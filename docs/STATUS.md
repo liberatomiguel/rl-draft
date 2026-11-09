@@ -1,63 +1,59 @@
 # Project Status — current state only
 
-> Updated: **2026-11-09**. History: CHANGELOG.md; plan: ROADMAP.md.
-> Career map: ROAD-TO-WORLDS-STATUS.md.
+> Updated: **2026-11-09**. History: CHANGELOG.md; plan: ROADMAP.md; career
+> round: ROADMAP-NEXT-2026-11-05.md. Career map: ROAD-TO-WORLDS-STATUS.md.
 
 ## Current builds
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.36.21**, career on, noindex,
-  preview tools on, analytics/accounts off in the isolated QA export.
+- Season 1 candidate: staging, **v2.0.0-rc.37** = rc.36.21 plus the rc.37
+  career round (F1 market, F2 finance, F3 matchday, F4a battery tooling; the
+  F5 replay contract is docs only). Career on, noindex, preview tools on,
+  analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
-- The rc.37 career workstreams remain separate. This package does not edit
-  career engine/store or existing career balance values.
+- F6 balancing: branch `claude/rc37-balance`, cut from staging rc.37. No
+  balance change reaches staging before Miguel approves the package.
 
 ## Current evidence
 
-- CH-01/02/03: 45 fixed-seed challenges / 135 stars with legal engine/store
-  replays, reload and once-only grants. Seven Draft Labs. Existing IDs, seeds,
-  goals and earned progress are preserved by rc.36.17.
-- Daily follow-up: 365 unique reviewed seeds, 09/11/2026–08/11/2027 UTC;
-  every legal store replay wins and earns its bonus. The 11-template rotation
-  separates Hard/Legacy days. Only future dailies read the new field shifts.
-- Quiz: 259 eligible players, a deck without repeats until completion, and
-  unambiguous full clues before the last attempt. Older dates keep their answer.
-- UI-01/01a/02: clear login XP, collected days and in-cell rewards; every rank's
-  actual rewards/condition; all 35 badges and 18 banners reviewed, including
-  First Chapter, Overdrive and Cosmic Ascension. Static/live layers, EN/PT,
-  profile/locker integration, 320px and reduced effects checked.
-- rc.36.18 restores lock overlays, shows all owned badges and inline track
-  rewards, cleans rank-up and separates orbital banner art from its background.
-- rc.36.20 compacts login/rank rewards, adds visual XP, makes locks translucent
-  and restores missing reusable shapes and independent banner motion planes.
-- rc.36.21 bounds badge collection to the rating column, adds View more and
-  prioritises login badges over quieter XP; challenge locks use translucent black.
-- Release validation: 2000 tests passed, lint, types and static export checked.
-  Production probe: profile 29 ms/s, board 13 ms/s, zero compositor failures.
-  Lighthouse accessibility: 100/100 on profile/login and Challenges entries.
-  Final visual/performance/accessibility evidence and limits:
-  UI-REVIEW-rc36-21.md and UI-DAILY-AUDIT-rc36-17.md.
-- Cosmetic inventory/proposals share one 106-row table:
+- Challenges CH-01/02/03: 45 fixed-seed challenges / 135 stars with legal
+  replays, reload and once-only grants; seven Draft Labs (rc.36.16–17).
+- Dailies: 365 reviewed seeds (09/11/2026–08/11/2027 UTC), every legal replay
+  wins; 11-template rotation. Quiz: 259 eligible players, no repeats.
+- UI-01/01a/02 (rc.36.18–21): login/rank rewards, all 35 badges and 18 banners
+  reviewed (UI-REVIEW-rc36-21.md, UI-DAILY-AUDIT-rc36-17.md). Cosmetics:
   COSMETICS-CATALOG-UNIFIED.md (89 existing, 17 proposed; grants unchanged).
-- BALANCE_VERSION 14 changes daily-only calibration. Existing match/chemistry,
-  Classic/Quick and career tunables retain their values.
+- rc.37 battery (06/11): 4,914 careers, 0 softlocks/errors. Report:
+  `docs/battery-rc37/RELATORIO-COMPLETO.md` (tables `rc37-tabelas.md`, cells
+  `rc37-cells.csv`); raw JSONL `C:/Users/Miguel/CLAUDE/rc37-battery/run1`.
+  Findings: youth profiles dominate titles; Worlds reach 6 % (EU) to 93 %
+  (SSA); bimodal funnel; renewals p50 0.61 of market; chemistry stuck at
+  67 %; reputation saturates at 100; the psychologist adds 0 rating.
+  Insolvency 2 / 7 / 21 % (on target).
+- BALANCE_VERSION **15**: rc.36.16's daily-only calibration plus the rc.37
+  career tunables (both sides had bumped to 14). Saves additive only; persist
+  keys/versions frozen.
+- Merge gates: typecheck and lint clean; full suite 2095 passed /
+  28 skipped (165 files); static export with the staging flags OK.
 
-## Remaining gates
+## Open, in order
 
-- Etapas 1–2 are implemented; Gate 2 play and ENG-03 real-save fixtures remain.
-- Gate 3b: career progression/economy acceptance, including historical Worlds
-  pacing. Use existing rc36-3/4/5 evidence and the separate rc.37 reports;
-  do not claim simulation policies predict human success.
-- Etapa 4: collection pacing and acceptance, DATA-02, SEA-01 cadence/rewards
-  review and ECO-06 sales/trades decision. UI-01/02 are delivered; the other
-  decisions are not silently closed.
-- Etapa 5: integrated playtest by difficulty/region, real saves, account/sync,
-  performance, final EN/PT/art, tutorial and launch notes.
-- Etapa 6: season dates, leaderboard freeze/grants, migration/rollback rehearsal
-  and Miguel's cutover actions (V2-IMPLEMENTATION-PLAN.md §6). No main deploy.
-- Refresh the reviewed daily calendar before November 2027 or after data/rule
-  changes; the replay suite guards the currently reviewed dates.
+1. **F6 balancing** on `claude/rc37-balance`: controlled experiments on the
+   measured bottlenecks (renewals first), then a package for Miguel.
+2. Miguel's review of the rc.37 handoffs' open points (`HANDOFF-rc37-*.md`:
+   F1 10(a)–(g), F2 10(a)–(e), F3 in play); F5 approval before any code.
+3. Gate 2 play and ENG-03 real-save fixtures. Gate 3b progression/economy
+   acceptance, including historical Worlds pacing; simulation policies do
+   not predict human success.
+4. Etapa 4 (collection pacing, DATA-02, SEA-01, ECO-06), Etapa 5 (integrated
+   playtest by difficulty/region, real saves, accounts/sync, performance,
+   EN/PT/art, tutorial, launch notes), Etapa 6 (season dates, leaderboard
+   freeze, migration rehearsal, Miguel's cutover in V2-IMPLEMENTATION-PLAN.md
+   §6). No main deploy. Still Miguel's: event cards and Season Rating deltas
+   (05/11 decisions 15–16).
+5. Refresh the reviewed daily calendar before November 2027 or after data or
+   rule changes; the replay suite guards the reviewed dates.
 
 ## Standing contracts
 

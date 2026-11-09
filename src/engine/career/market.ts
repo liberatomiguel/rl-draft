@@ -11,9 +11,12 @@
 
 import {
   CAREER_COACH_MARKET,
+  CAREER_DEV,
   CAREER_SALARY,
   CAREER_SEASONS,
+  CAREER_TALENT,
   CAREER_TRANSFER,
+  CAREER_VALUATION,
   CAREER_WORLD,
 } from "@/config/balance";
 import { lineups, playerById, playerCardById } from "@/data";
@@ -27,7 +30,10 @@ import {
   bestCardOverall,
   deriveArchetype,
   deriveBirthYear,
+  developmentProfileOf,
+  growthModelOf,
   isCompetitiveAge,
+  isGrowthContract,
   playerViewById,
   type ViewCtx,
 } from "./development";
@@ -38,10 +44,13 @@ import {
   contractedFeeFor,
   marketValueFor,
   quantize,
+  reachGapFor,
   repTierOf,
   salaryAskFactors,
   signableOverallCap,
   signingBonusFor,
+  type MarketValueInput,
+  type SalaryAskInput,
 } from "./economy";
 import { derivedFloat, deriveSeed, streams } from "./seeds";
 import type {
@@ -99,7 +108,7 @@ const LISTING_CAP = 120;
  * rc.32: free agents the org can sign that the listing always shows (one
  * market page). The top LISTING_CAP by overall can all sit above a low
  * reputation's signing cap — a restructured org at rep 0 saw only locked
- * rows and could never sign again.
+ * rows and could never sign again. rc.37 (F1): the contracted page too.
  */
 const LISTING_MIN_SIGNABLE = 24;
 
@@ -145,11 +154,22 @@ export function listingFor(ctx: {
   contracted.sort((a, b) => b.view.overall - a.view.overall);
 
   const listedFree = freeAgents.slice(0, LISTING_CAP);
+  const listedContracted = contracted.slice(0, LISTING_CAP);
   const cap = ctx.signableCap;
   if (cap !== undefined) {
     const signable = (v: CareerPlayerView) => Math.round(v.overall) <= cap;
     const missing = LISTING_MIN_SIGNABLE - listedFree.filter(signable).length;
     if (missing > 0) listedFree.push(...freeAgents.slice(LISTING_CAP).filter(signable).slice(0, missing));
+    // rc.37 (F1): the contracted page mirrors it. The top LISTING_CAP by
+    // overall stay (stars included); below them the best players this org may
+    // sign top the page up to LISTING_MIN_SIGNABLE, when there are that many.
+    // A low reputation saw only locked rows: the top 120 sat above its cap.
+    const missingContracted = LISTING_MIN_SIGNABLE - listedContracted.filter((c) => signable(c.view)).length;
+    if (missingContracted > 0) {
+      listedContracted.push(
+        ...contracted.slice(LISTING_CAP).filter((c) => signable(c.view)).slice(0, missingContracted),
+      );
+    }
   }
   // rc.36 (POL-04, Miguel on rc.35: "more free agents with potential in the
   // 80s through the seasons"): every free-agent prospect is listed. The top
@@ -164,7 +184,90 @@ export function listingFor(ctx: {
   }
   return {
     freeAgents: listedFree,
-    contracted: contracted.slice(0, LISTING_CAP),
+    contracted: listedContracted,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// rc.37 (F1): the one market-value input
+// ---------------------------------------------------------------------------
+
+/**
+ * rc.37 (F1): a player a price reads — a market view (its season `age`) or a
+ * squad player (his `birthYear`), with the peak age he carries.
+ */
+export interface PricedPlayer {
+  id: string;
+  overall: number;
+  potential: number;
+  /** A view's season age; a squad player gives his birthYear instead. */
+  age?: number;
+  birthYear?: number;
+  /** The view's / squad player's stored peak age (authoritative, never recomputed). */
+  peakAge?: number;
+}
+
+/** rc.37 (F1): his integer season age in `seasonIndex` — the age every price reads. */
+export function seasonAgeOf(p: PricedPlayer, careerSeed: number, seasonIndex: number): number {
+  return p.age ?? ageOf(p.birthYear ?? deriveBirthYear(p.id, careerSeed), seasonIndex);
+}
+
+/**
+ * rc.37 (F1): the ONE `marketValueFor` input for a player — his numbers, his
+ * season age and his arc (the peak age he carries and his DevelopmentProfile's
+ * plateau years), so his reach gap prices him — for every fee, bid and
+ * readout: the user's buys (`askPackageFor`), the AI's bids for his players
+ * (`incomingBidForDay`, the Blockbuster), the AI↔AI fee fiction. A market view
+ * and the squad player he becomes read the same input on the same day.
+ * Another caller (a sale, a crisis) builds its input here too, so buying,
+ * selling and a free agent's wage read one valuation.
+ */
+export function valueInputOf(
+  p: PricedPlayer,
+  careerSeed: number,
+  seasonIndex: number,
+  /**
+   * The career's development model (`growthModelOf(save.world)`; absent = the
+   * model a new career starts on). The arc prices model 2 only: rc.31's model
+   * 1 has no plateau — he grows toward his potential at any age — so it reads
+   * the profile-free input (his raw gap), as its bands read no age cap.
+   */
+  growthModel: number = CAREER_DEV.growthModel,
+): MarketValueInput {
+  const input: MarketValueInput = {
+    overall: p.overall,
+    age: seasonAgeOf(p, careerSeed, seasonIndex),
+    potential: p.potential,
+    seasonIndex,
+  };
+  if (p.peakAge == null || !isGrowthContract(growthModel)) return input;
+  return { ...input, peakAge: p.peakAge, plateauYears: developmentProfileOf(p.id, careerSeed).plateauYears };
+}
+
+/** rc.37 (F1): the `computeSalaryAsk` input on the same valuation (`valueInputOf`). */
+export function askInputOf(
+  p: PricedPlayer,
+  ctx: {
+    careerSeed: number;
+    seasonIndex: number;
+    rep: number;
+    lengthSeasons: 1 | 2 | 3;
+    difficulty: CareerDifficulty;
+    ambitious?: boolean;
+    blockbusterRefused?: boolean;
+    /** The career's development model (see `valueInputOf`). */
+    growthModel?: number;
+  },
+): SalaryAskInput {
+  return {
+    ...valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel),
+    rep: ctx.rep,
+    lengthSeasons: ctx.lengthSeasons,
+    difficulty: ctx.difficulty,
+    careerSeed: ctx.careerSeed,
+    playerId: p.id,
+    ambitious: ctx.ambitious,
+    blockbusterRefused: ctx.blockbusterRefused,
   };
 }
 
@@ -193,30 +296,18 @@ export function askPackageFor(
     role?: "starter" | "sub";
     lengthSeasons: 1 | 2 | 3;
     contracted?: { splitsRemaining: number };
+    /** rc.37 (F1): the career's development model (`growthModelOf(save.world)`; see `valueInputOf`). */
+    growthModel?: number;
   },
 ): AskPackage {
-  const input = {
-    overall: view.overall,
-    age: view.age,
-    potential: view.potential,
-    rep: ctx.rep,
-    seasonIndex: ctx.seasonIndex,
-    lengthSeasons: ctx.lengthSeasons,
-    difficulty: ctx.difficulty,
-    careerSeed: ctx.careerSeed,
-    playerId: view.id,
-  };
+  // rc.37 (F1): his ask and his fee read one valuation (his reach gap).
+  const input = askInputOf(view, ctx);
   const salaryPerSplit = computeSalaryAsk(input);
   // v0.3: fees derive from the unified market value with a bounded contract
   // load — no more ask × raw-splits-remaining swings.
   const fee = ctx.contracted
     ? contractedFeeFor(
-        marketValueFor({
-          overall: view.overall,
-          age: view.age,
-          potential: view.potential,
-          seasonIndex: ctx.seasonIndex,
-        }),
+        marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel)),
         ctx.contracted.splitsRemaining,
         ctx.seasonIndex,
       )
@@ -237,7 +328,7 @@ export function askPackageFor(
  */
 export function renewalAskFor(
   player: Pick<SquadPlayer, "id" | "overall" | "potential" | "birthYear"> &
-    Partial<Pick<SquadPlayer, "contractEndSeason" | "blockbusterRefusedUntil">>,
+    Partial<Pick<SquadPlayer, "contractEndSeason" | "blockbusterRefusedUntil" | "peakAge">>,
   ctx: {
     rep: number;
     seasonIndex: number;
@@ -246,26 +337,29 @@ export function renewalAskFor(
     lengthSeasons: 1 | 2 | 3;
     /** rc.32 (M2): false = the core ask, without the ambition premium or the Blockbuster surcharge (renewalTermsFor adds them on top). */
     surcharges?: boolean;
+    /** rc.37 (F1): the career's development model (see `valueInputOf`). */
+    growthModel?: number;
   },
 ): number {
-  return computeSalaryAsk({
-    overall: player.overall,
-    age: ageOf(player.birthYear, ctx.seasonIndex),
-    potential: player.potential,
-    rep: ctx.rep,
-    seasonIndex: ctx.seasonIndex,
-    lengthSeasons: ctx.lengthSeasons,
-    difficulty: ctx.difficulty,
-    careerSeed: ctx.careerSeed,
-    playerId: player.id,
-    // rc.32 (M2): `surcharges: false` prices the core ask — no ambition
-    // premium and no Blockbuster surcharge (renewalTermsFor adds both on top).
-    ambitious: ctx.surcharges !== false && isAmbitiousRenewal(player.overall, ctx.rep),
-    // rc.32: a Blockbuster bid refused during THIS deal surcharges its renewal
-    // (CAREER_SALARY.blockbusterRefusalRenewalMult; declared since v0.2, never
-    // passed before — the offer and the mail now say so).
-    blockbusterRefused: ctx.surcharges !== false && blockbusterRefusalApplies(player),
-  });
+  // rc.37 (F1): the one valuation (`askInputOf`) — his arc prices a renewal
+  // like any other ask.
+  return computeSalaryAsk(
+    askInputOf(player, {
+      careerSeed: ctx.careerSeed,
+      seasonIndex: ctx.seasonIndex,
+      rep: ctx.rep,
+      lengthSeasons: ctx.lengthSeasons,
+      difficulty: ctx.difficulty,
+      growthModel: ctx.growthModel,
+      // rc.32 (M2): `surcharges: false` prices the core ask — no ambition
+      // premium and no Blockbuster surcharge (renewalTermsFor adds both on top).
+      ambitious: ctx.surcharges !== false && isAmbitiousRenewal(player.overall, ctx.rep),
+      // rc.32: a Blockbuster bid refused during THIS deal surcharges its renewal
+      // (CAREER_SALARY.blockbusterRefusalRenewalMult; declared since v0.2, never
+      // passed before — the offer and the mail now say so).
+      blockbusterRefused: ctx.surcharges !== false && blockbusterRefusalApplies(player),
+    }),
+  );
 }
 
 /** The "ambitious" renewal premium's condition (design §9): a star at an org below rep tier 3. */
@@ -323,18 +417,45 @@ export function movedThisWindowIds(
   return out;
 }
 
-/** rc.35 (front C): true while a squad player's signing window is still open. */
-export function signedInWindow(
+// rc.37 (F1): rc.35's `signedInWindow` (no bid in the signing window) is
+// superseded by `resaleLocked` below (the signing window and the next).
+
+/** Transfer windows a season (preseason, two mid-season, the Worlds window). */
+const WINDOWS_PER_SEASON = 4;
+
+/**
+ * rc.37 (F1): the latest window opened by `day` of `seasonIndex`, as a career-
+ * wide ordinal (season × 4 + window), and whether that window is still open.
+ * The preseason window opens on day 1, so every day has one.
+ */
+function windowSlotOf(seasonIndex: number, day: number): { ord: number; open: boolean } {
+  const week = weekOfDay(day);
+  for (let w = week; w >= 1; w--) {
+    const idx = windowIndexOf(w);
+    if (idx !== null) return { ord: seasonIndex * WINDOWS_PER_SEASON + idx, open: w === week };
+  }
+  return { ord: seasonIndex * WINDOWS_PER_SEASON, open: false };
+}
+
+/**
+ * rc.37 (F1, the resale lock): true while a player the user signed cannot be
+ * sold — from his signing until the close of the
+ * CAREER_VALUATION.resaleLockWindows-th window after the one he signed in
+ * (signed between windows: after the last one that opened). No AI bid and no
+ * Blockbuster bid lands on him meanwhile, so buying and selling in the same
+ * window (or the next) is never a profit. A founder, or a squad player signed
+ * before rc.35 (no `signedDay`), is never locked. One rule for
+ * `incomingBidForDay`, the scripted Blockbuster degrade and any future sale.
+ */
+export function resaleLocked(
   p: { joinedSeason: number; signedDay?: number },
   seasonIndex: number,
-  windowIdx: number | null,
+  day: number,
 ): boolean {
-  return (
-    windowIdx !== null &&
-    p.signedDay !== undefined &&
-    p.joinedSeason === seasonIndex &&
-    windowIndexOf(weekOfDay(p.signedDay)) === windowIdx
-  );
+  if (p.signedDay === undefined) return false;
+  const lastLocked = windowSlotOf(p.joinedSeason, p.signedDay).ord + CAREER_VALUATION.resaleLockWindows;
+  const now = windowSlotOf(seasonIndex, day);
+  return now.open ? now.ord <= lastLocked : now.ord < lastLocked;
 }
 
 /** This season's real dataset lineups (the anchor targets). Empty when infinite. */
@@ -438,16 +559,13 @@ function feeFictionFor(
   view: CareerPlayerView,
   fromRef: string | null,
   ctx: WindowCtx,
+  /** rc.37 (F1): the world's development model (see `valueInputOf`). */
+  growthModel: number,
 ): number {
   if (!fromRef) return 0;
   // v0.3: value-anchored with a small seeded band — same-OVR players now
-  // trade for comparable fees everywhere.
-  const value = marketValueFor({
-    overall: view.overall,
-    age: view.age,
-    potential: view.potential,
-    seasonIndex: ctx.seasonIndex,
-  });
+  // trade for comparable fees everywhere. rc.37 (F1): the same value input.
+  const value = marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex, growthModel));
   const [lo, hi] = CAREER_TRANSFER.aiFeeBand;
   const f = derivedFloat(
     ctx.careerSeed,
@@ -541,7 +659,7 @@ export function aiWindowMoves(
       playerName: view.name,
       fromRef,
       toRef,
-      fee: quantize(feeFictionFor(view, fromRef, ctx)),
+      fee: quantize(feeFictionFor(view, fromRef, ctx, growthModelOf(next))),
     });
   };
 
@@ -642,6 +760,24 @@ export function userBidsBlocked(seasonIndex: number, windowIdx: number | null): 
 }
 
 /**
+ * The weight an AI bid targets a user player by: his level over 70, a star's
+ * +6, and rc.37 (F1, package 2) a talent's interest — a reach gap ≥
+ * CAREER_TRANSFER.prospectUpside at any age adds CAREER_TALENT.talentBidPerGap
+ * × his reach gap, at least talentBidMin (rc.36's +8 for an u18 prospect) and
+ * at most talentBidMax: a 70/98 at 17 weighs 29 (rc.36 9).
+ */
+export function bidWeightOf(
+  p: SquadPlayer,
+  ctx: { careerSeed: number; seasonIndex: number; /** The career's development model (see `valueInputOf`). */ growthModel?: number },
+): number {
+  const T = CAREER_TRANSFER;
+  const K = CAREER_TALENT;
+  const gap = reachGapFor(valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel));
+  const talent = gap >= T.prospectUpside ? Math.min(K.talentBidMax, Math.max(K.talentBidMin, K.talentBidPerGap * gap)) : 0;
+  return Math.max(1, p.overall - 70) + (p.overall >= T.starOverall ? 6 : 0) + talent;
+}
+
+/**
  * v0.3 daily poach roll: bids for user players can land on ANY window day
  * (was: only the window's first Monday, only ever for the single best
  * player). Chance scales with squad attractiveness — stars AND developing
@@ -668,13 +804,24 @@ export function incomingBidForDay(ctx: {
   if (ctx.bidsThisWindow >= T.maxBidsPerWindow) return null;
   if (ctx.day - ctx.lastBidDay < T.bidCooldownDays) return null;
 
-  const ageFor = (p: SquadPlayer) =>
-    ageOf(p.birthYear ?? deriveBirthYear(p.id, ctx.careerSeed), ctx.seasonIndex);
-  const isProspect = (p: SquadPlayer) =>
-    ageFor(p) <= T.prospectAgeMax && p.potential - p.overall >= T.prospectUpside;
+  // The players a bid may target: none with a pending bid; rc.35 (front C):
+  // none the user signed in this window; rc.37 (F1, the resale lock): nor in
+  // the window before it (`resaleLocked`). rc.37: the daily chance counts
+  // these players only, so a locked talent never draws bids onto his
+  // teammates (rc.36 counted the whole squad). The rolls are per-day derived
+  // floats: returning before them shifts nothing.
+  const pendingSet = new Set(ctx.pendingTargetIds);
+  const pool = ctx.squad.filter((p) => !pendingSet.has(p.id) && !resaleLocked(p, ctx.seasonIndex, ctx.day));
+  if (pool.length === 0) return null;
+  // rc.37 (F1): the career's development model prices his arc (`valueInputOf`).
+  const valueCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, growthModel: growthModelOf(ctx.world) };
+  const isProspect = (p: SquadPlayer) => {
+    const input = valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel);
+    return input.age <= T.prospectAgeMax && reachGapFor(input) >= T.prospectUpside;
+  };
 
-  const stars = ctx.squad.filter((p) => p.overall >= T.starOverall).length;
-  const prospects = ctx.squad.filter(isProspect).length;
+  const stars = pool.filter((p) => p.overall >= T.starOverall).length;
+  const prospects = pool.filter(isProspect).length;
   const chance = Math.min(
     T.poachDailyCap,
     T.poachDailyBase + T.poachPerStar * stars + T.poachPerProspect * prospects,
@@ -682,17 +829,9 @@ export function incomingBidForDay(ctx: {
   const roll = derivedFloat(ctx.careerSeed, streams.gen("poachDay", `${ctx.seasonIndex}:${ctx.day}`));
   if (roll >= chance) return null;
 
-  // Target: attractiveness-weighted — AI GMs hunt upside, not only the star.
-  const pendingSet = new Set(ctx.pendingTargetIds);
-  // rc.35 (front C): a player the user signed in this window takes no bid before it closes.
-  const pool = ctx.squad.filter(
-    (p) => !pendingSet.has(p.id) && !signedInWindow(p, ctx.seasonIndex, ctx.windowIdx),
-  );
-  if (pool.length === 0) return null;
-  const weightOf = (p: SquadPlayer) =>
-    Math.max(1, p.overall - 70) +
-    (p.overall >= T.starOverall ? 6 : 0) +
-    (isProspect(p) ? 8 : 0);
+  // Target: attractiveness-weighted — AI GMs hunt upside, not only the star
+  // (rc.37 F1: the more reach, the more interest, at any age — `bidWeightOf`).
+  const weightOf = (p: SquadPlayer) => bidWeightOf(p, valueCtx);
   const total = pool.reduce((s, p) => s + weightOf(p), 0);
   let cursor =
     derivedFloat(ctx.careerSeed, streams.gen("poachTarget", `${ctx.seasonIndex}:${ctx.day}`)) *
@@ -716,12 +855,8 @@ export function incomingBidForDay(ctx: {
   );
   const bidder = bidders[Math.min(pick, bidders.length - 1)];
 
-  const value = marketValueFor({
-    overall: target.overall,
-    age: ageFor(target),
-    potential: target.potential,
-    seasonIndex: ctx.seasonIndex,
-  });
+  // rc.37 (F1): the same valuation as a buy (`valueInputOf`).
+  const value = marketValueFor(valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel));
   const [lo, hi] = T.aiBidRange;
   const mult =
     lo +

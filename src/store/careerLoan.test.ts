@@ -154,8 +154,9 @@ describe("rc.34 — a breach is the bank's emergency loan", () => {
       expect(negative.finances.balance).toBe(-100);
       expect(negative.finances.balance).toBeGreaterThan(backerLineOf(negative).floor);
       expect(negative.finances.loan).toBeNull();
-      expect(moneyNoticeOf(negative)).toBeNull();
-      const broke = quietSunday(negative, 3);
+      // rc.37 F2: no rescue notice — at most the bank's voluntary offer (the runway sits at the warning level).
+      expect((negative.moneyNotices ?? []).every((n) => n.kind === "creditOffer")).toBe(true);
+      const broke = quietSunday({ ...negative, moneyNotices: [] }, 3);
       broke.finances.balance = backerLineOf(broke).floor - 100 - weeklyStatementOf(broke).net;
       const rescued = advanceDayFlow(broke);
       expect(rescued.finances.balance).toBe(backerLineOf(rescued).rescueTo);
@@ -387,6 +388,8 @@ describe("rc.34 — the money notice (a modal on every career screen)", () => {
     const monday = firstDayOfWeek(5);
     const broke = structuredClone(start);
     broke.finances.balance = backerLineOf(broke).floor + 100; // Monday's payroll breaks the floor
+    // rc.37 F2: an emergency-sale offer (cash negative) would hold the clock first — its cooldown runs here.
+    broke.finances.emergencySaleAt = { seasonIndex: broke.clock.seasonIndex, day: broke.clock.day };
     const stopped = advanceToNextStopFlow(broke);
     expect(stopped.clock.day).toBe(monday);
     expect(moneyNoticeOf(stopped)?.kind).toBe("loanOpened");

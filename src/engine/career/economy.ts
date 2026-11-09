@@ -14,6 +14,7 @@ import {
   CAREER_BANK,
   CAREER_COACH_MARKET,
   CAREER_CONTRACT,
+  CAREER_DEV,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
@@ -27,6 +28,7 @@ import {
   CAREER_SPONSOR,
   CAREER_STARS,
   CAREER_SUB,
+  CAREER_TALENT,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
@@ -52,6 +54,8 @@ import type {
   SponsorObjectiveKind,
   SponsorState,
 } from "./types";
+// rc.37 F2: the finance front's own block (kept apart from the import above).
+import { CAREER_CREDIT_OFFER, CAREER_LATE_REVENUE, CAREER_SPEND_ALERT } from "@/config/balance";
 
 // ---------------------------------------------------------------------------
 // PINNED leaf contract (careerResults + worldSim + market code against these)
@@ -122,6 +126,27 @@ export function standInFeeFor(seasonIndex: number): number {
 /** An insert option's money (data/career/inserts.ts is season-0 money), indexed. */
 export function insertMoneyFor(amount: number, seasonIndex: number): number {
   return indexedAmount(amount, seasonIndex);
+}
+
+// ---------------------------------------------------------------------------
+// rc.37 F2 package 1: late revenue (CAREER_LATE_REVENUE, decision 5)
+// ---------------------------------------------------------------------------
+
+/** rc.37 F2: is this season in the late-revenue era (season index ≥ CAREER_LATE_REVENUE.fromSeasonIndex, the 4th season on)? */
+export function lateRevenueActive(seasonIndex: number): boolean {
+  return seasonIndex >= CAREER_LATE_REVENUE.fromSeasonIndex;
+}
+
+/** rc.37 F2: the late-revenue factor on a tier's prize pool in this season (1 before S4 and for every tier but Major and Worlds). */
+export function latePrizeMultFor(tier: EventTier, seasonIndex: number): number {
+  if (!lateRevenueActive(seasonIndex)) return 1;
+  return CAREER_LATE_REVENUE.prizePoolMult[tier] ?? 1;
+}
+
+/** rc.37 F2: the late-revenue factor on a NEW sponsor quote of this tier in this season (1 before S4 and for tiers 1–2). */
+export function lateSponsorMultFor(tier: number, seasonIndex: number): number {
+  if (!lateRevenueActive(seasonIndex)) return 1;
+  return CAREER_LATE_REVENUE.sponsorQuoteMult[tier] ?? 1;
 }
 
 /**
@@ -207,6 +232,7 @@ export function prizeScheduleFor(
   tier: EventTier, format: CareerEventFormat, difficulty: CareerDifficulty, seasonIndex = 0,
 ): Record<string, number> {
   const placements = Object.entries(PLACEMENTS_BY_FORMAT[format]) as [Placement, number][];
+  // rc.37 F2: the switch-back restores rc.31 exactly — no late-revenue factor on this branch.
   if (CAREER_PRIZES.tables === "rc31" || CAREER_ECONOMY.indexMode === "rc31") {
     const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
     return Object.fromEntries(placements.map(([p]) => {
@@ -226,7 +252,9 @@ export function prizeScheduleFor(
   for (let season = 0; season <= Math.max(0, Math.floor(seasonIndex)); season++) {
     const minimum = Object.fromEntries(placements.map(([p]) => [p, previous ? previous[p] + quantum : quantum]));
     const minimumPool = placements.reduce((sum, [p, count]) => sum + minimum[p] * count, 0);
-    const rawPool = CAREER_PRIZES.pools[tier] * moneyIndex(season, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
+    // rc.37 F2: from the 4th season a Major's and Worlds' pool carry the late-revenue factor.
+    const rawPool = CAREER_PRIZES.pools[tier] * moneyIndex(season, "prizes") * CAREER_ECONOMY.prizeMult[difficulty] *
+      latePrizeMultFor(tier, season);
     const pool = Math.max(Math.round(rawPool / poolStep) * poolStep,
       previousPool + poolStep, Math.ceil(minimumPool / poolStep) * poolStep);
     const prizes = Object.fromEntries(placements.map(([p]) => [p,
@@ -347,21 +375,137 @@ export interface SalaryAskInput {
   ambitious?: boolean;
   /** Refused-Blockbuster surcharge on this player's next renewal. */
   blockbusterRefused?: boolean;
+  /**
+   * rc.37 (F1): his arc — the peak age he carries (the view's or the squad
+   * player's, never recomputed) and his DevelopmentProfile's plateau years —
+   * so the price reads his REACH gap (`talentFactorsFor`). Both or neither,
+   * built by `market.askInputOf`. Absent = the profile-free estimate: rc.36's
+   * potential factor on his raw gap (an u18 talent still climbs to the 19–22
+   * age factor), never a profile derived from the id.
+   */
+  peakAge?: number;
+  plateauYears?: number;
+  /**
+   * rc.37 (F1): a founding deal — the project contract (careerFlow.foundingAskOf)
+   * keeps rc.36's age and potential factors exactly, never the talent
+   * valuation: a prospects roster's 15–17-year-olds with 14–28 points of reach
+   * would found at ×1.7 rc.36's bill, which their protected renewals carry on.
+   */
+  founding?: boolean;
 }
 
-function ageFactorFor(age: number): number {
+/**
+ * rc.36's age table. rc.37 (F1): an u18 with real upside (his reach gap from
+ * CAREER_TALENT.u18TalentRampFrom to u18TalentRampTo) climbs linearly to the
+ * 19–22 factor, so young age never makes a talent cheaper; an u18 without
+ * upside keeps the u18 factor. `reachGap` 0 = rc.36.
+ */
+function ageFactorFor(age: number, reachGap = 0): number {
   const f = CAREER_SALARY.ageFactor;
-  if (age <= 18) return f.u18;
+  if (age <= 18) {
+    const { u18TalentRampFrom: from, u18TalentRampTo: to } = CAREER_TALENT;
+    const t = to <= from ? (reachGap >= to ? 1 : 0) : Math.max(0, Math.min(1, (reachGap - from) / (to - from)));
+    return t <= 0 ? f.u18 : t >= 1 ? f.a19_22 : f.u18 + (f.a19_22 - f.u18) * t;
+  }
   if (age <= 22) return f.a19_22;
   if (age <= 24) return f.a23_24;
   return f.a25plus;
 }
 
+/** rc.36's potential factor on the raw gap (rc.37: the profile-free fallback only). */
 function potentialFactorFor(overall: number, potential: number): number {
   return Math.min(
     CAREER_SALARY.potentialCap,
     1 + CAREER_SALARY.potentialPerPoint * Math.max(0, potential - overall),
   );
+}
+
+/**
+ * rc.37 (F1): his REACH gap — the potential the age clock still lets him
+ * close: min(potential − overall, CAREER_DEV.seasonGainCap × ceil(peakAge +
+ * plateauYears − age)), 0 once past his plateau (development.reachableOverallOf's
+ * clock on his potential, never his hidden peakOffset). The integer season
+ * age. Without an arc (peakAge and plateauYears) the raw gap.
+ */
+export function reachGapFor(x: { overall: number; potential: number; age: number; peakAge?: number; plateauYears?: number }): number {
+  const raw = Math.max(0, x.potential - x.overall);
+  if (x.peakAge == null || x.plateauYears == null) return raw;
+  const yearsLeft = x.peakAge + x.plateauYears - x.age;
+  if (yearsLeft <= 0) return 0;
+  return Math.min(raw, CAREER_DEV.seasonGainCap * Math.ceil(yearsLeft));
+}
+
+/**
+ * rc.37 (F1): the upside factor in tiers on the reach gap (CAREER_TALENT.
+ * upsideTiers) — rc.36's 0.02 a point up to gap 10 (×1.20), then steeper per
+ * tier and never saturating: ×1.40 at 15, ×1.70 at 20, ×2.34 at 28 (rc.36
+ * stopped at ×1.30 from 15, so a 70/98 priced like a 70/85).
+ */
+export function upsideFactorFor(reachGap: number): number {
+  let f = 1;
+  let lo = 0;
+  for (const t of CAREER_TALENT.upsideTiers) {
+    if (reachGap > lo) f += t.perPoint * (Math.min(reachGap, t.upTo) - lo);
+    lo = t.upTo;
+  }
+  return f;
+}
+
+/** rc.37 (F1): the talent tiers (engine and tests; a UI label must come from the scouted band). */
+export type TalentTier = "promising" | "high" | "exceptional" | "generational";
+const TALENT_TIERS: readonly TalentTier[] = ["promising", "high", "exceptional", "generational"];
+
+/** rc.37 (F1): his tier by reach gap — null under CAREER_TRANSFER.prospectUpside, else the upsideTiers band. */
+export function talentTierOf(reachGap: number): TalentTier | null {
+  if (reachGap < CAREER_TRANSFER.prospectUpside) return null;
+  const idx = CAREER_TALENT.upsideTiers.findIndex((t) => reachGap <= t.upTo);
+  return TALENT_TIERS[Math.min(TALENT_TIERS.length - 1, idx < 0 ? TALENT_TIERS.length - 1 : idx)];
+}
+
+export interface TalentFactors {
+  reachGap: number;
+  /** The age factor (rc.36's table; an u18 talent climbs to the 19–22 factor). */
+  age: number;
+  /** The potential factor (the tiers on the reach gap; rc.36's on the raw gap without an arc). */
+  potential: number;
+  hasArc: boolean;
+}
+
+/**
+ * rc.37 (F1): the ONE talent valuation — the age and potential factors every
+ * price reads: `marketValueFor` (fees, AI bids, the Blockbuster, the AI↔AI
+ * fiction), `computeSalaryAsk` (a free agent's wage, a renewal's fresh ask)
+ * and the `salaryAskFactors` readout, in rc.36's multiplication slots (equal
+ * factors give bit-identical prices). With an arc: the reach gap, its tiers
+ * and the u18 ramp. Without one: rc.36's potential factor on the raw gap, and
+ * the u18 ramp (rc.36 exactly at 19+, or an u18 with a gap ≤ 3). A founding
+ * deal (`founding`): rc.36's factors exactly.
+ */
+export function talentFactorsFor(x: {
+  overall: number;
+  potential: number;
+  age: number;
+  peakAge?: number;
+  plateauYears?: number;
+  /** A founding deal: rc.36's factors exactly (SalaryAskInput.founding). */
+  founding?: boolean;
+}): TalentFactors {
+  if (x.founding) {
+    return {
+      reachGap: Math.max(0, x.potential - x.overall),
+      age: ageFactorFor(x.age),
+      potential: potentialFactorFor(x.overall, x.potential),
+      hasArc: false,
+    };
+  }
+  const hasArc = x.peakAge != null && x.plateauYears != null;
+  const reachGap = reachGapFor(x);
+  return {
+    reachGap,
+    age: ageFactorFor(x.age, reachGap),
+    potential: hasArc ? upsideFactorFor(reachGap) : potentialFactorFor(x.overall, x.potential),
+    hasArc,
+  };
 }
 
 /**
@@ -423,10 +567,12 @@ function askJitterFor(careerSeed: number, playerId: string): number {
  * Floor CAREER_SALARY.minSalary, quantized.
  */
 export function computeSalaryAsk(input: SalaryAskInput): number {
+  // rc.37 (F1): the one talent valuation (`talentFactorsFor`), in rc.36's slots.
+  const t = talentFactorsFor(input);
   const raw =
     baseCurve(input.overall, input.seasonIndex, input.difficulty) *
-    ageFactorFor(input.age) *
-    potentialFactorFor(input.overall, input.potential) *
+    t.age *
+    t.potential *
     repPremiumFor(input.overall, input.rep) *
     Math.pow(CAREER_SALARY.lengthDiscountPerSeason, input.lengthSeasons - 1) *
     (input.ambitious ? CAREER_SALARY.ambitionRenewalMult : 1) *
@@ -447,9 +593,11 @@ export function salaryAskFactors(input: SalaryAskInput): { key: string; delta: n
   const core =
     baseCurve(input.overall, input.seasonIndex, input.difficulty) *
     askJitterFor(input.careerSeed, input.playerId);
+  // rc.37 (F1): the same talent factors as the ask, so the readout reconciles.
+  const t = talentFactorsFor(input);
   const steps: { key: string; factor: number }[] = [
-    { key: "age", factor: ageFactorFor(input.age) },
-    { key: "potential", factor: potentialFactorFor(input.overall, input.potential) },
+    { key: "age", factor: t.age },
+    { key: "potential", factor: t.potential },
     { key: "repPremium", factor: repPremiumFor(input.overall, input.rep) },
     {
       key: "length",
@@ -488,6 +636,17 @@ export interface MarketValueInput {
   age: number;
   potential: number;
   seasonIndex: number;
+  /**
+   * rc.37 (F1): his arc — the peak age he carries and his DevelopmentProfile's
+   * plateau years — so his reach gap prices him (`talentFactorsFor`). Every
+   * F1 price builds its input with `market.valueInputOf` (any new caller — a
+   * sale, a crisis — should too). Optional so a caller with only the four
+   * numbers above still compiles: it gets the profile-free estimate, rc.36's
+   * potential factor on his raw gap (an u18 talent still climbs to the 19–22
+   * age factor). Both or neither.
+   */
+  peakAge?: number;
+  plateauYears?: number;
 }
 
 /**
@@ -498,13 +657,15 @@ export interface MarketValueInput {
  * user's market screen (Miguel: fees were wildly discrepant).
  */
 export function marketValueFor(input: MarketValueInput): number {
+  // rc.37 (F1): the one talent valuation, the same factors as his ask.
+  const t = talentFactorsFor(input);
   const raw =
     CAREER_SALARY.basePerSplit *
     Math.pow(CAREER_SALARY.growthPerPoint, input.overall - CAREER_SALARY.anchorOverall) *
     starCurveFactor(input.overall) *
     moneyIndex(input.seasonIndex, "wages") *
-    ageFactorFor(input.age) *
-    potentialFactorFor(input.overall, input.potential) *
+    t.age *
+    t.potential *
     CAREER_TRANSFER.valueMultiple;
   return quantize(Math.max(indexedAmount(CAREER_TRANSFER.minFee, input.seasonIndex), raw));
 }
@@ -524,9 +685,12 @@ export function contractedFeeFor(value: number, splitsRemaining: number, seasonI
 // v0.3 rep-gated signing cap (visible lock — supersedes §21.3's soft-only gate)
 // ---------------------------------------------------------------------------
 
-/** Max overall a NEW signing accepts at this reputation (squad/renewals exempt). */
+/**
+ * Max overall a NEW signing accepts at this reputation (squad/renewals exempt).
+ * rc.37 (F1): rc.36.3's `signableCapFreeAt` (84) is gone — the line reaches 99
+ * at rep 70 on its own, so the "uncapped from" step never changed a number.
+ */
 export function signableOverallCap(rep: number): number {
-  if (rep >= CAREER_UNLOCKS.signableCapFreeAt) return 99;
   return Math.min(
     99,
     CAREER_UNLOCKS.signableCapBase + CAREER_UNLOCKS.signableCapPerRep * rep,
@@ -536,10 +700,9 @@ export function signableOverallCap(rep: number): number {
 /** Reputation needed before a player of this overall signs (0 = signable now). */
 export function repNeededForOverall(overall: number): number {
   if (overall <= CAREER_UNLOCKS.signableCapBase) return 0;
-  const rep = Math.ceil(
+  return Math.ceil(
     (overall - CAREER_UNLOCKS.signableCapBase) / CAREER_UNLOCKS.signableCapPerRep,
   );
-  return Math.min(rep, CAREER_UNLOCKS.signableCapFreeAt);
 }
 
 /** Free-agent "luvas": ≈15% of the first SEASON's (3 splits) salary. */
@@ -1701,6 +1864,136 @@ export function payBankLoanDown(
 }
 
 // ---------------------------------------------------------------------------
+// rc.37 F2 packages 2 and 4: the bank's offer before the floor, the spend alert
+// ---------------------------------------------------------------------------
+
+/** rc.37 F2: the bank's voluntary loan as its offer states it (CAREER_CREDIT_OFFER). */
+export interface CreditOffer {
+  /** What lands on the balance — the bank takes nothing up front, so the principal. */
+  net: number;
+  principal: number;
+  /** What the org repays in all (the principal + CAREER_BANK.interestPct). */
+  total: number;
+  weeklyPayment: number;
+  termWeeks: number;
+  /** Mondays the balance stays at or above $0 with the loan at this pace, its instalments counted (capped at 104). */
+  coversMondays: number;
+  /** The need was larger than the bank's reputation limit (the offer is the limit). */
+  capped: boolean;
+}
+
+/** Mondays the balance stays at or above $0 after `principal` lands — the net, the instalments while owed, the investor's run. */
+function mondaysCoveredWith(
+  balance: number,
+  weeklyNet: number,
+  principal: number,
+  run: NetRun | null | undefined,
+  maxMondays = 104,
+): number {
+  const terms = bankLoanTerms(principal);
+  let b = balance + principal;
+  let owed = terms.total;
+  for (let k = 1; k <= maxMondays; k++) {
+    const instalment = Math.min(owed, terms.weeklyPayment);
+    owed -= instalment;
+    const lostRun = run && run.weekly > 0 && k > run.mondays ? run.weekly : 0;
+    b += weeklyNet - instalment - lostRun;
+    if (b < 0) return k - 1;
+  }
+  return maxMondays;
+}
+
+/**
+ * rc.37 F2 package 2: the voluntary loan the bank offers on these books —
+ * sized to keep the balance at or above $0 for CAREER_CREDIT_OFFER.coverWeeks
+ * Mondays at next Monday's net, its own instalments counted; at least
+ * CAREER_BANK.minAmount, at most the reputation limit (`capped`). Null when
+ * the bank would refuse (a loan running, the emergency loan owed — one debt
+ * at a time — or a limit under the minimum) or the books need nothing over
+ * that horizon.
+ */
+export function creditOfferFor(input: {
+  fin: FinanceState;
+  rep: number;
+  seasonIndex: number;
+  /** Next Monday's net (weeklyStatement), the bank loan's own instalment excluded (none runs). */
+  weeklyNet: number;
+  run?: NetRun | null;
+}): CreditOffer | null {
+  const { fin, rep, seasonIndex, weeklyNet } = input;
+  if (!CAREER_CREDIT_OFFER.enabled) return null;
+  const min = bankMinAmountFor(seasonIndex);
+  const limit = quantize(bankLoanLimitFor(rep, seasonIndex));
+  if (limit < min || bankLoanRefusal(fin, rep, min, seasonIndex) !== null) return null;
+  const horizon = Math.max(1, Math.floor(CAREER_CREDIT_OFFER.coverWeeks));
+  const shortfall = -balanceAfterMondays(fin.balance, weeklyNet, horizon, input.run);
+  if (shortfall <= 0) return null;
+  // The instalments over the horizon eat part of the principal: P − k·w(P) ≥ shortfall, w ≈ P(1+i)/term.
+  const term = CAREER_BANK.termWeeks;
+  const eaten = (Math.min(horizon, term) * (1 + CAREER_BANK.interestPct)) / term;
+  const q = CAREER_ECONOMY.roundQuantum;
+  let principal = eaten < 1 ? Math.ceil(shortfall / (1 - eaten) / q) * q : limit;
+  principal = Math.max(min, principal);
+  // The instalment rounds up to the weekly quantum: step up until the horizon is really covered.
+  while (principal < limit && mondaysCoveredWith(fin.balance, weeklyNet, principal, input.run) < horizon) principal += q;
+  const capped = principal >= limit && mondaysCoveredWith(fin.balance, weeklyNet, limit, input.run) < horizon;
+  principal = Math.min(principal, limit);
+  const terms = bankLoanTerms(principal);
+  return {
+    net: principal,
+    principal,
+    total: terms.total,
+    weeklyPayment: terms.weeklyPayment,
+    termWeeks: terms.termWeeks,
+    coversMondays: mondaysCoveredWith(fin.balance, weeklyNet, principal, input.run),
+    capped,
+  };
+}
+
+/** rc.37 F2 package 4: what a one-off spend does to the projected breach (spendRiskFor). */
+export interface SpendRisk {
+  balanceAfter: number;
+  /** The Monday the books would close below the floor, before / after the spend (1 = the next; null = not burning). */
+  mondaysBefore: number | null;
+  mondaysAfter: number | null;
+  /** The spend brings the breach within CAREER_SPEND_ALERT.withinMondays (it was later, or never, before). */
+  alert: boolean;
+}
+
+/**
+ * rc.37 F2 package 4: the runway warnings read the weekly net, so a big
+ * one-off cost could leave the books just above the floor and the next
+ * Monday's payroll broke it without a word. This compares the projected
+ * breach before and after a spend (`upfront` out now, `weeklyChange` on the
+ * weekly net, negative = a new cost; `floorAfter` when the spend moves the
+ * wage bill the floor is counted on).
+ */
+export function spendRiskFor(input: {
+  balance: number;
+  weeklyNet: number;
+  floor: number;
+  upfront: number;
+  weeklyChange?: number;
+  floorAfter?: number;
+  run?: NetRun | null;
+}): SpendRisk {
+  const balanceAfter = input.balance - input.upfront;
+  // Books that the next Monday's net leaves below the floor breach then, whatever the net's sign.
+  const breachAt = (balance: number, net: number, floor: number): number | null =>
+    balance + net < floor ? 1 : mondaysToBreach(balance, net, floor, input.run);
+  const mondaysBefore = breachAt(input.balance, input.weeklyNet, input.floor);
+  const mondaysAfter = breachAt(balanceAfter, input.weeklyNet + (input.weeklyChange ?? 0), input.floorAfter ?? input.floor);
+  const within = CAREER_SPEND_ALERT.withinMondays;
+  const alert =
+    CAREER_SPEND_ALERT.enabled &&
+    input.upfront > 0 &&
+    mondaysAfter !== null &&
+    mondaysAfter <= within &&
+    (mondaysBefore === null || mondaysBefore > within);
+  return { balanceAfter, mondaysBefore, mondaysAfter, alert };
+}
+
+// ---------------------------------------------------------------------------
 // Sponsors, unlocks, reputation
 // ---------------------------------------------------------------------------
 
@@ -1725,7 +2018,8 @@ function sponsorOfferForTier(
   const pick = derivedFloat(careerSeed, streams.gen("sponsor", `${seasonIndex}:${tier}`));
   // v0.3: sponsor money grows with the scene (new deals only — offers are
   // generated per season, so the growth bakes in at offer time). rc.32: on
-  // the one money index (M1).
+  // the one money index (M1). rc.37 F2: no late-revenue factor here — this legacy
+  // offer has no runtime caller (sponsorDeals.tierValuePerWeek prices the live quotes).
   const mult = CAREER_ECONOMY.sponsorMult[difficulty] * moneyIndex(seasonIndex, "sponsor");
   return {
     sponsorId: SPONSOR_POOL[tier][pick < 0.5 ? 0 : 1],

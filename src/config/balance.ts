@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 14;
+export const BALANCE_VERSION = 15;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2078,6 +2078,125 @@ export const CAREER_TRANSFER = {
   // future update rethinks selling (ECO-06).
 } as const;
 
+// rc.37 F1 — market, valuation and renewals (ROADMAP-NEXT-2026-11-05 §3 F1).
+// Every new F1 tunable lives here; the integration bumps BALANCE_VERSION.
+export const CAREER_VALUATION = {
+  /**
+   * The resale lock (F1 package 2): a player the user signed takes no sale —
+   * no AI bid, no Blockbuster bid — in the window he signed in nor in the
+   * next this many windows (the Worlds window's next is the next season's
+   * preseason). Signed between windows, the next window is locked.
+   * `market.resaleLocked`; 0 = rc.35's rule (the signing window only).
+   */
+  resaleLockWindows: 1,
+} as const;
+
+/**
+ * Valuation by talent (F1 package 2). ONE helper (economy.talentFactorsFor)
+ * feeds marketValueFor, computeSalaryAsk and the salaryAskFactors readout, so
+ * a fee, an AI bid, a free agent's wage and a renewal read the same factors;
+ * market.valueInputOf / askInputOf build every input. The defaults reproduce
+ * rc.36 exactly for any price without an arc at age 19+ (and an u18 with a gap
+ * ≤ 3), and for any price with an arc at age 19+ whose reach gap equals his
+ * raw gap and is ≤ 10. rc.36's keys stay and are still read:
+ * CAREER_SALARY.ageFactor, potentialPerPoint / potentialCap (the no-arc
+ * fallback; tier 1 equals potentialPerPoint), CAREER_TRANSFER.prospect* /
+ * poach* (the bid chance).
+ */
+export const CAREER_TALENT = {
+  /**
+   * The upside factor, in tiers, on his REACH gap: the potential the age clock
+   * still lets him close, min(potential − overall, CAREER_DEV.seasonGainCap ×
+   * ceil(peakAge + plateauYears − age)), 0 once past his plateau, never his
+   * hidden peakOffset. Each tier adds perPoint per point of reach gap up to
+   * upTo: ×1.20 at 10 (= rc.36), ×1.40 at 15, ×1.70 at 20, ×2.34 at 28 (a 60/99
+   * tops at ×3.22). rc.36 stopped at ×1.30 from gap 15, so a 70/98 priced like
+   * a 70/85 (now 1.67×). The first slope must equal
+   * CAREER_SALARY.potentialPerPoint (the bulk stays bit-identical; a test pins it).
+   */
+  upsideTiers: [
+    { upTo: 10, perPoint: 0.02 }, // "promising" from CAREER_TRANSFER.prospectUpside (6)
+    { upTo: 15, perPoint: 0.04 }, // "high potential"
+    { upTo: 20, perPoint: 0.06 }, // "exceptional"
+    { upTo: 99, perPoint: 0.08 }, // "generational"
+  ] as readonly { upTo: number; perPoint: number }[],
+  /**
+   * Young age never makes a talent cheaper: an u18 keeps
+   * CAREER_SALARY.ageFactor.u18 (0.9) up to this reach gap...
+   */
+  u18TalentRampFrom: 3,
+  /**
+   * ...and prices at the 19–22 factor (1.1) from this reach gap
+   * (= CAREER_TRANSFER.prospectUpside), linear between (gap 4 ×0.967, 5
+   * ×1.033). Both 0 = no u18 discount for anyone.
+   */
+  u18TalentRampTo: 6,
+  /**
+   * AI bid weight (market.incomingBidForDay): a talent — reach gap ≥
+   * CAREER_TRANSFER.prospectUpside, at any age — adds talentBidPerGap × his
+   * reach gap, at least talentBidMin (rc.36's inline +8 for an u18 prospect)
+   * and at most talentBidMax: a 70/98 at 17 weighs 29 (rc.36 9), an 85/95 at
+   * 19 31 (rc.36 21). The daily chance keeps rc.36's formula, counted over the
+   * players a bid may target.
+   */
+  talentBidMin: 8,
+  talentBidPerGap: 1,
+  talentBidMax: 30,
+} as const;
+
+/**
+ * Renewal convergence (F1 package 3, renewal.renewalTermsFor). A player's
+ * FIRST renewal at the club (SquadPlayer.renewalCount 0) and every renewal
+ * while he has at most protectedTenure seasons there keep rc.36's rule
+ * exactly — the initial protection (CAREER_SALARY.renewalMarketFloor 0.6,
+ * renewalMaxJump ×2.5). From then on each season with the club lifts the jump
+ * a step (×2.75, then ×3.0), so a developed player — a formed prospect whose
+ * value outgrew his wage, bound by the jump — renews ever closer to his market
+ * ask instead of a fraction of it (the spec's promising player: 58 % → 71 % of
+ * market at his second 3-season renewal; a wonderkid on 1-season deals 28 % →
+ * 88 % by season 6); the floor stays rc.36's (floorPerSeason below); the top
+ * stays bounded.
+ */
+export const CAREER_RENEWAL_TENURE = {
+  /** Seasons with the club (seasonIndex − joinedSeason at pricing) that renew on rc.36's rule. */
+  protectedTenure: 2,
+  /**
+   * Each season past it lifts the market floor by this share of his core
+   * fresh ask, up to floorMax. 0 / 0.6 = rc.36's floor, measured (career-arc
+   * bot, 7 regions × Normal/Hard): a 0.1-a-season floor up to 0.9 (the design
+   * panel's default) reprices ORDINARY players whose wage lagged the money
+   * index, +33–50 % at their third renewal, and sent the median hands-off
+   * career (autopilot, balanced) to the Backer (Normal 0 → 1 of 7, Hard end
+   * balance p50 $63k → $5k); 0.05 up to 0.7 still did on Normal. A developed
+   * player is jump-bound — the jump ladder below converges him — so the floor
+   * stays. Raise these to bring a floor ladder back.
+   */
+  floorPerSeason: 0,
+  floorMax: 0.6,
+  /** Each season past it lets one renewal multiply his wage by this much more than renewalMaxJump (×2.75, then ×3.0)... */
+  jumpPerSeason: 0.25,
+  /**
+   * ...up to this: one notch above the first renewal (rc.33 broke hands-off
+   * prospects careers at ×3.9 p50). With premiumMax no renewal multiplies a
+   * wage by more than 3.0 × 1.45 = ×4.35 (rc.36 ×4.47). Fallback if the
+   * battery's hands-off prospects payroll breaks: 2.75.
+   */
+  jumpMax: 3.0,
+  /**
+   * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
+   * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
+   * the dominant team's title brake whole (Blockbuster + 3 titles = 1.43); a
+   * stack under the cap keeps rc.36's path verbatim.
+   */
+  premiumMax: 1.45,
+  /**
+   * ...and repPremium × that stack never above this × his rep-neutral price
+   * (rc.36 reached ×3.40 for a 95 at rep 30): the applied cap is
+   * min(premiumMax, premiumStackCap / repPremium).
+   */
+  premiumStackCap: 2.2,
+} as const;
+
 export const CAREER_SPONSOR = {
   /**
    * v0.2: tiers rescaled to the garage-org economy and each carries PERKS —
@@ -2424,14 +2543,15 @@ export const CAREER_UNLOCKS = {
   /**
    * v0.3 visible signing gate (Miguel: high-OVR free agents were trivial to
    * land day 1): NEW signings accept only up to
-   * cap(rep) = signableCapBase + signableCapPerRep × rep (rc.36.3: 71 + 0.4 × rep; uncapped from
-   * signableCapFreeAt). Renewals and the current squad are always exempt.
+   * cap(rep) = signableCapBase + signableCapPerRep × rep (rc.36.3: 71 + 0.4 × rep), at most 99
+   * (reached at rep 70). Renewals and the current squad are always exempt.
    * Locked market rows stay visible with the rep they need.
+   * rc.37 (F1): `signableCapFreeAt` (84, "uncapped from") is removed — the
+   * line already reads 99 from rep 70, so it never changed a cap.
    */
   // Less of a day-one jump; strong signings still open as the club earns standing.
   signableCapBase: 71,
   signableCapPerRep: 0.4,
-  signableCapFreeAt: 84,
 } as const;
 
 /**
@@ -2489,7 +2609,7 @@ export const CAREER_GEAR = {
    */
   bootcampSpan: "split" as "split" | "event",
   /**
-   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.0) for the whole split
+   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.75) for the whole split
    * (1). Decision 5-B, in reserve: 0.5 halves it, should the split-long camp
    * beat a coach (HQ-CONTRACT §6.5; the rc.34 measurement is in the report).
    */
@@ -2808,6 +2928,98 @@ export const CAREER_BANK = {
    * emergency one past its deadline.
    */
   blockedWhileBacker: true,
+} as const;
+
+// ---------------------------------------------------------------------------
+// rc.37 F2 — finances and crisis (ROADMAP-NEXT-2026-11-05 §3, front F2).
+// PROVISIONAL: the battery measures every number below.
+// ---------------------------------------------------------------------------
+
+/**
+ * rc.37 F2 package 1, late revenue (decision 5, 05/11: no wage budget; the
+ * extra money from the 4th season reaches only Majors, Worlds and the new
+ * high sponsor quotes). From season index `fromSeasonIndex` on, a Major's
+ * pool is ×prizePoolMult.major and Worlds' ×prizePoolMult.worlds (inside
+ * economy.prizeScheduleFor, so every placement and the lobbies' totals move
+ * together), and a NEW sponsor quote of tier 3 or 4 is ×sponsorQuoteMult.
+ * Signed deals keep their terms (a quote is priced once, at offer time) and
+ * booked results are never rewritten. 1 everywhere restores rc.36.
+ */
+export const CAREER_LATE_REVENUE = {
+  /** The first season it applies to: index 3 = the 4th season (S4). */
+  fromSeasonIndex: 3,
+  prizePoolMult: { major: 1.15, worlds: 1.25 } as Partial<Record<string, number>>,
+  sponsorQuoteMult: { 3: 1.1, 4: 1.1 } as Partial<Record<number, number>>,
+} as const;
+
+/**
+ * rc.37 F2 package 2, the bank's voluntary credit offered BEFORE the floor:
+ * when the risk shows (the Monday the runway falls to the accountant's
+ * warning level, or a one-off spend that brings the breach within
+ * CAREER_SPEND_ALERT.withinMondays), the bank puts CAREER_BANK's voluntary
+ * loan on the table as a money notice, with its three numbers (what lands,
+ * the total repaid, the term). The floor stays at −CAREER_LOAN.floorWeeks
+ * weeks of payroll (a −4 floor was tested and rejected); nothing here moves
+ * it. The offer follows CAREER_BANK's rules (one loan, none while the
+ * emergency loan is owed, the reputation limit).
+ */
+export const CAREER_CREDIT_OFFER = {
+  enabled: true,
+  /** The runway (weeks to $0 at next Monday's net) at or under which the Monday offer comes — CAREER_PAYROLL.runwayWarnWeeks. */
+  runwayWeeks: 4,
+  /**
+   * The offer is sized to keep the balance at or above $0 for this many
+   * Mondays at today's net, its own instalments counted (at least
+   * CAREER_BANK.minAmount, at most the reputation limit).
+   */
+  coverWeeks: 8,
+  /** Mondays between two offers (one per squeeze; a dismissed offer does not come back the next Monday). */
+  cooldownWeeks: 8,
+} as const;
+
+/**
+ * rc.37 F2 package 4, the one-off spend alert. The runway warnings read the
+ * weekly net, so a fee, gear or a severance that leaves the books just above
+ * the floor broke it on the next Monday without a word. A spend that brings
+ * the projected breach (the Monday the books close below the floor at
+ * next Monday's net) within `withinMondays` raises a money notice at once,
+ * with the bank's offer when it can lend.
+ */
+export const CAREER_SPEND_ALERT = {
+  enabled: true,
+  withinMondays: 4,
+} as const;
+
+/**
+ * rc.37 F2 package 3, the emergency sale. While the balance is below
+ * `balanceBelow`, AI orgs table extra offers for a squad player at
+ * `feeRange` × his market value (economy.marketValueFor), on any day of a
+ * transfer window (Miguel, 05/11: windows only) — at most one pending,
+ * `cooldownDays` apart (from the day one arrives), each open `validDays`
+ * and never past the window's close. Never while the
+ * user's event is in progress (the squad is frozen). The normal bids roll as
+ * before; a player under the resale lock never gets one.
+ */
+export const CAREER_EMERGENCY_SALE = {
+  enabled: true,
+  balanceBelow: 0,
+  feeRange: [0.65, 0.8] as readonly [number, number],
+  /** The chance a day with no offer pending (and the cooldown over) brings one. */
+  dailyChance: 0.5,
+  cooldownDays: 14,
+  validDays: 7,
+} as const;
+
+/**
+ * rc.37 F2 package 4, the season-close outlook (the season review,
+ * careerFlow.seasonOutlookOf): next season's wage bill after the contract
+ * review, the debt and its term, the balance projected to the next important
+ * income (next season's first regional, no prize counted) and the
+ * retirements in sight.
+ */
+export const CAREER_SEASON_OUTLOOK = {
+  /** Retirement chances at or above this read "likely"; under it "possible" (decision 8: the warning, no rebuild yet). */
+  likelyRetirementChance: 0.5,
 } as const;
 
 export const CAREER_WORLD = {
@@ -3193,8 +3405,8 @@ export const CAREER_PLAYBACK = {
  *    reload); starting it is exactly one day on (Sunday trains nobody and
  *    pays nobody). false = rc.35's flow (the clock walks into Sunday).
  *  - `briefing`: phase-based Sunday team-rating edges, shown upfront.
- *    Continuity +0.10 throughout; Recover trades Swiss strength for playoff
- *    strength; Prepare does the reverse. Completed phases are never replayed.
+ *    Continuity is steady; Recover favors playoffs; Prepare favors the entire
+ *    Swiss. Championship Sunday trades quarterfinal/semifinal strength for the grand final.
  *  - follow (SUN-03): an event the user is out of is kept compact; HQ offers
  *    it for `followCardDays` days from the day it resolved (the eliminated
  *    Saturday's "Sunday without you" card besides); watching reveals a round
@@ -3223,10 +3435,17 @@ export const CAREER_CREST = {
 
 export const CAREER_SUNDAY = {
   saturdayStop: true,
+  // rc.37 F3 — coach required; bootcamp remains a separate bonus under the shared cap.
   briefing: {
     keep: { swiss: 0.1, playoffs: 0.1 },
-    recover: { swiss: -0.15, playoffs: 0.35 },
-    prepare: { swiss: 0.35, playoffs: -0.15 },
+    recover: { swiss: -0.15, playoffs: 0.4 },
+    prepare: { swiss: 0.4, playoffs: -0.15 },
+  },
+  // rc.37 F3 — explicit bracket rounds, not the user's number of series played.
+  championshipBriefing: {
+    keep: { quarters: 0.1, semis: 0.1, other: 0.1, final: 0.1 },
+    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.4 },
+    prepare: { quarters: 0.4, semis: 0.25, other: 0, final: -0.15 },
   },
   defaultBriefing: "keep",
   followCardDays: 2,

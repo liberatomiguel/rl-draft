@@ -1,7 +1,10 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.10**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R98. Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> Last updated: **2026-11-09**. Candidate: **v2.0.0-rc.37**, `staging` (rc.36.21
+> plus the rc.37 round: F1 market, F2 finance, F3 matchday, F4a battery tooling;
+> handoffs `HANDOFF-rc37-*.md`). Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R99.
+> Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. F6
+> balancing runs on `claude/rc37-balance`. Gate: `CAREER-FEEDBACK-rc36-6.md`.
 
 ## Run and verify
 
@@ -51,7 +54,8 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
   across all generic roles. New careers use version 3; old identities survive.
 - Founding economy, growth, late support, sponsor/contract talks, goals,
   crests and Sunday decisions remain as in rc.36.5. Regional timing, star
-  affordability and historical Worlds titles remain open. BALANCE_VERSION 13.
+  affordability and historical Worlds titles remain open. BALANCE_VERSION 15
+  (rc.37 career tunables plus rc.36.16's daily-only calibration).
 
 ## System map
 

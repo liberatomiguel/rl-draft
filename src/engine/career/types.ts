@@ -349,9 +349,16 @@ export interface SquadPlayer {
   splitsTogether: number;
   joinedSeason: number;
   /**
+   * rc.37 (F1): the renewals he has signed since `joinedSeason` (absent = 0).
+   * His first renewal at the club always keeps rc.36's protection
+   * (renewal.renewalLadderFor). Optional, additive.
+   */
+  renewalCount?: number;
+  /**
    * rc.35 (front C): the season day he signed (with `joinedSeason`). Optional
    * and additive: a founder or an older save has none. No bid lands for him
-   * in the window he signed in (`market.signedInWindow`).
+   * in the window he signed in — rc.37 (F1): nor in the next one, the resale
+   * lock (`market.resaleLocked`).
    */
   signedDay?: number;
   /**
@@ -775,6 +782,17 @@ export interface FinanceState {
    * a save books after rc.34.
    */
   incomeTally?: IncomeTally;
+  /**
+   * rc.37 F2: the Monday the bank last put its voluntary loan on the table
+   * (the "creditOffer" notice; CAREER_CREDIT_OFFER.cooldownWeeks counts from
+   * it). Absent / null = never.
+   */
+  creditOfferAt?: CareerMonday | null;
+  /**
+   * rc.37 F2: the day the last emergency-sale offer arrived
+   * (CAREER_EMERGENCY_SALE.cooldownDays counts from it). Absent / null = never.
+   */
+  emergencySaleAt?: { seasonIndex: number; day: number } | null;
 }
 
 /** rc.34 (ECO-04): one missed goal's fine, booked in equal Monday instalments. */
@@ -840,7 +858,11 @@ export type MoneyNoticeKind =
   | "careerEnded"
   | "loanTakenOver"
   // rc.34 review: inside the deadline's last weeks the projection stopped covering the debt.
-  | "deadlineSlipped";
+  | "deadlineSlipped"
+  // rc.37 F2: the bank's voluntary loan, offered on the Monday the runway reaches the warning level.
+  | "creditOffer"
+  // rc.37 F2: a one-off spend brought the floor within CAREER_SPEND_ALERT.withinMondays (with the bank's offer when it lends).
+  | "spendRisk";
 
 /** One pending money notice (careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow). */
 export interface MoneyNotice {
@@ -1029,6 +1051,13 @@ export interface TransferOffer {
   factors: OfferFactor[];
   /** True when this offer came from a degraded scripted beat (Blockbuster). */
   blockbuster?: boolean;
+  /**
+   * rc.37 F2: an emergency-sale offer (engine/career/emergencySale.ts) — tabled
+   * while the balance is negative, inside a transfer window, below market value.
+   */
+  emergency?: boolean;
+  /** rc.37 F2: the fee as a percent of his market value when it was tabled (the market-value tag; absent = not priced). */
+  valuePct?: number;
   /**
    * @deprecated rc.32 (M8): the offer answered the user's "List for sale" —
    * withdrawn in rc.33 (ECO-12). Never written; the load repair
@@ -1275,6 +1304,19 @@ export interface StandingRowSnapshot {
   ref: string;
   name: string;
   points: number;
+}
+
+/** rc.37 (F1): the user's titles in one season, as the renewal title raise counts them. */
+export interface SeasonTitleCount {
+  seasonIndex: number;
+  majorOrWorlds: number;
+  regional: number;
+  /**
+   * The season day of each title (`major` = a Major or Worlds), so a player
+   * who joined mid-season counts only the titles won after his signing day.
+   * Absent on a row without days: the whole season counts for him.
+   */
+  days?: { day: number; major: boolean }[];
 }
 
 export interface SeasonRecord {
@@ -1560,6 +1602,16 @@ export interface CareerSave {
   scouted: Record<string, number>;
   /** This season's compiled events (archived into history at rollover). */
   eventResults: CompactEventResult[];
+  /**
+   * rc.37 (F1): the user's titles per season (regional, Major or Worlds),
+   * counted when he wins them — the renewal title raise's window reads it
+   * (`careerFlow.renewalTitlesOf`), so last season's titles survive the
+   * rollover that clears `eventResults` (rc.33–rc.36 read only this season).
+   * Pruned at the rollover to the raise's window. Optional, additive: absent
+   * = a save from before rc.37, backfilled from this season's results at its
+   * next title or rollover.
+   */
+  userTitlesBySeason?: SeasonTitleCount[];
 
   history: SeasonRecord[];
   seasonGoals: SeasonGoals | null;

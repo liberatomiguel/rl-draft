@@ -149,12 +149,14 @@ describe("v0.3 training quantization fix", () => {
 // ---------------------------------------------------------------------------
 
 describe("v0.3 signable cap", () => {
-  it("grows linearly with rep and frees at signableCapFreeAt", () => {
+  it("grows linearly with rep and stops at 99 (rc.37: no separate free-at step)", () => {
     expect(signableOverallCap(0)).toBe(CAREER_UNLOCKS.signableCapBase);
     expect(signableOverallCap(20)).toBe(
       CAREER_UNLOCKS.signableCapBase + CAREER_UNLOCKS.signableCapPerRep * 20,
     );
-    expect(signableOverallCap(CAREER_UNLOCKS.signableCapFreeAt)).toBe(99);
+    const freeAt = Math.ceil((99 - CAREER_UNLOCKS.signableCapBase) / CAREER_UNLOCKS.signableCapPerRep);
+    expect(signableOverallCap(freeAt)).toBe(99);
+    expect(signableOverallCap(freeAt - 1)).toBeLessThan(99);
     expect(signableOverallCap(100)).toBe(99);
   });
 

@@ -92,8 +92,9 @@ export function RenewalReadout({
   const S = CAREER_SALARY;
   const runway = save && player ? renewalRunwayOf(save, player, terms) : undefined;
   const cap = String(S.renewalRaiseCap);
-  const floorPct = Math.round(S.renewalMarketFloor * 100);
-  const jump = String(S.renewalMaxJump);
+  // rc.37 (F1): the floor and the jump his seasons with the club allow (the tenure ladder).
+  const floorPct = Math.round(terms.floorShare * 100);
+  const jump = String(terms.maxJump);
   const capFloor = terms.rule === "capFloor";
   return (
     <div className={cx("rounded-lg border border-line bg-white/[0.02] p-3 text-xs", className)}>
@@ -113,7 +114,9 @@ export function RenewalReadout({
           </p>
         </div>
       </div>
-      {capFloor ? (
+      {/* rc.37 (F1): with the premiums capped he renews under the market ask (it carries
+          them in full), so "he renews at his market ask" would mislead — the capped line says why. */}
+      {capFloor && !(terms.premiumCapped && terms.bound === "fresh") ? (
         <p className="mt-1.5 text-[11px] text-sub">
           {terms.bound === "cap"
             ? C.squad.renewalBoundCap(cap)
@@ -124,13 +127,20 @@ export function RenewalReadout({
                 : C.squad.renewalBoundFresh}
         </p>
       ) : null}
-      {terms.titlePremium > 0 ? (
+      {capFloor && terms.tenureSteps > 0 ? (
+        <p className="mt-1 text-[11px] text-sub">{C.squad.renewalTenure(terms.tenure)}</p>
+      ) : null}
+      {/* rc.37 (F1): a capped stack shows its one applied total, never the premiums in full. */}
+      {terms.premiumCapped ? (
+        <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalPremiumCapped(pct(terms.premiumMult))}</p>
+      ) : null}
+      {!terms.premiumCapped && terms.titlePremium > 0 ? (
         <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalTitles(Math.round(terms.titlePremium * 100))}</p>
       ) : null}
-      {capFloor && terms.ambitious ? (
+      {!terms.premiumCapped && capFloor && terms.ambitious ? (
         <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalAmbition(pct(S.ambitionRenewalMult))}</p>
       ) : null}
-      {terms.blockbusterRefused ? (
+      {!terms.premiumCapped && terms.blockbusterRefused ? (
         <p className="mt-1 text-[11px] text-orange-bright">
           {C.squad.renewalBlockbuster(pct(S.blockbusterRefusalRenewalMult))}
         </p>

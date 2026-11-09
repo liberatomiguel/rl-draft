@@ -2040,6 +2040,23 @@ R98. **rc.36.10 — spectator actions return to the timeline.**
      chosen clock action. No forced watch or calendar navigation, no extra
      training/rewards. Existing Sunday/queue regression checks apply.
 
+R99. **rc.37 integration — the emergency sale honours F1's two-window resale
+     lock.** F2's emergency offer (cash below $0, inside a window, 65–80 % of
+     value) and F1's resale lock were built in parallel: F2 read rc.35's
+     same-window rule (`signedInWindow`), while F1 moved every sale to
+     `market.resaleLocked`, none in the signing window nor the next
+     (`CAREER_VALUATION.resaleLockWindows` 1; the Worlds window's next is the
+     next preseason). The integration (ROADMAP-NEXT-2026-11-05 §3, round 2)
+     keeps one lock for every exit: AI bids, the Blockbuster and the
+     emergency offer (`careerFlow.rollEmergencySale` passes `resaleLocked(p,
+     seasonIndex, day)`). Going red on purpose never reopens a fresh signing
+     for resale; the first legal emergency offer comes two windows after the
+     signing (exploit probe: ~68 % of value). The offer prices on F1's single
+     valuation (`valueInputOf` + the career's growth model), like every bid.
+     Sales stay AI-initiated (05/11 decision 14: no active sale). Test:
+     `careerRc37Integration.test.ts`. BALANCE_VERSION 14; provisional until
+     the battery report and Miguel's review.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

@@ -22,7 +22,7 @@ import {
   seasonLabelFor,
   weekOfDay,
 } from "@/engine/career/calendar";
-import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type {
@@ -571,10 +571,14 @@ function candidatesFor(save: CareerSave): Candidate[] {
       careerSeed: save.careerSeed,
       lengthSeasons: 2,
       contracted: splitsRemaining === null ? undefined : { splitsRemaining },
+      growthModel: growthModelOf(save.world),
     });
     const level = Math.min(2, Math.max(0, Number(save.scouted[view.id] ?? 0))) as ScoutLevel;
     // rc.32: the band the market screen shows (the save's development model).
-    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world));
+    // rc.37 (F1): and its band model (the uniform band from rc.37 on).
+    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world), {
+      uniform: readsUniformBand(save.bandModel),
+    });
     out.push({
       view,
       cost: pack.fee + pack.signingBonus,

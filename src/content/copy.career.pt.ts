@@ -576,6 +576,9 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (UX-06b): os lembretes antes de um jogador poder sair.
       contractReminder: (p: Record<string, string | number>) => `Contratos: ${p.weeks} semanas para ${p.players}`,
       bankLoan: (p: Record<string, string | number>) => `Empréstimo aprovado: ${p.amount}`,
+      // rc.37 F2: a oferta do banco antes do piso, e a proposta da venda de emergência.
+      creditOffer: (p: Record<string, string | number>) => `O banco oferece ${p.loanNet} antes do piso`,
+      emergencyBid: (p: Record<string, string | number>) => `Proposta de emergência por ${p.player}`,
       bankCleared: () => `Empréstimo bancário quitado`,
       cashWarning: (p: Record<string, string | number>) => `Alerta de caixa: ${p.weeks} semanas de fôlego`,
       qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
@@ -670,6 +673,12 @@ export const CAREER_PT: CareerCopy = {
         `${p.players} — ainda sem contrato depois desta temporada, com ${p.weeks} semanas pela frente. Renove no Elenco antes da virada, ou eles saem como agentes livres (a revisão antes da nova temporada lista todos).`,
       bankLoan: (p: Record<string, string | number>) =>
         `O banco liberou ${p.amount}. Parcelas de ${p.weekly} caem toda segunda-feira até quitar ${p.total}. Gaste em algo que se pague.`,
+      // rc.37 F2 (pacote 2): o empréstimo comum do banco, oferecido na segunda em que o fôlego chega ao nível de alerta.
+      creditOffer: (p: Record<string, string | number>) =>
+        `${Number(p.weeks) > 0 ? `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras` : `As contas estão no vermelho (${p.balance}), com ${p.burn} de queima por semana`}, e fechariam abaixo do piso (${p.floor}) n${breachWhenPt(p)}. Antes disso, o banco oferece o empréstimo comum: ${p.loanNet} no saldo agora, ${p.loanTotal} pagos no total (${p.loanPct}% de juros), em parcelas de ${p.loanWeekly} toda segunda por ${p.loanTerm} semanas. Sai mais barato que o empréstimo emergencial (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, a quitar em até ${p.emergencyTerm} semanas` : ""}). Em Finanças dá para pegar qualquer valor até o limite do banco.`,
+      // rc.37 F2 (pacote 3): uma proposta de venda de emergência — abaixo do valor de mercado, com o caixa no vermelho.
+      emergencyBid: (p: Record<string, string | number>) =>
+        `O caixa está no vermelho (${p.balance}), e a ${p.org} sentiu a oportunidade: ${p.fee} por ${p.player}, ${p.pct}% do valor de mercado dele. É uma proposta de emergência: vale por ${p.days} dias (no máximo até a janela fechar), e aceitar vende o jogador na hora. A aba de negociações do Mercado mostra o líquido depois da parte do banco, o salário liberado e a vaga que fica.`,
       bankCleared: () =>
         `A última parcela foi paga. A linha de crédito está aberta de novo, se a org precisar.`,
       // rc.32 (M4, provisório): toda segunda com ≤ 4 semanas — a quebra projetada e a saída.
@@ -870,6 +879,11 @@ export const CAREER_PT: CareerCopy = {
     renewalTitles: (pct: number) => `+${pct}% pelos títulos que ele ganhou com você nas últimas temporadas.`,
     renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
+    // rc.37 (F1): a escada por tempo de clube e o teto dos bônus.
+    renewalTenure: (seasons: number) =>
+      `${seasons} temporadas com você: quanto mais tempo ele fica, mais a renovação se aproxima do valor de mercado.`,
+    renewalPremiumCapped: (pct: number) =>
+      `Bônus com teto: ambição, proposta bombástica recusada e títulos somam no máximo +${pct}%.`,
     renewalsTitle: "Contratos para renovar",
     renewalsEmpty: "Nenhum contrato termina nesta temporada.",
     renewalsGo: "Renovar no Elenco",
@@ -1311,6 +1325,18 @@ export const CAREER_PT: CareerCopy = {
         : `Fôlego depois: ${weeks === 1 ? "1 semana" : `${weeks} semanas`} com a nova queima`,
     // ECO-02 (R46): uma venda com o Investidor em aberto — a parte dele na taxa.
     saleBackerRepaid: (s: string) => `Abatido do empréstimo emergencial: ${s}`,
+    // rc.37 F2 (pacote 3): a venda de emergência — o selo da proposta, o que ela é, e o que a venda deixa.
+    emergencyBadge: "Proposta de emergência",
+    emergencyWhat: (days: number) =>
+      `As contas estão no vermelho, então este comprador oferece abaixo do valor de mercado. A proposta vale por ${days} dias, no máximo até a janela fechar.`,
+    // rc.37 F2 (Miguel, 05/11): o selo de valor de mercado nas propostas de emergência e bombásticas.
+    belowValue: (pct: number | null) => (pct === null ? "Abaixo do valor de mercado" : `Abaixo do valor de mercado · ${pct}%`),
+    aboveValue: (pct: number | null) => (pct === null ? "Acima do valor de mercado" : `Acima do valor de mercado · ${pct}%`),
+    saleLeaves: (player: string, org: string, n: number) => `${player} vai para a ${org}: o elenco fica com ${n}.`,
+    saleShortSeat: "Uma vaga de titular aberta: um agente livre pode ocupá-la em qualquer dia, pelo Mercado.",
+    saleNetAfterDebt: (net: string, fee: string, share: string) => `Entram ${net}: ${fee} menos a parte do banco, ${share}.`,
+    saleNetFull: (net: string) => `Entram ${net}, sem descontos.`,
+    saleWagesFreed: (s: string) => `Salário liberado: ${s} por semana.`,
     // ECO-03 (R47): a vaga é definida depois da contratação e nunca muda o preço.
     slotLabel: "Vaga no elenco",
     slotStarter: "Assume uma vaga aberta no trio titular.",
@@ -1433,6 +1459,7 @@ export const CAREER_PT: CareerCopy = {
       meetPrice: "Atender a pedida",
     },
     errors: {
+      bootcampEventActive: "Conclua o evento em andamento antes de comprar um bootcamp. O time do evento já está congelado.",
       windowClosed: "A janela de transferências está fechada.",
       alreadySigned: "Já está no elenco.",
       squadFull: "Elenco cheio — dispense ou venda antes.",
@@ -1709,6 +1736,30 @@ export const CAREER_PT: CareerCopy = {
       `Sem empréstimo emergencial nesta dificuldade: uma segunda-feira que fechar abaixo de ${floor} encerra a carreira.`,
     backerWarning: "Este negócio provavelmente rompe o piso: o empréstimo emergencial do banco entraria, com prazo.",
     endsCareerWarning: "Este negócio provavelmente encerra a carreira: a próxima quebra do piso é a última.",
+    // rc.37 F2: o empréstimo comum do banco como Finanças o sugere enquanto as contas queimam (careerFlow.creditOfferOf).
+    creditSuggest: (net: string, total: string, weekly: string, weeks: number, covers: number) =>
+      `A sugestão do banco para estas contas: ${net} agora, ${total} pagos no total — ${weekly} toda segunda por ${weeks} semanas. Mantém o saldo acima de $0 por cerca de ${covers} segundas neste ritmo.`,
+    // rc.37 F2 (pacote 4): a visão consolidada das contas da próxima temporada na revisão (careerFlow.seasonOutlookOf).
+    outlook: {
+      title: "As contas da próxima temporada",
+      payroll: "Folha salarial",
+      payrollLine: (now: string, next: string) => `${now} por semana agora → ${next} por semana na próxima temporada (depois da revisão de contratos)`,
+      leaving: (names: string) => `Saem na virada, sem contrato novo: ${names}`,
+      debt: "Dívida",
+      debtNone: "Nada a pagar.",
+      debtEmergency: (s: string) => `Empréstimo emergencial: ${s}`,
+      debtBank: (s: string, n: number) => `Empréstimo bancário: ${s} (${n === 1 ? "falta 1 parcela" : `faltam ${n} parcelas`} de segunda)`,
+      deadline: (date: string, weeks: number) => `O empréstimo emergencial vence ${date} — daqui a ${weeks === 1 ? "1 semana" : `${weeks} semanas`}.`,
+      cash: "Até o primeiro regional",
+      cashLine: (balance: string, week: number, mondays: number, net: string) =>
+        `${balance} no saldo até a semana ${week} — ${mondays} segundas a ${net} por semana, sem contar premiação.`,
+      sponsorEnds: "O contrato de patrocínio acaba com esta temporada: até assinar um novo, a conta não inclui a base do patrocinador.",
+      retirements: "Aposentadorias",
+      retireNone: "Ninguém está perto do fim da carreira.",
+      retireNow: (name: string) => `${name} se aposenta na virada (a última temporada dele foi anunciada).`,
+      retireLikely: (name: string) => `${name} deve anunciar a próxima temporada como a última.`,
+      retirePossible: (name: string) => `${name} pode anunciar a próxima temporada como a última.`,
+    },
     backerRescued: "O último empréstimo emergencial está quitado.",
     insolvencyWarning: "As contas estão ruindo — a próxima quebra do piso encerra a carreira.",
     // rc.32 (M4): a linha em semanas de salário.
@@ -2072,6 +2123,8 @@ export const CAREER_PT: CareerCopy = {
       unavailable: (p: Record<string, string | number>) => `${p.player} está fora de ${p.event}`,
       standIn: (p: Record<string, string | number>) => `Substituto de emergência entra em ${p.event}`,
       bankLoan: (p: Record<string, string | number>) => `A org pega um empréstimo de ${p.amount}`,
+      // rc.37 F2 (pacote 3): chega uma proposta de venda de emergência.
+      emergencyBid: (p: Record<string, string | number>) => `${p.org} fazem uma proposta de emergência por ${p.player}`,
       bankCleared: () => `A org quita o empréstimo bancário`,
       cashWarning: (p: Record<string, string | number>) => `Caixa apertado: ${p.weeks} semanas de fôlego`,
       // Histórico (rc.31–rc.33); o rc.34 publica emergencyLoan / emergencyTopUp / loanCollected.
@@ -2178,6 +2231,8 @@ export const CAREER_PT: CareerCopy = {
         `Um substituto contratado mantém a org no ${p.event}. Escalação completa, química zero — e dá para notar.`,
       bankLoan: (p: Record<string, string | number>) =>
         `Crédito novo no balanço — ${p.amount}, pago semanalmente. Ambição com dinheiro emprestado ainda é ambição.`,
+      emergencyBid: (p: Record<string, string | number>) =>
+        `Com as contas da org no vermelho, ${p.org} vão atrás de ${p.player} com desconto. Venda rápida ou briga para segurar: a decisão é do manager.`,
       bankCleared: () =>
         `A parcela final caiu. O que o dinheiro comprou, a org agora tem de verdade.`,
       cashWarning: (p: Record<string, string | number>) =>
@@ -2459,14 +2514,20 @@ export const CAREER_PT: CareerCopy = {
     openerLabel: "Sua estreia",
     fieldLabel: "Quem joga no domingo",
     briefingTitle: "Preleção do técnico",
-    briefingHint: "Escolha a troca para o domingo. Sem briefing, o time segue com continuidade.",
+    briefingHint: "Escolha entre o Swiss inteiro e os playoffs. Bootcamp e preleção dividem o teto de +2 de rating. Padrão: continuidade.",
+    championshipBriefing: { keep: "Preparação equilibrada", recover: "Pico na grande final", prepare: "Força nas primeiras rodadas" },
+    championshipHint: "Priorize quartas/semis (incluindo a repescagem) ou a grande final. As demais rodadas têm efeito próprio, indicado abaixo. Teto de bootcamp + preleção: +2.",
+    effectChampionship: (q: number, s: number, o: number, f: number) => `Quartas ${q > 0 ? "+" : ""}${String(q).replace(".", ",")}; semis ${s > 0 ? "+" : ""}${String(s).replace(".", ",")}; demais rodadas ${o > 0 ? "+" : ""}${String(o).replace(".", ",")}; grande final ${f > 0 ? "+" : ""}${String(f).replace(".", ",")}.`,
+    effectLaterOnly: (n: number) => `${n > 0 ? "+" : ""}${String(n).replace(".", ",")} nas séries seguintes dos playoffs.`,
+    effectLater: (opening: number, later: number) => `${opening > 0 ? "+" : ""}${String(opening).replace(".", ",")} na abertura dos playoffs; ${later > 0 ? "+" : ""}${String(later).replace(".", ",")} nas séries seguintes dos playoffs.`,
+    effectStudyRest: (n: number) => `Sem bônus no restante do Swiss; ${String(n).replace(".", ",")} nos playoffs.`,
     briefing: {
       keep: "Continuidade",
       recover: "Recuperar",
-      prepare: "Estudar o adversário",
+      prepare: "Estudar o Swiss",
     },
     effectContinuity: (n: number) => `+${String(n).replace(".", ",")} de rating em todas as séries; sem risco extra.`,
-    effectPlayoffs: (n: number) => `${n > 0 ? "+" : ""}${String(n).replace(".", ",")} nos playoffs. O Swiss já terminou.`,
+    effectPlayoffs: (n: number) => `${n > 0 ? "+" : ""}${n} em todas as séries dos playoffs.`,
     effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${String(first).replace(".", ",")} no Swiss; ${later > 0 ? "+" : ""}${String(later).replace(".", ",")} nos playoffs.`,
     effectKeep: "Nada muda: a rotina que trouxe vocês até aqui.",
     effectRecover: (n: number) => `+${String(n).replace(".", ",")} de rating do time em todas as séries de hoje`,
@@ -2810,6 +2871,48 @@ export const CAREER_PT: CareerCopy = {
         p.dlDate !== undefined && ["O que encerra a carreira", `Em ${p.dlDate} o banco cobra o que é devido. Se pagar deixar as contas abaixo do piso, a carreira acaba.`],
       ),
       foot: Number(p.lock) ? undefined : "Nada fica mais travado enquanto você deve: contratações, taxas e equipamentos estão liberados.",
+    }),
+    // rc.37 F2 (pacote 2): o empréstimo comum do banco, oferecido antes do piso (careerFlow.offerCreditOnRunway).
+    notNow: "Agora não",
+    takeLoan: (amount: string) => `Pegar ${amount}`,
+    creditOffer: (p: Record<string, string | number>): MoneyNoticeText => ({
+      title: "O banco oferece um empréstimo",
+      lead:
+        Number(p.weeks) > 0
+          ? `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Antes de as contas chegarem ao piso (${p.floor}), o banco oferece o empréstimo comum.`
+          : `As contas estão no vermelho (${p.balance}) e queimam ${p.burn} por semana. Antes de chegarem ao piso (${p.floor}), o banco oferece o empréstimo comum.`,
+      rows: noticeRows(
+        ["Você recebe", `${p.loanNet} agora, no saldo`],
+        ["Você paga", `${p.loanTotal} no total, com ${p.loanPct}% de juros`],
+        ["Prazo", `${p.loanTerm} semanas: ${p.loanWeekly} toda segunda`],
+        [
+          "O que ele cobre",
+          Number(p.loanCapped)
+            ? `É o máximo que o banco empresta na sua reputação: cerca de ${p.loanCovers} segundas acima de $0 neste ritmo.`
+            : `Cerca de ${p.loanCovers} segundas acima de $0 neste ritmo, já contando as parcelas.`,
+        ],
+        ["Sem ele", `Neste ritmo as contas fecham abaixo do piso n${breachWhenPt(p)}. ${nextBreachPt(p)}`],
+      ),
+      foot: `O empréstimo emergencial custa ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` e precisa ser quitado em até ${p.emergencyTerm} semanas` : ""}. Atrasar as parcelas deste só consome o saldo. Finanças empresta qualquer valor até o limite, em qualquer dia.`,
+    }),
+    // rc.37 F2 (pacote 4): um gasto único trouxe o piso para perto (careerFlow.spendAlertFlow).
+    spendRisk: (p: Record<string, string | number>): MoneyNoticeText => ({
+      title: Number(p.mondays) === 1 ? "A próxima segunda quebra o piso" : "Este gasto deixa o piso perto",
+      lead: positive(p.burn)
+        ? `Esse gasto (${p.spent}) deixa ${p.balance} no saldo. Com ${p.burn} de queima por semana, as contas fecham abaixo do piso (${p.floor}) n${breachWhenPt(p)}.`
+        : `Esse gasto (${p.spent}) deixa ${p.balance} no saldo, abaixo do piso (${p.floor}) mesmo depois da receita da semana: ${breachWhenPt(p)} quebra o piso.`,
+      rows: noticeRows(
+        ["Nessa segunda", nextBreachPt(p)],
+        Number(p.offer) > 0 && [
+          "A oferta do banco",
+          `${p.loanNet} agora; ${p.loanTotal} pagos no total (${p.loanPct}% de juros), ${p.loanWeekly} toda segunda por ${p.loanTerm} semanas.`,
+        ],
+        ["Outras saídas", "Premiação antes dessa segunda, uma boa proposta por um jogador ou uma folha mais leve."],
+      ),
+      foot:
+        Number(p.offer) > 0
+          ? `O empréstimo emergencial custa ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` e precisa ser quitado em até ${p.emergencyTerm} semanas` : ""}.`
+          : undefined,
     }),
   },
 

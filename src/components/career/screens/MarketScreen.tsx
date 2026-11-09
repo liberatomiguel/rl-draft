@@ -19,6 +19,7 @@
 import { useMemo, useState } from "react";
 import {
   CAREER_CONTRACT,
+  CAREER_EMERGENCY_SALE,
   CAREER_PAYROLL,
   CAREER_SCOUT,
   CAREER_LADDER,
@@ -35,7 +36,7 @@ import {
 } from "@/engine/career/economy";
 import { signableAtRep } from "@/engine/career/market";
 import type { ContractOffer } from "@/engine/career/contract";
-import { signsForFinalSeason } from "@/engine/career/development";
+import { growthModelOf, signsForFinalSeason } from "@/engine/career/development";
 import type {
   CareerPlayerView,
   PotentialBand,
@@ -63,6 +64,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { MarketValueTag } from "@/components/career/MarketValueTag";
 import { RenewalsPanel } from "@/components/career/RenewalReadout";
 import {
   askPackageFor,
@@ -274,6 +276,8 @@ export function MarketScreen() {
         careerSeed: save.careerSeed,
         lengthSeasons: 2,
         contracted: splitsRemaining !== null ? { splitsRemaining } : undefined,
+        // rc.37 (F1): the career's development model prices his arc.
+        growthModel: growthModelOf(save.world),
       });
       return {
         view,
@@ -372,6 +376,7 @@ export function MarketScreen() {
       careerSeed: save.careerSeed,
       lengthSeasons,
       contracted: row.splitsRemaining !== null ? { splitsRemaining: row.splitsRemaining } : undefined,
+      growthModel: growthModelOf(save.world),
     });
   const pack = target ? packFor(target, offerLen) : null;
   // ECO-03 (R47): the flow's own plan — the slot and every refusal come from
@@ -716,11 +721,19 @@ export function MarketScreen() {
                           {o.blockbuster ? (
                             <Badge tone="gold">{C.market.blockbuster}</Badge>
                           ) : null}
+                          {o.emergency ? <Badge tone="bad">{C.market.emergencyBadge}</Badge> : null}
+                          <MarketValueTag offer={o} />
                         </div>
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (
                           <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">
                             {blockbusterWhatOf(C, orgName)}
+                          </p>
+                        ) : null}
+                        {/* rc.37 F2: so is an emergency-sale offer. */}
+                        {o.emergency ? (
+                          <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">
+                            {C.market.emergencyWhat(CAREER_EMERGENCY_SALE.validDays)}
                           </p>
                         ) : null}
                         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-sub">

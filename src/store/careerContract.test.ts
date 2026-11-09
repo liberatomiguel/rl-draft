@@ -114,7 +114,8 @@ describe("ECO-10 — every contract carries a prize share", () => {
         expect(p.prizeSharePct).toBe(0);
         expect(contractSharePctFor(p, "worlds")).toBe(0);
       }
-      expect(save.bandModel).toBe(2);
+      // rc.37 (F1): band model 3 — DEV-04's widths, the truth at a uniform place.
+      expect(save.bandModel).toBe(3);
     }
   });
 

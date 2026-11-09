@@ -388,6 +388,8 @@ export interface DraftState {
 // --- Tournament ---
 
 export interface TeamRatingBreakdown {
+  /** Career-only frozen bootcamp edge; absent on saves predating rc.37. */
+  temporaryMod?: number;
   avgPlayerOverall: number;
   coachMod: number;
   subMod: number;

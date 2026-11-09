@@ -112,6 +112,7 @@ import {
   ageOf,
   applyMatchXp,
   becomesCoachOnRetirement,
+  CURRENT_BAND_MODEL,
   isCompetitiveAge,
   fieldQualityFor,
   playerViewById,
@@ -123,6 +124,7 @@ import {
   trainingProjection,
   type DrillEffect,
   growthCtxOf,
+  growthModelOf,
   userSeriesPlayed,
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
@@ -214,10 +216,12 @@ import {
   askPackageFor,
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
+  askInputOf,
   incomingBidForDay,
   movedThisWindowIds,
-  signedInWindow,
+  resaleLocked,
   listingFor,
+  valueInputOf,
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
@@ -312,6 +316,7 @@ import type {
   PotentialBand,
   ScrimLogEntry,
   SeasonRecord,
+  SeasonTitleCount,
   SponsorGoal,
   SponsorState,
   SponsorTerms,
@@ -324,6 +329,24 @@ import type { Placement, Region, TournamentState } from "@/engine/types";
 // design: careerDecisions reads squadHoldFor / isEventPaused from here, and
 // both sides only call each other inside functions).
 import { clockHoldOf, rolloverHoldOf } from "./careerDecisions";
+// rc.37 F2 (finances and crisis): the front's own imports, kept apart from the blocks above.
+import {
+  CAREER_AGE,
+  CAREER_BANK,
+  CAREER_CREDIT_OFFER,
+  CAREER_EMERGENCY_SALE,
+  CAREER_SEASON_OUTLOOK,
+  CAREER_SPEND_ALERT,
+} from "@/config/balance";
+import {
+  absWeekOf,
+  bankInstalmentsLeft,
+  creditOfferFor,
+  spendRiskFor,
+  type CreditOffer,
+} from "@/engine/career/economy";
+import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
+import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -1145,20 +1168,17 @@ export function processDayArrival(input: CareerSave): CareerSave {
         // ECO-03b (ROADMAP, R47): the career's first window is bid-free — a
         // Blockbuster for a user-owned target there reads as preempted instead.
         // rc.35 (front C): so is a target the user signed in this window.
+        // rc.37 (F1): or in the window before it — the resale lock (`resaleLocked`).
         const signedNow = save.squad.some(
-          (p) => p.id === beat.requiresPlayerFree && signedInWindow(p, seasonIndex, windowIndexOf(week)),
+          (p) => p.id === beat.requiresPlayerFree && resaleLocked(p, seasonIndex, day),
         );
         const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week)) || signedNow;
         if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree && !bidFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
           const fee = quantize(
-            marketValueFor({
-              overall: player.overall,
-              age: ageOf(player.birthYear, seasonIndex),
-              potential: player.potential,
-              seasonIndex,
-            }) * CAREER_TRANSFER.blockbusterFeeMult,
+            marketValueFor(valueInputOf(player, save.careerSeed, seasonIndex, growthModelOf(save.world))) *
+              CAREER_TRANSFER.blockbusterFeeMult,
           );
           const toOrg = beat.effect?.forceTransfer.toOrgRef;
           save.pendingOffers.push({
@@ -1464,6 +1484,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
       });
     }
   }
+
+  // ============ EVERY DAY: rc.37 F2 — the emergency sale (cash negative) ===
+  rollEmergencySale(save);
 
   // ==================== EVERY DAY: offer expiry ============================
   // rc.34 (ECO-04): an unsigned sponsor decision lapses after its deadline.
@@ -2497,6 +2520,8 @@ function warnRunway(save: CareerSave, net: number): void {
       linkTo: "/career/finances",
     });
   }
+  // rc.37 F2 package 2: at the warning level the bank puts its voluntary loan on the table.
+  offerCreditOnRunway(save, runway, net);
 }
 
 function runSplitBoundary(save: CareerSave): void {
@@ -2875,6 +2900,306 @@ export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
 }
 
 // ---------------------------------------------------------------------------
+// rc.37 F2 — finances and crisis (ROADMAP-NEXT-2026-11-05 §3, F2): the bank's
+// offer before the floor, the one-off spend alert, the emergency sale and the
+// season-close outlook. The floor stays at −CAREER_LOAN.floorWeeks weeks.
+// ---------------------------------------------------------------------------
+
+/**
+ * rc.37 F2 package 2: the bank's voluntary loan on this save's books right
+ * now (economy.creditOfferFor, on next Monday's net and the investor's run;
+ * null = the bank would not lend, or the books need nothing). The notices,
+ * the bank's mail and Finances read this.
+ */
+export function creditOfferOf(save: CareerSave): CreditOffer | null {
+  if (save.phase === "ended") return null;
+  return creditOfferFor({
+    fin: save.finances,
+    rep: save.reputation,
+    seasonIndex: save.clock.seasonIndex,
+    weeklyNet: weeklyStatementOf(save).net,
+    run: partnerRunOf(save),
+  });
+}
+
+/** rc.37 F2: an offer's numbers as the notices and the mail quote them (money raw; `principal` is what accepting borrows). */
+function creditOfferParams(save: CareerSave, offer: CreditOffer): Record<string, number> {
+  return {
+    principal: offer.principal,
+    loanNet: offer.net,
+    loanTotal: offer.total,
+    loanWeekly: offer.weeklyPayment,
+    loanTerm: offer.termWeeks,
+    loanCovers: offer.coversMondays,
+    loanCapped: offer.capped ? 1 : 0,
+    loanPct: Math.round(CAREER_BANK.interestPct * 100),
+    // The emergency loan it avoids: its interest and its term on this difficulty (0 = no deadline).
+    emergencyPct: Math.round((CAREER_LOAN.repayFactor - 1) * 100),
+    emergencyTerm: deadlineWeeksFor(save.difficulty) ?? 0,
+  };
+}
+
+/** rc.37 F2: has CAREER_CREDIT_OFFER.cooldownWeeks passed since the bank's last offer? */
+function creditOfferCooledDown(save: CareerSave): boolean {
+  const at = save.finances.creditOfferAt;
+  if (!at) return true;
+  const now = absWeekOf({ seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) });
+  return now - absWeekOf(at) >= CAREER_CREDIT_OFFER.cooldownWeeks;
+}
+
+function stampCreditOffer(save: CareerSave): void {
+  save.finances = {
+    ...save.finances,
+    creditOfferAt: { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) },
+  };
+}
+
+/** rc.37 F2: the Monday breach the warnings quote — Mondays to it, its week (and whether it falls next season). */
+function breachWhenParams(save: CareerSave, mondays: number): Record<string, number> {
+  const breachWeek = weekOfDay(save.clock.day) + mondays;
+  const nextSeason = breachWeek > CAREER_CALENDAR.weeksPerSeason;
+  return {
+    mondays,
+    breachWeek: nextSeason ? breachWeek - CAREER_CALENDAR.weeksPerSeason : breachWeek,
+    nextSeason: nextSeason ? 1 : 0,
+  };
+}
+
+/**
+ * rc.37 F2 package 2: the Monday the runway reaches CAREER_CREDIT_OFFER.
+ * runwayWeeks (the accountant's warning level, read by warnRunway on the
+ * books just booked), the bank offers its voluntary loan — a money notice
+ * and its mail, once per cooldown, never while a loan of either kind runs.
+ * The −8-week floor and the emergency loan are untouched.
+ */
+function offerCreditOnRunway(save: CareerSave, runway: number, net: number): void {
+  if (!CAREER_CREDIT_OFFER.enabled || save.phase !== "running") return;
+  if (runway > CAREER_CREDIT_OFFER.runwayWeeks || !creditOfferCooledDown(save)) return;
+  const offer = creditOfferOf(save);
+  if (!offer) return;
+  const line = backerLineOf(save);
+  const mondays = mondaysToBreach(save.finances.balance, net, line.floor, partnerRunOf(save)) ?? 1;
+  const params = {
+    weeks: runway,
+    burn: -net,
+    balance: save.finances.balance,
+    floor: line.floor,
+    ...breachWhenParams(save, mondays),
+    ...creditOfferParams(save, offer),
+    ...nextBreachParamsOf(save),
+  };
+  stampCreditOffer(save);
+  pushMoneyNotice(save, "creditOffer", params);
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "creditOffer",
+    bodyKey: "creditOffer",
+    params,
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+}
+
+/**
+ * rc.37 F2 package 4: after a player's action (the store's withResult runs
+ * it on every result), a one-off spend that brought the projected breach
+ * within CAREER_SPEND_ALERT.withinMondays raises the "spendRisk" notice at
+ * once — before the Monday whose payroll would break the floor — with the
+ * bank's offer when it lends (the offer's cooldown starts). Same day only:
+ * an Advance's Monday is the runway warnings' job. Returns `next` untouched
+ * when nothing is raised.
+ */
+export function spendAlertFlow(prev: CareerSave, next: CareerSave): CareerSave {
+  if (!CAREER_SPEND_ALERT.enabled || next.phase !== "running") return next;
+  if (prev.clock.seasonIndex !== next.clock.seasonIndex || prev.clock.day !== next.clock.day) return next;
+  const spent = prev.finances.balance - next.finances.balance;
+  if (spent <= 0) return next;
+  const netBefore = weeklyStatementOf(prev).net;
+  const netAfter = weeklyStatementOf(next).net;
+  const floorAfter = backerLineOf(next).floor;
+  const risk = spendRiskFor({
+    balance: prev.finances.balance,
+    weeklyNet: netBefore,
+    floor: backerLineOf(prev).floor,
+    upfront: spent,
+    weeklyChange: netAfter - netBefore,
+    floorAfter,
+    run: partnerRunOf(next),
+  });
+  if (!risk.alert || risk.mondaysAfter === null) return next;
+  const save = clone(next);
+  const offer = creditOfferOf(save);
+  const params: Record<string, string | number> = {
+    spent,
+    balance: save.finances.balance,
+    floor: floorAfter,
+    burn: -netAfter,
+    ...breachWhenParams(save, risk.mondaysAfter),
+    ...nextBreachParamsOf(save),
+    offer: offer ? 1 : 0,
+    ...(offer ? creditOfferParams(save, offer) : {}),
+  };
+  if (offer) stampCreditOffer(save);
+  pushMoneyNotice(save, "spendRisk", params);
+  return save;
+}
+
+/**
+ * rc.37 F2: take the bank's loan a notice offered ("creditOffer", or a
+ * "spendRisk" that carried an offer) at the amount it quoted — the bank's own
+ * rules apply (takeBankLoanFlow); the notice is acknowledged either way.
+ */
+export function acceptCreditOfferFlow(input: CareerSave, noticeId: string): FlowResult {
+  const notice = (input.moneyNotices ?? []).find((n) => n.id === noticeId);
+  const principal = notice ? Number(notice.params.principal) : NaN;
+  if (!notice || !(principal > 0)) return { save: input, error: "none" };
+  const res = takeBankLoanFlow(input, principal);
+  return { save: acknowledgeMoneyNoticeFlow(res.save, noticeId), error: res.error };
+}
+
+/**
+ * rc.37 F2 package 3: today's emergency-sale offer (engine/career/
+ * emergencySale.ts) — cash negative, any day, at most one pending; booked as
+ * a plain out-offer flagged `emergency`, with a news line and the agent's
+ * mail (who, the fee against his value, how long it stands). rc.37
+ * integration: the resale lock is F1's `resaleLocked` (no offer for a player
+ * signed in this window or the previous one) and the value is F1's one
+ * valuation (`valueInputOf`, the career's growth model).
+ */
+function rollEmergencySale(save: CareerSave): void {
+  if (save.phase !== "running" || save.squad.length === 0) return;
+  const { seasonIndex, day } = save.clock;
+  const growthModel = growthModelOf(save.world);
+  const offer = emergencyOfferForDay({
+    world: save.world,
+    squad: save.squad,
+    seasonIndex,
+    day,
+    careerSeed: save.careerSeed,
+    balance: save.finances.balance,
+    // No sale during a tournament: its days (pending today, or in progress) bring no offer.
+    inEvent: Boolean(save.activeEvent) || save.pendingEventDef?.day === day,
+    pending: save.pendingOffers,
+    lastOffer: save.finances.emergencySaleAt ?? null,
+    isLocked: (p) => resaleLocked(p, seasonIndex, day),
+    growthModel,
+  });
+  if (!offer) return;
+  save.pendingOffers.push(offer);
+  save.finances = { ...save.finances, emergencySaleAt: { seasonIndex, day } };
+  const player = save.squad.find((p) => p.id === offer.playerId);
+  const value = player ? emergencyValueOf(player, seasonIndex, save.careerSeed, growthModel) : 0;
+  const org = offer.otherRef ? nameOfRef(save, offer.otherRef) : "?";
+  const params = {
+    player: offer.playerName,
+    org,
+    fee: offer.fee,
+    pct: value > 0 ? Math.round((offer.fee / value) * 100) : 0,
+    days: CAREER_EMERGENCY_SALE.validDays,
+    balance: save.finances.balance,
+  };
+  pushNews(save, { type: "transfer", priority: 2, titleKey: "emergencyBid", params: { player: offer.playerName, org } });
+  pushMail(save, {
+    kind: "offer",
+    titleKey: "emergencyBid",
+    bodyKey: "emergencyBid",
+    params,
+    fromKey: "agent",
+    linkTo: "/career/market",
+  });
+}
+
+/** rc.37 F2 package 4: one player the outlook names as a likely retirement (decision 8: the warning; no cheaper rebuild yet). */
+export interface OutlookRetirement {
+  playerId: string;
+  name: string;
+  /** "now": his final season was announced — he retires at this rollover. "likely" / "possible": the rollover may announce next season as his last. */
+  when: "now" | "likely" | "possible";
+}
+
+/**
+ * rc.37 F2 package 4: the season-close outlook — the consolidated view the
+ * season review shows next to the contract review (live: a renewal moves it).
+ */
+export interface SeasonOutlook {
+  /** The weekly wage bill (squad + coach) now, and next season's: deals that run into it (renewals included), the retiring and the expiring out. */
+  payrollNow: number;
+  payrollNext: number;
+  /** Squad players whose deal ends with this season and is not renewed (they leave at the rollover). */
+  leaving: string[];
+  /** What is owed: the emergency loan, the bank loan, both. */
+  debt: { emergency: number; bank: number; total: number };
+  /** The emergency loan's deadline (null = none owed, or no deadline) and the Mondays to it from today. */
+  deadline: { seasonIndex: number; week: number; weeksLeft: number } | null;
+  /** The bank loan's Monday instalments still to book (0 = none). */
+  bankInstalmentsLeft: number;
+  /** The next important income: next season's first regional week, the Mondays to it, and the balance projected to its Monday at next season's net. */
+  nextIncome: { week: number; mondays: number; balanceAtIt: number; weeklyNetNext: number };
+  /** A sponsor deal is running and ends by the rollover (next season counts no base until a new one); false with no deal. */
+  sponsorEnds: boolean;
+  retirements: OutlookRetirement[];
+}
+
+export function seasonOutlookOf(save: CareerSave): SeasonOutlook {
+  const s = save.clock.seasonIndex;
+  const stays = save.squad.filter((p) => p.contractEndSeason > s && !p.finalSeasonAnnounced);
+  const payrollNow = weeklyWageBill(save.squad.map((p) => p.salaryPerSplit), save.coach?.salaryPerSplit ?? null);
+  const payrollNext = weeklyWageBill(stays.map((p) => p.salaryPerSplit), save.coach?.salaryPerSplit ?? null);
+  const leaving = save.squad
+    .filter((p) => p.contractEndSeason <= s && !p.finalSeasonAnnounced)
+    .map((p) => p.name);
+  const loan = save.finances.loan;
+  const bank = save.finances.bankLoan ?? null;
+  const emergency = loan?.remaining ?? 0;
+  const weeksLeft = loan?.deadline ? weeksToDeadline(loan, { seasonIndex: s, week: weekOfDay(save.clock.day) }) : null;
+  const statement = weeklyStatementOf(save);
+  const terms = save.sponsor?.terms;
+  // A deal that runs out by the rollover (no deal at all: nothing ends, and the statement carries no base).
+  const sponsorEnds = Boolean(save.sponsor) && (terms ? terms.endsOn.seasonIndex <= s : false);
+  // Next season's Monday net: this statement with next season's wage bill, and without the base when the deal ends.
+  const weeklyNetNext =
+    statement.net + (statement.payroll + statement.coach) - payrollNext - (sponsorEnds ? statement.sponsorBase : 0);
+  const mondays = Math.max(0, CAREER_CALENDAR.weeksPerSeason - weekOfDay(save.clock.day)) + FIRST_REGIONAL_WEEK;
+  const retirements: OutlookRetirement[] = [];
+  for (const p of save.squad) {
+    if (p.finalSeasonAnnounced) {
+      retirements.push({ playerId: p.id, name: p.name, when: "now" });
+      continue;
+    }
+    if (p.contractEndSeason <= s) continue; // leaving anyway
+    const chance = retirementChanceFor({
+      age: ageOf(p.birthYear, s + 1),
+      nextAge: ageOf(p.birthYear, s + 2),
+      peakAge: peakAgeOf(p),
+      overall: p.overall,
+      starOverall: CAREER_AGE.retirementStarOverallSquad,
+    });
+    if (chance <= 0) continue;
+    retirements.push({
+      playerId: p.id,
+      name: p.name,
+      when: chance >= CAREER_SEASON_OUTLOOK.likelyRetirementChance ? "likely" : "possible",
+    });
+  }
+  return {
+    payrollNow,
+    payrollNext,
+    leaving,
+    debt: { emergency, bank: bank?.remaining ?? 0, total: emergency + (bank?.remaining ?? 0) },
+    deadline: loan?.deadline && weeksLeft !== null ? { ...loan.deadline, weeksLeft } : null,
+    bankInstalmentsLeft: bank ? bankInstalmentsLeft(bank) : 0,
+    nextIncome: {
+      week: FIRST_REGIONAL_WEEK,
+      mondays,
+      balanceAtIt: balanceAfterMondays(save.finances.balance, weeklyNetNext, mondays),
+      weeklyNetNext,
+    },
+    sponsorEnds,
+    retirements,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Event lifecycle
 // ---------------------------------------------------------------------------
 
@@ -3175,12 +3500,12 @@ function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
 /**
  * rc.36 (SUN-01, R88): one round of the user's event — on its Sunday, the
  * coach briefing's edge on the user's team for this round only (the base
- * team stays as it was frozen when the event started). No briefing, "keep",
- * or any other day: exactly `playNextRound`.
+ * team stays as it was frozen when the event started). Continuity has its
+ * own steady edge; outside the briefed Sunday this is exactly `playNextRound`.
  */
 function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<typeof createRng>): TournamentState {
   const ev = save.activeEvent;
-  const edge = ev ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t) : 0;
+  const edge = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
   if (edge === 0) return playNextRound(t, save.difficulty, rng);
   return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
 }
@@ -3344,6 +3669,8 @@ export function finishEvent(input: CareerSave): CareerSave {
     if (def.tier === "regional") save.stats.titlesRegional += 1;
     if (def.tier === "major") save.stats.titlesMajor += 1;
     if (def.tier === "worlds") save.stats.titlesWorlds += 1;
+    // rc.37 (F1): the renewal title raise's per-season count.
+    noteUserTitle(save, def.tier);
     // rc.4 (Underdog): how far below the rest of the field the user's team was.
     if (def.tier === "regional" || def.tier === "major" || def.tier === "worlds") {
       const gap = underdogGapOf(ev.tournament);
@@ -3778,6 +4105,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.36 (UX-02): last season's target is read before the new goals replace it.
   const lastGoalMet = save.seasonGoals?.targetMet ?? null;
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
+  // rc.37 (F1): the title counts outlive the results (the renewal title raise's window).
+  rollTitleCounts(save, nextSeason);
   save.eventResults = [];
   // v0.3 season-scoped bookkeeping resets.
   save.scheduledScrims = [];
@@ -3893,17 +4222,11 @@ export function foundingWageOf(
 
 /** The founding ask: the market ask at the starting reputation, 2 seasons. */
 function foundingAskOf(view: StarterOffer["players"][number], difficulty: CareerDifficulty, careerSeed: number): number {
+  // rc.37 (F1): the founding deal is the project contract — rc.36's factors exactly
+  // (`founding`), never the market's talent valuation; his renewals price the market.
   return computeSalaryAsk({
-    overall: view.overall,
-    age: view.age,
-    potential: view.potential,
-    rep: CAREER_REP.start,
-    role: "starter",
-    seasonIndex: 0,
-    lengthSeasons: 2,
-    difficulty,
-    careerSeed,
-    playerId: view.id,
+    ...askInputOf(view, { careerSeed, seasonIndex: 0, rep: CAREER_REP.start, lengthSeasons: 2, difficulty }),
+    founding: true,
   });
 }
 
@@ -3961,7 +4284,8 @@ export function founderPotentialBandFor(
 ): PotentialBand {
   return squadPotentialBand(
     { ...view, birthYear: seasonYear(0) - view.age, scoutLevel: FOUNDER_SCOUT_LEVEL },
-    { careerSeed, seasonIndex: 0, day: 1, model: CAREER_DEV.growthModel, rc32Reports: false },
+    // rc.37 (F1): a new career reads band model 3 (CURRENT_BAND_MODEL), the uniform band.
+    { careerSeed, seasonIndex: 0, day: 1, model: CAREER_DEV.growthModel, rc32Reports: false, uniform: true },
   );
 }
 
@@ -4029,7 +4353,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     transferLog: [],
     negotiationTries: {},
     // rc.33 (DEV-04): a new career reads the honest band from day one.
-    bandModel: 2,
+    // rc.37 (F1): band model 3 — the truth at a uniform place inside it.
+    bandModel: CURRENT_BAND_MODEL,
     // rc.34 (DEV-03, decision 3-A): the preset's delegation (Easy: the coach
     // runs it; Normal: the coach proposes; Hard: you set it); the first
     // period opens on day 1's arrival, on the base until a coach is hired.
@@ -4302,21 +4627,93 @@ export function signingTalkFor(
 }
 
 /**
+ * rc.37 (F1): the user's titles per season counted from the stored event
+ * results — the backfill of a save from before rc.37 (`userTitlesBySeason`
+ * absent), whose `eventResults` hold the running season only.
+ */
+function titleCountsFromResults(results: readonly CompactEventResult[]): SeasonTitleCount[] {
+  const bySeason = new Map<number, SeasonTitleCount>();
+  for (const r of results) {
+    if (r.userPlacement !== "champion") continue;
+    const major = r.tier === "major" || r.tier === "worlds";
+    if (!major && r.tier !== "regional") continue;
+    const row = bySeason.get(r.seasonIndex) ?? { seasonIndex: r.seasonIndex, majorOrWorlds: 0, regional: 0, days: [] };
+    if (major) row.majorOrWorlds += 1;
+    else row.regional += 1;
+    // The last day of the event's week (a title is won on its Sunday at the latest).
+    row.days!.push({ day: firstDayOfWeek(r.week) + CAREER_CALENDAR.daysPerWeek - 1, major });
+    bySeason.set(r.seasonIndex, row);
+  }
+  return [...bySeason.values()].sort((a, b) => a.seasonIndex - b.seasonIndex);
+}
+
+/**
+ * rc.37 (F1): count a title the user just won today (its result already
+ * ingested) in `userTitlesBySeason`, with its day. A save from before rc.37
+ * is backfilled from this season's results instead — they already hold this
+ * title.
+ */
+function noteUserTitle(save: CareerSave, tier: CareerEventDef["tier"]): void {
+  const major = tier === "major" || tier === "worlds";
+  if (!major && tier !== "regional") return;
+  if (save.userTitlesBySeason === undefined) {
+    save.userTitlesBySeason = titleCountsFromResults(save.eventResults);
+    return;
+  }
+  const season = save.clock.seasonIndex;
+  let row = save.userTitlesBySeason.find((t) => t.seasonIndex === season);
+  if (!row) {
+    row = { seasonIndex: season, majorOrWorlds: 0, regional: 0, days: [] };
+    save.userTitlesBySeason.push(row);
+  }
+  if (major) row.majorOrWorlds += 1;
+  else row.regional += 1;
+  row.days?.push({ day: save.clock.day, major });
+}
+
+/**
+ * rc.37 (F1): at the rollover, before `eventResults` is cleared — backfill a
+ * save from before rc.37 and keep only the seasons the title raise's window
+ * can still read from `nextSeason` on.
+ */
+function rollTitleCounts(save: CareerSave, nextSeason: number): void {
+  const counts = save.userTitlesBySeason ?? titleCountsFromResults(save.eventResults);
+  const oldest = nextSeason - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1);
+  save.userTitlesBySeason = counts.filter((t) => t.seasonIndex >= oldest);
+}
+
+/**
  * rc.33 (ECONOMY-CONTRACT M6 lever 3): the titles the user won while `player`
  * was in the squad, in the title raise's window (this season and the ones
  * before it, never before he joined): regional titles and Major/Worlds
- * titles, read from the stored event results.
+ * titles. rc.37 (F1): read from `userTitlesBySeason`, which survives the
+ * rollover — rc.33–rc.36 read `eventResults`, cleared at each rollover, so
+ * the two-season window only ever saw this season. A save from before rc.37
+ * reads this season's results until its next title or rollover. In the
+ * season he joined, a player signed mid-season (`signedDay`) counts only the
+ * titles won after his signing day; a founder, or a player signed before
+ * rc.35, counts that whole season.
  */
-export function renewalTitlesOf(save: CareerSave, player: Pick<SquadPlayer, "joinedSeason">): RenewalTitles {
-  const from = Math.max(
-    player.joinedSeason ?? 0,
-    save.clock.seasonIndex - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1),
-  );
+export function renewalTitlesOf(
+  save: CareerSave,
+  player: Pick<SquadPlayer, "joinedSeason"> & Partial<Pick<SquadPlayer, "signedDay">>,
+): RenewalTitles {
+  const joined = player.joinedSeason ?? 0;
+  const from = Math.max(joined, save.clock.seasonIndex - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1));
   const titles: RenewalTitles = { majorOrWorlds: 0, regional: 0 };
-  for (const r of save.eventResults) {
-    if (r.seasonIndex < from || r.userPlacement !== "champion") continue;
-    if (r.tier === "major" || r.tier === "worlds") titles.majorOrWorlds++;
-    else if (r.tier === "regional") titles.regional++;
+  for (const t of save.userTitlesBySeason ?? titleCountsFromResults(save.eventResults)) {
+    if (t.seasonIndex < from || t.seasonIndex > save.clock.seasonIndex) continue;
+    const signedDay = player.signedDay;
+    if (t.seasonIndex === joined && signedDay !== undefined && t.days) {
+      for (const d of t.days) {
+        if (d.day <= signedDay) continue;
+        if (d.major) titles.majorOrWorlds += 1;
+        else titles.regional += 1;
+      }
+      continue;
+    }
+    titles.majorOrWorlds += t.majorOrWorlds;
+    titles.regional += t.regional;
   }
   return titles;
 }
@@ -4330,6 +4727,7 @@ export function renewalTermsOfSave(save: CareerSave, player: SquadPlayer, length
     careerSeed: save.careerSeed,
     lengthSeasons,
     titles: renewalTitlesOf(save, player),
+    growthModel: growthModelOf(save.world),
   });
 }
 
@@ -4420,6 +4818,7 @@ export function emptySeatPriceFor(
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
       lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex) ? 1 : lengthSeasons,
+      growthModel: growthModelOf(save.world),
     });
     const cost = pack.fee + pack.signingBonus;
     const wagePerSplit = pack.salaryPerSplit;
@@ -4490,6 +4889,7 @@ export function signingPlanFor(
     contracted: onOrg
       ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
+    growthModel: growthModelOf(save.world),
   });
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
@@ -4754,6 +5154,8 @@ export function renewPlayerFlow(
   player.salaryPerSplit = talk.terms.wagePerSplit;
   player.prizeSharePct = talk.terms.sharePct;
   player.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
+  // rc.37 (F1): his renewals at the club — the next one climbs the tenure ladder.
+  player.renewalCount = (player.renewalCount ?? 0) + 1;
   return { save };
 }
 
@@ -4809,6 +5211,8 @@ export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult 
 }
 
 export function runBootcampFlow(input: CareerSave): FlowResult {
+  // The event team is frozen, including between Saturday and Sunday.
+  if (input.activeEvent) return { save: input, error: "bootcampEventActive" };
   const save = clone(input);
   const tier = bootcampTierFor(save.reputation);
   if (tier === 0) return { save: input, error: "locked" };

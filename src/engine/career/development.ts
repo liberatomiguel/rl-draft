@@ -986,7 +986,9 @@ export function statsFromView(
  * CAREER_SCOUT.honestWidthByLevel wide, its top 0–bandMaxAbove above the
  * truth; with `opts.arc` (his peak age and exact age), capped at what the age
  * clock still lets him reach (`reachableOverallOf`), so an older player shows
- * no potential he can no longer reach.
+ * no potential he can no longer reach. rc.37 (F1, `opts.uniform`, band model
+ * 3): the truth at a uniform place (`uniformBand`), and the cap only once the
+ * age clock binds.
  *
  * Model 1 (rc.31's development, careers created on rc.31; rc.33 review): the
  * same honest band on its potential — the ceiling its training climbs to,
@@ -1010,17 +1012,37 @@ export function scoutedBand(
    * earned level inside the band rc.32 showed (a career created before
    * rc.33, `CareerSave.bandModel` absent). Model 1 reads neither.
    */
-  opts?: { arc?: { peakAge: number; exactAge: number }; rc32Reports?: boolean },
+  opts?: {
+    arc?: { peakAge: number; exactAge: number };
+    rc32Reports?: boolean;
+    /**
+     * rc.37 (F1, ROADMAP decision 7): the career reads band model 3
+     * (`readsUniformBand`) — the truth at a uniform place inside the band
+     * (`uniformBand`) instead of rc.33's top places. Model 2 only.
+     */
+    uniform?: boolean;
+  },
 ): PotentialBand {
   if (isGrowthContract(model)) {
-    const band = honestBand(potential, level, careerSeed, playerId, (l) =>
-      opts?.rc32Reports ? nestedBand(potential, l, careerSeed, playerId) : null,
-    );
+    const band = opts?.uniform
+      ? uniformBand(potential, level, careerSeed, playerId)
+      : honestBand(potential, level, careerSeed, playerId, (l) =>
+          opts?.rc32Reports ? nestedBand(potential, l, careerSeed, playerId) : null,
+        );
     const arc = opts?.arc;
     if (!arc) return floorAtOverall(band, overall);
-    const cap = Math.round(
-      reachableOverallOf({ id: playerId, overall, potential, peakAge: arc.peakAge }, arc.exactAge, careerSeed),
-    );
+    const reach = reachableOverallOf({ id: playerId, overall, potential, peakAge: arc.peakAge }, arc.exactAge, careerSeed);
+    // rc.37 (F1): under band model 3 the age cap applies only once the age
+    // clock binds — he can no longer reach his real peak (time runs short, his
+    // plateau is over, or he is already there). A player still growing toward
+    // it keeps the uniform band: capping him at his real peak (his potential
+    // ± 2) would clip every band back to rc.33's top places, and collapse the
+    // ones drawn with the truth near their floor into an exact read.
+    if (opts?.uniform) {
+      const target = peakTargetOf(potential, developmentProfileOf(playerId, careerSeed));
+      if (target > overall && reach >= target) return floorAtOverall(band, overall);
+    }
+    const cap = Math.round(reach);
     return floorAtOverall(cap >= band.max ? band : { min: Math.min(band.min, cap), max: cap, level }, overall);
   }
   const band = honestBand(potential, level, careerSeed, playerId, (l) =>
@@ -1079,13 +1101,35 @@ export function rc31Band(
  */
 export function squadPotentialBand(
   p: { id: string; potential: number; overall: number; peakAge: number; birthYear: number; scoutLevel: ScoutLevel },
-  ctx: { careerSeed: number; seasonIndex: number; day: number; model: number; rc32Reports: boolean },
+  ctx: {
+    careerSeed: number;
+    seasonIndex: number;
+    day: number;
+    model: number;
+    rc32Reports: boolean;
+    /** rc.37 (F1): band model 3's uniform band (`readsUniformBand(save.bandModel)`). */
+    uniform?: boolean;
+  },
 ): PotentialBand {
   const arc = { peakAge: p.peakAge, exactAge: exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day) };
   return scoutedBand(p.potential, p.overall, p.scoutLevel, ctx.careerSeed, p.id, ctx.model, {
     arc,
     rc32Reports: ctx.rc32Reports,
+    uniform: ctx.uniform,
   });
+}
+
+/**
+ * rc.37 (F1): the band model a new career stamps (`CareerSave.bandModel`) —
+ * 3 = the truth at a uniform place inside the band (`uniformBand`). rc.33–
+ * rc.36 careers (2) keep rc.33's band, so no band moves under a running
+ * career; a career from before rc.33 (absent) keeps its rc.32 reports too.
+ */
+export const CURRENT_BAND_MODEL = 3;
+
+/** rc.37 (F1): does a career with this `bandModel` stamp read the uniform band? */
+export function readsUniformBand(bandModel: number | undefined): boolean {
+  return (bandModel ?? 0) >= 3;
 }
 
 /**
@@ -1177,6 +1221,70 @@ function honestBand(
     }
   }
   return { min, max, level };
+}
+
+/**
+ * rc.37 (F1 package 4, ROADMAP-NEXT decision 7): band model 3 — rc.33's
+ * widths (CAREER_SCOUT.honestWidthByLevel), but the true potential sits at a
+ * UNIFORM seeded place inside the unscouted band (every one of its points
+ * equally likely), no longer always in its top bandMaxAbove + 1 points. It
+ * reads the potential only and nests like rc.33's: each report narrows inside
+ * the band shown before and still holds the truth.
+ *
+ * Built on a lattice so the bands a manager sees, read against each other,
+ * give the truth away as little as possible: the deepest report's place is
+ * drawn first (uniform); every outer band then sits a whole number of blocks
+ * (the deepest band's points, 2 for widths 5 / 3 / 1) above it — the
+ * unscouted band among (w0 + 1) / block equally likely blocks, a level
+ * between among the blocks that hold the inner band inside the outer one.
+ * With 5 / 3 / 1: the unscouted place and the level-1 place are uniform
+ * (each of their points equally likely); the deepest report stays exactly
+ * 50/50 whatever the stack of bands above it (the stack never depends on
+ * where the truth sits in it); read against the unscouted band, level 1 keeps
+ * all four points (2:2:1:1 — exactly uniform there is impossible once the
+ * unscouted place is). A naive "uniform at every level, outside in" lets a
+ * stack of bands sharing one top point at the truth. Near 60 or 99 (the band
+ * clamped) or with widths off the lattice, it draws outside in, each level
+ * uniform among the places that fit (the unscouted band still uniform).
+ */
+function uniformBand(potential: number, level: ScoutLevel, careerSeed: number, playerId: string): PotentialBand {
+  const truth = clamp(Math.round(potential), 60, 99);
+  const width = (l: number) => CAREER_SCOUT.honestWidthByLevel[l] ?? 0;
+  if (width(level) <= 0) return { min: truth, max: truth, level };
+  let deepest = level;
+  while (width(deepest + 1) > 0) deepest += 1;
+  // The places a level's top can take above the truth, the band kept in 60–99.
+  const lo = (l: number) => Math.max(0, width(l) - (truth - 60));
+  const hi = (l: number) => Math.min(width(l), 99 - truth);
+  const pick = (from: number, to: number, key: string) => {
+    const f = derivedFloat(careerSeed, streams.gen("band5", `${playerId}:${key}`));
+    return from + Math.min(to - from, Math.floor(f * (to - from + 1)));
+  };
+  const above: number[] = [];
+  const block = width(deepest) + 1;
+  const free = lo(0) === 0 && hi(0) === width(0);
+  // Every band sits a whole number of blocks above the deepest one.
+  let lattice = free && (width(0) + 1) % block === 0;
+  for (let l = 1; l < deepest; l++) lattice &&= (width(l) - width(deepest)) % block === 0;
+  if (lattice) {
+    above[deepest] = pick(0, width(deepest), "deep");
+    above[0] = above[deepest] + block * pick(0, (width(0) + 1) / block - 1, "stack");
+    for (let l = 1; l < deepest; l++) {
+      const from = Math.max(above[l - 1] - (width(l - 1) - width(l)), above[deepest]);
+      const to = Math.min(above[l - 1], above[deepest] + (width(l) - width(deepest)));
+      const steps = pick(Math.ceil((from - above[deepest]) / block), Math.floor((to - above[deepest]) / block), `mid${l}`);
+      above[l] = above[deepest] + block * steps;
+    }
+  } else {
+    above[0] = pick(lo(0), hi(0), "top");
+    for (let l = 1; l <= deepest; l++) {
+      const from = Math.max(lo(l), above[l - 1] - (width(l - 1) - width(l)));
+      const to = Math.min(hi(l), above[l - 1]);
+      above[l] = pick(from, to, `in${l}`);
+    }
+  }
+  const max = truth + above[level];
+  return { min: max - width(level), max, level };
 }
 
 /**
