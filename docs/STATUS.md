@@ -7,10 +7,11 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.38.2** = rc.37 plus cosmetic / reward
+- Season 1 candidate: staging, **v2.0.0-rc.38.3** = rc.37 plus cosmetic / reward
   presentation corrections and draft header ordering (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
   SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
-  analytics/accounts off in the isolated QA export.
+  analytics/accounts off in the isolated QA export. Special-card photos show
+  during drafts again, including hidden-overall runs (rc.38.3).
   Play at https://staging.rocketdraft.app.
 - F6 balancing: branch `claude/rc37-balance`, cut from staging rc.37. No
   balance change reaches staging before Miguel approves the package.
@@ -40,6 +41,8 @@
   captures remain historical evidence; no new captures requested for rc.38.1.
 - UI rc.38.2: 3 existing season-header tests, typecheck, lint and staging
   export passed; no new captures. Engine/balance unchanged.
+- UI rc.38.3: 19 card visibility/frame tests, typecheck, lint and staging
+  export passed. Photos restored; hidden overall remains `??`. No captures.
 
 ## Open, in order
 

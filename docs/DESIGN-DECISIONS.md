@@ -1937,3 +1937,12 @@ art treatment, preserving their individual palettes; use cyan only for rarity
 identification (labels, list rings, ceremony accents). 50/50 Staff is white.
 The rank-up header/emblem belongs on the dark backdrop outside the lower card.
 Open cosmetic follow-ups live in PENDING-COSMETICS.md and STATUS links to them.
+
+
+### rc.38.3 — special photo masking reverted (2026-11-09)
+
+Miguel explicitly reverses the rc.38 hidden-art decision. Special-card photos
+are visible during the draft/review regardless of overall visibility and
+collection ownership, restoring the pre-rc.38 rule. Hidden-overall runs still
+hide overall numbers; existing rarity/collection masks are unchanged. The
+rc.38 art-masking notes and captures are historical, superseded by this decision.

@@ -8,10 +8,8 @@
  * rarity (~ common · + silver · ++ gold · +++ blue).
  * Special cards: player photo (public/cards/specials/<id>.png or imageUrl)
  * with heavy rarity treatment — animated frames, halo, foil sheen.
- * Hidden-overall runs (v0.5.1, by direction): ratings/buffs/rarity stay
- * "??" but ORG LOGOS show everywhere, and SPECIALS are masked — frame,
- * holo and rarity announce "this is a special", while the photo, title,
- * type and overall stay secret until the results reveal.
+ * Hidden-overall runs keep ratings hidden; special photos remain visible,
+ * independent of overall visibility or collection ownership (rc.38.3).
  */
 
 import { useState } from "react";
@@ -197,10 +195,10 @@ export function GameCard({
   const displayName =
     isNationalOrg && card.orgId ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
   const hiddenBase = !showOverall && !isSpecial;
-  // Hidden-overall runs also keep special art secret until the final reveal.
+  // Overall visibility still masks the special rarity, independently of its art.
   const hideSpecialRarity = isSpecial && !showOverall;
-  // Hidden specials use the same team crest as base cards.
-  const showLogoCenter = !isSpecial || !showOverall;
+  // Base cards use the team crest; specials always render their photo/fallback.
+  const showLogoCenter = !isSpecial;
   const logoOrgId = card.orgId;
   const logoSeasonId = card.seasonId;
   // Role tag tint — a FIXED color per kind (v1.0: the org tag no longer
@@ -242,8 +240,8 @@ export function GameCard({
         className,
       )}
     >
-      {/* Do not mount art (or request its image) while the overall is hidden. */}
-      {isSpecial && showOverall ? <SpecialArt card={card} priority={priority} /> : null}
+      {/* Photos remain visible even when ratings are hidden. */}
+      {isSpecial ? <SpecialArt card={card} priority={priority} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped
           in `lite` mode (dense grids): these mix-blend-mode layers are the main

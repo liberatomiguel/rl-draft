@@ -13,11 +13,11 @@ describe('special artwork visibility contract shared by all draft modes', () => 
   const sp = specialCards.find(s=>s.id==='sp-torsos-oce-longevity')!;
   const card = resolvePlayerCard(sp.baseCardId,sp.id);
   for (const collected of [true,false]) {
-    it(`keeps local and explicit artwork out of hidden offers/review, collected=${collected}`, () => {
+    it(`shows local and explicit art while keeping overall hidden, collected=${collected}`, () => {
       for (const special of [card.special!, { ...card.special!, imageUrl: '/qa-explicit-photo.png' }]) {
         const html=renderToStaticMarkup(React.createElement(GameCard,{card:{...card,special},showOverall:false,specialCollected:collected}));
-        expect(html).not.toContain(`${sp.id}.png`);
-        expect(html).not.toContain('qa-explicit-photo');
+        expect(html).toContain(special.imageUrl ? 'qa-explicit-photo' : `${sp.id}.png`);
+        expect(html).toMatch(/class="[^"]*ovr-[^"]*"[^>]*>\?\?<\/span>/);
         expect(html).toContain(card.orgName!);
       }
     });
@@ -28,7 +28,7 @@ describe('special artwork visibility contract shared by all draft modes', () => 
   }
 });
 
-describe('the actual run visibility decisions reach the shared art renderer', () => {
+describe('run overall visibility never hides special photos', () => {
   afterEach(() => { vi.useRealTimers(); useRunStore.setState({ run: null }); });
   const sp = specialCards.find(s => s.id === 'sp-torsos-oce-longevity')!;
   const card = resolvePlayerCard(sp.baseCardId, sp.id);
@@ -40,9 +40,10 @@ describe('the actual run visibility decisions reach the shared art renderer', ()
           useRunStore.getState().startRun({ mode, difficulty, showOverall: requested });
           const expected = requested && (difficulty === 'easy' || difficulty === 'normal');
           expect(useRunStore.getState().run?.showOverall).toBe(expected);
-          expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(expected);
+          expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(true);
           useRunStore.getState().restartRun();
           expect(useRunStore.getState().run?.showOverall).toBe(expected);
+          expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(true);
         }
       });
     }
@@ -51,7 +52,7 @@ describe('the actual run visibility decisions reach the shared art renderer', ()
     for (const regionLock of ['NA','EU','SAM','OCE','MENA'] as const) {
       for (const showOverall of [false,true]) {
         useRunStore.getState().startRun({mode:'classic', difficulty:'normal', regionLock, showOverall});
-        expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(showOverall);
+        expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(true);
       }
     }
   });
@@ -67,7 +68,7 @@ describe('the actual run visibility decisions reach the shared art renderer', ()
       useRunStore.getState().startDailyRun();
       expect(useRunStore.getState().run?.mode).toBe('daily');
       expect(useRunStore.getState().run?.showOverall).toBe(expected);
-      expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(expected);
+      expect(hasArt(useRunStore.getState().run!.showOverall)).toBe(true);
       seen.add(expected);
     }
     expect(seen.size).toBe(2);

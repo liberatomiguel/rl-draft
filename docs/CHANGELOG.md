@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.2**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.3**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,18 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.38.3 (2026-11-09), restore special photos
+
+- Miguel reverses rc.38's photo mask: special cards show their photos again
+  in offers and review, even when the run hides overall. Restore the original
+  SpecialArt rendering and its missing-art fallback. Overall numbers and the
+  existing rarity/collection masks remain unchanged, as do the final reveal,
+  the revised header, cosmetics and rank-up layout. No art, data or saves changed.
+- Update the existing mode/region/daily/restart matrix to require photos in
+  hidden and visible runs, and explicitly assert hidden overall stays `??`.
+- **Validation:** 19 card visibility/frame tests, typecheck, lint and staging
+  export passed (data and persist-contract prechecks included). No captures.
 
 ### Changed — rc.38.2 (2026-11-09), draft header
 
