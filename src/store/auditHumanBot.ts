@@ -444,7 +444,8 @@ export interface ArcSeason {
   market?: ArcMarketLevel | null;
   /**
    * rc.34 (DEV-03, TRAINING-CONTRACT §7): the season's training — periods
-   * filed, prompts the manager met (t1), the package objective per period
+   * filed, training decisions the manager made (t1: a proposal approved or, since rc.37 F6, a plan picked at a
+   * cycle start), the package objective per period
    * ("base" = none), package scrims won / lost, the scrims' share of each
    * player's period gain (t4, p90), players ruled out by the pre-event roll,
    * and each player's season gain split by source. Absent in older dumps.
@@ -1210,7 +1211,11 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
     save = approveTrainingProposalFlow(save).save;
   }
+  const hadPlan = Boolean(trainingOf(save).plan?.package);
   save = startArcCycle(save, policy);
+  // rc.37 F6: since rc.36 (front T2) no proposal waits — the manager picks the plan at a cycle start;
+  // that pick is the training decision `prompts` counts (it read 0 in every season of the 06/11 battery).
+  if (!hadPlan && trainingOf(save).plan?.package) t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
   // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
   if ((opts.bootcamp || policy.fullSupport) && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
