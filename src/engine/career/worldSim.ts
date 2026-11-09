@@ -37,7 +37,9 @@ import {
   CAREER_DEV,
   CAREER_GEAR,
   CAREER_QUALIFIER,
+  CAREER_REGION_FIELD,
   CAREER_SEASONS,
+  CAREER_TITLE_DEFENSE,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
@@ -439,6 +441,7 @@ export function starterRosterOffers(
     .slice(0, 9)
     .map((x) => x.name);
 
+  const starterOffset = CAREER_REGION_FIELD.starterOvrOffset[region] ?? 0;
   const offers: StarterOffer[] = [];
   for (let o = 0; o < STARTER_OFFERS.length; o++) {
     const shape = STARTER_OFFERS[o];
@@ -454,17 +457,20 @@ export function starterRosterOffers(
       const f = (what: string) =>
         derivedFloat(careerSeed, streams.gen("starter", `${region}:${k}:${what}`));
       const age = shape.ageMin + Math.floor(f("age") * shape.ageSpan);
-      const overall = Math.round(shape.ovrMin + f("ovr") * shape.ovrSpan);
-      const potential =
+      const baseOverall = Math.round(shape.ovrMin + f("ovr") * shape.ovrSpan);
+      const basePotential =
         shape.key === "journeymen"
           ? clamp(
-              overall + 1 + Math.round(f("pot") * 3),
-              overall,
+              baseOverall + 1 + Math.round(f("pot") * 3),
+              baseOverall,
               JOURNEYMAN_POTENTIAL_CAP,
             )
           : j === headliner
             ? headlinerPotential(f("pot"))
-            : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), overall, 99);
+            : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), baseOverall, 99);
+      // rc.37 F6 (lever, off by default): the region moves the whole founder (overall and potential).
+      const overall = starterOffset === 0 ? baseOverall : clamp(baseOverall + starterOffset, 40, 99);
+      const potential = starterOffset === 0 ? basePotential : clamp(basePotential + starterOffset, overall, 99);
       const archetype = deriveArchetype(id, careerSeed);
       group.push({
         id,
@@ -908,6 +914,8 @@ export interface FieldCtx {
    * instead of missing both events. The user is never fielded from it.
    */
   userSeedRow?: { rating: number; prestige: number } | null;
+  /** rc.37 F6: Worlds titles the user already holds (CAREER_TITLE_DEFENSE; absent = 0). */
+  userWorldsTitles?: number;
 }
 
 /** Intrinsic (shift-stripped) rating — comparisons and field quality use this. */
@@ -1550,6 +1558,32 @@ export function fieldForEvent(
   if (field.length !== want) {
     throw new Error(
       `fieldForEvent: "${def.id}" needs ${want} teams, built ${field.length}`,
+    );
+  }
+  // rc.37 F6 (lever, off by default): the regional scene's strength by region,
+  // regional-level events only. Carried in difficultyShift like the
+  // difficulty's own shift, so field quality (intrinsic rating) is unchanged.
+  const sceneShift =
+    (CAREER_REGION_FIELD.tiers.includes(def.tier)
+      ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0)
+      : 0) +
+    // rc.37 F6 (lever, off by default): the title defence at the user's Worlds.
+    (def.tier === "worlds" && ctx.userTeam && field.includes(ctx.userTeam)
+      ? CAREER_TITLE_DEFENSE.worldsShiftPerTitle *
+        Math.min(ctx.userWorldsTitles ?? 0, CAREER_TITLE_DEFENSE.maxTitles)
+      : 0);
+  if (sceneShift !== 0) {
+    field = field.map((team) =>
+      team.isUser
+        ? team
+        : {
+            ...team,
+            rating: {
+              ...team.rating,
+              total: team.rating.total + sceneShift,
+              difficultyShift: team.rating.difficultyShift + sceneShift,
+            },
+          },
     );
   }
 

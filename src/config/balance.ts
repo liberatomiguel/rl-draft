@@ -2207,6 +2207,38 @@ export const CAREER_RENEWAL_TENURE = {
   valueFloorByRenewal: [0, 0, 0] as readonly number[],
 } as const;
 
+/**
+ * rc.37 F6 (experiment levers, off): a region's scene strength for the user's
+ * climb, with the Worlds slots untouched (Miguel, 09/11: the slots stay, the
+ * deepest pools stay the hardest). The battery (06/11) sent Normal careers
+ * to the Worlds by S10 in 100 % (SSA, median S1) down to 4 % (EU).
+ *  - `shift`: rating added to the AI sides of the regional-level events
+ *    (`tiers`) of that region, beside the difficulty's opponentRatingShift
+ *    (`rating.difficultyShift` carries both, so seeding and field quality,
+ *    which read the intrinsic rating, are unchanged). Major and Worlds never
+ *    read it.
+ *  - `starterOvrOffset`: added to the overall AND potential of the three
+ *    founding roster offers in that region (the user's day-one strength).
+ * 0 everywhere = rc.37 exactly.
+ */
+export const CAREER_REGION_FIELD = {
+  tiers: ["qualifier", "regional"] as readonly string[],
+  shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
+  starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
+} as const;
+
+/**
+ * rc.37 F6 (experiment lever, off): the title defence. The battery's paired
+ * test raised the opponents of the user's FIRST Worlds (+0.5: −19 % titles);
+ * this raises them only once the user holds a Worlds title — rating added to
+ * the AI sides of the user's Worlds per title held (stats.titlesWorlds), up
+ * to maxTitles, carried in difficultyShift. 0 = rc.37.
+ */
+export const CAREER_TITLE_DEFENSE = {
+  worldsShiftPerTitle: 0,
+  maxTitles: 1,
+} as const;
+
 export const CAREER_SPONSOR = {
   /**
    * v0.2: tiers rescaled to the garage-org economy and each carries PERKS —

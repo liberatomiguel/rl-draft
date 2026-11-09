@@ -3318,6 +3318,7 @@ export function eventFieldFor(save: CareerSave, def: CareerEventDef): ReturnType
   return fieldForEvent(def, {
     world: save.world, competition: save.competition, userTeam: userTeamForEvent(save, def).team,
     userRegion: save.identity.region, careerSeed: save.careerSeed, difficulty: save.difficulty, userPrestige: repTierOf(save.reputation),
+    userWorldsTitles: save.stats.titlesWorlds,
   });
 }
 
@@ -3349,6 +3350,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
     userPrestige: repTierOf(save.reputation),
+    userWorldsTitles: save.stats.titlesWorlds,
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
   const tournament = initFieldTournament(field, def.format, rng);
