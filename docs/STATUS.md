@@ -7,9 +7,9 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.37** = rc.36.21 plus the rc.37
-  career round (F1 market, F2 finance, F3 matchday, F4a battery tooling; the
-  F5 replay contract is docs only). Career on, noindex, preview tools on,
+- Season 1 candidate: staging, **v2.0.0-rc.38** = rc.37 plus cosmetic / reward
+  presentation corrections (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
+  SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
   analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
 - F6 balancing: branch `claude/rc37-balance`, cut from staging rc.37. No
@@ -34,8 +34,10 @@
 - BALANCE_VERSION **15**: rc.36.16's daily-only calibration plus the rc.37
   career tunables (both sides had bumped to 14). Saves additive only; persist
   keys/versions frozen.
-- Merge gates: typecheck and lint clean; full suite 2095 passed /
-  28 skipped (165 files); static export with the staging flags OK.
+- Merge gates: typecheck and lint clean; full suite 2099 passed /
+  28 skipped (165 files), plus 15 passed in the added visibility matrix; static
+  export with staging flags OK (all 1073 image URLs). Local real-flow captures
+  cover login, hidden/visible special, reveal, season track, rank-up and locker.
 
 ## Open, in order
 

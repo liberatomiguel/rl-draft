@@ -197,15 +197,10 @@ export function GameCard({
   const displayName =
     isNationalOrg && card.orgId ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
   const hiddenBase = !showOverall && !isSpecial;
-  // v1.3: special cards always show their photo, identity, org/season and buff in
-  // EVERY mode (base doc §11/§14) — exactly like base cards keep their crest and
-  // name on no-overall runs. The ONLY difficulty-driven mask left for a special is
-  // the rarity label (and the overall number, handled by `overallText`). Whether a
-  // not-yet-collected special hides its title/rarity is the COLLECTION reward
-  // (`specialCollected`), independent of difficulty.
+  // Hidden-overall runs also keep special art secret until the final reveal.
   const hideSpecialRarity = isSpecial && !showOverall;
-  // Only BASE cards use the org-logo centerpiece now; specials always show the photo.
-  const showLogoCenter = !isSpecial;
+  // Hidden specials use the same team crest as base cards.
+  const showLogoCenter = !isSpecial || !showOverall;
   const logoOrgId = card.orgId;
   const logoSeasonId = card.seasonId;
   // Role tag tint — a FIXED color per kind (v1.0: the org tag no longer
@@ -214,8 +209,8 @@ export function GameCard({
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
   // Buff pill (v1.2.1; v1.3 always shows the value): every special advertises its
-  // full buff — the gameplay info a drafter needs, shown in EVERY mode now that the
-  // photo is no longer hidden. It shows even on yet-to-be-unlocked specials.
+  // full buff — the gameplay info a drafter needs, independent of art visibility.
+  // It shows even on yet-to-be-unlocked specials.
   const buffLabel =
     isSpecial && card.special ? specialBuffLabel(card.special.effect, true) : null;
   // `lite` (dense grids) keeps the 3D tilt — it's cheap now that TiltCard only
@@ -247,8 +242,8 @@ export function GameCard({
         className,
       )}
     >
-      {/* Special photo layer — v1.3: always shown for specials, in every mode. */}
-      {isSpecial ? <SpecialArt card={card} priority={priority} /> : null}
+      {/* Do not mount art (or request its image) while the overall is hidden. */}
+      {isSpecial && showOverall ? <SpecialArt card={card} priority={priority} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped
           in `lite` mode (dense grids): these mix-blend-mode layers are the main

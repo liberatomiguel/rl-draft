@@ -2075,3 +2075,15 @@ LOCKED and built. Remaining review items:
 - **First-guess tunables to confirm after playtests:** scrim chemistryCredit
   0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
   the filler headliner band 77–84.
+
+
+## 2026-11-09 — rc.38, Road Warrior correction
+
+Miguel sets Road Warrior to four seasons with one org (enter season four,
+zero-based seasonIndex >= 3), replacing three. Keep `car-three-seasons` as the
+persisted achievement ID and historical XP entitlement, but correct its new
+grant threshold/copy. The badge now reads the additive cosmetic-only
+`car-four-seasons` fact, derived from saves on load/actions, because old
+permanent achievement marks cannot prove four seasons. Do not reset keys,
+replay XP, or infer four seasons from an unavailable/deleted save. Retiring
+Underdog affects only the cosmetic; the career achievement remains historical.

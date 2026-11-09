@@ -29,6 +29,7 @@ import { careerAchievementById } from "@/data/career/achievements";
 import {
   EMPTY_ACHIEVEMENT_MEMORY,
   evaluateCareerAchievements,
+  careerCosmeticMarks,
   marksMissingFrom,
   withProfileMarks,
   worldsWonOnAfter,
@@ -336,6 +337,9 @@ export const useCareerStore = create<CareerStoreState>()(
       const settleAchievements = (save: CareerSave): { memory: CareerAchievementMemory; toasts: CareerToast[] } => {
         // rc.36 (UX-05, #155): the profile's marks are unlocked too (another device, an older
         // store) — they join silently, so nothing is ever granted twice.
+        const profileFacts = useProfileStore.getState();
+        const cosmeticMarks = careerCosmeticMarks(save).filter(id => !(profileFacts.careerMarks ?? []).includes(id));
+        if (cosmeticMarks.length) profileFacts.addCareerMarks(cosmeticMarks);
         const memory = withProfileMarks(
           get().achievements ?? EMPTY_ACHIEVEMENT_MEMORY,
           useProfileStore.getState().careerMarks ?? [],
@@ -678,6 +682,11 @@ export const useCareerStore = create<CareerStoreState>()(
         // memory's ids join the marks (the general list reads them), silently both ways.
         try {
           const profile = useProfileStore.getState();
+          for (const slot of state.slots ?? []) {
+            if (!slot) continue;
+            const marks = careerCosmeticMarks(slot).filter(id => !(useProfileStore.getState().careerMarks ?? []).includes(id));
+            if (marks.length) profile.addCareerMarks(marks);
+          }
           state.achievements = withProfileMarks(state.achievements, profile.careerMarks ?? [], Date.now());
           const missing = marksMissingFrom(state.achievements, profile.careerMarks ?? []);
           if (missing.length > 0) profile.addCareerMarks(missing);

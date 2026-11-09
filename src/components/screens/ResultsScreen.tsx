@@ -6,9 +6,6 @@
  * progress, achievement toasts and unlocked specials.
  */
 
-import { COSMETICS } from "@/data/cosmetics";
-import { SEASON } from "@/config/season";
-import { CosmeticPreview } from "@/components/cosmetics/CosmeticViews";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -867,13 +864,10 @@ export function RankUpCelebration({
   }, []);
 
   const previous = RANKS.findIndex(r => r.id === prevRankId);
-  const current = RANKS.findIndex(r => r.id === rank.id);
-  const rewards = COSMETICS.filter(c => { const source=c.source; if(source.type !== "season-rank" || source.seasonId !== SEASON.id) return false; const index=RANKS.findIndex(r=>r.id===source.rankId); return index>previous && index<=current; });
   return <CeremonyPortal ariaLabel={R.rankUpTitle} className="bg-black/90" onClick={onDone}>
-    <div className="w-full max-w-lg rounded-2xl border border-orange/35 bg-raised p-5 sm:p-7" onClick={e=>e.stopPropagation()}>
+    <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-orange/40 bg-[radial-gradient(ellipse_at_top,#f9731626,transparent_65%)] bg-raised p-5 shadow-[0_0_80px_#f9731618] sm:p-8" onClick={e=>e.stopPropagation()}>
       <p className="kicker text-center">{R.rankUpTitle}</p>
-      <div className="my-5 flex items-center justify-center gap-5"><RankBadge rank={rank} variant="menu" size="lg" /><div><p className="text-sm text-sub">{RANKS[previous]?.label} →</p><p className="display text-3xl font-bold text-orange-bright">{rank.label}</p></div></div>
-      {rewards.length ? <div className="mb-5 grid gap-2">{rewards.map(c=><div key={c.id} className="rounded-xl border border-orange/25 bg-orange/[0.04] p-3"><CosmeticPreview id={c.id} size="sm" /></div>)}</div> : null}
+      <div className="my-7 flex flex-col items-center justify-center gap-4 text-center"><RankBadge rank={rank} variant="menu" size="lg" /><div><p className="text-sm text-sub">{RANKS[previous]?.label} →</p><p className="display text-3xl font-bold text-orange-bright">{rank.label}</p></div></div>
       {unlocks.length ? <section className="rounded-xl border border-line bg-bg p-4"><p className="mb-3 text-xs font-semibold text-sub">{R.rankUpUnlocked}</p><ul className="space-y-3">{unlocks.map(u=><li key={u} className="flex items-start gap-3 text-sm text-ink"><span className="text-good" aria-hidden>✓</span><span>{u}</span></li>)}</ul></section> : null}
       <Button variant="primary" full size="lg" className="mt-5" onClick={onDone}>{R.ceremonyContinue}</Button>
     </div>

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.37**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,38 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed / Fixed — rc.38 (2026-11-09), cosmetic review
+
+- **Added:** manual `50-50-staff` grant → 50/50 Staff badge + title. Badge has
+  a text fallback until Miguel supplies art. Additive staging-only SQL in
+  `docs/sql/rc38-staff-grant.sql`; no grants or account permissions changed.
+- **Changed:** manual cosmetics use **Exclusive**, between Epic and Legendary,
+  consistently in locker ordering, labels, rings, title treatment and ceremonies.
+  This rarity is separate from the existing `exclusive` ownership-visibility flag.
+- **Changed:** Supernova needs 75 challenge stars; pre-season Champion rank
+  badge is Rare; Platinum / Diamond / Champion pre-season titles are grey;
+  Leaderboard Finalist title is now Contender (stable saved ID).
+- **Changed:** Road Warrior requires reaching season four with one org. The
+  achievement keeps its persisted ID and XP history, now checks index 3. A
+  cosmetic-only four-season fact is derived on load/actions; the old three-season
+  mark alone no longer grants the badge, and no duplicate XP/toast is generated.
+- **Changed:** Underdog **cosmetic** retired from catalog/grants/equipment;
+  existing refresh/sanitization removes it safely. Its unrelated career
+  achievement and history remain. Save versions/keys unchanged.
+- **Fixed (root cause):** shared GameCard mounted SpecialArt unconditionally.
+  Hidden-overall offers and review now mount a team crest instead, requesting
+  no special image. The final results/collection and visible-overall drafts
+  still render art, regardless of collection ownership.
+- **Fixed (root cause):** the rank-up screen previewed rank-track cosmetics
+  before their queued individual ceremony. Remove only that preview, preserve
+  all other unlock copy, and restyle the rank emblem/transition panel.
+- **Fixed (root cause):** titles used the same 6px corner radius at tiny sizes;
+  XS now uses 3px and SM 4px, including the profile season track. Login badges
+  now use a 52px box and stronger gold milestone framing.
+- **Audits:** `SPECIAL-CARDS-MISSING-rc38.md` (21/111 lack art) and
+  `UNLOCK-COPY-AUDIT-rc38.md` (exact EN/PT copy, every cosmetic and rank).
+  `COSMETIC-SUGGESTIONS-rc38.md` is proposals only; none were registered.
 
 ### Added — rc.37, round-2 career build (integrated onto staging rc.36.21)
 - **Staging integration (09/11):** `claude/rc37-integration` (`89a063b`) and the

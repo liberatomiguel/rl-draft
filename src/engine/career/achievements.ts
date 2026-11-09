@@ -101,3 +101,8 @@ export function worldsWonOnAfter(
   if (save.stats.titlesWorlds > 0) return { ...memory.worldsWonOn, [save.difficulty]: true };
   return memory.worldsWonOn;
 }
+
+/** Cosmetic-only facts: do not replay old achievements, their XP or toasts. */
+export function careerCosmeticMarks(save: CareerSave): string[] {
+  return save.clock.seasonIndex >= 3 ? ["car-four-seasons"] : [];
+}

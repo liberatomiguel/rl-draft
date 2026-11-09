@@ -1914,3 +1914,16 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      banner on: profile ≤ 80 ms/s, board ≤ 60 ms/s (rc.13 measures ~40 and
      ~20), zero composite failures.
 
+
+
+## 2026-11-09 — rc.38, Miguel's cosmetic review
+
+Miguel supersedes the v1.3 photo exception: whenever a draft hides overall,
+special-card art stays secret through offers, roster and review, until final
+results. Use the same run visibility flag in the shared renderer, with the
+team crest as fallback. Visible drafts and collection/reveal remain unchanged.
+Manual grants use the distinct Exclusive rarity (above Epic, below Legendary);
+Unique would incorrectly imply a one-of-one item. The existing `exclusive`
+boolean still controls ownership visibility and also applies to legacy items
+of other rarities. Rank-up celebrates the rank and existing unlock text; each
+cosmetic retains its subsequent individual unlock ceremony.

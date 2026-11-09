@@ -317,7 +317,7 @@ export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
 
 /** rc.6: locker order — rarity first (legendary → common), then the item's
  *  family, then the catalog priority (e.g. the higher rank first). */
-const TIER_ORDER: CosmeticDef["tier"][] = ["legend", "epic", "rare", "uncommon", "common"];
+const TIER_ORDER: CosmeticDef["tier"][] = ["legend", "exclusive", "epic", "rare", "uncommon", "common"];
 const GROUP_ORDER: CosmeticSource["type"][] = [
   "legacy-position", // pre-season board (rating)
   "legacy-rank", // pre-season peak rank
