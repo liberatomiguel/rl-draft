@@ -14,9 +14,10 @@ interface ModalProps {
   onClose: () => void;
   wide?: boolean;
   className?: string;
+  summary?: React.ReactNode;
 }
 
-export function Modal({ open, title, children, actions, onClose, wide, className }: ModalProps) {
+export function Modal({ open, title, children, actions, onClose, wide, className, summary }: ModalProps) {
   // Portal target — animated ancestors create transform containing blocks
   // that would re-anchor position:fixed, so the dialog must live on <body>.
   const host = useMounted() ? document.body : null;
@@ -73,6 +74,7 @@ export function Modal({ open, title, children, actions, onClose, wide, className
             </svg>
           </button>
         </div>
+        {summary ? <div className="shrink-0">{summary}</div> : null}
         <div className="-mr-2 overflow-y-auto pr-2 text-sm leading-relaxed text-sub">{children}</div>
         {actions ? (
           <div className="mt-6 flex shrink-0 flex-wrap justify-end gap-3">{actions}</div>

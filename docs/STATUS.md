@@ -7,7 +7,7 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.36.18**, career on, noindex,
+- Season 1 candidate: staging, **v2.0.0-rc.36.19**, career on, noindex,
   preview tools on, analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
 - The rc.37 career workstreams remain separate. This package does not edit
@@ -30,10 +30,12 @@
 - rc.36.18 restores lock overlays, shows all owned badges and inline track
   rewards, cleans rank-up and separates orbital banner art from its background.
 - Release validation: 1997 tests passed, lint, types and static export checked.
-  Production probe: profile 53 ms/s, board 12 ms/s, zero compositor failures.
+  Production probe: profile 66 ms/s, board 18 ms/s, zero compositor failures.
   Lighthouse accessibility: 100/100 on profile/login and Challenges entries.
   Final visual/performance/accessibility evidence and limits:
-  UI-REVIEW-rc36-18.md and UI-DAILY-AUDIT-rc36-17.md.
+  UI-REVIEW-rc36-19.md and UI-DAILY-AUDIT-rc36-17.md.
+- Cosmetic inventory/proposals share one 106-row table:
+  COSMETICS-CATALOG-UNIFIED.md (89 existing, 17 proposed; grants unchanged).
 - BALANCE_VERSION 14 changes daily-only calibration. Existing match/chemistry,
   Classic/Quick and career tunables retain their values.
 

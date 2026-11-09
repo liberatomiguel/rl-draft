@@ -322,12 +322,12 @@ function ChallengeCard({
       onClick={onOpen}
       className={cx(
         "panel relative overflow-hidden p-4 text-left transition-colors hover:!border-line-strong",
-        cleared ? "!border-amber-300/40" : locked ? "!bg-raised" : style.glow,
+        cleared ? "!border-amber-300/40" : locked ? "!bg-raised min-h-[23rem]" : style.glow,
         cleared && style.legend && "ach-legend",
       )}
     >
       <div aria-hidden={locked || undefined} className={locked ? "opacity-25" : undefined}>{inner}</div>
-      {locked ? <div className="absolute inset-0 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]"><div className="w-full"><p className="text-center text-sm font-bold text-ink">{CH.catalog[ch.id]?.title ?? ch.title}</p><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
+      {locked ? <div className="challenge-lock absolute inset-0 flex items-center justify-center p-4 backdrop-blur-[2px]"><div className="w-full"><div className="mb-2 flex items-center justify-center gap-3"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-11 !w-11" /><div className="text-left"><p className="text-[10px] font-bold uppercase tracking-widest text-orange-bright">{CH.status.locked}</p><p className="display text-lg font-bold text-ink">{rankLabel(ch.rankRequired)}</p></div><svg className="h-5 w-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div><p className="text-center text-sm font-bold text-ink">{CH.catalog[ch.id]?.title ?? ch.title}</p><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
     </button>
   );
 }
@@ -340,17 +340,17 @@ function UnlockPath({ challenge: ch, CH, compact }: { challenge: Challenge; CH: 
   const quizSolved = useProfileStore(s => s.quiz.solved);
   const rankMet = RANKS.findIndex(r => r.id === rankForXp(xp).id) >= RANKS.findIndex(r => r.id === ch.rankRequired);
   const row = (text: string, met: boolean, progress?: string) => <span className={cx("flex items-start gap-1.5 text-xs leading-relaxed", met ? "text-good" : "text-sub")}><span aria-hidden>{met ? "✓" : "○"}</span><span className="min-w-0 flex-1">{text}</span>{progress ? <span className="shrink-0 font-mono text-[10px]">{progress}</span> : null}</span>;
-  return <div className={cx("mt-4 rounded-lg border border-line-strong bg-bg/70 p-3", !compact && "mb-4")}>
+  return <div className={cx("mt-3 rounded-lg border border-line-strong bg-bg/80 p-3", !compact && "mb-4")}>
     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-ink">{CH.unlockTitle}</p>
     <div className="space-y-1.5">
-      <div className="flex items-center gap-2"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-6 !w-6" />{row(CH.unlocksAt(rankLabel(ch.rankRequired)), rankMet)}</div>
+      <div className="flex items-center gap-2">{!compact ? <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-6 !w-6" /> : null}{row(CH.unlocksAt(rankLabel(ch.rankRequired)), rankMet)}</div>
       {ch.prereq ? row(CH.clearPrereq(CH.catalog[ch.prereq]?.title ?? challengeById.get(ch.prereq)?.title ?? ch.prereq), !!completed[ch.prereq]) : null}
       {ch.unlock ? <div className="border-t border-line pt-2">
         {ch.unlock.anyOf.length > 1 ? <p className="mb-1.5 text-[11px] text-sub">{CH.unlockAny}</p> : null}
         {ch.unlock.anyOf.map((condition, i) => {
           const p = challengeUnlockProgress(condition, completed, { challengeStars, careerMarks, quizSolved });
           const label = condition.kind === "career" ? CH.unlockMilestone.career[condition.mark] : CH.unlockMilestone[condition.kind](condition.count);
-          return <div key={i}>{i > 0 ? <p className="my-1 pl-4 text-[10px] font-semibold uppercase text-sub">{CH.unlockOr}</p> : null}{row(label, p.met, condition.kind === "career" ? undefined : CH.unlockProgress(p.current, p.target))}</div>;
+          return <div key={i}>{i > 0 ? <p className="my-1 pl-4 text-[10px] font-semibold uppercase text-sub">{CH.unlockOr}</p> : null}{row(label, p.met, condition.kind === "career" ? undefined : CH.unlockProgress(p.current, p.target))}{condition.kind !== "career" ? <div className="ml-4 mt-1 h-1 overflow-hidden rounded-full bg-white/10" aria-hidden><div className={cx("h-full rounded-full", p.met ? "bg-good" : "bg-orange/70")} style={{width:`${Math.min(100,p.current/p.target*100)}%`}} /></div> : null}</div>;
         })}
       </div> : null}
     </div>

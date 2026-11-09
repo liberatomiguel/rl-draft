@@ -1856,7 +1856,7 @@ html.reduce-fx .card-float {
 .cos-banner > * {
   position: relative;
 }
-.cos-banner > :not(.cos-anim):not(.cos-frame) { z-index: 2; }
+.cos-banner > :not(.cos-anim):not(.cos-frame):not(.cos-prestige) { z-index: 2; }
 
 /* Lite effects: stop the loops, keep the colours. */
 :is(html.lite-fx, html.reduce-fx) .cos-banner-epic::after,
@@ -1889,3 +1889,27 @@ html.reduce-fx .card-float {
 .cos-banner > .cos-orbit { animation: cos-original-orbit 140s linear infinite paused; }
 @keyframes cos-original-orbit { to { transform: rotate(360deg); } }
 @keyframes cos-motion-breathe { 0%,100% { opacity:.7; } 50% { opacity:1; } }
+
+/* Quiet rarity accents: static paint composited through opacity only. */
+.cos-banner > .cos-prestige {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; display: none;
+  background:
+    radial-gradient(circle at calc(var(--cos-pivot-x, 62%) + 42px) calc(var(--cos-pivot-y, 50%) - 24px), #fff9 0 1px, transparent 3px),
+    radial-gradient(circle at calc(var(--cos-pivot-x, 62%) - 30px) calc(var(--cos-pivot-y, 50%) + 20px), #ffe1a980 0 1px, transparent 3px);
+  animation: cos-prestige-breathe 8s ease-in-out var(--cos-delay, 0s) infinite paused;
+}
+.cos-banner-legend > .cos-prestige {
+  background:
+    radial-gradient(circle at calc(var(--cos-pivot-x, 62%) + 45px) calc(var(--cos-pivot-y, 50%) - 28px), #fff 0 1px, #fff5 2px, transparent 7px),
+    radial-gradient(circle at calc(var(--cos-pivot-x, 62%) - 36px) calc(var(--cos-pivot-y, 50%) + 24px), #ffe8b9 0 1px, transparent 6px),
+    radial-gradient(circle at calc(var(--cos-pivot-x, 62%) + 100px) calc(var(--cos-pivot-y, 50%) + 34px), #e0c8ff 0 1px, transparent 5px);
+  animation-duration: 6s;
+}
+@keyframes cos-prestige-breathe { 0%,100% { opacity: .15; } 50% { opacity: .8; } }
+.cos-banner[data-live][data-motion="full"] > .cos-prestige { display: block; animation-play-state: running; }
+:is(html.lite-fx, html.reduce-fx) .cos-banner[data-live][data-motion] > .cos-prestige { display: none; animation: none; }
+@media (prefers-reduced-motion: reduce) { .cos-banner[data-live][data-motion] > .cos-prestige { display: none; animation: none; } }
+.challenge-lock {
+  background: radial-gradient(ellipse at 50% 12%, #23375999, transparent 65%), linear-gradient(150deg, #0c1424f5, #05080ff0);
+  box-shadow: inset 0 2px 0 #96b8e533;
+}

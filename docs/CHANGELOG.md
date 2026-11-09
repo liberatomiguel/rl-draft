@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.18**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.19**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,21 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.36.19, visual reward hierarchy
+- Locked Challenges show a rank crest, lock, status and numeric milestone bars
+  on a distinct dark surface; overlay space accommodates advanced conditions.
+- Epic/legendary banners gain restrained static-painted glints with composited
+  opacity only. Existing artwork/motion stays intact; offscreen and reduced
+  effects disable the accents, and dense leaderboard rows stay still.
+- Login reward art grows from 20px badges / 32px banners to 36px / 64px and
+  real title tags. Day 30 has a full-width prize row with larger previews.
+  XP/progress remain pinned; the current day scrolls into view on opening.
+- Featured badges grow 50→56px with aligned centres; collection badges grow
+  52→64px with 3/4 columns instead of 4/5. All owned items remain visible.
+- COSMETICS-CATALOG-UNIFIED.md joins 89 existing items and 17 proposals in one
+  106-row table. Proposals stay explicitly unimplemented. No unlock rules,
+  gameplay, seeds, persistence or career code change.
 
 ### Fixed / Changed — rc.36.18, visual review after playtest
 - Daily login: one calendar, in-cell reward art/names and XP, collected checks,

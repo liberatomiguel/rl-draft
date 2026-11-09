@@ -125,12 +125,15 @@ export function BadgeEmblem({
   size = "sm",
   className,
   fx = true,
+  sparkles = true,
 }: {
   badge: CosmeticDef;
   size?: BadgeSize;
   className?: string;
   /** false = plain art (tiny previews). */
   fx?: boolean;
+  /** Dense galleries keep art/glow/holo without per-item particle loops. */
+  sparkles?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isBadge = badge.kind === "badge";
@@ -172,7 +175,7 @@ export function BadgeEmblem({
   // Legendary + mouse: tilt toward the pointer (DOM-only CSS vars and a data
   // attribute, no re-render). At rest a legendary does not move.
   const tiltDeg = tiltDegFor(px);
-  const sparks = px >= BADGE_SPARK_MIN_PX;
+  const sparks = sparkles && px >= BADGE_SPARK_MIN_PX;
   const onMove = (e: React.PointerEvent<HTMLSpanElement>) => {
     const el = ref.current;
     if (e.pointerType !== "mouse" || !el) return;
@@ -437,6 +440,7 @@ export function BannerSurface({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {banner.style.art === "cosmic-ascension" ? <img className="cos-anim cos-orbit" src={bannerArtSrc(`${banner.style.art}.orbit`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} /> : null}
       </> : null}
+      {motion && (legend || banner.tier === "epic") ? <span className="cos-prestige" aria-hidden /> : null}
       <span className="cos-frame" aria-hidden />
       {children}
     </div>

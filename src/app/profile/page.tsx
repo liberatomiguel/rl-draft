@@ -49,7 +49,7 @@ import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { SeasonRankTrack } from "@/components/cosmetics/SeasonRankTrack";
 
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
-const HERO_FEATURED_PX = 50;
+const HERO_FEATURED_PX = 56;
 const HERO_BADGE_PX = 44;
 
 export default function ProfilePage() {
@@ -566,7 +566,7 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
       {badges.length === 0 ? (
         <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-xs leading-relaxed text-faint">{P.showcaseEmpty}</p>
       ) : (
-        <div className="grid flex-1 grid-cols-4 content-start gap-x-2 gap-y-3 sm:grid-cols-5">
+        <div className="grid flex-1 grid-cols-3 content-start gap-x-3 gap-y-4 sm:grid-cols-4">
           {shown.map((b) => (
             <button
               key={b.id}
@@ -575,7 +575,7 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
               title={`${copy.name(b.id)} · ${copy.tier(b.tier)}`}
               className="flex items-center justify-center rounded-lg py-1 outline-none transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-orange/70"
             >
-              <BadgeEmblem badge={b} size={52} />
+              <BadgeEmblem badge={b} size={64} sparkles={false} />
             </button>
           ))}
           {more > 0 ? (
