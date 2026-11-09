@@ -10,7 +10,7 @@
  *    locker button) says something new is waiting there.
  *  · Season — the interactive rank-reward track (rc.20: paid on rank-up),
  *    the season numbers + rating sparkline under it, and the BADGE
- *    SHOWCASE beside it: every badge the player owns, best first.
+ *    SHOWCASE beside it: owned badges, best first, with the rest in the locker.
  *  · Lifetime — three headline numbers, a secondary grid, then the rest as
  *    quiet chips.
  *  · Achievements + run history (as before), the pre-season recap replay,
@@ -18,7 +18,7 @@
  */
 
 import { AppLink } from "@/components/ui/AppLink";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FEATURES, SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
@@ -265,7 +265,9 @@ export default function ProfilePage() {
             )}
           </Panel>
         </div>
-        <BadgeShowcase owned={profile.cosmetics.owned} onOpen={() => openLocker("badge")} className="lg:col-span-2" />
+        <div className="relative lg:col-span-2">
+          <BadgeShowcase owned={profile.cosmetics.owned} onOpen={() => openLocker("badge")} className="h-80 lg:absolute lg:inset-0 lg:h-auto" />
+        </div>
       </div>
       </>
       ) : null}
@@ -543,20 +545,35 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
   );
 }
 
-/** Max badges the showcase draws before a "+N" tile (layout, not gameplay). */
-
-/** rc.6: the locker on display — every badge the player owns, best first
- *  (rarity, then family), with their effects. Tapping opens the locker. */
+/** Fit complete rows beside the season/rating column; the locker holds the rest. */
 function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, string>; onOpen: () => void; className?: string }) {
   const { PROFILE_UI: P } = useCopy();
   const copy = useCosmeticCopy();
   const { owned: badges, locked } = lockerItems(owned, "badge");
   const total = badges.length + locked.length;
-  const shown = badges;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [capacity, setCapacity] = useState(12);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const measure = () => {
+      const grid = viewport.firstElementChild;
+      if (!grid) return;
+      const style = getComputedStyle(grid);
+      const columns = style.gridTemplateColumns.split(/\s+/).length;
+      const row = parseFloat(style.gridAutoRows);
+      const gap = parseFloat(style.rowGap) || 0;
+      if (row > 0) setCapacity(Math.max(0, Math.floor((viewport.clientHeight + gap) / (row + gap))) * columns);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [badges.length]);
+  const shown = badges.slice(0, capacity);
   const more = badges.length - shown.length;
   return (
-    <Panel className={cx("flex flex-col p-4", className)}>
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <Panel className={cx("flex min-h-0 flex-col p-4", className)}>
+      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
         <p className="kicker !text-[10px]">{P.showcaseTitle}</p>
         <span className="display text-xs font-bold text-sub">
           {badges.length}
@@ -566,35 +583,29 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
       {badges.length === 0 ? (
         <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-xs leading-relaxed text-faint">{P.showcaseEmpty}</p>
       ) : (
-        <div className="grid flex-1 grid-cols-3 content-start gap-x-3 gap-y-4 sm:grid-cols-4">
+        <div ref={viewportRef} className="min-h-0 flex-1 overflow-hidden">
+          <div className="grid auto-rows-[64px] grid-cols-3 content-start gap-2 sm:grid-cols-4">
           {shown.map((b) => (
             <button
               key={b.id}
               type="button"
               onClick={onOpen}
               title={`${copy.name(b.id)} · ${copy.tier(b.tier)}`}
-              className="flex items-center justify-center rounded-lg py-1 outline-none transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-orange/70"
+              className="flex items-center justify-center rounded-lg outline-none transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-orange/70"
             >
-              <BadgeEmblem badge={b} size={64} sparkles={false} />
+              <BadgeEmblem badge={b} size={52} sparkles={false} />
             </button>
           ))}
-          {more > 0 ? (
-            <button
-              type="button"
-              onClick={onOpen}
-              className="display mx-auto flex h-[52px] w-[52px] items-center justify-center self-center rounded-full border border-dashed border-line-strong text-sm font-bold text-sub transition-colors hover:border-orange/50 hover:text-ink"
-            >
-              +{more}
-            </button>
-          ) : null}
+          </div>
         </div>
       )}
       <button
         type="button"
         onClick={onOpen}
-        className="mt-3 self-center text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+        aria-haspopup="dialog"
+        className="mt-3 shrink-0 self-center text-[11px] font-semibold uppercase tracking-wider text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
       >
-        {P.openLocker} →
+        {more > 0 ? P.showcaseMore(more) : P.openLocker} →
       </button>
     </Panel>
   );

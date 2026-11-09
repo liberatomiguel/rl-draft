@@ -644,6 +644,7 @@ export const PROFILE_UI = {
   seasonTrackNext: (rank: string) => `Next rank: ${rank}`,
   seasonTrackDone: "Top of the ladder",
   showcaseTitle: "Badge collection",
+  showcaseMore: (count: number) => `View more (${count})`,
   showcaseEmpty: "No badges yet. Login streaks, challenge stars, quiz solves and titles unlock them.",
   headlineStats: "Headline",
   moreStats: "More numbers",

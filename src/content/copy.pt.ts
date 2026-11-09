@@ -832,6 +832,7 @@ export const PT: Copy = {
     seasonTrackNext: (rank: string) => `Próximo rank: ${rank}`,
     seasonTrackDone: "Topo da escada",
     showcaseTitle: "Coleção de insígnias",
+    showcaseMore: (count: number) => `Ver mais (${count})`,
     showcaseEmpty: "Nenhuma insígnia ainda. Sequência de login, estrelas de challenge, quizzes e títulos desbloqueiam.",
     headlineStats: "Destaques",
     moreStats: "Mais números",

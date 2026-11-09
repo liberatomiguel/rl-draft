@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.20**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.21**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,20 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Fixed / Changed — rc.36.21, bounded badge gallery and quieter login
+- Challenges use a darker translucent black lock overlay and no rectangle
+  behind the rank crest. Rank/milestone conditions and start guards stay intact.
+- Badge collection ends at the rating-history column's bottom on desktop;
+  smaller 52px art fits complete rows. Capacity follows the available size,
+  with View more / Ver mais opening the full badge locker. Mobile uses a compact
+  three-column preview. Root cause of the oversized panel: all owned items
+  determined the shared grid row's height, stretching past the rating history.
+- Login XP uses a fine neutral outline with no coin, fill or orange halo;
+  XP-only amounts are quieter. Badge rewards grow 24→40px with a restrained
+  warm cell accent; the final-day banner/title still fit the compact calendar.
+- No banner-animation, gameplay, reward, unlock, persistence or career changes.
+  Visual/validation evidence: UI-REVIEW-rc36-21.md.
 
 ### Fixed / Changed — rc.36.20, compact rewards and restored banner motion
 - Login uses smaller calendar cells and previews, visual XP tokens, actual
