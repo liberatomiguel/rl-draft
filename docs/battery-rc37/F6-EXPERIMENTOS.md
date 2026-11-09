@@ -231,6 +231,54 @@ Por perfil: `academy` 57% → R15 33% · R30 24% · R55 14% · J4 33%; `prospect
   14%, com o alcance do Worlds caindo de 76% para 60%) e produzem reajustes de até 54×. **Rejeitar como
   valor de partida.**
 
+### E2. Mercado acessível a quem já evoluiu (B)
+
+Normal · 7 regiões × 3 elencos · seed 9100 · um ou dois perfis por família · 147 carreiras por braço
+(E2-CAP: 63, só os perfis presos pela reputação).
+
+**E2-G117: curva salarial mais plana** (`CAREER_SALARY.growthPerPoint` 1,20 → 1,17 por ponto acima de 70).
+Pedidos e valores ficam mais baratos quanto mais alto o overall: 75 −12%, 80 −22%, 85 −31%, 90 −40%
+(abaixo de 70 ficam um pouco mais caros: 65 +13%).
+
+| Perfil (família) | Título do Worlds | Ganhou / perdeu | Título do Major | Alcance do Major | Falência | Folha ÷ receita S6–10 | Rating S10 |
+|---|---|---|---|---|---|---|---|
+| `academy` (jovens) | 57% → 52% | +1 / −2 | 67% → 71% | 95% → 90% | 0% → 0% | 0,51 → 0,59 | 95,3 → 96,5 |
+| `ambitious` (comprar) | **0% → 33%** | **+7 / −0** | 5% → 24% | 71% → 81% | 10% → 10% | 0,82 → 0,72 | 93,3 → 95,2 |
+| `learner` (outros) | 0% → 14% | +3 / −0 | 0% → 14% | 48% → 67% | 5% → 0% | 1,30 → 1,00 | 91,4 → 94,2 |
+| `stars` (comprar) | 5% → 10% | +2 / −1 | 5% → 10% | 33% → 33% | 0% → 0% | 0,92 → 0,83 | 80,1 → 79,8 |
+| `known` (comprar) | 0% → 5% | +1 / −0 | 0% → 10% | 33% → 38% | 0% → 0% | 0,91 → 0,79 | 80,0 → 81,3 |
+| `trader` (negociar) | 0% → 5% | +1 / −0 | 5% → 24% | 48% → 52% | 0% → 0% | 1,19 → 0,88 | 88,3 → 91,7 |
+| `homegrown` (manter) | 0% → 5% | +1 / −0 | 5% → 10% | 52% → 52% | 10% → 0% | 0,81 → 0,64 | 80,9 → 81,9 |
+| **todos** | **9% → 18%** | **+16 / −3** | 12% → 23% | 54% → 59% | 3% → 1% | 0,86 → 0,72 | 88,6 → 93,0 |
+
+**Leitura:** é o complemento do A. O mercado intermediário fica alcançável e o caminho "comprar prontos"
+(`ambitious`) passa a ganhar, enquanto a academia quase não se beneficia (ela não compra). Também baixa a
+falência e a folha ÷ receita de quem vive no limite. `stars` e `known` continuam presos por só aceitarem jogadores reais
+conhecidos (o teto por reputação não é o gargalo, ver E2-CAP).
+
+**E2-FEE: taxa de compra ~45% menor** (`CAREER_TRANSFER.contractLoadBase` 0,70 → 0,35,
+`contractLoadPerSplit` 0,15 → 0,10; salários iguais):
+
+| Perfil | Título do Worlds | Ganhou / perdeu | Falência | Folha ÷ receita S6–10 | Vendas S1–S10 |
+|---|---|---|---|---|---|
+| `academy` | 57% → 52% | +3 / −4 | 0% → 0% | 0,51 → 0,87 | 1 → 2 |
+| `ambitious` | 0% → 33% | +7 / −0 | **10% → 19%** | **0,82 → 2,01** | **12 → 25** |
+| `learner` | 0% → 10% | +2 / −0 | 5% → 5% | 1,30 → 1,84 | 17 → 29 |
+| `trader` | 0% → 0% | +0 / −0 | 0% → 0% | 1,19 → 1,45 | 14 → 19 |
+| `homegrown` | 0% → 10% | +2 / −0 | 10% → 10% | 0,81 → 0,82 | 1 → 1 |
+| `stars` / `known` | 5% / 0% → 0% / 0% | — | 0% | ≈ | ≈ |
+| **todos** | 9% → 15% | +14 / −5 | 3% → **5%** | 0,86 → **0,99** | 7 → 8 |
+
+**Leitura:** baratear só a taxa estimula a rotatividade (compra e vende o dobro) com salários ainda caros: o
+título sobe, mas a folha passa da receita e a falência sobe. A curva plana entrega o mesmo ganho de título com
+a economia mais saudável. **G117 domina FEE: rejeitar FEE.**
+
+**E2-CAP: teto de contratação +4** (`CAREER_UNLOCKS.signableCapBase` 71 → 75; `stars`, `known`,
+`learner`, 63 carreiras): título do Worlds 2% → 2% (+0 / −0); só o alcance do Major do `learner` sobe
+(48% → 71%). **O gargalo é dinheiro, não reputação: rejeitar.** `stars` e `known` continuam em 0–10% em
+qualquer braço porque só aceitam jogadores reais conhecidos, que são poucos e caros. É um nicho do protocolo,
+não um caminho que precise ser equalizado.
+
 ### E3. Regiões fáceis (vagas intactas; EU, NA e SAM sem mudança)
 
 Normal · SSA, APAC, OCE, MENA × 3 elencos · seed 9100 · perfis `academy`, `coachUpgrades`, `stars`,
@@ -264,31 +312,55 @@ Normal · SSA, APAC, OCE, MENA × 3 elencos · seed 9100 · perfis `academy`, `c
   Alvo por região no Normal (alcance do Worlds até a S10): SSA e APAC 55–75%, OCE 45–60%, MENA 25–40%, sem
   1º Worlds antes da S3.
 
-### E2. Mercado acessível a quem já evoluiu (B)
+### P1. Combinação A + B + C (a pergunta que importa: o pacote junto cria caminhos sem endurecer o jogo?)
 
-Normal · 7 regiões × 3 elencos · seed 9100 · um ou dois perfis por família · 147 carreiras por braço
-(E2-CAP: 63, só os perfis presos pela reputação).
+`renewalMaxJump` 4,0 + `jumpMax` 5,0 (J4) · `growthPerPoint` 1,17 (G117) · fundadores SSA −3 / APAC −2 /
+OCE −1 e cena SSA +1,5 / APAC +1,0 / OCE +0,5. Normal · 7 regiões × 3 elencos · seed 9100 · 7 perfis ·
+147 carreiras.
 
-**E2-G117: curva salarial mais plana** (`CAREER_SALARY.growthPerPoint` 1,20 → 1,17 por ponto acima de 70).
-Pedidos e valores ficam mais baratos quanto mais alto o overall: 75 −12%, 80 −22%, 85 −31%, 90 −40%
-(abaixo de 70 ficam um pouco mais caros: 65 +13%).
-
-| Perfil (família) | Título do Worlds | Ganhou / perdeu | Título do Major | Alcance do Major | Falência | Folha ÷ receita S6–10 | Rating S10 |
+| Perfil | Título do Worlds | Ganhou / perdeu | Título do Major | Alcance do Worlds | Falência | Folha ÷ receita | Reajuste p90 |
 |---|---|---|---|---|---|---|---|
-| `academy` (jovens) | 57% → 52% | +1 / −2 | 67% → 71% | 95% → 90% | 0% → 0% | 0,51 → 0,59 | 95,3 → 96,5 |
-| `ambitious` (comprar) | **0% → 33%** | **+7 / −0** | 5% → 24% | 71% → 81% | 10% → 10% | 0,82 → 0,72 | 93,3 → 95,2 |
-| `learner` (outros) | 0% → 14% | +3 / −0 | 0% → 14% | 48% → 67% | 5% → 0% | 1,30 → 1,00 | 91,4 → 94,2 |
-| `stars` (comprar) | 5% → 10% | +2 / −1 | 5% → 10% | 33% → 33% | 0% → 0% | 0,92 → 0,83 | 80,1 → 79,8 |
-| `known` (comprar) | 0% → 5% | +1 / −0 | 0% → 10% | 33% → 38% | 0% → 0% | 0,91 → 0,79 | 80,0 → 81,3 |
-| `trader` (negociar) | 0% → 5% | +1 / −0 | 5% → 24% | 48% → 52% | 0% → 0% | 1,19 → 0,88 | 88,3 → 91,7 |
-| `homegrown` (manter) | 0% → 5% | +1 / −0 | 5% → 10% | 52% → 52% | 10% → 0% | 0,81 → 0,64 | 80,9 → 81,9 |
-| **todos** | **9% → 18%** | **+16 / −3** | 12% → 23% | 54% → 59% | 3% → 1% | 0,86 → 0,72 | 88,6 → 93,0 |
+| `academy` | 57% → **38%** | +2 / −6 | 67% → 52% | 90% → 76% | 0% → 0% | 0,51 → 0,62 | 3,9 → 6,2 |
+| `prospectsOnly` | 48% → **38%** | +1 / −3 | 52% → 48% | 62% → 71% | 0% → 5% | 0,67 → 0,56 | 3,9 → 6,2 |
+| `ambitious` | 0% → **24%** | +5 / −0 | 5% → 29% | 62% → 76% | 10% → 10% | 0,82 → 0,74 | 2,7 → 3,5 |
+| `learner` | 0% → 5% | +1 / −0 | 0% → 19% | 48% → 52% | 5% → 0% | 1,30 → 1,07 | 3,7 → 4,0 |
+| `trader` | 0% → 0% | +0 / −0 | 5% → 19% | 43% → 43% | 0% → 0% | 1,19 → 0,98 | 3,1 → 3,7 |
+| `homegrown` | 0% → 0% | +0 / −0 | 5% → 0% | 52% → **33%** | 10% → 0% | 0,81 → 0,72 | 3,9 → 6,2 |
+| `stars` | 5% → 0% | +0 / −1 | 5% → 0% | 33% → 19% | 0% → 0% | 0,92 → 0,83 | 3,7 → 3,8 |
+| **todos** | **16% → 15%** | +9 / −10 | **20% → 24%** | 56% → 53% | 3% → 2% | 0,82 → 0,75 | 3,9 → 6,2 |
 
-**Leitura:** é o complemento do A. O mercado intermediário fica alcançável e o caminho "comprar prontos"
-(`ambitious`) passa a ganhar, enquanto a academia quase não se beneficia (ela não compra). Também baixa a
-falência e a folha ÷ receita de quem vive no limite. `stars` e `known` continuam presos, pelo teto de
-contratação por reputação e por só aceitarem jogadores reais (ver E2-CAP).
+Metas do relatório (mesmas 147 carreiras):
 
-E2_REST_PLACEHOLDER
+| | Regional até o 2º split | Mediana 1º Major / 1º Worlds | Título até S10 | Jovens × melhor não-jovem | Falência | Alcance do Worlds por região |
+|---|---|---|---|---|---|---|
+| controle | 76% | S8 / S9 | 16% | 52% × 5% (**~10×**) | 3% | SSA 100 · APAC 100 · OCE 81 · MENA 33 · SAM 33 · NA 29 · EU 14 |
+| P1 | 65% | S9 / S10 | 15% | 38% × 24% (**1,6×**) | 2% | SSA 81 · APAC 86 · OCE 76 · MENA 43 · SAM 43 · NA 29 · EU 14 |
 
-EXPERIMENTOS3_PLACEHOLDER
+**Leitura:**
+- **Funciona sem endurecer o jogo:** o título geral fica igual (16% → 15%), o de Major sobe (20% → 24%), a
+  falência cai, e passam a existir dois caminhos que vencem (formar e comprar), com o formar ainda à frente
+  (1,6×, dentro da meta de ≤ 2×).
+- **C ficou fraco na combinação:** SSA ainda vai ao Worlds na S2 (mediana) e o título em SSA até subiu
+  (24% → 38%), porque a curva plana também fortalece quem compra. O P2 (rodando) testa a dose cheia dos
+  fundadores (−4 / −3 / −2 / −1) com cena SSA +2,0 / APAC +1,5 / OCE +0,5.
+- **`homegrown` é quem paga a conta de C** (alcance 52% → 33%, concentrado nas regiões fáceis): quem mantém
+  os fundadores fica com fundadores mais fracos. A alavanca natural para dar fôlego a "manter o elenco" é a
+  química por convivência (3.5), que recompensa exatamente o elenco estável.
+- Nas regiões do meio, MENA e SAM sobem (33% → 43% de alcance, efeito da curva plana); EU e NA ficam iguais
+  (14% e 29%), coerente com "o pool mais forte é o mais difícil".
+
+E4_PLACEHOLDER
+
+ADIM_PLACEHOLDER
+
+---
+
+## 5. Pacote provisório (para aprovação de direção; nada aplicado ao staging)
+
+PACOTE_PLACEHOLDER
+
+---
+
+## 6. Próximos passos e custo
+
+PROXIMOS_PLACEHOLDER
