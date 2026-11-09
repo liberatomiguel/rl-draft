@@ -1,7 +1,7 @@
 /** Extract a filter-free motion layer without losing the painted children of
  * animated groups, or geometry driven by an animated gradient in <defs>. */
 const ANIM = new Set(["animate", "animateTransform", "animateMotion", "set"]);
-const refsOf = attrs => [...attrs.matchAll(/url\(#([\w:-]+)\)/g)].map(x => x[1]);
+const refsOf = attrs => [...attrs.matchAll(/url\(#([\w:-]+)\)|(?:^|\s)(?:xlink:)?href="#([\w:-]+)"/g)].map(x => x[1] ?? x[2]);
 const idOf = attrs => /\sid="([^"]+)"/.exec(attrs)?.[1] ?? null;
 const hasAnim = n => ANIM.has(n.tag) || n.children.some(hasAnim);
 
@@ -96,6 +96,41 @@ export function splitOrbit(overlay, orbitOnly) {
     return orbitOnly && !children.length ? null : {...n, children};
   };
   return serialize({...svg, children:svg.children.flatMap(n => n.tag === "defs" ? [n] : [keep(n)].filter(Boolean))});
+}
+
+/** Separate original moving geometry into a few independently composited
+ * planes. Each painted subtree belongs to exactly one plane: no ghost copies
+ * of flames/rings, and no live filters or per-frame SVG rasterisation. */
+export function partitionMotion(overlay, art) {
+  const svg = parseSvg(overlay);
+  const buckets = new Map();
+  let drift = 0;
+  const assign = n => {
+    const animations = n.children.filter(c => ANIM.has(c.tag));
+    if (animations.length) {
+      const transform = animations.find(c => c.tag === "animateTransform" && /attributeName="transform"/.test(c.attrs));
+      let role = "motion";
+      if (transform && /type="rotate"/.test(transform.attrs)) {
+        role = /to="-360/.test(transform.attrs) ? "counter" : "orbit";
+      } else if (transform && /type="translate"/.test(transform.attrs)) {
+        role = art === "heatwave" ? (drift++ % 2 ? "drift" : "motion")
+          : ["slipstream", "wildfire"].includes(art) ? (drift++ % 2 ? "drift2" : "drift")
+          : art === "cosmic-ascension" ? "motion" : "drift";
+      }
+      buckets.set(n, role);
+    } else n.children.forEach(assign);
+  };
+  svg.children.filter(n => n.tag !== "defs").forEach(assign);
+  const select = (n, role) => {
+    if (buckets.has(n)) return buckets.get(n) === role ? n : null;
+    if (!n.children.length) return role === "motion" ? n : null;
+    const children = n.children.map(c => select(c, role)).filter(Boolean);
+    return children.length ? {...n, children} : null;
+  };
+  return Object.fromEntries(["motion", ...new Set(buckets.values())].filter((r,i,a) => a.indexOf(r) === i).flatMap(role => {
+    const body = svg.children.filter(n => n.tag !== "defs").map(n => select(n, role)).filter(Boolean);
+    return body.length ? [[role, serialize({...svg, children:[...svg.children.filter(n => n.tag === "defs"), ...body]})]] : [];
+  }));
 }
 
 export function motionRasterSource(overlay, dedupeEllipses = false) {

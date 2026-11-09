@@ -1614,6 +1614,8 @@ html.reduce-fx .card-float {
   0% { transform: translateX(-55%); }
   22%, 100% { transform: translateX(55%); }
 }
+.cos-title[data-motion="still"] { transform: none; transition: none; will-change: auto; }
+.cos-title[data-motion="still"]::after { display: none; animation: none; }
 
 /* ---------------------------------------------------------------------------
    Banners (rc.21) — Miguel's art as ONE pre-rendered image (--cos-img, the
@@ -1890,6 +1892,28 @@ html.reduce-fx .card-float {
 @keyframes cos-original-orbit { to { transform: rotate(360deg); } }
 @keyframes cos-motion-breathe { 0%,100% { opacity:.7; } 50% { opacity:1; } }
 
+/* Original streaks, flames, particles and orbital geometry move separately. */
+.cos-banner[data-art="slipstream"] > :is(.cos-drift, .cos-drift2) { animation: cos-speed-streaks 3.4s linear infinite paused; }
+.cos-banner[data-art="slipstream"] > .cos-drift2 { animation-duration: 4.6s; animation-delay: -2.3s; }
+.cos-banner[data-art="wildfire"] > .cos-anim { animation: cos-fire-flicker 3.2s ease-in-out infinite paused; }
+.cos-banner[data-art="wildfire"] > :is(.cos-drift, .cos-drift2) { animation: cos-rising-embers 3.8s linear infinite paused; }
+.cos-banner[data-art="wildfire"] > .cos-drift2 { animation-duration: 5.4s; animation-delay: -2.7s; }
+.cos-banner[data-art="singularity"] > .cos-anim { animation: cos-gravity-pulse 7s ease-in-out infinite paused; }
+.cos-banner[data-art="singularity"] > .cos-orbit { animation: cos-gravity-tilt 12s ease-in-out infinite paused; }
+.cos-banner[data-art="singularity"] > .cos-drift { animation: cos-gravity-dust 9s ease-in-out -4s infinite paused; }
+.cos-banner[data-art="heatwave"] > .cos-anim { animation: cos-heat-flow 6s ease-in-out infinite paused; }
+.cos-banner[data-art="heatwave"] > .cos-drift { animation-duration: 9s; animation-delay: -4s; }
+.cos-banner[data-art="cosmic-ascension"] > .cos-counter { animation: cos-original-orbit 80s linear reverse infinite paused; }
+.cos-banner[data-art="cosmic-ascension"] > .cos-motion { animation: cos-cosmic-radiance 6s ease-in-out infinite paused; }
+@keyframes cos-speed-streaks { 0% { transform: translateX(-2.5%); opacity: 0; } 20%,75% { opacity: 1; } 100% { transform: translateX(2.5%); opacity: 0; } }
+@keyframes cos-fire-flicker { 0%,100% { transform: skewX(-0.7deg) scaleY(.98); opacity: .75; } 35% { transform: skewX(1deg) scaleY(1.025); opacity: 1; } 70% { transform: skewX(-1deg) scaleY(1.04); opacity: .9; } }
+@keyframes cos-rising-embers { 0% { transform: translate(-.5%,8%); opacity: 0; } 20%,65% { opacity: 1; } 100% { transform: translate(1.6%,-22%); opacity: 0; } }
+@keyframes cos-gravity-pulse { 0%,100% { transform: scale(1); opacity: .7; } 50% { transform: scale(1.05); opacity: 1; } }
+@keyframes cos-gravity-tilt { 0%,100% { transform: rotate(-2.5deg); opacity: .8; } 50% { transform: rotate(2.5deg); opacity: 1; } }
+@keyframes cos-gravity-dust { 0%,100% { transform: translate(-.6%,2%); opacity: .35; } 50% { transform: translate(.6%,-2%); opacity: 1; } }
+@keyframes cos-heat-flow { 0%,100% { transform: translateX(0); opacity: .65; } 50% { transform: translateX(-4.5%); opacity: 1; } }
+@keyframes cos-cosmic-radiance { 0%,100% { opacity: .45; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
+
 /* Quiet rarity accents: static paint composited through opacity only. */
 .cos-banner > .cos-prestige {
   position: absolute; inset: 0; z-index: 0; pointer-events: none; display: none;
@@ -1910,6 +1934,13 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .cos-banner[data-live][data-motion] > .cos-prestige { display: none; animation: none; }
 @media (prefers-reduced-motion: reduce) { .cos-banner[data-live][data-motion] > .cos-prestige { display: none; animation: none; } }
 .challenge-lock {
-  background: radial-gradient(ellipse at 50% 12%, #23375999, transparent 65%), linear-gradient(150deg, #0c1424f5, #05080ff0);
+  background: linear-gradient(150deg, #0c142455, #05080f80);
   box-shadow: inset 0 2px 0 #96b8e533;
+}
+.challenge-lock-heading { background: #080e1de8; box-shadow: 0 2px 16px #0005; }
+.login-xp-token {
+  display: grid; place-items: center; width: 24px; height: 24px;
+  border: 1px solid #fb923c66; border-radius: 50%; color: #fdba74;
+  background: radial-gradient(circle at 35% 25%, #fb923c35, #f973160c);
+  box-shadow: inset 0 0 0 3px #fb923c0a;
 }

@@ -1,9 +1,39 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { animationOverlay, staticMotionBase, motionRasterSource, splitOrbit } from "../../scripts/lib/banner-animation.mjs";
+import { animationOverlay, staticMotionBase, motionRasterSource, splitOrbit, partitionMotion } from "../../scripts/lib/banner-animation.mjs";
 import animated from "@/generated/banner-anim.json";
+import parts from "@/generated/banner-motion.json";
 
 describe("banner motion extraction",()=>{
+  it("resolves reusable flame/orbit geometry through href and transitive paint references",()=>{
+    const out=animationOverlay('<svg><defs><linearGradient id="paint"><stop offset="0"/></linearGradient><path id="flame" fill="url(#paint)" d="M0 0L4 8"/></defs><g><use href="#flame"/><animateTransform attributeName="transform" type="skewX" values="0;2"/></g></svg>')!;
+    expect(out).toContain('id="flame"');
+    expect(out).toContain('id="paint"');
+    expect(out).toContain('d="M0 0L4 8"');
+  });
+  it("ships every moving shape once, with all referenced geometry and no live SVG animation",()=>{
+    const count=(svg:string)=>(svg.replace(/<defs>[\s\S]*?<\/defs>/g,"").match(/<(?:path|circle|ellipse|rect|use|polyline|polygon)\b/g)??[]).length;
+    for(const art of ["slipstream","wildfire","singularity","heatwave","cosmic-ascension"] as const) {
+      const source=readFileSync(`public/banners/${art}.anim.svg`,"utf8");
+      const layers=["motion",...parts[art]].map(role=>readFileSync(`public/banners/${art}.${role}.svg`,"utf8"));
+      expect(layers.reduce((n,s)=>n+count(s),0),art).toBe(count(source));
+      for(const layer of layers) {
+        expect(layer,art).not.toMatch(/<animate|<filter|<fe[A-Z]|\sfilter=/);
+        const ids=new Set([...layer.matchAll(/\sid="([^"]+)"/g)].map(m=>m[1]));
+        for(const ref of layer.matchAll(/url\(#([^)]+)\)|href="#([^"]+)"/g)) expect(ids.has(ref[1]??ref[2]),`${art}: ${ref[1]??ref[2]}`).toBe(true);
+      }
+    }
+  });
+  it("partitions original art without duplicating geometry, keeping opposite orbits independent",()=>{
+    const source='<svg viewBox="0 0 1240 200"><defs/><g><path id="core"/><animate attributeName="opacity" values=".5;1"/></g><g><path id="ring"/><animateTransform attributeName="transform" type="rotate" to="360 766 74"/></g><g><path id="counter"/><animateTransform attributeName="transform" type="rotate" to="-360 766 74"/></g><g><circle id="dust"/><animateTransform attributeName="transform" type="translate" to="0 -20"/></g></svg>';
+    const layers=partitionMotion(source,"cosmic-ascension");
+    expect(Object.keys(layers).sort()).toEqual(["counter","motion","orbit"]);
+    for(const [role,id] of [["motion","core"],["orbit","ring"],["counter","counter"],["motion","dust"]]) {
+      expect(layers[role]).toContain(`id="${id}"`);
+      expect(Object.values(layers).join("").split(`id="${id}"`).length-1).toBe(1);
+      expect(motionRasterSource(layers[role])).not.toMatch(/<animate|<filter/);
+    }
+  });
   it("keeps one Overdrive ring train when two SMIL phases freeze to identical poses",()=>{
     const out=motionRasterSource('<svg viewBox="0 0 1240 200"><g><ellipse cx="770" rx="3"/><ellipse cx="770" rx="3"/></g></svg>',true)!;
     expect((out.match(/<ellipse/g)??[]).length).toBe(1);

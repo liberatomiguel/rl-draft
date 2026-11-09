@@ -18,6 +18,7 @@ import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@
 import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
+import bannerMotionParts from "@/generated/banner-motion.json";
 
 /** Name + description from the copy dictionary (falls back to the id). */
 export function useCosmeticCopy() {
@@ -305,14 +306,14 @@ const TITLE_SIZE = {
   xl: "px-4 py-2 text-2xl",
 } as const;
 
-export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef | null | undefined; size?: keyof typeof TITLE_SIZE; className?: string }) {
+export function TitleTag({ title, size = "sm", className, motion = true }: { title: CosmeticDef | null | undefined; size?: keyof typeof TITLE_SIZE; className?: string; motion?: boolean }) {
   const copy = useCosmeticCopy();
   if (!title || title.kind !== "title") return null;
   const sizeClass = TITLE_SIZE[size];
   const legend = title.tier === "legend";
   const name = copy.name(title.id);
   // Legendary: tilt toward the pointer (CSS vars on the element, no state).
-  const onMove = legend
+  const onMove = legend && motion
     ? (e: React.PointerEvent<HTMLSpanElement>) => {
         if (e.pointerType !== "mouse") return;
         const el = e.currentTarget;
@@ -324,7 +325,7 @@ export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef
         el.style.setProperty("--ct-bx", `${(x * 60).toFixed(1)}%`);
       }
     : undefined;
-  const onLeave = legend
+  const onLeave = legend && motion
     ? (e: React.PointerEvent<HTMLSpanElement>) => {
         for (const v of ["--ct-ry", "--ct-rx", "--ct-bx"]) e.currentTarget.style.removeProperty(v);
       }
@@ -332,6 +333,7 @@ export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef
   return (
     <span
       className={cx("cos-title", `cos-title-${title.tier}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
+      data-motion={motion ? "full" : "still"}
       style={stopsVars(title.style.colors, title.style.glow) as React.CSSProperties}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
@@ -381,7 +383,7 @@ export function BannerSurface({
     const stop = observeLive(el);
     // Keep the motion's focal point on the artwork, even under cover-cropping
     // on a tall phone hero. Resize only; never reads layout per animation frame.
-    const origin = banner.style.art === "overdrive" ? [746, 96] : [766, 74];
+    const origin = banner.style.art === "overdrive" ? [746, 96] : banner.style.art === "singularity" ? [770, 96] : [766, 74];
     const align = () => {
       const w = el.clientWidth, h = el.clientHeight;
       const scale = Math.max(w / 1240, h / 200);
@@ -436,11 +438,12 @@ export function BannerSurface({
       {motion && bannerMotionLayerSrc(banner.style.art, displayPx) ? <>
         {/* Static pre-rendered texture; only CSS transform/opacity animate. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cos-anim" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {banner.style.art === "cosmic-ascension" ? <img className="cos-anim cos-orbit" src={bannerArtSrc(`${banner.style.art}.orbit`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} /> : null}
+        <img className="cos-anim cos-motion" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
+        {(bannerMotionParts[banner.style.art as keyof typeof bannerMotionParts] ?? []).map(role =>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={role} className={`cos-anim cos-${role}`} src={bannerArtSrc(`${banner.style.art}.${role}`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />)}
       </> : null}
-      {motion && (legend || banner.tier === "epic") ? <span className="cos-prestige" aria-hidden /> : null}
+      {motion && (legend || banner.tier === "epic") && !(bannerMotionParts[banner.style.art as keyof typeof bannerMotionParts] ?? []).length ? <span className="cos-prestige" aria-hidden /> : null}
       <span className="cos-frame" aria-hidden />
       {children}
     </div>

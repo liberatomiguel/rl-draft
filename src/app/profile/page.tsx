@@ -511,14 +511,14 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
   const max = Math.max(...values);
   const span = Math.max(1, max - min);
   const w = 300;
-  const h = 44;
+  const h = 80;
   const x = (i: number) => (i / Math.max(1, values.length - 1)) * w;
   const y = (v: number) => h - 5 - ((v - min) / span) * (h - 10);
   const d = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   const last = points[points.length - 1];
   return (
     <div className="flex items-end gap-3">
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-11 min-w-0 flex-1" preserveAspectRatio="none" aria-hidden>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-20 min-w-0 flex-1" preserveAspectRatio="none" aria-hidden>
         <defs>
           <linearGradient id="rating-fill" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor="#f97316" stopOpacity="0.35" />

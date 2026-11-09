@@ -21,7 +21,7 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
-import { animationOverlay, staticMotionBase, motionRasterSource, splitOrbit } from "./lib/banner-animation.mjs";
+import { animationOverlay, staticMotionBase, motionRasterSource, partitionMotion } from "./lib/banner-animation.mjs";
 
 const SRC = "data-sources/banners/banners-rocket-draft.html";
 const OUT = "public/banners";
@@ -50,12 +50,11 @@ for (const b of BANNERS) {
 
 // --- Animated overlay (rc.23) ------------------------------------------------
 // The design file animates sparkles, dust, flames and rings with SMIL. The
-// profile hero shows that life as a SECOND layer over the WebP: a small SVG
-// holding ONLY the elements that animate (with their ancestors and the
-// gradients / clips they reference), every filter stripped — so nothing in the
-// browser ever runs turbulence, displacement or blur. Everything static stays
-// in the raster. A banner with no animation gets no overlay.
+// Keep authoring overlays, then freeze their painted subtrees as transparent
+// textures. Production uses WebP planes animated by CSS transform/opacity only;
+// reusable href geometry, paint servers and clips must survive extraction.
 const animated = [];
+const motionParts = {};
 for (const b of BANNERS) {
   const source = String(bannerSVG(b.key, { frame: false, animated: true }));
   const overlay = animationOverlay(source);
@@ -63,12 +62,14 @@ for (const b of BANNERS) {
   if (/<filter|<feTurbulence|<feGaussianBlur|filter=/.test(overlay)) throw new Error(`${b.key}: a filter survived in the overlay`);
   writeFileSync(join(OUT, `${b.key}.anim.svg`), `${overlay}\n`);
   writeFileSync(join(OUT, `${b.key}.base.svg`), `${staticMotionBase(source)}\n`);
-  writeFileSync(join(OUT, `${b.key}.motion.svg`), `${motionRasterSource(b.key === "cosmic-ascension" ? splitOrbit(overlay, false) : overlay, b.key === "overdrive")}\n`);
-  if (b.key === "cosmic-ascension") writeFileSync(join(OUT, `${b.key}.orbit.svg`), `${motionRasterSource(splitOrbit(overlay, true))}\n`);
+  const layers = ["slipstream", "wildfire", "singularity", "heatwave", "cosmic-ascension"].includes(b.key) ? partitionMotion(overlay, b.key) : {motion:overlay};
+  for (const [role, layer] of Object.entries(layers)) writeFileSync(join(OUT, `${b.key}.${role}.svg`), `${motionRasterSource(layer, b.key === "overdrive")}\n`);
+  motionParts[b.key] = Object.keys(layers).filter(role => role !== "motion");
   animated.push([b.key, overlay.length]);
 }
 mkdirSync("src/generated", { recursive: true });
 writeFileSync("src/generated/banner-anim.json", `${JSON.stringify(animated.map(([k]) => k).sort(), null, 2)}\n`);
+writeFileSync("src/generated/banner-motion.json", `${JSON.stringify(motionParts, null, 2)}\n`);
 console.log(`animated overlays: ${animated.map(([k, n]) => `${k} (${(n / 1024).toFixed(0)} KB)`).join(", ")}`);
 
 // Every art key the catalog references must exist.

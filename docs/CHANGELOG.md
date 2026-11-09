@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.19**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.20**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,28 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Fixed / Changed — rc.36.20, compact rewards and restored banner motion
+- Login uses smaller calendar cells and previews, visual XP tokens, actual
+  titles and collected checks. Remove cosmetic-name captions and the oversized
+  final-day row; keep the current day in view and XP credited today pinned.
+- Remove the Challenges format selector/fixed-seed toolbar. Make lock overlays
+  translucent; rank stays on the crest and briefing, while Unlock Path lists
+  only prerequisites and milestones. Preserve deterministic seeds and guards.
+- Remove rank-preview instructions, repeated reward names/rarities and timing
+  prose. Show actual titles both on the progression line and selected preview.
+  Compact the selected reward panel; rating history grows from 44px to 80px.
+- Restore reusable flame/orbit geometry in banner motion extraction. Root cause:
+  reference traversal followed url(#id), but omitted href="#id" dependencies.
+  Regression tests cover transitive references and each painted shape appearing
+  exactly once across exported motion planes.
+- Slipstream streaks and Wildfire embers have independent phases; Singularity
+  separates gravitational pulse, tilt and dust; Heatwave separates wave rhythms;
+  Cosmic Ascension separates opposite orbits, sparks and radiance. Production
+  remains raster WebP plus composited transform/opacity, with offscreen pausing
+  and reduced-effects fallbacks. Overdrive still has one deduplicated ring train.
+- UI/art only: no gameplay, rewards, unlock conditions, persistence, balance or
+  career changes. Validation: UI-REVIEW-rc36-20.md.
 
 ### Changed — rc.36.19, visual reward hierarchy
 - Locked Challenges show a rank crest, lock, status and numeric milestone bars

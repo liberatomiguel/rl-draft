@@ -153,7 +153,6 @@ export function ChallengesView() {
   const starsMax = ordered.reduce((n, c) => n + starsAvailable(c), 0);
 
   const [active, setActive] = useState<Challenge | null>(null);
-  const [format, setFormat] = useState("all");
   // rc.33 (COL-02c): NEW = opened to the player, briefing not read yet. Reading
   // the briefing is opening the content; visiting this page marks nothing.
   const fresh = useProfileNew();
@@ -167,7 +166,7 @@ export function ChallengesView() {
   const TIER_ORDER = ["common", "rare", "epic", "legend"] as const;
   const sections = TIER_ORDER.map((tier) => ({
     tier,
-    items: ordered.filter((c) => c.tier === tier && (format === "all" || (c.kind ?? "boss") === format)),
+    items: ordered.filter((c) => c.tier === tier),
   })).filter((s) => s.items.length > 0);
 
   return (
@@ -181,15 +180,6 @@ export function ChallengesView() {
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
       <p className="mb-5 max-w-2xl text-xs leading-relaxed text-sub">{CH.unlockHint}</p>
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-sub">
-          {CH.formatLabel}
-          <select aria-label={CH.formatLabel} value={format} onChange={e => setFormat(e.target.value)} className="rounded-lg border border-line bg-bg px-3 py-2 text-ink">
-            {Object.entries(CH.formats).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-          </select>
-        </label>
-        <span className="text-xs text-faint">{CH.fixedSeedHint}</span>
-      </div>
       {modeLocked ? (
         <Panel className="p-8 text-center">
           <p className="display text-lg font-bold uppercase tracking-wide text-ink">{CH.modeLockedTitle}</p>
@@ -320,32 +310,31 @@ function ChallengeCard({
     <button
       type="button"
       onClick={onOpen}
+      aria-label={locked ? `${CH.catalog[ch.id]?.title ?? ch.title} · ${CH.status.locked} · ${rankLabel(ch.rankRequired)}` : undefined}
       className={cx(
         "panel relative overflow-hidden p-4 text-left transition-colors hover:!border-line-strong",
         cleared ? "!border-amber-300/40" : locked ? "!bg-raised min-h-[23rem]" : style.glow,
         cleared && style.legend && "ach-legend",
       )}
     >
-      <div aria-hidden={locked || undefined} className={locked ? "opacity-25" : undefined}>{inner}</div>
-      {locked ? <div className="challenge-lock absolute inset-0 flex items-center justify-center p-4 backdrop-blur-[2px]"><div className="w-full"><div className="mb-2 flex items-center justify-center gap-3"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-11 !w-11" /><div className="text-left"><p className="text-[10px] font-bold uppercase tracking-widest text-orange-bright">{CH.status.locked}</p><p className="display text-lg font-bold text-ink">{rankLabel(ch.rankRequired)}</p></div><svg className="h-5 w-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div><p className="text-center text-sm font-bold text-ink">{CH.catalog[ch.id]?.title ?? ch.title}</p><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
+      <div aria-hidden={locked || undefined} className={locked ? "opacity-70" : undefined}>{inner}</div>
+      {locked ? <div className="challenge-lock absolute inset-0 flex items-center justify-center p-4"><div className="w-full"><div className="challenge-lock-heading mx-auto mb-2 flex w-fit items-center justify-center gap-3 rounded-xl px-3 py-2"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-11 !w-11" /><div className="text-left"><p className="text-[10px] font-bold uppercase tracking-widest text-orange-bright">{CH.status.locked}</p><p className="display text-lg font-bold text-ink">{rankLabel(ch.rankRequired)}</p></div><svg className="h-5 w-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
     </button>
   );
 }
 
 function UnlockPath({ challenge: ch, CH, compact }: { challenge: Challenge; CH: ReturnType<typeof useCopy>["CHALLENGES_UI"]; compact?: boolean }) {
-  const xp = useProfileStore(s => s.xp);
   const completed = useProfileStore(s => s.challengesCompleted);
   const challengeStars = useProfileStore(s => s.challengeStars);
   const careerMarks = useProfileStore(s => s.careerMarks);
   const quizSolved = useProfileStore(s => s.quiz.solved);
-  const rankMet = RANKS.findIndex(r => r.id === rankForXp(xp).id) >= RANKS.findIndex(r => r.id === ch.rankRequired);
+  if (!ch.prereq && !ch.unlock) return null;
   const row = (text: string, met: boolean, progress?: string) => <span className={cx("flex items-start gap-1.5 text-xs leading-relaxed", met ? "text-good" : "text-sub")}><span aria-hidden>{met ? "✓" : "○"}</span><span className="min-w-0 flex-1">{text}</span>{progress ? <span className="shrink-0 font-mono text-[10px]">{progress}</span> : null}</span>;
   return <div className={cx("mt-3 rounded-lg border border-line-strong bg-bg/80 p-3", !compact && "mb-4")}>
     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-ink">{CH.unlockTitle}</p>
     <div className="space-y-1.5">
-      <div className="flex items-center gap-2">{!compact ? <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-6 !w-6" /> : null}{row(CH.unlocksAt(rankLabel(ch.rankRequired)), rankMet)}</div>
       {ch.prereq ? row(CH.clearPrereq(CH.catalog[ch.prereq]?.title ?? challengeById.get(ch.prereq)?.title ?? ch.prereq), !!completed[ch.prereq]) : null}
-      {ch.unlock ? <div className="border-t border-line pt-2">
+      {ch.unlock ? <div className={ch.prereq ? "border-t border-line pt-2" : undefined}>
         {ch.unlock.anyOf.length > 1 ? <p className="mb-1.5 text-[11px] text-sub">{CH.unlockAny}</p> : null}
         {ch.unlock.anyOf.map((condition, i) => {
           const p = challengeUnlockProgress(condition, completed, { challengeStars, careerMarks, quizSolved });
@@ -401,6 +390,7 @@ function BriefingModal({
       }
     >
       <p className="leading-relaxed text-sub">{CH.catalog[challenge.id]?.brief ?? challenge.brief}</p>
+      {locked ? <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-ink"><RankBadge rank={rankInfo(challenge.rankRequired)} variant="menu" size="sm" className="!h-7 !w-7" />{rankLabel(challenge.rankRequired)}</div> : null}
       {locked ? <UnlockPath challenge={challenge} CH={CH} /> : null}
 
       {/* Stars (v2.0) */}
