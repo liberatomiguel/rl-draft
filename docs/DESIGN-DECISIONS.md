@@ -1927,3 +1927,13 @@ Unique would incorrectly imply a one-of-one item. The existing `exclusive`
 boolean still controls ownership visibility and also applies to legacy items
 of other rarities. Rank-up celebrates the rank and existing unlock text; each
 cosmetic retains its subsequent individual unlock ceremony.
+
+
+### rc.38.1 clarification — rarity metadata versus title art
+
+Miguel clarified that creating Exclusive must preserve manual titles' original
+stroke, gradient, glow and sweep. Render these titles with the existing Epic
+art treatment, preserving their individual palettes; use cyan only for rarity
+identification (labels, list rings, ceremony accents). 50/50 Staff is white.
+The rank-up header/emblem belongs on the dark backdrop outside the lower card.
+Open cosmetic follow-ups live in PENDING-COSMETICS.md and STATUS links to them.

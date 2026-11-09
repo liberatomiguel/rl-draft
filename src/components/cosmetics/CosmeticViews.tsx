@@ -45,7 +45,7 @@ export const TIER_ACCENT: Record<CosmeticTier, string> = {
   uncommon: "#9fe3b8",
   rare: "#60a5fa",
   epic: "#c084fc",
-  exclusive: "#f0abfc",
+  exclusive: "#22d3ee",
   legend: "#fcd34d",
 };
 
@@ -54,7 +54,7 @@ export const TIER_RING: Record<CosmeticTier, string> = {
   uncommon: "border-emerald-300/35",
   rare: "border-blue/40",
   epic: "border-violet-400/45",
-  exclusive: "border-fuchsia-300/60",
+  exclusive: "border-cyan-300/60",
   legend: "border-amber-300/50",
 };
 
@@ -152,7 +152,7 @@ export function BadgeEmblem({
     return observeLive(ref.current);
   }, [live]);
   if (badge.kind !== "badge") return null;
-  if (badge.style.pendingArt && !hasBadgeArt(badge.style.art)) return <span role="img" aria-label={copy.name(badge.id)} className={cx("inline-flex shrink-0 items-center justify-center rounded-lg border border-fuchsia-300/60 bg-fuchsia-300/10 font-bold text-fuchsia-200", className)} style={{ width: basePx, height: basePx, fontSize: Math.max(8, basePx / 4) }}>50/50</span>;
+  if (badge.style.pendingArt && !hasBadgeArt(badge.style.art)) return <span role="img" aria-label={copy.name(badge.id)} className={cx("inline-flex shrink-0 items-center justify-center rounded-lg border border-white/60 bg-white/10 font-bold text-white", className)} style={{ width: basePx, height: basePx, fontSize: Math.max(8, basePx / 4) }}>50/50</span>;
   const src = badgeArtSrc(badge.style.art, px);
   // Move the useful opaque silhouette onto the box centre. Translucent glow
   // and ornament weight must not pull the badge away from neighbouring art.
@@ -314,6 +314,8 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
   const copy = useCosmeticCopy();
   if (!title || title.kind !== "title") return null;
   const sizeClass = TITLE_SIZE[size];
+  // Manual titles retain their original Epic art treatment; rarity is metadata.
+  const treatment = title.tier === "exclusive" ? "epic" : title.tier;
   const legend = title.tier === "legend";
   const name = copy.name(title.id);
   // Legendary: tilt toward the pointer (CSS vars on the element, no state).
@@ -336,7 +338,7 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
     : undefined;
   return (
     <span
-      className={cx("cos-title", `cos-title-${title.tier}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
+      className={cx("cos-title", `cos-title-${treatment}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
       data-motion={motion ? "full" : "still"}
       style={stopsVars(title.style.colors, title.style.glow) as React.CSSProperties}
       onPointerMove={onMove}

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.1**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,24 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed / Fixed — rc.38.1 (2026-11-09), visual review follow-up
+
+- **Fixed (root cause):** rc.38 selected a new title CSS class for Exclusive,
+  unintentionally replacing the original manual titles' stroke, gradient,
+  glow and sweep. Exclusive is rarity metadata; its titles now reuse their
+  original Epic art treatment and their existing individual colours/effects.
+- **Changed:** Exclusive rarity labels/list rings/ceremony accents use cyan,
+  distinct from Epic violet. This does not recolour the titles themselves.
+  50/50 Staff title and pending-art text fallback are white.
+- **Changed:** rank-up emblem and rank transition sit directly on the dark
+  backdrop; only the lower unlock list / Continue area has a card. Existing
+  unlock text and the later individual cosmetic ceremony are preserved.
+- **Validation:** full suite 2117 passed / 28 skipped; typecheck and lint clean.
+- **Docs:** durable checklist in `PENDING-COSMETICS.md`, linked from STATUS:
+  unapplied staging Supabase grant SQL, future Staff art, missing special-card
+  photos, unlock-copy decisions and suggestions awaiting selection. No new
+  reward proposals implemented. No screenshots requested or generated.
 
 ### Added / Changed / Fixed — rc.38 (2026-11-09), cosmetic review
 

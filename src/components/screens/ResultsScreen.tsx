@@ -865,11 +865,18 @@ export function RankUpCelebration({
 
   const previous = RANKS.findIndex(r => r.id === prevRankId);
   return <CeremonyPortal ariaLabel={R.rankUpTitle} className="bg-black/90" onClick={onDone}>
-    <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-orange/40 bg-[radial-gradient(ellipse_at_top,#f9731626,transparent_65%)] bg-raised p-5 shadow-[0_0_80px_#f9731618] sm:p-8" onClick={e=>e.stopPropagation()}>
-      <p className="kicker text-center">{R.rankUpTitle}</p>
-      <div className="my-7 flex flex-col items-center justify-center gap-4 text-center"><RankBadge rank={rank} variant="menu" size="lg" /><div><p className="text-sm text-sub">{RANKS[previous]?.label} →</p><p className="display text-3xl font-bold text-orange-bright">{rank.label}</p></div></div>
-      {unlocks.length ? <section className="rounded-xl border border-line bg-bg p-4"><p className="mb-3 text-xs font-semibold text-sub">{R.rankUpUnlocked}</p><ul className="space-y-3">{unlocks.map(u=><li key={u} className="flex items-start gap-3 text-sm text-ink"><span className="text-good" aria-hidden>✓</span><span>{u}</span></li>)}</ul></section> : null}
-      <Button variant="primary" full size="lg" className="mt-5" onClick={onDone}>{R.ceremonyContinue}</Button>
+    <div className="w-full max-w-lg" onClick={e=>e.stopPropagation()}>
+      <header className="mb-7 text-center">
+        <p className="kicker">{R.rankUpTitle}</p>
+        <div className="mt-7 flex flex-col items-center justify-center gap-4">
+          <RankBadge rank={rank} variant="menu" size="lg" />
+          <div><p className="text-sm text-sub">{RANKS[previous]?.label} →</p><p className="display text-3xl font-bold text-orange-bright">{rank.label}</p></div>
+        </div>
+      </header>
+      <div className="rounded-2xl border border-orange/40 bg-raised p-5 shadow-[0_0_60px_#f9731612] sm:p-7">
+        {unlocks.length ? <section><p className="mb-3 text-xs font-semibold text-sub">{R.rankUpUnlocked}</p><ul className="space-y-3">{unlocks.map(u=><li key={u} className="flex items-start gap-3 text-sm text-ink"><span className="text-good" aria-hidden>✓</span><span>{u}</span></li>)}</ul></section> : null}
+        <Button variant="primary" full size="lg" className={unlocks.length ? "mt-5" : undefined} onClick={onDone}>{R.ceremonyContinue}</Button>
+      </div>
     </div>
   </CeremonyPortal>;
 }

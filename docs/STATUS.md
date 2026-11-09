@@ -7,7 +7,7 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.38** = rc.37 plus cosmetic / reward
+- Season 1 candidate: staging, **v2.0.0-rc.38.1** = rc.37 plus cosmetic / reward
   presentation corrections (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
   SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
   analytics/accounts off in the isolated QA export.
@@ -34,10 +34,10 @@
 - BALANCE_VERSION **15**: rc.36.16's daily-only calibration plus the rc.37
   career tunables (both sides had bumped to 14). Saves additive only; persist
   keys/versions frozen.
-- Merge gates: typecheck and lint clean; full suite 2099 passed /
-  28 skipped (165 files), plus 15 passed in the added visibility matrix; static
-  export with staging flags OK (all 1073 image URLs). Local real-flow captures
-  cover login, hidden/visible special, reveal, season track, rank-up and locker.
+- Merge gates (rc.38.1): typecheck and lint clean; full suite 2117 passed /
+  28 skipped (167 files), including visibility and manual-title appearance
+  regressions. Staging export validated (all 1073 image URLs). rc.38 real-flow
+  captures remain historical evidence; no new captures requested for rc.38.1.
 
 ## Open, in order
 
@@ -56,6 +56,10 @@
    (05/11 decisions 15–16).
 5. Refresh the reviewed daily calendar before November 2027 or after data or
    rule changes; the replay suite guards the reviewed dates.
+
+6. Cosmetic follow-ups: **PENDING-COSMETICS.md** — staging SQL for Staff,
+   user-supplied Staff art, 21 missing special photos, unlock-copy decisions
+   and proposed rewards. None are completed by publishing the UI changes.
 
 ## Standing contracts
 

@@ -88,7 +88,10 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
 
   it("the manual-grant colours are reserved: no other title uses them", () => {
     const reserved = new Set(
-      Object.values(GRANT_COLORS)
+      Object.entries(GRANT_COLORS)
+        // Staff is intentionally white; white is not a reserved brand colour.
+        .filter(([id]) => id !== "50-50-staff")
+        .map(([, style]) => style)
         .flatMap((g) => [...g.colors, g.glow])
         .map((c) => c.toLowerCase()),
     );

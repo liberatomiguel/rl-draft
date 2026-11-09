@@ -154,12 +154,12 @@ export const WHITE_GOLD: Stops = ["#ffffff", "#fff4d6", "#ffe6f3"];
 const GOLD: Stops = ["#ffeb5c", "#fff3a0"];
 const GOLD_GLOW = "#ffa300";
 
-/** Reserved manual-grant colours (unique; no other title may use them). */
+/** Reserved manual-grant colours; Staff's requested white is the exception. */
 export const GRANT_COLORS: Record<GrantId, { colors: Stops; glow: string }> = {
   "early-supporter": { colors: ["#ff9ec0", "#ffd1e1"], glow: "#ff4d8d" }, // rose, a tone off the supporter's
   supporter: { colors: ["#e8356d", "#ff7aa2"], glow: "#e8356d" }, // raspberry
   contributor: { colors: ["#19d290", "#7ef0c0"], glow: "#00d1d1" }, // emerald / teal
-  "50-50-staff": { colors: ["#ffb86c", "#ffe0b2"], glow: "#ffb86c" },
+  "50-50-staff": { colors: ["#ffffff"], glow: "#ffffff" },
   pro: { colors: ["#aef7ff", "#e0fbff"], glow: "#43afff" }, // ice / sky
 };
 
