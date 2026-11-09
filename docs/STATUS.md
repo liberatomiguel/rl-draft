@@ -7,8 +7,8 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.38.1** = rc.37 plus cosmetic / reward
-  presentation corrections (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
+- Season 1 candidate: staging, **v2.0.0-rc.38.2** = rc.37 plus cosmetic / reward
+  presentation corrections and draft header ordering (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
   SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
   analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
@@ -38,6 +38,8 @@
   28 skipped (167 files), including visibility and manual-title appearance
   regressions. Staging export validated (all 1073 image URLs). rc.38 real-flow
   captures remain historical evidence; no new captures requested for rc.38.1.
+- UI rc.38.2: 3 existing season-header tests, typecheck, lint and staging
+  export passed; no new captures. Engine/balance unchanged.
 
 ## Open, in order
 

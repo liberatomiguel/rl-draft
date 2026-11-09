@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.1**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.2**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,18 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.38.2 (2026-11-09), draft header
+
+- Season edition now sits next to the team name in the draft offer header,
+  at 14px on mobile / 16px on desktop, retaining its edition colour, year
+  deduplication and 2027 NEW marker. Region moves to the secondary row where
+  the season used to appear; national-team identification stays on that row.
+- The shared offer header covers Classic, Quick, Daily and authored Challenges.
+  Keep season/region hidden during the spinning reel as before; no game rules,
+  data, cosmetic grants or persistence contracts changed. No new captures.
+- **Validation:** existing season badge tests (3), typecheck, lint and staging
+  export passed, including the data and persist-contract prebuild checks.
 
 ### Changed / Fixed — rc.38.1 (2026-11-09), visual review follow-up
 
