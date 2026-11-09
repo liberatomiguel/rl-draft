@@ -2195,6 +2195,16 @@ export const CAREER_RENEWAL_TENURE = {
    * min(premiumMax, premiumStackCap / repPremium).
    */
   premiumStackCap: 2.2,
+  /**
+   * rc.37 F6 (experiment lever, off): a VALUE floor the jump never caps — a
+   * renewal never prices below this share of his core fresh ask, by his
+   * renewalCount at the club (index 0 = his first renewal, the last entry for
+   * every later one). The rc.37 floor above (renewalMarketFloor 0.6) is held
+   * at maxJump × his wage, so a developed wonderkid renews at 2–5 % of his
+   * market ask (battery 06/11, RELATORIO-COMPLETO Parte 7). 0 everywhere =
+   * rc.37's rule exactly.
+   */
+  valueFloorByRenewal: [0, 0, 0] as readonly number[],
 } as const;
 
 export const CAREER_SPONSOR = {

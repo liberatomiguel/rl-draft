@@ -148,6 +148,10 @@ export function renewalTermsFor(
   const fullFloor = quantize(core * ladder.floorShare);
   const jumpCap = quantize(oldWage * ladder.maxJump);
   const marketFloor = Math.min(fullFloor, Math.max(jumpCap, raiseCap));
+  // rc.37 F6: the value floor — a share of his core ask by renewal count that the jump never caps (0 = off).
+  const vf = R.valueFloorByRenewal;
+  const valueShare = vf.length > 0 ? vf[Math.min(player.renewalCount ?? 0, vf.length - 1)] : 0;
+  const valueFloor = valueShare > 0 ? quantize(core * valueShare) : 0;
   const titlePremium = titlePremiumFor(ctx.titles);
   const withTitles = (x: number) => (titlePremium > 0 ? quantize(x * (1 + titlePremium)) : x);
   // rc.37 (F1): the top's extremes — the premium stack, alone and with his rep premium, is capped.
@@ -171,10 +175,18 @@ export function renewalTermsFor(
       ...extra,
     };
   }
-  const bounded = Math.max(raiseCap, marketFloor);
+  const bounded = Math.max(raiseCap, marketFloor, valueFloor);
   const ruled = Math.min(core, bounded);
   const bound: RenewalTerms["bound"] =
-    ruled >= core ? "fresh" : raiseCap >= marketFloor ? "cap" : marketFloor < fullFloor ? "jump" : "floor";
+    ruled >= core
+      ? "fresh"
+      : valueFloor > Math.max(raiseCap, marketFloor)
+        ? "floor"
+        : raiseCap >= marketFloor
+          ? "cap"
+          : marketFloor < fullFloor
+            ? "jump"
+            : "floor";
   const surcharge = refused ? S.blockbusterRefusalRenewalMult : 1;
   // Under the cap his fresh ask stands (both surcharges already in it);
   // otherwise the bound, with the ambition premium and the Blockbuster
