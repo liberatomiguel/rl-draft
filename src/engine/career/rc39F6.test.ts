@@ -42,22 +42,22 @@ describe("R102 — chemistry grows with time together up to 100 %; heritage is o
     expect(prev).toBe(100);
   });
 
-  it("heritage never counts past a full pair: one same-country pair does not cover a new pair", () => {
-    // Two compatriots long together + a newcomer from elsewhere, no grace (he has his own tenure 0).
+  it("heritage never counts past a full pair, and a newcomer inherits the fast phase only", () => {
+    // Two compatriots long together + a newcomer from elsewhere: his pairs start at rc.38's ceiling.
     const veterans = [player("a", 20, "EU", "FR"), player("b", 20, "EU", "FR")];
     const chem = careerChemistry([...veterans, player("c", 0, "NA")]);
-    const grace = Math.min(C.connMaxPerPair, 20 * C.newcomerGraceFactor * C.connPerSplitTogether);
-    const graceBond = Math.max(0, 20 * C.newcomerGraceFactor - C.connMaxPerPair / C.connPerSplitTogether) * C.bondPerSplitTogether;
-    const newPair = Math.min(C.maxRawPerPair, grace + graceBond);
-    expect(chem.raw).toBeCloseTo(C.maxRawPerPair + 2 * newPair, 9);
+    expect(chem.raw).toBeCloseTo(C.maxRawPerPair + 2 * C.connMaxPerPair, 9);
+    // ...and from there he bonds like anyone else.
+    const later = careerChemistry([...veterans, player("c", 4, "NA")]);
+    expect(later.raw).toBeCloseTo(C.maxRawPerPair + 2 * (C.connMaxPerPair + (4 - fastTenure) * C.bondPerSplitTogether), 9);
   });
 
   it("swapping a starter of a long-standing core now costs chemistry (rc.38: none once the core was old)", () => {
     const core = [player("a", 12, "EU"), player("b", 12, "NA"), player("c", 12, "SAM")];
     const swapped = [core[0], core[1], player("d", 0, "OCE")];
     expect(careerChemistry(core).percent).toBe(100);
-    expect(careerChemistry(swapped).percent).toBeLessThan(90);
-    expect(careerChemistry(swapped).percent).toBeGreaterThanOrEqual(67);
+    // One new face: 100 % → 78 % (his two pairs at the fast-phase ceiling), then back up with time.
+    expect(careerChemistry(swapped).percent).toBe(78);
   });
 });
 

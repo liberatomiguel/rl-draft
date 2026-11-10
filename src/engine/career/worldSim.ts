@@ -566,7 +566,12 @@ export function careerChemistry(fielded: SquadPlayer[]): {
       if (tenure > maxTenure) maxTenure = tenure;
     }
   }
-  const graceTenure = maxTenure * C.newcomerGraceFactor;
+  // rc.39 F6 (R102): the grace covers the fast phase only — a newcomer inherits the structure
+  // (up to rc.38's ceiling for his pairs), never the bond the others built match by match.
+  const graceTenure =
+    C.bondPerSplitTogether > 0
+      ? Math.min(maxTenure * C.newcomerGraceFactor, C.connMaxPerPair / C.connPerSplitTogether)
+      : maxTenure * C.newcomerGraceFactor;
 
   let raw = 0;
   for (const [i, j, tenure] of pairsIdx) {
