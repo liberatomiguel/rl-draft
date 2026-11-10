@@ -387,7 +387,32 @@ oito dígitos e a IA da era infinita não acompanha.
   que o craque quer aceitar); (c) um teto suave pela folha (o prêmio de título na renovação já existe, mas
   com caixa de 8–12M ele não pesa).
 
-ADIM_PLACEHOLDER
+### A-dim. As outras fontes da vantagem dos jovens, uma de cada vez
+
+Normal · 7 regiões × 3 elencos · seed 9100 · `academy` e `prospectsOnly` · 42 carreiras por braço, cada
+braço com **uma** mudança só (a retenção já foi medida no E1).
+
+- **A-INFO, informação de potencial** (faixa visível sem relatório 5 → 12 pontos, topo até 5 acima do real):
+  **não medido.** Com a faixa larga, a busca de mercado do bot da academia fica ~15× mais lenta e uma
+  carreira por shard estourou o orçamento de 10 min ainda na S1–S2 (carreiras truncadas). Encerrei o braço.
+  Como a faixa estreita é decisão do Miguel (DEV-04, 30/10), a informação fica como está. Se for preciso
+  medir depois, a forma mais barata é cobrar para ver a faixa (custo do relatório), não alargá-la.
+
+- **A-HIRE, preço de contratar talentos** (`CAREER_TALENT.upsideTiers` ×1,5 por ponto de alcance): jovens
+  **52% → 40%** (−6 / +1; `academy` 57% → 38%, `prospectsOnly` 48% → 43%), alcance do Worlds igual (76%),
+  caixa igual. Contratar promessas barato explica cerca de um quarto da vantagem.
+- **A-GROW, crescimento** (`CAREER_AGE.growthMult` u16 1,5 → 1,30, 17–18 1,25 → 1,12, a proposta T2 do
+  relatório): resultado **idêntico ao controle** em todas as 42 carreiras. O parâmetro não chega ao
+  desenvolvimento do usuário: no modelo de crescimento atual (contrato de crescimento, modelo 2+), o jogador
+  sobe pelo ritmo até o potencial na idade de pico (`contractPacePerWeek`, limitado por
+  `CAREER_DEV.seasonGainCap` = 7 por temporada). `growthMult` só vale para o modelo antigo (rc.31) e para os
+  jogadores da IA. **Correção ao relatório:** a T2 não teria efeito. Se um dia for preciso frear os jovens, a
+  alavanca certa é o ritmo do contrato (por exemplo, `seasonGainCap` 7 → 6), não `growthMult`.
+
+**Decomposição da vantagem dos jovens (Normal, título do Worlds 52%, uma mudança por vez):** retenção barata
+(J4) −21 pp · contratação barata (A-HIRE) −12 pp · informação de potencial: não medida · crescimento: a
+alavanca do relatório não age. O resto é o próprio desenvolvimento (o jovem chega ao potencial), que é o
+que o Miguel quer preservar.
 
 ---
 
@@ -406,8 +431,10 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
 | F1 | Telemetria da bateria corrigida | qualifier com `advanced`; `prompts` = plano escolhido | — | nenhum (ferramenta de teste) |
 
 **Manter (não mexer agora)**
-- Crescimento dos jovens (`CAREER_AGE.growthMult`): com A1 + B1, os jovens já ficam a 1,6× do melhor
-  não-jovem. Medição separada no item A-dim (abaixo).
+- Crescimento dos jovens: com A1 + B1 os jovens já ficam a 1,6× do melhor não-jovem, e a alavanca do
+  relatório (`growthMult`) nem age no modelo atual (A-dim). Fica como está.
+- Em reserva, se a confirmação mostrar os jovens acima de 2× o melhor não-jovem: talentos mais caros de
+  contratar (`CAREER_TALENT.upsideTiers` ×1,5; sozinho, jovens 52% → 40%).
 - Faixa de potencial visível (DEV-04, decisão do Miguel em 30/10): medição só informativa (A-INFO).
 - Receitas e prêmios: o P1 manteve o título geral e baixou a falência **sem** mexer em receita.
 - Dificuldade geral da S1–S2: o excesso de facilidade inicial é regional (C1), não global.
@@ -421,10 +448,11 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
   sobe.
 - Teto de contratação mais alto (E2-CAP): nenhum efeito em título.
 - Cena regional de SSA a +2,5 sozinha: forte demais (SSA abaixo de APAC e OCE).
+- Defesa de título por rating no Worlds: +0,5 não muda nada; +1,0 freia pouco (52% → 45% das temporadas)
+  e leva o campeão à falência em 8% dos casos.
 
 **Ainda precisa ser testado**
 - Dose final de C1 na combinação (P2, rodando).
-- Defesa de título na endless (E4, rodando).
 - Química por convivência: dar fôlego a "manter o elenco" (`homegrown` é quem perde com C1). Precisa de uma
   alavanca de duas inclinações (até 67% como hoje, depois devagar até 100%) e de contrapartida, porque 67% →
   100% vale +0,67 de rating.
@@ -441,7 +469,9 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
 3. **Meta da temporada depois de um título mundial:** o campeão deixa de perder reputação no fechamento?
 4. **Química por convivência** com contrapartida: seguir para teste?
 5. **Elenco de 3 imune à indisponibilidade:** hoje ter reserva só traz risco. Manter assim?
-6. **Defesa de título na endless:** depende do E4.
+6. **Endless:** a dominância do campeão é estrutural (elenco ~96 contra IA ~90–93). Qual caminho de desenho
+   seguir: IA que se reforça na era infinita, assédio às estrelas de uma dinastia ou teto suave pela folha?
+   E para quem chega sem título (13% vencem depois): a curva plana basta, ou precisa de algo próprio?
 
 ---
 
