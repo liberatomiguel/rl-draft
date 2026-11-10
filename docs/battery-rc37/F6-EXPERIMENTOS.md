@@ -811,6 +811,95 @@ Normal, 28 carreiras do pacote final estendidas até a S20:
 - **Vaga de Major ou Worlds perdida por falta de reserva:** o caminho foi exercitado pelas carreiras dos
   bots sem travamento, mas não tem teste unitário próprio além do de permissão.
 
+### 7.11 Publicação (rc.39, 10/11), a leva de 2027 e a lente das regiões principais
+
+O pacote foi publicado no `staging` como **v2.0.0-rc.39** (um commit de merge; desfaz com
+`git revert -m 1`). Junto entrou a **leva de 2027** (R109): os 46 elencos de RLCS 2027 do dataset entram
+na virada para a S9 da era infinita (`CAREER_WORLD.lateIntake`).
+
+**Efeito da leva** (63 carreiras por braço, NA / EU / SAM, seed 17019, pareadas; as temporadas 1 a 7 saem
+idênticas bit a bit nas 63):
+
+| | Normal sem | Normal com | Hard sem | Hard com |
+|---|---|---|---|---|
+| Título do Worlds até a S10 | 16% | 16% | 16% | 14% |
+| Campeão na S9 / na S10 | 3% / 13% | 6% / 14% | 3% / 14% | 6% / 11% |
+| Falência | 10% | 10% | 29% | 25% |
+
+A leva é neutra: reagrupa os jogadores reais nos times de 2027 e traz 31 novos, sem endurecer o Worlds
+de forma mensurável. Os dois braços do Hard rodaram com as doses finais (química 0,10), o que fecha a
+pendência do item 7.10 para as regiões principais: 14–16% de título até a S10 (staging: 10%).
+
+**Lente do Miguel (10/11): a maioria joga em SAM, EU e NA, no Normal e no Hard, e a ideia é que dê para
+ganhar o Worlds até a S8, mais ou menos.** Com essa lente, só NA + EU + SAM (63 carreiras por célula):
+
+| | Normal staging | Normal rc.39 | Hard staging | Hard rc.39 |
+|---|---|---|---|---|
+| Título até a S8 | 3% | 2% | 2% | 2% |
+| Título até a S10 | 17% | 16% | 10% | 14% |
+| Chegou ao Worlds até a S8 | 14% | 11% | 10% | 8% |
+| Algum Major até a S8 | 14% | 17% | 11% | 14% |
+| Título até a S10, jovens / compra / outros | 56 / 0 / 4% | 50 / 0 / 4% | 33 / 0 / 0% | 44 / 0 / 4% |
+| Falência | 6% | 10% | 27% | 25% |
+
+O que isso diz, em linguagem simples:
+
+- O rc.39 **não mudou** o ritmo das regiões principais; ele já era assim no staging. As médias gerais das
+  tabelas 7.0 são puxadas pelas quatro regiões fáceis.
+- Para os bots, **vencer até a S8 nas regiões principais é raro** (1 ou 2 carreiras em 63). Os títulos
+  vêm na S9 e na S10, e quase todos do caminho de jovens.
+- A carreira típica fica com rating de time perto de 80 e na 18ª posição da região até a S7 (precisa de
+  ~97 para ganhar o Worlds). Só quem forma jovens sai desse platô: 84 na S6, 92 na S8, 97 na S10. Quem
+  compra fica em ~80 a carreira inteira, com caixa mediano abaixo de 40 mil até a S9.
+- Na EU nenhum bot chegou ao Worlds até a S8, em nenhuma das quatro células.
+- Bot não é gente: um jogador bom faz melhor que a política mecânica. Mas a distância (S10 contra a meta
+  de S8, e um só estilo vencendo) é grande demais para ser só isso.
+
+**Proposta (não aplicada; precisa de medição):** acelerar o meio da carreira só em NA / EU / SAM, sem
+mexer nas regiões fáceis, em três braços de 63 carreiras (≈ 12 min cada):
+
+1. cena regional um pouco mais fraca no qualifier e no Regional (`CAREER_REGION_FIELD.shift` −1,0 em
+   NA / EU / SAM), a mesma alavanca das regiões fáceis com o sinal trocado;
+2. renda do meio da tabela (prêmio de qualifier / Regional ou patrocínio base) para tirar o caixa dos
+   40 mil;
+3. os dois juntos, com o Hard conferido em seguida.
+
+A meta da medição seria: título até a S8 em 8–12% no Normal e 4–8% no Hard nas regiões principais, com
+compra e "outros" deixando o zero, sem passar de 10% / 25% de falência.
+
+### 7.12 rc.39.1: a leva de 2027 na primeira temporada do endless, e a meta "título entre 2026 e 2027"
+
+Correção do Miguel (10/11): "s9" queria dizer a **primeira temporada da era infinita** (S7, a que o jogo já
+chama de RLCS 2027), e a meta de ritmo é **ganhar o Worlds entre 2026 e 2027** (S6 e S7).
+`CAREER_WORLD.lateIntake.atSeasonIndex` 8 → 6, publicado como rc.39.1. **A leva não foi medida de novo
+na S7** (na S9 era neutra); as temporadas 1 a 6 não mudam.
+
+Título do Worlds acumulado, dados já existentes (seed 17019, bots; entre parênteses, carreiras):
+
+| | Easy staging | Easy rc.39 | Normal staging | Normal rc.39 | Hard staging | Hard rc.39 |
+|---|---|---|---|---|---|---|
+| **NA + EU + SAM (63)**: até 2026 (S6) | 13% (8) | 16% (10) | 0% (0) | 2% (1) | 0% (0) | 0–2% (0–1) |
+| até 2027 (S7) | 17% (11) | 16% (10) | 2% (1) | 2% (1) | 0% (0) | 0–2% (0–1) |
+| até a S10 | 35% (22) | 33% (21) | 17% (11) | 16% (10) | 10% (6) | 14–16% (9–10) |
+| chegou ao Worlds até 2027 | 38% (24) | 32% (20) | 13% (8) | 6% (4) | 6% (4) | 5% (3) |
+| **Regiões fáceis (84)**: até 2027 (S7) | 43% (36) | 57% (48) | 10% (8) | 4% (3) | 2% (2) | 4% (3) |
+| chegou ao Worlds até 2027 | 93% (78) | 92% (77) | 76% (64) | 49% (41) | 42% (35) | 31% (26) |
+| **Todas (147)**: até 2027 (S7) | 32% (47) | 39% (58) | 6% (9) | 3% (4) | 1% (2) | 2% (3) |
+
+(Hard rc.39: a faixa junta a validação a 0,15 de química e o braço das doses finais nas regiões principais.
+Na seed 9100 o staging dá, nas regiões principais, 2% até a S7 no Normal e 0% no Hard: mesma ordem.)
+
+Leitura:
+
+- **A meta 2026–2027 não é atingida pelos bots no Normal nem no Hard, e já não era no staging.** Nas
+  regiões principais é 1 carreira em 63 no Normal e zero ou uma no Hard, antes e depois.
+- **O rc.39 não piorou o título nas regiões principais**, mas menos carreiras chegam ao Worlds até 2027
+  no Normal (8 → 4 em 63).
+- **Onde o rc.39 atrasou de verdade foi nas regiões fáceis no Normal** (chegar ao Worlds até 2027:
+  76% → 49%; título: 10% → 4%). É o efeito pedido no pacote aprovado (R101), agora visto contra esta meta.
+- **No Easy a meta funciona**: 16–17% nas regiões principais e 43% → 57% nas fáceis.
+- Quem vence até 2027 fora do Easy é quase só o caminho de jovens em região fácil.
+
 ---
 
 ## 8. Propostas de desenho (não implementadas): progressão por reputação e patrocinadores simultâneos

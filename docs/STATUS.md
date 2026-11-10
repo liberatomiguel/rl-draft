@@ -7,10 +7,10 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.39** = rc.38.3 (cosmetic / reward
+- Season 1 candidate: staging, **v2.0.0-rc.39.1** = rc.38.3 (cosmetic / reward
   presentation, draft header, special photos back in drafts) plus the career's
-  F6 balance package (R100–R108, BALANCE_VERSION 16) and the RLCS 2027 wave at
-  season nine of the infinite era (R109). Career on, noindex, preview tools on,
+  F6 balance package (R100–R108, BALANCE_VERSION 16) and the RLCS 2027 wave in
+  the first infinite season (R109; rc.39.1 moved it from season nine). Career on, noindex, preview tools on,
   analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
 - rc.39 is one merge commit on `staging` (branch `claude/rc37-balance`): it is
@@ -31,7 +31,7 @@
   `rc37-cells.csv`); raw JSONL `C:/Users/Miguel/CLAUDE/rc37-battery/run1`.
   Findings: youth profiles dominate titles; Worlds reach 6 % (EU) to 93 %
   (SSA); insolvency 2 / 7 / 21 % (on target).
-- BALANCE_VERSION **16** (rc.39: the F6 career package; 15 was rc.36.16's
+- BALANCE_VERSION **17** (rc.39.1; 16 = rc.39, the F6 career package; 15 was rc.36.16's
   daily-only calibration plus the rc.37 career tunables). Saves additive only;
   persist keys/versions frozen.
 - UI rc.38–38.3: typecheck, lint, suite and staging export passed (all 1073

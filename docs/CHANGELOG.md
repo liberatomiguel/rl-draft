@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39.1**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,14 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.39.1 (2026-11-10), the 2027 wave moves to the first infinite season
+- `CAREER_WORLD.lateIntake.atSeasonIndex` 8 → **6** (R109 corrected): the RLCS 2027 lineups arrive in
+  the season the game already calls "RLCS 2027", the first of the infinite era. Root cause: rc.39 read
+  Miguel's "s9" as the ninth career season; he meant the first endless season. Seasons one to six are
+  bit-identical to rc.39; the wave now lands two seasons earlier and was **not** re-measured there (at
+  season nine it was neutral). The retirement protection is now covered by the existing anchor rule.
+- No other change. BALANCE_VERSION 16 → **17** (rc.39 was published as 16).
 
 ### Added — rc.39 (2026-11-10), the RLCS 2027 wave in the infinite era
 - **rc.39 publishes the whole F6 package to staging** (the two sections below, R100–R108,
@@ -43,8 +51,9 @@ with the root cause — that section doubles as the project's bugfix log.
 - Tests: `worldSim.test.ts` (no intake in seasons seven and eight, every org of the wave in at nine, no
   wave org gives its seat, one wave only; the anchor pass seats the rosters at that preseason only).
 - Gates: typecheck and lint clean, full suite 2129 passed / 31 skipped (170 files), career static
-  export built. The wave's effect on seasons nine and ten was still being measured at publish
-  (paired arms on NA / EU / SAM, Normal and Hard): F6-EXPERIMENTOS.md 7.11.
+  export built. Measured after publish (63 paired careers a cell, NA / EU / SAM, seed 17019): the
+  wave is neutral — Worlds titles by season ten 16 % → 16 % on Normal and 16 % → 14 % on Hard,
+  insolvency 10 % → 10 % and 29 % → 25 % (F6-EXPERIMENTOS.md 7.11, with the main-regions pace).
 
 ### Balance — rc.39 (rc.37 F6), the approved package (published to staging in rc.39; BALANCE_VERSION 16)
 - **Renewals climb in larger steps** (R100): `CAREER_SALARY.renewalMaxJump` 2.5 → **4.0**,
