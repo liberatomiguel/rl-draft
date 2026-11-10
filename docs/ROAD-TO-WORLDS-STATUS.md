@@ -4,7 +4,12 @@
 > plus the rc.37 round: F1 market, F2 finance, F3 matchday, F4a battery tooling;
 > handoffs `HANDOFF-rc37-*.md`). Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R99.
 > Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. F6
-> balancing runs on `claude/rc37-balance`. Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> balancing runs on `claude/rc37-balance` (levers off by default; triage and the
+> provisional package: `docs/battery-rc37/F6-EXPERIMENTOS.md`; experiment runner
+> `src/store/auditHumanExperiment.test.ts`). Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> Note: new careers grow on the growth contract (`contractPacePerWeek`,
+> `CAREER_DEV.seasonGainCap`); `CAREER_AGE.growthMult` only drives model 1 and the
+> AI world pass.
 
 ## Run and verify
 

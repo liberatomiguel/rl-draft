@@ -36,11 +36,16 @@
   keys/versions frozen.
 - Merge gates: typecheck and lint clean; full suite 2095 passed /
   28 skipped (165 files); static export with the staging flags OK.
+- F6 triage (09/11, `claude/rc37-balance`): ~1,250 careers paired with the
+  battery (bit-exact reproduction). Provisional package: renewal jumps ×4/×5,
+  wage curve 1.17, slower start in the easy regions; nothing applied, levers
+  off by default. Report: `docs/battery-rc37/F6-EXPERIMENTOS.md`.
 
 ## Open, in order
 
-1. **F6 balancing** on `claude/rc37-balance`: controlled experiments on the
-   measured bottlenecks (renewals first), then a package for Miguel.
+1. **F6:** Miguel approves the direction → confirmation on the 3 difficulties
+   (~500 careers, ~2 h) → validation on seed 17019 (882, ~3 h) → rc.38 on
+   staging. His six open decisions: F6-EXPERIMENTOS.md Parte 5.
 2. Miguel's review of the rc.37 handoffs' open points (`HANDOFF-rc37-*.md`:
    F1 10(a)–(g), F2 10(a)–(e), F3 in play); F5 approval before any code.
 3. Gate 2 play and ENG-03 real-save fixtures. Gate 3b progression/economy

@@ -12,7 +12,48 @@
 
 ## 0. Resumo em uma página
 
-RESUMO_PLACEHOLDER
+**O que foi feito**
+- **Integração:** `staging` = **v2.0.0-rc.37** (rc.36.21 + a rodada rc.37 + o relatório da bateria),
+  publicado; 2.095 testes, lint, tipos e export estático ok.
+- **Branch de balanceamento** `claude/rc37-balance` com a ferramenta de experimento e alavancas novas
+  **desligadas**: o jogo do branch é igual ao do `staging`.
+- **~1.250 carreiras** em 17 braços de triagem, cada uma comparada com a mesma carreira da bateria (o código
+  integrado reproduz a bateria bit a bit, então o controle não precisa ser rerodado).
+
+**O que os dados mostram**
+1. **A vantagem dos jovens tem fontes separáveis:** retenção barata (−21 pp de título no Normal com a
+   alavanca J4), contratação barata (−12 pp) e o próprio desenvolvimento. A alavanca de crescimento proposta
+   no relatório (`growthMult`) **não age** no modelo de crescimento atual.
+2. **A causa de fundo é a escala dos preços:** um craque custa mais que a receita de qualquer time na
+   S1–S10. Ninguém compra estrelas, e o mercado intermediário é inalcançável para quem não ganha.
+3. **Corrigir só a renovação deixa o jogo mais difícil sem criar caminhos.** Uma curva salarial um pouco
+   mais plana (1,20 → 1,17 por ponto) faz o "comprar prontos" funcionar e ainda baixa a falência.
+4. **Juntos (P1, Normal):** jovens 52% → 38% de título do Worlds; comprar 0% → 24%; título geral estável
+   (16% → 15%); Major 20% → 24%; falência 3% → 2%. Jovens × melhor não-jovem: **~10× → 1,6×**.
+5. **Regiões:** as fáceis chegam cedo e fracas (em SSA, 61% dos Worlds terminam no Swiss); as difíceis
+   chegam pouco e fortes. Fundadores mais fracos (a ideia do Miguel) atrasam o começo sem punir o meio da
+   carreira; um pouco de cena regional mais forte completa. Na dose do P2, o 1º Worlds de SSA e APAC passa
+   para a S3 e o alcance de APAC cai de 100% para 67%, com EU e NA intactos.
+6. **Progressão:** metade das carreiras não-jovens nunca chega ao Major (EU 97%). O gargalo é o mercado
+   intermediário, não a S1–S2.
+7. **Endless:** o campeão vence em 54% das temporadas seguintes; quem chega sem título, em 4%. A defesa de
+   título +0,5 não muda nada; +1 freia pouco e quebra 8% dos campeões. É uma questão de desenho.
+8. **Sistemas:** a psicóloga funciona (~+0,2 de rating); o coach nunca troca a preleção; "recuperar" é quase
+   sempre pior que "preparar"; a reputação negativa no Worlds é a meta da temporada; a química trava em 67%
+   por desenho. Registros da telemetria corrigidos.
+
+**Recomendação objetiva**
+- **Aplicar, depois de confirmar nas 3 dificuldades:** A1 saltos de renovação ×4/×5 · B1 curva salarial
+  1,17 · C1 regiões fáceis (fundadores e cena, dose do P2).
+- **Rejeitar:** pisos de 55/70/80% · taxa de compra mais barata · teto de reputação mais alto · defesa de
+  título +0,5.
+- **Manter:** crescimento dos jovens · faixa de potencial (DEV-04) · receitas e prêmios · dificuldade da
+  S1–S2 · EU e NA.
+- **Testar a seguir:** química por convivência (para "manter o elenco") · tabela de preleção de campeonato ·
+  reputação após título mundial · solução de desenho para a endless.
+
+**Limiar de amostras adotado:** triagem de 48–147 carreiras (8–40 min por braço), confirmação de ~500
+carreiras (~2 h) e validação de 882 (~3 h), contra 4.914 carreiras (21 h de relógio) da bateria.
 
 ---
 
@@ -349,6 +390,22 @@ Metas do relatório (mesmas 147 carreiras):
 - Nas regiões do meio, MENA e SAM sobem (33% → 43% de alcance, efeito da curva plana); EU e NA ficam iguais
   (14% e 29%), coerente com "o pool mais forte é o mais difícil".
 
+### P2. Dose regional mais forte (no pacote)
+
+Igual ao P1, com fundadores SSA −4 / APAC −3 / OCE −2 / MENA −1 e cena SSA +2,0 / APAC +1,5 / OCE +0,5.
+Só as 4 regiões fáceis (84 carreiras), comparadas com as **mesmas carreiras do P1**.
+
+| Região | Alcance do Worlds P1 → P2 | 1º Worlds p50 P1 → P2 | Título do Worlds P1 → P2 |
+|---|---|---|---|
+| SSA | 81% → 81% | S2 → **S3** | 38% → 33% |
+| APAC | 86% → **67%** | S3 → S3 | 29% → 19% |
+| OCE | 76% → 71% | S5 → S5 | 19% → 19% |
+| MENA | 43% → 52% | S6 → S7 | 10% → 24% |
+
+**Leitura:** a dose cheia tira o Worlds da S2 em SSA e traz APAC para a faixa-alvo. SSA continua alto (81%):
+na confirmação, testar a cena a +2,5. Em MENA, o fundador −1 deixa a folha inicial mais barata e, com a curva
+plana, isso vira mercado: o alcance sobe em vez de cair. Para MENA, fundador 0 é o mais coerente.
+
 ### E4. Endless: quem chegou sem vencer, e a defesa de título
 
 **E4-NC (balance atual):** 30 carreiras do Normal **sem título do Worlds até a S10** (regiões e perfis
@@ -427,7 +484,7 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
 |---|---|---|---|---|
 | A1 | Renovação: saltos maiores, sem piso de valor | `CAREER_SALARY.renewalMaxJump` 2,5 → **4,0**; `CAREER_RENEWAL_TENURE.jumpMax` 3,0 → **5,0** | jovens 52% → 31% sozinho, 38% no pacote; reajuste p90 ~6×, máximo 6,2× por renovação | só renovações futuras; o craque barato sobe por degraus, sem migração |
 | B1 | Curva salarial mais plana acima de 70 | `CAREER_SALARY.growthPerPoint` 1,20 → **1,17** | título geral 9% → 18% sozinho; `ambitious` 0% → 33%; falência 3% → 1% | contratos atuais mantidos; pedidos, valores e taxas futuros mais baratos (85 −31%, 90 −40%); venda dos próprios craques rende menos; abaixo de 70, +13% no 65; coaches não mudam (curva própria) |
-| C1 | Começo mais lento nas regiões fáceis | `CAREER_REGION_FIELD.starterOvrOffset` e `.shift` (dose final pelo P2) | P1: SSA 100% → 81%, APAC 100% → 86%; EU/NA intactos | fundadores: só carreiras novas; cena: vale já nos próximos eventos regionais de saves em SSA/APAC/OCE |
+| C1 | Começo mais lento nas regiões fáceis | `CAREER_REGION_FIELD.starterOvrOffset` 0 → **SSA −4, APAC −3, OCE −2** (MENA 0); `.shift` 0 → **SSA +2,0 a +2,5, APAC +1,5, OCE +0,5** (só qualifier e Regional) | P2 no pacote: 1º Worlds de SSA e APAC na S3 (era S2); alcance APAC 100% → 67%, SSA 100% → 81%; EU/NA intactos | fundadores: só carreiras novas; cena: vale já nos próximos eventos regionais de saves em SSA/APAC/OCE |
 | F1 | Telemetria da bateria corrigida | qualifier com `advanced`; `prompts` = plano escolhido | — | nenhum (ferramenta de teste) |
 
 **Manter (não mexer agora)**
@@ -452,7 +509,8 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
   e leva o campeão à falência em 8% dos casos.
 
 **Ainda precisa ser testado**
-- Dose final de C1 na combinação (P2, rodando).
+- Dose de SSA: na combinação, SSA ainda chega ao Worlds em 81% (alvo 55–75%); testar cena +2,5 na
+  confirmação.
 - Química por convivência: dar fôlego a "manter o elenco" (`homegrown` é quem perde com C1). Precisa de uma
   alavanca de duas inclinações (até 67% como hoje, depois devagar até 100%) e de contrapartida, porque 67% →
   100% vale +0,67 de rating.
