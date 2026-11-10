@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
-import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
+import { BADGE_GLOW_PAD, hasBadgeArt, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import bannerMotionParts from "@/generated/banner-motion.json";
@@ -45,6 +45,7 @@ export const TIER_ACCENT: Record<CosmeticTier, string> = {
   uncommon: "#9fe3b8",
   rare: "#60a5fa",
   epic: "#c084fc",
+  exclusive: "#22d3ee",
   legend: "#fcd34d",
 };
 
@@ -53,6 +54,7 @@ export const TIER_RING: Record<CosmeticTier, string> = {
   uncommon: "border-emerald-300/35",
   rare: "border-blue/40",
   epic: "border-violet-400/45",
+  exclusive: "border-cyan-300/60",
   legend: "border-amber-300/50",
 };
 
@@ -137,6 +139,7 @@ export function BadgeEmblem({
   sparkles?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
+  const copy = useCosmeticCopy();
   const isBadge = badge.kind === "badge";
   const basePx = typeof size === "number" ? size : PX[size];
   const tier = badge.tier;
@@ -149,6 +152,7 @@ export function BadgeEmblem({
     return observeLive(ref.current);
   }, [live]);
   if (badge.kind !== "badge") return null;
+  if (badge.style.pendingArt && !hasBadgeArt(badge.style.art)) return <span role="img" aria-label={copy.name(badge.id)} className={cx("inline-flex shrink-0 items-center justify-center rounded-lg border border-white/60 bg-white/10 font-bold text-white", className)} style={{ width: basePx, height: basePx, fontSize: Math.max(8, basePx / 4) }}>50/50</span>;
   const src = badgeArtSrc(badge.style.art, px);
   // Move the useful opaque silhouette onto the box centre. Translucent glow
   // and ornament weight must not pull the badge away from neighbouring art.
@@ -299,8 +303,8 @@ const LONG_TITLE_CHARS = 22;
 /** rc.21: a step larger everywhere (Miguel) — md is the profile hero, sm the
  *  board row, xs the compact icon in lists and the calendar. */
 const TITLE_SIZE = {
-  xs: "px-1.5 py-px text-[9.5px]",
-  sm: "px-1.5 py-px text-[12px]",
+  xs: "!rounded-[3px] px-1.5 py-px text-[9.5px]",
+  sm: "!rounded-[4px] px-1.5 py-px text-[12px]",
   md: "px-2 py-0.5 text-[15px]",
   lg: "px-3 py-1 text-lg",
   xl: "px-4 py-2 text-2xl",
@@ -310,6 +314,8 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
   const copy = useCosmeticCopy();
   if (!title || title.kind !== "title") return null;
   const sizeClass = TITLE_SIZE[size];
+  // Manual titles retain their original Epic art treatment; rarity is metadata.
+  const treatment = title.tier === "exclusive" ? "epic" : title.tier;
   const legend = title.tier === "legend";
   const name = copy.name(title.id);
   // Legendary: tilt toward the pointer (CSS vars on the element, no state).
@@ -332,7 +338,7 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
     : undefined;
   return (
     <span
-      className={cx("cos-title", `cos-title-${title.tier}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
+      className={cx("cos-title", `cos-title-${treatment}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
       data-motion={motion ? "full" : "still"}
       style={stopsVars(title.style.colors, title.style.glow) as React.CSSProperties}
       onPointerMove={onMove}

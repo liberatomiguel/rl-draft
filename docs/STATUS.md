@@ -7,12 +7,13 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.37** = rc.36.21 plus the rc.37
-  career round (F1 market, F2 finance, F3 matchday, F4a battery tooling; the
-  F5 replay contract is docs only). Career on, noindex, preview tools on,
-  analytics/accounts off in the isolated QA export.
+- Season 1 candidate: staging, **v2.0.0-rc.38.3** = rc.37 plus cosmetic / reward
+  presentation corrections and draft header ordering (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
+  SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
+  analytics/accounts off in the isolated QA export. Special-card photos show
+  during drafts again, including hidden-overall runs (rc.38.3).
   Play at https://staging.rocketdraft.app.
-- F6 balancing: branch `claude/rc37-balance`, cut from staging rc.37. No
+- F6 balancing: branch `claude/rc37-balance` (rc.37 + rc.38.3 merged in). No
   balance change reaches staging before Miguel approves the package.
 
 ## Current evidence
@@ -34,8 +35,14 @@
 - BALANCE_VERSION **15**: rc.36.16's daily-only calibration plus the rc.37
   career tunables (both sides had bumped to 14). Saves additive only; persist
   keys/versions frozen.
-- Merge gates: typecheck and lint clean; full suite 2095 passed /
-  28 skipped (165 files); static export with the staging flags OK.
+- Merge gates (rc.38.1): typecheck and lint clean; full suite 2117 passed /
+  28 skipped (167 files), including visibility and manual-title appearance
+  regressions. Staging export validated (all 1073 image URLs). rc.38 real-flow
+  captures remain historical evidence; no new captures requested for rc.38.1.
+- UI rc.38.2: 3 existing season-header tests, typecheck, lint and staging
+  export passed; no new captures. Engine/balance unchanged.
+- UI rc.38.3: 19 card visibility/frame tests, typecheck, lint and staging
+  export passed. Photos restored; hidden overall remains `??`. No captures.
 - F6 triage (09/11, `claude/rc37-balance`): ~1,250 careers paired with the
   battery (bit-exact reproduction). Provisional package: renewal jumps ×4/×5,
   wage curve 1.17, slower start in the easy regions; nothing applied, levers
@@ -44,7 +51,7 @@
 ## Open, in order
 
 1. **F6:** Miguel approves the direction → confirmation on the 3 difficulties
-   (~500 careers, ~2 h) → validation on seed 17019 (882, ~3 h) → rc.38 on
+   (~500 careers, ~2 h) → validation on seed 17019 (882, ~3 h) → the next rc on
    staging. His six open decisions: F6-EXPERIMENTOS.md Parte 5.
 2. Miguel's review of the rc.37 handoffs' open points (`HANDOFF-rc37-*.md`:
    F1 10(a)–(g), F2 10(a)–(e), F3 in play); F5 approval before any code.
@@ -59,6 +66,10 @@
    (05/11 decisions 15–16).
 5. Refresh the reviewed daily calendar before November 2027 or after data or
    rule changes; the replay suite guards the reviewed dates.
+
+6. Cosmetic follow-ups: **PENDING-COSMETICS.md** — staging SQL for Staff,
+   user-supplied Staff art, 21 missing special photos, unlock-copy decisions
+   and proposed rewards. None are completed by publishing the UI changes.
 
 ## Standing contracts
 

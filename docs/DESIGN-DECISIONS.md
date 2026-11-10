@@ -1914,3 +1914,35 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      banner on: profile ≤ 80 ms/s, board ≤ 60 ms/s (rc.13 measures ~40 and
      ~20), zero composite failures.
 
+
+
+## 2026-11-09 — rc.38, Miguel's cosmetic review
+
+Miguel supersedes the v1.3 photo exception: whenever a draft hides overall,
+special-card art stays secret through offers, roster and review, until final
+results. Use the same run visibility flag in the shared renderer, with the
+team crest as fallback. Visible drafts and collection/reveal remain unchanged.
+Manual grants use the distinct Exclusive rarity (above Epic, below Legendary);
+Unique would incorrectly imply a one-of-one item. The existing `exclusive`
+boolean still controls ownership visibility and also applies to legacy items
+of other rarities. Rank-up celebrates the rank and existing unlock text; each
+cosmetic retains its subsequent individual unlock ceremony.
+
+
+### rc.38.1 clarification — rarity metadata versus title art
+
+Miguel clarified that creating Exclusive must preserve manual titles' original
+stroke, gradient, glow and sweep. Render these titles with the existing Epic
+art treatment, preserving their individual palettes; use cyan only for rarity
+identification (labels, list rings, ceremony accents). 50/50 Staff is white.
+The rank-up header/emblem belongs on the dark backdrop outside the lower card.
+Open cosmetic follow-ups live in PENDING-COSMETICS.md and STATUS links to them.
+
+
+### rc.38.3 — special photo masking reverted (2026-11-09)
+
+Miguel explicitly reverses the rc.38 hidden-art decision. Special-card photos
+are visible during the draft/review regardless of overall visibility and
+collection ownership, restoring the pre-rc.38 rule. Hidden-overall runs still
+hide overall numbers; existing rarity/collection masks are unchanged. The
+rc.38 art-masking notes and captures are historical, superseded by this decision.

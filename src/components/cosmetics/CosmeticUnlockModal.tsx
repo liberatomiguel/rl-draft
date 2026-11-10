@@ -37,6 +37,7 @@ const TIER_RING: Record<CosmeticDef["tier"], string> = {
   uncommon: "rgba(159, 227, 184, 0.5)",
   rare: "rgba(96, 165, 250, 0.55)",
   epic: "rgba(192, 132, 252, 0.6)",
+  exclusive: "rgba(34, 211, 238, 0.7)",
   legend: "rgba(252, 211, 77, 0.7)",
 };
 

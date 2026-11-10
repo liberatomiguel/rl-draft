@@ -1,6 +1,8 @@
+> Atualizado em rc.38. Catálogo atual: 90 itens (35 badges, 37 titles, 18 banners). As propostas antigas continuam sugestões, sem implementação. Raridade manual: Exclusive, acima de Epic e abaixo de Legendary. Underdog foi retirado como cosmético.
+
 # Catálogo unificado de cosméticos — 08/11/2026
 
-**106 itens: 89 existentes e 17 propostas.** Os existentes somam 35 badges, 18 banners e 36 títulos. Destes, 51 são obtidos jogando, oito são concessões manuais e 30 são de legado. As propostas ainda não foram implementadas nem concedidas.
+**107 itens: 90 existentes e 17 propostas.** Os existentes somam 35 badges, 18 banners e 37 títulos. Destes, 50 são obtidos jogando, dez são concessões manuais e 30 são de legado. As propostas ainda não foram implementadas nem concedidas.
 
 A coluna Estado separa o catálogo atual das ideias para discussão. Legado indica uma recompensa histórica preservada para quem a ganhou; Manual indica concessão administrativa. As condições existentes são as do catálogo de staging.
 
@@ -10,7 +12,7 @@ A coluna Estado separa o catálogo atual das ideias para discussão. Legado indi
 | Existente | Wildfire | Badge | Épico | 30 dias seguidos de login | Disponível no jogo | wildfire |
 | Existente | Rising Star | Badge | Incomum | 25 estrelas em Challenges | Disponível no jogo | rising-star |
 | Existente | Constellation | Badge | Raro | 50 estrelas em Challenges | Disponível no jogo | constellation |
-| Existente | Supernova | Badge | Épico | 70 estrelas em Challenges | Disponível no jogo | supernova |
+| Existente | Supernova | Badge | Épico | 75 estrelas em Challenges | Disponível no jogo | supernova |
 | Existente | Veteran Drafter I | Badge | Incomum | 50 torneios vencidos (acumulado) | Disponível no jogo | veteran-drafter-1 |
 | Existente | Veteran Drafter II | Badge | Raro | 250 torneios vencidos (acumulado) | Disponível no jogo | veteran-drafter-2 |
 | Existente | Veteran Drafter III | Badge | Épico | 500 torneios vencidos (acumulado) | Disponível no jogo | veteran-drafter-3 |
@@ -30,17 +32,18 @@ A coluna Estado separa o catálogo atual das ideias para discussão. Legado indi
 | Existente | Pre-season Gold | Badge | Incomum | Pico na pré-temporada ≥ Gold | Legado | pre-season-gold |
 | Existente | Pre-season Platinum | Badge | Incomum | Pico na pré-temporada ≥ Platinum | Legado | pre-season-platinum |
 | Existente | Pre-season Diamond | Badge | Raro | Pico na pré-temporada ≥ Diamond | Legado | pre-season-diamond |
-| Existente | Pre-season Champion | Badge | Épico | Pico na pré-temporada ≥ Champion | Legado | pre-season-champion |
+| Existente | Pre-season Champion | Badge | Raro | Pico na pré-temporada ≥ Champion | Legado | pre-season-champion |
 | Existente | Pre-season Grand Champion | Badge | Épico | Pico na pré-temporada ≥ Grand Champion | Legado | pre-season-grand-champion |
 | Existente | Pre-season Supersonic | Badge | Lendário | Pico na pré-temporada ≥ Supersonic Legend | Legado | pre-season-supersonic |
-| Existente | Road Warrior | Badge | Raro | Três temporadas no Road to Worlds. (marco car-three-seasons) | Disponível no jogo | road-warrior |
-| Existente | Underdog | Badge | Raro | Venceu um regional, Major ou Mundial como azarão. (marco car-worlds-underdog) | Disponível no jogo | underdog |
+| Existente | Road Warrior | Badge | Raro | Chegar à quarta temporada com uma mesma org no Road to Worlds. (marco car-four-seasons) | Disponível no jogo | road-warrior |
 | Existente | Crowned World Champion | Badge | Épico | 1 Worlds vencidos no RTW, somando os saves | Disponível no jogo | world-champion-crowned |
 | Existente | Dynasty | Badge | Lendário | Na mesma temporada: Supersonic Legend, 3 Worlds no RTW e 25 títulos Legacy | Disponível no jogo | dynasty |
-| Existente | Early Supporter | Badge | Épico | Concessão manual: early-supporter | Manual | early-supporter |
-| Existente | Supporter | Badge | Épico | Concessão manual: supporter | Manual | supporter |
-| Existente | Contributor | Badge | Épico | Concessão manual: contributor | Manual | contributor |
-| Existente | Verified Pro | Badge | Épico | Concessão manual: pro | Manual | verified-pro |
+| Existente | Early Supporter | Badge | Exclusivo | Concessão manual: early-supporter | Manual | early-supporter |
+| Existente | Supporter | Badge | Exclusivo | Concessão manual: supporter | Manual | supporter |
+| Existente | Contributor | Badge | Exclusivo | Concessão manual: contributor | Manual | contributor |
+| Existente | Verified Pro | Badge | Exclusivo | Concessão manual: pro | Manual | verified-pro |
+| Existente | 50/50 Staff | Badge | Exclusivo | Concessão manual: 50-50-staff; arte pendente | Manual | 50-50-staff |
+| Existente | 50/50 Staff | Título | Exclusivo | Concessão manual: 50-50-staff | Manual | grant-title-50-50-staff |
 | Existente | Kickoff | Banner | Comum | 5 dias seguidos de login | Disponível no jogo | login-banner-kickoff |
 | Existente | After Hours | Banner | Incomum | 14 dias seguidos de login | Disponível no jogo | login-banner-after-hours |
 | Existente | Solar Flare | Banner | Raro | 21 dias seguidos de login | Disponível no jogo | login-banner-solar-flare |
@@ -82,7 +85,7 @@ A coluna Estado separa o catálogo atual das ideias para discussão. Legado indi
 | Existente | Pre-Season Leaderboard #2 | Título | Épico | Ranking da pré-temporada: 2–2 | Legado | legacy-title-ps-board-2 |
 | Existente | Pre-Season Leaderboard #3 | Título | Épico | Ranking da pré-temporada: 3–3 | Legado | legacy-title-ps-board-3 |
 | Existente | Pre-Season Leaderboard Elite | Título | Épico | Ranking da pré-temporada: 4–10 | Legado | legacy-title-ps-board-elite |
-| Existente | Pre-Season Leaderboard Finalist | Título | Raro | Ranking da pré-temporada: 11–50 | Legado | legacy-title-ps-board-finalist |
+| Existente | Pre-Season Leaderboard Contender | Título | Raro | Ranking da pré-temporada: 11–50 | Legado | legacy-title-ps-board-finalist |
 | Existente | Pre-Season Bronze | Título | Comum | Pico na pré-temporada ≥ Bronze | Legado | legacy-title-ps-bronze |
 | Existente | Pre-Season Silver | Título | Comum | Pico na pré-temporada ≥ Silver | Legado | legacy-title-ps-silver |
 | Existente | Pre-Season Gold | Título | Comum | Pico na pré-temporada ≥ Gold | Legado | legacy-title-ps-gold |
@@ -91,10 +94,10 @@ A coluna Estado separa o catálogo atual das ideias para discussão. Legado indi
 | Existente | Pre-Season Champion | Título | Raro | Pico na pré-temporada ≥ Champion | Legado | legacy-title-ps-champion |
 | Existente | Pre-Season Grand Champion | Título | Épico | Pico na pré-temporada ≥ Grand Champion | Legado | legacy-title-ps-grand-champion |
 | Existente | Pre-Season Supersonic Legend | Título | Lendário | Pico na pré-temporada ≥ Supersonic Legend | Legado | legacy-title-ps-supersonic-legend |
-| Existente | Early Supporter | Título | Épico | Concessão manual: early-supporter | Manual | grant-title-early-supporter |
-| Existente | Supporter | Título | Épico | Concessão manual: supporter | Manual | grant-title-supporter |
-| Existente | Contributor | Título | Épico | Concessão manual: contributor | Manual | grant-title-contributor |
-| Existente | Pro Player | Título | Épico | Concessão manual: pro | Manual | grant-title-pro |
+| Existente | Early Supporter | Título | Exclusivo | Concessão manual: early-supporter | Manual | grant-title-early-supporter |
+| Existente | Supporter | Título | Exclusivo | Concessão manual: supporter | Manual | grant-title-supporter |
+| Existente | Contributor | Título | Exclusivo | Concessão manual: contributor | Manual | grant-title-contributor |
+| Existente | Pro Player | Título | Exclusivo | Concessão manual: pro | Manual | grant-title-pro |
 | Proposta | First Formation | Badge | Comum | Concluir A Primeira Conexão | Recompensa inicial no primeiro dia, antes dos marcos longos de login e estrelas | — |
 | Proposta | Blueprint Graduate | Badge | Incomum | Concluir os três primeiros Draft Labs | Ensinar composição, sem depender de vitória simulada | — |
 | Proposta | Puzzle Architect | Banner | Épico | Obter três estrelas nos sete Draft Labs | Fechar a trilha de puzzles; seed fixo e prova legal para cada estrela | — |

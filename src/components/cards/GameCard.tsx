@@ -8,10 +8,8 @@
  * rarity (~ common · + silver · ++ gold · +++ blue).
  * Special cards: player photo (public/cards/specials/<id>.png or imageUrl)
  * with heavy rarity treatment — animated frames, halo, foil sheen.
- * Hidden-overall runs (v0.5.1, by direction): ratings/buffs/rarity stay
- * "??" but ORG LOGOS show everywhere, and SPECIALS are masked — frame,
- * holo and rarity announce "this is a special", while the photo, title,
- * type and overall stay secret until the results reveal.
+ * Hidden-overall runs keep ratings hidden; special photos remain visible,
+ * independent of overall visibility or collection ownership (rc.38.3).
  */
 
 import { useState } from "react";
@@ -197,14 +195,9 @@ export function GameCard({
   const displayName =
     isNationalOrg && card.orgId ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
   const hiddenBase = !showOverall && !isSpecial;
-  // v1.3: special cards always show their photo, identity, org/season and buff in
-  // EVERY mode (base doc §11/§14) — exactly like base cards keep their crest and
-  // name on no-overall runs. The ONLY difficulty-driven mask left for a special is
-  // the rarity label (and the overall number, handled by `overallText`). Whether a
-  // not-yet-collected special hides its title/rarity is the COLLECTION reward
-  // (`specialCollected`), independent of difficulty.
+  // Overall visibility still masks the special rarity, independently of its art.
   const hideSpecialRarity = isSpecial && !showOverall;
-  // Only BASE cards use the org-logo centerpiece now; specials always show the photo.
+  // Base cards use the team crest; specials always render their photo/fallback.
   const showLogoCenter = !isSpecial;
   const logoOrgId = card.orgId;
   const logoSeasonId = card.seasonId;
@@ -214,8 +207,8 @@ export function GameCard({
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
   // Buff pill (v1.2.1; v1.3 always shows the value): every special advertises its
-  // full buff — the gameplay info a drafter needs, shown in EVERY mode now that the
-  // photo is no longer hidden. It shows even on yet-to-be-unlocked specials.
+  // full buff — the gameplay info a drafter needs, independent of art visibility.
+  // It shows even on yet-to-be-unlocked specials.
   const buffLabel =
     isSpecial && card.special ? specialBuffLabel(card.special.effect, true) : null;
   // `lite` (dense grids) keeps the 3D tilt — it's cheap now that TiltCard only
@@ -247,7 +240,7 @@ export function GameCard({
         className,
       )}
     >
-      {/* Special photo layer — v1.3: always shown for specials, in every mode. */}
+      {/* Photos remain visible even when ratings are hidden. */}
       {isSpecial ? <SpecialArt card={card} priority={priority} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped

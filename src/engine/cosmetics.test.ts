@@ -67,10 +67,10 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
     for (const id of Object.keys(PT.COSMETICS.items)) expect(cosmeticById.has(id), `stale PT copy ${id}`).toBe(true);
   });
 
-  it("the official list: 35 badges, 36 titles, 18 banners", () => {
+  it("the official list: 35 badges, 37 titles, 18 banners", () => {
     const count = (kind: string) => COSMETICS.filter((c) => c.kind === kind).length;
     expect(count("badge")).toBe(35);
-    expect(count("title")).toBe(36);
+    expect(count("title")).toBe(37);
     expect(count("banner")).toBe(18);
   });
 
@@ -88,7 +88,10 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
 
   it("the manual-grant colours are reserved: no other title uses them", () => {
     const reserved = new Set(
-      Object.values(GRANT_COLORS)
+      Object.entries(GRANT_COLORS)
+        // Staff is intentionally white; white is not a reserved brand colour.
+        .filter(([id]) => id !== "50-50-staff")
+        .map(([, style]) => style)
         .flatMap((g) => [...g.colors, g.glow])
         .map((c) => c.toLowerCase()),
     );
@@ -197,7 +200,7 @@ describe("deriveOwnedIds — play milestones", () => {
 
   it("stars / quiz / missions thresholds (badges keep their rules; On Target is 25)", () => {
     expect(earned(facts({ challengeStars: 25 }))).toEqual(["rising-star"]);
-    expect(earned(facts({ challengeStars: 70 })).sort()).toEqual(["constellation", "rising-star", "supernova"]);
+    expect(earned(facts({ challengeStars: 75 })).sort()).toEqual(["constellation", "rising-star", "supernova"]);
     expect(earned(facts({ quizSolved: 10 })).sort()).toEqual(["quiz-title-rl-nerd", "scholar-1"]);
     expect(earned(facts({ quizSolved: 50 })).sort()).toEqual(["quiz-banner-playbook", "quiz-title-rl-nerd", "scholar-1", "scholar-2", "scholar-3"]);
     expect(earned(facts({ missionsCompleted: 24 }))).toEqual([]);
@@ -225,7 +228,8 @@ describe("deriveOwnedIds — play milestones", () => {
   });
 
   it("Road to Worlds: marks, the first Worlds (badge + title), and Dynasty within one season", () => {
-    expect(earned(facts({ careerMarks: ["car-three-seasons", "car-worlds-underdog"] })).sort()).toEqual(["road-warrior", "underdog"]);
+    expect(earned(facts({ careerMarks: ["car-three-seasons", "car-worlds-underdog"] }))).toEqual([]);
+    expect(earned(facts({ careerMarks: ["car-four-seasons"] }))).toEqual(["road-warrior"]);
     expect(earned(facts({ careerWorlds: 1 })).sort()).toEqual(["career-title-rtw-champion", "world-champion-crowned"]);
     expect(earned(facts({ careerWorlds: 3 })).sort()).toEqual(["career-title-rtw-champion", "world-champion-crowned"]);
     const dynasty = { seasonPeakRankId: "supersonic-legend", seasonCareerWorlds: 3, seasonLegacyTitles: 25, careerWorlds: 3 };
@@ -273,7 +277,7 @@ describe("owned map + equipped resolution", () => {
     const all = refreshOwned({}, facts({ previewAll: true }));
     const order = lockerItems(all, "badge").owned;
     const tiers = order.map((c) => c.tier);
-    const rank = ["legend", "epic", "rare", "uncommon", "common"];
+    const rank = ["legend", "exclusive", "epic", "rare", "uncommon", "common"];
     expect(tiers).toEqual([...tiers].sort((a, b) => rank.indexOf(a) - rank.indexOf(b)));
     // Within a rarity, a family stays together (the board badges before the peak-rank ones).
     const epic = order.filter((c) => c.tier === "epic").map((c) => c.source.type);
@@ -405,7 +409,7 @@ describe("badge art", () => {
   it("every badge's art file exists in public/badges", () => {
     const dir = resolve(dirname(fileURLToPath(import.meta.url)), "../../public/badges");
     for (const c of COSMETICS) {
-      if (c.kind !== "badge") continue;
+      if (c.kind !== "badge" || c.style.pendingArt) continue;
       expect(existsSync(resolve(dir, `${c.style.art}.svg`)), c.style.art).toBe(true);
     }
   });
@@ -414,9 +418,30 @@ describe("badge art", () => {
     const badges = COSMETICS.filter((c) => c.kind === "badge");
     expect(badges).toHaveLength(35);
     expect(badges.every((c) => c.kind === "badge" && c.style.art === c.id)).toBe(true);
-    for (const retired of ["world-champion", "season-fourth-place-ps", "season-fifth-place-ps"]) expect(cosmeticById.has(retired)).toBe(false);
+    for (const retired of ["underdog", "world-champion", "season-fourth-place-ps", "season-fifth-place-ps"]) expect(cosmeticById.has(retired)).toBe(false);
     expect(cosmeticById.get("world-champion-crowned")?.source).toEqual({ type: "career-worlds", count: 1 });
     expect(cosmeticById.get("on-target")?.source).toEqual({ type: "missions-completed", count: 25 });
-    expect(cosmeticById.get("pre-season-champion")?.tier).toBe("epic");
+    expect(cosmeticById.get("pre-season-champion")?.tier).toBe("rare");
+  });
+});
+
+describe("rc.38 corrections and old saves", () => {
+  it("Supernova begins at 75, including an old 70-star ownership record", () => {
+    const below = facts({ challengeStars: 74 });
+    expect(earned(below)).not.toContain("supernova");
+    expect(refreshOwned({ supernova: "2026-11-01" }, below)).not.toHaveProperty("supernova");
+    expect(earned(facts({ challengeStars: 75 }))).toContain("supernova");
+  });
+  it("retired Underdog cannot survive refresh, equipment or cloud rendering", () => {
+    const old = { underdog: "2026-11-01" };
+    expect(refreshOwned(old, facts({ careerMarks: ["car-worlds-underdog"] }))).not.toHaveProperty("underdog");
+    expect(sanitizeEquipped(old, { title: null, banner: null, badges: ["underdog"] }).badges).toEqual([]);
+    expect(resolveEquipped({ owned: old, equipped: { title: null, banner: null, badges: ["underdog"] }, seen: [] }).badges).toEqual([]);
+  });
+  it("every manual grant has Exclusive rarity; staff grants both items only manually", () => {
+    for (const c of COSMETICS.filter(c => c.source.type === "grant")) expect(c.tier).toBe("exclusive");
+    expect(earned(facts({ grants: ["50-50-staff"] })).sort()).toEqual(["50-50-staff", "grant-title-50-50-staff"]);
+    expect(earned(facts())).not.toContain("50-50-staff");
+    expect(compareForLocker(cosmeticById.get("50-50-staff")!, cosmeticById.get("supernova")!)).toBeLessThan(0);
   });
 });

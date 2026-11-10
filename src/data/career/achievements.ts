@@ -33,7 +33,8 @@ export const CAREER_ACHIEVEMENTS: readonly CareerAchievementDef[] = [
   { id: "car-bank-cleared", tier: "common", xp: 40, condition: { kind: "flag", flag: "achBankCleared" } },
   { id: "car-first-qualifier", tier: "common", xp: 60, condition: { kind: "flag", flag: "achQualifierAdvanced" } },
   { id: "car-rep-50", tier: "rare", xp: 100, condition: { kind: "reputation", min: 50 } },
-  { id: "car-three-seasons", tier: "rare", xp: 120, condition: { kind: "seasonIndex", min: 2 } },
+  // Persisted id stays stable; the corrected milestone is the fourth season.
+  { id: "car-three-seasons", tier: "rare", xp: 120, condition: { kind: "seasonIndex", min: 3 } },
   { id: "car-major-qualified", tier: "rare", xp: 120, condition: { kind: "stat", stat: "majorsQualified", min: 1 } },
   { id: "car-first-regional", tier: "rare", xp: 150, condition: { kind: "stat", stat: "titlesRegional", min: 1 } },
   { id: "car-worlds-qualified", tier: "epic", xp: 200, condition: { kind: "stat", stat: "worldsQualified", min: 1 } },

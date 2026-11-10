@@ -307,16 +307,16 @@ function OfferReveal({
               </div>
             </div>
           ) : (
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <h2
                 className={cx(
-                  "display pop-in truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
+                  "display pop-in min-w-0 truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
                   national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
                 )}
               >
                 {headerName}
               </h2>
-              <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
+              <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} newLabel={DRAFT_UI.newSeason} />
             </div>
           )}
           <div
@@ -326,7 +326,7 @@ function OfferReveal({
               rolling && "invisible opacity-0",
             )}
           >
-            <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} newLabel={DRAFT_UI.newSeason} />
+            <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
           </div>
         </div>

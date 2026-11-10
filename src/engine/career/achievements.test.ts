@@ -3,6 +3,7 @@ import { CAREER_ACHIEVEMENTS } from "@/data/career/achievements";
 import type { CareerSave } from "./types";
 import {
   ACH_FLAGS,
+  careerCosmeticMarks,
   EMPTY_ACHIEVEMENT_MEMORY,
   evaluateCareerAchievements,
   worldsWonOnAfter,
@@ -43,7 +44,7 @@ describe("career achievements (R32)", () => {
     const save = fakeSave({
       flags: { [ACH_FLAGS.sponsorSigned]: true, [ACH_FLAGS.qualifierAdvanced]: true },
       reputation: 55,
-      clock: { seasonIndex: 2, day: 1 },
+      clock: { seasonIndex: 3, day: 1 },
       stats: { titlesRegional: 1, majorsQualified: 1 },
     });
     const fresh = evaluateCareerAchievements(save, EMPTY_ACHIEVEMENT_MEMORY);
@@ -73,4 +74,9 @@ describe("career achievements (R32)", () => {
     expect(evaluateCareerAchievements(base, { ...memory, worldsWonOn: worldsWonOnAfter(base, memory) })).toContain("car-all-difficulties");
     expect(evaluateCareerAchievements(base, memory)).not.toContain("car-all-difficulties");
   });
+});
+
+it("Road Warrior cosmetic fact requires the fourth season, independent of old achievements", () => {
+  expect(careerCosmeticMarks(fakeSave({ clock: { seasonIndex: 2, day: 1 } }))).toEqual([]);
+  expect(careerCosmeticMarks(fakeSave({ clock: { seasonIndex: 3, day: 1 } }))).toEqual(["car-four-seasons"]);
 });

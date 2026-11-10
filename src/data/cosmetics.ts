@@ -18,7 +18,7 @@
  * `public/badges/<art>.svg`, exported from the design file in
  * `data-sources/badges/` by `npm run build:badges`. The approved catalog's id
  * IS its art key (and the SVG's file name). Rarity follows the design file's
- * five-step ladder (common → legend). rc.20 follows the revised design file:
+ * six-step ladder (common → exclusive → legend). rc.20 follows the revised design file:
  * Season Elite covers #4–10 (4th / 5th place badges are gone), Crowned World
  * Champion is the FIRST Worlds title (the original World Champion art is
  * retired), Early Supporter joins the manual grants, On Target is 25 missions.
@@ -48,15 +48,15 @@
  *  · Manual grants carry a RESERVED colour each (cobalt, raspberry, emerald,
  *    baby blue) — no other title uses them.
  *
- * `exclusive` items (pre-season legacy, manual grants) can no longer be
- * earned: the locker hides them from players who do not own them.
+ * `exclusive: true` items (pre-season legacy, manual grants) are hidden until
+ * owned, independent of the Exclusive rarity reserved for manual grants.
  */
 
 export type CosmeticKind = "title" | "badge" | "banner";
-export type CosmeticTier = "common" | "uncommon" | "rare" | "epic" | "legend";
+export type CosmeticTier = "common" | "uncommon" | "rare" | "epic" | "exclusive" | "legend";
 
 /** Manual grant ids (the cloud `profile_grants.grant_id` column). */
-export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro";
+export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff";
 
 export type CosmeticSource =
   | { type: "legacy-participation" }
@@ -97,6 +97,8 @@ export type CosmeticSource =
 export interface BadgeStyle {
   /** File name (no extension) in `public/badges/`. */
   art: string;
+  /** User-supplied artwork is pending; render a text fallback until built. */
+  pendingArt?: true;
 }
 
 /** One to three stops: the text colour (one colour = flat; more = gradient). */
@@ -152,11 +154,12 @@ export const WHITE_GOLD: Stops = ["#ffffff", "#fff4d6", "#ffe6f3"];
 const GOLD: Stops = ["#ffeb5c", "#fff3a0"];
 const GOLD_GLOW = "#ffa300";
 
-/** Reserved manual-grant colours (unique; no other title may use them). */
+/** Reserved manual-grant colours; Staff's requested white is the exception. */
 export const GRANT_COLORS: Record<GrantId, { colors: Stops; glow: string }> = {
   "early-supporter": { colors: ["#ff9ec0", "#ffd1e1"], glow: "#ff4d8d" }, // rose, a tone off the supporter's
   supporter: { colors: ["#e8356d", "#ff7aa2"], glow: "#e8356d" }, // raspberry
   contributor: { colors: ["#19d290", "#7ef0c0"], glow: "#00d1d1" }, // emerald / teal
+  "50-50-staff": { colors: ["#ffffff"], glow: "#ffffff" },
   pro: { colors: ["#aef7ff", "#e0fbff"], glow: "#43afff" }, // ice / sky
 };
 
@@ -209,22 +212,22 @@ const PRESEASON_RANK_BADGES: [rankId: string, id: string, tier: CosmeticTier][] 
   ["gold", "pre-season-gold", "uncommon"],
   ["platinum", "pre-season-platinum", "uncommon"],
   ["diamond", "pre-season-diamond", "rare"],
-  ["champion", "pre-season-champion", "epic"],
+  ["champion", "pre-season-champion", "rare"],
   ["grand-champion", "pre-season-grand-champion", "epic"],
   ["supersonic-legend", "pre-season-supersonic", "legend"],
 ];
 
 /** Pre-season peak rank → title colour (the source document: grey, grey, weak
  *  yellow, weak light blue, blue, purple, pure red, white gold). */
-/** rc.21 (Miguel): Bronze / Silver / Gold plain grey, Platinum / Diamond green
- *  (uncommon), Champion green (rare), Grand Champion red (epic), SSL white gold. */
+/** rc.38 (Miguel): Bronze through Champion grey; Grand Champion red (epic),
+ *  SSL white gold. Title rarity and colour are independent. */
 const PRESEASON_RANK_TITLES: [rankId: string, id: string, tier: CosmeticTier, colors: Stops][] = [
   ["bronze", "legacy-title-ps-bronze", "common", ["#a3adbd"]],
   ["silver", "legacy-title-ps-silver", "common", ["#a3adbd"]],
   ["gold", "legacy-title-ps-gold", "common", ["#a3adbd"]],
-  ["platinum", "legacy-title-ps-platinum", "uncommon", ["#20a93e"]],
-  ["diamond", "legacy-title-ps-diamond", "uncommon", ["#20a93e"]],
-  ["champion", "legacy-title-ps-champion", "rare", ["#20a93e"]],
+  ["platinum", "legacy-title-ps-platinum", "uncommon", ["#a3adbd"]],
+  ["diamond", "legacy-title-ps-diamond", "uncommon", ["#a3adbd"]],
+  ["champion", "legacy-title-ps-champion", "rare", ["#a3adbd"]],
   ["grand-champion", "legacy-title-ps-grand-champion", "epic", ["#ff1f1f", "#ff6b6b"]],
   ["supersonic-legend", "legacy-title-ps-supersonic-legend", "legend", WHITE_GOLD],
 ];
@@ -255,7 +258,7 @@ const BADGES: CosmeticDef[] = [
   // --- Challenge stars ----------------------------------------------------------
   badge("rising-star", "uncommon", 23, { type: "challenge-stars", stars: 25 }),
   badge("constellation", "rare", 43, { type: "challenge-stars", stars: 50 }),
-  badge("supernova", "epic", 63, { type: "challenge-stars", stars: 70 }),
+  badge("supernova", "epic", 63, { type: "challenge-stars", stars: 75 }),
   // --- Runs won (lifetime) ------------------------------------------------------
   badge("veteran-drafter-1", "uncommon", 24, { type: "runs-won", count: 50 }),
   badge("veteran-drafter-2", "rare", 44, { type: "runs-won", count: 250 }),
@@ -276,15 +279,15 @@ const BADGES: CosmeticDef[] = [
   // --- Pre-season peak rank (cumulative) ----------------------------------------
   ...PRESEASON_RANK_BADGES.map(([rankId, id, tier], i) => badge(id, tier, 30 + i * 4, { type: "legacy-rank", rankId }, true)),
   // --- Road to Worlds -----------------------------------------------------------
-  badge("road-warrior", "rare", 48, { type: "career-mark", markId: "car-three-seasons" }),
-  badge("underdog", "rare", 49, { type: "career-mark", markId: "car-worlds-underdog" }),
+  badge("road-warrior", "rare", 48, { type: "career-mark", markId: "car-four-seasons" }),
   badge("world-champion-crowned", "epic", 69, { type: "career-worlds", count: 1 }),
   badge("dynasty", "legend", 100, { type: "season-feat", rankId: "supersonic-legend", careerWorlds: 3, legacyTitles: 25 }),
   // --- Manual grants ------------------------------------------------------------
-  badge("early-supporter", "epic", 73, { type: "grant", grantId: "early-supporter" }, true),
-  badge("supporter", "epic", 72, { type: "grant", grantId: "supporter" }, true),
-  badge("contributor", "epic", 71, { type: "grant", grantId: "contributor" }, true),
-  badge("verified-pro", "epic", 70, { type: "grant", grantId: "pro" }, true),
+  { ...badge("50-50-staff", "exclusive", 74, { type: "grant", grantId: "50-50-staff" }, true), style: { art: "50-50-staff", pendingArt: true } },
+  badge("early-supporter", "exclusive", 73, { type: "grant", grantId: "early-supporter" }, true),
+  badge("supporter", "exclusive", 72, { type: "grant", grantId: "supporter" }, true),
+  badge("contributor", "exclusive", 71, { type: "grant", grantId: "contributor" }, true),
+  badge("verified-pro", "exclusive", 70, { type: "grant", grantId: "pro" }, true),
 ];
 
 const GREY: Stops = ["#a3adbd"];
@@ -353,8 +356,9 @@ const LEGACY: CosmeticDef[] = [
 
 /** Manual grants (reserved colours). */
 const grantTitle = (id: string, priority: number, grantId: GrantId): TitleDef =>
-  title(id, "epic", priority, { type: "grant", grantId }, GRANT_COLORS[grantId].colors, true, GRANT_COLORS[grantId].glow);
+  title(id, "exclusive", priority, { type: "grant", grantId }, GRANT_COLORS[grantId].colors, true, GRANT_COLORS[grantId].glow);
 const GRANTS: CosmeticDef[] = [
+  grantTitle("grant-title-50-50-staff", 84, "50-50-staff"),
   grantTitle("grant-title-early-supporter", 83, "early-supporter"),
   grantTitle("grant-title-supporter", 82, "supporter"),
   grantTitle("grant-title-contributor", 81, "contributor"),

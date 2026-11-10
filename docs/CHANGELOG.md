@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.37**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.3**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -45,6 +45,79 @@ with the root cause — that section doubles as the project's bugfix log.
   (front T2) no proposal waits for approval; the bot now counts the manager's plan pick at a cycle
   start. `unavailable` = 0 is correct: bot squads carry no reserve, and nobody is ruled out without one.
 - Results and the provisional package: `docs/battery-rc37/F6-EXPERIMENTOS.md`.
+### Changed — rc.38.3 (2026-11-09), restore special photos
+
+- Miguel reverses rc.38's photo mask: special cards show their photos again
+  in offers and review, even when the run hides overall. Restore the original
+  SpecialArt rendering and its missing-art fallback. Overall numbers and the
+  existing rarity/collection masks remain unchanged, as do the final reveal,
+  the revised header, cosmetics and rank-up layout. No art, data or saves changed.
+- Update the existing mode/region/daily/restart matrix to require photos in
+  hidden and visible runs, and explicitly assert hidden overall stays `??`.
+- **Validation:** 19 card visibility/frame tests, typecheck, lint and staging
+  export passed (data and persist-contract prechecks included). No captures.
+
+### Changed — rc.38.2 (2026-11-09), draft header
+
+- Season edition now sits next to the team name in the draft offer header,
+  at 14px on mobile / 16px on desktop, retaining its edition colour, year
+  deduplication and 2027 NEW marker. Region moves to the secondary row where
+  the season used to appear; national-team identification stays on that row.
+- The shared offer header covers Classic, Quick, Daily and authored Challenges.
+  Keep season/region hidden during the spinning reel as before; no game rules,
+  data, cosmetic grants or persistence contracts changed. No new captures.
+- **Validation:** existing season badge tests (3), typecheck, lint and staging
+  export passed, including the data and persist-contract prebuild checks.
+
+### Changed / Fixed — rc.38.1 (2026-11-09), visual review follow-up
+
+- **Fixed (root cause):** rc.38 selected a new title CSS class for Exclusive,
+  unintentionally replacing the original manual titles' stroke, gradient,
+  glow and sweep. Exclusive is rarity metadata; its titles now reuse their
+  original Epic art treatment and their existing individual colours/effects.
+- **Changed:** Exclusive rarity labels/list rings/ceremony accents use cyan,
+  distinct from Epic violet. This does not recolour the titles themselves.
+  50/50 Staff title and pending-art text fallback are white.
+- **Changed:** rank-up emblem and rank transition sit directly on the dark
+  backdrop; only the lower unlock list / Continue area has a card. Existing
+  unlock text and the later individual cosmetic ceremony are preserved.
+- **Validation:** full suite 2117 passed / 28 skipped; typecheck and lint clean.
+- **Docs:** durable checklist in `PENDING-COSMETICS.md`, linked from STATUS:
+  unapplied staging Supabase grant SQL, future Staff art, missing special-card
+  photos, unlock-copy decisions and suggestions awaiting selection. No new
+  reward proposals implemented. No screenshots requested or generated.
+
+### Added / Changed / Fixed — rc.38 (2026-11-09), cosmetic review
+
+- **Added:** manual `50-50-staff` grant → 50/50 Staff badge + title. Badge has
+  a text fallback until Miguel supplies art. Additive staging-only SQL in
+  `docs/sql/rc38-staff-grant.sql`; no grants or account permissions changed.
+- **Changed:** manual cosmetics use **Exclusive**, between Epic and Legendary,
+  consistently in locker ordering, labels, rings, title treatment and ceremonies.
+  This rarity is separate from the existing `exclusive` ownership-visibility flag.
+- **Changed:** Supernova needs 75 challenge stars; pre-season Champion rank
+  badge is Rare; Platinum / Diamond / Champion pre-season titles are grey;
+  Leaderboard Finalist title is now Contender (stable saved ID).
+- **Changed:** Road Warrior requires reaching season four with one org. The
+  achievement keeps its persisted ID and XP history, now checks index 3. A
+  cosmetic-only four-season fact is derived on load/actions; the old three-season
+  mark alone no longer grants the badge, and no duplicate XP/toast is generated.
+- **Changed:** Underdog **cosmetic** retired from catalog/grants/equipment;
+  existing refresh/sanitization removes it safely. Its unrelated career
+  achievement and history remain. Save versions/keys unchanged.
+- **Fixed (root cause):** shared GameCard mounted SpecialArt unconditionally.
+  Hidden-overall offers and review now mount a team crest instead, requesting
+  no special image. The final results/collection and visible-overall drafts
+  still render art, regardless of collection ownership.
+- **Fixed (root cause):** the rank-up screen previewed rank-track cosmetics
+  before their queued individual ceremony. Remove only that preview, preserve
+  all other unlock copy, and restyle the rank emblem/transition panel.
+- **Fixed (root cause):** titles used the same 6px corner radius at tiny sizes;
+  XS now uses 3px and SM 4px, including the profile season track. Login badges
+  now use a 52px box and stronger gold milestone framing.
+- **Audits:** `SPECIAL-CARDS-MISSING-rc38.md` (21/111 lack art) and
+  `UNLOCK-COPY-AUDIT-rc38.md` (exact EN/PT copy, every cosmetic and rank).
+  `COSMETIC-SUGGESTIONS-rc38.md` is proposals only; none were registered.
 
 ### Added — rc.37, round-2 career build (integrated onto staging rc.36.21)
 - **Staging integration (09/11):** `claude/rc37-integration` (`89a063b`) and the

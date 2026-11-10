@@ -266,6 +266,10 @@ export function bannerMotionLayerSrc(art: string, displayPx = 1240): string | nu
   return BANNER_ANIM.has(art) ? bannerArtSrc(`${art}.motion`, displayPx) : null;
 }
 
+export function hasBadgeArt(art: string): boolean {
+  return hashFor(manifest.badges ?? {}, art) !== undefined;
+}
+
 export function badgeArtSrc(art: string, displayPx = 64): string {
   const hash = IS_PROD && BADGE_WIDTHS.length ? hashFor(manifest.badges ?? {}, art) : undefined;
   if (!hash) return `/badges/${seg(art)}.svg`;

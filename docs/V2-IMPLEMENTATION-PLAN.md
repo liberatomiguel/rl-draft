@@ -393,7 +393,7 @@ create table if not exists public.profile_grants (
   -- references profiles (not auth.users) so the app can embed the grants in the
   -- profile read (one request). Grant only players who already have a profile row.
   user_id    uuid not null references public.profiles(id) on delete cascade,
-  grant_id   text not null check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor')),
+  grant_id   text not null check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor', '50-50-staff')),
   note       text,
   granted_at timestamptz not null default now(),
   primary key (user_id, grant_id)
@@ -402,7 +402,7 @@ create table if not exists public.profile_grants (
 -- 'early-supporter' — replace it (idempotent; the default constraint name).
 alter table public.profile_grants drop constraint if exists profile_grants_grant_id_check;
 alter table public.profile_grants add constraint profile_grants_grant_id_check
-  check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor'));
+  check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor', '50-50-staff'));
 alter table public.profile_grants enable row level security;
 drop policy if exists "a user reads only their own grants" on public.profile_grants;
 create policy "a user reads only their own grants"
