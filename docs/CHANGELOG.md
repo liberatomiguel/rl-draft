@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.3**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -25,7 +25,28 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
-### Balance — rc.37 F6, the approved package (branch `claude/rc37-balance`, not on staging yet; BALANCE_VERSION 16)
+### Added — rc.39 (2026-11-10), the RLCS 2027 wave in the infinite era
+- **rc.39 publishes the whole F6 package to staging** (the two sections below, R100–R108,
+  BALANCE_VERSION 16) plus this entry. Staging had nothing the branch lacked (rc.38.3 was merged in).
+- **The RLCS 2027 lineups arrive at season nine** (R109, Miguel 10/11): the career timeline still ends
+  in 2026 (season six), and the dataset's 46 lineups of 2027 (25 orgs never seen before, 31 new
+  players) used to stay out of the career for good, because the infinite era ran no dataset intake.
+  At the rollover into `CAREER_WORLD.lateIntake.atSeasonIndex` (8) their orgs enter like any dataset
+  season's (weakest filler first, then the weakest org outside the wave), and that preseason's anchor
+  pass brings the rosters in with the usual fidelity (a probe seats 69 % of the wave after the window;
+  the timeline's seasons seat 73–83 %). A player with a 2027 club card does not retire before that
+  season. One wave: season ten on is the rc.38 infinite era again. `enabled: false` turns it off.
+- Engine: `calendar.intakeSeasonIdFor` is the one answer to "which dataset season does this career
+  season bring in" (`worldSim.realOrgIntake`, `market.aiWindowMoves`' anchor pass, `orgHistoryOverAt`).
+  Seasons one to seven are bit-identical to the F6 validation; season eight differs only by the
+  retirement rolls the protected players no longer take.
+- Tests: `worldSim.test.ts` (no intake in seasons seven and eight, every org of the wave in at nine, no
+  wave org gives its seat, one wave only; the anchor pass seats the rosters at that preseason only).
+- Gates: typecheck and lint clean, full suite 2129 passed / 31 skipped (170 files), career static
+  export built. The wave's effect on seasons nine and ten was still being measured at publish
+  (paired arms on NA / EU / SAM, Normal and Hard): F6-EXPERIMENTOS.md 7.11.
+
+### Balance — rc.39 (rc.37 F6), the approved package (published to staging in rc.39; BALANCE_VERSION 16)
 - **Renewals climb in larger steps** (R100): `CAREER_SALARY.renewalMaxJump` 2.5 → **4.0**,
   `CAREER_RENEWAL_TENURE.jumpMax` 3.0 → **5.0**. A developed prospect renewed at 2–5 % of his
   market ask; the youth path won 52 % of Normal careers against 0–5 % for any other style.
@@ -42,7 +63,7 @@ with the root cause — that section doubles as the project's bugfix log.
   (was 1.5 ×: an 85 is 31 % cheaper), and the emergency-sale share tolerates one rounding step
   (`careerRc37Integration.test.ts`; the offer is priced before the day's growth, the test after).
 
-### Added / Changed / Fixed — rc.37 F6, round of 09–10/11 (branch `claude/rc37-balance`, not on staging yet; BALANCE_VERSION 16)
+### Added / Changed / Fixed — rc.39 (rc.37 F6), round of 09–10/11 (published to staging in rc.39; BALANCE_VERSION 16)
 - **Chemistry by time together** (R102): past the two-split fast phase a pair keeps bonding
   (`CAREER_CHEMISTRY.bondPerSplitTogether` 0.10) until heritage + connection fills it, and every official
   series the fielded players play counts as time together (`officialSeriesCredit` 0.02). A trio from three

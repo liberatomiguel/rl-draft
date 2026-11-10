@@ -2186,6 +2186,22 @@ R108. **rc.37 F6 — Hard reads the package through its own two scales.** The
      the roster before the difficulty is picked). The flatter ask curve
      stays on Hard: restoring 1.20 there did not help (titles 7 % → 2 %).
 
+R109. **rc.39 — the RLCS 2027 lineups arrive in the infinite era at season
+     nine (Miguel, 10/11).** The game still ends in 2026: the timeline is
+     the six seasons of `CAREER_SEASONS` and the labels do not change
+     (season seven is still called "RLCS 2027"). The dataset's 2027 lineups
+     are a late wave: `CAREER_WORLD.lateIntake` { `seasonId` "rlcs-2027",
+     `atSeasonIndex` 8 } — at that rollover the orgs enter (the same rules
+     as every dataset intake) and the preseason anchor pass seats the
+     rosters with `anchorFidelity`; a player with a card of the wave does
+     not retire before it. Season nine as Miguel asked ("na s9 na era
+     infinita"); the reading taken is the ninth career season, the wave
+     being the endless era's first fresh challenge after the season-eight
+     title target. One number moves it (`atSeasonIndex`), `enabled: false`
+     removes it. Not done: the real players' card overalls still follow
+     the calendar (a 2027 card reads from season seven on, as in rc.38), so
+     the wave regroups and adds players, it does not re-rate them.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
