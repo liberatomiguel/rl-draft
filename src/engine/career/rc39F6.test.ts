@@ -60,3 +60,53 @@ describe("R102 — chemistry grows with time together up to 100 %; heritage is o
     expect(careerChemistry(swapped).percent).toBeGreaterThanOrEqual(67);
   });
 });
+
+describe("R104 — reputation in proportion to the org", () => {
+  it("under 50 nothing changes: every result pays its base", async () => {
+    const { CAREER_REP } = await import("@/config/balance");
+    const { repGainFor } = await import("./economy");
+    for (const rep of [5, 24, 25, 49]) {
+      for (const kind of ["qualifierAdvance", "regionalTop8", "regionalTop4", "regionalWin", "majorQualify", "majorWin", "worldsQualify"] as const) {
+        expect(repGainFor(kind, rep), `${kind} at ${rep}`).toBe(CAREER_REP.gains[kind]);
+      }
+    }
+    // A newcomer's own results (tier 0) pay in full only while he is one.
+    expect(repGainFor("t3Final", 10)).toBe(CAREER_REP.gains.t3Final);
+    expect(repGainFor("t3Final", 30)).toBe(0);
+  });
+
+  it("a contender (50–74) is paid for titles, Majors and the Worlds, half for a regional top 4, nothing for getting through", async () => {
+    const { CAREER_REP } = await import("@/config/balance");
+    const { repGainFor, repTierFor } = await import("./economy");
+    const G = CAREER_REP.gains;
+    expect(repTierFor(49)).toBe(1);
+    expect(repTierFor(50)).toBe(2);
+    expect(repTierFor(75)).toBe(3);
+    for (const rep of [50, 60, 74]) {
+      expect(repGainFor("qualifierAdvance", rep)).toBe(0);
+      expect(repGainFor("regionalTop8", rep)).toBe(0);
+      expect(repGainFor("regionalTop4", rep)).toBe(Math.floor(G.regionalTop4 / 2));
+      // rc.38 halved these from 60: a contender now earns them whole.
+      expect(repGainFor("regionalWin", rep)).toBe(G.regionalWin);
+      expect(repGainFor("majorQualify", rep)).toBe(G.majorQualify);
+      expect(repGainFor("majorWin", rep)).toBe(G.majorWin);
+      expect(repGainFor("worldsQualify", rep)).toBe(G.worldsQualify);
+      expect(repGainFor("worldsTop4", rep)).toBe(G.worldsTop4);
+    }
+  });
+
+  it("an elite org (75+) needs Majors and the Worlds — and a title never pays zero", async () => {
+    const { CAREER_REP } = await import("@/config/balance");
+    const { repGainFor } = await import("./economy");
+    const G = CAREER_REP.gains;
+    expect(repGainFor("regionalTop4", 80)).toBe(0);
+    expect(repGainFor("majorQualify", 80)).toBe(Math.floor(G.majorQualify / 2));
+    expect(repGainFor("regionalWin", 80)).toBe(Math.floor(G.regionalWin / 2));
+    expect(repGainFor("majorTop4", 95)).toBe(G.majorTop4);
+    for (const rep of [0, 30, 55, 80, 99]) {
+      for (const title of CAREER_REP.proportional.titles) {
+        expect(repGainFor(title as keyof typeof G, rep), `${title} at ${rep}`).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+});

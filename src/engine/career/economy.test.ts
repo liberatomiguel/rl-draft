@@ -764,12 +764,21 @@ describe("unlocks & reputation", () => {
     });
   });
 
-  it("repGainFor halves (rounded up) at the soft cap", () => {
+  it("repGainFor: rc.39's proportional rule by default (R104); switched off, rc.38's soft cap halves (rounded up)", () => {
     expect(repGainFor("majorWin", 40)).toBe(CAREER_REP.gains.majorWin);
-    expect(repGainFor("majorWin", CAREER_REP.softCapAt)).toBe(
-      Math.ceil(CAREER_REP.gains.majorWin * CAREER_REP.softCapFactor),
-    );
-    expect(repGainFor("regionalTop8", CAREER_REP.softCapAt + 5)).toBe(1);
+    // R104: a Major title is at or above every org's tier, so it pays in full past the old soft cap.
+    expect(repGainFor("majorWin", CAREER_REP.softCapAt)).toBe(CAREER_REP.gains.majorWin);
+    expect(repGainFor("regionalTop8", CAREER_REP.softCapAt + 5)).toBe(0);
+    const P = CAREER_REP.proportional as unknown as { enabled: boolean };
+    P.enabled = false;
+    try {
+      expect(repGainFor("majorWin", CAREER_REP.softCapAt)).toBe(
+        Math.ceil(CAREER_REP.gains.majorWin * CAREER_REP.softCapFactor),
+      );
+      expect(repGainFor("regionalTop8", CAREER_REP.softCapAt + 5)).toBe(1);
+    } finally {
+      P.enabled = true;
+    }
   });
 
   it("repLossFloor tracks the highest earned sponsor gate minus slack", () => {

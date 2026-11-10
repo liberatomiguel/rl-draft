@@ -14,7 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_NEGOTIATION, CAREER_TRAINING } from "@/config/balance";
+import { CAREER_NEGOTIATION, CAREER_TRAINING, CAREER_WORLD } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -38,6 +38,9 @@ import {
   advanceDayFlow,
   advanceToNextStopFlow,
   backerLineOf,
+  canSkipShortSquadEvent,
+  skipShortSquadEventFlow,
+  uncoveredAbsenceOf,
   createCareerSave,
   emptySeatPriceFor,
   migrateSaveToV5,
@@ -317,51 +320,133 @@ describe("RTW-05 — no event with fewer than three players", () => {
   });
 });
 
-describe("RTW-05 — the unavailability roll never takes a lineup below three", () => {
-  it("with no reserve nobody is ruled out; with a reserve he covers the seat", () => {
+describe("R103 (rc.39 F6) — a three-player squad is ruled out too; without a reserve the lineup is short", () => {
+  const W = CAREER_WORLD as unknown as { unavailabilityWithoutReserve: "immune" | "short"; unavailabilityNoReserveGraceSeasons: number };
+  const reserveOf = (save: CareerSave): SquadPlayer => {
+    const lead = save.squad[0];
+    return { ...lead, id: `${lead.id}:r`, name: "Reserve", role: "sub", overall: lead.overall - 5 };
+  };
+
+  it("no reserve: he is out, his seat is empty, the clock holds and the event cannot start; a reserve lifts it", () => {
     const base = onDay(createCareerSave(INPUT, 50_507), regionalW4.day, regionalW4);
     const starter = base.starterIds[0];
-    // Three players, a starter flagged out (an old save): he still plays, the lobby shows nobody out.
+    expect(squadIsShort(base)).toBe(false);
     const three = structuredClone(base);
     three.pendingUnavailability = { playerId: starter, eventId: regionalW4.id };
-    expect(ruledOutFor(three, regionalW4)).toBeNull();
+    expect(ruledOutFor(three, regionalW4)?.id).toBe(starter);
+    expect(uncoveredAbsenceOf(three)?.id).toBe(starter);
+    expect(squadIsShort(three)).toBe(true);
+    expect(squadHoldFor(three)?.id).toBe(regionalW4.id);
     const t3 = userTeamForEvent(three, regionalW4);
-    expect(t3.emptySeats).toBe(0);
-    expect(t3.fieldedIds).toContain(starter);
-    // Four players: the reserve takes his seat.
+    expect(t3.emptySeats).toBe(1);
+    expect(t3.fieldedIds).not.toContain(starter);
+    expect(startEvent(three, false).activeEvent).toBeNull();
+    // The scrim rule reads the roster, not the absence: three under contract still scrim.
+    expect(scrimAvailability(three).reason).not.toBe("squadShort");
+    // Four players: the reserve takes his seat and nothing holds.
     const four = structuredClone(three);
-    const lead = four.squad[0];
-    const reserve: SquadPlayer = { ...lead, id: `${lead.id}:r`, name: "Reserve", role: "sub", overall: lead.overall - 5 };
+    const reserve = reserveOf(four);
     four.squad.push(reserve);
+    expect(uncoveredAbsenceOf(four)).toBeNull();
+    expect(squadIsShort(four)).toBe(false);
+    expect(squadHoldFor(four)).toBeNull();
     expect(ruledOutFor(four, regionalW4)?.id).toBe(starter);
     const t4 = userTeamForEvent(four, regionalW4);
     expect(t4.fieldedIds).not.toContain(starter);
     expect(t4.fieldedIds).toContain(reserve.id);
     expect(t4.emptySeats).toBe(0);
+    expect(startEvent(four, false).activeEvent?.def.id).toBe(regionalW4.id);
   });
 
-  it("the Monday roll fires only for a squad with a reserve (same seed, same week)", () => {
-    let fired = 0;
-    for (let seed = 50_600; seed < 50_760 && fired < 2; seed++) {
-      const base = createCareerSave(INPUT, seed);
+  it("the hold is answered like any short squad: a free agent signs outside the window, or the regional is sat out", () => {
+    const three = onDay(createCareerSave(INPUT, 50_508), regionalW4.day - 1, regionalW4);
+    three.pendingUnavailability = { playerId: three.starterIds[1], eventId: regionalW4.id };
+    expect(isWindowWeek(weekOfDay(three.clock.day))).toBe(false);
+    expect(canSkipShortSquadEvent(three)).toBe(true);
+    const skipped = skipShortSquadEventFlow(three);
+    expect(skipped.error).toBeUndefined();
+    expect(skipped.save.pendingUnavailability).toBeNull();
+    expect(squadIsShort(skipped.save)).toBe(false);
+    // The cheapest free agent signs as the reserve whatever the cash (emptySeatPriceFor).
+    const broke = structuredClone(three);
+    broke.finances.balance = backerLineOf(broke).floor;
+    const listing = listingFor({
+      world: broke.world,
+      squadIds: broke.squad.map((p) => p.id),
+      seasonIndex: broke.clock.seasonIndex,
+      careerSeed: broke.careerSeed,
+      signableCap: signableOverallCap(broke.reputation),
+    });
+    const price = emptySeatPriceFor(broke, 1)!;
+    const signed = listing.freeAgents
+      .map((v) => signPlayerFlow(broke, v.id, { lengthSeasons: 1 }))
+      .find((r) => !r.error);
+    expect(price).not.toBeNull();
+    expect(signed, "a free agent signs as the reserve").toBeDefined();
+    expect(signed!.save.squad).toHaveLength(4);
+    expect(uncoveredAbsenceOf(signed!.save)).toBeNull();
+    expect(squadHoldFor(signed!.save)).toBeNull();
+  });
+
+  it("a stale flag (another event's) never holds the clock; \"immune\" is rc.38's rule", () => {
+    const base = onDay(createCareerSave(INPUT, 50_509), regionalW4.day, regionalW4);
+    const stale = structuredClone(base);
+    stale.pendingUnavailability = { playerId: stale.starterIds[0], eventId: "0:1:somewhere-else" };
+    expect(squadIsShort(stale)).toBe(false);
+    const flagged = structuredClone(base);
+    flagged.pendingUnavailability = { playerId: flagged.starterIds[0], eventId: regionalW4.id };
+    const mode = W.unavailabilityWithoutReserve;
+    W.unavailabilityWithoutReserve = "immune";
+    try {
+      expect(ruledOutFor(flagged, regionalW4)).toBeNull();
+      expect(squadIsShort(flagged)).toBe(false);
+      expect(userTeamForEvent(flagged, regionalW4).emptySeats).toBe(0);
+    } finally {
+      W.unavailabilityWithoutReserve = mode;
+    }
+  });
+
+  it("the Monday roll: a first-season squad without a reserve is exempt; past the grace it is ruled out like one with a reserve", () => {
+    const sundayOf = (seed: number) => {
+      const sunday = structuredClone(createCareerSave(INPUT, seed));
       // Split 2's first regional week (season 0's split 1 is the novice grace).
-      const sunday = structuredClone(base);
       sunday.clock.day = firstDayOfWeek(14) - 1;
       sunday.pendingEventDef = null;
       sunday.unofficialOffer = null;
       sunday.pendingInsert = null;
       sunday.sponsorOffers = null;
       for (const p of sunday.squad) p.trainingIntensity = "heavy";
-      const lead = sunday.squad[0];
+      return sunday;
+    };
+    let fired = 0;
+    const firedSeeds: number[] = [];
+    for (let seed = 50_600; seed < 50_760 && fired < 2; seed++) {
+      const sunday = sundayOf(seed);
       const four = structuredClone(sunday);
-      four.squad.push({ ...lead, id: `${lead.id}:r`, name: "Reserve", role: "sub", overall: lead.overall - 5 });
+      four.squad.push(reserveOf(four));
       const withReserve = advanceDayFlow(four);
       const without = advanceDayFlow(sunday);
       expect(without.pendingUnavailability, `seed ${seed}`).toBeNull();
-      if (withReserve.pendingUnavailability) fired += 1;
+      if (withReserve.pendingUnavailability) {
+        fired += 1;
+        firedSeeds.push(seed);
+      }
     }
     expect(fired).toBeGreaterThan(0);
-  });
+    // The same Mondays with the grace over: the three-player squad is hit too, the mail says there is no reserve.
+    const grace = W.unavailabilityNoReserveGraceSeasons;
+    W.unavailabilityNoReserveGraceSeasons = 0;
+    try {
+      for (const seed of firedSeeds) {
+        const hit = advanceDayFlow(sundayOf(seed));
+        expect(hit.pendingUnavailability, `seed ${seed}`).not.toBeNull();
+        expect(hit.mail.some((m) => m.bodyKey === "unavailableNoReserve")).toBe(true);
+        expect(uncoveredAbsenceOf(hit)?.id).toBe(hit.pendingUnavailability!.playerId);
+      }
+    } finally {
+      W.unavailabilityNoReserveGraceSeasons = grace;
+    }
+  }, 30_000);
 });
 
 describe("RTW-05 — no scrim with fewer than three players (rc.33 review)", () => {

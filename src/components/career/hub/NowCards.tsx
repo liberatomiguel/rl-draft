@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { CAREER_EMERGENCY_SALE, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { breachesToEndFor, insertMoneyFor, loanBreachesOf } from "@/engine/career/economy";
-import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor } from "@/store/careerFlow";
+import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { regionalForQualifier } from "@/engine/career/calendar";
 import type { CareerEventDef, CareerSave, TransferOffer } from "@/engine/career/types";
@@ -204,12 +204,16 @@ export function NowSquadShort({
 }) {
   const router = useRouter();
   const unofficial = def.tier === "t3" || def.tier === "t2";
+  // rc.39 F6 (R103): three under contract, one ruled out, nobody on the bench.
+  const absent = save.squad.length >= 3 ? uncoveredAbsenceOf(save) : null;
   return (
     <div>
       <p className="kicker mb-1 text-[10px] text-bad">{C.hub.squadShortKicker}</p>
-      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{C.hub.squadShortTitle}</h2>
+      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
+        {absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}
+      </h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">
-        {C.hub.squadShortBody(save.squad.length, def.name)}
+        {absent ? C.hub.squadShortAbsentBody(absent.name, def.name) : C.hub.squadShortBody(save.squad.length, def.name)}
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="md" className="min-h-11" onClick={() => router.push("/career/market")}>

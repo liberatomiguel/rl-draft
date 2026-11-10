@@ -639,7 +639,10 @@ export function userTeamFor(input: UserTeamInput): {
   // without one nobody is ruled out (no lineup ever drops below three).
   const asked = input.unavailablePlayerId ?? null;
   const askedIsStarter = asked !== null && input.starterIds.includes(asked) && byId.has(asked);
-  const unavailable = askedIsStarter && !(subPlayer && subPlayer.id !== asked) ? null : asked;
+  // rc.39 F6 (R103): under "short" he is out all the same — his seat stays empty (the flow never
+  // starts an event like this: careerFlow.squadIsShort).
+  const uncovered = askedIsStarter && !(subPlayer && subPlayer.id !== asked);
+  const unavailable = uncovered && CAREER_WORLD.unavailabilityWithoutReserve !== "short" ? null : asked;
 
   let emptySeats = 0;
   let usedSubId: string | null = null;

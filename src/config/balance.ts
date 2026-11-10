@@ -2602,6 +2602,34 @@ export const CAREER_REP = {
   newcomer: { repCeiling: 25, t3SemiMinSeed: 3, deepRunWins: 1, deepRunsPerSplit: 1 },
   softCapAt: 60,
   softCapFactor: 0.5,
+  /**
+   * rc.39 F6 (R104, Miguel 09/11: "reputation in proportion: a small org
+   * earns from qualifiers and regionals, a big one needs bigger results; a
+   * title never pays zero"). Replaces the flat soft cap above (every gain
+   * halved from 60, so a Worlds berth paid a contender half and a qualifier
+   * Saturday still paid an elite org +1). The org's tier is the number of
+   * `tierAt` gates its reputation has passed (0 newcomer, 1 established,
+   * 2 contender, 3 elite); each result has a `level`. A result at or above
+   * the org's tier pays in full; one level below pays `belowFactor` (rounded
+   * down); further below, nothing. A title (`titles`) never pays less than
+   * `titleFloor`. Under 50 nothing changes from rc.38. `enabled: false` =
+   * rc.38's soft cap.
+   */
+  proportional: {
+    enabled: true,
+    tierAt: [25, 50, 75] as readonly number[],
+    level: {
+      t3Win: 0, t3Final: 0, t3Semi: 0, qualifierDeepRun: 0, regionalSwissExit: 0,
+      qualifierAdvance: 1, regionalTop8: 1, regionalTop4: 1, t2Final: 1, t2Win: 1,
+      regionalWin: 2, majorQualify: 2,
+      majorTop4: 3, majorWin: 3, worldsQualify: 3, worldsTop4: 3,
+    } as Record<string, number>,
+    belowFactor: 0.5,
+    titles: ["t3Win", "t2Win", "regionalWin", "majorWin"] as readonly string[],
+    titleFloor: 1,
+    /** The season's Worlds champion never loses reputation to a missed season goal. */
+    championKeepsGoalRep: true,
+  },
   /** Reputation FALLS on missed telegraphed expectations (v0.1 adjustment). */
   lossMajorMissAtRep: 40,
   lossMajorMiss: 2,
@@ -2694,8 +2722,9 @@ export const CAREER_GEAR = {
   bootcampSplitEdgeShare: 1,
   /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
   psychologistRep: 46,
-  psychologistPerSplit: 4_000,
-  psychologistStatBonus: { clutch: 3, consistency: 3 } as Record<string, number>,
+  // rc.39 F6 (R105): 4,000 → 6,000 and +3/+3 → +5/+5 — a stronger, dearer hire (f6Probes prices the edge in rating points).
+  psychologistPerSplit: 6_000,
+  psychologistStatBonus: { clutch: 5, consistency: 5 } as Record<string, number>,
   /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
   tempRatingMax: 2.0,
 } as const;
@@ -3257,6 +3286,24 @@ export const CAREER_WORLD = {
   unavailabilityMaxPerSplit: 1,
   /** Novice guard: no random events in Split 1 of Season 1. */
   unavailabilityGraceSplits: 1,
+  /**
+   * rc.39 F6 (R103, Miguel 09/11: "a three-player roster is ruled out too;
+   * without a reserve the team does not play"). Until rc.38 nobody was ruled
+   * out without a reserve ("immune"), so a reserve only ever brought the risk
+   * he covers. "short": a starter of a three-player squad is ruled out like
+   * any other, the lineup is short for that event and RTW-05's rules apply —
+   * the clock holds before it, a free agent signs as the reserve at any time
+   * (the cheapest one whatever the cash), a regional or its qualifier can be
+   * sat out, a Major or Worlds slot waits for the signing.
+   */
+  unavailabilityWithoutReserve: "short" as "immune" | "short",
+  /**
+   * ...but never in the first N seasons of a career: the first season
+   * teaches the rule (the Squad screen says so from day one) while the
+   * founding budget cannot carry a fourth wage yet. A squad WITH a reserve
+   * keeps rc.38's rule (only Split 1 of Season 1 is exempt).
+   */
+  unavailabilityNoReserveGraceSeasons: 1,
 } as const;
 
 export const CAREER_NEWS = {
@@ -3522,7 +3569,10 @@ export const CAREER_SUNDAY = {
   // rc.37 F3 — explicit bracket rounds, not the user's number of series played.
   championshipBriefing: {
     keep: { quarters: 0.1, semis: 0.1, other: 0.1, final: 0.1 },
-    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.4 },
+    // rc.39 F6 (R105): final 0.4 → 0.6. On 0.4 "recover" never beat "keep" (f6Probes: a favourite's
+    // title chance 42.4 % vs 43.2 %); on 0.6 it is the favourite's plan (+1.0 pp title) while
+    // "prepare" stays the way through the quarter-final for a side that is not.
+    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.6 },
     prepare: { quarters: 0.4, semis: 0.25, other: 0, final: -0.15 },
   },
   defaultBriefing: "keep",

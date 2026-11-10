@@ -69,6 +69,9 @@ import {
   simEventToEnd,
   spendAlertFlow,
   squadIsShort,
+  canSkipShortSquadEvent,
+  skipShortSquadEventFlow,
+  uncoveredAbsenceOf,
   startEvent,
   takeBankLoanFlow,
   payDebtFlow,
@@ -833,6 +836,34 @@ function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candida
   return save;
 }
 
+/**
+ * rc.39 F6 (R103): a starter is ruled out of the committed event and nobody
+ * covers his seat. What a manager does on the eve: sign a free agent as the
+ * reserve — the best one whose wage is small beside the starters' (at most
+ * half the cheapest starter's) and fits the policy's budget, else the
+ * cheapest in the pool (never refused for money: emptySeatPriceFor) — and, if
+ * nobody signs, sit a regional or its qualifier out. He stays as the reserve
+ * for the length of his deal, so the next absence is covered.
+ */
+function coverAbsence(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  let save = input;
+  const pool = candidatesFor(save, policy).filter((c) => c.cost === 0);
+  const starterWage = Math.min(...starters(save).map((p) => p.salaryPerSplit));
+  const modest = pool
+    .filter((c) => c.salaryPerSplit <= starterWage / 2 && affordable(save, c.cost, c.salaryPerSplit, policy))
+    .sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
+  const byCost = [...pool].sort((a, b) => a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall);
+  for (const c of [...modest.slice(0, 1), ...byCost.slice(0, 6)]) {
+    if (!uncoveredAbsenceOf(save)) break;
+    save = sign(save, c, t) ?? save;
+  }
+  if (uncoveredAbsenceOf(save) && canSkipShortSquadEvent(save)) {
+    const skipped = skipShortSquadEventFlow(save);
+    if (!skipped.error) save = alerted(save, skipped.save);
+  }
+  return save;
+}
+
 /** RTW-05 test hook: one visit of the bot's seat filler (a squad under three always signs, broke or not). */
 export function fillSeatsForTests(save: CareerSave, policyId: ArcPolicyId): CareerSave {
   return fillSeats(save, ARC_POLICIES[policyId], newTally(save, new Set()));
@@ -1102,6 +1133,8 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   save = answerMoneyNotices(save, policy, t);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
+  // rc.39 F6 (R103): ...and covers a ruled-out starter before his event.
+  if (!save.activeEvent && save.phase === "running" && uncoveredAbsenceOf(save)) save = coverAbsence(save, policy, t);
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
   if (save.activeEvent) {
     save = simEventToEnd(save);

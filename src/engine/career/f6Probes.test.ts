@@ -60,3 +60,35 @@ it.skipIf(process.env.F6_PROBE !== "1")("prices the psychologist's clutch/consis
   console.log(["psychologist +" + JSON.stringify(bonus) + `, N=${N} series per point`, ...rows].join("\n"));
   expect(rows.length).toBe(9);
 }, 3_600_000);
+
+/**
+ * rc.37 F6 (E): the championship briefing as a title chance. A Sunday bracket
+ * (quarters Bo5, semis Bo7, final Bo7) against opponents that get stronger each
+ * round; the plan shifts the user's rating per round (CAREER_SUNDAY
+ * .championshipBriefing, or F6_BRIEFING = a JSON table to try). Prints the
+ * title chance of keep / recover / prepare for a favourite, an even side and
+ * an underdog, so "recover" can be priced as the favourite's choice.
+ */
+it.skipIf(process.env.F6_PROBE !== "1")("prices the championship briefing as a title chance by how favoured the side is", async () => {
+  const { CAREER_SUNDAY } = await import("@/config/balance");
+  type Plan = Record<"quarters" | "semis" | "final", number>;
+  const table = (process.env.F6_BRIEFING ? JSON.parse(process.env.F6_BRIEFING) : CAREER_SUNDAY.championshipBriefing) as Record<string, Plan>;
+  const rounds = [["quarters", 5], ["semis", 7], ["final", 7]] as const;
+  // The user's edge over the quarter-final opponent; each later opponent is `step` stronger.
+  const sides = [["strong favourite", 3, 1], ["favourite", 2, 1], ["even", 0.5, 0.75], ["underdog", -1, 0.75]] as const;
+  const rows: string[] = [];
+  for (const [label, edge, step] of sides) {
+    const cells: string[] = [];
+    for (const plan of ["keep", "recover", "prepare"]) {
+      let title = 1;
+      rounds.forEach(([round, bestOf], i) => {
+        const user = team("a", 85 + edge - step * i + table[plan][round], 84);
+        title *= winRate(user, team("b", 85, 84), bestOf, "playoff", 20261110 + i);
+      });
+      cells.push(`${plan} ${(title * 100).toFixed(1)}%`);
+    }
+    rows.push(`${label} (edge ${edge}, −${step}/round) | ${cells.join(" | ")}`);
+  }
+  console.log([`championship briefing ${JSON.stringify(table)}, N=${N}`, ...rows].join("\n"));
+  expect(rows.length).toBe(sides.length);
+}, 3_600_000);
