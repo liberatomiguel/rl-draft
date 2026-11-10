@@ -541,7 +541,7 @@ Valores medidos só no **Normal, 1 seed**: a direção está clara, e os número
 2. **Ajuste fino**, se a confirmação pedir: um ou dois braços de triagem (25–40 min cada).
 3. **Validação final**, uma vez: os 14 perfis base × 63 situações na **seed 17019** (réplica nova) = 882
    carreiras, **~3 h**, mais uma amostra pequena da endless (S20) se a defesa de título entrar.
-4. **Pacote no staging:** um commit `v2.0.0-rc.38` com os valores, `BALANCE_VERSION` 16, testes de
+4. **Pacote no staging:** um commit de versão nova (depois da rc.38.3 atual do staging) com os valores, `BALANCE_VERSION` 16, testes de
    regressão atualizados (os que fixam números da renovação e da curva), CHANGELOG, DESIGN/ROAD-TO-WORLDS
    decisions e STATUS. Só depois do seu OK no pacote final.
 
