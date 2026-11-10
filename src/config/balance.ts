@@ -2275,6 +2275,27 @@ export const CAREER_TITLE_DEFENSE = {
   maxTitles: 1,
 } as const;
 
+/**
+ * rc.39 F6 (R106 — a lever, OFF until Miguel approves a dose): rivals rise
+ * against a dynasty. In the endless a champion wins the Worlds in 54 % of the
+ * following seasons (squad ~96 against AI sides at 90–93), and lifting every
+ * Worlds opponent (CAREER_TITLE_DEFENSE, measured +0.5 / +1.0) brakes little
+ * and bankrupts champions through early exits. This lifts only the
+ * `rivals` strongest AI sides of the user's Major and Worlds fields, by
+ * `shiftPerTitle` per Worlds title the user won in the last `windowSeasons`
+ * finished seasons, up to `maxShift`: the early rounds (and their prize) stay
+ * as they are, the semi-finals and the final become a contest, and when the
+ * dynasty stops winning the rivals come back down. Carried in difficultyShift
+ * like every other field shift. shiftPerTitle 0 = off (rc.38 exactly).
+ */
+export const CAREER_DYNASTY = {
+  tiers: ["major", "worlds"] as readonly string[],
+  windowSeasons: 3,
+  rivals: 3,
+  shiftPerTitle: 0,
+  maxShift: 3,
+} as const;
+
 export const CAREER_SPONSOR = {
   /**
    * v0.2: tiers rescaled to the garage-org economy and each carries PERKS —

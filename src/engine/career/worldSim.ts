@@ -40,6 +40,7 @@ import {
   CAREER_REGION_FIELD,
   CAREER_SEASONS,
   CAREER_TITLE_DEFENSE,
+  CAREER_DYNASTY,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
@@ -925,6 +926,8 @@ export interface FieldCtx {
   userSeedRow?: { rating: number; prestige: number } | null;
   /** rc.37 F6: Worlds titles the user already holds (CAREER_TITLE_DEFENSE; absent = 0). */
   userWorldsTitles?: number;
+  /** rc.39 F6 (R106): Worlds titles the user won in the last CAREER_DYNASTY.windowSeasons finished seasons. */
+  userRecentWorldsTitles?: number;
 }
 
 /** Intrinsic (shift-stripped) rating — comparisons and field quality use this. */
@@ -1593,6 +1596,34 @@ export function fieldForEvent(
               difficultyShift: team.rating.difficultyShift + sceneShift,
             },
           },
+    );
+  }
+
+  // rc.39 F6 (R106, lever — off at shiftPerTitle 0): the strongest AI sides of the user's Major /
+  // Worlds rise against a dynasty; everyone else, and every other event, is untouched.
+  const dynastyShift =
+    CAREER_DYNASTY.shiftPerTitle > 0 && CAREER_DYNASTY.tiers.includes(def.tier) && ctx.userTeam && field.includes(ctx.userTeam)
+      ? Math.min(CAREER_DYNASTY.maxShift, CAREER_DYNASTY.shiftPerTitle * (ctx.userRecentWorldsTitles ?? 0))
+      : 0;
+  if (dynastyShift > 0) {
+    const rivals = new Set(
+      field
+        .filter((t) => !t.isUser)
+        .sort((a, b) => intrinsicRating(b) - intrinsicRating(a) || a.id.localeCompare(b.id))
+        .slice(0, CAREER_DYNASTY.rivals)
+        .map((t) => t.id),
+    );
+    field = field.map((team) =>
+      rivals.has(team.id)
+        ? {
+            ...team,
+            rating: {
+              ...team.rating,
+              total: team.rating.total + dynastyShift,
+              difficultyShift: team.rating.difficultyShift + dynastyShift,
+            },
+          }
+        : team,
     );
   }
 

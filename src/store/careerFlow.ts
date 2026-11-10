@@ -30,6 +30,7 @@
 import {
   CAREER_CALENDAR,
   CAREER_CHEMISTRY,
+  CAREER_DYNASTY,
   CAREER_CONTRACT,
   CAREER_DEV,
   CAREER_GEAR,
@@ -3348,11 +3349,18 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
   return { save: capNews(save) };
 }
 
+/** rc.39 F6 (R106): the Worlds titles of the last CAREER_DYNASTY.windowSeasons finished seasons. */
+function recentWorldsTitlesOf(save: CareerSave): number {
+  const from = save.clock.seasonIndex - CAREER_DYNASTY.windowSeasons;
+  return save.history.filter((h) => h.seasonIndex >= from && h.userWorldsPlacement === "champion").length;
+}
+
 export function eventFieldFor(save: CareerSave, def: CareerEventDef): ReturnType<typeof fieldForEvent> {
   return fieldForEvent(def, {
     world: save.world, competition: save.competition, userTeam: userTeamForEvent(save, def).team,
     userRegion: save.identity.region, careerSeed: save.careerSeed, difficulty: save.difficulty, userPrestige: repTierOf(save.reputation),
     userWorldsTitles: save.stats.titlesWorlds,
+    userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
 }
 
@@ -3387,6 +3395,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     difficulty: save.difficulty,
     userPrestige: repTierOf(save.reputation),
     userWorldsTitles: save.stats.titlesWorlds,
+    userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
   const tournament = initFieldTournament(field, def.format, rng);
