@@ -53,7 +53,7 @@ describe("R102 — chemistry grows with time together up to 100 %; heritage is o
   });
 
   it("swapping a starter of a long-standing core now costs chemistry (rc.38: none once the core was old)", () => {
-    const core = [player("a", 12, "EU"), player("b", 12, "NA"), player("c", 12, "SAM")];
+    const core = [player("a", 20, "EU"), player("b", 20, "NA"), player("c", 20, "SAM")];
     const swapped = [core[0], core[1], player("d", 0, "OCE")];
     expect(careerChemistry(core).percent).toBe(100);
     // One new face: 100 % → 78 % (his two pairs at the fast-phase ceiling), then back up with time.

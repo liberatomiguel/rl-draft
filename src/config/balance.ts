@@ -1150,10 +1150,14 @@ export const CAREER_CHEMISTRY = {
    * split-unit together adds `bondPerSplitTogether`, until heritage +
    * connection fills the pair (maxRawPerPair): heritage is where a pair
    * starts, time is where it ends. 0 = rc.38 (no late phase, no pair cap).
-   * At 0.25 a no-heritage trio is Perfect about two seasons in, a same-region
-   * trio within its first season.
+   * Time together runs about five split-units a season (scrims and packages
+   * count). Measured on Normal (10/11): 0.25 (Perfect two seasons in) put the
+   * youth path, which keeps a mixed trio for years, at 36–71 % Worlds titles
+   * against 0–5 % for every other style; 0.1 barely moved anything by S10.
+   * 0.15: a no-heritage trio is Perfect about three seasons in, a same-region
+   * trio within its first.
    */
-  bondPerSplitTogether: 0.25,
+  bondPerSplitTogether: 0.15,
   /**
    * ...and every official series (qualifier, regional, Major, Worlds) the
    * fielded players play adds this to their time together (splitsTogether),
@@ -3315,8 +3319,14 @@ export const CAREER_WORLD = {
   historyOverFreeAgentLeaveChance: 0.5,
   /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
   unavailabilityChancePerWeek: 0.02,
-  /** The pre-event roll multiplies the weekly chance by this (≈ a month's risk). */
-  unavailabilityEventMult: 4,
+  /**
+   * The pre-event roll multiplies the weekly chance by this. rc.39 F6 (R103):
+   * 4 → 2 (8 % → 4 % an official event, about one absence every two seasons).
+   * Until rc.38 a three-player squad was immune, so the rate was never felt;
+   * with every squad exposed, 8 % cost about one event a season and the
+   * Worlds reach fell 8 pp on Normal (arms G0–G2).
+   */
+  unavailabilityEventMult: 2,
   unavailabilityMaxPerSplit: 1,
   /** Novice guard: no random events in Split 1 of Season 1. */
   unavailabilityGraceSplits: 1,
