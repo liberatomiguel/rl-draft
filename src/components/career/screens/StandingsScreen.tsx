@@ -25,6 +25,7 @@ import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { REGION_BADGE } from "@/components/regionStyle";
+import { CareerHonorsTable } from "../CareerHonorsTable";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
@@ -562,6 +563,8 @@ export function StandingsScreen() {
         </p>
       )}
       </div>
+
+      <div className="mt-6"><CareerHonorsTable save={save} C={copy} /></div>
 
       <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>

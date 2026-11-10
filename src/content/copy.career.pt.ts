@@ -2343,6 +2343,11 @@ export const CAREER_PT: CareerCopy = {
   },
 
   club: {
+    honorsEntityFilter: "Comparar organizações ou jogadores",
+    honorsEventFilter: "Competição dos títulos",
+    honorsTitles: "Títulos",
+    honorsEmpty: "Ainda não há títulos registrados nesta competição.",
+    honorsAll: "Classificação completa de títulos",
     honorsTitle: "Corrida pela história",
     honorsHint: "Títulos reais até a Season 9, somados aos resultados desta carreira. Majors RLCS começam na Season X.",
     honorsOrgs: "Organizações",

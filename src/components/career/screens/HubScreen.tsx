@@ -205,7 +205,7 @@ export function HubScreen() {
             </AppLink>
           </div>
 
-          <div className="order-9"><CareerHonorsTable save={save} C={C} /></div>
+          <div className="order-9"><CareerHonorsTable save={save} C={C} compact /></div>
           {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
           <div className="order-10">
             <TransferWirePanel save={save} C={C} D={D} />

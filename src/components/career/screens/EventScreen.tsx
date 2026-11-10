@@ -296,6 +296,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
     <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
       <ErrorBanner />
 
+      <EventBrand name={def.name} />
       <SectionTitle
         kicker={C.event.lobbyTitle}
         title={def.name}
@@ -316,7 +317,6 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         ) : null}
       </div>
 
-      <EventBrand name={def.name} />
       {/* stakes */}
       <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
         <p className="kicker mb-2.5 text-[10px]">{C.calendar.stakes}</p>
@@ -362,11 +362,11 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
 
       {/* the field */}
       {def.teamSize ? <Panel className="p-4"><CommunityLineup key={def.id} save={save} def={def} C={C} /></Panel> : null}
-      <div className={cx("grid items-start gap-4", "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
+      <div className={cx("grid items-stretch gap-4", "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
       {field.length > 0 ? (
-        <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
+        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "80ms" }}>
           <p className="kicker mb-2.5 text-[10px]">{C.event.fieldTitle}</p>
-          <div className={cx("grid grid-cols-1 gap-2 sm:grid-cols-2", !isQualifier && "lg:grid-cols-4")}>
+          <div className={cx("grid flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-2", !isQualifier && "lg:grid-cols-4")}>
             {field.map((f) => {
               const isUser = f.ref === "user";
               const content = (
@@ -429,8 +429,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         </Panel>
       ) : null}
 
-      <div className="space-y-3"><EventRewardsTable save={save} def={def} C={C} />
-      {isQualifier ? <Panel className="rise-in border-blue/25 p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="space-y-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
+      <div className="flex min-w-0 flex-col gap-4"><EventRewardsTable save={save} def={def} C={C} />
+      {isQualifier ? <Panel className="rise-in flex flex-1 flex-col p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="flex flex-1 flex-col justify-between gap-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
       </div>
       </div>
 

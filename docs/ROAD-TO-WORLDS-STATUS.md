@@ -1,37 +1,38 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-10**. Candidate **v2.0.0-rc.41**, staging.
-> Decisions R1–R111. BALANCE_VERSION **19**. Feedback: CAREER-FEEDBACK-rc41.md.
+> Updated **2026-11-10**. Candidate **v2.0.0-rc.42**, staging.
+> Decisions R1–R112. BALANCE_VERSION **19**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
-rc.41 revises Miguel's feedback over rc.40. The crest builder uses manual
-shape/pattern/emblem combinations, two-colour kits and a conditional third
-colour picker. Patterns are inset; the striped, curved-band and diagonal
-fields and emblem silhouettes are revised. Existing IDs remain valid.
-Region cards show relative difficulty. HQ limits progression to direct purchases, shares Inbox
-glyphs and moves the compact transfer wire below Inbox. Coach unlock emails
-point to Coaches and its unread dot; direct purchases retain novelty markers.
+rc.42 refines the career cards over rc.41. Crests use manual combinations,
+two-colour kits and conditional third colours; existing IDs remain valid.
+Region cards show relative difficulty. HQ progression lists direct purchases;
+coach unlock emails point to Coaches. Shared Inbox glyphs and novelty markers
+remain, with the compact transfer wire below Inbox.
 
 Training selections use green/blue/orange and a visible None state; attribute
-panels carry current values and context. HQ records weekly overall/chemistry
+panels carry current values and context. HQ records overall/chemistry
 change for the active cycle beside scrims. Club puts trophies above framed
-Records in its larger left column, Reputation above Progression on the right,
-and shares Profile achievement cards, with distinct career glyphs.
+Records beneath the identity banner in its larger left column; Reputation
+starts above Progression on the right, with aligned column endings. Club
+shares Profile achievement cards, with distinct career glyphs.
 
-Net/week contains Weekly Statement; Projected has its own card and Balance
-uses a taller chart. Next Season Books uses numeric tiles. Loans stay expanded below Movements. Normal credit/spend
+Weekly Statement contains Net/week; Projected has its own card and Balance
+uses a bounded chart fitted to recorded balances. The three tiles share a
+baseline; Loans sits beneath left-column Progression. Next Season Books uses numeric tiles. Normal credit/spend
 offers arrive by email without popup/calendar hold; emergency notices use
 numeric tiles, visible deadline/repayment/risk and expandable secondary terms.
 
-Bids and sponsors require accept or decline before advancing, including old
-parked saves. Direct regional seeds with a coach receive the Sunday briefing;
-old saves already on Sunday answer without moving the clock. Contracted
-signings unlock at reputation 20 and keep the overall cap. My Deals shows
-the player's overall and weekly wage. Pass sits beside Continue.
+Bids and sponsors require accept/decline. Direct seeds with a coach receive
+Sunday briefings, including old saves already on Sunday. Contracted signings
+unlock at reputation 20 and keep the overall cap. My Deals includes overall
+and wage. Pass sits beside Continue.
 
 Pre-event tables read the actual prize/points settlement, above the direct-seed
-notice. HQ's title ledger sits below Inbox with ranked counts. It
+notice. Event columns share a baseline; placement, cash and points have icons.
+HQ's compact title ledger sits below Inbox, showing three entries and the user
+club. The full table is in Standings; both use separate entity/title filters. It
 starts with real pre-X Worlds and zero Majors, then stores each simulated
 Major/Worlds winner with its playing roster. Transfers/rollovers preserve it.
 Legacy saves disclose missing past individual records. Historical sources:
@@ -49,7 +50,7 @@ cause and unavailable player; Market explicitly explains closed windows.
 Dev: Home → Road to Worlds → wizard → HQ. Staging uses
 NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1. Production remains off
 until the approved cutover. Final regressions, static-export and browser
-evidence are recorded in CAREER-FEEDBACK-rc41.md. This release makes no new
+evidence are recorded in CAREER-FEEDBACK-rc42.md. This release makes no new
 economy/growth/title-pacing claim.
 
 rc.39's F6 balance remains apart from rc.40's explicit gates and rc.41's

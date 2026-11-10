@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.41**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.42**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,14 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.42 (2026-11-10), career card layout
+- Chasing History adopts the standard card kicker, restrained rows and independent Organization/Player and Major/Worlds filters. HQ shows three entries and the user's club; the complete title table lives in Standings, linked directly from HQ. Empty competitions have an explicit empty state.
+- Club identity sits inside the left column, above Trophy Room and Records. Reputation starts at the top of the right column; Records and Progression stretch to the same baseline. Event field/rewards columns share a baseline; reward rows add placement marks, trophy/prize/points icons and a restrained champion highlight.
+- Partner event art is a compact 40px mark above the event/invitation title, shared by 50/50 and Duds. Finance tiles separate cash history/runway/debt, weekly breakdown/net/payday and Monday/split forecasts with income/outgoings. Keep their heights equal, cap the small chart and fit its range to recorded balances. Loans & Debt moves beneath left-column Progression, at that column's width.
+
+### Fixed — rc.42
+- Root causes: History used oversized counts and a separate heading style; its full list crowded HQ. Club's full-width identity pushed the right column down. Independent column heights left unequal card endings. The finance statement duplicated its net total and overloaded one tile; the chart's zero baseline flattened changes in a positive balance. Partner art had a larger shared canvas and the invitation image sat inside the heading.
 
 ### Changed — rc.41 (2026-11-10), career revision
 - Remove club presets; retain editable shape/pattern/colour combinations only. Two-colour kits preserve the selected third colour (white initially), one red/black kit, purple/gold restored. Third-colour emblems and Maltese cross; remove symbol outlines/shadows, harmonize/inset patterns, regular stripes, curved fifth field and reversed sash.
