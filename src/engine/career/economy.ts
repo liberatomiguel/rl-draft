@@ -31,6 +31,7 @@ import {
   CAREER_TALENT,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
+  CAREER_STAFF,
 } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { Placement } from "../types";
@@ -53,6 +54,7 @@ import type {
   SponsorFineState,
   SponsorObjectiveKind,
   SponsorState,
+  StaffId,
 } from "./types";
 // rc.37 F2: the finance front's own block (kept apart from the import above).
 import { CAREER_CREDIT_OFFER, CAREER_LATE_REVENUE, CAREER_SPEND_ALERT } from "@/config/balance";
@@ -1086,6 +1088,8 @@ export interface WeeklyStatement {
   payroll: number;
   coach: number;
   psychologist: number;
+  /** rc.45 (R120): the support staff's retainers (CAREER_STAFF). */
+  staff: number;
   upkeep: number;
   bankPayment: number;
   /** rc.34 (ECO-04): this Monday's instalments of missed goals' fines (0 = none). */
@@ -1113,13 +1117,14 @@ export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
   const payroll = input.squadSalaries.reduce((sum, l) => sum + weeklyWage(l.amount), 0);
   const coach = input.coachSalary !== null && input.coachSalary > 0 ? weeklyWage(input.coachSalary) : 0;
   const psychologist = input.gear.psychologist ? weeklyOf(psychologistPerSplitFor(s)) : 0;
+  const staff = staffWeeklyOf(input.gear, s);
   const upkeep = weeklyOf(gearUpkeepPerSplit(input.gear, s));
   const bankPayment = input.bankLoan
     ? Math.min(input.bankLoan.remaining, input.bankLoan.weeklyPayment)
     : 0;
   const sponsorFine = sponsorFineDueOf(input.sponsorFines);
   const income = sponsorBase + foundingPartner + rescuePartner + fanbase;
-  const expenses = payroll + coach + psychologist + upkeep + bankPayment + sponsorFine;
+  const expenses = payroll + coach + psychologist + staff + upkeep + bankPayment + sponsorFine;
   return {
     sponsorBase,
     foundingPartner,
@@ -1128,6 +1133,7 @@ export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
     payroll,
     coach,
     psychologist,
+    staff,
     upkeep,
     bankPayment,
     sponsorFine,
@@ -1606,7 +1612,8 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
   line("fanbase", statement.fanbase);
   line("payroll", -statement.payroll);
   line("coachSalary", -statement.coach);
-  line("buff", -statement.psychologist);
+  // rc.45 (R120): the support staff bills on the psychologist's line (one "buff" entry a Monday).
+  line("buff", -(statement.psychologist + statement.staff));
   line("upkeep", -statement.upkeep);
 
   let bankCleared = false;
@@ -2173,6 +2180,23 @@ export function gearUpkeepPerSplit(gear: GearState, seasonIndex = 0): number {
   let upkeep = 0;
   for (const item of CAREER_GEAR.items) if (gear[item.id]) upkeep += item.upkeepPerSplit;
   return upkeep * moneyIndex(seasonIndex, "flat");
+}
+
+/** rc.45 (R120): is this support-staff role retained? */
+export function staffOn(gear: Pick<GearState, "staff"> | null | undefined, id: StaffId): boolean {
+  return Boolean(gear?.staff?.[id]);
+}
+
+/** rc.45 (R120): a role's retainer per split this season (CAREER_STAFF, the flat money index). */
+export function staffPerSplitFor(id: StaffId, seasonIndex = 0): number {
+  return CAREER_STAFF.roles[id].perSplit * moneyIndex(seasonIndex, "flat");
+}
+
+/** rc.45 (R120): what the retained support staff bills a Monday. */
+export function staffWeeklyOf(gear: Pick<GearState, "staff"> | null | undefined, seasonIndex = 0): number {
+  let sum = 0;
+  for (const id of CAREER_STAFF.order) if (staffOn(gear, id)) sum += weeklyOf(staffPerSplitFor(id, seasonIndex));
+  return sum;
 }
 
 /** The psychologist's retainer per split this season (CAREER_GEAR.psychologistPerSplit, M1 index). */

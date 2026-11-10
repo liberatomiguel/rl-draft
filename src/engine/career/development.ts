@@ -1841,6 +1841,8 @@ export function applyMatchXp(
      * XP = series × CAREER_DEV.xpWeeksPerSeries × field quality.
      */
     seriesPlayed?: number;
+    /** rc.45 (R120): the bench's share with an assistant coach retained (absent = CAREER_DEV.benchXpShare). */
+    benchXpShare?: number;
   },
 ): SquadPlayer {
   const quality = clamp(
@@ -1853,7 +1855,7 @@ export function applyMatchXp(
     // A reserve who did not play keeps his training days and earns no
     // starter XP (rc.31 paid the registered sub subXpFactor of the event).
     // rc.44 (R119): the bench banks CAREER_DEV.benchXpShare of it (0 = none, rc.43).
-    const share = ctx.isSub ? CAREER_DEV.benchXpShare : 1;
+    const share = ctx.isSub ? (ctx.benchXpShare ?? CAREER_DEV.benchXpShare) : 1;
     if (share <= 0) return p;
     const weeks =
       (ctx.xpWeeksOverride !== undefined

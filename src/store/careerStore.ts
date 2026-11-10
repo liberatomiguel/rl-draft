@@ -50,6 +50,7 @@ import type {
   SundayBriefingChoice,
   TrainingMode,
   TrainingPackage,
+  StaffId,
 } from "@/engine/career/types";
 import { createRng, randomSeed } from "@/lib/rng";
 import {
@@ -88,6 +89,7 @@ import {
   runScrimFlow,
   scheduleScrimFlow,
   setPsychologistFlow,
+  setStaffFlow,
   setStartersFlow,
   setCommunityParticipantsFlow,
   skipShortSquadEventFlow,
@@ -264,6 +266,8 @@ interface CareerStoreState {
 
   buyGear: (itemId: GearItemId) => void;
   setPsychologist: (on: boolean) => void;
+  /** rc.45 (R120): retain or release a support-staff role. */
+  setStaff: (id: StaffId, on: boolean) => void;
   runBootcamp: () => void;
   buyScoutReport: (playerId: string) => void;
   hireCoach: (coach: CoachState) => void;
@@ -547,6 +551,9 @@ export const useCareerStore = create<CareerStoreState>()(
         setPsychologist: (on) => {
           withResult((s) => setPsychologistFlow(s, on));
           if (on && !get().lastError) get().markCareerSeen([toolboxNewKey("psych")]);
+        },
+        setStaff: (id, on) => {
+          withResult((s) => setStaffFlow(s, id, on));
         },
         runBootcamp: () => {
           const before = selectActiveSave(get());

@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 21;
+export const BALANCE_VERSION = 22;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2821,6 +2821,32 @@ export const CAREER_GEAR = {
   psychologistStatBonus: { clutch: 5, consistency: 5 } as Record<string, number>,
   /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
   tempRatingMax: 2.0,
+} as const;
+
+/**
+ * rc.45 (R120, playtest 10/11: "few progression items to unlock and buy"):
+ * four support-staff retainers, each a rolling per-split fee on the money
+ * index (like the psychologist), unlocked by reputation, hired and released
+ * at will. Every effect rides an existing channel:
+ * - `assistant`: a reserve banks `benchXpShare` of the team's series XP
+ *   instead of CAREER_DEV.benchXpShare.
+ * - `analyst`: +`playoffRating` on the user's team in every playoff round
+ *   (permanent staff, outside CAREER_GEAR.tempRatingMax).
+ * - `physio`: the pre-event unavailability chance from training wear x
+ *   `wearRiskMult` (on top of the coach's CAREER_PLAN.wear.coachRiskMult).
+ * - `brand`: a sponsor decision quoted while he is retained is worth x
+ *   `sponsorValueMult`; at a Tier 3 deal that is about $3.3k a split for a
+ *   $2.5k retainer, so it pays only for a club that also meets its goals.
+ * `order` is the ladder's and the screen's order.
+ */
+export const CAREER_STAFF = {
+  order: ["assistant", "analyst", "physio", "brand"] as const,
+  roles: {
+    assistant: { repGate: 16, perSplit: 1_500, benchXpShare: 0.8 },
+    analyst: { repGate: 30, perSplit: 3_000, playoffRating: 0.75 },
+    physio: { repGate: 36, perSplit: 3_000, wearRiskMult: 0.75 },
+    brand: { repGate: 50, perSplit: 2_500, sponsorValueMult: 1.15 },
+  },
 } as const;
 
 /** Hireable coaches (v0.2): real retired pros + generated candidates. */

@@ -12,7 +12,7 @@
  * matrix runner and the report live in the test file.
  */
 
-import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS, CAREER_WORLD } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS, CAREER_WORLD, CAREER_STAFF } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
@@ -25,7 +25,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
-import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, staffOn, staffPerSplitFor, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import { userTeamFor } from "@/engine/career/worldSim";
 import type {
@@ -65,6 +65,7 @@ import {
   rolloverToNextSeason,
   runBootcampFlow,
   setPsychologistFlow,
+  setStaffFlow,
   signPlayerFlow,
   simEventToEnd,
   spendAlertFlow,
@@ -1255,6 +1256,15 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
       const extra = save.finances.gear.psychologist ? 0 : psychologistPerSplitFor(save.clock.seasonIndex);
       if (policy.eagerInfrastructure || affordable(save, 0, extra, policy)) {
         policyAction(policy, "psychologist", save, hired.save); save = alerted(save, hired.save);
+      }
+    }
+    // rc.45 (R120): the support staff, each when its rung is reached and the budget carries the retainer.
+    for (const id of CAREER_STAFF.order) {
+      if (staffOn(save.finances.gear, id) || save.reputation < CAREER_STAFF.roles[id].repGate) continue;
+      const staffed = setStaffFlow(save, id, true);
+      if (staffed.error) continue;
+      if (policy.eagerInfrastructure || affordable(save, 0, staffPerSplitFor(id, save.clock.seasonIndex), policy)) {
+        policyAction(policy, "psychologist", save, staffed.save, id); save = alerted(save, staffed.save);
       }
     }
     // A human can hire a first coach as soon as the unlock is earned.

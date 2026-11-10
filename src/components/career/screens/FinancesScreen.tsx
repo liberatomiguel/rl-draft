@@ -30,6 +30,7 @@ import {
   CAREER_PAYROLL,
   CAREER_PRIZES,
   CAREER_SPONSOR,
+  CAREER_STAFF,
 } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { RESCUE_PARTNER_BRAND, sponsorBrandById } from "@/data/career/sponsors";
@@ -51,6 +52,8 @@ import {
   moneyIndex,
   nextPaydayFor,
   psychologistPerSplitFor,
+  staffOn,
+  staffPerSplitFor,
   quantize,
   rescuePartnerLastPayday,
   weeklyOf,
@@ -369,6 +372,7 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
     { key: "payroll", amount: -st.payroll },
     { key: "coach", amount: -st.coach },
     { key: "psychologist", amount: -st.psychologist },
+    { key: "staff", amount: -st.staff },
     { key: "upkeep", amount: -st.upkeep },
     { key: "bankPayment", amount: -st.bankPayment },
     // rc.34 (ECO-04): a missed goal's fine instalment.
@@ -539,6 +543,7 @@ export function FinancesScreen() {
 
   const buyGear = useCareerStore((s) => s.buyGear);
   const setPsychologist = useCareerStore((s) => s.setPsychologist);
+  const setStaff = useCareerStore((s) => s.setStaff);
   const runBootcamp = useCareerStore((s) => s.runBootcamp);
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
   const payDebt = useCareerStore((s) => s.payDebt);
@@ -914,6 +919,41 @@ export function FinancesScreen() {
                 </>
               }
             />
+
+            {/* rc.45 (R120) · support staff (rolling retainers) */}
+            {CAREER_STAFF.order.map((id) => {
+              const role = CAREER_STAFF.roles[id];
+              const on = staffOn(gear, id);
+              const open = rep >= role.repGate;
+              const weekly = formatMoney(weeklyOf(staffPerSplitFor(id, seasonIndex)), { compact: true });
+              return (
+                <LadderStep
+                  key={id}
+                  status={on ? "owned" : open ? "next" : "locked"}
+                  rung={id}
+                  title={C.finances.staff[id].title}
+                  desc={C.finances.staff[id].desc}
+                  badges={on ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : null}
+                  aside={
+                    on ? (
+                      <Button variant="danger" size="sm" onClick={() => setStaff(id, false)}>
+                        {C.finances.dropLabel}
+                      </Button>
+                    ) : open ? (
+                      <Button variant="primary" size="sm" onClick={() => setStaff(id, true)}>
+                        {C.finances.hireLabel} · {C.squad.perWeek(weekly)}
+                      </Button>
+                    ) : null
+                  }
+                  notes={
+                    <>
+                      <p className="mt-1 text-[10px] text-faint">{C.finances.upkeepLabel(weekly)}</p>
+                      {!open ? <p className="mt-1 text-[10px] font-semibold text-faint">{C.finances.lockedAtRep(role.repGate)}</p> : null}
+                    </>
+                  }
+                />
+              );
+            })}
 
             {/* 7 · Performance Center (the summit) */}
             <LadderStep

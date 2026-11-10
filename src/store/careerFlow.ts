@@ -56,6 +56,7 @@ import {
   CAREER_NEWS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
+  CAREER_STAFF,
 } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { prioritizeScrimVariety } from "@/engine/career/training";
@@ -212,6 +213,7 @@ import {
   type GearItemId,
   type NetRun,
   type WeeklyStatement,
+  staffOn,
 } from "@/engine/career/economy";
 import {
   aiWindowMoves,
@@ -326,6 +328,7 @@ import type {
   SquadPlayer,
   TransferLogEntry,
   TransferOffer,
+  StaffId,
 } from "@/engine/career/types";
 import type { Placement, Region, TournamentState } from "@/engine/types";
 // rc.34 (UX-01a): the one decision list every clock path reads (a cycle by
@@ -473,6 +476,7 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
     [CAREER_GEAR.bootcamp[0].repGate, "bootcamp1"],
     [CAREER_GEAR.bootcamp[1].repGate, "bootcamp2"],
     [CAREER_GEAR.psychologistRep, "psychologist"],
+    ...CAREER_STAFF.order.map((id): [number, string] => [CAREER_STAFF.roles[id].repGate, id]),
     [CAREER_UNLOCKS.coachRep, "coach"],
     [CAREER_LADDER.exProCoachRep, "exProCoach"],
     ...CAREER_LADDER.sponsorRep.map((g, i): [number, string] => [g, `sponsors${i + 1}`]),
@@ -1794,7 +1798,10 @@ function offerSponsorDecision(
     level: sponsorLevelOf(save),
     demoted,
     // rc.35 (front S): the ladder's sponsor access (front P's ladder will hand its own level in here).
-    access: sponsorAccessFor(sponsorLadderLevelOf(save.reputation)),
+    // rc.45 (R120): a brand manager in post lifts what the decision is worth.
+    access: ((a) => (staffOn(save.finances.gear, "brand") ? { ...a, valueMult: a.valueMult * CAREER_STAFF.roles.brand.sponsorValueMult } : a))(
+      sponsorAccessFor(sponsorLadderLevelOf(save.reputation)),
+    ),
   });
   if (CAREER_SPONSOR.fines.seasonCapScope === "season" && finedSeason && finedSeason.s === today.seasonIndex) {
     for (const o of offers) if (o.terms) o.terms.finedSeason = { ...finedSeason };
@@ -3570,7 +3577,10 @@ function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
  */
 function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<typeof createRng>): TournamentState {
   const ev = save.activeEvent;
-  const edge = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
+  const briefing = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
+  // rc.45 (R120): the analyst's edge in every playoff round (permanent staff, outside the temporary cap).
+  const analyst = ev && t.stage === "playoffs" && staffOn(save.finances.gear, "analyst") ? CAREER_STAFF.roles.analyst.playoffRating : 0;
+  const edge = briefing + analyst;
   if (edge === 0) return playNextRound(t, save.difficulty, rng);
   return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
 }
@@ -3718,6 +3728,7 @@ export function finishEvent(input: CareerSave): CareerSave {
         coachOverall: save.coach?.overall ?? null,
         gearBonus,
         seriesPlayed,
+        benchXpShare: staffOn(save.finances.gear, "assistant") ? CAREER_STAFF.roles.assistant.benchXpShare : undefined,
         ...growthCtxOf(save),
       });
       Object.assign(p, next);
@@ -5300,6 +5311,19 @@ export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult 
   return { save };
 }
 
+/** rc.45 (R120): retain or release a support-staff role (CAREER_STAFF), the psychologist's rules. */
+export function setStaffFlow(input: CareerSave, id: StaffId, on: boolean): FlowResult {
+  const save = clone(input);
+  if (on && save.reputation < CAREER_STAFF.roles[id].repGate) return { save: input, error: "locked" };
+  const staff = { ...(save.finances.gear.staff ?? {}), [id]: on };
+  if (on && !staffOn(save.finances.gear, id)) {
+    const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, staff } } });
+    if (backerLocks(save, 0, weeklyStatementOf(save).net - withRetainer.net)) return { save: input, error: "loanRunway" };
+  }
+  save.finances.gear.staff = staff;
+  return { save };
+}
+
 export function runBootcampFlow(input: CareerSave): FlowResult {
   // The event team is frozen, including between Saturday and Sunday.
   if (input.activeEvent) return { save: input, error: "bootcampEventActive" };
@@ -5565,6 +5589,7 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
       coachOverall: save.coach?.overall ?? null,
       gearBonus,
       xpWeeksOverride: CAREER_SCRIM.xpWeeks,
+      benchXpShare: staffOn(save.finances.gear, "assistant") ? CAREER_STAFF.roles.assistant.benchXpShare : undefined,
       ...growthCtxOf(save),
     });
     Object.assign(p, next);
