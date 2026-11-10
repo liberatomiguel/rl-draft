@@ -2368,6 +2368,11 @@ export const CAREER_EN = {
   },
 
   club: {
+    honorsEntityFilter: "Compare organizations or players",
+    honorsEventFilter: "Title competition",
+    honorsTitles: "Titles",
+    honorsEmpty: "No titles recorded for this competition yet.",
+    honorsAll: "Full title standings",
     honorsTitle: "Chasing history",
     honorsHint: "Real titles through Season 9, plus results in this career. RLCS Majors begin in Season X.",
     honorsOrgs: "Organizations",

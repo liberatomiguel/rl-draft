@@ -389,12 +389,6 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
             </span>
           </div>
         ))}
-      <div className="flex items-baseline justify-between gap-3 px-2.5 py-1.5 text-xs">
-        <span className="font-semibold text-ink">{C.finances.net}</span>
-        <span className={cx("font-mono font-bold", st.net >= 0 ? "text-good" : "text-bad")}>
-          {formatMoneyDelta(st.net)}
-        </span>
-      </div>
     </div>
   );
 }
@@ -409,8 +403,11 @@ function BalanceSparkline({ data }: { data: number[] }) {
   if (data.length < 2) return null;
   const w = 100;
   const h = 28;
-  const min = Math.min(...data, 0);
-  const max = Math.max(...data, 0);
+  const low = Math.min(...data);
+  const high = Math.max(...data);
+  const padding = Math.max((high - low) * 0.15, 1);
+  const min = low - padding;
+  const max = high + padding;
   const span = Math.max(1, max - min);
   const pts = data
     .map(
@@ -423,10 +420,10 @@ function BalanceSparkline({ data }: { data: number[] }) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
-      className="h-28 w-full text-cyan"
+      className="h-24 w-full text-cyan"
       aria-hidden
     >
-      {min < 0 ? (
+      {min < 0 && max > 0 ? (
         <line
           x1="0"
           y1={zeroY}
@@ -562,7 +559,7 @@ export function FinancesScreen() {
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           <div className="h-[32rem] animate-pulse rounded-2xl bg-white/5 lg:col-span-3" />
-          <div className="space-y-4 lg:col-span-2">
+          <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
             <div className="h-56 animate-pulse rounded-2xl bg-white/5" />
             <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
           </div>
@@ -581,6 +578,7 @@ export function FinancesScreen() {
   const statement = weeklyStatementOf(save);
   const { income, expenses, net } = statement;
   const projected = fin.balance + net;
+  const nextPayday = nextPaydayFor(save.clock);
   // rc.33 review: the rescue partner's help counts only on its remaining Mondays.
   const runway = runwayWeeksOf(save, net);
   // rc.34 (UX-01e): the end-of-split projection HQ shows — one function, the same figure.
@@ -817,117 +815,41 @@ export function FinancesScreen() {
 
       <FinanceErrorNotice className="rise-in" />
 
-      {/* ================= statement tiles ================= */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Panel strong className="rise-in p-4">
+      {/* Three complementary views: cash history, weekly detail, then forecast. */}
+      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">
+        <Panel strong className="rise-in flex min-w-0 flex-col p-4">
           <p className="kicker text-[10px]">{C.finances.balance}</p>
-          <p
-            className={cx(
-              "display mt-1 text-3xl font-bold leading-none",
-              fin.balance < 0 ? "text-bad" : "text-ink",
-            )}
-          >
-            {formatMoney(fin.balance)}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {fin.loan ? (
-              <Badge tone="bad">
-                {C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}
-              </Badge>
-            ) : null}
-            {fin.bankLoan ? (
-              <Badge tone="orange">
-                {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining, { compact: true }))}
-              </Badge>
-            ) : null}
-          </div>
-          {/* rc.33 (UX-07): the sparkline opens the expanded chart of the recorded Mondays. */}
-          <button
-            type="button"
-            onClick={() => setChartOpen(true)}
-            aria-label={C.finances.chartOpen}
-            title={C.finances.chartOpen}
-            className="group mt-3 flex min-h-32 w-full items-center gap-2 border-t border-line pt-2 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-cyan/60"
-          >
-            <span className="min-w-0 flex-1">
-              {sparkTail.length >= 2 ? (
-                <BalanceSparkline data={sparkTail} />
-              ) : (
-                <span className="text-[11px] text-faint">{C.finances.chartTitle}</span>
-              )}
-            </span>
-            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint transition-colors group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <p className={cx("display mt-1 text-3xl font-bold leading-none", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
+          <button type="button" onClick={() => setChartOpen(true)} aria-label={C.finances.chartOpen} title={C.finances.chartOpen} className="group my-4 flex min-h-24 w-full items-center gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan/60">
+            <span className="min-w-0 flex-1">{sparkTail.length >= 2 ? <BalanceSparkline data={sparkTail} /> : <span className="flex h-24 items-center justify-center border-b border-dashed border-line text-[11px] text-faint">{C.finances.chartTitle}</span>}</span>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-        </Panel>
-
-        <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
-          <p className="kicker text-[10px]">{C.finances.net}</p>
-          <p
-            className={cx(
-              "display mt-1 text-3xl font-bold leading-none",
-              net >= 0 ? "text-good" : "text-bad",
-            )}
-          >
-            {formatMoneyDelta(net, { compact: true })}
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-md border border-line bg-white/[0.03] px-2 py-1.5">
-              <span className="kicker block text-[9px]">{C.finances.income}</span>
-              <span className="font-semibold text-good">
-                {formatMoney(income, { compact: true })}
-              </span>
-            </div>
-            <div className="rounded-md border border-line bg-white/[0.03] px-2 py-1.5">
-              <span className="kicker block text-[9px]">{C.finances.expenses}</span>
-              <span className="font-semibold text-bad">
-                {formatMoney(expenses, { compact: true })}
-              </span>
-            </div>
+          <div className="mt-auto border-t border-line pt-3">
+            <p className={cx("text-xs font-semibold", runway === null ? "text-good" : runway <= CAREER_PAYROLL.runwayWarnWeeks ? "text-bad" : "text-orange-bright")}>{runway === null ? C.finances.runwayOk : C.finances.runway(runway)}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">{fin.loan ? <Badge tone="bad">{C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}</Badge> : null}{fin.bankLoan ? <Badge tone="orange">{C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining, { compact: true }))}</Badge> : null}</div>
           </div>
-          <div className="mt-3 border-t border-line pt-3"><p className="kicker mb-2 text-[10px]">{C.finances.weeklyStatement}</p><StatementLines st={statement} /></div>
         </Panel>
-
-        <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
-          <p className="kicker mt-3 border-t border-line pt-3 text-[10px]">{C.finances.projected}</p>
-          <p
-            className={cx(
-              "display mt-1 text-xl font-bold leading-none",
-              projected < 0 ? "text-bad" : "text-ink",
-            )}
-          >
-            {formatMoney(projected, { compact: true })}
-          </p>
-          <p className="mt-3 text-[11px] text-faint">
-            {C.finances.payday} · {C.hub.budgetNet(formatMoneyDelta(net, { compact: true }))}
-          </p>
-          <p
-            className={cx(
-              "mt-1 text-[11px] font-semibold",
-              runway === null
-                ? "text-good"
-                : runway <= CAREER_PAYROLL.runwayWarnWeeks
-                  ? "text-bad"
-                  : "text-orange-bright",
-            )}
-          >
-            {runway === null ? C.finances.runwayOk : C.finances.runway(runway)}
-          </p>
-          {save.phase !== "ended" ? (
-            <p className={cx("mt-1 text-[11px]", projection.balance < 0 ? "text-bad" : "text-faint")}>
-              {C.finances.projectionSplit(
-                formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)),
-                formatMoney(projection.balance, { compact: true }),
-              )}
-            </p>
-          ) : null}
+        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "40ms" }}>
+          <p className="kicker text-[10px]">{C.finances.weeklyStatement}</p>
+          <div className="mb-4 mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1"><p className={cx("display text-3xl font-bold leading-none", net >= 0 ? "text-good" : "text-bad")}>{formatMoneyDelta(net, { compact: true })}</p><span className="text-[10px] text-faint">{C.finances.net}</span></div>
+          <div className="max-h-44 overflow-y-auto"><StatementLines st={statement} /></div>
+          <p className="mt-auto pt-3 text-[11px] text-faint">{C.finances.payday} · {formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day))}</p>
+        </Panel>
+        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "80ms" }}>
+          <p className="kicker text-[10px]">{C.finances.projected}</p>
+          <p className={cx("display mt-1 text-3xl font-bold leading-none", projected < 0 ? "text-bad" : "text-ink")}>{formatMoney(projected, { compact: true })}</p>
+          <div className="my-4 grid grid-cols-2 gap-3 border-y border-line py-3 text-xs">
+            <div><p className="kicker mb-1 text-[9px]">{C.finances.income}</p><p className="font-mono font-semibold text-good">{formatMoney(income, { compact: true })}</p></div>
+            <div><p className="kicker mb-1 text-[9px]">{C.finances.expenses}</p><p className="font-mono font-semibold text-bad">{formatMoney(expenses, { compact: true })}</p></div>
+          </div>
+          {save.phase !== "ended" ? <p className={cx("mt-auto text-xs leading-relaxed", projection.balance < 0 ? "text-bad" : "text-sub")}>{C.finances.projectionSplit(formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)), formatMoney(projection.balance, { compact: true }))}</p> : null}
         </Panel>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-3">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
-        <Panel className="rise-in p-4 sm:p-5 lg:col-span-3" style={{ animationDelay: "120ms" }}>
+        <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "120ms" }}>
           <div className="mb-3 flex justify-end">
             <span className="shrink-0 text-[10px] font-semibold text-faint">
               {C.common.reputation} {Math.round(rep)}
@@ -1009,8 +931,170 @@ export function FinancesScreen() {
           </ol>
         </Panel>
 
-        {/* ================= right column: statement + sponsors + ledger ================= */}
-        <div className="space-y-4 lg:col-span-2">
+      {/* ================= Loans & debt (always visible below progression) ================= */}
+      <section
+        className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="kicker text-[10px]">
+            {C.finances.loans}
+            {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
+          </span>
+          {/* rc.33 review (ECO-08): where the next breach ends the career, no Backer is promised. */}
+          <span className="text-[10px] text-faint">
+            {nextBreach === "insolvent" ? C.finances.loansHintEnd : C.finances.loansHint}
+          </span>
+        </div>
+        <div className="px-4 pb-4">
+        <div className="grid grid-cols-1 gap-3">
+          {/* Bank */}
+          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
+              {C.finances.bankTitle}
+            </p>
+            {fin.bankLoan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining))}
+                </p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
+                </p>
+                <BankSchedule loan={fin.bankLoan} clock={save.clock} />
+                <PayDown
+                  remaining={fin.bankLoan.remaining}
+                  balance={fin.balance}
+                  onPay={payBankLoan}
+                  cta={C.finances.bankPayEarly}
+                  floor={backer.floor}
+                  next={nextBreachParams}
+                />
+                <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-sub">
+                  {(nextBreach === "insolvent" ? C.finances.bankHintEnd : C.finances.bankHint)(
+                    CAREER_BANK.termWeeks,
+                    Math.round(CAREER_BANK.interestPct * 100),
+                  )}
+                </p>
+                <BankLoanRequest
+                  fin={fin}
+                  rep={rep}
+                  balance={fin.balance}
+                  seasonIndex={seasonIndex}
+                  suggested={creditOfferOf(save)}
+                />
+              </>
+            )}
+          </div>
+
+          {/* rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the Emergency Backer) —
+              what is owed, the deadline and what happens on it, how it is repaid, the top-ups,
+              what the next breach does; the rule on this difficulty when nothing is owed. */}
+          <div
+            className={cx(
+              "rounded-lg border bg-white/[0.02] p-3",
+              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
+            )}
+          >
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
+            {fin.loan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
+                </p>
+                {loanView?.deadline ? (
+                  <>
+                    <p className={cx("mt-1 text-sm font-semibold", loanView.covered ? "text-orange-bright" : "text-bad")}>
+                      {C.finances.loanDeadline(
+                        deadlineDateText(D, loanView.deadline, save.clock),
+                        loanView.weeksLeft ?? 0,
+                      )}
+                    </p>
+                    <p className="mt-0.5 text-xs text-sub">
+                      {C.finances.loanCovered(loanView.covered)} {C.finances.loanDeadlineRule}
+                    </p>
+                  </>
+                ) : null}
+                <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
+                </p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {CAREER_LOAN.lockCommitments ? C.finances.backerLock : C.finances.loanNoLock}
+                </p>
+                {loanView?.lent ? (
+                  <p className="mt-1 text-[11px] text-faint">{C.finances.loanLent(formatMoney(loanView.lent))}</p>
+                ) : null}
+                {loanView && (loanView.topUps > 0 || loanView.maxTopUps !== null) ? (
+                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.loanTopUps(loanView.topUps, loanView.maxTopUps)}</p>
+                ) : null}
+                {breachEnd !== null ? (
+                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
+                ) : null}
+                <p className={cx("mt-1 text-xs", nextBreach === "insolvent" ? "font-semibold text-bad" : "text-sub")}>
+                  {C.hub.backerNextBreach(nextBreachParams)}
+                </p>
+                <PayDown
+                  remaining={fin.loan.remaining}
+                  balance={fin.balance}
+                  onPay={payDebt}
+                  cta={C.finances.payDebt}
+                  hint={C.finances.payDebtHint}
+                  floor={backer.floor}
+                  next={nextBreachParams}
+                />
+              </>
+            ) : fin.loanUsed ? (
+              <>
+                <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
+                  {/* rc.34 review: the flow's own words — a breach count, or the career's last loan repaid (the loan cap). */}
+                  {C.hub.backerNextBreach(nextBreachParams)}
+                </p>
+                <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
+                {breachEnd !== null ? (
+                  <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
+                ) : null}
+              </>
+            ) : (
+              <>
+                {/* CAREER_LOAN.breachesToEnd may end this difficulty's careers at the first breach: no loan to describe. */}
+                <p className="mt-1 text-xs text-sub">
+                  {nextBreach === "insolvent"
+                    ? C.finances.backerIdleNone(formatMoney(backer.floor, { compact: true }))
+                    : C.finances.backerIdle(
+                        formatMoney(backer.floor, { compact: true }),
+                        formatMoney(backer.rescueTo, { compact: true }),
+                        deadlineWeeksFor(save.difficulty),
+                      )}
+                </p>
+                {CAREER_LOAN.sizing === "weeks" && nextBreach !== "insolvent" ? (
+                  <p className="mt-1 text-[11px] text-faint">
+                    {C.finances.backerWeeksLine(CAREER_LOAN.floorWeeks, CAREER_LOAN.rescueToWeeks)}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-[11px] text-faint">
+                  {C.finances.loanRule({
+                    term: deadlineWeeksFor(save.difficulty),
+                    partnerPct: Math.round((investorShareFor(save.difficulty) ?? 0) * 100),
+                    partnerWeeks: CAREER_LOAN.investor.weeks,
+                    maxTopUps: CAREER_LOAN.emergency.maxTopUps,
+                    endAt: breachEnd,
+                    maxLoans: maxLoansFor(save.difficulty),
+                  })}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      </section>
+        </div>
+
+        {/* ================= right column: sponsors + ledger ================= */}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
           {/* Sponsors */}
           <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
@@ -1224,7 +1308,7 @@ export function FinancesScreen() {
           </Panel>
 
           {/* Ledger */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "200ms" }}>
+          <Panel className="rise-in flex flex-1 flex-col p-4" style={{ animationDelay: "200ms" }}>
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="kicker text-[11px]">{C.finances.ledger}</p>
               <div className="flex gap-1.5">
@@ -1292,166 +1376,7 @@ export function FinancesScreen() {
               </div>
             )}
           </Panel>
-      {/* ================= Loans & debt (v2.0; rc.2: folded away unless a loan is live) ================= */}
-      <section
-        className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
-      >
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
-          <span className="kicker text-[10px]">
-            {C.finances.loans}
-            {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
-          </span>
-          {/* rc.33 review (ECO-08): where the next breach ends the career, no Backer is promised. */}
-          <span className="text-[10px] text-faint">
-            {nextBreach === "insolvent" ? C.finances.loansHintEnd : C.finances.loansHint}
-          </span>
-        </div>
-        <div className="px-4 pb-4">
-        <div className="grid grid-cols-1 gap-3">
-          {/* Bank */}
-          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-              {C.finances.bankTitle}
-            </p>
-            {fin.bankLoan ? (
-              <>
-                <p className="display mt-1 text-lg font-bold text-orange-bright">
-                  {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining))}
-                </p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
-                </p>
-                <BankSchedule loan={fin.bankLoan} clock={save.clock} />
-                <PayDown
-                  remaining={fin.bankLoan.remaining}
-                  balance={fin.balance}
-                  onPay={payBankLoan}
-                  cta={C.finances.bankPayEarly}
-                  floor={backer.floor}
-                  next={nextBreachParams}
-                />
-                <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-xs text-sub">
-                  {(nextBreach === "insolvent" ? C.finances.bankHintEnd : C.finances.bankHint)(
-                    CAREER_BANK.termWeeks,
-                    Math.round(CAREER_BANK.interestPct * 100),
-                  )}
-                </p>
-                <BankLoanRequest
-                  fin={fin}
-                  rep={rep}
-                  balance={fin.balance}
-                  seasonIndex={seasonIndex}
-                  suggested={creditOfferOf(save)}
-                />
-              </>
-            )}
-          </div>
 
-          {/* rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the Emergency Backer) —
-              what is owed, the deadline and what happens on it, how it is repaid, the top-ups,
-              what the next breach does; the rule on this difficulty when nothing is owed. */}
-          <div
-            className={cx(
-              "rounded-lg border bg-white/[0.02] p-3",
-              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
-            )}
-          >
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
-            {fin.loan ? (
-              <>
-                <p className="display mt-1 text-lg font-bold text-orange-bright">
-                  {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
-                </p>
-                {loanView?.deadline ? (
-                  <>
-                    <p className={cx("mt-1 text-sm font-semibold", loanView.covered ? "text-orange-bright" : "text-bad")}>
-                      {C.finances.loanDeadline(
-                        deadlineDateText(D, loanView.deadline, save.clock),
-                        loanView.weeksLeft ?? 0,
-                      )}
-                    </p>
-                    <p className="mt-0.5 text-xs text-sub">
-                      {C.finances.loanCovered(loanView.covered)} {C.finances.loanDeadlineRule}
-                    </p>
-                  </>
-                ) : null}
-                <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
-                </p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {CAREER_LOAN.lockCommitments ? C.finances.backerLock : C.finances.loanNoLock}
-                </p>
-                {loanView?.lent ? (
-                  <p className="mt-1 text-[11px] text-faint">{C.finances.loanLent(formatMoney(loanView.lent))}</p>
-                ) : null}
-                {loanView && (loanView.topUps > 0 || loanView.maxTopUps !== null) ? (
-                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.loanTopUps(loanView.topUps, loanView.maxTopUps)}</p>
-                ) : null}
-                {breachEnd !== null ? (
-                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
-                ) : null}
-                <p className={cx("mt-1 text-xs", nextBreach === "insolvent" ? "font-semibold text-bad" : "text-sub")}>
-                  {C.hub.backerNextBreach(nextBreachParams)}
-                </p>
-                <PayDown
-                  remaining={fin.loan.remaining}
-                  balance={fin.balance}
-                  onPay={payDebt}
-                  cta={C.finances.payDebt}
-                  hint={C.finances.payDebtHint}
-                  floor={backer.floor}
-                  next={nextBreachParams}
-                />
-              </>
-            ) : fin.loanUsed ? (
-              <>
-                <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {/* rc.34 review: the flow's own words — a breach count, or the career's last loan repaid (the loan cap). */}
-                  {C.hub.backerNextBreach(nextBreachParams)}
-                </p>
-                <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
-                {breachEnd !== null ? (
-                  <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
-                ) : null}
-              </>
-            ) : (
-              <>
-                {/* CAREER_LOAN.breachesToEnd may end this difficulty's careers at the first breach: no loan to describe. */}
-                <p className="mt-1 text-xs text-sub">
-                  {nextBreach === "insolvent"
-                    ? C.finances.backerIdleNone(formatMoney(backer.floor, { compact: true }))
-                    : C.finances.backerIdle(
-                        formatMoney(backer.floor, { compact: true }),
-                        formatMoney(backer.rescueTo, { compact: true }),
-                        deadlineWeeksFor(save.difficulty),
-                      )}
-                </p>
-                {CAREER_LOAN.sizing === "weeks" && nextBreach !== "insolvent" ? (
-                  <p className="mt-1 text-[11px] text-faint">
-                    {C.finances.backerWeeksLine(CAREER_LOAN.floorWeeks, CAREER_LOAN.rescueToWeeks)}
-                  </p>
-                ) : null}
-                <p className="mt-1 text-[11px] text-faint">
-                  {C.finances.loanRule({
-                    term: deadlineWeeksFor(save.difficulty),
-                    partnerPct: Math.round((investorShareFor(save.difficulty) ?? 0) * 100),
-                    partnerWeeks: CAREER_LOAN.investor.weeks,
-                    maxTopUps: CAREER_LOAN.emergency.maxTopUps,
-                    endAt: breachEnd,
-                    maxLoans: maxLoansFor(save.difficulty),
-                  })}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      </section>
 
         </div>
       </div>

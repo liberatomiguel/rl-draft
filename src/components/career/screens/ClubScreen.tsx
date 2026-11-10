@@ -200,8 +200,10 @@ export function ClubScreen() {
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
       <SectionTitle kicker={copy.meta.title} title={copy.club.title} className="mb-5" />
 
+      <div className="mb-4 grid grid-cols-1 items-stretch gap-4 md:grid-cols-5">
+        <div className="flex min-w-0 flex-col gap-4 md:col-span-3">
       {/* 1 — Identity (wears the org's own colors) */}
-      <Panel strong glow="blue" className="relative mb-4 overflow-hidden p-6">
+      <Panel strong glow="blue" className="relative overflow-hidden p-5">
         <div
           aria-hidden
           className="pointer-events-none absolute -left-14 -top-14 h-52 w-52 rounded-full opacity-20 blur-3xl"
@@ -216,7 +218,7 @@ export function ClubScreen() {
             background: `radial-gradient(circle, ${save.identity.colors.secondary}, transparent 70%)`,
           }}
         />
-        <div className="relative flex flex-col items-center gap-6 sm:flex-row">
+        <div className="relative flex flex-col items-center gap-4 sm:flex-row">
           <UserCrest
             crestId={save.identity.crestId}
             colors={save.identity.colors}
@@ -243,10 +245,6 @@ export function ClubScreen() {
           </div>
         </div>
       </Panel>
-
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-5">
-        {/* 2 — Reputation track */}
-        <div className="flex flex-col gap-4 md:col-span-3">
 
 
       {/* 4 — Trophy room */}
@@ -305,9 +303,9 @@ export function ClubScreen() {
 
 
           {/* 5 — Records */}
-          <Panel className="p-4">
-            <p className="kicker mb-2">{copy.club.records}</p>
-            <div className="grid grid-cols-2 gap-3">
+          <Panel className="flex flex-1 flex-col p-4">
+            <p className="kicker mb-3">{copy.club.records}</p>
+            <div className="grid flex-1 grid-cols-2 gap-3">
               <StatTile
                 label={copy.club.recordPrize}
                 value={formatMoney(stats.totalPrize, { compact: true })}
@@ -329,7 +327,8 @@ export function ClubScreen() {
         </div>
 
         {/* 3 — Progression Track (the unlock ladder, never hidden) */}
-        <div className="space-y-4 md:col-span-2">          <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
+        <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
+          <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
             <p className="kicker mb-1">{copy.club.reputation}</p>
             <p className="display text-4xl font-bold text-ink">
               <AnimatedNumber value={rep} />
@@ -355,10 +354,11 @@ export function ClubScreen() {
                 {copy.club.repNext(nextGate.gate, unlockLabels[nextGate.key] ?? nextGate.key)}
               </p>
             ) : null}
-          </Panel>        <Panel className="rise-in p-5 md:col-span-2" style={{ animationDelay: "90ms" }}>
+          </Panel>
+          <Panel className="rise-in flex flex-1 flex-col p-5" style={{ animationDelay: "90ms" }}>
           <p className="kicker mb-0.5">{copy.club.progression}</p>
           <p className="mb-3 text-xs text-faint">{copy.club.progressionDesc}</p>
-          <ul>
+          <ul className="flex flex-1 flex-col justify-between">
             {track.map((entry) => {
               const owned = entry.unlocked && entry.owned === true;
               const available = entry.unlocked && entry.owned === false;

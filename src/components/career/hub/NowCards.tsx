@@ -156,8 +156,9 @@ export function NowInvite({
   const daysAway = def.day - save.clock.day;
   return (
     <div>
+      <EventBrand name={def.name} />
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
-        <EventBrand name={def.name} />{C.hub.inviteTitle(def.name)}
+        {C.hub.inviteTitle(def.name)}
       </h2>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <TierChip tier={def.tier} />
