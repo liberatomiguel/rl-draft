@@ -43,8 +43,9 @@ with the root cause — that section doubles as the project's bugfix log.
 - Tests: `worldSim.test.ts` (no intake in seasons seven and eight, every org of the wave in at nine, no
   wave org gives its seat, one wave only; the anchor pass seats the rosters at that preseason only).
 - Gates: typecheck and lint clean, full suite 2129 passed / 31 skipped (170 files), career static
-  export built. The wave's effect on seasons nine and ten was still being measured at publish
-  (paired arms on NA / EU / SAM, Normal and Hard): F6-EXPERIMENTOS.md 7.11.
+  export built. Measured after publish (63 paired careers a cell, NA / EU / SAM, seed 17019): the
+  wave is neutral — Worlds titles by season ten 16 % → 16 % on Normal and 16 % → 14 % on Hard,
+  insolvency 10 % → 10 % and 29 % → 25 % (F6-EXPERIMENTOS.md 7.11, with the main-regions pace).
 
 ### Balance — rc.39 (rc.37 F6), the approved package (published to staging in rc.39; BALANCE_VERSION 16)
 - **Renewals climb in larger steps** (R100): `CAREER_SALARY.renewalMaxJump` 2.5 → **4.0**,
