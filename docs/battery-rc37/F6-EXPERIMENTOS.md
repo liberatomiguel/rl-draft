@@ -554,5 +554,11 @@ Custo total até o staging: ~5–6 h de máquina e pouco tempo de análise, cont
 HUMAN_EXPERIMENT=1 HUMAN_EXP=C:/caminho/spec.json HUMAN_DIR=C:/Users/Miguel/CLAUDE/rc37-battery/f6/<braço> HUMAN_SHARDS=6 HUMAN_SHARD=0 node node_modules/vitest/vitest.mjs run src/store/auditHumanExperiment.test.ts
 ```
 
+**Atenção ao desmontar o worktree:** apague antes só a junction (PowerShell
+`[System.IO.Directory]::Delete("<worktree>
+ode_modules")`) e confira que o `node_modules` do projeto
+continua lá. O `git worktree remove --force` segue a junction e apaga o `node_modules` real (aconteceu em
+09/11; restaurado com `npm ci`).
+
 Um processo por shard (0 a 5). Comparar: `node src/store/auditHumanSummaryF6.mjs --arm <pasta> --by
 profile|family|region`. As specs e as pastas de resultado ficam em `C:\Users\Miguel\CLAUDE\rc37-battery\f6`.
