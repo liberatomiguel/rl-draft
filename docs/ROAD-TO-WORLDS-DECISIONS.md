@@ -2057,6 +2057,39 @@ R99. **rc.37 integration — the emergency sale honours F1's two-window resale
      `careerRc37Integration.test.ts`. BALANCE_VERSION 14; provisional until
      the battery report and Miguel's review.
 
+R100. **rc.37 F6 — two ways to win: renewals climb faster, the ask curve is
+     flatter (Miguel, 09/11).** The 06/11 battery (4,914 careers) had the
+     youth path at 52 % Worlds titles on Normal and every other style at
+     0–5 %: a formed prospect renewed at 2–5 % of his market ask, and a star
+     cost more than any S1–S10 income, so nobody bought. Applied together:
+     `CAREER_SALARY.renewalMaxJump` 2.5 → 4.0 with
+     `CAREER_RENEWAL_TENURE.jumpMax` 3.0 → 5.0 (no value floor: 55/70/80 %
+     and 30/45/60 % were measured and rejected, they erase the return on
+     developing and reprice up to 38–54×), and `CAREER_SALARY.growthPerPoint`
+     1.20 → 1.17. Paired triage (Normal, 147 careers): youth 52 % → 38 %,
+     buying 0 % → 24 %, overall title 16 % → 15 %, bankruptcies 3 % → 2 %;
+     youth ÷ best non-youth ~10× → 1.6×. Also rejected, measured: a cheaper
+     transfer fee, a higher signing cap by reputation, a Worlds title
+     defence by rating (+0.5 no effect, +1 bankrupts 8 % of champions) and
+     `CAREER_AGE.growthMult` (it does not drive the growth contract).
+     Existing saves: signed deals keep their wage; future asks, values, fees
+     and renewals read the new numbers. Contract e2's snowball brake moves
+     from ≤ 1.5 × to ≤ 2 × three 85s' wages. BALANCE_VERSION 16. Evidence:
+     `docs/battery-rc37/F6-EXPERIMENTOS.md` (E1, E2, P1).
+
+R101. **rc.37 F6 — the easy regions start slower; the slots and the deep
+     pools stay (Miguel, 09/11).** SSA and APAC reached the Worlds in 100 %
+     of Normal careers (median S1–S2) and then lost in the Swiss. Founders:
+     `CAREER_REGION_FIELD.starterOvrOffset` SSA −4 / APAC −3 / OCE −2,
+     overall and potential (so the Prospects headliner there sits under his
+     EU twin); MENA stays 0 (a cheaper founding payroll became market there
+     and the reach rose). Scene: `.shift` SSA +2.0 / APAC +1.5 / OCE +0.5,
+     qualifier and regional AI sides only; Major and Worlds never read it.
+     Paired (P2): first Worlds of SSA and APAC S2 → S3; reach by S10 APAC
+     100 % → 67 %, SSA 100 % → 81 %. EU and NA are untouched on Normal
+     ("the strongest pool is the hardest", Miguel). Founders apply to new
+     careers; the scene applies from the next regional event of a save there.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

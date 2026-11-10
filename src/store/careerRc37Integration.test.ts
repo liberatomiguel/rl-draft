@@ -119,7 +119,9 @@ describe("rc.37 integration — F2's emergency sale on F1's resale lock and valu
         const [lo, hi] = CAREER_EMERGENCY_SALE.feeRange;
         expect(o.fee).toBeGreaterThanOrEqual(lo * value - 50);
         expect(o.fee).toBeLessThanOrEqual(hi * value);
-        expect(o.valuePct).toBe(Math.round((o.fee / value) * 100));
+        // The offer is priced before the day's growth lands and the value is re-derived after it, so
+        // the share can sit one rounding step apart (seen on rc.39's flatter ask curve: 67.5 %).
+        expect(Math.abs((o.valuePct ?? 0) - Math.round((o.fee / value) * 100))).toBeLessThanOrEqual(1);
         checked++;
       }
     }

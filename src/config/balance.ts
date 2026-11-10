@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 15;
+export const BALANCE_VERSION = 16;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1910,7 +1910,14 @@ export const CAREER_ECONOMY = {
 
 export const CAREER_SALARY = {
   basePerSplit: 1_500,
-  growthPerPoint: 1.2,
+  /**
+   * rc.39 F6 (R100): 1.20 → 1.17. A flatter ask curve above the anchor (an 85
+   * asks −31 %, a 90 −40 %; a 65 +13 %): on 1.20 a star cost more than any
+   * S1–S10 income, so nobody bought and only "raise your own" won the Worlds
+   * (battery 06/11). Paired triage: `ambitious` 0 % → 24–33 % Worlds titles,
+   * bankruptcies down. Coaches keep their own curve.
+   */
+  growthPerPoint: 1.17,
   anchorOverall: 70,
   /**
    * rc.33 — ECO-09 (Miguel, 30/10: "wages feel too low, or should grow more
@@ -2002,8 +2009,13 @@ export const CAREER_SALARY = {
    * prospect climbs to his value over two renewals, not one: rc.33's first
    * re-measure had the prospects' renewals at ×3.9 p50 / ×12 p90 (up to
    * ×25), which broke every hands-off prospects career in EU/NA on Normal.
+   * rc.39 F6 (R100): 2.5 → 4.0 (with CAREER_RENEWAL_TENURE.jumpMax 5.0). On
+   * ×2.5 a developed wonderkid renewed at 2–5 % of his market ask and the
+   * youth path won 52 % of Normal careers against 0–5 % for every other
+   * style; the flatter curve above (growthPerPoint 1.17) is what keeps the
+   * hands-off payroll whole at the larger step.
    */
-  renewalMaxJump: 2.5,
+  renewalMaxJump: 4.0,
   /**
    * rc.33 (ECONOMY-CONTRACT M6 lever 3, the title raise; Claude's call —
    * tested at Gate 2): a player renews dearer for the titles the user won
@@ -2179,9 +2191,10 @@ export const CAREER_RENEWAL_TENURE = {
    * ...up to this: one notch above the first renewal (rc.33 broke hands-off
    * prospects careers at ×3.9 p50). With premiumMax no renewal multiplies a
    * wage by more than 3.0 × 1.45 = ×4.35 (rc.36 ×4.47). Fallback if the
-   * battery's hands-off prospects payroll breaks: 2.75.
+   * battery's hands-off prospects payroll breaks: 2.75. rc.39 F6 (R100):
+   * 3.0 → 5.0 (×4.0, ×4.25 … ×5.0 by tenure; measured p90 ×6.2 a renewal).
    */
-  jumpMax: 3.0,
+  jumpMax: 5.0,
   /**
    * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
    * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
@@ -2223,8 +2236,11 @@ export const CAREER_RENEWAL_TENURE = {
  */
 export const CAREER_REGION_FIELD = {
   tiers: ["qualifier", "regional"] as readonly string[],
-  shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
-  starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
+  // rc.39 F6 (R101): the easy regions start slower. Paired triage (P2): the
+  // first Worlds of SSA and APAC moves from S2 to S3, APAC's reach by S10
+  // 100 % → 67 %; EU, NA, SAM and MENA untouched.
+  shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0.5, APAC: 1.5, SSA: 2 } as Record<Region, number>,
+  starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: -2, APAC: -3, SSA: -4 } as Record<Region, number>,
 } as const;
 
 /**

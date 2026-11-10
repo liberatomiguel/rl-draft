@@ -25,6 +25,23 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Balance — rc.37 F6, the approved package (branch `claude/rc37-balance`, not on staging yet; BALANCE_VERSION 16)
+- **Renewals climb in larger steps** (R100): `CAREER_SALARY.renewalMaxJump` 2.5 → **4.0**,
+  `CAREER_RENEWAL_TENURE.jumpMax` 3.0 → **5.0**. A developed prospect renewed at 2–5 % of his
+  market ask; the youth path won 52 % of Normal careers against 0–5 % for any other style.
+- **Flatter ask curve** (R100): `CAREER_SALARY.growthPerPoint` 1.20 → **1.17** (an 85 asks −31 %,
+  a 90 −40 %, a 65 +13 %; values and fees follow, coaches keep their curve). Signed deals do not change.
+- **Easy regions start slower** (R101): `CAREER_REGION_FIELD.starterOvrOffset` SSA −4 / APAC −3 /
+  OCE −2 (new careers only) and `.shift` SSA +2.0 / APAC +1.5 / OCE +0.5 on qualifier and regional
+  AI sides (from the next regional event of a save there). EU, NA, SAM and MENA unchanged.
+- Measured paired with the 06/11 battery (Normal, 147 careers, arms P1 + P2): youth 52 % → 38 %
+  Worlds titles, buying 0 % → 24 %, overall title 16 % → 15 %, Major 20 % → 24 %, bankruptcies
+  3 % → 2 %; first Worlds of SSA and APAC S2 → S3.
+- Tests re-pinned on purpose: the renewal ladder (`rc37F1.test.ts`), the Prospects headliner reads the
+  region offset (`rc35FrontC.test.ts`), contract e2's snowball brake is now ≤ 2 × three 85s' wages
+  (was 1.5 ×: an 85 is 31 % cheaper), and the emergency-sale share tolerates one rounding step
+  (`careerRc37Integration.test.ts`; the offer is priced before the day's growth, the test after).
+
 ### Added / Fixed — rc.37 F6, balance experiments (branch `claude/rc37-balance`, no gameplay change yet)
 - **Experiment runner** `auditHumanExperiment.test.ts` (opt-in `HUMAN_EXPERIMENT=1`): plays chosen
   battery cells under a balance patch applied in memory (strict deep merge: an unknown key fails),
