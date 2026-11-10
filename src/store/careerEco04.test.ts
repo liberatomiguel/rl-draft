@@ -266,18 +266,18 @@ describe("rc.32 M5 — prize tables that sum to 100 %", () => {
     expect(single8.champion + single8.runner_up + 2 * single8.top4 + 4 * single8.top8).toBe(100);
   });
 
-  it("a season-0 regional pays its $40k and a Community Cup its $2k; the qualifier is unchanged", () => {
+  it("a season-0 regional pays its $50k (rc.43, R115), a Community Cup its $2k and the qualifier its pool", () => {
     expect(prizePoolPaidFor("regional", "swiss", "normal", 0)).toBe(CAREER_PRIZES.pools.regional);
     expect(prizePoolPaidFor("t3", "single", "normal", 0)).toBe(CAREER_PRIZES.pools.t3);
     expect(prizePoolPaidFor("qualifier", "swissOnly", "normal", 0)).toBe(CAREER_PRIZES.pools.qualifier);
-    expect(prizeFor("regional", "champion", "swiss", "normal", 0)).toBe(11_200);
-    expect(prizeFor("regional", "swiss_exit", "swiss", "normal", 0)).toBe(500);
+    expect(prizeFor("regional", "champion", "swiss", "normal", 0)).toBe(14_100); // 28 % of $50k, plus the rounding remainder of the lower places
+    expect(prizeFor("regional", "swiss_exit", "swiss", "normal", 0)).toBe(600);
   });
 
   it("switch-back: tables 'rc31' restore rc.31's 30 % title and its 102 % Swiss table", () => {
     withConfig(CAREER_PRIZES, { tables: "rc31" }, () => {
-      expect(prizeFor("regional", "champion", "swiss", "normal", 0)).toBe(12_000);
-      expect(prizePoolPaidFor("regional", "swiss", "normal", 0)).toBe(40_800);
+      expect(prizeFor("regional", "champion", "swiss", "normal", 0)).toBe(15_000);
+      expect(prizePoolPaidFor("regional", "swiss", "normal", 0)).toBe(51_000);
       expect(prizeFor("t2", "runner_up", "single", "normal", 0)).toBe(2_200);
     });
   });

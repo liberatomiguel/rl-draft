@@ -385,7 +385,8 @@ describe("rc.37 F1 — value by profile (Miguel's checks)", () => {
 const renewCtx = (seasonIndex: number, rep = 50) => ({
   rep,
   seasonIndex,
-  difficulty: "normal" as const,
+  // rc.43 (R117): Easy reads the unscaled ladder these tests describe (Normal now scales it like Hard).
+  difficulty: "easy" as const,
   careerSeed: 42,
   lengthSeasons: 1 as const,
 });

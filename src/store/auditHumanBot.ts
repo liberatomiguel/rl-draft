@@ -1112,7 +1112,7 @@ function answerMoneyNotices(input: CareerSave, policy: ArcPolicy, t: Tally): Car
   let save = input;
   for (let guard = 0; guard < 32; guard++) {
     // rc.40 (R110) made the bank's offer mail-only: `moneyNoticeOf` no longer returns it, so the bot
-    // reads the quoted offer from the queue, as a player opening the mail does (rc.42: it saw none).
+    // reads the quoted offer from the queue, as a player opening the mail does (rc.40 to rc.42: it saw none).
     const notice =
       (save.moneyNotices ?? []).find((n) => n.kind === "creditOffer" || n.kind === "spendRisk") ?? moneyNoticeOf(save);
     if (!notice) break;

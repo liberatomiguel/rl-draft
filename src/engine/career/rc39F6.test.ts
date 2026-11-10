@@ -116,16 +116,16 @@ describe("R104 — reputation in proportion to the org", () => {
 });
 
 describe("R100 / R101 — Hard keeps rc.37's renewal ladder and the easy regions' scene unshifted", () => {
-  it("the jump scales by difficulty: ×4.0 on Easy and Normal, ×2.5 on Hard, the cap alike", async () => {
+  it("the jump scales by difficulty: ×4.0 on Easy, ×2.5 on Normal (rc.43, R117) and Hard, the cap alike", async () => {
     const { CAREER_RENEWAL_TENURE, CAREER_SALARY } = await import("@/config/balance");
     const { renewalLadderFor } = await import("./renewal");
     const first = { joinedSeason: 8, renewalCount: 0 }, old = { joinedSeason: 0, renewalCount: 2 };
-    for (const d of ["easy", "normal"] as const) {
+    for (const d of ["easy"] as const) {
       expect(renewalLadderFor(first, 10, d).maxJump).toBe(CAREER_SALARY.renewalMaxJump);
       expect(renewalLadderFor(old, 10, d).maxJump).toBe(CAREER_RENEWAL_TENURE.jumpMax);
     }
-    expect(renewalLadderFor(first, 10, "hard").maxJump).toBeCloseTo(2.5, 9);
-    expect(renewalLadderFor(old, 10, "hard").maxJump).toBeCloseTo(3.125, 9);
+    for (const d of ["normal", "hard"] as const) expect(renewalLadderFor(first, 10, d).maxJump).toBeCloseTo(2.5, 9);
+    for (const d of ["normal", "hard"] as const) expect(renewalLadderFor(old, 10, d).maxJump).toBeCloseTo(3.125, 9);
     // No difficulty passed (a pure ladder read): the unscaled ladder.
     expect(renewalLadderFor(first, 10).maxJump).toBe(CAREER_SALARY.renewalMaxJump);
   });

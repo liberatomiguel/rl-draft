@@ -41,6 +41,7 @@ import {
   askInputOf,
   askPackageFor,
   bidWeightOf,
+  bidPremiumFor,
   incomingBidForDay,
   listingFor,
   renewalAskFor,
@@ -309,7 +310,8 @@ describe("rc.37 F1 — one valuation for buying, selling and the wage", () => {
           seen += 1;
           const value = marketValueFor(valueInputOf(bought, 909 + day + seedOffset, 1));
           expect(bid.fee).toBeGreaterThanOrEqual(quantize(value * CAREER_TRANSFER.aiBidRange[0]) - CAREER_ECONOMY.roundQuantum);
-          expect(bid.fee).toBeLessThanOrEqual(quantize(value * CAREER_TRANSFER.aiBidRange[1]));
+          // rc.43 (R114): the bid adds its premium for youth and reach on top of the shared value.
+          expect(bid.fee).toBeLessThanOrEqual(quantize(value * bidPremiumFor(valueInputOf(bought, 909 + day + seedOffset, 1)) * CAREER_TRANSFER.aiBidRange[1]));
         }
       }
     }
@@ -432,7 +434,7 @@ describe("rc.37 F1 — one valuation for buying, selling and the wage", () => {
           // The two bands never overlap, so the fee says which valuation priced it.
           expect(arcValue * CAREER_TRANSFER.aiBidRange[0]).toBeGreaterThan(flatValue * CAREER_TRANSFER.aiBidRange[1]);
           expect(bid.fee).toBeGreaterThanOrEqual(quantize(arcValue * CAREER_TRANSFER.aiBidRange[0]) - CAREER_ECONOMY.roundQuantum);
-          expect(bid.fee).toBeLessThanOrEqual(quantize(arcValue * CAREER_TRANSFER.aiBidRange[1]));
+          expect(bid.fee).toBeLessThanOrEqual(quantize(arcValue * bidPremiumFor(valueInputOf(kid, seed, 1)) * CAREER_TRANSFER.aiBidRange[1]));
         }
       }
     }

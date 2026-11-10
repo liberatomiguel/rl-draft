@@ -2269,3 +2269,23 @@ Remove club-inspired presets. Kits select two colours and preserve a separate th
 ## R112 — 10 November 2026: title race and card composition
 
 Use the standard card heading/filter system for Chasing History. HQ is a short preview with the user's club; Standings contains the complete title ledger. Entity and competition filters are independent. Keep Club identity inside the left column, Reputation/Progression at the right top and paired card columns aligned at the bottom. Reward placement markers and compact partner art follow the game's existing icons. Redistribute finance summaries across three equally sized cards; debt belongs below left-column progression. Display-only changes: BALANCE_VERSION 19 and all save contracts unchanged.
+
+## R113 — 10 November 2026: the bank lends in a shallow red (rc.43)
+
+R107 refused every ordinary loan below zero, so the mailed offer arrived too late and the first help was the counted emergency loan. `CAREER_BANK.negativeDepthOfLimit` 0.5: the bank still writes the loan while the hole is within half the reputation limit. Offer by mail, emergency loan by pop-up (Miguel, 10/11). 0 restores rc.39.
+
+## R114 — 10 November 2026: bids pay for youth and potential (rc.43)
+
+R100's flatter ask curve cut an 85's value by about 30 % and every AI bid with it. `CAREER_TALENT.bidPremium` multiplies only the AI's bid for a user player: +20 % up to age 21, +4 % a point of reachable gap, +60 % at most. Asks, renewals and the user's own fees keep the shared valuation.
+
+## R115 — 10 November 2026: regionals and qualifiers pay more (rc.43)
+
+Regional $40k to $50k, qualifier $6k to $8k, tables unchanged (champion most, every place in proportion). +50 % measured no better on NA/EU/SAM Normal and doubled the easy regions' season-five cash. The snowball brake in contract.test moves from 2 to 2.15 × three 85s' wages (it reads 2.11); the dominants' cash in the battery did not rise.
+
+## R116 — 10 November 2026: chemistry Perfect in about two seasons (rc.43)
+
+`CAREER_CHEMISTRY.bondPerSplitTogether` 0.10 to 0.20 (Miguel, 10/11).
+
+## R117 — 10 November 2026: Normal renews on Hard's ladder (rc.43)
+
+R100's ×4.0 first jump raised the youth careers' payroll from season four with no income to match. ×3.25 left titles by 2027 at 1 in 63; ×2.5 (scale 0.625, at most ×3.125) gave 4. Easy keeps ×4.0. Open after launch: two simultaneous sponsors, a longer growth window (growth speed did not change between rc.38 and rc.39).

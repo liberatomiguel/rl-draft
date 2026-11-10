@@ -777,7 +777,7 @@ export function bidWeightOf(
   return Math.max(1, p.overall - 70) + (p.overall >= T.starOverall ? 6 : 0) + talent;
 }
 
-/** rc.42 (R112): what an AI bid adds for youth and reach (CAREER_TALENT.bidPremium); 1 = the plain market value. */
+/** rc.43 (R114): what an AI bid adds for youth and reach (CAREER_TALENT.bidPremium); 1 = the plain market value. */
 export function bidPremiumFor(input: Parameters<typeof reachGapFor>[0]): number {
   const B = CAREER_TALENT.bidPremium;
   const young = input.age <= B.youngAgeMax ? B.young : 0;
@@ -864,7 +864,7 @@ export function incomingBidForDay(ctx: {
 
   // rc.37 (F1): the same valuation as a buy (`valueInputOf`).
   const targetInput = valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel);
-  // rc.42 (R112): a bid pays for youth and upside on top of the shared valuation.
+  // rc.43 (R114): a bid pays for youth and upside on top of the shared valuation.
   const value = marketValueFor(targetInput) * bidPremiumFor(targetInput);
   const [lo, hi] = T.aiBidRange;
   const mult =

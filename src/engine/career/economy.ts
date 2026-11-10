@@ -1814,7 +1814,7 @@ export function bankLoanRefusal(
   if (fin.bankLoan) return "active";
   if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
   // rc.39 F6 (R107): in the red the only bank money is the emergency loan (counted).
-  // rc.42 (R111): a shallow red still borrows — the hole within negativeDepthOfLimit of the limit.
+  // rc.43 (R113): a shallow red still borrows — the hole within negativeDepthOfLimit of the limit.
   if (
     CAREER_BANK.blockedWhileNegative &&
     fin.balance < 0 &&
