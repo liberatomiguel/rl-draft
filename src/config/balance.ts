@@ -3205,6 +3205,17 @@ export const CAREER_WORLD = {
   /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
   anchorFidelity: 0.85,
   anchorFidelityTop: 0.95,
+  /**
+   * rc.39 (R109, Miguel 10/11): the dataset already holds RLCS 2027 lineups,
+   * one season past the career timeline (which still ends in 2026). They
+   * arrive in the infinite era at `atSeasonIndex` (8 = the ninth season): at
+   * that rollover the orgs enter like any dataset intake
+   * (`worldSim.realOrgIntake`) and the preseason anchor pass brings their
+   * rosters in with the usual fidelity. A player with a card of that season
+   * does not retire before it. One wave, one season; `enabled: false` is the
+   * rc.38 infinite era (no real intake at all).
+   */
+  lateIntake: { enabled: true, seasonId: "rlcs-2027", atSeasonIndex: 8 },
   /** v0.3: 0.25 → 0.35 — the mid-season market was too quiet. */
   midWindowMoveRate: 0.35,
   /**

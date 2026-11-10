@@ -32,6 +32,7 @@ import {
   CAREER_SEASONS,
   CAREER_SLOTS,
   CAREER_UNOFFICIAL,
+  CAREER_WORLD,
 } from "@/config/balance";
 import { T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
 import type { Region } from "../types";
@@ -511,6 +512,17 @@ export function seasonLabelFor(seasonIndex: number): string {
 export function seasonIdFor(seasonIndex: number): string {
   if (seasonIndex < INFINITE_FROM) return CAREER_SEASONS[seasonIndex].seasonId;
   return `career-${infiniteYear(seasonIndex)}`;
+}
+
+/**
+ * rc.39 (R109): the dataset season whose real lineups a career season brings
+ * in — its own on the timeline, the late wave (CAREER_WORLD.lateIntake) at
+ * its one infinite-era season, none otherwise.
+ */
+export function intakeSeasonIdFor(seasonIndex: number): string | null {
+  if (seasonIndex >= 0 && seasonIndex < INFINITE_FROM) return CAREER_SEASONS[seasonIndex].seasonId;
+  const late = CAREER_WORLD.lateIntake;
+  return late.enabled && seasonIndex === late.atSeasonIndex && seasonIndex >= INFINITE_FROM ? late.seasonId : null;
 }
 
 /** Dataset chronology order (10..15); the infinite era clamps at the last one. */

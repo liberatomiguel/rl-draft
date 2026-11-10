@@ -110,6 +110,7 @@ import {
   statsFromView,
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
+import { intakeSeasonIdFor } from "./calendar";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -188,6 +189,17 @@ function orderFor(seasonIndex: number): number {
   return seasonIndex <= last
     ? CAREER_SEASONS[seasonIndex].order
     : CAREER_SEASONS[last].order + (seasonIndex - last);
+}
+
+/** rc.39 (R109): the players with a club card of the late wave's season (memoized). */
+let lateWavePlayerIds: Set<string> | null = null;
+function lateWavePlayers(): Set<string> {
+  lateWavePlayerIds ??= new Set(
+    playerCards
+      .filter((c) => c.seasonId === CAREER_WORLD.lateIntake.seasonId && !lineupById.get(c.lineupId)?.national)
+      .map((c) => c.playerId),
+  );
+  return lateWavePlayerIds;
 }
 
 /** Latest dataset-card season order per player (anchor-protection lookup). */
@@ -1773,6 +1785,9 @@ export function agePassAndIntake(
   // played. rc.32: the age clock steps exactly one year a season (rc.31's
   // was two across 2022-23 → 2024), so the step is 1 at every rollover.
   const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
+  const lateWave = CAREER_WORLD.lateIntake;
+  const lateWavePending =
+    lateWave.enabled && toSeasonIndex >= CAREER_SEASONS.length && toSeasonIndex <= lateWave.atSeasonIndex;
   const rollsRetirement = (view: CareerPlayerView): boolean => {
     if (view.kind === "real") {
       // Anchor protection: a real player plays every season he has a club
@@ -1781,6 +1796,8 @@ export function agePassAndIntake(
       // player already past it retires at that first rollover.
       const last = lastDatasetCardOrder(view.id);
       if (last !== undefined && last >= orderNow) return false;
+      // rc.39 (R109): a player of the late wave plays its season first.
+      if (lateWavePending && lateWavePlayers().has(view.id)) return false;
     }
     const p = retirementChanceFor({
       age: view.age - calendarStep,
@@ -2224,8 +2241,9 @@ export function realOrgIntake(
   /** rc.33 (RTW-03): orgs whose history was over and whose seat an entrant took. */
   left: { ref: string; name: string; region: Region }[];
 } {
-  if (toSeasonIndex <= 0 || toSeasonIndex >= CAREER_SEASONS.length) return { world, entered: [], left: [] };
-  const seasonId = CAREER_SEASONS[toSeasonIndex].seasonId;
+  // rc.39 (R109): the late wave (RLCS 2027) enters at its infinite-era season.
+  const seasonId = intakeSeasonIdFor(toSeasonIndex);
+  if (toSeasonIndex <= 0 || !seasonId) return { world, entered: [], left: [] };
   const next: WorldState = {
     ...world,
     orgs: { ...world.orgs },
@@ -2298,6 +2316,8 @@ export function datasetOrgName(ref: string): string | undefined {
 
 /** rc.33 (RTW-03): career season index → the orgs with a club lineup that season (memoized). */
 let orgsBySeason: Set<string>[] | null = null;
+/** rc.39 (R109): the orgs of the late wave (memoized). */
+let lateWaveOrgs: Set<string> | null = null;
 
 /**
  * rc.33 (RTW-03): an org's history is over at a season when it has no club
@@ -2314,6 +2334,15 @@ export function orgHistoryOverAt(ref: string, seasonIndex: number): boolean {
     });
   }
   for (let s = Math.max(0, seasonIndex); s < orgsBySeason.length; s++) if (orgsBySeason[s].has(ref)) return false;
+  // rc.39 (R109): in the infinite era an org of the late wave still has its
+  // season to play. The timeline's own answers are unchanged.
+  const late = CAREER_WORLD.lateIntake;
+  if (late.enabled && seasonIndex >= orgsBySeason.length && seasonIndex <= late.atSeasonIndex) {
+    lateWaveOrgs ??= new Set(
+      lineups.filter((l) => l.seasonId === late.seasonId && !l.rareSpawn && !l.national).map((l) => l.orgId),
+    );
+    if (lateWaveOrgs.has(ref)) return false;
+  }
   return true;
 }
 
