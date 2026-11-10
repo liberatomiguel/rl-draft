@@ -2261,6 +2261,15 @@ export const CAREER_REGION_FIELD = {
   // 100 % → 67 %; EU, NA, SAM and MENA untouched.
   shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0.5, APAC: 1.5, SSA: 2 } as Record<Region, number>,
   starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: -2, APAC: -3, SSA: -4 } as Record<Region, number>,
+  /**
+   * rc.39 F6 (R102): the counterpart of chemistry by time together. A stable
+   * squad now reaches 100 % (rc.38: 67–75 % for most, worth about +0.5 rating
+   * on Normal), which is felt where titles are decided. Rating added to every
+   * AI side of these tiers, in every region, beside the difficulty's shift
+   * (carried in difficultyShift like `shift`). The climb — qualifiers and
+   * regionals — is untouched. 0 = rc.38.
+   */
+  tierShift: { major: 0, worlds: 0 } as Record<string, number>,
 } as const;
 
 /**

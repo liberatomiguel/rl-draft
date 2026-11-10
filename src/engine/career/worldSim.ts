@@ -1584,6 +1584,8 @@ export function fieldForEvent(
     (CAREER_REGION_FIELD.tiers.includes(def.tier)
       ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0)
       : 0) +
+    // rc.39 F6 (R102): the top tiers' own shift (the counterpart of chemistry by time together).
+    (CAREER_REGION_FIELD.tierShift[def.tier] ?? 0) +
     // rc.37 F6 (lever, off by default): the title defence at the user's Worlds.
     (def.tier === "worlds" && ctx.userTeam && field.includes(ctx.userTeam)
       ? CAREER_TITLE_DEFENSE.worldsShiftPerTitle *
