@@ -777,6 +777,13 @@ export function bidWeightOf(
   return Math.max(1, p.overall - 70) + (p.overall >= T.starOverall ? 6 : 0) + talent;
 }
 
+/** rc.43 (R114): what an AI bid adds for youth and reach (CAREER_TALENT.bidPremium); 1 = the plain market value. */
+export function bidPremiumFor(input: Parameters<typeof reachGapFor>[0]): number {
+  const B = CAREER_TALENT.bidPremium;
+  const young = input.age <= B.youngAgeMax ? B.young : 0;
+  return 1 + Math.min(B.max, young + B.perGap * Math.max(0, reachGapFor(input)));
+}
+
 /**
  * v0.3 daily poach roll: bids for user players can land on ANY window day
  * (was: only the window's first Monday, only ever for the single best
@@ -856,7 +863,9 @@ export function incomingBidForDay(ctx: {
   const bidder = bidders[Math.min(pick, bidders.length - 1)];
 
   // rc.37 (F1): the same valuation as a buy (`valueInputOf`).
-  const value = marketValueFor(valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel));
+  const targetInput = valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel);
+  // rc.43 (R114): a bid pays for youth and upside on top of the shared valuation.
+  const value = marketValueFor(targetInput) * bidPremiumFor(targetInput);
   const [lo, hi] = T.aiBidRange;
   const mult =
     lo +

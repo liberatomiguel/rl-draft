@@ -507,7 +507,7 @@ describe("ECO-10 — the prize share each contract carries", () => {
   });
 
   // With the share switched off (CAREER_PRIZES.playerShare.enabled false = rc.31) there is no brake to check.
-  it.skipIf(!CAREER_PRIZES.playerShare.enabled)("stays a snowball brake (contract e2): a dominant season keeps ≤ 2 × three 85s' wages, even at the lowest share", () => {
+  it.skipIf(!CAREER_PRIZES.playerShare.enabled)("stays a snowball brake (contract e2): a dominant season keeps ≤ 2.15 × three 85s' wages, even at the lowest share", () => {
     const S = CAREER_PRIZE_SHARE;
     // The probe's P2 ask: age 20, potential = overall, rep 100, normal, 2 seasons, the median jitter.
     const ask85 = (s: number) =>
@@ -553,7 +553,9 @@ describe("ECO-10 — the prize share each contract carries", () => {
     // rc.39 F6 (R100): the flatter ask curve (growthPerPoint 1.17) prices an 85 31 % lower, so the
     // same dominant season keeps up to 2 × three 85s' wages (rc.37: 1.5 ×). Three 90s still cost more
     // than it keeps: the brake on the very top stays.
-    for (const r of base) expect(r).toBeLessThanOrEqual(2);
+    // rc.43 (R115): regionals pay +25 %, so nine regional titles lift it to 2.11 ×. The battery's
+    // dominants hold no more cash for it (season-ten p50 $117k -> $112k on NA/EU/SAM Normal).
+    for (const r of base) expect(r).toBeLessThanOrEqual(2.15);
     // ...and with it on, the seasons before it are untouched and the overshoot after is its factor at most.
     expect(keptRatio(0)).toBe(base[0]);
     const top = Math.max(...Object.values(CAREER_LATE_REVENUE.prizePoolMult).map((m) => m ?? 1));

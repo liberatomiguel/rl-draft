@@ -7,7 +7,7 @@
 
 - Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
   Season 1 has no production approval.
-- Staging candidate **v2.0.0-rc.42**, revising rc.41: Miguel's
+- Staging is **v2.0.0-rc.42**; **rc.43 waits for Miguel on branch `claude/rc42-balance`** (mid-career balance, R113–R117: Normal renewals ×2.5, regionals +25 %, loan in a shallow red, faster chemistry, bid premium). rc.42 revises rc.41: Miguel's
   Road to Worlds feedback. Manual crest builder, HQ/Club/Training/Finances layouts,
   inbox-only routine loans, mandatory accept/decline, direct-seed coach
   briefings, title ledger, partner events and reputation-20 contracted market.

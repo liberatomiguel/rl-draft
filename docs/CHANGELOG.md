@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.42**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.43**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,19 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Balance — rc.43 (2026-11-10), mid-career money and progression (R113–R117, BALANCE_VERSION 20)
+- Miguel's playtest (SAM, Normal): finances too hard to hold, no room to buy or grow, the middle seasons stall. Paired careers (same 24, NA/EU/SAM Normal, staging rc.38.3 against rc.39) agree: weeks in the red in seasons 3–7 rose 1.9–3.0 to 2.8–4.0, the top quartile's rating in season 7 fell 96.0 to 89.9, prize money in season 7 fell $193k to $94k with no prize table changed (fewer careers reached Majors and Worlds).
+- Renewals on Normal return to Hard's ladder: first jump ×2.5, at most ×3.125 (rc.39: ×4.0 / ×5.0). Easy keeps ×4.0.
+- Regional pool $40k to $50k and qualifier $6k to $8k, tables unchanged: every regional place pays +25 %, the champion still most. Major and Worlds stay.
+- The bank writes an ordinary loan in a shallow red (the hole within half the reputation limit); the offer still arrives by mail. Deeper than that, only the emergency loan, still a pop-up and still counted.
+- Chemistry: the bond for a split together doubles (0.10 to 0.20), so a trio with no shared history is Perfect a little past two seasons.
+- AI bids for the user's players add a premium for youth (+20 % up to age 21) and reachable potential (+4 % a point), capped at +60 %. His own ask, renewals and the fees the user pays are untouched.
+- Measured on the committed doses (63 paired careers a difficulty, NA/EU/SAM, rc.41 against rc.43). Normal: Mondays in the red in season 5 4.0 to 2.1 and in season 7 3.6 to 1.7; reached Worlds by 2027 4 to 11 careers; title by 2027 1 to 3; title by season 10 12 to 12; top-quartile rating in season 7 87.4 to 90.3; early endings 3 to 4. SAM alone (21): reached Worlds by 2027 1 to 5, title by season 10 3 to 5. Hard: title by season 10 6 to 8, early endings 11 to 12, Mondays in the red in season 5 3.8 to 2.6. Easy: title by season 10 23 to 29. Easy regions on Normal were measured on a near-final arm (84 careers): title by season 10 24 to 30.
+
+### Fixed — rc.43
+- The audit bot took no bank offer since rc.40. Root cause: rc.40 moved the credit offer to the inbox and `moneyNoticeOf` stopped returning it; the bot only read `moneyNoticeOf`. It now reads the queued offer, as a player opening the mail does. Test tooling only.
+- Finances told the player "in the red the bank writes no ordinary loan"; the refusal now says the balance is too deep in the red (EN and PT).
 
 ### Changed — rc.42 (2026-11-10), career card layout
 - Chasing History adopts the standard card kicker, restrained rows and independent Organization/Player and Major/Worlds filters. HQ shows three entries and the user's club; the complete title table lives in Standings, linked directly from HQ. Empty competitions have an explicit empty state.

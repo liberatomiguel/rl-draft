@@ -1111,7 +1111,10 @@ function takesCredit(save: CareerSave, policy: ArcPolicy, principal: number): bo
 function answerMoneyNotices(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
   let save = input;
   for (let guard = 0; guard < 32; guard++) {
-    const notice = moneyNoticeOf(save);
+    // rc.40 (R110) made the bank's offer mail-only: `moneyNoticeOf` no longer returns it, so the bot
+    // reads the quoted offer from the queue, as a player opening the mail does (rc.40 to rc.42: it saw none).
+    const notice =
+      (save.moneyNotices ?? []).find((n) => n.kind === "creditOffer" || n.kind === "spendRisk") ?? moneyNoticeOf(save);
     if (!notice) break;
     const principal = Number(notice.params?.principal ?? 0);
     const offered = (notice.kind === "creditOffer" || notice.kind === "spendRisk") && principal > 0;

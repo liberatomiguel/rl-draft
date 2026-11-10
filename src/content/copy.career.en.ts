@@ -1510,7 +1510,7 @@ export const CAREER_EN = {
       loanActive: "No fee transfers while the emergency loan is owed.",
       bankActive: "One bank loan at a time — clear the current one first.",
       bankBacker: "The bank writes no other loan while its emergency loan is open — repay that one first.",
-      bankNegative: "With the balance in the red the bank writes no ordinary loan. Its only money now is the emergency loan, at the floor — and those are counted.",
+      bankNegative: "The balance is too deep in the red for an ordinary loan. The bank's only money now is the emergency loan, at the floor — and those are counted.",
       bankAmount: "Enter a valid amount.",
       bankLimit: "That is above what the bank offers at your reputation.",
       unknown: "That deal is no longer available.",

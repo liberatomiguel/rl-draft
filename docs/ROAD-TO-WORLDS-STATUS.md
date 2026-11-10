@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-10**. Candidate **v2.0.0-rc.42**, staging.
-> Decisions R1–R112. BALANCE_VERSION **19**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-10**. Candidate **v2.0.0-rc.43** (branch `claude/rc42-balance`, not on staging until Miguel approves); staging is rc.42.
+> Decisions R1–R117. BALANCE_VERSION **20**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
@@ -53,7 +53,9 @@ until the approved cutover. Final regressions, static-export and browser
 evidence are recorded in CAREER-FEEDBACK-rc42.md. This release makes no new
 economy/growth/title-pacing claim.
 
-rc.39's F6 balance remains apart from rc.40's explicit gates and rc.41's
+rc.43 retunes the middle of a career (R113–R117): Normal renewals back to ×2.5,
+regional +25 %, ordinary loan in a shallow red, chemistry bond 0.20, AI bid premium
+for youth and reach. rc.39's F6 balance otherwise remains apart from rc.40's explicit gates and rc.41's
 open-week cadence/coach wear modifier (R111). R100–R109 and report
 F6-EXPERIMENTOS.md Parts 7–8 remain the pacing evidence. RLCS 2027 lineups enter the
 first infinite season. The 4,914-career battery is in docs/battery-rc37.

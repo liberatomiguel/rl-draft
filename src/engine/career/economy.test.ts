@@ -12,8 +12,10 @@ import {
   CAREER_SALARY,
   CAREER_SAVE,
   CAREER_SPONSOR,
+  CAREER_TALENT,
 } from "@/config/balance";
 import type { Placement } from "../types";
+import { bidPremiumFor } from "./market";
 import {
   applyPrize,
   bootcampTierFor,
@@ -140,8 +142,9 @@ describe("prizeFor", () => {
 
   // rc.32 (M5, provisional): the champion's share is the active table's (28 %; rc.31: 30 %).
   it("regional champion follows the placement table within rounding, with distinct difficulty budgets", () => {
-    const pool = (prizeTables().swiss16.champion / 100) * 40_000;
-    expect(prizeFor("regional", "champion", "swiss", "normal")).toBe(quantize(pool));
+    const pool = (prizeTables().swiss16.champion / 100) * CAREER_PRIZES.pools.regional;
+    // The champion also takes the rounding remainder of the lower places (under 1 % of his share).
+    expect(Math.abs(prizeFor("regional", "champion", "swiss", "normal") - pool) / pool).toBeLessThan(0.01);
     const normal = prizeFor("regional", "champion", "swiss", "normal");
     expect(prizeFor("regional", "champion", "swiss", "easy")).toBeGreaterThan(normal);
     expect(prizeFor("regional", "champion", "swiss", "hard")).toBeLessThan(normal);
@@ -178,11 +181,11 @@ describe("prizeFor", () => {
     expect(prizeFor("t3", "fourth", "single", "normal")).toBe(top4);
   });
 
-  it("rc.29 (CAR-08): the qualifier pays exactly its advertised $6k at season 0 — 8 × $600 + 8 × $150", () => {
+  it("rc.29 (CAR-08): the qualifier pays exactly its advertised pool at season 0 — 8 × $800 + 8 × $200 of $8k (rc.43, R115)", () => {
     expect(CAREER_PRIZES.swissOnlyPct).toEqual({ qualified: 10, eliminated: 2.5 });
     expect(8 * CAREER_PRIZES.swissOnlyPct.qualified + 8 * CAREER_PRIZES.swissOnlyPct.eliminated).toBe(100);
-    expect(prizeFor("qualifier", "top8", "swissOnly", "normal", 0)).toBe(600);
-    expect(prizeFor("qualifier", "swiss_exit", "swissOnly", "normal", 0)).toBe(150);
+    expect(prizeFor("qualifier", "top8", "swissOnly", "normal", 0)).toBe(800);
+    expect(prizeFor("qualifier", "swiss_exit", "swissOnly", "normal", 0)).toBe(200);
     expect(prizePoolPaidFor("qualifier", "swissOnly", "normal", 0)).toBe(CAREER_PRIZES.pools.qualifier);
   });
 
@@ -656,6 +659,32 @@ describe("bank loan (v2.0 R21)", () => {
     expect(bankLoanRefusal(freshFin(0, { loan: { remaining: 500 }, loanUsed: true }), 0, 2_000)).toBe("backer");
     const withLoan = takeBankLoan(fin, 2_000, { seasonIndex: 0, week: 4 });
     expect(bankLoanRefusal(withLoan, 0, 1_000)).toBe("active");
+  });
+
+  it("rc.43 (R113): a shallow red still borrows, a deep red is left to the emergency loan", () => {
+    const limit = bankLoanLimitFor(0);
+    const edge = limit * CAREER_BANK.negativeDepthOfLimit;
+    expect(edge).toBeGreaterThan(0);
+    expect(edge).toBeLessThan(limit);
+    expect(bankLoanRefusal(freshFin(-1), 0, 2_000)).toBeNull();
+    expect(bankLoanRefusal(freshFin(-edge), 0, 2_000)).toBeNull();
+    expect(bankLoanRefusal(freshFin(-edge - 1), 0, 2_000)).toBe("negative");
+    // The Backer and an open loan still come first.
+    expect(bankLoanRefusal(freshFin(-1, { loan: { remaining: 500 }, loanUsed: true }), 0, 2_000)).toBe("backer");
+  });
+
+  it("rc.43 (R114): an AI bid pays for youth and reach, capped, and never below the plain value", () => {
+    const B = CAREER_TALENT.bidPremium;
+    const arc = { peakAge: 25, plateauYears: 3 };
+    expect(bidPremiumFor({ overall: 85, potential: 85, age: 27, ...arc })).toBe(1);
+    expect(bidPremiumFor({ overall: 85, potential: 85, age: B.youngAgeMax, ...arc })).toBeCloseTo(1 + B.young, 9);
+    expect(bidPremiumFor({ overall: 85, potential: 85, age: B.youngAgeMax + 1, ...arc })).toBe(1);
+    const young = bidPremiumFor({ overall: 85, potential: 92, age: 20, ...arc });
+    expect(young).toBeCloseTo(1 + Math.min(B.max, B.young + B.perGap * 7), 9);
+    expect(young).toBeGreaterThan(bidPremiumFor({ overall: 85, potential: 88, age: 20, ...arc }));
+    expect(bidPremiumFor({ overall: 70, potential: 98, age: 17, ...arc })).toBeCloseTo(1 + B.max, 9);
+    // Past his window the gap is unreachable: no premium for potential he cannot reach.
+    expect(bidPremiumFor({ overall: 85, potential: 92, age: 30, ...arc })).toBe(1);
   });
 
   it("takes, repays weekly through the payroll, and clears exactly at 0", () => {

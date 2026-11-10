@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 19;
+export const BALANCE_VERSION = 20;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1027,7 +1027,16 @@ export const CAREER_INSERTS = {
 } as const;
 
 export const CAREER_PRIZES = {
-  pools: { t3: 2_000, t2: 10_000, qualifier: 6_000, regional: 40_000, major: 150_000, worlds: 600_000 },
+  /**
+   * rc.43 (R115, Miguel 10/11: "the champion earns most, every place earns in
+   * proportion"): qualifier 6,000 -> 8,000 and regional 40,000 -> 50,000, the
+   * tables unchanged, so a regional placement is +25 % ($14k ... $625 at a
+   * season-one regional). Mid-career sits 5th-16th in its region, where a
+   * regional paid $500-2,600 against a $17-30k split payroll. Major and
+   * Worlds stay. +50 % measured no better on NA/EU/SAM and doubled the
+   * season-five cash of the easy regions.
+   */
+  pools: { t3: 2_000, t2: 10_000, qualifier: 8_000, regional: 50_000, major: 150_000, worlds: 600_000 },
   /** Seasonal prize budgets and payouts use readable steps, independent of wage rounding. */
   poolQuantum: { t3: 250, t2: 1_000, qualifier: 400, regional: 5_000, major: 10_000, worlds: 50_000 },
   payoutQuantum: { t3: 50, t2: 100, qualifier: 50, regional: 100, major: 500, worlds: 1_000 },
@@ -1159,7 +1168,8 @@ export const CAREER_CHEMISTRY = {
    * youth path still cut. A no-heritage trio is Perfect about four seasons
    * in, a same-region trio within its first.
    */
-  bondPerSplitTogether: 0.1,
+  // rc.43 (R116, Miguel 10/11: "100 % in about two seasons"): 0.10 -> 0.20, a no-heritage trio Perfect a little past two seasons.
+  bondPerSplitTogether: 0.2,
   /**
    * ...and every official series (qualifier, regional, Major, Worlds) the
    * fielded players play adds this to their time together (splitsTogether),
@@ -2180,6 +2190,17 @@ export const CAREER_TALENT = {
   talentBidMin: 8,
   talentBidPerGap: 1,
   talentBidMax: 30,
+  /**
+   * rc.43 (R114, Miguel's playtest 10/11: "the bids for young players with a
+   * high overall are still very low, and potential is not valued in a bid").
+   * R100's flatter ask curve (1.20 → 1.17 a point) cut an 85's market value by
+   * about 30 %, and every AI bid with it. An AI bid for a user player
+   * (market.incomingBidForDay only — never his ask, his renewal or a fee the
+   * user pays) is multiplied by 1 + `young` (age ≤ `youngAgeMax`) + `perGap` ×
+   * his reach gap, the sum at most `max`: an 85/92 at 20 draws ×1.48, an
+   * 85/85 at 27 ×1. All 0 = rc.41.
+   */
+  bidPremium: { young: 0.2, youngAgeMax: 21, perGap: 0.04, max: 0.6 },
 } as const;
 
 /**
@@ -2230,7 +2251,10 @@ export const CAREER_RENEWAL_TENURE = {
    * rc.37's ladder (×2.5 first, ×3.125 at most): paired arms on Hard put the
    * insolvency at 23 % (×4.0), 18 % (×3.25) and 11–14 % (×2.5; staging 14 %).
    */
-  jumpScaleByDifficulty: { easy: 1, normal: 1, hard: 0.625 } as Record<string, number>,
+  // rc.43 (R117): Normal 1 -> 0.625, Hard's ladder (first jump x2.5, at most x3.125; rc.37's). On x4.0 the youth careers' payroll rose
+  // 5-30 % from season four with no income to match and their top quartile stopped at 88-90 by season seven (rc.38: 93-96).
+  // x3.25 was measured too: it left the titles by 2027 where x4.0 had them (1 in 63), x2.5 gave 4.
+  jumpScaleByDifficulty: { easy: 1, normal: 0.625, hard: 0.625 } as Record<string, number>,
   /**
    * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
    * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
@@ -3106,6 +3130,17 @@ export const CAREER_BANK = {
    * deficit could chain voluntary loans and never reach the floor.
    */
   blockedWhileNegative: true,
+  /**
+   * rc.43 (R113, Miguel 10/11: "the game may offer the loan when the books
+   * get tight, by mail; the emergency loan is the pop-up"). R107 left a
+   * shallow red with no way back but the counted emergency loan (bank money
+   * received S5–S7 halved, weeks in the red +30–70 %). The voluntary loan is
+   * written in the red while the hole is at most this share of the bank's
+   * reputation limit — a loan that can still put the books back in the black.
+   * Deeper than that it is R107 again, so a structural deficit still reaches
+   * the floor. 0 = rc.39 (never in the red).
+   */
+  negativeDepthOfLimit: 0.5,
 } as const;
 
 // ---------------------------------------------------------------------------
