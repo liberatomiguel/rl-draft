@@ -2641,9 +2641,12 @@ export const CAREER_REP = {
    * `tierAt` gates its reputation has passed (0 newcomer, 1 established,
    * 2 contender, 3 elite); each result has a `level`. A result at or above
    * the org's tier pays in full; one level below pays `belowFactor` (rounded
-   * down); further below, nothing. A title (`titles`) never pays less than
-   * `titleFloor`. Under 50 nothing changes from rc.38. `enabled: false` =
-   * rc.38's soft cap.
+   * UP: it still counts); further below, nothing. A title (`titles`) never
+   * pays less than `titleFloor`. Measured (F3, 10/11): rounding down stalled
+   * mid orgs at ~50 (reputation at S10 67 → 46, Worlds reach 49 % → 39 %), so
+   * a contender keeps rc.38's +1 for getting through and for a regional top
+   * 8 / top 4 and gains the Major and Worlds results whole; only an elite org
+   * (75+) stops earning from them. `enabled: false` = rc.38's soft cap.
    */
   proportional: {
     enabled: true,
@@ -2752,8 +2755,9 @@ export const CAREER_GEAR = {
   bootcampSplitEdgeShare: 1,
   /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
   psychologistRep: 46,
-  // rc.39 F6 (R105): 4,000 → 6,000 and +3/+3 → +5/+5 — a stronger, dearer hire (f6Probes prices the edge in rating points).
-  psychologistPerSplit: 6_000,
+  // rc.39 F6 (R105): +3/+3 → +5/+5 and 4,000 → 4,500 (Miguel, 10/11: 6,000 was 22 % of the payroll when she unlocks,
+  // 2.6× the wage price of the same rating) — a stronger hire that is worth its retainer (f6Probes prices the edge).
+  psychologistPerSplit: 4_500,
   psychologistStatBonus: { clutch: 5, consistency: 5 } as Record<string, number>,
   /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
   tempRatingMax: 2.0,

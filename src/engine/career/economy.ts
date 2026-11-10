@@ -2226,7 +2226,7 @@ export function repTierFor(currentRep: number): number {
 
 /**
  * Rep gain for one achievement kind. rc.39 F6 (R104): in proportion to the
- * org — full for a result at or above its tier, `belowFactor` (rounded down)
+ * org — full for a result at or above its tier, `belowFactor` (rounded up)
  * one level below, nothing further down; a title never under `titleFloor`.
  * `proportional.enabled` false = rc.38: gains halve (rounded up) at the soft cap.
  */
@@ -2235,7 +2235,7 @@ export function repGainFor(kind: keyof typeof CAREER_REP.gains, currentRep: numb
   const P = CAREER_REP.proportional;
   if (P.enabled) {
     const gap = repTierFor(currentRep) - (P.level[kind] ?? 0);
-    const scaled = gap <= 0 ? base : gap === 1 ? Math.floor(base * P.belowFactor) : 0;
+    const scaled = gap <= 0 ? base : gap === 1 ? Math.ceil(base * P.belowFactor) : 0;
     return base > 0 && P.titles.includes(kind) ? Math.max(P.titleFloor, scaled) : scaled;
   }
   if (currentRep >= CAREER_REP.softCapAt) {

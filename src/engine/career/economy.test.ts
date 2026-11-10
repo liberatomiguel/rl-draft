@@ -768,7 +768,8 @@ describe("unlocks & reputation", () => {
     expect(repGainFor("majorWin", 40)).toBe(CAREER_REP.gains.majorWin);
     // R104: a Major title is at or above every org's tier, so it pays in full past the old soft cap.
     expect(repGainFor("majorWin", CAREER_REP.softCapAt)).toBe(CAREER_REP.gains.majorWin);
-    expect(repGainFor("regionalTop8", CAREER_REP.softCapAt + 5)).toBe(0);
+    expect(repGainFor("regionalTop8", CAREER_REP.softCapAt + 5)).toBe(1);
+    expect(repGainFor("regionalTop8", 80)).toBe(0);
     const P = CAREER_REP.proportional as unknown as { enabled: boolean };
     P.enabled = false;
     try {
