@@ -15,8 +15,9 @@ export function WeeklyScrimLine({ save, C }: { save: CareerSave; C: CareerCopy }
   const entries = save.scrimLog
     .filter(e => e.seasonIndex === save.clock.seasonIndex && e.day <= save.clock.day && weekOfDay(e.day) === weekOfDay(save.clock.day))
     .sort((a, b) => a.day - b.day);
-  const baseline = save.training?.weekly;
-  const gains = baseline?.seasonIndex === save.clock.seasonIndex && baseline.week === weekOfDay(save.clock.day) ? save.squad.filter(p => baseline.players[p.id]).map(p => ({ name: p.name, gain: p.overall - baseline.players[p.id].overall })) : [];
+  const plan = save.training?.plan;
+  const baseline = plan ? { players: Object.fromEntries(Object.entries(plan.players).map(([id,p]) => [id, { overall: p.overallStart }])), chemistry: plan.chemStart } : null;
+  const gains = baseline ? save.squad.filter(p => baseline.players[p.id]).map(p => ({ name: p.name, gain: p.overall - baseline.players[p.id].overall })) : [];
   const average = gains.length ? gains.reduce((n,p) => n+p.gain,0)/gains.length : 0;
   const best = [...gains].sort((a,b) => b.gain-a.gain)[0];
   const fmt = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;

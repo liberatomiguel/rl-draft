@@ -1,4 +1,7 @@
 "use client";
+import { NowFollow } from "../hub/SundayCard";
+import { followCardOf } from "@/store/careerSunday";
+import { CareerHonorsTable } from "../CareerHonorsTable";
 
 /**
  * v2.0 hub rebuild (R26), re-cut in rc.2 and rc.34 (ROADMAP UX-01, HQ-CONTRACT
@@ -125,6 +128,7 @@ export function HubScreen() {
         <div className="contents lg:col-span-2 lg:block lg:space-y-4">
           {/* 1 — THE DECISION BLOCK: the next needed decision, or the clock (UX-01a) */}
           <div className="order-1">
+            {save.phase === "seasonReview" && followCardOf(save) ? <Panel className="mb-4 p-4"><NowFollow save={save} C={C} out={null} follow={followCardOf(save)} /></Panel> : null}
             <DecisionBlock save={save} C={C} />
           </div>
 
@@ -201,6 +205,7 @@ export function HubScreen() {
             </AppLink>
           </div>
 
+          <div className="order-9"><CareerHonorsTable save={save} C={C} /></div>
           {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
           <div className="order-10">
             <TransferWirePanel save={save} C={C} D={D} />

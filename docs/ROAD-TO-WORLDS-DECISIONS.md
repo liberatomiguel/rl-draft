@@ -2261,3 +2261,7 @@ grant threshold/copy. The badge now reads the additive cosmetic-only
 permanent achievement marks cannot prove four seasons. Do not reset keys,
 replay XP, or infer four seasons from an unavailable/deleted save. Retiring
 Underdog affects only the cosmetic; the career achievement remains historical.
+
+## R111 — 10 November 2026: revision after rc.40
+
+Remove club-inspired presets. Kits select two colours and preserve a separate third colour; third-colour emblems and supported patterns reveal its picker. Harmonize inset patterns and symbols. HQ hosts the title race below Inbox. Training recap measures the active cycle. Every open week offers a cup below the invitational reputation gate, or an invitational above it; remove the old rating/entry ceilings and random invitational absence. Future dates and Skip previews include them. Spectator Major/Worlds Sundays stop Skip without moving AI settlement earlier, including Worlds follow options at season review. Coach multiplier 0.8 applies only to training wear, not base illness. Store the real absence category; use No substitute and explicit transfer-window notices. BALANCE_VERSION 19; save schema remains additive.

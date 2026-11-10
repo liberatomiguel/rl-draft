@@ -7,14 +7,15 @@
 
 - Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
   Season 1 has no production approval.
-- Staging candidate **v2.0.0-rc.40**, based on rc.39.1: Miguel's 19-item
-  Road to Worlds feedback. Crest builder, HQ/Club/Training/Finances layouts,
+- Staging candidate **v2.0.0-rc.41**, revising rc.40: Miguel's
+  Road to Worlds feedback. Manual crest builder, HQ/Club/Training/Finances layouts,
   inbox-only routine loans, mandatory accept/decline, direct-seed coach
   briefings, title ledger, partner events and reputation-20 contracted market.
-  Request mapping and validation: CAREER-FEEDBACK-rc40.md.
+  Optional cups every open week, calendar forecasts and spectator title stops.
+  Request mapping and validation: CAREER-FEEDBACK-rc41.md.
 - The rc.39 F6 package remains in place (R100–R109); the 2027 roster wave
-  still enters season seven, the first infinite season. BALANCE_VERSION **18**
-  adds the contracted-market gate and immediate proposal decisions.
+  still enters season seven, the first infinite season. BALANCE_VERSION **19**
+  includes a 20% reduction of training-wear absence risk with a coach (R111).
 - Staging configuration: career on, noindex; accounts/analytics off in the
   isolated QA export. Entry: https://staging.rocketdraft.app.
 
@@ -27,7 +28,7 @@
   are disclosed, not invented. New careers record all future title lineups.
 - Browser review covers the creation wizard, HQ, Club, Finances and Training;
   Training/Club/Finances checked at 320 px without horizontal page overflow.
-  Final build/check counts are in CAREER-FEEDBACK-rc40.md.
+  rc.41 checks and limits are in CAREER-FEEDBACK-rc41.md.
 - Prior challenge/daily/quiz and cosmetics validation remains documented in
   UI-REVIEW-rc36-21.md, UI-DAILY-AUDIT-rc36-17.md and CHANGELOG.md. Daily calendar
   reviewed through 8 November 2027; refresh before then or after rule changes.
@@ -39,7 +40,7 @@
 
 1. Miguel plays F6 in NA/EU/SAM, Normal/Hard first, and answers
    F6-EXPERIMENTOS.md Parts 7.9/7.11. Career pacing/affordability acceptance
-   remains Gate 3b. rc.40 does not close it.
+   remains Gate 3b. rc.41 does not close it.
 2. Review open rc.37 handoff questions (F1/F2/F3); F5 approval before code.
    Gate 2 play and ENG-03 real-save fixtures remain.
 3. Etapa 4: collection pacing, DATA-02, SEA-01 and ECO-06. Etapa 5:

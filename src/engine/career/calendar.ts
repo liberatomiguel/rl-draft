@@ -431,9 +431,8 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
 
 /**
  * The unofficial-tournament offer for an open week, if any. Deterministic per
- * (careerSeed, seasonIndex, week) — no RNG cursor. Precedence: a t2
- * Invitational (rep-gated, ~60% of eligible weeks) over the t3 Community Cup
- * (open to low-rated teams, capped entries per split); null when neither fits.
+ * (careerSeed, seasonIndex, week) — no RNG cursor. Every open week has a t2
+ * Invitational above the reputation gate or a t3 Community Cup below it.
  * The def carries no region — unofficials are local to the user org, which the
  * store knows.
  */
@@ -457,16 +456,13 @@ export function unofficialOfferFor(
   const rot = seasonIndex * CAREER_CALENDAR.weeksPerSeason + week;
 
   if (
-    ctx.rep >= CAREER_UNOFFICIAL.t2RepGate &&
-    derivedFloat(ctx.careerSeed, streams.gen("t2offer", `${seasonIndex}:${week}`)) <
-      CAREER_UNOFFICIAL.t2OfferChance
+    ctx.rep >= CAREER_UNOFFICIAL.t2RepGate
   ) {
     return { ...base, tier: "t2", name: T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length] };
   }
 
   if (
-    ctx.userTeamRating <= CAREER_UNOFFICIAL.t3RatingCeiling &&
-    ctx.t3EntriesThisSplit < CAREER_UNOFFICIAL.t3MaxEntriesPerSplit
+    ctx.rep < CAREER_UNOFFICIAL.t2RepGate
   ) {
     const small = derivedFloat(ctx.careerSeed, streams.gen("communityFormat", `${seasonIndex}:${week}`)) < CAREER_UNOFFICIAL.smallTeamChance;
     const sizes = CAREER_UNOFFICIAL.smallTeamSizes;

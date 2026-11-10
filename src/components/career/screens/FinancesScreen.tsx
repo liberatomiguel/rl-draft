@@ -423,7 +423,7 @@ function BalanceSparkline({ data }: { data: number[] }) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
-      className="h-9 w-full text-cyan"
+      className="h-28 w-full text-cyan"
       aria-hidden
     >
       {min < 0 ? (
@@ -847,7 +847,7 @@ export function FinancesScreen() {
             onClick={() => setChartOpen(true)}
             aria-label={C.finances.chartOpen}
             title={C.finances.chartOpen}
-            className="group mt-3 flex min-h-11 w-full items-center gap-2 border-t border-line pt-2 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-cyan/60"
+            className="group mt-3 flex min-h-32 w-full items-center gap-2 border-t border-line pt-2 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-cyan/60"
           >
             <span className="min-w-0 flex-1">
               {sparkTail.length >= 2 ? (
@@ -886,11 +886,10 @@ export function FinancesScreen() {
               </span>
             </div>
           </div>
+          <div className="mt-3 border-t border-line pt-3"><p className="kicker mb-2 text-[10px]">{C.finances.weeklyStatement}</p><StatementLines st={statement} /></div>
         </Panel>
 
         <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
-          <p className="kicker mb-2 text-[10px]">{C.finances.weeklyStatement}</p>
-          <StatementLines st={statement} />
           <p className="kicker mt-3 border-t border-line pt-3 text-[10px]">{C.finances.projected}</p>
           <p
             className={cx(

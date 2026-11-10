@@ -658,7 +658,7 @@ export function CalendarScreen() {
                             ? "border-blue/50 bg-blue/15 hover:bg-blue/20"
                             : ev
                             ? spectating
-                              ? cx("border-line/60 hover:bg-white/[0.06]", d.windowOpen ? "bg-[#0d1a33]" : "bg-white/[0.03]")
+                              ? MATCHDAY_FILL[ev.tier]
                               : MATCHDAY_FILL[ev.tier]
                             : d.windowOpen
                               ? "border-blue/40 bg-blue/20 hover:bg-blue/25"
@@ -676,7 +676,7 @@ export function CalendarScreen() {
                           {ev ? (
                             <EventTierIcon
                               tier={ev.tier}
-                              className={cx("h-3 w-3", spectating ? "text-white/40" : TIER_ICON_TONE[ev.tier])}
+                              className={cx("h-3 w-3", TIER_ICON_TONE[ev.tier])}
                             />
                           ) : followed && followed.day === d.day ? (
                             // rc.36 (SUN-03): an event the user is out of — muted, tap to follow it.

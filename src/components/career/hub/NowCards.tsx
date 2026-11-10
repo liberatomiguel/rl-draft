@@ -217,7 +217,7 @@ export function NowSquadShort({
         {absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}
       </h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">
-        {absent ? C.hub.squadShortAbsentBody(absent.name, def.name) : C.hub.squadShortBody(save.squad.length, def.name)}
+        {absent ? C.hub.squadShortAbsentBody(absent.name, def.name, C.hub.absenceReasons[save.pendingUnavailability?.reason ?? "fitness"]) : C.hub.squadShortBody(save.squad.length, def.name)}
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         {/* rc.39 F6 (R103): a reserve only signs in a window — the Market is an answer only while one is open. */}

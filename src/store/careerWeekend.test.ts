@@ -784,7 +784,7 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     expect(news).toHaveLength(1);
     expect(news[0].day).toBe(eventDayFor(MAJOR_W) + 1);
     // A spectator weekend is never a stop.
-    expect(advanceToNextStopFlow(quiet(save)).clock.day).toBeGreaterThan(sun.clock.day);
+    expect(advanceToNextStopFlow(quiet(save)).clock.day).toBe(sun.clock.day);
   });
 });
 

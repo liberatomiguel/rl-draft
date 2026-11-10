@@ -153,12 +153,12 @@ export function WizardScreen() {
   const [crestShape, setCrestShape] = useState<CrestId>("shield");
   const [crestSymbol, setCrestSymbol] = useState<SymbolId | null>(null);
   const [crestPattern, setCrestPattern] = useState<PatternId | null>(null);
-  const [iconColor, setIconColor] = useState<"primary" | "secondary">("secondary");
+  const [iconColor, setIconColor] = useState<"primary" | "secondary" | "tertiary">("secondary");
   const [crestLayout, setCrestLayout] = useState<LayoutId>("emblem");
   const [colors, setColors] = useState<CareerColors>({
     primary: DEFAULT_CREST_COLORS.primary,
     secondary: DEFAULT_CREST_COLORS.secondary,
-    tertiary: DEFAULT_CREST_COLORS.tertiary ?? "#f5f7fa",
+    tertiary: "#f5f7fa",
   });
   const [buffType, setBuffType] = useState<StatKey>("offense");
   /** The composite crestId written to identity ("shape[:symbol[:pattern[:layout]]]"). */
@@ -464,6 +464,7 @@ export function WizardScreen() {
                       </span>
                       {active ? <Badge tone="orange">{copy.SETUP.selected}</Badge> : null}
                     </div>
+                    <div className="mb-3 flex items-center gap-2"><span className={cx("flex gap-1", ["EU", "NA"].includes(r) ? "text-orange-bright" : ["APAC", "SSA"].includes(r) ? "text-good" : "text-blue-bright")}>{[1,2,3].map(n => <span key={n} className={cx("h-2 w-6 rounded-full bg-current", n > (["EU", "NA"].includes(r) ? 3 : ["APAC", "SSA"].includes(r) ? 1 : 2) && "opacity-15")} />)}</span><span className="text-xs font-semibold text-sub">{C.wizard.regionLevels[["EU", "NA"].includes(r) ? "hard" : ["APAC", "SSA"].includes(r) ? "easy" : "mid"]}</span></div>
                     <p className="mb-2 text-xs leading-relaxed text-sub">
                       {C.wizard.regionStrength} · {C.wizard[STRENGTH_KEY[r]]}
                     </p>

@@ -225,10 +225,9 @@ export const CAREER_EN = {
   },
 
   wizard: {
-    references: "Club inspirations",
+    regionLevels: { hard: "Harder road", mid: "Intermediate", easy: "Easier road" },
     iconColor: "Emblem colour",
     tertiaryColor: "Third colour",
-    referenceNames: { rio: "Rio", paulista: "São Paulo", gaucho: "Porto Alegre", "buenos-aires": "La Boca", tricolor: "Laranjeiras", nautical: "Nautical", "los-angeles": "Los Angeles", milan: "Milan" },
     title: "Found your organization",
     step: (n: number, total: number) => `Step ${n} of ${total}`,
     quickStart: "Quick start",
@@ -418,9 +417,10 @@ export const CAREER_EN = {
     squadShortBody: (n: number, event: string) =>
       `Only ${n} of 3 seats are filled, and no event is played short-handed. The clock waits before ${event} until a third player signs — a free agent can take the empty seat today, window or not.`,
     // rc.39 F6 (R103): a starter ruled out and no reserve — the same hold, worded for it.
-    squadShortAbsentTitle: "No reserve",
-    squadShortAbsentBody: (player: string, event: string) =>
-      `${player} is ruled out of ${event} and nobody covers his seat. No event is played short-handed, and a reserve only signs in a transfer window: without one, the team does not enter.`,
+    squadShortAbsentTitle: "No substitute",
+    absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues" },
+    squadShortAbsentBody: (player: string, event: string, reason?: string) =>
+      `${player} cannot play ${event} due to ${reason ?? "fitness issues"}. There is no substitute to take his place. Sign a substitute during a transfer window or sit this tournament out.`,
     squadShortAbsentSkip: "Sit this event out",
     squadShortAbsentSkipHint: (event: string) =>
       `${event}: no entry, no points, no prize. Sign a reserve in the next transfer window so it does not happen again.`,
@@ -972,7 +972,7 @@ export const CAREER_EN = {
   },
 
   training: {
-    weekSummary: "Squad growth this week",
+    weekSummary: "Squad growth this cycle",
     weekChemistry: "Chemistry",
     weekScrims: "This week’s scrims",
     weekScrimsEmpty: "No scrims recorded this week yet.",
@@ -2354,7 +2354,7 @@ export const CAREER_EN = {
     items: {
       "ins-showmatch": { title: "A streamer wants a showmatch", body: "An invitation arrives for a friendly on stream. The appearance fee is agreed, but the squad would need to give up an afternoon of practice.", a: "Play it", b: "Pass" },
       "ins-5050-showmatch": { title: "An invitation from 50/50", body: "50/50 is putting together a showmatch and would like your org on the broadcast. There is an appearance fee and a chance to meet a new audience; the staff will have to move an afternoon of practice.", a: "Join the 50/50 showmatch", b: "Keep the training schedule" },
-      "ins-duds-showmatch": { title: "DudsMelow has a spot on stream", body: "DudsMelow is organizing a showmatch with the community and has invited your squad. The players are keen, and the appearance fee helps; it would mean cutting practice short that day.", a: "Accept DudsMelow' invitation", b: "Sit this one out" },
+      "ins-duds-showmatch": { title: "Duds Melow invited you to play a showmatch on stream", body: "Duds Melow is organizing a showmatch with the community and has invited your squad. The players are keen, and the appearance fee helps; it would mean cutting practice short that day.", a: "Accept Duds Melow’s invitation", b: "Sit this one out" },
       "ins-charity-cup": { title: "Charity cup appearance", body: "A local charity cup wants your org on the poster. It costs a little and buys goodwill.", a: "Show up", b: "Decline" },
       "ins-pc-dies": { title: "A PC dies mid-week", body: "One of the tournament rigs gave out. Replace it now, or borrow a spare and lose practice time.", a: "Replace it", b: "Borrow a spare" },
       "ins-fan-meetup": { title: "Fans ask for a meetup", body: "The fanbase wants a meetup after practice. A small cost, a little standing.", a: "Host it", b: "Not this week" },

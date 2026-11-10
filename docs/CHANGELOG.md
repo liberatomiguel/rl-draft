@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.40**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.41**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,15 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.41 (2026-11-10), career revision
+- Remove club presets; retain editable shape/pattern/colour combinations only. Two-colour kits preserve the selected third colour (white initially), one red/black kit, purple/gold restored. Third-colour emblems and Maltese cross; remove symbol outlines/shadows, harmonize/inset patterns, regular stripes, curved fifth field and reversed sash.
+- Region difficulty bars; Records in a card and reputation above right-column progression. Combine net/week with Weekly Statement, enlarge balance chart and restore the separate projection card. Cycle growth replaces weekly growth; title standings move below HQ Inbox with rank/count emphasis. Reorganize pre-event reward tables and next-season financial readout.
+- Every open week has an optional cup/invitational, visible in future calendar/Skip previews; declined cups stay declined. Spectated Majors/Worlds keep their calendar colours and stop Skip on Sunday, with Worlds follow options also visible at season review. Duds Melow showmatch invitation copy corrected.
+- Coach reduces training-wear absence risk by 20% (base illness risk unchanged), reflected in the plan preview. Store the absence reason and explain who misses which tournament in No substitute; outside-window signing sheets explicitly state the transfer restriction. BALANCE_VERSION 19, optional reason field only, frozen save versions unchanged.
+
+### Fixed — rc.41
+- Root causes: ready-made club combinations contradicted the intended builder; emblem strokes/shadows polluted small negative spaces; stripe trim broke regular spacing. Calendar previously previewed only already offered cups and intentionally filtered spectators out of next stops; rating/entry caps could leave open weekends empty. No-substitute copy omitted the actual cause; disabled signing buttons conveyed the window only through a tooltip.
 
 ### Added — rc.40 (2026-11-10), Road to Worlds feedback
 - Eight editable club-inspired crest combinations, third field colour and primary/secondary emblem colour; a career-long Major/Worlds title ledger with pre-X real champions and frozen winning lineups, plus Organization/Player tables in Club. Historical source audit: CAREER-HONORS-SOURCES.md.

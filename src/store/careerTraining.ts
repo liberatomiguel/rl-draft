@@ -1029,7 +1029,7 @@ export function runPackageScrims(save: CareerSave): void {
 export function wearUnavailabilityAddOf(save: CareerSave): number {
   const plan = save.training?.plan;
   if (!plan) return 0;
-  return unavailabilityAddFor(plan.wearProjected, plan.endDay - plan.startDay + 1);
+  return unavailabilityAddFor(plan.wearProjected, plan.endDay - plan.startDay + 1) * (save.coach ? CAREER_PLAN.wear.coachRiskMult : 1);
 }
 
 /** The pre-event roll ruled a player out — the period's summary says so (T7). */
@@ -1360,7 +1360,7 @@ export function projectTrainingPackage(
     players,
     startersAvg,
     squadWear,
-    unavailabilityPts: Math.round(unavailabilityAddFor(squadWear, periodDays) * 1000) / 10,
+    unavailabilityPts: Math.round(unavailabilityAddFor(squadWear, periodDays) * (save.coach ? CAREER_PLAN.wear.coachRiskMult : 1) * 1000) / 10,
   };
 }
 

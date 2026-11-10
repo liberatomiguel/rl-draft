@@ -19,7 +19,7 @@ import { deadlineDateText } from "@/components/career/finances/loanDates";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-t border-line pt-2.5 first:border-t-0 first:pt-0">
+    <div className="rounded-xl border border-line bg-black/20 p-3">
       <p className="kicker text-[10px] text-faint">{label}</p>
       <div className="mt-0.5 space-y-0.5 text-sm leading-snug text-sub">{children}</div>
     </div>
@@ -33,11 +33,9 @@ export function SeasonOutlook({ save, C }: { save: CareerSave; C: CareerCopy }) 
   return (
     <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "210ms" }}>
       <p className="kicker mb-3 !text-[10px]">{O.title}</p>
-      <div className="space-y-2.5">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Row label={O.payroll}>
-          <p className="font-semibold text-ink">
-            {O.payrollLine(formatMoney(view.payrollNow), formatMoney(view.payrollNext))}
-          </p>
+          <p className="display text-xl font-bold text-ink">{formatMoney(view.payrollNow)} <span className="text-faint">→</span> {formatMoney(view.payrollNext)}</p>
           {view.leaving.length > 0 ? <p className="text-xs">{O.leaving(view.leaving.join(", "))}</p> : null}
         </Row>
         <Row label={O.debt}>
@@ -53,14 +51,10 @@ export function SeasonOutlook({ save, C }: { save: CareerSave; C: CareerCopy }) 
           ) : null}
         </Row>
         <Row label={O.cash}>
-          <p className={cx("font-semibold", view.nextIncome.balanceAtIt < 0 ? "text-bad" : "text-ink")}>
-            {O.cashLine(
-              formatMoney(view.nextIncome.balanceAtIt),
-              view.nextIncome.week,
-              view.nextIncome.mondays,
-              formatMoney(view.nextIncome.weeklyNetNext),
-            )}
+          <p className={cx("display text-xl font-bold", view.nextIncome.balanceAtIt < 0 ? "text-bad" : "text-ink")}>
+            {formatMoney(view.nextIncome.balanceAtIt)}
           </p>
+          <p className="mt-2 text-xs text-sub">{C.finances.net}: <strong>{formatMoney(view.nextIncome.weeklyNetNext)}</strong> · {C.finances.payday} × {view.nextIncome.mondays}</p>
           {view.sponsorEnds ? <p className="text-xs">{O.sponsorEnds}</p> : null}
         </Row>
         <Row label={O.retirements}>

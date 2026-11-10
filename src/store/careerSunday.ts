@@ -197,7 +197,7 @@ export function followSundayFlow(input: CareerSave, choice: SpectatorMode): Flow
  */
 export function followCardOf(save: CareerSave): FollowEventState | null {
   const f = save.followEvent;
-  if (!f || f.dismissed || f.view !== null || save.phase !== "running") return null;
+  if (!f || f.dismissed || f.view !== null || (save.phase !== "running" && save.phase !== "seasonReview")) return null;
   if (f.def.seasonIndex !== save.clock.seasonIndex) return null;
   const resolved = playoffsDayFor(f.def);
   const age = save.clock.day - resolved;

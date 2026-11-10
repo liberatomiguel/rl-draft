@@ -12,7 +12,6 @@
  * there is no mutation path for identity.colors yet (see build report).
  */
 
-import { CareerHonorsTable } from "../CareerHonorsTable";
 import { AchievementCard } from "@/components/AchievementsGrid";
 import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
@@ -248,33 +247,7 @@ export function ClubScreen() {
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-5">
         {/* 2 — Reputation track */}
         <div className="flex flex-col gap-4 md:col-span-3">
-          <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
-            <p className="kicker mb-1">{copy.club.reputation}</p>
-            <p className="display text-4xl font-bold text-ink">
-              <AnimatedNumber value={rep} />
-              <span className="ml-2 align-middle text-sm font-semibold text-faint">/ 100</span>
-            </p>
-            {/* 0..100 scale with a tick on every unlock gate — the whole road. */}
-            <div className="relative mt-3">
-              <ProgressBar value={rep / 100} tone="orange" label={copy.club.reputation} />
-              {gateTicks.map((g) => (
-                <span
-                  key={g}
-                  aria-hidden
-                  className={cx(
-                    "absolute top-1/2 h-3 w-px -translate-y-1/2",
-                    rep >= g ? "bg-white/50" : "bg-white/20",
-                  )}
-                  style={{ left: `${g}%` }}
-                />
-              ))}
-            </div>
-            {nextGate ? (
-              <p className="mt-2 text-xs text-sub">
-                {copy.club.repNext(nextGate.gate, unlockLabels[nextGate.key] ?? nextGate.key)}
-              </p>
-            ) : null}
-          </Panel>
+
 
       {/* 4 — Trophy room */}
       <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
@@ -332,7 +305,7 @@ export function ClubScreen() {
 
 
           {/* 5 — Records */}
-          <div>
+          <Panel className="p-4">
             <p className="kicker mb-2">{copy.club.records}</p>
             <div className="grid grid-cols-2 gap-3">
               <StatTile
@@ -352,11 +325,37 @@ export function ClubScreen() {
               />
               <StatTile label={copy.club.recordTitles} value={String(titlesTotal)} delay={180} />
             </div>
-          </div>
+          </Panel>
         </div>
 
         {/* 3 — Progression Track (the unlock ladder, never hidden) */}
-        <Panel className="rise-in p-5 md:col-span-2" style={{ animationDelay: "90ms" }}>
+        <div className="space-y-4 md:col-span-2">          <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
+            <p className="kicker mb-1">{copy.club.reputation}</p>
+            <p className="display text-4xl font-bold text-ink">
+              <AnimatedNumber value={rep} />
+              <span className="ml-2 align-middle text-sm font-semibold text-faint">/ 100</span>
+            </p>
+            {/* 0..100 scale with a tick on every unlock gate — the whole road. */}
+            <div className="relative mt-3">
+              <ProgressBar value={rep / 100} tone="orange" label={copy.club.reputation} />
+              {gateTicks.map((g) => (
+                <span
+                  key={g}
+                  aria-hidden
+                  className={cx(
+                    "absolute top-1/2 h-3 w-px -translate-y-1/2",
+                    rep >= g ? "bg-white/50" : "bg-white/20",
+                  )}
+                  style={{ left: `${g}%` }}
+                />
+              ))}
+            </div>
+            {nextGate ? (
+              <p className="mt-2 text-xs text-sub">
+                {copy.club.repNext(nextGate.gate, unlockLabels[nextGate.key] ?? nextGate.key)}
+              </p>
+            ) : null}
+          </Panel>        <Panel className="rise-in p-5 md:col-span-2" style={{ animationDelay: "90ms" }}>
           <p className="kicker mb-0.5">{copy.club.progression}</p>
           <p className="mb-3 text-xs text-faint">{copy.club.progressionDesc}</p>
           <ul>
@@ -421,6 +420,7 @@ export function ClubScreen() {
             })}
           </ul>
         </Panel>
+        </div>
       </div>
 
       {/* 5b — Career achievements (v2.0 R32) */}
@@ -444,7 +444,7 @@ export function ClubScreen() {
         </div>
       </Panel>
 
-      <CareerHonorsTable save={save} C={copy} />
+
 
       {/* 6 — Season history */}
       {save.history.length > 0 ? (

@@ -678,6 +678,8 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
     }
     return def;
   }
+  const cup = unofficialOfferFor(seasonIndex, week, { userTeamRating: approxUserRating(save), rep: save.reputation, t3EntriesThisSplit: save.t3EntriesThisSplit, careerSeed: save.careerSeed });
+  if (cup && day >= save.clock.day && day === cup.day && !save.eventResults.some(r => r.eventId === cup.id) && !save.flags[`unofficialPassed:${cup.id}`]) return cup;
   return null;
 }
 
@@ -1648,7 +1650,7 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   }
   const victim = rng.pick(starters);
   save.flags[usedKey] = true;
-  save.pendingUnavailability = { playerId: victim.id, eventId: def.id };
+  save.pendingUnavailability = { playerId: victim.id, eventId: def.id, reason: createRng(deriveSeed(save.careerSeed, streams.random(seasonIndex, week))).chance(CAREER_WORLD.unavailabilityChancePerWeek * CAREER_WORLD.unavailabilityEventMult) ? "illness" : "fatigue" };
   noteUnavailable(save, victim.id);
   pushNews(save, {
     type: "org",
@@ -3449,6 +3451,8 @@ export function declineUnofficial(input: CareerSave): CareerSave {
   ) {
     save.pendingEventDef = null;
   }
+  const passed = input.unofficialOffer ?? input.pendingEventDef;
+  if (passed) save.flags[`unofficialPassed:${passed.id}`] = true;
   save.unofficialOffer = null;
   // rc.34 review: no hidden "Training Week" day for the whole squad any more —
   // it ran outside the period plan (the summary showed gain it could not
@@ -4550,6 +4554,7 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   // rc.36 (front T2, R83): a training cycle completed and nothing runs after
   // it — stop once (the report, the next plan); never a hold.
   if (day !== startedAtDay && cycleEndedTodayOf(save)) return true;
+  if (day !== startedAtDay && save.followEvent && !save.followEvent.dismissed && save.followEvent.view === null && (save.followEvent.def.tier === "major" || save.followEvent.def.tier === "worlds") && eventEndDayFor(save.followEvent.def) === day) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&

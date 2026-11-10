@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 18;
+export const BALANCE_VERSION = 19;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1708,7 +1708,7 @@ export const CAREER_PLAN = {
    * ≤ +4 points per event), normalised to a nominalDays period (so a split
    * period in mode 1-B reads per 28 days).
    */
-  wear: { chancePerPoint: 0.005, chanceMax: 0.04, nominalDays: 28 },
+  wear: { coachRiskMult: 0.8, chancePerPoint: 0.005, chanceMax: 0.04, nominalDays: 28 },
   /**
    * T3: a period's package-scrim XP is capped at this share of the period's
    * gain (sessions + scrims; contract 25 %, range 15–35 %) — t4 by

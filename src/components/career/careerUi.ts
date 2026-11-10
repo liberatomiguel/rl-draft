@@ -287,9 +287,9 @@ export function upcomingStops(save: CareerSave, count: number): UpcomingStop[] {
     const week = weekOfDay(day);
     const dow = dayOfWeekOf(day);
     const found = userEventOnDay(save, day);
-    // R40: a spectated Major/Worlds is not a stop (the batched Advance runs
-    // through it) — the preview must not promise one.
-    const event = found && participationOf(save, found) !== "spectating" ? found : null;
+    // R111: spectator Majors/Worlds stop on Sunday, when the field settles.
+    // Hide their Saturday entry so the preview matches the actual stop.
+    const event = found && participationOf(save, found) === "spectating" && day === found.day ? null : found;
     // R40: a two-day Major/Worlds covers Saturday AND Sunday — list it once.
     const listed = event !== null && out.some((s) => s.event?.id === event.id);
     if (event && !listed && (day > today || isTodaysStop(event))) {

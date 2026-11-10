@@ -209,10 +209,9 @@ export const CAREER_PT: CareerCopy = {
   },
 
   wizard: {
-    references: "Inspirações de clubes",
+    regionLevels: { hard: "Mais difícil", mid: "Intermediário", easy: "Mais fácil" },
     iconColor: "Cor do emblema",
     tertiaryColor: "Terceira cor",
-    referenceNames: { rio: "Rio", paulista: "São Paulo", gaucho: "Porto Alegre", "buenos-aires": "La Boca", tricolor: "Laranjeiras", nautical: "Náutico", "los-angeles": "Los Angeles", milan: "Milão" },
     title: "Funde sua organização",
     step: (n: number, total: number) => `Etapa ${n} de ${total}`,
     quickStart: "Início rápido",
@@ -397,9 +396,10 @@ export const CAREER_PT: CareerCopy = {
     squadShortBody: (n: number, event: string) =>
       `Só ${n} de 3 vagas estão preenchidas, e nenhum evento é disputado com time incompleto. O relógio espera antes de ${event} até um terceiro jogador assinar — um agente livre pode ocupar a vaga hoje, com ou sem janela.`,
     // rc.39 F6 (R103): titular indisponível e sem reserva — a mesma pausa, com o texto certo.
-    squadShortAbsentTitle: "Sem reserva",
-    squadShortAbsentBody: (player: string, event: string) =>
-      `${player} está fora de ${event} e ninguém cobre a vaga. Nenhum evento é disputado com time incompleto, e reserva só assina na janela de transferências: sem reserva, o time não joga.`,
+    squadShortAbsentTitle: "Sem substituto",
+    absenceReasons: { fatigue: "excesso de carga de treino", illness: "problemas de saúde", fitness: "falta de condições físicas" },
+    squadShortAbsentBody: (player: string, event: string, reason?: string) =>
+      `${player} não poderá jogar ${event} por ${reason ?? "falta de condições físicas"}. Não há um substituto para ocupar sua vaga. Contrate um substituto durante a janela de transferências ou fique fora deste campeonato.`,
     squadShortAbsentSkip: "Ficar fora deste evento",
     squadShortAbsentSkipHint: (event: string) =>
       `${event}: sem inscrição, sem pontos, sem prêmio. Contrate um reserva na próxima janela para isso não se repetir.`,
@@ -952,7 +952,7 @@ export const CAREER_PT: CareerCopy = {
   },
 
   training: {
-    weekSummary: "Evolução do elenco nesta semana",
+    weekSummary: "Evolução do elenco neste ciclo",
     weekChemistry: "Entrosamento",
     effectDescription: {
       offense: "Cria pressão e oportunidades de gol ao longo de cada jogo.",

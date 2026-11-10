@@ -394,7 +394,7 @@ export function MarketScreen() {
   // rc.36 (front S2): the consequences price the offer itself — his answer comes only once it is sent.
   const cost = pack ? pack.fee + (talk ? talk.offered.bonus : pack.signingBonus) : 0;
   const balanceAfter = save.finances.balance - cost;
-  const blockReason = !planError
+  const blockReason = target && !freeAgentSignable ? C.market.errors.windowClosed : !planError
     ? null
     : planError === "squadFull"
       ? C.market.squadFullWarn(CAREER_CONTRACT.squadCap)
@@ -796,6 +796,7 @@ export function MarketScreen() {
         </div>
       ) : null}
 
+      {target && !freeAgentSignable ? <Panel className="p-3 text-sm text-orange-bright">{C.market.errors.windowClosed}</Panel> : null}
       {/* ================= player sheet (browse/scout, sign entry) ================= */}
       <PlayerSheet
         data={
@@ -832,7 +833,7 @@ export function MarketScreen() {
                   {C.player.scoutDone}
                 </Badge>
               )}
-              {targetLocked ? (
+              {(!windowOpen && !(freeAgentSignable && target.orgRef === null)) ? <span className="self-center rounded-lg border border-orange/40 bg-orange/10 p-2 text-xs text-orange-bright">{C.market.errors.windowClosed}</span> : targetLocked ? (
                 <span className="self-center" title={C.market.lockedHint}>
                   <Badge tone="neutral">
                     🔒{" "}

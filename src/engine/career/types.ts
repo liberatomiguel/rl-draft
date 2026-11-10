@@ -1579,7 +1579,7 @@ export interface CareerSave {
   /** @deprecated rc.32 (M8) — withdrawn in rc.33 (ECO-12): never written; the load repair (careerFlow.repairMoneyOnLoad) deletes it. */
   lateSigning?: LateSigningState | null;
   /** A starter is unavailable for this event (random event, sub steps in). */
-  pendingUnavailability: { playerId: string; eventId: string } | null;
+  pendingUnavailability: { playerId: string; eventId: string; reason?: "fatigue" | "illness" } | null;
   /**
    * rc.36 (SUN-01, R88): Saturday → HQ → Sunday — the Sunday ahead and its
    * briefing (engine/career/sunday.ts). Optional, additive: absent = none.

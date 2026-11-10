@@ -68,7 +68,7 @@ export const SYMBOL_IDS = [
 ] as const;
 /** rc.36 (UX-04): the wizard's further symbols. */
 export const SYMBOL_IDS_RC36 = ["car", "ball", "wheel", "trophy", "wings", "peak", "gem", "chevrons"] as const;
-export const SYMBOL_IDS_CLUB = ["bull", "jaguar", "sunburst"] as const;
+export const SYMBOL_IDS_CLUB = ["bull", "jaguar", "sunburst", "maltese-cross"] as const;
 export const ALL_SYMBOL_IDS = [...SYMBOL_IDS, ...SYMBOL_IDS_RC36, ...SYMBOL_IDS_CLUB] as const;
 /** Retired picker options still render in saved crests. */
 export const WIZARD_SYMBOL_IDS = [
@@ -86,16 +86,6 @@ export const PATTERN_IDS_RC36 = ["hoops", "halves", "cross", "border"] as const;
 export const PATTERN_IDS_CLUB = ["club-hoops", "club-stripes", "tricolor", "yoke", "club-ring"] as const;
 export const ALL_PATTERN_IDS = [...PATTERN_IDS, ...PATTERN_IDS_RC36, ...PATTERN_IDS_CLUB] as const;
 export const WIZARD_PATTERN_IDS = [...PATTERN_IDS_CLUB, ...PATTERN_IDS, "halves", "cross", "border"] as const;
-export const CREST_REFERENCES = [
-  { id: "rio", shape: "heater", symbol: "flame", pattern: "club-hoops", primary: "#000000", secondary: "#b51f35", tertiary: "#f5f7fa" },
-  { id: "paulista", shape: "circle", symbol: "star", pattern: "border", primary: "#16633e", secondary: "#f5f7fa", tertiary: "#c5a12a" },
-  { id: "gaucho", shape: "roundshield", symbol: "star", pattern: "club-stripes", primary: "#82bef0", secondary: "#000000", tertiary: "#f5f7fa" },
-  { id: "buenos-aires", shape: "badge", symbol: "star", pattern: "club-ring", primary: "#17345d", secondary: "#c5a12a", tertiary: "#c5a12a" },
-  { id: "tricolor", shape: "heater", symbol: "gem", pattern: "tricolor", primary: "#631e38", secondary: "#16633e", tertiary: "#f5f7fa" },
-  { id: "nautical", shape: "tapered", symbol: "anchor", pattern: "sash", primary: "#000000", secondary: "#f5f7fa", tertiary: "#b51f35" },
-  { id: "los-angeles", shape: "shield", symbol: "wings", pattern: "border", primary: "#000000", secondary: "#c5a12a", tertiary: "#f5f7fa" },
-  { id: "milan", shape: "roundshield", symbol: "bolt", pattern: "club-stripes", primary: "#b51f35", secondary: "#000000", tertiary: "#b51f35" },
-] as const;
 export type PatternId = (typeof ALL_PATTERN_IDS)[number];
 
 /**
@@ -163,11 +153,17 @@ export const CREST_WIZARD_PALETTE: { id: string; hex: string }[] = [
   { id: "olive", hex: "#67762d" }, { id: "olive-light", hex: "#c7d59a" },
 ];
 
-export const CREST_WIZARD_KITS: { id: string; primary: string; secondary: string; tertiary?: string }[] = [
-  { id: "navy-gold", primary: "#17345d", secondary: "#c5a12a", tertiary: "#f5f7fa" },
-  ...CREST_REFERENCES.filter(k => k.id !== "buenos-aires").map(({ id, primary, secondary, tertiary }) => ({ id, primary, secondary, tertiary })),
-  { id: "royal-white", primary: "#234fd1", secondary: "#f5f7fa", tertiary: "#c5a12a" },
-  { id: "orange-black", primary: "#c85b17", secondary: "#000000", tertiary: "#f5f7fa" },
+export const CREST_WIZARD_KITS = [
+ { id: "navy-gold", primary: "#17345d", secondary: "#c5a12a" },
+ { id: "black-scarlet", primary: "#000000", secondary: "#b51f35" },
+ { id: "forest-white", primary: "#16633e", secondary: "#f5f7fa" },
+ { id: "sky-black", primary: "#82bef0", secondary: "#000000" },
+ { id: "burgundy-forest", primary: "#631e38", secondary: "#16633e" },
+ { id: "black-white", primary: "#000000", secondary: "#f5f7fa" },
+ { id: "black-gold", primary: "#000000", secondary: "#c5a12a" },
+ { id: "plum-gold", primary: "#6635a5", secondary: "#ead886" },
+ { id: "royal-white", primary: "#234fd1", secondary: "#f5f7fa" },
+ { id: "orange-black", primary: "#c85b17", secondary: "#000000" },
 ];
 
 /** Legacy curated pairs — kept for old call sites; every color is in CREST_PALETTE. */
@@ -247,7 +243,7 @@ export interface CrestConfig {
   pattern?: PatternId;
   /** rc.36: absent = "emblem" (every id saved before rc.36). */
   layout?: LayoutId;
-  iconColor?: "primary";
+  iconColor?: "primary" | "tertiary";
 }
 
 /** Parse any crestId string; unknown/absent parts fall back (legacy-safe). */
@@ -257,7 +253,7 @@ export function parseCrestId(raw: string): CrestConfig {
   const symbol = (ALL_SYMBOL_IDS as readonly string[]).includes(sy) ? (sy as SymbolId) : undefined;
   const pattern = (ALL_PATTERN_IDS as readonly string[]).includes(pt) ? (pt as PatternId) : undefined;
   const layout = ly && ly !== "emblem" && (LAYOUT_IDS as readonly string[]).includes(ly) ? (ly as LayoutId) : undefined;
-  return { shape, symbol, pattern, layout, ...(ic === "primary" ? { iconColor: "primary" as const } : {}) };
+  return { shape, symbol, pattern, layout, ...(ic === "primary" || ic === "tertiary" ? { iconColor: ic } : {}) };
 }
 
 /**
@@ -269,9 +265,9 @@ export function composeCrestId(cfg: {
   symbol?: string | null;
   pattern?: string | null;
   layout?: string | null;
-  iconColor?: "primary" | "secondary";
+  iconColor?: "primary" | "secondary" | "tertiary";
 }): string {
-  if (cfg.iconColor === "primary") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout ?? "emblem"}:primary`;
+  if (cfg.iconColor === "primary" || cfg.iconColor === "tertiary") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout ?? "emblem"}:${cfg.iconColor}`;
   if (cfg.layout && cfg.layout !== "emblem") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout}`;
   if (cfg.pattern) return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern}`;
   if (cfg.symbol) return `${cfg.shape}:${cfg.symbol}`;
@@ -366,6 +362,7 @@ const ACCENT_PATH: Record<CrestId, string> = {
  * centered ≈(32,34), ~24–30px tall — strong silhouettes, readable at 20px.
  */
 const SYMBOL_PATHS: Record<SymbolId, string[]> = {
+  "maltese-cross": ["M23 17L32 22L41 17L37 29L49 25L44 34L49 43L37 39L41 51L32 46L23 51L27 39L15 43L20 34L15 25L27 29Z"],
   // Upright rocket: nose cone + window hole, side fins, exhaust flick.
   rocket: [
     "M32 16.5 C36.6 20.8 38.6 26.2 38.6 32.4 L38.6 41 L25.4 41 L25.4 32.4 C25.4 26.2 27.4 20.8 32 16.5 Z " +
@@ -596,8 +593,8 @@ const PATTERN_DEFS: Record<PatternId, string> = {
     "M32 32 L32 102 L-17.5 81.5 Z",
   // Annulus ring around center.
   ring: "M32 11 A21 21 0 1 1 31.99 11 Z M32 18 A14 14 0 1 1 31.99 18 Z",
-  // v0.3 — one thick heraldic sash (top-left → bottom-right).
-  sash: "M-12 0 L0 -12 L76 64 L64 76 Z",
+  // One thick heraldic sash (top-right → bottom-left).
+  sash: "M64 -12 L76 0 L0 76 L-12 64 Z",
   // v0.3 — quartered field (two opposite quarters filled).
   quarters: "M-2 -2 H32 V32 H-2 Z M32 32 H66 V66 H32 Z",
   // rc.36 (UX-04) — three horizontal hoops.
@@ -608,13 +605,12 @@ const PATTERN_DEFS: Record<PatternId, string> = {
   cross: "M27 -2 H37 V66 H27 Z M-2 27 H66 V37 H-2 Z",
   // rc.36 — "border" is drawn as a thick inner outline of the shape itself (the renderer).
   border: "",
-  // Strong club fields use full secondary colour. Neutral trim is added
-  // separately by the renderer; the persisted colour schema stays two-colour.
+  // Strong fields use secondary colour, with a third field only for tricolor/yoke.
   "club-hoops": "M-2 10 H66 V20 H-2 Z M-2 30 H66 V40 H-2 Z M-2 50 H66 V60 H-2 Z",
-  "club-stripes": "M8 -2 H18 V66 H8 Z M28 -2 H38 V66 H28 Z M48 -2 H58 V66 H48 Z",
-  tricolor: "M41 -2 H66 V66 H41 Z",
-  yoke: "M32 23 H66 V66 H32 Z",
-  "club-ring": "M-2 25 H66 V39 H-2 Z",
+  "club-stripes": "M8 -2 H16 V66 H8 Z M24 -2 H32 V66 H24 Z M40 -2 H48 V66 H40 Z M56 -2 H64 V66 H56 Z",
+  tricolor: "M42 -2 H66 V66 H42 Z",
+  yoke: "M32 21 H66 V66 H32 Z",
+  "club-ring": "M-2 22 Q32 39 66 22 V34 Q32 51 -2 34 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -627,7 +623,6 @@ const LIGHT_INK = "rgba(245,248,255,0.92)";
 const CLUB_TRIM = "#f5f7fa";
 /** Primaries darker than this get a light monogram (dark ink vanished on them). */
 const INK_LUMINANCE_THRESHOLD = 0.16;
-const SYMBOL_SHADOW = "rgba(5,8,15,0.5)";
 /** rc.36 (UX-04): the stacked / band letters need this many pixels to read (smaller: the emblem alone). */
 const LAYOUT_LETTERS_MIN_PX = 40;
 /** rc.36: the emblem's size and rise when it shares the crest with the letters. */
@@ -684,7 +679,7 @@ export function UserCrest({
       {pattern || band ? (
         <defs>
           <clipPath id={clipId}>
-            <path d={BASE_PATH[shape]} />
+            <path d={BASE_PATH[shape]} transform="translate(32 32) scale(.88) translate(-32 -32)" />
           </clipPath>
         </defs>
       ) : null}
@@ -697,10 +692,8 @@ export function UserCrest({
         <g clipPath={`url(#${clipId})`}>
           {pattern === "border" ? <path d={BASE_PATH[shape]} fill="none" stroke={colors.secondary} strokeWidth={7} /> :
             <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} fillRule="evenodd" />}
-          {pattern === "tricolor" ? <path d="M25 -2 H39 V66 H25 Z" fill={trim} /> : null}
+          {pattern === "tricolor" ? <path d="M22 -2 H42 V66 H22 Z" fill={trim} /> : null}
           {pattern === "yoke" ? <path d="M-2 -2 H66 V21 H-2 Z" fill={trim} /> : null}
-          {pattern === "club-stripes" ? <path d="M19 -2 H23 V66 H19 Z M41 -2 H45 V66 H41 Z" fill={trim} /> : null}
-          {pattern === "club-ring" ? <circle cx={32} cy={32} r={21} fill="none" stroke={trim} strokeWidth={3} /> : null}
         </g>
       ) : null}
 
@@ -728,16 +721,11 @@ export function UserCrest({
         </text>
       ) : null}
 
-      {/* 3 — center symbol: dark drop shape for contrast, then the emblem */}
+      {/* 3 — clean center symbol in the chosen colour role */}
       {symbol ? (
         <g transform={symbolTransform}>
-          <g transform="translate(1 1.6)" aria-hidden>
-            {SYMBOL_PATHS[symbol].map((d, i) => (
-              <path key={`s${i}`} d={d} fill={SYMBOL_SHADOW} fillRule="evenodd" />
-            ))}
-          </g>
           {SYMBOL_PATHS[symbol].map((d, i) => (
-            <path key={i} d={d} fill={iconColor === "primary" ? colors.primary : colors.secondary} stroke={crestLuminance(iconColor === "primary" ? colors.primary : colors.secondary) > 0.4 ? DARK_INK : LIGHT_INK} strokeWidth={0.45} paintOrder="stroke" fillRule="evenodd" />
+            <path key={i} d={d} fill={iconColor === "tertiary" ? trim : iconColor === "primary" ? colors.primary : colors.secondary} fillRule="evenodd" />
           ))}
         </g>
       ) : null}

@@ -15,7 +15,7 @@ import {
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
 } from "@/config/balance";
-import { T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
+import { T3_EVENT_NAMES } from "@/data/career/names";
 import type { Region } from "../types";
 import {
   DAYS_PER_SEASON,
@@ -47,7 +47,6 @@ import {
   windowCloseWeekFor,
   windowIndexOf,
 } from "./calendar";
-import { derivedFloat, streams } from "./seeds";
 
 const REGIONS = Object.keys(CAREER_SLOTS.major) as Region[];
 
@@ -348,47 +347,11 @@ describe("unofficialOfferFor", () => {
     expect(T3_EVENT_NAMES).toContain(offer!.name.split(" · ")[0]);
   });
 
-  it("stops t3 offers above the rating ceiling or the split entry cap", () => {
-    expect(
-      unofficialOfferFor(0, 3, {
-        ...lowRepCtx,
-        userTeamRating: CAREER_UNOFFICIAL.t3RatingCeiling + 1,
-      }),
-    ).toBeNull();
-    expect(
-      unofficialOfferFor(0, 3, {
-        ...lowRepCtx,
-        t3EntriesThisSplit: CAREER_UNOFFICIAL.t3MaxEntriesPerSplit,
-      }),
-    ).toBeNull();
-  });
-
-  it("rolls the t2 Invitational on the documented derived stream", () => {
-    // The t2 branch must agree with the raw derivedFloat for ANY seed — probe
-    // a swath so both outcomes are exercised.
-    let sawT2 = false;
-    let sawFallback = false;
-    for (let careerSeed = 1; careerSeed <= 64; careerSeed++) {
-      const ctx = {
-        userTeamRating: 78,
-        rep: CAREER_UNOFFICIAL.t2RepGate,
-        t3EntriesThisSplit: 0,
-        careerSeed,
-      };
-      const offer = unofficialOfferFor(2, 15, ctx);
-      const roll = derivedFloat(careerSeed, streams.gen("t2offer", "2:15"));
-      if (roll < CAREER_UNOFFICIAL.t2OfferChance) {
-        sawT2 = true;
-        expect(offer?.tier).toBe("t2");
-        expect(T2_EVENT_NAMES).toContain(offer!.name);
-        expect(offer!.id).toBe("2:15:unofficial");
-      } else {
-        sawFallback = true;
-        expect(offer?.tier).toBe("t3"); // rating 78 keeps the t3 fallback open
-      }
+  it("keeps an optional event on every open week at low and high reputation", () => {
+    for (const week of seasonSchedule().filter(w => w.kind === "open").map(w => w.week)) {
+      expect(unofficialOfferFor(0, week, { ...lowRepCtx, userTeamRating: 99, t3EntriesThisSplit: 99 })?.tier).toBe("t3");
+      expect(unofficialOfferFor(0, week, { ...lowRepCtx, rep: CAREER_UNOFFICIAL.t2RepGate })?.tier).toBe("t2");
     }
-    expect(sawT2).toBe(true);
-    expect(sawFallback).toBe(true);
   });
 
   it("is deterministic per (seed, season, week)", () => {

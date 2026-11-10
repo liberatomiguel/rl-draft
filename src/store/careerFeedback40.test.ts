@@ -8,8 +8,8 @@ import { officialEventDefsForWeek, seasonSchedule } from "@/engine/career/calend
 import { prizeScheduleFor } from "@/engine/career/economy";
 import { EventRewardsTable } from "@/components/career/event/EventRewardsTable";
 import { UserCrest, composeCrestId, parseCrestId } from "@/components/career/UserCrest";
-import { createCareerSave, finishEvent, simEventToEnd, startEvent, continueEventToNextDayFlow, moneyNoticeOf, moneyNoticeRaisedToday, acknowledgeMoneyNoticeFlow, signingPlanFor, type CreateCareerInput } from "./careerFlow";
-import { trainingDayStart, runTrainingSession } from "./careerTraining";
+import { coachCandidatesFor, userEventDefOnDay, declineUnofficial, createCareerSave, finishEvent, simEventToEnd, startEvent, continueEventToNextDayFlow, moneyNoticeOf, moneyNoticeRaisedToday, acknowledgeMoneyNoticeFlow, signingPlanFor, type CreateCareerInput } from "./careerFlow";
+import { wearUnavailabilityAddOf, trainingDayStart, runTrainingSession } from "./careerTraining";
 
 const input: CreateCareerInput = {
   identity: { orgName: "Aurora", abbrev: "AUR", managerName: "QA", country: "BR", region: "SAM", crestId: "shield", colors: { primary: "#17345d", secondary: "#c5a12a" }, buffType: "consistency" },
@@ -18,6 +18,30 @@ const input: CreateCareerInput = {
 const fresh = () => createCareerSave(input, 40001);
 
 describe("rc.40 feedback contracts", () => {
+  it("coach reduces only the training-wear risk and keeps its weekly basis", () => {
+    const save = fresh();
+    trainingDayStart(save);
+    save.training!.plan!.wearProjected = 8;
+    const without = wearUnavailabilityAddOf(save);
+    expect(without).toBeGreaterThan(0);
+    save.coach = coachCandidatesFor(save)[0];
+    expect(wearUnavailabilityAddOf(save)).toBeCloseTo(without * .8);
+  });
+
+  it("future optional cups are visible before their offer and a declined cup stays declined", () => {
+    const save = fresh();
+    const def = userEventDefOnDay(save, 20)!;
+    expect(def.tier).toBe("t3");
+    const offered = { ...save, unofficialOffer: def };
+    expect(userEventDefOnDay(declineUnofficial(offered), def.day)).toBeNull();
+  });
+
+  it("third-colour emblems round-trip independently of a two-colour pattern", () => {
+    const id = composeCrestId({shape:"shield",symbol:"maltese-cross",iconColor:"tertiary"});
+    expect(parseCrestId(id).iconColor).toBe("tertiary");
+    expect(composeCrestId(parseCrestId(id))).toBe(id);
+  });
+
   it("starts at the Season X cutoff, with eight Worlds and no retroactive Majors", () => {
     const save = fresh();
     const orgs = honorsTableOf(save, "orgs");
@@ -108,6 +132,6 @@ describe("rc.40 feedback contracts", () => {
     expect(composeCrestId(parseCrestId(id))).toBe(id);
     const html = renderToStaticMarkup(createElement(UserCrest,{crestId:id,colors:{primary:"#16633e",secondary:"#631e38",tertiary:"#ead886"},abbrev:"AUR",size:"lg"}));
     expect(html).toContain('fill="#ead886"');
-    expect(html).toContain('fill="#16633e" stroke=');
+    expect(html).toContain('fill="#16633e" fill-rule=');
   });
 });
