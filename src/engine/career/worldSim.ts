@@ -1582,7 +1582,8 @@ export function fieldForEvent(
   // difficulty's own shift, so field quality (intrinsic rating) is unchanged.
   const sceneShift =
     (CAREER_REGION_FIELD.tiers.includes(def.tier)
-      ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0)
+      ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0) *
+        (CAREER_REGION_FIELD.shiftScaleByDifficulty[ctx.difficulty] ?? 1)
       : 0) +
     // rc.39 F6 (R102): the top tiers' own shift (the counterpart of chemistry by time together).
     (CAREER_REGION_FIELD.tierShift[def.tier] ?? 0) +

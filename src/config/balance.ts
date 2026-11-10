@@ -2224,9 +2224,11 @@ export const CAREER_RENEWAL_TENURE = {
    * and jumpMax alike) times this. The larger step fits Normal's and Easy's
    * income; on Hard it broke the careers that renew everyone (battery-paired,
    * 77 careers: insolvency 18 % → 27 %, hands-off prospects 64 %, Worlds
-   * titles 9 % → 1 %). 1 = the same ladder on every difficulty.
+   * titles 9 % → 1 %). 1 = the same ladder on every difficulty. Hard 0.625 =
+   * rc.37's ladder (×2.5 first, ×3.125 at most): paired arms on Hard put the
+   * insolvency at 23 % (×4.0), 18 % (×3.25) and 11–14 % (×2.5; staging 14 %).
    */
-  jumpScaleByDifficulty: { easy: 1, normal: 1, hard: 1 } as Record<string, number>,
+  jumpScaleByDifficulty: { easy: 1, normal: 1, hard: 0.625 } as Record<string, number>,
   /**
    * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
    * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
@@ -2272,6 +2274,15 @@ export const CAREER_REGION_FIELD = {
   // first Worlds of SSA and APAC moves from S2 to S3, APAC's reach by S10
   // 100 % → 67 %; EU, NA, SAM and MENA untouched.
   shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0.5, APAC: 1.5, SSA: 2 } as Record<Region, number>,
+  /**
+   * ...times this by the career's difficulty. The doses above were measured
+   * on Normal; on Hard (AI sides already 0.4 stronger) the same scene sent
+   * APAC's Worlds reach from 100 % to 0–14 % and SSA's from 71–75 % to
+   * 25–29 % (paired arms PK-H, HX0). Hard keeps the slower start (the
+   * founders' offset cannot read the difficulty: the wizard shows the roster
+   * before the difficulty is picked) without the stronger scene.
+   */
+  shiftScaleByDifficulty: { easy: 1, normal: 1, hard: 0 } as Record<string, number>,
   starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: -2, APAC: -3, SSA: -4 } as Record<Region, number>,
   /**
    * rc.39 F6 (R102): the counterpart of chemistry by time together. A stable
