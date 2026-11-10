@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-10**. Staging **v2.0.0-rc.43**; candidate **rc.44** on branch `claude/rc42-balance`, waiting for Miguel.
-> Decisions R1–R119. BALANCE_VERSION **21**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-10**. Candidate **v2.0.0-rc.45**, staging.
+> Decisions R1–R120. BALANCE_VERSION **22**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
@@ -53,7 +53,8 @@ until the approved cutover. Final regressions, static-export and browser
 evidence are recorded in CAREER-FEEDBACK-rc42.md. This release makes no new
 economy/growth/title-pacing claim.
 
-rc.44 adds the dataset's real coaches to the coach market (market.staffCoachCandidatesFor),
+rc.45 adds four support-staff retainers (CAREER_STAFF; economy.staffOn, careerFlow.setStaffFlow,
+Finances and the ladder). rc.44 adds the dataset's real coaches to the coach market (market.staffCoachCandidatesFor),
 lifts ex-pros, pays the bench 60 % of series XP and slows the squad's decline (R118–R119).
 rc.43 retunes the middle of a career (R113–R117): Normal renewals back to ×2.5,
 regional +25 %, ordinary loan in a shallow red, chemistry bond 0.20, AI bid premium

@@ -2297,3 +2297,7 @@ Playtest (an experienced tester on staging): no real coaches to hire, ex-pros to
 ## R119 — 10 November 2026: the bench grows, the squad fades slower (rc.44)
 
 `CAREER_DEV.benchXpShare` 0.6: a reserve banks that share of the team's series XP (DEV-01 paid him none; he grew at half a starter's pace and aged out on the bench). `CAREER_AGE.trainingDeclineDampen` 0.7 to 0.55, user squad only. Not changed: the growth curve and the peak windows. The runs show starters reach their potential; growth already reads the distance to the peak and each player's own window. Open: the 2027 wave has no birth dates, so its ages are inferred young (13-17 at debut); real birthdays in the dataset fix it.
+
+## R120 — 10 November 2026: support staff (rc.45)
+
+Playtest: too few things to unlock and buy. Miguel chose four of six proposals (10/11): an opponent analyst, a physical trainer ("reduces wear in general"), a brand manager and an assistant coach. `CAREER_STAFF`: rolling retainers on the flat money index, on existing channels only (bench XP share, a playoff rating edge outside the temporary cap, the wear-risk multiplier, the sponsor decision's value multiplier). Gates 16 / 30 / 36 / 50, $1.5k / $3k / $3k / $2.5k a split. The brand manager multiplies the decision's value (x1.15) instead of adding a fourth offer: the three offers are one per risk profile. Not built: the regional scout and the academy. Not measured on Hard and Easy; doses are deliberately small and each has a switch (the role's number at its neutral value).
