@@ -377,7 +377,8 @@ describe("real orgs enter by era (RTW-01): none arrives before its first dataset
       return n / total;
     };
     const ctx = { windowIdx: 0, week: 1, careerSeed: seed, userSquadIds: [], isPreseason: true, infinite: true };
-    const quiet = aiWindowMoves(w, { ...ctx, seasonIndex: late.atSeasonIndex - 1 }).world;
+    // The season after the wave: an infinite-era preseason with no anchor pass.
+    const quiet = aiWindowMoves(w, { ...ctx, seasonIndex: late.atSeasonIndex + 1 }).world;
     const arrived = aiWindowMoves(w, { ...ctx, seasonIndex: late.atSeasonIndex }).world;
     expect(seated(quiet)).toBeLessThan(0.2);
     // One pass seats what a timeline season's does (0.62–0.72; a later anchor may displace an earlier one).

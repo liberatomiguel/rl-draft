@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 16;
+export const BALANCE_VERSION = 17;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3208,14 +3208,15 @@ export const CAREER_WORLD = {
   /**
    * rc.39 (R109, Miguel 10/11): the dataset already holds RLCS 2027 lineups,
    * one season past the career timeline (which still ends in 2026). They
-   * arrive in the infinite era at `atSeasonIndex` (8 = the ninth season): at
-   * that rollover the orgs enter like any dataset intake
+   * arrive in the infinite era at `atSeasonIndex` (6 = its first season, the
+   * one labelled "RLCS 2027"; rc.39 had 8, a misreading corrected in
+   * rc.39.1): at that rollover the orgs enter like any dataset intake
    * (`worldSim.realOrgIntake`) and the preseason anchor pass brings their
    * rosters in with the usual fidelity. A player with a card of that season
    * does not retire before it. One wave, one season; `enabled: false` is the
    * rc.38 infinite era (no real intake at all).
    */
-  lateIntake: { enabled: true, seasonId: "rlcs-2027", atSeasonIndex: 8 },
+  lateIntake: { enabled: true, seasonId: "rlcs-2027", atSeasonIndex: 6 },
   /** v0.3: 0.25 → 0.35 — the mid-season market was too quiet. */
   midWindowMoveRate: 0.35,
   /**

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39.1**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,14 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.39.1 (2026-11-10), the 2027 wave moves to the first infinite season
+- `CAREER_WORLD.lateIntake.atSeasonIndex` 8 → **6** (R109 corrected): the RLCS 2027 lineups arrive in
+  the season the game already calls "RLCS 2027", the first of the infinite era. Root cause: rc.39 read
+  Miguel's "s9" as the ninth career season; he meant the first endless season. Seasons one to six are
+  bit-identical to rc.39; the wave now lands two seasons earlier and was **not** re-measured there (at
+  season nine it was neutral). The retirement protection is now covered by the existing anchor rule.
+- No other change. BALANCE_VERSION 16 → **17** (rc.39 was published as 16).
 
 ### Added — rc.39 (2026-11-10), the RLCS 2027 wave in the infinite era
 - **rc.39 publishes the whole F6 package to staging** (the two sections below, R100–R108,

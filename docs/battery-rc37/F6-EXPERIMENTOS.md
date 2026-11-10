@@ -867,6 +867,39 @@ mexer nas regiões fáceis, em três braços de 63 carreiras (≈ 12 min cada):
 A meta da medição seria: título até a S8 em 8–12% no Normal e 4–8% no Hard nas regiões principais, com
 compra e "outros" deixando o zero, sem passar de 10% / 25% de falência.
 
+### 7.12 rc.39.1: a leva de 2027 na primeira temporada do endless, e a meta "título entre 2026 e 2027"
+
+Correção do Miguel (10/11): "s9" queria dizer a **primeira temporada da era infinita** (S7, a que o jogo já
+chama de RLCS 2027), e a meta de ritmo é **ganhar o Worlds entre 2026 e 2027** (S6 e S7).
+`CAREER_WORLD.lateIntake.atSeasonIndex` 8 → 6, publicado como rc.39.1. **A leva não foi medida de novo
+na S7** (na S9 era neutra); as temporadas 1 a 6 não mudam.
+
+Título do Worlds acumulado, dados já existentes (seed 17019, bots; entre parênteses, carreiras):
+
+| | Easy staging | Easy rc.39 | Normal staging | Normal rc.39 | Hard staging | Hard rc.39 |
+|---|---|---|---|---|---|---|
+| **NA + EU + SAM (63)**: até 2026 (S6) | 13% (8) | 16% (10) | 0% (0) | 2% (1) | 0% (0) | 0–2% (0–1) |
+| até 2027 (S7) | 17% (11) | 16% (10) | 2% (1) | 2% (1) | 0% (0) | 0–2% (0–1) |
+| até a S10 | 35% (22) | 33% (21) | 17% (11) | 16% (10) | 10% (6) | 14–16% (9–10) |
+| chegou ao Worlds até 2027 | 38% (24) | 32% (20) | 13% (8) | 6% (4) | 6% (4) | 5% (3) |
+| **Regiões fáceis (84)**: até 2027 (S7) | 43% (36) | 57% (48) | 10% (8) | 4% (3) | 2% (2) | 4% (3) |
+| chegou ao Worlds até 2027 | 93% (78) | 92% (77) | 76% (64) | 49% (41) | 42% (35) | 31% (26) |
+| **Todas (147)**: até 2027 (S7) | 32% (47) | 39% (58) | 6% (9) | 3% (4) | 1% (2) | 2% (3) |
+
+(Hard rc.39: a faixa junta a validação a 0,15 de química e o braço das doses finais nas regiões principais.
+Na seed 9100 o staging dá, nas regiões principais, 2% até a S7 no Normal e 0% no Hard: mesma ordem.)
+
+Leitura:
+
+- **A meta 2026–2027 não é atingida pelos bots no Normal nem no Hard, e já não era no staging.** Nas
+  regiões principais é 1 carreira em 63 no Normal e zero ou uma no Hard, antes e depois.
+- **O rc.39 não piorou o título nas regiões principais**, mas menos carreiras chegam ao Worlds até 2027
+  no Normal (8 → 4 em 63).
+- **Onde o rc.39 atrasou de verdade foi nas regiões fáceis no Normal** (chegar ao Worlds até 2027:
+  76% → 49%; título: 10% → 4%). É o efeito pedido no pacote aprovado (R101), agora visto contra esta meta.
+- **No Easy a meta funciona**: 16–17% nas regiões principais e 43% → 57% nas fáceis.
+- Quem vence até 2027 fora do Easy é quase só o caminho de jovens em região fácil.
+
 ---
 
 ## 8. Propostas de desenho (não implementadas): progressão por reputação e patrocinadores simultâneos

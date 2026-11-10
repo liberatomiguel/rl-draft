@@ -2186,21 +2186,23 @@ R108. **rc.37 F6 — Hard reads the package through its own two scales.** The
      the roster before the difficulty is picked). The flatter ask curve
      stays on Hard: restoring 1.20 there did not help (titles 7 % → 2 %).
 
-R109. **rc.39 — the RLCS 2027 lineups arrive in the infinite era at season
-     nine (Miguel, 10/11).** The game still ends in 2026: the timeline is
+R109. **rc.39 / rc.39.1 — the RLCS 2027 lineups arrive in the infinite
+     era's first season (Miguel, 10/11).** The game still ends in 2026: the timeline is
      the six seasons of `CAREER_SEASONS` and the labels do not change
      (season seven is still called "RLCS 2027"). The dataset's 2027 lineups
      are a late wave: `CAREER_WORLD.lateIntake` { `seasonId` "rlcs-2027",
-     `atSeasonIndex` 8 } — at that rollover the orgs enter (the same rules
+     `atSeasonIndex` 6 } — at that rollover the orgs enter (the same rules
      as every dataset intake) and the preseason anchor pass seats the
      rosters with `anchorFidelity`; a player with a card of the wave does
-     not retire before it. Season nine as Miguel asked ("na s9 na era
-     infinita"); the reading taken is the ninth career season, the wave
-     being the endless era's first fresh challenge after the season-eight
-     title target. One number moves it (`atSeasonIndex`), `enabled: false`
+     not retire before it. rc.39 shipped it at index 8 (the ninth career
+     season, a misreading of "s9"); rc.39.1 puts it where Miguel meant, the
+     first endless season, which the game already labels "RLCS 2027". His
+     pacing target, restated the same day: a Worlds title should be
+     winnable between 2026 and 2027 (seasons six and seven). One number
+     moves it (`atSeasonIndex`), `enabled: false`
      removes it. Not done: the real players' card overalls still follow
-     the calendar (a 2027 card reads from season seven on, as in rc.38), so
-     the wave regroups and adds players, it does not re-rate them.
+     the calendar (a 2027 card reads from season seven on, as in rc.38):
+     with the wave in season seven, rosters and ratings now arrive together.
 
 ## Still open for Miguel (career mode)
 

@@ -1,9 +1,9 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-10**. Candidate: **v2.0.0-rc.39**, `staging` (the
+> Last updated: **2026-11-10**. Candidate: **v2.0.0-rc.39.1**, `staging` (the
 > rc.37 round — F1 market, F2 finance, F3 matchday, F4a battery tooling,
 > handoffs `HANDOFF-rc37-*.md` — plus the F6 balance package, R100–R108,
-> BALANCE_VERSION 16, and the RLCS 2027 wave at season nine, R109).
+> BALANCE_VERSION 16, and the RLCS 2027 wave in season seven, R109).
 > Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R109.
 > Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. F6
 > report and Miguel's open decisions: `docs/battery-rc37/F6-EXPERIMENTOS.md`
@@ -62,7 +62,7 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
 - Founding economy, growth, late support, sponsor/contract talks, goals,
   crests and Sunday decisions remain as in rc.36.5. Regional timing, star
   affordability and historical Worlds titles remain open. Staging runs
-  BALANCE_VERSION 16.
+  BALANCE_VERSION 17.
 
 ## System map
 
