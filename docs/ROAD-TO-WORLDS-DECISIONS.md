@@ -2289,3 +2289,15 @@ Regional $40k to $50k, qualifier $6k to $8k, tables unchanged (champion most, ev
 ## R117 — 10 November 2026: Normal renews on Hard's ladder (rc.43)
 
 R100's ×4.0 first jump raised the youth careers' payroll from season four with no income to match. ×3.25 left titles by 2027 at 1 in 63; ×2.5 (scale 0.625, at most ×3.125) gave 4. Easy keeps ×4.0. Open after launch: two simultaneous sponsors, a longer growth window (growth speed did not change between rc.38 and rc.39).
+
+## R118 — 10 November 2026: real coaches and better ex-pros (rc.44)
+
+Playtest (an experienced tester on staging): no real coaches to hire, ex-pros too weak, no good coach in the endgame. The dataset already holds 144 real coaches; the career never offered them. `CAREER_COACH_MARKET.staff` seats two a window (source "dataset", id `coach:staff:<personId>`), quality from the best coach card at or before the current season, capped by reputation (80 + 0.15 x rep) so the elite answers only a big club; gated at the ex-pros' rung. Ex-pro base 66 to 70. The shortlist is derived, never persisted: no save change. `staff.perWindow` 0 and base 66 restore rc.43.
+
+## R119 — 10 November 2026: the bench grows, the squad fades slower (rc.44)
+
+`CAREER_DEV.benchXpShare` 0.6: a reserve banks that share of the team's series XP (DEV-01 paid him none; he grew at half a starter's pace and aged out on the bench). `CAREER_AGE.trainingDeclineDampen` 0.7 to 0.55, user squad only. Not changed: the growth curve and the peak windows. The runs show starters reach their potential; growth already reads the distance to the peak and each player's own window. Open: the 2027 wave has no birth dates, so its ages are inferred young (13-17 at debut); real birthdays in the dataset fix it.
+
+## R120 — 10 November 2026: support staff (rc.45)
+
+Playtest: too few things to unlock and buy. Miguel chose four of six proposals (10/11): an opponent analyst, a physical trainer ("reduces wear in general"), a brand manager and an assistant coach. `CAREER_STAFF`: rolling retainers on the flat money index, on existing channels only (bench XP share, a playoff rating edge outside the temporary cap, the wear-risk multiplier, the sponsor decision's value multiplier). Gates 16 / 30 / 36 / 50, $1.5k / $3k / $3k / $2.5k a split. The brand manager multiplies the decision's value (x1.15) instead of adding a fourth offer: the three offers are one per risk profile. Not built: the regional scout and the academy. Not measured on Hard and Easy; doses are deliberately small and each has a switch (the role's number at its neutral value).

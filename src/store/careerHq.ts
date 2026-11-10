@@ -83,7 +83,7 @@ export function hqFinanceOf(save: CareerSave): HqFinance {
   let partnerLeft = rescue?.mondaysLeft ?? 0;
   let finesLeft = (fin.sponsorFines ?? []).map((f) => ({ ...f }));
   const fixedIncome = st.sponsorBase + st.foundingPartner + st.fanbase;
-  const fixedCost = st.payroll + st.coach + st.psychologist + st.upkeep;
+  const fixedCost = st.payroll + st.coach + st.psychologist + st.staff + st.upkeep;
   // rc.34 review: the fines' floor is the Monday funnel's (economy.weeklyPayroll: on the wage bill booked).
   const floor = backerLineOf(save).floor;
   for (let day = save.clock.day + 1; day <= endDay && day <= DAYS_PER_SEASON; day++) {

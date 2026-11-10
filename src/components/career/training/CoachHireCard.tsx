@@ -189,7 +189,7 @@ export function CoachHireCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="display truncate text-sm font-bold text-ink">{coach.name}</div>
-          {coach.source === "real" ? <Badge tone="gold">{K.exPro}</Badge> : <Badge tone="neutral">{K.staff}</Badge>}
+          {coach.source === "real" ? <Badge tone="gold">{K.exPro}</Badge> : coach.source === "dataset" ? <Badge tone="gold">{K.proCoach}</Badge> : <Badge tone="neutral">{K.staff}</Badge>}
         </div>
         <div className="shrink-0 text-right leading-none">
           <div className="display text-2xl font-bold text-ink">{Math.round(coach.overall)}</div>

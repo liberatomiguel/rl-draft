@@ -9,7 +9,7 @@
  * (sponsorDeals.sponsorAccessFor, front S) maps it to offers and values.
  */
 
-import { CAREER_GEAR, CAREER_LADDER, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_GEAR, CAREER_LADDER, CAREER_UNLOCKS, CAREER_STAFF } from "@/config/balance";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 
 export type LadderRungId =
@@ -23,6 +23,10 @@ export type LadderRungId =
   | "sponsors2"
   | "bootcamp2"
   | "psychologist"
+  | "assistant"
+  | "analyst"
+  | "physio"
+  | "brand"
   | "sponsors3"
   | "perfCenter"
   | "sponsors4";
@@ -56,6 +60,8 @@ export function ladderRungs(): LadderRung[] {
     { id: "sponsors2", kind: "sponsor", gate: CAREER_LADDER.sponsorRep[1] },
     { id: "bootcamp2", kind: "bootcamp", gate: CAREER_GEAR.bootcamp[1].repGate },
     { id: "psychologist", kind: "staff", gate: CAREER_GEAR.psychologistRep },
+    // rc.45 (R120): the support staff.
+    ...CAREER_STAFF.order.map((id): LadderRung => ({ id, kind: "staff", gate: CAREER_STAFF.roles[id].repGate })),
     { id: "sponsors3", kind: "sponsor", gate: CAREER_LADDER.sponsorRep[2] },
     { id: "perfCenter", kind: "gear", gate: gearGate("perfCenter") },
     { id: "sponsors4", kind: "sponsor", gate: CAREER_LADDER.sponsorRep[3] },
@@ -86,7 +92,8 @@ export function sponsorLadderLevelOf(save: Pick<CareerSave, "reputation">): 0 | 
 /** Why a coach cannot be hired yet ("repGate": no coach rung; "exProGate": an ex-pro before his rung), or null. */
 export function coachHireRefusalFor(rep: number, coach: Pick<CoachState, "source">): "repGate" | "exProGate" | null {
   if (rep < CAREER_UNLOCKS.coachRep) return "repGate";
-  if (coach.source === "real" && rep < CAREER_LADDER.exProCoachRep) return "exProGate";
+  // rc.44 (R118): the dataset's real coaches share the ex-pros' rung.
+  if (coach.source !== "generated" && rep < CAREER_LADDER.exProCoachRep) return "exProGate";
   return null;
 }
 
@@ -100,10 +107,15 @@ function ownedOf(save: CareerSave, id: LadderRungId): boolean {
       return Boolean(gear[id]);
     case "psychologist":
       return Boolean(gear.psychologist);
+    case "assistant":
+    case "analyst":
+    case "physio":
+    case "brand":
+      return Boolean(gear.staff?.[id]);
     case "coach":
       return Boolean(save.coach);
     case "exProCoach":
-      return save.coach?.source === "real";
+      return Boolean(save.coach) && save.coach?.source !== "generated";
     case "sponsors1":
     case "sponsors2":
     case "sponsors3":

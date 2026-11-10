@@ -26,12 +26,12 @@
  * (`onSquadJoined`) and an unknown phase is read after a few training days.
  */
 
-import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCOUT, CAREER_SCRIM, CAREER_TRAINING, TOURNAMENT } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCOUT, CAREER_SCRIM, CAREER_TRAINING, TOURNAMENT, CAREER_STAFF } from "@/config/balance";
 import { DAYS_PER_SEASON, dayOfWeekOf, unofficialOfferFor, weekAt, weekOfDay } from "@/engine/career/calendar";
 import { majorFieldFor, worldsFieldFor } from "@/engine/career/careerResults";
 import { ageOf, fieldQualityFor, growthCtxOf, growthModelOf, phaseTagFor, trainDay, trainWeek } from "@/engine/career/development";
 import { presetTrainingModeOf } from "@/engine/career/difficulty";
-import { gearTrainingBonus } from "@/engine/career/economy";
+import { gearTrainingBonus, staffOn } from "@/engine/career/economy";
 import { deriveSeed, derivedFloat, streams } from "@/engine/career/seeds";
 import {
   BASE_EFFECT,
@@ -1025,11 +1025,16 @@ export function runPackageScrims(save: CareerSave): void {
   }
 }
 
+/** The staff's cut on the wear risk: the coach (CAREER_PLAN.wear.coachRiskMult) and, rc.45 (R120), the physio. */
+export function wearRiskMultOf(save: Pick<CareerSave, "coach" | "finances">): number {
+  return (save.coach ? CAREER_PLAN.wear.coachRiskMult : 1) * (staffOn(save.finances.gear, "physio") ? CAREER_STAFF.roles.physio.wearRiskMult : 1);
+}
+
 /** Decision 6-A: the pre-event unavailability chance the period's projected wear adds (careerFlow.rollUnavailability). */
 export function wearUnavailabilityAddOf(save: CareerSave): number {
   const plan = save.training?.plan;
   if (!plan) return 0;
-  return unavailabilityAddFor(plan.wearProjected, plan.endDay - plan.startDay + 1) * (save.coach ? CAREER_PLAN.wear.coachRiskMult : 1);
+  return unavailabilityAddFor(plan.wearProjected, plan.endDay - plan.startDay + 1) * wearRiskMultOf(save);
 }
 
 /** The pre-event roll ruled a player out — the period's summary says so (T7). */
@@ -1360,7 +1365,7 @@ export function projectTrainingPackage(
     players,
     startersAvg,
     squadWear,
-    unavailabilityPts: Math.round(unavailabilityAddFor(squadWear, periodDays) * (save.coach ? CAREER_PLAN.wear.coachRiskMult : 1) * 1000) / 10,
+    unavailabilityPts: Math.round(unavailabilityAddFor(squadWear, periodDays) * wearRiskMultOf(save) * 1000) / 10,
   };
 }
 

@@ -215,10 +215,11 @@ describe("DEV-03 rules (engine)", () => {
   });
 
   it("decision 5-A: an ex-pro coaches from his career-best card at slope 0.8, ±4, inside 64–94", () => {
-    expect(exProCoachQuality(75, 0.5)).toBe(66);
-    expect(exProCoachQuality(90, 0.5)).toBe(78);
-    expect(exProCoachQuality(99, 0.5)).toBe(85);
-    expect(exProCoachQuality(99, 1)).toBe(89);
+    // rc.44 (R118): base 66 -> 70.
+    expect(exProCoachQuality(75, 0.5)).toBe(70);
+    expect(exProCoachQuality(90, 0.5)).toBe(82);
+    expect(exProCoachQuality(99, 0.5)).toBe(89);
+    expect(exProCoachQuality(99, 1)).toBe(93);
     expect(exProCoachQuality(60, 0)).toBe(CAREER_COACH_MARKET.exPro.range[0]);
     // The market's real coaches: experience 3, an archetype's specialty, the best card, ×1.15 the generic wage.
     const seed = 4_321;
@@ -233,7 +234,7 @@ describe("DEV-03 rules (engine)", () => {
       expect(c.bestCard).toBeGreaterThan(0);
       expect(c.overall).toBeGreaterThanOrEqual(CAREER_COACH_MARKET.exPro.range[0]);
       expect(c.overall).toBeLessThanOrEqual(CAREER_COACH_MARKET.exPro.range[1]);
-      expect(Math.abs(c.overall - (66 + 0.8 * (c.bestCard! - 75)))).toBeLessThanOrEqual(CAREER_COACH_MARKET.exPro.jitter + 0.5);
+      expect(Math.abs(c.overall - (CAREER_COACH_MARKET.exPro.base + 0.8 * (c.bestCard! - 75)))).toBeLessThanOrEqual(CAREER_COACH_MARKET.exPro.jitter + 0.5);
       expect(c.salaryPerSplit).toBe(coachWageFor({ quality: c.overall, experience: 3, exPro: true }, 4, "normal"));
       expect(c.salaryPerSplit).toBeGreaterThanOrEqual(coachWageFor({ quality: c.overall, experience: 3, exPro: false }, 4, "normal"));
     }

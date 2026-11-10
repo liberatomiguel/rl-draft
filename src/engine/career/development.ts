@@ -199,7 +199,7 @@ export function ageOf(birthYear: number, seasonIndex: number): number {
 }
 
 /** Dataset season `order` a career seasonIndex maps to (0..5 → 10..15; infinite extends). */
-function seasonOrderFor(seasonIndex: number): number {
+export function seasonOrderFor(seasonIndex: number): number {
   const last = CAREER_SEASONS.length - 1;
   if (seasonIndex <= last) return CAREER_SEASONS[Math.max(0, seasonIndex)].order;
   return CAREER_SEASONS[last].order + (seasonIndex - last);
@@ -1841,6 +1841,8 @@ export function applyMatchXp(
      * XP = series × CAREER_DEV.xpWeeksPerSeries × field quality.
      */
     seriesPlayed?: number;
+    /** rc.45 (R120): the bench's share with an assistant coach retained (absent = CAREER_DEV.benchXpShare). */
+    benchXpShare?: number;
   },
 ): SquadPlayer {
   const quality = clamp(
@@ -1852,11 +1854,13 @@ export function applyMatchXp(
     // DEV-01 base growth: XP comes from the series a player actually plays.
     // A reserve who did not play keeps his training days and earns no
     // starter XP (rc.31 paid the registered sub subXpFactor of the event).
-    if (ctx.isSub) return p;
+    // rc.44 (R119): the bench banks CAREER_DEV.benchXpShare of it (0 = none, rc.43).
+    const share = ctx.isSub ? (ctx.benchXpShare ?? CAREER_DEV.benchXpShare) : 1;
+    if (share <= 0) return p;
     const weeks =
       (ctx.xpWeeksOverride !== undefined
         ? ctx.xpWeeksOverride
-        : (ctx.seriesPlayed ?? 0) * CAREER_DEV.xpWeeksPerSeries) * quality;
+        : (ctx.seriesPlayed ?? 0) * CAREER_DEV.xpWeeksPerSeries) * quality * share;
     if (weeks <= 0) return p;
     return trainWeek(p, {
       seasonIndex: ctx.seasonIndex,

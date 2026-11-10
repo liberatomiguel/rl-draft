@@ -44,7 +44,11 @@ export function RungIcon({ id, className }: { id: LadderRungId; className?: stri
     case "bootcamp2":
       return <TentIcon className={className} />;
     case "psychologist":
+    case "physio":
       return <MindIcon className={className} />;
+    case "assistant":
+    case "analyst":
+      return <CoachIcon className={className} />;
     default:
       return <HandshakeIcon className={className} />;
   }

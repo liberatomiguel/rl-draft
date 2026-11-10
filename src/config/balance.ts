@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 20;
+export const BALANCE_VERSION = 22;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1520,6 +1520,14 @@ export const CAREER_DEV = {
    * 0.7 of a starter's event XP).
    */
   xpWeeksPerSeries: 0.4,
+  /**
+   * rc.44 (R119, playtest 10/11: "a sub never improves"): the share of the
+   * team's series XP a registered reserve banks from the bench (scrims, the
+   * event week with the squad). On 0 a 17-year-old reserve with 15 points of
+   * room grew 2.0 a season against a starter's 3.9 and aged out of his
+   * window on the bench. 0 = rc.43 (training days only).
+   */
+  benchXpShare: 0.6,
   /** DEV-01: the AI world's training multiplier for its weekly growth (1 = a default setup). */
   worldTrainingMult: 1,
   /**
@@ -1804,7 +1812,9 @@ export const CAREER_AGE = {
   declineByAge: { a22: 0.5, a23_24: 1.5, a25_26: 2.0, a27plus: 3.0 },
   declineRateDist: { slow: 0.2, normal: 0.6, fast: 0.2 } as Record<string, number>,
   declineRateMult: { slow: 0.6, normal: 1.0, fast: 1.4 } as Record<string, number>,
-  trainingDeclineDampen: 0.7,
+  // rc.44 (R119): 0.7 -> 0.55. The user's starters lost 0.85 a season at 24-25 and 1.4 from 26, so a squad
+  // built by season three was already fading by the 2027-2028 title window. The world's decline is unchanged.
+  trainingDeclineDampen: 0.55,
   mechanicsDeclineOffset: 0.5,
   expGrowthPerSeason: 0.5,
   /**
@@ -2813,11 +2823,52 @@ export const CAREER_GEAR = {
   tempRatingMax: 2.0,
 } as const;
 
+/**
+ * rc.45 (R120, playtest 10/11: "few progression items to unlock and buy"):
+ * four support-staff retainers, each a rolling per-split fee on the money
+ * index (like the psychologist), unlocked by reputation, hired and released
+ * at will. Every effect rides an existing channel:
+ * - `assistant`: a reserve banks `benchXpShare` of the team's series XP
+ *   instead of CAREER_DEV.benchXpShare.
+ * - `analyst`: +`playoffRating` on the user's team in every playoff round
+ *   (permanent staff, outside CAREER_GEAR.tempRatingMax).
+ * - `physio`: the pre-event unavailability chance from training wear x
+ *   `wearRiskMult` (on top of the coach's CAREER_PLAN.wear.coachRiskMult).
+ * - `brand`: a sponsor decision quoted while he is retained is worth x
+ *   `sponsorValueMult`; at a Tier 3 deal that is about $3.3k a split for a
+ *   $2.5k retainer, so it pays only for a club that also meets its goals.
+ * `order` is the ladder's and the screen's order.
+ */
+export const CAREER_STAFF = {
+  order: ["assistant", "analyst", "physio", "brand"] as const,
+  roles: {
+    assistant: { repGate: 16, perSplit: 1_500, benchXpShare: 0.8 },
+    analyst: { repGate: 30, perSplit: 3_000, playoffRating: 0.75 },
+    physio: { repGate: 36, perSplit: 3_000, wearRiskMult: 0.75 },
+    brand: { repGate: 50, perSplit: 2_500, sponsorValueMult: 1.15 },
+  },
+} as const;
+
 /** Hireable coaches (v0.2): real retired pros + generated candidates. */
 export const CAREER_COACH_MARKET = {
-  candidatesPerWindow: 5,
-  /** Target share of REAL (retired-pro) names among candidates. */
+  // rc.44 (R118): 5 -> 6, the two extra seats are the dataset's real coaches (`staff`).
+  candidatesPerWindow: 6,
+  /** Target share of REAL (retired-pro) names among the candidates left after the real coaches. */
   realShare: 0.5,
+  /**
+   * rc.44 (R118, playtest 10/11: "no real coaches to hire, and no good coach
+   * in the endgame"): the dataset's real coaches (coaches.json, 144 people)
+   * enter the shortlist, `perWindow` a window. A coach is on the market once
+   * he has coached a season at or before the current one and is not playing
+   * it; his quality is his best coach card so far, his experience the seasons
+   * he coached. Who answers a club reads its reputation: quality at most
+   * `repCapBase` + `repCapPerRep` x reputation (80 at 0, 87.5 at 50, 92 at
+   * 80). The first seat is drawn from the best `eliteShare` of those, the
+   * second prefers the club's region. Hiring is gated like an ex-pro
+   * (CAREER_LADDER.exProCoachRep) and paid `wageMult` x a generic. perWindow
+   * 0 = rc.43.
+   */
+  staff: { perWindow: 2, repCapBase: 80, repCapPerRep: 0.15, eliteShare: 0.34, maxExperience: 10, wageMult: 1.15 },
   /**
    * rc.34 (DEV-03 T4): generated coaches. The first generated candidate of a
    * window is a senior profile (t7: a good generic sits within 5 quality of
@@ -2840,7 +2891,8 @@ export const CAREER_COACH_MARKET = {
    * same quality and experience. rc.33: round(min(92, 55 + 0.25 × last card)).
    */
   exPro: {
-    base: 66,
+    // rc.44 (R118, playtest 10/11: "ex-pro coaches should be better"): 66 -> 70 (a 90 peak coaches near 82, a 99 near 89).
+    base: 70,
     slope: 0.8,
     anchor: 75,
     jitter: 4,

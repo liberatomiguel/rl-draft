@@ -676,7 +676,12 @@ export interface GearState {
   perfCenter: boolean;
   /** Sports psychologist retainer (rolling, paid per split). */
   psychologist: boolean;
+  /** rc.45 (R120): the support staff retained (CAREER_STAFF). Optional and additive: absent = none. */
+  staff?: Partial<Record<StaffId, boolean>>;
 }
+
+/** rc.45 (R120): the support-staff retainers (CAREER_STAFF.roles). */
+export type StaffId = "assistant" | "analyst" | "physio" | "brand";
 
 /**
  * v2.0 bank loan (R21): the player-initiated line of credit. `remaining`

@@ -173,7 +173,7 @@ describe("DEV-01 through the flow", { timeout: 120_000 }, () => {
     expect([p.peakAge, p.potential, p.declineRate]).toEqual([view.peakAge, view.potential, view.declineRate]);
   });
 
-  it("a reserve who did not play the event earns no event XP (model 2); the fielded trio does", () => {
+  it("a reserve who did not play the event banks only the bench share of its XP (rc.44, R119); the fielded trio earns it whole", () => {
     let save = createCareerSave({ ...INPUT, rosterKey: "balanced" }, 50_707);
     // Sign a fourth player so the squad carries a reserve.
     save.finances.balance = 1_000_000;
@@ -191,7 +191,8 @@ describe("DEV-01 through the flow", { timeout: 120_000 }, () => {
     const fielded = started.activeEvent!.fieldedIds ?? started.starterIds;
     for (const p of done.squad) {
       if (fielded.includes(p.id)) expect(p.gainedThisSeason).toBeGreaterThanOrEqual(before.get(p.id)!);
-      else expect(p.gainedThisSeason).toBe(before.get(p.id));
+      else if (CAREER_DEV.benchXpShare <= 0) expect(p.gainedThisSeason).toBe(before.get(p.id));
+      else expect(p.gainedThisSeason).toBeGreaterThanOrEqual(before.get(p.id)!);
     }
     expect(done.squad.some((p) => fielded.includes(p.id) && p.gainedThisSeason > before.get(p.id)!)).toBe(true);
   });

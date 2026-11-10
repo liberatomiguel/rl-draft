@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.43**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.45**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,26 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added — rc.45 (2026-11-10), support staff (R120, BALANCE_VERSION 22)
+- Four support-staff retainers in Finances and on the progression ladder, each a weekly fee, unlocked by reputation, hired and released at will (the psychologist's rules, including the loan lock):
+  - Assistant coach (reputation 16, $1.5k a split): reserves bank 80 % of the team's series XP instead of 60 %.
+  - Opponent analyst (30, $3k): +0.75 team rating in every playoff round.
+  - Physical trainer (36, $3k): the chance of a player missing an event from training wear x0.75, on top of the coach's cut.
+  - Brand manager (50, $2.5k): a sponsor decision quoted while he is retained is worth 15 % more.
+- The brand manager is not "one more offer": a decision already holds one offer per risk profile (Steady, Balanced, Bold), so a fourth would repeat one of them. He raises the value of the three instead.
+- Save: `finances.gear.staff` is optional and additive (absent = nobody retained); no migration.
+- Measurement: Normal only (63 paired careers, NA/EU/SAM, rc.44 against rc.45, the audit bots hiring every role as soon as its rung opens): title by 2027 3 to 3, by season 10 11 to 14, early endings 4 to 7, emergency loans in season 5 10 % to 21 %. Hiring all four the moment they unlock costs about $10k a split and hurts a club that cannot carry it: the retainers are a choice, not free strength. The dose-level check on Hard and Easy is left for the next playtest round (Miguel, 10/11: test calmly later).
+
+### Added — rc.44 (2026-11-10), real coaches (R118)
+- The dataset's real coaches (144 people from coaches.json) are on the coach market, two a window, tagged "Pro coach". A coach appears once he has coached a season at or before the current one and is not playing it; his quality is his best coach card so far, his experience the seasons he coached, his buff the one on that card. Reputation decides who answers (quality at most 80 + 0.15 x reputation), the first seat comes from the best third of those, the second prefers the club's region. Hired from the ex-pros' rung (reputation 23), paid 1.15 x a generic. The shortlist grows from five to six.
+
+### Balance — rc.44 (R118-R119, BALANCE_VERSION 21)
+- Ex-pro coaches: quality base 66 to 70 (a 90 peak coaches near 82, a 99 near 89).
+- A registered reserve banks 60 % of the team's series XP from the bench (was none). In the rc.43 runs a reserve of 17 or younger with 15 points of room grew 2.0 a season against a starter's 3.9.
+- The user's squad declines slower after its plateau (dampen 0.7 to 0.55): starters lost 0.85 a season at 24-25 and 1.4 from 26. The world's decline is unchanged.
+- Measured (63 paired careers a difficulty, NA/EU/SAM, rc.43 against rc.44): no difficulty moved. Normal: title by 2027 3 to 3, by season 10 12 to 11, early endings 4 to 4, Mondays in the red in season 5 2.1 to 2.1. Hard: title by season 10 8 to 11, early endings 12 to 12. Easy: title by season 10 29 to 31. The audit bots rarely field a reserve and gain little from a coach, so these read "not easier", not the size of the benefit to a player.
+- Checked, not changed: starters do reach their potential (mean gap 1.7 at 20-21, 43 % within a point); growth already follows the distance to the peak and each player has his own window (peak age 17-26). The report of an 18-year-old in 2030 is the inferred age of a 2027-wave player without a birth date in the dataset (debut at 15 in 2027), not a stuck clock.
 
 ### Balance — rc.43 (2026-11-10), mid-career money and progression (R113–R117, BALANCE_VERSION 20)
 - Miguel's playtest (SAM, Normal): finances too hard to hold, no room to buy or grow, the middle seasons stall. Paired careers (same 24, NA/EU/SAM Normal, staging rc.38.3 against rc.39) agree: weeks in the red in seasons 3–7 rose 1.9–3.0 to 2.8–4.0, the top quartile's rating in season 7 fell 96.0 to 89.9, prize money in season 7 fell $193k to $94k with no prize table changed (fewer careers reached Majors and Worlds).

@@ -424,6 +424,9 @@ describe("rc.32 M3 — the founding partner (switch-back: founding.enabled true 
 // M4 — the safety net (decision 4-B)
 // ===========================================================================
 
+// rc.44 (R118): the first seats are the real coaches (gated by reputation); these read the wage lock on a generic.
+const genericCoach = (save: Parameters<typeof coachCandidatesFor>[0]) => coachCandidatesFor(save).find((c) => c.source === "generated")!;
+
 describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does", () => {
   it("season 0 keeps about rc.31's line: −8 / +6 weeks of a $500 week is −$4k / +$3k", () => {
     expect(backerLineFor(500, 0)).toEqual({ floor: -4_000, rescueTo: 3_000 });
@@ -573,7 +576,7 @@ describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (r
         expect(save.finances.balance).toBeGreaterThan(backerLineOf(save).floor);
         const fa = cheapFa(save);
         expect(signPlayerFlow(save, fa.id, { lengthSeasons: 2 }).error, `balance ${weeks} weeks of burn`).toBe("loanRunway");
-        expect(hireCoachFlow(save, coachCandidatesFor(save)[0]).error, `coach at ${weeks} weeks`).toBe("loanRunway");
+        expect(hireCoachFlow(save, genericCoach(save)).error, `coach at ${weeks} weeks`).toBe("loanRunway");
       }
     }));
 
@@ -631,7 +634,7 @@ describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (r
   it("a coach hire that adds wages is refused the same way", () =>
     withLock(() => {
       const save = owedInWindow();
-      const coach = coachCandidatesFor(save)[0];
+      const coach = genericCoach(save);
       expect(hireCoachFlow(save, coach).error).toBe("loanRunway");
     }));
 
@@ -640,7 +643,7 @@ describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (r
       const save = owedInWindow();
       const fa = cheapFa(save);
       expect("plan" in signingPlanFor(save, fa.id, { lengthSeasons: 2 })).toBe(true);
-      expect(hireCoachFlow(save, coachCandidatesFor(save)[0]).error).toBeUndefined();
+      expect(hireCoachFlow(save, genericCoach(save)).error).toBeUndefined();
     });
   });
 });
