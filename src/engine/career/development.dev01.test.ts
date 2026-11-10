@@ -321,10 +321,14 @@ describe("DEV-01d — the curve: no split cap, a season cap, steep young, never 
     expect(bonus.overall).toBe(vet.overall);
   });
 
-  it("base growth: days plus the series actually played; a reserve who did not play keeps his days, no starter XP", () => {
+  it("base growth: days plus the series actually played; a reserve who did not play keeps his days and banks the bench share (rc.44, R119)", () => {
     const p = kid();
     const ctx = { seasonIndex: 1, fieldQuality: 1, coachOverall: null, gearBonus: 0, ...M2, day: 60 };
-    expect(applyMatchXp(p, { ...ctx, isSub: true, seriesPlayed: 5 })).toEqual(p);
+    const bench = applyMatchXp(p, { ...ctx, isSub: true, seriesPlayed: 5 }).overall - p.overall;
+    const played = applyMatchXp(p, { ...ctx, isSub: false, seriesPlayed: 5 }).overall - p.overall;
+    expect(bench).toBeGreaterThan(0);
+    expect(bench).toBeLessThan(played);
+    expect(bench / played).toBeCloseTo(CAREER_DEV.benchXpShare, 1);
     const four = applyMatchXp(p, { ...ctx, isSub: false, seriesPlayed: 4 }).overall - p.overall;
     const eight = applyMatchXp(p, { ...ctx, isSub: false, seriesPlayed: 8 }).overall - p.overall;
     expect(four).toBeGreaterThan(0);

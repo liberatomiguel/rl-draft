@@ -18,7 +18,7 @@ import {
   CAREER_VALUATION,
   CAREER_WORLD,
 } from "@/config/balance";
-import { lineups, playerById, playerCardById } from "@/data";
+import { coaches as coachCards, lineups, playerById, playerCardById, seasonById } from "@/data";
 import { createRng } from "@/lib/rng";
 import type { Region, StatKey } from "../types";
 import { intakeSeasonIdFor, weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
@@ -34,6 +34,7 @@ import {
   isCompetitiveAge,
   isGrowthContract,
   playerViewById,
+  seasonOrderFor,
   type ViewCtx,
 } from "./development";
 import { OBJECTIVES, coachBonusLevelFor } from "./training";
@@ -933,6 +934,99 @@ export function exProCoachQuality(bestCard: number, f: number): number {
   return Math.round(Math.min(X.range[1], Math.max(X.range[0], raw)));
 }
 
+/** rc.44 (R118): the dataset's real coaches by person: every season coached (its order) with that card's overall and buff. */
+type StaffCard = { order: number; overall: number; bonusType: StatKey };
+const staffByPerson: Map<string, { name: string; region: Region; cards: StaffCard[] }> = (() => {
+  const map = new Map<string, { name: string; region: Region; cards: StaffCard[] }>();
+  for (const c of coachCards) {
+    const order = seasonById.get(c.seasonId)?.order;
+    if (order == null) continue;
+    const row = map.get(c.personId) ?? { name: c.name, region: c.region as Region, cards: [] };
+    row.cards.push({ order, overall: c.overall, bonusType: c.bonusType as StatKey });
+    map.set(c.personId, row);
+  }
+  return map;
+})();
+
+/** The last season order a person appears in as a PLAYER (absent = never). */
+const lastPlayedOrder: Map<string, number> = (() => {
+  const map = new Map<string, number>();
+  for (const card of playerCardById.values()) {
+    const order = seasonById.get(card.seasonId)?.order ?? 0;
+    map.set(card.playerId, Math.max(map.get(card.playerId) ?? 0, order));
+  }
+  return map;
+})();
+
+type StaffPick = { id: string; name: string; region: Region; overall: number; experience: number; bonusType: StatKey; f: number };
+
+/**
+ * rc.44 (R118): the real coaches a club of this reputation can shortlist in a
+ * window (CAREER_COACH_MARKET.staff). Deterministic per (career, season,
+ * window); quality and experience read only the seasons already played.
+ */
+export function staffCoachCandidatesFor(ctx: {
+  region: Region;
+  seasonIndex: number;
+  windowIdx: number;
+  careerSeed: number;
+  difficulty: CareerDifficulty;
+  reputation: number;
+}): CoachState[] {
+  const S = CAREER_COACH_MARKET.staff;
+  if (S.perWindow <= 0) return [];
+  const order = seasonOrderFor(ctx.seasonIndex);
+  const cap = S.repCapBase + S.repCapPerRep * ctx.reputation;
+  const key = `${ctx.seasonIndex}:${ctx.windowIdx}`;
+  const pool: StaffPick[] = [];
+  for (const [id, person] of staffByPerson) {
+    const past = person.cards.filter((c) => c.order <= order);
+    if (past.length === 0 || (lastPlayedOrder.get(id) ?? 0) >= order) continue;
+    const best = past.reduce((a, b) => (b.overall > a.overall ? b : a));
+    if (best.overall > cap) continue;
+    pool.push({
+      id,
+      name: person.name,
+      region: person.region,
+      overall: best.overall,
+      experience: Math.min(S.maxExperience, new Set(past.map((c) => c.order)).size),
+      bonusType: best.bonusType,
+      f: derivedFloat(ctx.careerSeed, streams.gen("coachStaff", `${key}:${id}`)),
+    });
+  }
+  if (pool.length === 0) return [];
+  const byQuality = [...pool].sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
+  const elite = new Set(byQuality.slice(0, Math.max(1, Math.ceil(pool.length * S.eliteShare))).map((p) => p.id));
+  const rotation = [...pool].sort((a, b) => a.f - b.f || a.id.localeCompare(b.id));
+  const picks: StaffPick[] = [];
+  const first = rotation.find((p) => elite.has(p.id));
+  if (first) picks.push(first);
+  const wants: ((p: StaffPick) => boolean)[] = [(p) => p.region === ctx.region, () => true];
+  for (const want of wants) {
+    for (const p of rotation) {
+      if (picks.length >= S.perWindow) break;
+      if (!picks.includes(p) && want(p)) picks.push(p);
+    }
+  }
+  return picks.slice(0, S.perWindow).map((p) => ({
+    id: `coach:staff:${p.id}`,
+    name: p.name,
+    overall: p.overall,
+    bonusType: p.bonusType,
+    bonusLevel: coachBonusLevelFor(p.overall),
+    salaryPerSplit: quantize(
+      coachWageFor({ quality: p.overall, experience: p.experience, exPro: false }, ctx.seasonIndex, ctx.difficulty) * S.wageMult,
+    ),
+    source: "dataset" as const,
+    experience: p.experience,
+    specialty:
+      OBJECTIVES[
+        Math.floor(derivedFloat(ctx.careerSeed, streams.gen("coachSpec", `staff:${p.id}`)) * OBJECTIVES.length) % OBJECTIVES.length
+      ],
+    ceiling: coachCeilingFor(p.overall, derivedFloat(ctx.careerSeed, streams.gen("coachCeil", `staff:${p.id}`))),
+  }));
+}
+
 /**
  * Deterministic coach candidates for a window: real retired pros (from the
  * world's retired list — familiar names feed the coach market, design §8)
@@ -950,9 +1044,15 @@ export function coachCandidatesFor(ctx: {
   careerSeed: number;
   difficulty: CareerDifficulty;
   nameBank: string[];
+  /** rc.44 (R118): the club's reputation, which decides who of the real coaches answers. Absent = none (rc.43's shortlist). */
+  reputation?: number;
 }): CoachState[] {
   const M = CAREER_COACH_MARKET;
   const out: CoachState[] = [];
+  // rc.44 (R118): the dataset's real coaches take the first seats.
+  const staff = ctx.reputation == null ? [] : staffCoachCandidatesFor({ ...ctx, reputation: ctx.reputation });
+  const staffPeople = new Set(staff.map((c) => c.id.slice("coach:staff:".length)));
+  out.push(...staff);
   const key = (i: number) => `${ctx.seasonIndex}:${ctx.windowIdx}:${i}`;
   const objectives = OBJECTIVES;
 
@@ -967,11 +1067,11 @@ export function coachCandidatesFor(ctx: {
     }))
     .sort((a, b) => a.f - b.f || a.id.localeCompare(b.id));
 
-  const realTarget = Math.round(M.candidatesPerWindow * M.realShare);
+  const realTarget = staff.length + Math.round((M.candidatesPerWindow - staff.length) * M.realShare);
   for (const cand of realPool) {
     if (out.length >= realTarget) break;
     const person = playerById.get(cand.id);
-    if (!person) continue;
+    if (!person || staffPeople.has(cand.id)) continue;
     // rc.34 (5-A): his career-best club card, the slope 0.8 formula, the
     // archetype's specialty (an all-rounder rolls one), 3 seasons of
     // experience and the ex-pro wage premium. Stable per (career, player).

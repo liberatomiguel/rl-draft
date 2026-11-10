@@ -86,7 +86,8 @@ export function sponsorLadderLevelOf(save: Pick<CareerSave, "reputation">): 0 | 
 /** Why a coach cannot be hired yet ("repGate": no coach rung; "exProGate": an ex-pro before his rung), or null. */
 export function coachHireRefusalFor(rep: number, coach: Pick<CoachState, "source">): "repGate" | "exProGate" | null {
   if (rep < CAREER_UNLOCKS.coachRep) return "repGate";
-  if (coach.source === "real" && rep < CAREER_LADDER.exProCoachRep) return "exProGate";
+  // rc.44 (R118): the dataset's real coaches share the ex-pros' rung.
+  if (coach.source !== "generated" && rep < CAREER_LADDER.exProCoachRep) return "exProGate";
   return null;
 }
 
@@ -103,7 +104,7 @@ function ownedOf(save: CareerSave, id: LadderRungId): boolean {
     case "coach":
       return Boolean(save.coach);
     case "exProCoach":
-      return save.coach?.source === "real";
+      return Boolean(save.coach) && save.coach?.source !== "generated";
     case "sponsors1":
     case "sponsors2":
     case "sponsors3":

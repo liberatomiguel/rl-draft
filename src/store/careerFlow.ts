@@ -5382,6 +5382,7 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
     nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion, save.careerSeed)],
+    reputation: save.reputation,
   });
 }
 

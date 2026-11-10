@@ -657,7 +657,7 @@ export function MarketScreen() {
               <p className="kicker mb-2 text-[10px]">{C.market.currentCoach}</p>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2"><span className="display truncate text-base font-bold text-ink">{save.coach.name}</span><Badge tone={save.coach.source === "real" ? "gold" : "neutral"}>{save.coach.source === "real" ? C.market.coachRealTag : C.market.coachGenTag}</Badge></div>
+                  <div className="flex flex-wrap items-center gap-2"><span className="display truncate text-base font-bold text-ink">{save.coach.name}</span><Badge tone={save.coach.source === "generated" ? "neutral" : "gold"}>{save.coach.source === "real" ? C.market.coachRealTag : save.coach.source === "dataset" ? C.market.coachProTag : C.market.coachGenTag}</Badge></div>
                   <p className="mt-1 text-[11px] text-sub">{C.training.cycle.coach.wage} <span className="ml-1 text-sm font-bold text-ink">{wageLabel(C, save.coach.salaryPerSplit)}</span></p>
                 </div>
                 <div className="text-right leading-none"><div className="display text-2xl font-bold text-ink">{Math.round(save.coach.overall)}</div><div className="kicker text-[9px] text-faint">{C.common.ovr}</div></div>

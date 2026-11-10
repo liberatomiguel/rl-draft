@@ -1179,6 +1179,7 @@ export const CAREER_PT: CareerCopy = {
         same: "Igual ao atual",
         wage: "Salário",
         exPro: "Ex-pro",
+        proCoach: "Coach profissional",
         staff: "Coach da casa",
       },
     },
@@ -1393,6 +1394,7 @@ export const CAREER_PT: CareerCopy = {
     // v0.2 — mercado de coaches + ferramentas de busca
     coaches: "Coaches",
     coachRealTag: "Ex-pro",
+    coachProTag: "Coach profissional",
     coachGenTag: "Coach",
     coachBonus: (stat: string) => `Reforça ${stat}`,
     hireCoach: "Contratar",
@@ -1504,7 +1506,7 @@ export const CAREER_PT: CareerCopy = {
       repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
       /** rc.35 (front C): uma org o contratou nesta janela. */
       justSigned: "Ele acabou de assinar com outra org nesta janela — tente na próxima.",
-      exProGate: "Coaches ex-pro pedem mais reputação — a escada de progressão mostra quando.",
+      exProGate: "Coaches ex-pro e profissionais pedem mais reputação — a escada de progressão mostra quando.",
       // rc.33 (ECO-11): uma oferta abaixo do piso dele — a ficha mostra a contraproposta.
       negotiationCounter: "Isso está abaixo do piso dele — aceite a contraproposta ou suba a oferta.",
       sameDay: "Vocês já treinaram contra esse time hoje.",

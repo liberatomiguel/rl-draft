@@ -1198,6 +1198,7 @@ export const CAREER_EN = {
         same: "Same as now",
         wage: "Wage",
         exPro: "Ex-pro",
+        proCoach: "Pro coach",
         staff: "Staff coach",
       },
     },
@@ -1414,6 +1415,7 @@ export const CAREER_EN = {
     // v0.2 — coach market + browsing tools
     coaches: "Coaches",
     coachRealTag: "Former pro",
+    coachProTag: "Pro coach",
     coachGenTag: "Coach",
     coachBonus: (stat: string) => `Boosts ${stat}`,
     hireCoach: "Hire",
@@ -1528,7 +1530,7 @@ export const CAREER_EN = {
       /** rc.35 (front C): an org signed him in this window. */
       justSigned: "He just signed elsewhere in this window — try again in the next one.",
       /** rc.35: an ex-pro coach before his ladder rung. */
-      exProGate: "Ex-pro coaches need more reputation — the progression ladder shows when.",
+      exProGate: "Ex-pro and pro coaches need more reputation — the progression ladder shows when.",
       // rc.33 (ECO-11): an offer under his floor — the sheet shows his counter.
       negotiationCounter: "That is under his floor — take his counter or raise the offer.",
       sameDay: "Already scrimmed this team today.",
