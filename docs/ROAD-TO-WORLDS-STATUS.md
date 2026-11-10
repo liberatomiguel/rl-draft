@@ -1,12 +1,13 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-09**. Candidate: **v2.0.0-rc.37**, `staging` (rc.36.21
+> Last updated: **2026-11-10**. Candidate: **v2.0.0-rc.37**, `staging` (rc.36.21
 > plus the rc.37 round: F1 market, F2 finance, F3 matchday, F4a battery tooling;
-> handoffs `HANDOFF-rc37-*.md`). Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R99.
-> Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. F6
-> balancing runs on `claude/rc37-balance` (levers off by default; triage and the
-> provisional package: `docs/battery-rc37/F6-EXPERIMENTOS.md`; experiment runner
-> `src/store/auditHumanExperiment.test.ts`). Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> handoffs `HANDOFF-rc37-*.md`). Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R108.
+> Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. The F6
+> package (R100–R108, BALANCE_VERSION 16) sits on `claude/rc37-balance`, not on
+> staging, awaiting Miguel's approval: `docs/battery-rc37/F6-EXPERIMENTOS.md`
+> Parts 7–8 (experiment runner `src/store/auditHumanExperiment.test.ts`).
+> Gate: `CAREER-FEEDBACK-rc36-6.md`.
 > Note: new careers grow on the growth contract (`contractPacePerWeek`,
 > `CAREER_DEV.seasonGainCap`); `CAREER_AGE.growthMult` only drives model 1 and the
 > AI world pass.
@@ -59,8 +60,8 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
   across all generic roles. New careers use version 3; old identities survive.
 - Founding economy, growth, late support, sponsor/contract talks, goals,
   crests and Sunday decisions remain as in rc.36.5. Regional timing, star
-  affordability and historical Worlds titles remain open. BALANCE_VERSION 15
-  (rc.37 career tunables plus rc.36.16's daily-only calibration).
+  affordability and historical Worlds titles remain open. Staging runs
+  BALANCE_VERSION 15; the F6 branch is 16.
 
 ## System map
 

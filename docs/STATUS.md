@@ -13,8 +13,9 @@
   analytics/accounts off in the isolated QA export. Special-card photos show
   during drafts again, including hidden-overall runs (rc.38.3).
   Play at https://staging.rocketdraft.app.
-- F6 balancing: branch `claude/rc37-balance` (rc.37 + rc.38.3 merged in). No
-  balance change reaches staging before Miguel approves the package.
+- F6 balancing: branch `claude/rc37-balance` (rc.37 + rc.38.3 merged in) holds
+  the whole F6 package, BALANCE_VERSION 16, NOT on staging: it waits for
+  Miguel's approval (F6-EXPERIMENTOS.md Parts 7–8).
 
 ## Current evidence
 
@@ -43,16 +44,17 @@
   export passed; no new captures. Engine/balance unchanged.
 - UI rc.38.3: 19 card visibility/frame tests, typecheck, lint and staging
   export passed. Photos restored; hidden overall remains `??`. No captures.
-- F6 triage (09/11, `claude/rc37-balance`): ~1,250 careers paired with the
-  battery (bit-exact reproduction). Provisional package: renewal jumps ×4/×5,
-  wage curve 1.17, slower start in the easy regions; nothing applied, levers
-  off by default. Report: `docs/battery-rc37/F6-EXPERIMENTOS.md`.
+- F6 (09–10/11, `claude/rc37-balance`): the approved package applied (renewal
+  jumps ×4/×5, wage curve 1.17, slower easy regions) plus chemistry by time,
+  the reserve rule, proportional reputation, psychologist, briefing, the bank
+  fix and Hard's own scales (R100–R108). Validated on seed 17019, 147 careers
+  a difficulty, paired with the battery. Report: F6-EXPERIMENTOS.md Part 7.
 
 ## Open, in order
 
-1. **F6:** Miguel approves the direction → confirmation on the 3 difficulties
-   (~500 careers, ~2 h) → validation on seed 17019 (882, ~3 h) → the next rc on
-   staging. His six open decisions: F6-EXPERIMENTOS.md Parte 5.
+1. **F6:** Miguel approves the final package (F6-EXPERIMENTOS.md 7.9: his open
+   decisions) → merge to staging as the next rc. Design proposals for 2.0.1
+   (reputation ladder, a second sponsor, endgame): Part 8.
 2. Miguel's review of the rc.37 handoffs' open points (`HANDOFF-rc37-*.md`:
    F1 10(a)–(g), F2 10(a)–(e), F3 in play); F5 approval before any code.
 3. Gate 2 play and ENG-03 real-save fixtures. Gate 3b progression/economy

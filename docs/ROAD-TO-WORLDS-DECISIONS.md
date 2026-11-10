@@ -2093,35 +2093,43 @@ R101. **rc.37 F6 — the easy regions start slower; the slots and the deep
 R102. **rc.37 F6 — chemistry grows with time and official matches together,
      up to 100 %; heritage is only the base (Miguel, 09/11).** Until rc.38 a
      pair's connection stopped at `connMaxPerPair`, so a trio from three
-     regions sat at 67 % for ever. Now, past the fast phase (two splits),
-     each further split-unit together adds `CAREER_CHEMISTRY.bondPerSplitTogether`
-     until heritage + connection fills the pair, and every official series the
-     fielded players play adds `officialSeriesCredit` to their time together.
-     The newcomer's grace covers the fast phase only: swapping one starter of
-     a long-standing core costs 100 % → 78 % and is earned back with time
-     (rc.38: nothing, once the core was old). Time together accrues about
-     five split-units a season (scrims and packages included). The doses and
-     the counterpart (`CAREER_REGION_FIELD.tierShift`, Major and Worlds AI
-     sides) are the measured ones in `docs/battery-rc37/F6-EXPERIMENTOS.md`
-     Part 7: the rule lifts every stable squad, the youth path most.
+     regions sat at 67 % for ever. Past the fast phase (two splits) each
+     further split-unit together adds `CAREER_CHEMISTRY.bondPerSplitTogether`
+     (0.10) until heritage + connection fills the pair, and every official
+     series the fielded players play adds `officialSeriesCredit` (0.02) to
+     their time together. The newcomer's grace covers the fast phase only:
+     swapping one starter of a long-standing core costs 100 % → 78 % and is
+     earned back (rc.38: nothing, once the core was old). Time together runs
+     about five split-units a season, so a no-heritage trio is Perfect about
+     four seasons in. Dose, measured on Normal against the battery (seed
+     17019, 147 careers an arm; staging: Worlds titles 22 %, the youth path
+     76 %, buying 0 %): no late phase 17 % / 52 % / 5 %; 0.10 21 % / 62 % /
+     7 %; 0.15 25 % / 74 % / 10 % — the youth path keeps a mixed trio for
+     years, so it gains most. 0.10 ships: the overall difficulty back at
+     staging's, the youth path still cut. A counterpart on the Major /
+     Worlds AI sides (`CAREER_REGION_FIELD.tierShift`, +0.5) was measured
+     and rejected — on the whole package it only removed titles (10 % →
+     6 %); the lever stays at 0.
 
-R103. **rc.37 F6 — a three-player squad is ruled out too; without a reserve
-     the lineup is short (Miguel, 09/11).** `CAREER_WORLD
+R103. **rc.37 F6 — a three-player squad is ruled out too; a reserve only
+     signs in a transfer window (Miguel, 09–10/11).** `CAREER_WORLD
      .unavailabilityWithoutReserve` "short": the pre-event roll no longer
-     skips a squad without a reserve. The starter is out, RTW-05's rules take
-     over (R67): the clock holds before the event, a free agent signs as the
-     reserve at any time (the cheapest one whatever the cash), a regional or
-     its qualifier can be sat out, a Major or Worlds slot waits for the
-     signing. Claude's calls, to protect the player: a career's first season
-     is exempt for a squad without a reserve
-     (`unavailabilityNoReserveGraceSeasons` 1; the founding budget cannot
-     carry a fourth wage), nobody ever forfeits by a dice roll (there is
-     always a signing that lifts the hold), three players under contract
-     still scrim. The player is told before it can happen: the Squad screen's
-     empty reserve slot, the help entry, a club mail at the start of the
-     second season, and the hold card names the absent player. The audit
-     bots sign a modest free agent as the reserve when the hold comes and
-     keep him for his deal. "immune" restores rc.38.
+     skips a squad without a reserve. With the starter out and nobody on the
+     bench the team does not enter that event, whatever its tier — the hold
+     card offers "Sit this event out" (and the Market only while a window is
+     open); an absence is not an empty seat, so no free agent signs outside a
+     window for it (a squad UNDER three keeps R67). Claude's calls: a
+     career's first season is exempt for a squad without a reserve
+     (`unavailabilityNoReserveGraceSeasons` 1), three players under contract
+     still scrim, and the rate halves — `unavailabilityEventMult` 4 → 2 (4 %
+     an official event, about one absence every two seasons): until rc.38
+     nobody without a reserve felt the rate, and at 8 % it cost about one
+     event a season and 8 pp of Worlds reach on Normal. The player is told
+     before it can happen: the Squad screen's empty reserve slot, the help
+     entry, a club mail at the start of the second season; the absence mail
+     says there is no reserve and the missed event is a club mail. The audit
+     bots keep a modest reserve from season two, signed in a window.
+     "immune" restores rc.38.
 
 R104. **rc.37 F6 — reputation in proportion to the org (Miguel, 09/11).**
      `CAREER_REP.proportional` replaces the flat soft cap (every gain halved
@@ -2129,18 +2137,21 @@ R104. **rc.37 F6 — reputation in proportion to the org (Miguel, 09/11).**
      has a level (0 local cups and qualifier runs, 1 qualifier advance and
      regional top 8 / top 4, 2 regional title and Major berth, 3 Major
      results and the Worlds). At or above the org's tier a result pays in
-     full, one level below half (rounded down), further below nothing; a
-     title never pays under 1. Under 50 nothing changes from rc.38; from 50 a
-     qualifier Saturday and a regional top 8 stop paying, while a Major or
-     Worlds result pays whole where it paid half. The season's Worlds
-     champion no longer loses reputation to a missed season goal.
+     full, one level below half ROUNDED UP, further below nothing; a title
+     never pays under 1. Rounding down was measured first and stalled mid
+     orgs at ~50 (reputation at S10 67 → 46). As shipped: under 60 nothing
+     of note changes; from 60 a contender keeps rc.38's +1 for getting
+     through and earns titles, Majors and the Worlds whole (rc.38 half); an
+     elite org (75+) stops earning from qualifiers and regional places. The
+     season's Worlds champion no longer loses reputation to a missed season
+     goal.
 
-R105. **rc.37 F6 — the psychologist is a stronger, dearer hire; "recover" is
-     the favourite's plan.** `CAREER_GEAR.psychologistStatBonus` +3/+3 →
-     +5/+5 and `psychologistPerSplit` 4,000 → 6,000: priced by match.ts
-     Monte Carlo (`f6Probes.test.ts`) at +0.23 to +0.50 rating (rc.38 +0.13
-     to +0.31), a 54–56 % series against an equal side. Existing retainers
-     pay the new fee from the next Monday. `CAREER_SUNDAY
+R105. **rc.37 F6 — the psychologist is a stronger hire; "recover" is the
+     favourite's plan.** `CAREER_GEAR.psychologistStatBonus` +3/+3 → +5/+5,
+     `psychologistPerSplit` 4,000 → 4,500 (Miguel, 10/11: 6,000 was 22 % of
+     the payroll when she unlocks). Priced by match.ts Monte Carlo
+     (`f6Probes.test.ts`) at +0.23 to +0.50 rating (rc.38 +0.13 to +0.31), a
+     54–56 % series against an equal side. `CAREER_SUNDAY
      .championshipBriefing.recover.final` 0.4 → 0.6: on 0.4 "recover" never
      beat "keep"; on 0.6 it adds about one point of title chance for a
      favourite, and "prepare" stays the way through the quarter-final.
@@ -2149,11 +2160,31 @@ R106. **rc.37 F6 — rivals rise against a dynasty: a lever, off (Miguel
      decides the dose).** `CAREER_DYNASTY`: the `rivals` (3) strongest AI
      sides of the user's Major and Worlds fields gain `shiftPerTitle` per
      Worlds title the user won in the last `windowSeasons` (3), up to
-     `maxShift` (3). Unlike the rejected title defence (every Worlds
-     opponent +0.5 / +1) it leaves the early rounds and their prize alone
-     and relaxes when the dynasty stops winning. `shiftPerTitle` 0 ships
-     (rc.38 exactly). The other endgame proposals (poaching, costly late
-     unlocks) are design only: F6-EXPERIMENTOS Part 7.
+     `maxShift` (3). Unlike the rejected title defence it leaves the early
+     rounds and their prize alone and relaxes when the dynasty stops
+     winning. `shiftPerTitle` 0 ships (rc.38 exactly).
+
+R107. **rc.37 F6 — in the red the bank writes no ordinary loan (Miguel's
+     staging playtest, 10/11).** The Monday credit offer (rc.37 F2) also
+     came "when already negative", every cooldown, so a structural deficit
+     chained ordinary loans and never reached the floor where the counted
+     emergency loans end a career. `CAREER_BANK.blockedWhileNegative`: no
+     voluntary loan — offer or Finances request — while the balance is below
+     $0 (`bankLoanRefusal` "negative", its own line on Finances). The
+     ordinary loan is for books still in the black; in the red the only
+     bank money is the emergency loan at the floor, counted
+     (`CAREER_LOAN.emergency.maxLoans`). The floor itself is unchanged.
+
+R108. **rc.37 F6 — Hard reads the package through its own two scales.** The
+     approved package (R100, R101) is neutral on Normal and broke Hard
+     (battery-paired: Worlds titles 9 % → 1 %, insolvency 18 % → 27 %,
+     hands-off prospects 64 %; APAC's Worlds reach 100 % → 0–14 %).
+     `CAREER_RENEWAL_TENURE.jumpScaleByDifficulty.hard` 0.625 (rc.37's ×2.5
+     / ×3.125 ladder: insolvency 23 % at ×4.0, 18 % at ×3.25, 11–14 % at
+     ×2.5) and `CAREER_REGION_FIELD.shiftScaleByDifficulty.hard` 0 (no
+     stronger scene; the founders' offset stays, because the wizard shows
+     the roster before the difficulty is picked). The flatter ask curve
+     stays on Hard: restoring 1.20 there did not help (titles 7 % → 2 %).
 
 ## Still open for Miguel (career mode)
 

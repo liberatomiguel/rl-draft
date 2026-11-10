@@ -1151,13 +1151,15 @@ export const CAREER_CHEMISTRY = {
    * connection fills the pair (maxRawPerPair): heritage is where a pair
    * starts, time is where it ends. 0 = rc.38 (no late phase, no pair cap).
    * Time together runs about five split-units a season (scrims and packages
-   * count). Measured on Normal (10/11): 0.25 (Perfect two seasons in) put the
-   * youth path, which keeps a mixed trio for years, at 36–71 % Worlds titles
-   * against 0–5 % for every other style; 0.1 barely moved anything by S10.
-   * 0.15: a no-heritage trio is Perfect about three seasons in, a same-region
-   * trio within its first.
+   * count). Measured on Normal against the battery (seed 17019, 147 careers
+   * an arm; staging: Worlds titles 22 %, the youth path 76 %, buying 0 %):
+   * no late phase 17 % / 52 % / 5 %; 0.10 21 % / 62 % / 7 %; 0.15 25 % / 74 %
+   * / 10 % (the youth path keeps a mixed trio for years, so it gains most).
+   * 0.10 ships: the package's overall difficulty back at staging's with the
+   * youth path still cut. A no-heritage trio is Perfect about four seasons
+   * in, a same-region trio within its first.
    */
-  bondPerSplitTogether: 0.15,
+  bondPerSplitTogether: 0.1,
   /**
    * ...and every official series (qualifier, regional, Major, Worlds) the
    * fielded players play adds this to their time together (splitsTogether),

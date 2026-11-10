@@ -42,6 +42,40 @@ with the root cause — that section doubles as the project's bugfix log.
   (was 1.5 ×: an 85 is 31 % cheaper), and the emergency-sale share tolerates one rounding step
   (`careerRc37Integration.test.ts`; the offer is priced before the day's growth, the test after).
 
+### Added / Changed / Fixed — rc.37 F6, round of 09–10/11 (branch `claude/rc37-balance`, not on staging yet; BALANCE_VERSION 16)
+- **Chemistry by time together** (R102): past the two-split fast phase a pair keeps bonding
+  (`CAREER_CHEMISTRY.bondPerSplitTogether` 0.10) until heritage + connection fills it, and every official
+  series the fielded players play counts as time together (`officialSeriesCredit` 0.02). A trio from three
+  regions is no longer stuck at 67 %: Perfect about four seasons in. A newcomer inherits the fast phase
+  only, so swapping a starter of an old core costs 100 % → 78 %.
+- **A three-player squad is ruled out too; a reserve only signs in a transfer window** (R103): with a
+  starter out and nobody on the bench the team does not enter that event (hold card "Sit this event out",
+  the Market only while a window is open). First season exempt for a squad without a reserve; the rate is
+  4 % an official event (`unavailabilityEventMult` 4 → 2). EN/PT: the Squad screen's reserve slot, the help
+  entry, a club mail at the start of season two, the absence mail, the missed-event mail.
+- **Reputation in proportion to the org** (R104): `CAREER_REP.proportional` replaces the flat soft cap. A
+  contender (50–74) earns titles, Majors and the Worlds whole; an elite org (75+) stops earning from
+  qualifiers and regional places; a title never pays zero; the season's Worlds champion keeps his
+  reputation at a missed season goal.
+- **Psychologist** +3/+3 → +5/+5 for 4,500 a split (was 4,000); **championship briefing** "recover" final
+  0.4 → 0.6 (R105). Stale "+1 Clutch, +1 Consistency" strings corrected.
+- **Hard reads the package through its own scales** (R108): `jumpScaleByDifficulty.hard` 0.625 (rc.37's
+  renewal ladder) and `shiftScaleByDifficulty.hard` 0 (no stronger scene in the easy regions).
+- **Levers added, off**: `CAREER_DYNASTY` (the three strongest AI sides of the user's Major / Worlds rise
+  per recent Worlds title, R106) and `CAREER_REGION_FIELD.tierShift` (measured and rejected as the
+  chemistry counterpart).
+- Fixed (R107): the bank offered its ordinary loan with the balance already below $0, every cooldown, so a
+  structural deficit chained loans and never reached the counted emergency loan. Root cause: rc.37 F2's
+  offer read only the runway ("also when already negative") and `bankLoanRefusal` had no balance rule. Now
+  no voluntary loan — offer or request — while the balance is below $0 (`CAREER_BANK.blockedWhileNegative`).
+- Fixed (audit bots): no reserve ever signed and a Major slot held the clock (23 of 63 careers of the
+  first arm). Root cause: the cover routine filtered free agents by `cost === 0`, but a candidate's cost
+  includes his signing bonus. Candidates now carry `free`.
+- Tests: `rc39F6.test.ts` (chemistry, reputation, Hard scales), `careerRtw05.test.ts` (the reserve rule),
+  `careerRc37Finance.test.ts` and `economy.test.ts` re-pinned on purpose. Probe: the championship briefing
+  as a title chance (`f6Probes.test.ts`).
+- Measured (paired with the 06/11 battery; arms and tables in `docs/battery-rc37/F6-EXPERIMENTOS.md` Part 7).
+
 ### Added / Fixed — rc.37 F6, balance experiments (branch `claude/rc37-balance`, no gameplay change yet)
 - **Experiment runner** `auditHumanExperiment.test.ts` (opt-in `HUMAN_EXPERIMENT=1`): plays chosen
   battery cells under a balance patch applied in memory (strict deep merge: an unknown key fails),

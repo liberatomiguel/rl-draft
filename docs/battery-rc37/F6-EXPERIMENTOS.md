@@ -562,3 +562,324 @@ continua lá. O `git worktree remove --force` segue a junction e apaga o `node_m
 
 Um processo por shard (0 a 5). Comparar: `node src/store/auditHumanSummaryF6.mjs --arm <pasta> --by
 profile|family|region`. As specs e as pastas de resultado ficam em `C:\Users\Miguel\CLAUDE\rc37-battery\f6`.
+
+---
+
+## 7. Rodada de 09–10/11: pacote aplicado, frentes A–F, correção do banco e validação
+
+**Estado:** tudo no branch `claude/rc37-balance`, um commit por etapa, `BALANCE_VERSION` 16. **Nada no
+`staging`.** Decisões R100–R108 em `ROAD-TO-WORLDS-DECISIONS.md`. Dados brutos em
+`C:\Users\Miguel\CLAUDE\rc37-battery\f6`.
+
+### 7.0 Resumo em uma página
+
+**O pacote final (o que está no branch)**
+
+| # | Item | Valor |
+|---|---|---|
+| 1 | Renovação em degraus maiores (aprovado) | salto ×4,0 a ×5,0 no Easy e no Normal; **no Hard fica o do staging** (×2,5 a ×3,1) |
+| 2 | Curva salarial mais plana (aprovado) | 1,20 → 1,17 por ponto, nas três dificuldades |
+| 3 | Regiões fáceis mais lentas (aprovado) | fundadores SSA −4 / APAC −3 / OCE −2; cena SSA +2,0 / APAC +1,5 / OCE +0,5 no Easy e no Normal; **sem reforço de cena no Hard** |
+| 4 | Química por convivência | cresce até 100% com tempo e séries oficiais; trio de regiões diferentes fica Perfeito em ~4 temporadas; trocar um titular de um núcleo antigo custa 100% → 78% |
+| 5 | Reserva | elenco de 3 também sofre ausência (4% por evento oficial); sem reserva o time não joga aquele evento; reserva só assina na janela; 1ª temporada isenta |
+| 6 | Reputação proporcional | org de 50–74 ganha inteiro por título, Major e Worlds; org de 75+ não ganha mais com qualifier e Regional; título nunca rende zero; campeão mundial não perde pela meta |
+| 7 | Psicóloga | +5/+5 por 4.500 por split (era +3/+3 por 4.000) |
+| 8 | Preleção de campeonato | "recuperar": final +0,4 → +0,6 |
+| 9 | Banco | sem empréstimo comum com o caixa negativo; no vermelho só o de emergência, que é contado |
+| 10 | Rivais de dinastia | alavanca criada, **desligada** |
+
+**Validação final contra o staging** (seed 17019, 147 carreiras por dificuldade, cada carreira comparada com
+ela mesma na bateria):
+
+| | Easy | Normal | Hard |
+|---|---|---|---|
+| Título do Worlds até a S10 | 45% → **57%** | 22% → **21%** | 14% → **16%** |
+| Título: formar jovens | 98% → 93% | 76% → **62%** | 48% → 52% |
+| Título: comprar | 24% → **50%** | 0% → **7%** | 0% → 0% |
+| Título: outros estilos | 24% → 38% | 2% → 3% | 0% → 2% |
+| Alcance do Worlds | 82% → 75% | 63% → **51%** | 46% → 37% |
+| 1º Major (mediana de todas as carreiras) | S4 → S4 | S7 → **S10** | depois da S10 nos dois |
+| Falência | 1% → 1% | 3% → 5% | 19% → 15% |
+| Caixa na S10 (mediana) | 598k → 800k | 226k → 161k | 84k → 88k |
+
+Easy e Hard rodaram com a química a 0,15; a dose final é 0,10 (medida no Normal). O efeito esperado nos
+dois é um título um pouco menor do que o da tabela.
+
+**Leitura**
+- **Dificuldade geral:** Normal e Hard ficaram no nível do staging em título; o Easy ficou mais fácil.
+- **Estilos:** comprar passou a vencer no Easy e no Normal; formar jovens caiu no Normal (76% → 62%) mas
+  continua sendo o melhor caminho. No Hard só os jovens vencem, como já era.
+- **Progressão:** está mais lenta no Normal. O alcance do Worlds caiu 12 pontos e o 1º Major mediano foi da
+  S7 para a S10. É o custo somado das regiões fáceis mais lentas (aprovado), da regra de reserva e da
+  correção do banco. É o ponto que mais merece a sua atenção (7.9).
+- **Falência:** estável no Easy, +2 pontos no Normal (a correção do banco tira a muleta dos empréstimos em
+  série), melhor no Hard.
+
+### 7.1 Como os testes foram reduzidos
+
+A rodada inteira usou ~6 h de máquina em segundo plano ao longo de uma noite, em blocos de 10 a 30 minutos,
+contra as 21 h da bateria. O que permitiu:
+
+1. **O Normal do pacote aprovado não precisou de carreira nova:** com os valores no `balance.ts`, o código
+   reproduz bit a bit as carreiras dos braços P1 e P2 (6 de 6 idênticas). As 147 já rodadas viraram a base
+   do pacote (`f6/PKN`).
+2. **Quadrado latino na triagem:** 7 regiões × 7 perfis com o elenco inicial em rodízio (49 carreiras por
+   braço, ~10 minutos), e elencos completos só onde estava a pergunta.
+3. **Sondas do motor em vez de carreiras** para valores que só agem na partida (psicóloga, preleção).
+4. **Métrica sensível antes da rara:** além do título, a comparação pareada lê rating, química, reputação,
+   caixa e reserva por temporada (`f6/cmp.mjs`, `f6/sum.mjs`).
+5. **Validação grande só uma vez, no fim, numa seed nova:** 147 carreiras por dificuldade na seed 17019,
+   que a bateria também tem como controle.
+6. **Worktree de execução sem junction** (`.claude/worktrees/f6-run*`): o Node acha o `node_modules`
+   subindo de pasta.
+
+**O limite, medido na prática:** com 49 carreiras, diferenças de 2 ou 3 títulos são ruído. Três decisões
+desta rodada só ficaram claras com 147 carreiras (a dose da química, o Hard e a diferença entre seeds: quem
+forma jovens vence 52% na seed 9100 e 76% na 17019, no mesmo jogo).
+
+### 7.2 Pacote aprovado nas três dificuldades (antes das frentes novas)
+
+| Dificuldade | n | Título do Worlds | Alcance do Worlds | Falência |
+|---|---|---|---|---|
+| Easy (controle → pacote) | 49 | 49% → 59% | 76% → 71% | 2% → 2% |
+| Normal (P1 + P2) | 147 | 16% → 13–15% | 56% → 50–53% | 3% → 2% |
+| Hard (EU e NA em peso triplo) | 77 | 9% → **1%** | 32% → 14% | **18% → 27%** |
+
+O pacote era neutro no Normal e quebrava o Hard: quem renova tudo sem vender ia à falência
+(`prospectsOnly` 18% → 64%), e APAC caía de 100% para 14% de alcance do Worlds.
+
+**Decomposição do Hard** (44 carreiras por braço, 4 perfis, contra o staging: título 16%, alcance 43%,
+falência 14%):
+
+| Braço | Título | Alcance do Worlds | Falência |
+|---|---|---|---|
+| Pacote completo, salto ×4,0 | 2% | 14% | 23% |
+| Salto ×3,25 | 7% | 20% | 18% |
+| Salto ×2,5 (staging) | 5–7% | 18–23% | 11–14% |
+| Salto ×2,5 e curva 1,20 (staging) | 2% | 27% | 20% |
+
+- O salto de renovação maior é a causa da falência no Hard.
+- A curva salarial não é: devolver 1,20 só piorou.
+- O resto da queda vem das regiões fáceis, calibradas no Normal.
+
+**Decisão (R108):** o Hard fica com o salto do staging e sem o reforço de cena nas regiões fáceis. Os
+fundadores mais fracos continuam valendo no Hard, porque o assistente mostra o elenco antes de o jogador
+escolher a dificuldade.
+
+### 7.3 A. Química por convivência (R102)
+
+**Regra:** até dois splits juntos, como hoje (trio de três regiões chega a 67%, mesma região a 92%). Depois
+o par continua ganhando devagar até 100%, e cada série oficial jogada junto conta como tempo. A
+nacionalidade só define de onde o par parte. O recém-chegado herda apenas a fase rápida.
+
+**Dose, medida no Normal** (seed 17019, 147 carreiras por braço):
+
+| Química | Título geral | Formar jovens | Comprar | Outros | Alcance do Worlds |
+|---|---|---|---|---|---|
+| Staging | 22% | 76% | 0% | 2% | 63% |
+| Pacote final **sem** a fase lenta | 17% | 52% | 5% | 2% | 48% |
+| **0,10 (escolhida)** | **21%** | **62%** | **7%** | **3%** | **51%** |
+| 0,15 | 25% | 74% | 10% | 3% | 52% |
+
+Antes disso, na seed 9100 (63 carreiras): a dose 0,25 sozinha, com a herança sem limite, levou os dois
+perfis de jovens de 14–29% para **71%** de título, com os outros estilos parados.
+
+**Leitura:**
+- Quem mais ganha com a química não é o `homegrown` (os fundadores já partem de 92% pela região e o limite
+  deles é o potencial): é quem forma jovens, porque mantém por anos um trio de regiões diferentes.
+- Sem a fase lenta, o pacote completo deixa o Normal mais duro que o staging (17% contra 22%). A dose 0,10
+  devolve a dificuldade geral ao nível do staging e mantém o corte nos jovens (76% → 62%).
+- **Contrapartida rejeitada:** rivais de Major e Worlds +0,5. Sobre o pacote completo só tirou títulos
+  (10% → 6%). A alavanca (`CAREER_REGION_FIELD.tierShift`) fica em 0.
+
+### 7.4 B. Reserva e indisponibilidade (R103)
+
+**Regra:**
+- Um titular de um elenco de 3 pode ficar fora de um evento oficial, como qualquer outro.
+- Sem reserva, o time **não joga aquele evento**, seja Regional, Major ou Worlds. O cartão do HQ nomeia o
+  ausente e oferece "Ficar fora deste evento"; o Mercado só aparece se uma janela estiver aberta.
+- **Reserva só assina na janela de transferências** (Miguel, 10/11).
+- A primeira temporada é isenta para quem não tem reserva (decisão minha).
+- Três jogadores sob contrato continuam fazendo scrim durante a ausência.
+- **Frequência: 4% por evento oficial** (era 8%), cerca de uma ausência a cada duas temporadas. Até aqui
+  ninguém sentia essa taxa, porque elenco de 3 era imune. A 8% custava perto de um evento por temporada e
+  ~8 pontos de alcance do Worlds no Normal (decisão minha).
+- **Aviso ao jogador (EN/PT):** o slot vazio de reserva na tela de Elenco, a entrada de ajuda, um e-mail do
+  clube no começo da 2ª temporada, o e-mail da ausência e o e-mail do evento perdido.
+- **Bots:** mantêm um reserva modesto a partir da 2ª temporada, contratado na janela. Ficam com reserva em
+  ~53% das temporadas.
+
+**Custo medido** (Normal, 49 carreiras, a 8%, sem química, contra o pacote): título 10% → 4%, alcance do
+Worlds 49% → 43%. Foi o que motivou cortar a frequência pela metade.
+
+### 7.5 C. Reputação proporcional (R104)
+
+**Regra:** o tamanho da org é dado pelos portões 25 / 50 / 75. No nível da org ou acima, o resultado paga
+inteiro; um nível abaixo, metade arredondada **para cima**; mais abaixo, nada. Título nunca paga menos de
++1. O campeão mundial da temporada não perde reputação pela meta.
+
+| Resultado | Rep < 50 | Rep 50–74 (antes, de 60 em diante) | Rep 75+ (antes) |
+|---|---|---|---|
+| Passar do qualifier (+1) | +1 | +1 (+1) | **0** (+1) |
+| Top 8 de Regional (+1) | +1 | +1 (+1) | **0** (+1) |
+| Top 4 de Regional (+2) | +2 | +1 (+1) | **0** (+1) |
+| Título de Regional (+4) | +4 | **+4** (+2) | +2 (+2) |
+| Vaga em Major (+2) | +2 | **+2** (+1) | +1 (+1) |
+| Top 4 / título de Major (+4 / +7) | +4 / +7 | **+4 / +7** (+2 / +4) | **+4 / +7** (+2 / +4) |
+| Vaga / top 4 no Worlds (+8 / +10) | +8 / +10 | **+8 / +10** (+4 / +5) | **+8 / +10** (+4 / +5) |
+
+**Primeira versão rejeitada:** metade arredondada para baixo. Travou as orgs médias em torno de 50 de
+reputação (mediana na S10 de 67 para 46). Com o arredondamento para cima, a mediana na S10 fica em 63 (pacote sem as frentes novas: 67).
+
+### 7.6 D. Psicóloga e E. preleção (R105), por sonda do motor
+
+**Psicóloga +5/+5** (12 mil séries por ponto):
+
+| Atributos do time | Bo3 (Swiss) | Bo5 (playoffs) | Bo7 (playoffs) |
+|---|---|---|---|
+| 78 | 50,7% → 54,4% (≈ +0,32 de rating) | 50,6% → 53,5% (+0,30) | 50,6% → 53,6% (+0,23) |
+| 84 | 49,3% → 56,1% (+0,50) | 50,6% → 55,8% (+0,50) | 50,0% → 55,5% (+0,37) |
+| 90 | 50,1% → 56,3% (+0,40) | 50,5% → 56,3% (+0,48) | 50,5% → 54,8% (+0,30) |
+
+Em pontos de rating, +0,23 a +0,50 (com +3/+3 era +0,13 a +0,31). **Preço: 4.500 por split** (Miguel,
+10/11). A 6.000 ela custava ~22% da folha no momento em que desbloqueia e 2,6× o preço do mesmo rating
+comprado em salário.
+
+**Preleção de campeonato** (chance de título no domingo; quartas Bo5, semi e final Bo7; 30 mil séries):
+
+| Situação | Manter | Recuperar antes (final +0,4) | **Recuperar agora (final +0,6)** | Preparar |
+|---|---|---|---|---|
+| Muito favorito | 42,9% | 42,2% | **43,9%** | 42,6% |
+| Favorito | 25,3% | 25,0% | **26,1%** | 25,4% |
+| Equilibrado | 10,4% | 10,1% | 10,9% | 10,7% |
+| Azarão | 2,2% | 2,1% | 2,3% | 2,3% |
+
+"Recuperar" nunca compensava; agora é a escolha do favorito (+1 ponto de título). "Preparar" continua sendo
+o plano de quem precisa primeiro passar das quartas.
+
+### 7.7 Banco: sem empréstimo comum no vermelho (R107)
+
+Relato do Miguel jogando no staging (10/11): com o caixa negativo o banco continuava oferecendo
+empréstimo, várias vezes, quando a carreira já devia ter falido.
+
+- **Causa:** a oferta de segunda-feira olhava só o fôlego de caixa, "também quando já negativo", a cada 8
+  semanas, e o pedido na tela de Finanças não tinha regra de saldo. Um déficit permanente emendava
+  empréstimos comuns e nunca chegava ao piso, onde entra o de emergência (o único contado).
+- **Correção:** com o caixa abaixo de zero o banco não faz empréstimo comum, nem por oferta nem por pedido.
+  A tela de Finanças diz o motivo. No vermelho só existe o empréstimo de emergência, no piso, com o limite
+  de sempre (3 / 2 / 1 por dificuldade).
+- **Não mudou:** o piso (8 semanas de contas). O de emergência continua entrando só nele.
+
+### 7.8 F. Endless e rivais de dinastia (R106)
+
+Normal, 28 carreiras do pacote final estendidas até a S20:
+
+| | Campeões até a S10 (10) | Sem título até a S10 (18) |
+|---|---|---|
+| Temporadas com título, alavanca desligada | 66% | 32% |
+| Temporadas com título, rivais +1,5 por título (teto +3) | 45% | 27% |
+| Sequência mais longa (mediana) | 7 → 4 | 3 → 1 |
+| Caixa na S20 (mediana) | 3,4 M → 3,6 M | 1,3 M → 1,2 M |
+| Falência | 0% → 10% | 0% → 6% |
+
+- Quem chega à era infinita sem título agora vence (32% das temporadas; na bateria do staging, 4%, numa
+  amostra diferente).
+- O campeão domina mais do que antes (66% contra 54% na bateria): a química ajuda.
+- Os rivais de dinastia freiam de verdade, mas 1 campeão em 10 quebra. A alavanca fica **desligada**.
+
+### 7.9 O que fica para o Miguel decidir
+
+1. **Aprovar o pacote final** (tabela 7.0) para ir ao `staging` como o próximo rc.
+2. **Progressão no Normal:** o alcance do Worlds caiu de 63% para 51% e o 1º Major mediano foi da S7 para a
+   S10. Se for demais, as alavancas mais limpas são a cena das regiões fáceis (SSA +2,0 → +1,5) e a
+   frequência de ausências (4% → 3%).
+3. **EU no Normal:** alcance do Worlds 33% → 14% e falência 5% → 14% na seed 17019 (na seed 9100 ficou
+   igual, 14% → 14%). Com 21 carreiras é em parte ruído, mas é a região para olhar no playtest.
+4. **Primeira temporada isenta** da regra de reserva: manter?
+5. **Empréstimo de emergência só no piso:** manter, ou entrar assim que o caixa negativar?
+6. **Rivais de dinastia:** lançar desligado (recomendado) e decidir a dose depois, com mais carreiras.
+7. **Comprar no Hard** continua sem vencer (0%). Aceitar como "o Hard é de quem forma", ou tratar na
+   2.0.1 junto com o segundo patrocinador (Parte 8)?
+
+### 7.10 O que não foi verificado
+
+- **Telas:** os avisos novos (slot de reserva, cartão "Sem reserva", recusa do banco) não foram conferidos
+  no app; a prévia local não carregou a carreira com a máquina ocupada. Estão cobertos por testes de fluxo
+  e de textos, não por olho.
+- **Easy e Hard com a química a 0,10:** rodaram a 0,15.
+- **`npm run build`:** não rodado (nada foi publicado).
+- **Vaga de Major ou Worlds perdida por falta de reserva:** o caminho foi exercitado pelas carreiras dos
+  bots sem travamento, mas não tem teste unitário próprio além do de permissão.
+
+---
+
+## 8. Propostas de desenho (não implementadas): progressão por reputação e patrocinadores simultâneos
+
+Pedido do Miguel em 10/11. Nada aqui está no código: são propostas para decidir, com o dado que as
+sustenta. Cada item precisa de tela, texto EN/PT e uma rodada de medição antes de entrar.
+
+### 8.1 O buraco na escada de hoje
+
+A escada atual: periféricos (8) → coach (10) → patrocínio local (10) → monitores (14) → PCs (20) →
+coaches ex-pro (23) → bootcamp (26) → patrocínio challenger (30) → bootcamp estruturado (38) → psicóloga
+(46) → patrocínio global (50) → centro de performance (55) → patrocínio headline (75).
+
+- **Entre 55 e 75 não desbloqueia nada**, e é a faixa em que a maioria das carreiras passa mais tempo.
+- **Acima de 80 não existe nada**: o campeão chega a 100 de reputação e a reputação deixa de importar.
+- A reputação proporcional (R104) faz a faixa 50–100 depender de resultado grande. Ela precisa de
+  recompensa à altura.
+
+### 8.2 Meio de carreira (reputação 35 a 70)
+
+| Rep | Desbloqueio | Buff | Tradeoff |
+|---|---|---|---|
+| 35 | **Olheiro regional** (mensal) | A faixa de potencial dos prospects de UMA região à escolha fica mais estreita, e um prospect a mais aparece por janela nela | Custo por split; trocar de região zera o conhecimento acumulado |
+| 42 | **Analista de adversários** | A preleção escolhida vale 1,5× (o plano certo pesa mais) | O plano errado também pesa 1,5×; custo por split |
+| 50 | **Segundo patrocinador** (8.4) | Uma segunda receita, menor | Dois objetivos para cumprir; falhar custa reputação |
+| 60 | **Time academy** | Uma vaga extra para um jogador de até 18 anos, fora do limite do elenco, que treina a 70% do ritmo e **serve de reserva** | Depois de 2 temporadas sem jogar ele pede vaga de titular ou sai de graça; salário e manutenção |
+| 65 | **Casa de conteúdo** | +10% de bônus de patrocínio e torcida | Os jogadores pedem +5% de salário nas renovações (querem a vitrine) |
+| 70 | **Mudança de região** (já previsto, adiado) | Trocar o circuito da org | Reputação cai 15, química zera a herança de região |
+
+### 8.3 Endgame (reputação 80 a 100)
+
+| Rep | Desbloqueio | Buff | Tradeoff |
+|---|---|---|---|
+| 80 | **Laboratório de performance** (caro + manutenção alta) | Jogadores de 26+ caem um ano mais tarde | Manutenção indexada à inflação da carreira, para sempre |
+| 85 | **Status de franquia** | Vaga direta no Regional (sem qualifier): menos desgaste, menos risco no sábado | A meta mínima da temporada vira "top 4 de Major"; errar custa o dobro de reputação |
+| 90 | **Marca global** | Patrocínio headline +20% e um terceiro patrocinador | Os 3 rivais mais fortes de Major e Worlds sobem (a alavanca `CAREER_DYNASTY`, R106): a fama atrai quem quer derrubar você |
+| 95 | **Legado** (sala de troféus, hall da fama, arena) | Só prestígio: conquistas do perfil e uma marca visual na org | Sumidouro de dinheiro puro, em degraus de US$ 1 M |
+| 100 | **Segunda org** (pós-lançamento) | Começar uma carreira nova herdando um bônus da primeira | — |
+
+Com isso o campeão tem onde gastar os US$ 8–12 M, e cada degrau do endgame troca dinheiro ou risco por uma
+vantagem estreita. O "status de franquia" e a "marca global" são os dois que deixam o topo mais difícil de
+propósito, e é o jogador que escolhe entrar.
+
+### 8.4 Mais de um patrocinador ao mesmo tempo: faz sentido?
+
+**Faz, e resolve um problema que os dados mostram.** Hoje existe um único contrato de patrocínio, e a
+receita não acompanha a folha no meio da carreira:
+
+- Quando a psicóloga desbloqueia (reputação 46, tipicamente na 4ª temporada), o patrocínio base rende
+  ~30 mil por split contra uma folha de ~47 mil.
+- No Hard a folha passa da receita (folha ÷ receita 0,96 na bateria; 1,13 com o pacote), e é lá que as
+  carreiras quebram.
+- No topo o problema é o inverso: o campeão acumula US$ 8–12 M e o patrocínio já não é decisão.
+
+**Desenho proposto:**
+
+| Vaga | Libera em | Valor | Regra |
+|---|---|---|---|
+| Principal | como hoje (10 / 30 / 50 / 75) | 100% | como hoje |
+| Secundário | reputação 50 | ~40% do valor do nível **abaixo** do principal | objetivo próprio, diferente do principal |
+| Terceiro (manga) | reputação 90, com a "marca global" | ~25% | só bônus por resultado, sem valor fixo |
+
+- **Tradeoff:** cada patrocinador traz um objetivo. Falhar em qualquer um custa reputação, e dois objetivos
+  podem puxar para lados diferentes (um quer top 8 de Regional toda semana, outro quer Major).
+- **Efeito esperado:** +15% a +20% de receita de patrocínio a partir da reputação 50. É o que falta para o
+  meio da carreira respirar sem mexer em prêmio nem em salário, e chega só para quem já provou resultado.
+- **Por que não entrou agora:** o save guarda UM patrocinador (`sponsor`), e o formato do save está
+  congelado por contrato de persistência. Virar lista pede migração de save, telas de Finanças novas e uma
+  rodada de medição, porque mexe na receita de todas as carreiras. É trabalho de 2 a 3 dias com teste: cabe
+  na primeira atualização depois do lançamento, não nos 2 dias que restam.
+
+**Recomendação:** aprovar o desenho agora e implementar na 2.0.1, junto com o item 8.2 da reputação 50.
