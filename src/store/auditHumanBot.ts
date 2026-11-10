@@ -12,7 +12,7 @@
  * matrix runner and the report live in the test file.
  */
 
-import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS, CAREER_WORLD } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
@@ -730,6 +730,8 @@ interface Candidate {
   lengthSeasons?: 2 | 3;
   /** rc.37: his ask before any talk (the listing's price, the same for every manager). */
   ask: number;
+  /** A free agent (no fee; `cost` is then his signing bonus). */
+  free?: boolean;
 }
 
 function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
@@ -775,6 +777,7 @@ function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
       lengthSeasons: policy?.negotiate ? 3 : 2,
       potentialRead: (band.min + band.max) / 2,
       ask: pack.salaryPerSplit,
+      free: splitsRemaining === null,
     });
   };
   for (const view of listing.freeAgents) add(view, null);
@@ -846,20 +849,33 @@ function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candida
  * for the length of his deal, so the next absence is covered.
  */
 function coverAbsence(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  let save = signReserve(input, policy, t, true);
+  if (uncoveredAbsenceOf(save) && canSkipShortSquadEvent(save)) {
+    const skipped = skipShortSquadEventFlow(save);
+    if (!skipped.error) save = alerted(save, skipped.save);
+  }
+  return save;
+}
+
+/**
+ * rc.39 F6 (R103, Miguel 10/11): a reserve only signs in a transfer window.
+ * A manager who read the rule keeps one from the season it applies: in a
+ * window, with no reserve, the best free agent whose wage is small beside the
+ * starters' (at most half the cheapest starter's) and fits the budget; with a
+ * starter already ruled out (`must`), the cheapest one if nobody fits.
+ */
+function signReserve(input: CareerSave, policy: ArcPolicy, t: Tally, must: boolean): CareerSave {
   let save = input;
-  const pool = candidatesFor(save, policy).filter((c) => c.cost === 0);
+  if (!isWindowWeek(weekOfDay(save.clock.day)) || save.squad.length !== 3 || starters(save).length !== 3) return save;
+  const pool = candidatesFor(save, policy).filter((c) => c.free);
   const starterWage = Math.min(...starters(save).map((p) => p.salaryPerSplit));
   const modest = pool
     .filter((c) => c.salaryPerSplit <= starterWage / 2 && affordable(save, c.cost, c.salaryPerSplit, policy))
     .sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   const byCost = [...pool].sort((a, b) => a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall);
-  for (const c of [...modest.slice(0, 1), ...byCost.slice(0, 6)]) {
-    if (!uncoveredAbsenceOf(save)) break;
+  for (const c of [...modest.slice(0, 2), ...(must ? byCost.slice(0, 6) : [])]) {
+    if (save.squad.length !== 3) break;
     save = sign(save, c, t) ?? save;
-  }
-  if (uncoveredAbsenceOf(save) && canSkipShortSquadEvent(save)) {
-    const skipped = skipShortSquadEventFlow(save);
-    if (!skipped.error) save = alerted(save, skipped.save);
   }
   return save;
 }
@@ -1135,6 +1151,15 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
   // rc.39 F6 (R103): ...and covers a ruled-out starter before his event.
   if (!save.activeEvent && save.phase === "running" && uncoveredAbsenceOf(save)) save = coverAbsence(save, policy, t);
+  // ...and keeps a reserve from the season the rule applies (signed in a window, once a week at most).
+  if (
+    !save.activeEvent && save.phase === "running" &&
+    CAREER_WORLD.unavailabilityWithoutReserve === "short" &&
+    save.clock.seasonIndex >= CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
+    save.squad.length === 3 && dayOfWeekOf(save.clock.day) === 1
+  ) {
+    save = signReserve(save, policy, t, false);
+  }
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
   if (save.activeEvent) {
     save = simEventToEnd(save);

@@ -782,10 +782,11 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   // rc.39 F6 (R103): a starter ruled out with no reserve — the cheapest free agent signs as one
   // (never refused for money), else a regional or its qualifier is sat out.
   if (!save.activeEvent && save.phase === "running" && uncoveredAbsenceOf(save)) {
-    const cheapest = candidatesFor(save)
-      .filter((c) => c.cost === 0)
-      .sort((a, b) => a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall);
-    for (const c of cheapest.slice(0, 6)) {
+    const cheapest = [...candidatesFor(save)].sort(
+      (a, b) => a.cost - b.cost || a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall,
+    );
+    // Miguel (10/11): a reserve only signs in a window; outside one the event is sat out.
+    for (const c of isWindowWeek(weekOfDay(save.clock.day)) ? cheapest.slice(0, 6) : []) {
       if (!uncoveredAbsenceOf(save)) break;
       save = sign(save, c, t) ?? save;
     }

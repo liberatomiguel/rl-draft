@@ -53,7 +53,7 @@ import {
   nextBreachOutcomeOf,
   signingPlanFor,
   signingTalkFor,
-  squadIsShort,
+  rosterIsShort,
   weeklyStatementOf,
 } from "@/store/careerFlow";
 import { blockbusterWhatOf } from "@/components/career/hub/NowCards";
@@ -344,7 +344,7 @@ export function MarketScreen() {
   // --- window state ----------------------------------------------------------
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
   // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat, window or not.
-  const emptySeatOpen = !windowOpen && squadIsShort(save);
+  const emptySeatOpen = !windowOpen && rosterIsShort(save);
   const freeAgentSignable = windowOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
   const targetLocked = target ? !signableAtRep(target.view.overall, save.reputation) : false;
@@ -399,7 +399,7 @@ export function MarketScreen() {
   // RTW-05 (rc.33 review): a short squad refused for money is pointed to the
   // free agent the empty seat always takes (the flow's own rule).
   const seatFallback =
-    (planError === "funds" || planError === "loanRunway") && squadIsShort(save)
+    (planError === "funds" || planError === "loanRunway") && rosterIsShort(save)
       ? emptySeatPriceFor(save, offerLen)
       : null;
   const wageBill = payrollProjection({

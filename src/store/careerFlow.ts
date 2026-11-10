@@ -3318,7 +3318,10 @@ export function squadHoldFor(save: CareerSave): CareerEventDef | null {
  */
 export function canSkipShortSquadEvent(save: CareerSave): boolean {
   const def = squadHoldFor(save);
-  return def !== null && (def.tier === "regional" || def.tier === "qualifier");
+  if (def === null) return false;
+  // rc.39 F6 (R103): a starter ruled out with no reserve — the team does not enter, whatever the event.
+  if (!rosterIsShort(save) && uncoveredAbsenceOf(save)) return true;
+  return def.tier === "regional" || def.tier === "qualifier";
 }
 
 /**
@@ -3339,7 +3342,7 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
   pushNews(save, {
     type: "org",
     priority: 2,
-    titleKey: "regionalSkipped",
+    titleKey: rosterIsShort(save) ? "regionalSkipped" : "eventMissedNoReserve",
     params: { org: save.identity.orgName, event: regional?.name ?? def.name, n: save.squad.length },
   });
   // rc.34 review: skipped ON its day, the event was already passed over by this
@@ -4912,7 +4915,9 @@ export function signingPlanFor(
   // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat
   // at any time; otherwise signings happen in a window (rc.33, ECO-12: rc.32's
   // late signing is gone).
-  const emptySeat = outsideWindow && squadIsShort(save) && !opts.releaseId;
+  // rc.39 F6 (R103, Miguel 10/11): a starter ruled out is NOT an empty seat — a reserve signs in a
+  // transfer window like anyone else; without one the team sits that event out.
+  const emptySeat = outsideWindow && rosterIsShort(save) && !opts.releaseId;
   if (outsideWindow && !emptySeat) return { error: "windowClosed" };
   if (save.squad.some((p) => p.id === playerId)) return { error: "alreadySigned" };
   const leaver = opts.releaseId ? (save.squad.find((p) => p.id === opts.releaseId) ?? null) : null;
@@ -4968,7 +4973,7 @@ export function signingPlanFor(
   // into an empty seat skips the money checks — but only one who costs no
   // more, upfront and in wages, than the cheapest free agent it may sign
   // (`emptySeatPriceFor`); anyone dearer goes through the normal checks.
-  const seatPrice = !onOrg && !leaver && squadIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
+  const seatPrice = !onOrg && !leaver && rosterIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
   // rc.36 (front S2, rc.35-(d)): the waiver counts the bonus offered (CAREER_NEGOTIATION.emptySeatCountsOfferedBonus).
   const waiverCost = CAREER_NEGOTIATION.emptySeatCountsOfferedBonus ? cost : pack.fee + pack.signingBonus + severance;
   const fillsEmptySeat =

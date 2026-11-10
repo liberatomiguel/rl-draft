@@ -47,7 +47,7 @@ import type {
 import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
-import { canSkipShortSquadEvent, eventFieldFor, ruledOutFor } from "@/store/careerFlow";
+import { canSkipShortSquadEvent, eventFieldFor, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
 import { CommunityLineup } from "../CommunityLineup";
 import { beginCareerNavigation } from "../careerNavigation";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
@@ -458,7 +458,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
                   router.push("/career");
                 }}
               >
-                {C.hub.squadShortSkip}
+                {save.squad.length >= 3 && uncoveredAbsenceOf(save) ? C.hub.squadShortAbsentSkip : C.hub.squadShortSkip}
               </Button>
             ) : null}
           </div>

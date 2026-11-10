@@ -16,7 +16,7 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { breachesToEndFor, insertMoneyFor, loanBreachesOf } from "@/engine/career/economy";
 import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
-import { regionalForQualifier } from "@/engine/career/calendar";
+import { isWindowWeek, regionalForQualifier, weekOfDay } from "@/engine/career/calendar";
 import type { CareerEventDef, CareerSave, TransferOffer } from "@/engine/career/types";
 import { insertById, type InsertEffects } from "@/data/career/inserts";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
@@ -216,9 +216,12 @@ export function NowSquadShort({
         {absent ? C.hub.squadShortAbsentBody(absent.name, def.name) : C.hub.squadShortBody(save.squad.length, def.name)}
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <Button variant="primary" size="md" className="min-h-11" onClick={() => router.push("/career/market")}>
-          {C.hub.squadShortMarket}
-        </Button>
+        {/* rc.39 F6 (R103): a reserve only signs in a window — the Market is an answer only while one is open. */}
+        {!absent || isWindowWeek(weekOfDay(save.clock.day)) ? (
+          <Button variant="primary" size="md" className="min-h-11" onClick={() => router.push("/career/market")}>
+            {C.hub.squadShortMarket}
+          </Button>
+        ) : null}
         <Button variant="secondary" size="md" className="min-h-11" onClick={() => router.push("/career/squad")}>
           {C.hub.squadShortSquad}
         </Button>
@@ -228,14 +231,16 @@ export function NowSquadShort({
           </Button>
         ) : null}
         {onSkip ? (
-          <Button variant="ghost" size="md" className="min-h-11" onClick={onSkip}>
-            {C.hub.squadShortSkip}
+          <Button variant={absent ? "primary" : "ghost"} size="md" className="min-h-11" onClick={onSkip}>
+            {absent ? C.hub.squadShortAbsentSkip : C.hub.squadShortSkip}
           </Button>
         ) : null}
       </div>
       {onSkip ? (
         <p className="mt-2 max-w-xl text-xs text-faint">
-          {C.hub.squadShortSkipHint(def.tier === "qualifier" ? (regionalForQualifier(def)?.name ?? def.name) : def.name)}
+          {(absent ? C.hub.squadShortAbsentSkipHint : C.hub.squadShortSkipHint)(
+            def.tier === "qualifier" ? (regionalForQualifier(def)?.name ?? def.name) : def.name,
+          )}
         </p>
       ) : null}
     </div>

@@ -358,34 +358,35 @@ describe("R103 (rc.39 F6) — a three-player squad is ruled out too; without a r
     expect(startEvent(four, false).activeEvent?.def.id).toBe(regionalW4.id);
   });
 
-  it("the hold is answered like any short squad: a free agent signs outside the window, or the regional is sat out", () => {
+  it("a reserve only signs in a window (Miguel, 10/11): outside one the event is sat out, whatever its tier", () => {
     const three = onDay(createCareerSave(INPUT, 50_508), regionalW4.day - 1, regionalW4);
     three.pendingUnavailability = { playerId: three.starterIds[1], eventId: regionalW4.id };
     expect(isWindowWeek(weekOfDay(three.clock.day))).toBe(false);
+    // No free agent takes the seat outside the window: an absence is not an empty seat.
+    const listing = listingFor({
+      world: three.world,
+      squadIds: three.squad.map((p) => p.id),
+      seasonIndex: three.clock.seasonIndex,
+      careerSeed: three.careerSeed,
+      signableCap: signableOverallCap(three.reputation),
+    });
+    for (const v of listing.freeAgents.slice(0, 5)) {
+      expect(signPlayerFlow(three, v.id, { lengthSeasons: 1 }).error).toBe("windowClosed");
+    }
+    // The regional is sat out and the flag goes with it.
     expect(canSkipShortSquadEvent(three)).toBe(true);
     const skipped = skipShortSquadEventFlow(three);
     expect(skipped.error).toBeUndefined();
     expect(skipped.save.pendingUnavailability).toBeNull();
     expect(squadIsShort(skipped.save)).toBe(false);
-    // The cheapest free agent signs as the reserve whatever the cash (emptySeatPriceFor).
-    const broke = structuredClone(three);
-    broke.finances.balance = backerLineOf(broke).floor;
-    const listing = listingFor({
-      world: broke.world,
-      squadIds: broke.squad.map((p) => p.id),
-      seasonIndex: broke.clock.seasonIndex,
-      careerSeed: broke.careerSeed,
-      signableCap: signableOverallCap(broke.reputation),
-    });
-    const price = emptySeatPriceFor(broke, 1)!;
-    const signed = listing.freeAgents
-      .map((v) => signPlayerFlow(broke, v.id, { lengthSeasons: 1 }))
-      .find((r) => !r.error);
-    expect(price).not.toBeNull();
-    expect(signed, "a free agent signs as the reserve").toBeDefined();
-    expect(signed!.save.squad).toHaveLength(4);
-    expect(uncoveredAbsenceOf(signed!.save)).toBeNull();
-    expect(squadHoldFor(signed!.save)).toBeNull();
+    expect(skipped.save.mail[0]).toMatchObject({ titleKey: "eventMissedNoReserve" });
+    // A Major slot too (a squad under three keeps R67: it signs first).
+    const major: CareerEventDef = { ...regionalW4, id: "0:1:major-test", tier: "major", name: "Test Major" };
+    const atMajor = onDay(createCareerSave(INPUT, 50_508), major.day - 1, major);
+    atMajor.pendingUnavailability = { playerId: atMajor.starterIds[0], eventId: major.id };
+    expect(squadHoldFor(atMajor)?.id).toBe(major.id);
+    expect(canSkipShortSquadEvent(atMajor)).toBe(true);
+    expect(canSkipShortSquadEvent(withoutOne(onDay(createCareerSave(INPUT, 50_508), major.day - 1, major)))).toBe(false);
   });
 
   it("a stale flag (another event's) never holds the clock; \"immune\" is rc.38's rule", () => {

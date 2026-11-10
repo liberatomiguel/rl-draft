@@ -3600,7 +3600,7 @@ export const CAREER_SUNDAY = {
   championshipBriefing: {
     keep: { quarters: 0.1, semis: 0.1, other: 0.1, final: 0.1 },
     // rc.39 F6 (R105): final 0.4 → 0.6. On 0.4 "recover" never beat "keep" (f6Probes: a favourite's
-    // title chance 42.4 % vs 43.2 %); on 0.6 it is the favourite's plan (+1.0 pp title) while
+    // title chance 42.2 % vs 42.9 %); on 0.6 it is the favourite's plan (+1.0 pp title) while
     // "prepare" stays the way through the quarter-final for a side that is not.
     recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.6 },
     prepare: { quarters: 0.4, semis: 0.25, other: 0, final: -0.15 },

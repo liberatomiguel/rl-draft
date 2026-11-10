@@ -414,9 +414,12 @@ export const CAREER_EN = {
     squadShortBody: (n: number, event: string) =>
       `Only ${n} of 3 seats are filled, and no event is played short-handed. The clock waits before ${event} until a third player signs — a free agent can take the empty seat today, window or not.`,
     // rc.39 F6 (R103): a starter ruled out and no reserve — the same hold, worded for it.
-    squadShortAbsentTitle: "Sign a reserve",
+    squadShortAbsentTitle: "No reserve",
     squadShortAbsentBody: (player: string, event: string) =>
-      `${player} is ruled out of ${event} and nobody covers his seat. No event is played short-handed: the clock waits until a reserve signs. A free agent can join today, window or not.`,
+      `${player} is ruled out of ${event} and nobody covers his seat. No event is played short-handed, and a reserve only signs in a transfer window: without one, the team does not enter.`,
+    squadShortAbsentSkip: "Sit this event out",
+    squadShortAbsentSkipHint: (event: string) =>
+      `${event}: no entry, no points, no prize. Sign a reserve in the next transfer window so it does not happen again.`,
     squadShortMarket: "Go to the Market",
     squadShortSquad: "Squad",
     contractsExpiring: (n: number) => (n === 1 ? "1 contract ends this season — renew or let it run out." : `${n} contracts end this season — renew or let them run out.`),
@@ -740,9 +743,9 @@ export const CAREER_EN = {
       unavailable: (p: Record<string, string | number>) =>
         `${p.player} can't play ${p.event} — the sub takes his seat with his chemistry.`,
       unavailableNoReserve: (p: Record<string, string | number>) =>
-        `${p.player} can't play ${p.event}, and the squad has no reserve to take his seat. Sign a free agent before the event (the market is open for this seat, window or not) or the team does not enter.`,
+        `${p.player} can't play ${p.event}, and the squad has no reserve to take his seat. A reserve only signs in a transfer window: unless one is open before the event, the team does not enter.`,
       noReserve: () =>
-        `From this season a starter can be ruled out of an official event: visas, health, life. With a reserve, he steps in. Without one, the team cannot enter until a player signs. A modest free agent on the bench is enough.`,
+        `From this season a starter can be ruled out of an official event: visas, health, life. With a reserve, he steps in. Without one, the team does not enter that event. Reserves only sign in a transfer window, and a modest free agent on the bench is enough.`,
       // rc.34 review: with what the next breach does (the career's last loan repaid: the end) — an older mail reads as sent.
       debtCleared: (p: Record<string, string | number> = {}) =>
         `The emergency loan is repaid in full, and its deadline is lifted — the org owns its future again. ${p.next === undefined ? "The bank's door stays open." : nextBreachEn(p)}`,
@@ -859,7 +862,7 @@ export const CAREER_EN = {
     coachSlot: "Coach",
     staffRow: "Staff & boosts",
     hire: "Hire",
-    emptySub: "No reserve. A starter can be ruled out of an official event (never in your first season), and without a reserve the team cannot enter until one signs.",
+    emptySub: "No reserve. A starter can be ruled out of an official event (never in your first season), and without a reserve the team does not enter it. Reserves only sign in a transfer window.",
     emptyCoach: "A coach boosts development and match prep.",
     contracts: "Contracts",
     wage: "Wage",
@@ -2115,6 +2118,7 @@ export const CAREER_EN = {
       contractReminder: (p: Record<string, string | number>) => `Contract clock: ${p.players} — ${p.weeks} weeks left`,
       // rc.34 (Miguel, 31/10): a short squad sat a regional out.
       regionalSkipped: (p: Record<string, string | number>) => `${p.org} sit out ${p.event}`,
+      eventMissedNoReserve: (p: Record<string, string | number>) => `${p.org} miss ${p.event}: no reserve`,
       playerLeft: (p: Record<string, string | number>) => `${p.player} walks as a free agent`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} announces his final season`,
       retired: (p: Record<string, string | number>) => `${p.player} hangs up the controller`,
@@ -2228,6 +2232,8 @@ export const CAREER_EN = {
         `The season ends in ${p.weeks} weeks and ${p.players} have no deal beyond it. Renew before the rollover, or they walk.`,
       regionalSkipped: (p: Record<string, string | number>) =>
         `Only ${p.n} of 3 seats are filled, so the squad does not enter ${p.event}: no points, no prize. The next regional asks again.`,
+      eventMissedNoReserve: (p: Record<string, string | number>) =>
+        `A starter was ruled out and nobody was on the bench, so the squad does not enter ${p.event}: no points, no prize. A reserve signs in the next transfer window.`,
       playerLeft: (p: Record<string, string | number>) =>
         `No renewal came, so ${p.player} walked for free. Agents talk — the next negotiation starts from this.`,
       retirementAnnounce: (p: Record<string, string | number>) =>
@@ -2795,7 +2801,7 @@ export const CAREER_EN = {
     },
     randomEvent: {
       title: "Next man up",
-      body: "Sometimes a starter can't play — visas, health, life. A reserve steps in with his chemistry. Without one the team cannot enter that event until a player signs (a free agent can join at any time). Your first season is exempt. No event is ever played with fewer than three.",
+      body: "Sometimes a starter can't play — visas, health, life. A reserve steps in with his chemistry. Without one the team does not enter that event, and a reserve only signs in a transfer window. Your first season is exempt. No event is ever played with fewer than three.",
     },
     worldsRace: {
       title: "The Worlds race",
