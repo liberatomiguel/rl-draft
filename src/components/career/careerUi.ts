@@ -105,7 +105,7 @@ import {
   nameOfRef,
   regionalUserEligible,
   scrimOpponentFor,
-  squadIsShort,
+  rosterIsShort,
   userEventDefOnDay,
   userIsDirect,
   userOwnsQualifier,
@@ -521,7 +521,7 @@ export function scrimAvailability(save: CareerSave): {
     return { available: false, remaining, opponentName: null, reason: "blocked" };
   }
   // RTW-05 (rc.33 review): the flow's own rule (performScrim) — no scrim with fewer than three.
-  if (squadIsShort(save)) {
+  if (rosterIsShort(save)) {
     return { available: false, remaining, opponentName: null, reason: "squadShort" };
   }
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) {

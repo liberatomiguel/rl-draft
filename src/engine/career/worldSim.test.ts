@@ -13,12 +13,13 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_SEASONS, CAREER_SLOTS, CAREER_UNOFFICIAL, TOURNAMENT } from "@/config/balance";
-import { lineups } from "@/data";
+import { CAREER_SEASONS, CAREER_SLOTS, CAREER_UNOFFICIAL, CAREER_WORLD, TOURNAMENT } from "@/config/balance";
+import { lineups, playerCardById } from "@/data";
 import type { Region, TournamentTeam } from "../types";
-import { officialEventDefsForWeek, qualifierDefsForWeek, seasonSchedule } from "./calendar";
+import { intakeSeasonIdFor, officialEventDefsForWeek, qualifierDefsForWeek, seasonSchedule } from "./calendar";
 import { applyResultToStandings, compileEventResult } from "./careerResults";
 import { localRef, localRegionOf, localSceneRefs, localTeamName, localTeamOffset } from "./localScene";
+import { aiWindowMoves } from "./market";
 import type { CareerEventDef, CompetitionState, WorldState } from "./types";
 import {
   buildWorldAtCreation,
@@ -330,7 +331,57 @@ describe("real orgs enter by era (RTW-01): none arrives before its first dataset
         expect(fillersIn(w, o.region), `${o.ref} left while ${o.region} kept a filler`).toBe(0);
       }
     }
-    // The infinite era brings nobody.
-    expect(realOrgIntake(w, CAREER_SEASONS.length).entered).toHaveLength(0);
+    // The infinite era brings nobody — until the late wave's season (rc.39 R109).
+    const late = CAREER_WORLD.lateIntake;
+    for (let s = CAREER_SEASONS.length; s < late.atSeasonIndex; s++) {
+      expect(realOrgIntake(w, s).entered, `season ${s}`).toHaveLength(0);
+      expect(intakeSeasonIdFor(s)).toBeNull();
+    }
+    expect(intakeSeasonIdFor(late.atSeasonIndex)).toBe(late.seasonId);
+    const wave = lineups.filter((l) => l.seasonId === late.seasonId && !l.rareSpawn && !l.national);
+    expect(wave.length).toBeGreaterThan(0);
+    const before = new Set(Object.keys(w.orgs));
+    const intake = realOrgIntake(w, late.atSeasonIndex);
+    // Every org of the wave is in the world, the new ones in their lineup's region.
+    for (const l of wave) expect(intake.world.orgs[l.orgId], `${l.orgId} (${l.region}) left out of the late wave`).toBeDefined();
+    expect(intake.entered.length).toBeGreaterThan(0);
+    for (const e of intake.entered) {
+      expect(before.has(e.ref), e.ref).toBe(false);
+      expect(e.region).toBe(wave.find((l) => l.orgId === e.ref)!.region);
+    }
+    // No org of the wave gave its seat; a real org leaves only once the fillers are gone.
+    const waveOrgs = new Set(wave.map((l) => l.orgId));
+    for (const o of intake.left) {
+      expect(waveOrgs.has(o.ref), `${o.ref} left with the wave to play`).toBe(false);
+      expect(fillersIn(intake.world, o.region), `${o.ref} left while ${o.region} kept a filler`).toBe(0);
+    }
+    // One wave: the season after brings nobody.
+    expect(realOrgIntake(intake.world, late.atSeasonIndex + 1).entered).toHaveLength(0);
+  });
+
+  it("the late wave's rosters come in at that preseason, and only then (rc.39 R109)", () => {
+    const late = CAREER_WORLD.lateIntake;
+    const seed = 777;
+    let w = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" });
+    for (let s = 1; s <= late.atSeasonIndex; s++) w = realOrgIntake(w, s).world;
+    const wave = lineups.filter((l) => l.seasonId === late.seasonId && !l.rareSpawn && !l.national);
+    const seated = (world: WorldState) => {
+      let n = 0;
+      let total = 0;
+      for (const l of wave) {
+        for (const cid of l.playerCardIds) {
+          total += 1;
+          if (world.orgs[l.orgId]?.playerIds.includes(playerCardById.get(cid)!.playerId)) n += 1;
+        }
+      }
+      return n / total;
+    };
+    const ctx = { windowIdx: 0, week: 1, careerSeed: seed, userSquadIds: [], isPreseason: true, infinite: true };
+    const quiet = aiWindowMoves(w, { ...ctx, seasonIndex: late.atSeasonIndex - 1 }).world;
+    const arrived = aiWindowMoves(w, { ...ctx, seasonIndex: late.atSeasonIndex }).world;
+    expect(seated(quiet)).toBeLessThan(0.2);
+    // One pass seats what a timeline season's does (0.62–0.72; a later anchor may displace an earlier one).
+    expect(seated(arrived)).toBeGreaterThan(0.5);
+    for (const org of Object.values(arrived.orgs)) expect(new Set(org.playerIds).size, org.ref).toBe(3);
   });
 });

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.38.3**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -25,6 +25,98 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Added — rc.39 (2026-11-10), the RLCS 2027 wave in the infinite era
+- **rc.39 publishes the whole F6 package to staging** (the two sections below, R100–R108,
+  BALANCE_VERSION 16) plus this entry. Staging had nothing the branch lacked (rc.38.3 was merged in).
+- **The RLCS 2027 lineups arrive at season nine** (R109, Miguel 10/11): the career timeline still ends
+  in 2026 (season six), and the dataset's 46 lineups of 2027 (25 orgs never seen before, 31 new
+  players) used to stay out of the career for good, because the infinite era ran no dataset intake.
+  At the rollover into `CAREER_WORLD.lateIntake.atSeasonIndex` (8) their orgs enter like any dataset
+  season's (weakest filler first, then the weakest org outside the wave), and that preseason's anchor
+  pass brings the rosters in with the usual fidelity (a probe seats 69 % of the wave after the window;
+  the timeline's seasons seat 73–83 %). A player with a 2027 club card does not retire before that
+  season. One wave: season ten on is the rc.38 infinite era again. `enabled: false` turns it off.
+- Engine: `calendar.intakeSeasonIdFor` is the one answer to "which dataset season does this career
+  season bring in" (`worldSim.realOrgIntake`, `market.aiWindowMoves`' anchor pass, `orgHistoryOverAt`).
+  Seasons one to seven are bit-identical to the F6 validation; season eight differs only by the
+  retirement rolls the protected players no longer take.
+- Tests: `worldSim.test.ts` (no intake in seasons seven and eight, every org of the wave in at nine, no
+  wave org gives its seat, one wave only; the anchor pass seats the rosters at that preseason only).
+- Gates: typecheck and lint clean, full suite 2129 passed / 31 skipped (170 files), career static
+  export built. The wave's effect on seasons nine and ten was still being measured at publish
+  (paired arms on NA / EU / SAM, Normal and Hard): F6-EXPERIMENTOS.md 7.11.
+
+### Balance — rc.39 (rc.37 F6), the approved package (published to staging in rc.39; BALANCE_VERSION 16)
+- **Renewals climb in larger steps** (R100): `CAREER_SALARY.renewalMaxJump` 2.5 → **4.0**,
+  `CAREER_RENEWAL_TENURE.jumpMax` 3.0 → **5.0**. A developed prospect renewed at 2–5 % of his
+  market ask; the youth path won 52 % of Normal careers against 0–5 % for any other style.
+- **Flatter ask curve** (R100): `CAREER_SALARY.growthPerPoint` 1.20 → **1.17** (an 85 asks −31 %,
+  a 90 −40 %, a 65 +13 %; values and fees follow, coaches keep their curve). Signed deals do not change.
+- **Easy regions start slower** (R101): `CAREER_REGION_FIELD.starterOvrOffset` SSA −4 / APAC −3 /
+  OCE −2 (new careers only) and `.shift` SSA +2.0 / APAC +1.5 / OCE +0.5 on qualifier and regional
+  AI sides (from the next regional event of a save there). EU, NA, SAM and MENA unchanged.
+- Measured paired with the 06/11 battery (Normal, 147 careers, arms P1 + P2): youth 52 % → 38 %
+  Worlds titles, buying 0 % → 24 %, overall title 16 % → 15 %, Major 20 % → 24 %, bankruptcies
+  3 % → 2 %; first Worlds of SSA and APAC S2 → S3.
+- Tests re-pinned on purpose: the renewal ladder (`rc37F1.test.ts`), the Prospects headliner reads the
+  region offset (`rc35FrontC.test.ts`), contract e2's snowball brake is now ≤ 2 × three 85s' wages
+  (was 1.5 ×: an 85 is 31 % cheaper), and the emergency-sale share tolerates one rounding step
+  (`careerRc37Integration.test.ts`; the offer is priced before the day's growth, the test after).
+
+### Added / Changed / Fixed — rc.39 (rc.37 F6), round of 09–10/11 (published to staging in rc.39; BALANCE_VERSION 16)
+- **Chemistry by time together** (R102): past the two-split fast phase a pair keeps bonding
+  (`CAREER_CHEMISTRY.bondPerSplitTogether` 0.10) until heritage + connection fills it, and every official
+  series the fielded players play counts as time together (`officialSeriesCredit` 0.02). A trio from three
+  regions is no longer stuck at 67 %: Perfect about four seasons in. A newcomer inherits the fast phase
+  only, so swapping a starter of an old core costs 100 % → 78 %.
+- **A three-player squad is ruled out too; a reserve only signs in a transfer window** (R103): with a
+  starter out and nobody on the bench the team does not enter that event (hold card "Sit this event out",
+  the Market only while a window is open). First season exempt for a squad without a reserve; the rate is
+  4 % an official event (`unavailabilityEventMult` 4 → 2). EN/PT: the Squad screen's reserve slot, the help
+  entry, a club mail at the start of season two, the absence mail, the missed-event mail.
+- **Reputation in proportion to the org** (R104): `CAREER_REP.proportional` replaces the flat soft cap. A
+  contender (50–74) earns titles, Majors and the Worlds whole; an elite org (75+) stops earning from
+  qualifiers and regional places; a title never pays zero; the season's Worlds champion keeps his
+  reputation at a missed season goal.
+- **Psychologist** +3/+3 → +5/+5 for 4,500 a split (was 4,000); **championship briefing** "recover" final
+  0.4 → 0.6 (R105). Stale "+1 Clutch, +1 Consistency" strings corrected.
+- **Hard reads the package through its own scales** (R108): `jumpScaleByDifficulty.hard` 0.625 (rc.37's
+  renewal ladder) and `shiftScaleByDifficulty.hard` 0 (no stronger scene in the easy regions).
+- **Levers added, off**: `CAREER_DYNASTY` (the three strongest AI sides of the user's Major / Worlds rise
+  per recent Worlds title, R106) and `CAREER_REGION_FIELD.tierShift` (measured and rejected as the
+  chemistry counterpart).
+- Fixed (R107): the bank offered its ordinary loan with the balance already below $0, every cooldown, so a
+  structural deficit chained loans and never reached the counted emergency loan. Root cause: rc.37 F2's
+  offer read only the runway ("also when already negative") and `bankLoanRefusal` had no balance rule. Now
+  no voluntary loan — offer or request — while the balance is below $0 (`CAREER_BANK.blockedWhileNegative`).
+- Fixed (audit bots): no reserve ever signed and a Major slot held the clock (23 of 63 careers of the
+  first arm). Root cause: the cover routine filtered free agents by `cost === 0`, but a candidate's cost
+  includes his signing bonus. Candidates now carry `free`.
+- Tests: `rc39F6.test.ts` (chemistry, reputation, Hard scales), `careerRtw05.test.ts` (the reserve rule),
+  `careerRc37Finance.test.ts` and `economy.test.ts` re-pinned on purpose. Probe: the championship briefing
+  as a title chance (`f6Probes.test.ts`).
+- Measured (paired with the 06/11 battery; arms and tables in `docs/battery-rc37/F6-EXPERIMENTOS.md` Part 7).
+
+### Added / Fixed — rc.37 F6, balance experiments (branch `claude/rc37-balance`, no gameplay change yet)
+- **Experiment runner** `auditHumanExperiment.test.ts` (opt-in `HUMAN_EXPERIMENT=1`): plays chosen
+  battery cells under a balance patch applied in memory (strict deep merge: an unknown key fails),
+  battery-format JSONL, sharded and resumable. The integrated code reproduces the 06/11 battery
+  exactly (4 + 2 cells checked), so the battery's 4,914 controls are every experiment's paired control.
+- **Comparator** `auditHumanSummaryF6.mjs` (arm × battery control, by profile / family / region) and
+  **probes** `f6Probes.test.ts` (`F6_PROBE=1`, the psychologist priced in rating points by match.ts
+  Monte Carlo: +0.13–0.31).
+- **Levers, all off by default** (rc.37 values exactly; BALANCE_VERSION stays 15, fingerprint hash
+  only): `CAREER_RENEWAL_TENURE.valueFloorByRenewal` (a renewal floor the jump never caps),
+  `CAREER_REGION_FIELD` (`shift` on a region's qualifier/regional AI sides, carried in
+  difficultyShift; `starterOvrOffset` on its three founding offers), `CAREER_TITLE_DEFENSE`
+  (Worlds opponents per Worlds title the user holds).
+- Fixed (battery telemetry): qualifier rows all read "swiss_exit". Root cause: the audit placed
+  events with `tournament.userPlacement`, which only reads playoff runs; the game books a Swiss-only
+  qualifier with `careerResults.placementOf` ("top8" = through). Rows now carry `advanced`.
+- Fixed (battery telemetry): `season.training.prompts` read 0 everywhere. Root cause: since rc.36
+  (front T2) no proposal waits for approval; the bot now counts the manager's plan pick at a cycle
+  start. `unavailable` = 0 is correct: bot squads carry no reserve, and nobody is ruled out without one.
+- Results and the provisional package: `docs/battery-rc37/F6-EXPERIMENTOS.md`.
 ### Changed — rc.38.3 (2026-11-09), restore special photos
 
 - Miguel reverses rc.38's photo mask: special cards show their photos again

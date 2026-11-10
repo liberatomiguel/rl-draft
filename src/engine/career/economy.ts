@@ -1802,7 +1802,7 @@ export function bankInstalmentsLeft(loan: Pick<BankLoanState, "remaining" | "wee
   return Math.ceil(loan.remaining / Math.max(1, loan.weeklyPayment));
 }
 
-export type BankLoanRefusal = "active" | "backer" | "amount" | "limit";
+export type BankLoanRefusal = "active" | "backer" | "negative" | "amount" | "limit";
 
 /** Why a loan request would be refused right now (null = allowed). */
 export function bankLoanRefusal(
@@ -1813,6 +1813,8 @@ export function bankLoanRefusal(
 ): BankLoanRefusal | null {
   if (fin.bankLoan) return "active";
   if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
+  // rc.39 F6 (R107): in the red the only bank money is the emergency loan (counted).
+  if (CAREER_BANK.blockedWhileNegative && fin.balance < 0) return "negative";
   if (principal < bankMinAmountFor(seasonIndex) || principal !== quantize(principal)) return "amount";
   if (principal > bankLoanLimitFor(rep, seasonIndex)) return "limit";
   return null;
@@ -2219,9 +2221,25 @@ export function unlocksFor(rep: number): {
   };
 }
 
-/** Rep gain for one achievement kind; gains halve (rounded up) at the soft cap. */
+/** The org's size for reputation (R104): how many `proportional.tierAt` gates its reputation has passed. */
+export function repTierFor(currentRep: number): number {
+  return CAREER_REP.proportional.tierAt.filter((gate) => currentRep >= gate).length;
+}
+
+/**
+ * Rep gain for one achievement kind. rc.39 F6 (R104): in proportion to the
+ * org — full for a result at or above its tier, `belowFactor` (rounded up)
+ * one level below, nothing further down; a title never under `titleFloor`.
+ * `proportional.enabled` false = rc.38: gains halve (rounded up) at the soft cap.
+ */
 export function repGainFor(kind: keyof typeof CAREER_REP.gains, currentRep: number): number {
   const base = CAREER_REP.gains[kind];
+  const P = CAREER_REP.proportional;
+  if (P.enabled) {
+    const gap = repTierFor(currentRep) - (P.level[kind] ?? 0);
+    const scaled = gap <= 0 ? base : gap === 1 ? Math.ceil(base * P.belowFactor) : 0;
+    return base > 0 && P.titles.includes(kind) ? Math.max(P.titleFloor, scaled) : scaled;
+  }
   if (currentRep >= CAREER_REP.softCapAt) {
     return Math.ceil(base * CAREER_REP.softCapFactor);
   }

@@ -7,6 +7,7 @@ import { gearBuffLevels, gearTrainingBonus } from "@/engine/career/economy";
 import { briefingEffectOf } from "@/engine/career/sunday";
 import { coachProfileOf, packageEffectFor, paidSessionMultFor } from "@/engine/career/training";
 import { userPlacement } from "@/engine/tournament";
+import { placementOf } from "@/engine/career/careerResults";
 import type { CareerSave, SundayBriefingChoice } from "@/engine/career/types";
 import { userTeamFor } from "@/engine/career/worldSim";
 import type { StatKey, Stats } from "@/engine/types";
@@ -39,6 +40,8 @@ export interface AuditEvent extends Stamp {
   id: string; tier: string; placement: string; swissWins: number; playoffWins: number;
   /** rc.37: Swiss losses, and what the settlement paid: reputation delta, prize booked, the players' share (the rep / prize probes). */
   swissLosses?: number; repBefore?: number; repDelta?: number; prize?: number; playerShare?: number;
+  /** rc.37 F6: a qualifier (Swiss-only) says whether the user went through to Sunday (its placement "top8"). */
+  advanced?: boolean;
 }
 
 /** Same-day marginal training gain at the actual player's current split/season/potential caps.
@@ -166,8 +169,11 @@ export function humanTelemetry(initial?: TelemetryState) {
       if (swiss.some(r => r.winnerTeamId === "user")) mark("swissWin", s);
       if (ev.tournament.playoffs?.seeds.includes("user")) mark("playoffs", s);
     }
+    // rc.37 F6: a Swiss-only qualifier places like the game books it (careerResults.placementOf:
+    // "top8" = through, "swiss_exit" = out); tournament.userPlacement reads every Swiss-only row as an exit.
+    const placement = ev.tournament.swissOnly ? placementOf(ev.tournament, "user") : userPlacement(ev.tournament);
     events.push({ ...auditStamp(s), id: ev.def.id, tier: ev.def.tier,
-      placement: userPlacement(ev.tournament),
+      placement, ...(ev.def.tier === "qualifier" ? { advanced: placement !== "swiss_exit" } : {}),
       swissWins: swiss.filter(r => r.winnerTeamId === "user").length,
       playoffWins: playoffs.filter(r => r.winnerTeamId === "user").length,
       swissLosses: swiss.filter(r => r.winnerTeamId && r.winnerTeamId !== "user").length });

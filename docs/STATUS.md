@@ -1,20 +1,21 @@
 # Project Status — current state only
 
-> Updated: **2026-11-09**. History: CHANGELOG.md; plan: ROADMAP.md; career
+> Updated: **2026-11-10**. History: CHANGELOG.md; plan: ROADMAP.md; career
 > round: ROADMAP-NEXT-2026-11-05.md. Career map: ROAD-TO-WORLDS-STATUS.md.
 
 ## Current builds
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.38.3** = rc.37 plus cosmetic / reward
-  presentation corrections and draft header ordering (CHANGELOG; UNLOCK-COPY-AUDIT-rc38;
-  SPECIAL-CARDS-MISSING-rc38). Career on, noindex, preview tools on,
-  analytics/accounts off in the isolated QA export. Special-card photos show
-  during drafts again, including hidden-overall runs (rc.38.3).
+- Season 1 candidate: staging, **v2.0.0-rc.39** = rc.38.3 (cosmetic / reward
+  presentation, draft header, special photos back in drafts) plus the career's
+  F6 balance package (R100–R108, BALANCE_VERSION 16) and the RLCS 2027 wave at
+  season nine of the infinite era (R109). Career on, noindex, preview tools on,
+  analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
-- F6 balancing: branch `claude/rc37-balance`, cut from staging rc.37. No
-  balance change reaches staging before Miguel approves the package.
+- rc.39 is one merge commit on `staging` (branch `claude/rc37-balance`): it is
+  undone with `git revert -m 1 <merge>` and a push, or by a rollback of the
+  `rocket-draft-staging` Worker's deployment. Saves stay readable either way.
 
 ## Current evidence
 
@@ -29,25 +30,27 @@
   `docs/battery-rc37/RELATORIO-COMPLETO.md` (tables `rc37-tabelas.md`, cells
   `rc37-cells.csv`); raw JSONL `C:/Users/Miguel/CLAUDE/rc37-battery/run1`.
   Findings: youth profiles dominate titles; Worlds reach 6 % (EU) to 93 %
-  (SSA); bimodal funnel; renewals p50 0.61 of market; chemistry stuck at
-  67 %; reputation saturates at 100; the psychologist adds 0 rating.
-  Insolvency 2 / 7 / 21 % (on target).
-- BALANCE_VERSION **15**: rc.36.16's daily-only calibration plus the rc.37
-  career tunables (both sides had bumped to 14). Saves additive only; persist
-  keys/versions frozen.
-- Merge gates (rc.38.1): typecheck and lint clean; full suite 2117 passed /
-  28 skipped (167 files), including visibility and manual-title appearance
-  regressions. Staging export validated (all 1073 image URLs). rc.38 real-flow
-  captures remain historical evidence; no new captures requested for rc.38.1.
-- UI rc.38.2: 3 existing season-header tests, typecheck, lint and staging
-  export passed; no new captures. Engine/balance unchanged.
-- UI rc.38.3: 19 card visibility/frame tests, typecheck, lint and staging
-  export passed. Photos restored; hidden overall remains `??`. No captures.
+  (SSA); insolvency 2 / 7 / 21 % (on target).
+- BALANCE_VERSION **16** (rc.39: the F6 career package; 15 was rc.36.16's
+  daily-only calibration plus the rc.37 career tunables). Saves additive only;
+  persist keys/versions frozen.
+- UI rc.38–38.3: typecheck, lint, suite and staging export passed (all 1073
+  image URLs); no new captures. Details: CHANGELOG.
+- rc.39 gates: typecheck, lint, full suite 2129 passed / 31 skipped (170
+  files), career static export built. No browser check of the new screens.
+- F6 (09–10/11, published in rc.39): the approved package applied (renewal
+  jumps ×4/×5, wage curve 1.17, slower easy regions) plus chemistry by time,
+  the reserve rule, proportional reputation, psychologist, briefing, the bank
+  fix and Hard's own scales (R100–R108). Validated on seed 17019, 147 careers
+  a difficulty, paired with the battery. Report: F6-EXPERIMENTOS.md Part 7.
 
 ## Open, in order
 
-1. **F6 balancing** on `claude/rc37-balance`: controlled experiments on the
-   measured bottlenecks (renewals first), then a package for Miguel.
+1. **F6 on staging (rc.39):** Miguel plays it (NA / EU / SAM, Normal and Hard
+   first) and answers F6-EXPERIMENTOS.md 7.9 and 7.11 (the pace to a Worlds
+   title in the main regions). Not checked in the app: the reserve slot text,
+   the "No reserve" hold card, the bank refusal. Design proposals for 2.0.1
+   (reputation ladder, a second sponsor, endgame): Part 8.
 2. Miguel's review of the rc.37 handoffs' open points (`HANDOFF-rc37-*.md`:
    F1 10(a)–(g), F2 10(a)–(e), F3 in play); F5 approval before any code.
 3. Gate 2 play and ENG-03 real-save fixtures. Gate 3b progression/economy

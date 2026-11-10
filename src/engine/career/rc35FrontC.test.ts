@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_DEV, CAREER_WORLD } from "@/config/balance";
+import { CAREER_DEV, CAREER_REGION_FIELD, CAREER_WORLD } from "@/config/balance";
 import type { Region } from "../types";
 import { playerViewById, scoutedBand } from "./development";
 import { buildWorldAtCreation, starterRosterOffers } from "./worldSim";
@@ -19,11 +19,13 @@ describe("rc.35 — the Prospects offer has one headliner above 90", () => {
     for (let seed = 1; seed <= 300; seed++) {
       for (const region of REGIONS) {
         const prospects = starterRosterOffers(region, seed * 7919).find((o) => o.key === "prospects")!.players;
-        const above = prospects.filter((p) => p.potential > 90);
+        // rc.39 F6 (R101): an easy region moves the whole founder, the headliner's ceiling included.
+        const offset = CAREER_REGION_FIELD.starterOvrOffset[region];
+        const above = prospects.filter((p) => p.potential > 90 + offset);
         expect(above).toHaveLength(1);
-        expect(above[0].potential).toBeLessThanOrEqual(hi);
+        expect(above[0].potential).toBeLessThanOrEqual(hi + offset);
         // Not a ready star: the offer's overall, years of growth to the ceiling.
-        expect(above[0].overall).toBeLessThanOrEqual(68);
+        expect(above[0].overall).toBeLessThanOrEqual(68 + offset);
         expect(above[0].age).toBeLessThanOrEqual(17);
         seen.add(prospects.indexOf(above[0]));
       }

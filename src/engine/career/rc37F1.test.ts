@@ -401,18 +401,22 @@ const renewer = (over: Partial<Renewer> = {}): Renewer => ({
 });
 
 describe("rc.37 F1 — renewals approach the market with his seasons at the club", () => {
-  it("the ladder: rc.36 for a first renewal at any tenure and while tenure ≤ 2; then the jump ×2.75 / ×3.0 (the floor stays 0.6)", () => {
+  it("the ladder: the first-renewal rule at any tenure and while tenure ≤ 2; then the jump climbs a step a season to jumpMax (the floor stays 0.6)", () => {
     const R = CAREER_RENEWAL_TENURE;
+    // rc.39 F6 (R100): ×4.0 first, then ×4.25 … ×5.0 (rc.37: ×2.5, ×2.75, ×3.0).
+    expect(S.renewalMaxJump).toBe(4);
+    expect(R.jumpMax).toBe(5);
     for (let t = 0; t <= 8; t++) {
-      expect(renewalLadderFor({ joinedSeason: 10 - t, renewalCount: 0 }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: 2.5 });
-      expect(renewalLadderFor({ joinedSeason: 10 - t }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: 2.5 });
+      expect(renewalLadderFor({ joinedSeason: 10 - t, renewalCount: 0 }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: S.renewalMaxJump });
+      expect(renewalLadderFor({ joinedSeason: 10 - t }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: S.renewalMaxJump });
     }
     const rows: [number, number, number][] = [
-      [2, 0, 2.5],
-      [3, 1, 2.75],
-      [4, 2, 3.0],
-      [5, 3, 3.0],
-      [8, 6, 3.0],
+      [2, 0, 4.0],
+      [3, 1, 4.25],
+      [4, 2, 4.5],
+      [5, 3, 4.75],
+      [6, 4, 5.0],
+      [8, 6, 5.0],
     ];
     for (const [tenure, steps, jump] of rows) {
       const l = renewalLadderFor({ joinedSeason: 10 - tenure, renewalCount: 1 }, 10);
@@ -425,7 +429,7 @@ describe("rc.37 F1 — renewals approach the market with his seasons at the club
     }
   });
 
-  it("protection: a first renewal prices exactly as rc.36 (floor 60 %, ×2.5), whatever his tenure", () => {
+  it("protection: a first renewal prices on the first-renewal rule (floor 60 %, renewalMaxJump), whatever his tenure", () => {
     for (const salary of [500, 3_000, 9_000, 20_000]) {
       for (const tenure of [0, 3, 6]) {
         const terms = renewalTermsFor(renewer({ salaryPerSplit: salary, joinedSeason: 6 - tenure }), renewCtx(6));
@@ -442,12 +446,13 @@ describe("rc.37 F1 — renewals approach the market with his seasons at the club
     const core = renewalTermsFor(renewer(), renewCtx(6)).freshAsk;
     const at = (tenure: number, salary: number) =>
       renewalTermsFor(renewer({ salaryPerSplit: salary, joinedSeason: 6 - tenure, renewalCount: 1 }), renewCtx(6));
-    // 1 % of his market (a formed prospect): the jump bounds it (×3.0 from 2 steps; rc.36 ×2.5).
+    // 1 % of his market (a formed prospect): the jump bounds it (rc.39: ×4.5 from 2 steps, ×4.0 protected).
     const tiny = Math.max(250, quantize(core * 0.01));
+    const J = S.renewalMaxJump, step = CAREER_RENEWAL_TENURE.jumpPerSeason;
     expect(at(4, tiny).bound).toBe("jump");
-    expect(at(4, tiny).ask).toBe(quantize(tiny * 3));
-    expect(at(3, tiny).ask).toBe(quantize(tiny * 2.75));
-    expect(at(0, tiny).ask).toBe(quantize(tiny * 2.5));
+    expect(at(4, tiny).ask).toBe(quantize(tiny * (J + 2 * step)));
+    expect(at(3, tiny).ask).toBe(quantize(tiny * (J + step)));
+    expect(at(0, tiny).ask).toBe(quantize(tiny * J));
     // An ordinary player on half his market: rc.36's rule at any tenure (the raise cap, ×1.75).
     const half = quantize(core * 0.5);
     for (const t of [0, 3, 5, 8]) expect(at(t, half).ask).toBe(Math.min(core, quantize(half * S.renewalRaiseCap)));
@@ -462,7 +467,7 @@ describe("rc.37 F1 — renewals approach the market with his seasons at the club
     }
   });
 
-  it("the top's extremes: no renewal multiplies a wage by more than jumpMax × premiumMax (×4.35; rc.36 ×4.47)", () => {
+  it("the top's extremes: no renewal multiplies a wage by more than jumpMax × premiumMax (rc.39 ×7.25; rc.37 ×4.35)", () => {
     const R = CAREER_RENEWAL_TENURE;
     for (const rep of [10, 30, 50, 80]) {
       for (const share of [0.01, 0.1, 0.4, 1]) {

@@ -29,6 +29,8 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CHEMISTRY,
+  CAREER_DYNASTY,
   CAREER_CONTRACT,
   CAREER_DEV,
   CAREER_GEAR,
@@ -1514,7 +1516,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
     for (const s of due) {
       // RTW-05 (rc.33 review): a squad under three never scrims — the booking
       // is called off, and the feed says so.
-      if (squadIsShort(save)) {
+      if (rosterIsShort(save)) {
         pushNews(save, {
           type: "training",
           priority: 2,
@@ -1632,9 +1634,17 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   if (!rng.chance(chance)) return;
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
   if (starters.length < LINEUP_SEATS) return;
-  // RTW-05 (rc.33): a reserve covers the ruled-out starter; with no reserve
-  // nobody is ruled out — no lineup ever drops below three.
-  if (!save.squad.some((p) => !save.starterIds.includes(p.id))) return;
+  // RTW-05 (rc.33): a reserve covers the ruled-out starter. rc.39 F6 (R103):
+  // without one the starter is ruled out all the same and the lineup is short
+  // for this event (squadIsShort) — except in a career's first season(s), and
+  // under "immune" (rc.38: with no reserve nobody is ruled out).
+  const hasReserve = save.squad.some((p) => !save.starterIds.includes(p.id));
+  if (
+    !hasReserve &&
+    (CAREER_WORLD.unavailabilityWithoutReserve !== "short" || seasonIndex < CAREER_WORLD.unavailabilityNoReserveGraceSeasons)
+  ) {
+    return;
+  }
   const victim = rng.pick(starters);
   save.flags[usedKey] = true;
   save.pendingUnavailability = { playerId: victim.id, eventId: def.id };
@@ -1649,7 +1659,7 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   pushMail(save, {
     kind: "club",
     titleKey: "unavailable",
-    bodyKey: "unavailable",
+    bodyKey: hasReserve ? "unavailable" : "unavailableNoReserve",
     params: { player: victim.name, event: def.name },
     fromKey: "staff",
     linkTo: "/career/squad",
@@ -2793,6 +2803,7 @@ export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResu
   const refusal = bankLoanRefusal(save.finances, save.reputation, amount, save.clock.seasonIndex);
   if (refusal === "active") return { save: input, error: "bankActive" };
   if (refusal === "backer") return { save: input, error: "bankBacker" };
+  if (refusal === "negative") return { save: input, error: "bankNegative" };
   if (refusal === "amount") return { save: input, error: "bankAmount" };
   if (refusal === "limit") return { save: input, error: "bankLimit" };
   save.finances = takeBankLoan(save.finances, amount, {
@@ -3244,8 +3255,28 @@ export function ruledOutFor(save: CareerSave, def: Pick<CareerEventDef, "id">): 
   if (!u || u.eventId !== def.id) return null;
   const player = save.squad.find((p) => p.id === u.playerId) ?? null;
   if (!player || !save.starterIds.includes(player.id)) return player;
-  const covered = save.squad.some((p) => p.role === "sub" && p.id !== player.id && !save.starterIds.includes(p.id));
-  return covered ? player : null;
+  // rc.39 F6 (R103): under "short" he is out with or without a reserve (the lineup is then short).
+  return reserveCovers(save, player.id) || CAREER_WORLD.unavailabilityWithoutReserve === "short" ? player : null;
+}
+
+/** A registered reserve who can take `playerId`'s seat (userTeamFor's rule). */
+function reserveCovers(save: CareerSave, playerId: string): boolean {
+  return save.squad.some((p) => p.role === "sub" && p.id !== playerId && !save.starterIds.includes(p.id));
+}
+
+/**
+ * rc.39 F6 (R103): the starter ruled out of the committed event with no
+ * reserve to take his seat — the lineup is short for that event. Null under
+ * "immune", once a reserve signs, and for any event but the pending one (a
+ * stale flag never holds the clock).
+ */
+export function uncoveredAbsenceOf(save: CareerSave): SquadPlayer | null {
+  const u = save.pendingUnavailability;
+  if (!u || CAREER_WORLD.unavailabilityWithoutReserve !== "short") return null;
+  if (save.pendingEventDef?.id !== u.eventId && save.activeEvent?.def.id !== u.eventId) return null;
+  const player = save.squad.find((p) => p.id === u.playerId) ?? null;
+  if (!player || !save.starterIds.includes(player.id)) return null;
+  return reserveCovers(save, player.id) ? null : player;
 }
 
 /**
@@ -3255,6 +3286,11 @@ export function ruledOutFor(save: CareerSave, def: Pick<CareerEventDef, "id">): 
  * agent into the empty seat is signable at any time, `signingPlanFor`).
  */
 export function squadIsShort(save: CareerSave): boolean {
+  return rosterIsShort(save) || uncoveredAbsenceOf(save) !== null;
+}
+
+/** Fewer than three players under contract (the absence of a starter aside): no scrim either. */
+export function rosterIsShort(save: CareerSave): boolean {
   return save.squad.length < LINEUP_SEATS;
 }
 
@@ -3283,7 +3319,10 @@ export function squadHoldFor(save: CareerSave): CareerEventDef | null {
  */
 export function canSkipShortSquadEvent(save: CareerSave): boolean {
   const def = squadHoldFor(save);
-  return def !== null && (def.tier === "regional" || def.tier === "qualifier");
+  if (def === null) return false;
+  // rc.39 F6 (R103): a starter ruled out with no reserve — the team does not enter, whatever the event.
+  if (!rosterIsShort(save) && uncoveredAbsenceOf(save)) return true;
+  return def.tier === "regional" || def.tier === "qualifier";
 }
 
 /**
@@ -3304,7 +3343,7 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
   pushNews(save, {
     type: "org",
     priority: 2,
-    titleKey: "regionalSkipped",
+    titleKey: rosterIsShort(save) ? "regionalSkipped" : "eventMissedNoReserve",
     params: { org: save.identity.orgName, event: regional?.name ?? def.name, n: save.squad.length },
   });
   // rc.34 review: skipped ON its day, the event was already passed over by this
@@ -3314,10 +3353,18 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
   return { save: capNews(save) };
 }
 
+/** rc.39 F6 (R106): the Worlds titles of the last CAREER_DYNASTY.windowSeasons finished seasons. */
+function recentWorldsTitlesOf(save: CareerSave): number {
+  const from = save.clock.seasonIndex - CAREER_DYNASTY.windowSeasons;
+  return save.history.filter((h) => h.seasonIndex >= from && h.userWorldsPlacement === "champion").length;
+}
+
 export function eventFieldFor(save: CareerSave, def: CareerEventDef): ReturnType<typeof fieldForEvent> {
   return fieldForEvent(def, {
     world: save.world, competition: save.competition, userTeam: userTeamForEvent(save, def).team,
     userRegion: save.identity.region, careerSeed: save.careerSeed, difficulty: save.difficulty, userPrestige: repTierOf(save.reputation),
+    userWorldsTitles: save.stats.titlesWorlds,
+    userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
 }
 
@@ -3339,6 +3386,8 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
   if (save.clock.day !== def.day) return save;
   // RTW-05 (rc.33): never with fewer than three players (no stand-in).
   if (save.squad.length < (def.teamSize ?? LINEUP_SEATS)) return input;
+  // rc.39 F6 (R103): nor with a starter ruled out and no reserve to take his seat.
+  if (!def.teamSize && uncoveredAbsenceOf(save)) return input;
 
   const { team, fieldedIds } = userTeamForEvent(save, def);
   const { field, fieldQuality } = fieldForEvent(def, {
@@ -3349,6 +3398,8 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
     userPrestige: repTierOf(save.reputation),
+    userWorldsTitles: save.stats.titlesWorlds,
+    userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
   const tournament = initFieldTournament(field, def.format, rng);
@@ -3661,6 +3712,14 @@ export function finishEvent(input: CareerSave): CareerSave {
     }
   }
 
+  // rc.39 F6 (R102): official series played together are time together too.
+  if (CAREER_CHEMISTRY.officialSeriesCredit > 0 && !def.teamSize && def.tier !== "t3" && def.tier !== "t2") {
+    const credit = seriesPlayed * CAREER_CHEMISTRY.officialSeriesCredit;
+    for (const p of save.squad) {
+      if (fielded.includes(p.id)) p.splitsTogether = Math.round((p.splitsTogether + credit) * 1e4) / 1e4;
+    }
+  }
+
   // Lifetime stats from the user's series.
   accumulateStats(save, ev.tournament);
   if (placement === "champion") {
@@ -3885,7 +3944,9 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
     const repBefore = save.reputation;
     save.reputation = seasonGoalReputationAfter(repBefore, met, save.seasonGoals.stretchMet === true);
     announceUnlockCrossings(save, repBefore);
-    if (!met && save.seasonGoals.repRisk > 0) {
+    // rc.39 F6 (R104): the season's Worlds champion never loses reputation to the goal he missed.
+    const champion = CAREER_REP.proportional.championKeepsGoalRep && userWorlds === "champion";
+    if (!met && save.seasonGoals.repRisk > 0 && !champion) {
       loseRep(save, save.seasonGoals.repRisk, "repDown");
     }
   }
@@ -4115,6 +4176,15 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   save.lastBidDay = -99;
   save.clock = { seasonIndex: nextSeason, day: 1 };
   save.phase = "running";
+  // rc.39 F6 (R103): the season the no-reserve rule starts, a squad without a reserve is told once.
+  if (
+    CAREER_WORLD.unavailabilityWithoutReserve === "short" &&
+    nextSeason === CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
+    nextSeason > 0 &&
+    !save.squad.some((p) => !save.starterIds.includes(p.id))
+  ) {
+    pushMail(save, { kind: "club", titleKey: "noReserve", bodyKey: "noReserve", params: {}, fromKey: "staff", linkTo: "/career/squad" });
+  }
   save.finances.freeBootcampsUsedThisSeason = 0;
   // rc.34 review: a camp bought in W31–32 is last season's — the new season's first split may run one.
   save.finances.bootcampUsedThisSplit = false;
@@ -4846,7 +4916,9 @@ export function signingPlanFor(
   // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat
   // at any time; otherwise signings happen in a window (rc.33, ECO-12: rc.32's
   // late signing is gone).
-  const emptySeat = outsideWindow && squadIsShort(save) && !opts.releaseId;
+  // rc.39 F6 (R103, Miguel 10/11): a starter ruled out is NOT an empty seat — a reserve signs in a
+  // transfer window like anyone else; without one the team sits that event out.
+  const emptySeat = outsideWindow && rosterIsShort(save) && !opts.releaseId;
   if (outsideWindow && !emptySeat) return { error: "windowClosed" };
   if (save.squad.some((p) => p.id === playerId)) return { error: "alreadySigned" };
   const leaver = opts.releaseId ? (save.squad.find((p) => p.id === opts.releaseId) ?? null) : null;
@@ -4902,7 +4974,7 @@ export function signingPlanFor(
   // into an empty seat skips the money checks — but only one who costs no
   // more, upfront and in wages, than the cheapest free agent it may sign
   // (`emptySeatPriceFor`); anyone dearer goes through the normal checks.
-  const seatPrice = !onOrg && !leaver && squadIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
+  const seatPrice = !onOrg && !leaver && rosterIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
   // rc.36 (front S2, rc.35-(d)): the waiver counts the bonus offered (CAREER_NEGOTIATION.emptySeatCountsOfferedBonus).
   const waiverCost = CAREER_NEGOTIATION.emptySeatCountsOfferedBonus ? cost : pack.fee + pack.signingBonus + severance;
   const fillsEmptySeat =
@@ -5437,7 +5509,7 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
   if (save.phase !== "running" || save.activeEvent) return "blocked";
   // RTW-05 (rc.33 review): a squad under three never scrims — an empty seat
   // rated 0 earned the two players chemistry and XP as if they had a lineup.
-  if (squadIsShort(save)) return "squadShort";
+  if (rosterIsShort(save)) return "squadShort";
   if (!CAREER_SCRIM.weekdays.includes(dow)) return "restDay";
   if (save.scrimsThisWeek >= CAREER_SCRIM.maxPerWeek) return "used";
 

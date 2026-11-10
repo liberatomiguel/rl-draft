@@ -13,7 +13,6 @@ import {
   CAREER_COACH_MARKET,
   CAREER_DEV,
   CAREER_SALARY,
-  CAREER_SEASONS,
   CAREER_TALENT,
   CAREER_TRANSFER,
   CAREER_VALUATION,
@@ -22,7 +21,7 @@ import {
 import { lineups, playerById, playerCardById } from "@/data";
 import { createRng } from "@/lib/rng";
 import type { Region, StatKey } from "../types";
-import { weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
+import { intakeSeasonIdFor, weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
 import {
   ageOf,
   anchorOverall,
@@ -460,8 +459,9 @@ export function resaleLocked(
 
 /** This season's real dataset lineups (the anchor targets). Empty when infinite. */
 function anchorLineupsFor(seasonIndex: number): { orgId: string; playerIds: string[] }[] {
-  if (seasonIndex >= CAREER_SEASONS.length) return [];
-  const seasonId = CAREER_SEASONS[seasonIndex].seasonId;
+  // rc.39 (R109): the late wave (RLCS 2027) anchors at its infinite-era season.
+  const seasonId = intakeSeasonIdFor(seasonIndex);
+  if (!seasonId) return [];
   return lineups
     .filter((l) => l.seasonId === seasonId && !l.rareSpawn)
     .map((l) => ({
@@ -663,7 +663,7 @@ export function aiWindowMoves(
     });
   };
 
-  if (ctx.isPreseason && !ctx.infinite) {
+  if (ctx.isPreseason && (!ctx.infinite || intakeSeasonIdFor(ctx.seasonIndex) !== null)) {
     // --- Anchor pass: history wants its rosters back -----------------------
     for (const anchor of anchorLineupsFor(ctx.seasonIndex)) {
       const org = next.orgs[anchor.orgId];

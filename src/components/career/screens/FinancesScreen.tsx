@@ -288,9 +288,10 @@ function BankSchedule({ loan, clock }: { loan: BankLoanState; clock: { seasonInd
 }
 
 /** ECO-02 (R46): the flow's own refusal (bankLoanRefusal) → the error string the flow returns. */
-const BANK_REFUSAL_COPY: Record<BankLoanRefusal, "bankActive" | "bankBacker" | "bankAmount" | "bankLimit"> = {
+const BANK_REFUSAL_COPY: Record<BankLoanRefusal, "bankActive" | "bankBacker" | "bankNegative" | "bankAmount" | "bankLimit"> = {
   active: "bankActive",
   backer: "bankBacker",
+  negative: "bankNegative",
   amount: "bankAmount",
   limit: "bankLimit",
 };
@@ -327,7 +328,7 @@ function BankLoanRequest({
   if (limit < minAmount) {
     return <p className="mt-2 text-xs text-faint">{C.finances.bankLockedRep}</p>;
   }
-  if (refusal === "active" || refusal === "backer") {
+  if (refusal === "active" || refusal === "backer" || refusal === "negative") {
     return (
       <p className="mt-2 text-xs font-semibold text-faint">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
     );

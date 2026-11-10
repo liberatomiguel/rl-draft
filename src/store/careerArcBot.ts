@@ -61,6 +61,9 @@ import {
   signPlayerFlow,
   simEventToEnd,
   squadIsShort,
+  canSkipShortSquadEvent,
+  skipShortSquadEventFlow,
+  uncoveredAbsenceOf,
   startEvent,
   takeBankLoanFlow,
   userSeedRatingFor,
@@ -776,6 +779,19 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   while (moneyNoticeOf(save)) save = acknowledgeMoneyNoticeFlow(save);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
+  // rc.39 F6 (R103): a starter ruled out with no reserve — the cheapest free agent signs as one
+  // (never refused for money), else a regional or its qualifier is sat out.
+  if (!save.activeEvent && save.phase === "running" && uncoveredAbsenceOf(save)) {
+    const cheapest = [...candidatesFor(save)].sort(
+      (a, b) => a.cost - b.cost || a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall,
+    );
+    // Miguel (10/11): a reserve only signs in a window; outside one the event is sat out.
+    for (const c of isWindowWeek(weekOfDay(save.clock.day)) ? cheapest.slice(0, 6) : []) {
+      if (!uncoveredAbsenceOf(save)) break;
+      save = sign(save, c, t) ?? save;
+    }
+    if (uncoveredAbsenceOf(save) && canSkipShortSquadEvent(save)) save = skipShortSquadEventFlow(save).save;
+  }
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
   if (save.activeEvent) {
     save = simEventToEnd(save);

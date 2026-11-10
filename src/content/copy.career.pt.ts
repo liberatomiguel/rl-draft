@@ -392,6 +392,13 @@ export const CAREER_PT: CareerCopy = {
     squadShortTitle: "Contrate um jogador",
     squadShortBody: (n: number, event: string) =>
       `Só ${n} de 3 vagas estão preenchidas, e nenhum evento é disputado com time incompleto. O relógio espera antes de ${event} até um terceiro jogador assinar — um agente livre pode ocupar a vaga hoje, com ou sem janela.`,
+    // rc.39 F6 (R103): titular indisponível e sem reserva — a mesma pausa, com o texto certo.
+    squadShortAbsentTitle: "Sem reserva",
+    squadShortAbsentBody: (player: string, event: string) =>
+      `${player} está fora de ${event} e ninguém cobre a vaga. Nenhum evento é disputado com time incompleto, e reserva só assina na janela de transferências: sem reserva, o time não joga.`,
+    squadShortAbsentSkip: "Ficar fora deste evento",
+    squadShortAbsentSkipHint: (event: string) =>
+      `${event}: sem inscrição, sem pontos, sem prêmio. Contrate um reserva na próxima janela para isso não se repetir.`,
     squadShortMarket: "Ir ao Mercado",
     squadShortSquad: "Elenco",
     contractsExpiring: (n: number) => (n === 1 ? "1 contrato termina nesta temporada — renove ou deixe vencer." : `${n} contratos terminam nesta temporada — renove ou deixe vencer.`),
@@ -426,7 +433,7 @@ export const CAREER_PT: CareerCopy = {
     edgesEmpty: "Ainda sem vantagens — coaches, equipamentos e patrocínios abrem com reputação.",
     edgeCoach: (name: string, pct: number) => `${name} · ${pct > 0 ? "+" : ""}${pct}% de treino`,
     edgeGear: (name: string, pct: number) => `${name} · +${pct}% de treino`,
-    edgePsych: "Psicólogo · +1 Clutch, +1 Consistência",
+    edgePsych: "Psicólogo · +5 Clutch, +5 Consistência",
     edgeSharp: "Bootcamp Sharp · armado para o próximo oficial",
     edgeSponsor: (tier: number) => `Vantagens do patrocínio tier ${tier}`,
     autoplayOn: "Autoplay ligado — pausa na próxima parada",
@@ -599,6 +606,7 @@ export const CAREER_PT: CareerCopy = {
       unlock: (p: Record<string, string | number>) => `Novidade para a org: ${p.name}`,
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas`,
       unavailable: (p: Record<string, string | number>) => `${p.player} fora de ${p.event}`,
+      noReserve: () => `Elenco sem reserva`,
       debtCleared: () => `Empréstimo emergencial quitado`,
       // DEV-02 (R48): o aposentado do próprio elenco — para onde ele foi.
       retiredToCoach: (p: Record<string, string | number>) => `${p.player} se aposenta — e vira treinador`,
@@ -716,6 +724,10 @@ export const CAREER_PT: CareerCopy = {
         `A janela fechou — ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
       unavailable: (p: Record<string, string | number>) =>
         `${p.player} não joga ${p.event} — o reserva assume a vaga com a química dele.`,
+      unavailableNoReserve: (p: Record<string, string | number>) =>
+        `${p.player} não joga ${p.event}, e o elenco não tem reserva para a vaga. Reserva só assina na janela de transferências: se nenhuma abrir antes do evento, o time não joga.`,
+      noReserve: () =>
+        `A partir desta temporada um titular pode ficar fora de um evento oficial: visto, saúde, vida. Com um reserva, ele entra. Sem reserva, o time não joga aquele evento. Reserva só assina na janela de transferências, e um agente livre modesto no banco já resolve.`,
       // rc.34 review: com o que a próxima quebra faz (o último empréstimo da carreira quitado: o fim) — um e-mail antigo lê como saiu.
       debtCleared: (p: Record<string, string | number> = {}) =>
         `O empréstimo emergencial está quitado, e o prazo deixou de existir — a org volta a ser dona do próprio futuro. ${p.next === undefined ? "A porta do banco segue aberta." : nextBreachPt(p)}`,
@@ -831,7 +843,7 @@ export const CAREER_PT: CareerCopy = {
     coachSlot: "Coach",
     staffRow: "Staff & boosts",
     hire: "Contratar",
-    emptySub: "Sem sub — ninguém fica de fora sem ele, mas um reserva dá profundidade ao rating do time.",
+    emptySub: "Sem reserva. Um titular pode ficar fora de um evento oficial (nunca na sua primeira temporada), e sem reserva o time não joga esse evento. Reserva só assina na janela de transferências.",
     emptyCoach: "Um coach acelera o desenvolvimento e a preparação.",
     contracts: "Contratos",
     wage: "Salário",
@@ -1470,6 +1482,7 @@ export const CAREER_PT: CareerCopy = {
       loanActive: "Sem transferências com taxa enquanto houver dívida do empréstimo emergencial.",
       bankActive: "Um empréstimo bancário por vez — quite o atual primeiro.",
       bankBacker: "O banco não faz outro empréstimo enquanto o emergencial estiver aberto — quite esse primeiro.",
+      bankNegative: "Com o caixa no vermelho o banco não faz empréstimo comum. O único dinheiro agora é o empréstimo emergencial, no piso — e esses são contados.",
       bankAmount: "Informe um valor válido.",
       bankLimit: "Acima do que o banco oferece para a sua reputação.",
       unknown: "Esse negócio não está mais disponível.",
@@ -1883,7 +1896,7 @@ export const CAREER_PT: CareerCopy = {
     buff: (n: number) => `+${n} nível de buff`,
     rating: (n: string) => `+${n} de rating do time`,
     chemistry: "um ganho de química",
-    stats: "+1 Clutch, +1 Consistência",
+    stats: "+5 Clutch, +5 Consistência",
     permanent: "Permanente",
     until: (date: string) => `Até ${date}`,
     nextEvent: "O próximo evento oficial",
@@ -1962,7 +1975,7 @@ export const CAREER_PT: CareerCopy = {
       bootcamp1: "Química e vantagem de rating",
       sponsors2: "Três ofertas, acordos ousados, mais dinheiro",
       bootcamp2: "Mais química e mais rating",
-      psychologist: "+1 Clutch, +1 Consistência",
+      psychologist: "+5 Clutch, +5 Consistência",
       sponsors3: "Marcas globais: mais dinheiro, perks melhores",
       perfCenter: "O melhor treino e buff de time",
       sponsors4: "A marca na camisa: o maior acordo",
@@ -2082,6 +2095,7 @@ export const CAREER_PT: CareerCopy = {
       contractReminder: (p: Record<string, string | number>) => `Relógio dos contratos: ${p.players} — ${p.weeks} semanas`,
       // rc.34 (Miguel, 31/10): um elenco incompleto ficou fora de uma regional.
       regionalSkipped: (p: Record<string, string | number>) => `${p.org} fica fora da ${p.event}`,
+      eventMissedNoReserve: (p: Record<string, string | number>) => `${p.org} perde ${p.event}: sem reserva`,
       playerLeft: (p: Record<string, string | number>) => `${p.player} sai como agente livre`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} anuncia sua última temporada`,
       retired: (p: Record<string, string | number>) => `${p.player} pendura o controle`,
@@ -2194,6 +2208,8 @@ export const CAREER_PT: CareerCopy = {
         `A temporada acaba em ${p.weeks} semanas e ${p.players} não têm contrato depois dela. Renove antes da virada, ou eles saem.`,
       regionalSkipped: (p: Record<string, string | number>) =>
         `Só ${p.n} de 3 vagas estão preenchidas, então o elenco não entra na ${p.event}: sem pontos, sem prêmio. A próxima regional pergunta de novo.`,
+      eventMissedNoReserve: (p: Record<string, string | number>) =>
+        `Um titular ficou indisponível e não havia ninguém no banco, então o elenco não joga ${p.event}: sem pontos, sem prêmio. Um reserva assina na próxima janela de transferências.`,
       playerLeft: (p: Record<string, string | number>) =>
         `A renovação não veio e ${p.player} saiu de graça. Agentes conversam — a próxima negociação começa daí.`,
       retirementAnnounce: (p: Record<string, string | number>) =>
@@ -2761,7 +2777,7 @@ export const CAREER_PT: CareerCopy = {
     },
     randomEvent: {
       title: "Próximo da fila",
-      body: "Às vezes um titular não pode jogar — visto, saúde, vida. O sub entra com a química dele; sem sub, ninguém fica de fora. Nenhum evento é disputado com menos de três.",
+      body: "Às vezes um titular não pode jogar — visto, saúde, vida. O reserva entra com a química dele. Sem reserva, o time não joga aquele evento, e reserva só assina na janela de transferências. A primeira temporada é isenta. Nenhum evento é disputado com menos de três.",
     },
     worldsRace: {
       title: "A corrida pelo Worlds",

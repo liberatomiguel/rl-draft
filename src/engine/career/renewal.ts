@@ -95,6 +95,8 @@ export function titlePremiumFor(titles: RenewalTitles | undefined): number {
 export function renewalLadderFor(
   player: Partial<Pick<SquadPlayer, "joinedSeason" | "renewalCount">>,
   seasonIndex: number,
+  /** rc.39 F6 (R100): the career's difficulty scales the jump (CAREER_RENEWAL_TENURE.jumpScaleByDifficulty). */
+  difficulty?: CareerDifficulty,
 ): { tenure: number; tenureSteps: number; floorShare: number; maxJump: number } {
   const R = CAREER_RENEWAL_TENURE;
   const S = CAREER_SALARY;
@@ -104,7 +106,9 @@ export function renewalLadderFor(
     tenure,
     tenureSteps,
     floorShare: Math.min(R.floorMax, S.renewalMarketFloor + R.floorPerSeason * tenureSteps),
-    maxJump: Math.min(R.jumpMax, S.renewalMaxJump + R.jumpPerSeason * tenureSteps),
+    maxJump:
+      Math.min(R.jumpMax, S.renewalMaxJump + R.jumpPerSeason * tenureSteps) *
+      (difficulty ? (R.jumpScaleByDifficulty[difficulty] ?? 1) : 1),
   };
 }
 
@@ -142,12 +146,16 @@ export function renewalTermsFor(
   const oldWage = player.salaryPerSplit;
   const core = ambitious || refused ? renewalAskFor(player, { ...askCtx, surcharges: false }) : freshAsk;
   // rc.37 (F1): the floor and the jump climb with his seasons at the club.
-  const ladder = renewalLadderFor(player, ctx.seasonIndex);
+  const ladder = renewalLadderFor(player, ctx.seasonIndex, ctx.difficulty);
   const raiseCap = quantize(oldWage * S.renewalRaiseCap);
   // rc.33: the floor never lifts him more than maxJump × in one renewal.
   const fullFloor = quantize(core * ladder.floorShare);
   const jumpCap = quantize(oldWage * ladder.maxJump);
   const marketFloor = Math.min(fullFloor, Math.max(jumpCap, raiseCap));
+  // rc.37 F6: the value floor — a share of his core ask by renewal count that the jump never caps (0 = off).
+  const vf = R.valueFloorByRenewal;
+  const valueShare = vf.length > 0 ? vf[Math.min(player.renewalCount ?? 0, vf.length - 1)] : 0;
+  const valueFloor = valueShare > 0 ? quantize(core * valueShare) : 0;
   const titlePremium = titlePremiumFor(ctx.titles);
   const withTitles = (x: number) => (titlePremium > 0 ? quantize(x * (1 + titlePremium)) : x);
   // rc.37 (F1): the top's extremes — the premium stack, alone and with his rep premium, is capped.
@@ -171,10 +179,18 @@ export function renewalTermsFor(
       ...extra,
     };
   }
-  const bounded = Math.max(raiseCap, marketFloor);
+  const bounded = Math.max(raiseCap, marketFloor, valueFloor);
   const ruled = Math.min(core, bounded);
   const bound: RenewalTerms["bound"] =
-    ruled >= core ? "fresh" : raiseCap >= marketFloor ? "cap" : marketFloor < fullFloor ? "jump" : "floor";
+    ruled >= core
+      ? "fresh"
+      : valueFloor > Math.max(raiseCap, marketFloor)
+        ? "floor"
+        : raiseCap >= marketFloor
+          ? "cap"
+          : marketFloor < fullFloor
+            ? "jump"
+            : "floor";
   const surcharge = refused ? S.blockbusterRefusalRenewalMult : 1;
   // Under the cap his fresh ask stands (both surcharges already in it);
   // otherwise the bound, with the ambition premium and the Blockbuster

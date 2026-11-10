@@ -37,7 +37,10 @@ import {
   CAREER_DEV,
   CAREER_GEAR,
   CAREER_QUALIFIER,
+  CAREER_REGION_FIELD,
   CAREER_SEASONS,
+  CAREER_TITLE_DEFENSE,
+  CAREER_DYNASTY,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
@@ -107,6 +110,7 @@ import {
   statsFromView,
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
+import { intakeSeasonIdFor } from "./calendar";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -185,6 +189,17 @@ function orderFor(seasonIndex: number): number {
   return seasonIndex <= last
     ? CAREER_SEASONS[seasonIndex].order
     : CAREER_SEASONS[last].order + (seasonIndex - last);
+}
+
+/** rc.39 (R109): the players with a club card of the late wave's season (memoized). */
+let lateWavePlayerIds: Set<string> | null = null;
+function lateWavePlayers(): Set<string> {
+  lateWavePlayerIds ??= new Set(
+    playerCards
+      .filter((c) => c.seasonId === CAREER_WORLD.lateIntake.seasonId && !lineupById.get(c.lineupId)?.national)
+      .map((c) => c.playerId),
+  );
+  return lateWavePlayerIds;
 }
 
 /** Latest dataset-card season order per player (anchor-protection lookup). */
@@ -439,6 +454,7 @@ export function starterRosterOffers(
     .slice(0, 9)
     .map((x) => x.name);
 
+  const starterOffset = CAREER_REGION_FIELD.starterOvrOffset[region] ?? 0;
   const offers: StarterOffer[] = [];
   for (let o = 0; o < STARTER_OFFERS.length; o++) {
     const shape = STARTER_OFFERS[o];
@@ -454,17 +470,20 @@ export function starterRosterOffers(
       const f = (what: string) =>
         derivedFloat(careerSeed, streams.gen("starter", `${region}:${k}:${what}`));
       const age = shape.ageMin + Math.floor(f("age") * shape.ageSpan);
-      const overall = Math.round(shape.ovrMin + f("ovr") * shape.ovrSpan);
-      const potential =
+      const baseOverall = Math.round(shape.ovrMin + f("ovr") * shape.ovrSpan);
+      const basePotential =
         shape.key === "journeymen"
           ? clamp(
-              overall + 1 + Math.round(f("pot") * 3),
-              overall,
+              baseOverall + 1 + Math.round(f("pot") * 3),
+              baseOverall,
               JOURNEYMAN_POTENTIAL_CAP,
             )
           : j === headliner
             ? headlinerPotential(f("pot"))
-            : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), overall, 99);
+            : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), baseOverall, 99);
+      // rc.37 F6 (lever, off by default): the region moves the whole founder (overall and potential).
+      const overall = starterOffset === 0 ? baseOverall : clamp(baseOverall + starterOffset, 40, 99);
+      const potential = starterOffset === 0 ? basePotential : clamp(basePotential + starterOffset, overall, 99);
       const archetype = deriveArchetype(id, careerSeed);
       group.push({
         id,
@@ -536,7 +555,7 @@ function squadMemberView(p: SquadPlayer, psychologist: boolean): MemberView {
  * A brand-new squad sits near the floor; a core kept 2+ splits together
  * climbs to High. Swapping a starter drops it (the new pair has 0 tenure).
  */
-function careerChemistry(fielded: SquadPlayer[]): {
+export function careerChemistry(fielded: SquadPlayer[]): {
   raw: number;
   max: number;
   percent: number;
@@ -559,14 +578,23 @@ function careerChemistry(fielded: SquadPlayer[]): {
       if (tenure > maxTenure) maxTenure = tenure;
     }
   }
-  const graceTenure = maxTenure * C.newcomerGraceFactor;
+  // rc.39 F6 (R102): the grace covers the fast phase only — a newcomer inherits the structure
+  // (up to rc.38's ceiling for his pairs), never the bond the others built match by match.
+  const graceTenure =
+    C.bondPerSplitTogether > 0
+      ? Math.min(maxTenure * C.newcomerGraceFactor, C.connMaxPerPair / C.connPerSplitTogether)
+      : maxTenure * C.newcomerGraceFactor;
 
   let raw = 0;
   for (const [i, j, tenure] of pairsIdx) {
     const a = fielded[i];
     const b = fielded[j];
     const effTenure = Math.max(tenure, graceTenure);
-    const conn = Math.min(C.connMaxPerPair, effTenure * C.connPerSplitTogether);
+    const fast = Math.min(C.connMaxPerPair, effTenure * C.connPerSplitTogether);
+    // rc.39 F6 (R102): past the fast phase the pair keeps bonding, slowly, to its full value.
+    const lateTenure = Math.max(0, effTenure - C.connMaxPerPair / C.connPerSplitTogether);
+    const bond = C.bondPerSplitTogether > 0 ? lateTenure * C.bondPerSplitTogether : 0;
+    let conn = fast + bond;
     let her = 0;
     let herLabel = "";
     if (a.country && b.country && a.country === b.country) {
@@ -576,6 +604,8 @@ function careerChemistry(fielded: SquadPlayer[]): {
       her = C.herRegion;
       herLabel = `Same region (${a.region})`;
     }
+    // ...heritage is the pair's base: together they never count past a full pair.
+    if (C.bondPerSplitTogether > 0) conn = Math.max(0, Math.min(conn, C.maxRawPerPair - her));
     raw += conn + her;
     if (conn > 0) items.push({ label: `${a.name} · ${b.name} — time together`, points: conn });
     if (her > 0) items.push({ label: `${a.name} · ${b.name} — ${herLabel}`, points: her });
@@ -627,7 +657,10 @@ export function userTeamFor(input: UserTeamInput): {
   // without one nobody is ruled out (no lineup ever drops below three).
   const asked = input.unavailablePlayerId ?? null;
   const askedIsStarter = asked !== null && input.starterIds.includes(asked) && byId.has(asked);
-  const unavailable = askedIsStarter && !(subPlayer && subPlayer.id !== asked) ? null : asked;
+  // rc.39 F6 (R103): under "short" he is out all the same — his seat stays empty (the flow never
+  // starts an event like this: careerFlow.squadIsShort).
+  const uncovered = askedIsStarter && !(subPlayer && subPlayer.id !== asked);
+  const unavailable = uncovered && CAREER_WORLD.unavailabilityWithoutReserve !== "short" ? null : asked;
 
   let emptySeats = 0;
   let usedSubId: string | null = null;
@@ -908,6 +941,10 @@ export interface FieldCtx {
    * instead of missing both events. The user is never fielded from it.
    */
   userSeedRow?: { rating: number; prestige: number } | null;
+  /** rc.37 F6: Worlds titles the user already holds (CAREER_TITLE_DEFENSE; absent = 0). */
+  userWorldsTitles?: number;
+  /** rc.39 F6 (R106): Worlds titles the user won in the last CAREER_DYNASTY.windowSeasons finished seasons. */
+  userRecentWorldsTitles?: number;
 }
 
 /** Intrinsic (shift-stripped) rating — comparisons and field quality use this. */
@@ -1552,6 +1589,63 @@ export function fieldForEvent(
       `fieldForEvent: "${def.id}" needs ${want} teams, built ${field.length}`,
     );
   }
+  // rc.37 F6 (lever, off by default): the regional scene's strength by region,
+  // regional-level events only. Carried in difficultyShift like the
+  // difficulty's own shift, so field quality (intrinsic rating) is unchanged.
+  const sceneShift =
+    (CAREER_REGION_FIELD.tiers.includes(def.tier)
+      ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0) *
+        (CAREER_REGION_FIELD.shiftScaleByDifficulty[ctx.difficulty] ?? 1)
+      : 0) +
+    // rc.39 F6 (R102): the top tiers' own shift (the counterpart of chemistry by time together).
+    (CAREER_REGION_FIELD.tierShift[def.tier] ?? 0) +
+    // rc.37 F6 (lever, off by default): the title defence at the user's Worlds.
+    (def.tier === "worlds" && ctx.userTeam && field.includes(ctx.userTeam)
+      ? CAREER_TITLE_DEFENSE.worldsShiftPerTitle *
+        Math.min(ctx.userWorldsTitles ?? 0, CAREER_TITLE_DEFENSE.maxTitles)
+      : 0);
+  if (sceneShift !== 0) {
+    field = field.map((team) =>
+      team.isUser
+        ? team
+        : {
+            ...team,
+            rating: {
+              ...team.rating,
+              total: team.rating.total + sceneShift,
+              difficultyShift: team.rating.difficultyShift + sceneShift,
+            },
+          },
+    );
+  }
+
+  // rc.39 F6 (R106, lever — off at shiftPerTitle 0): the strongest AI sides of the user's Major /
+  // Worlds rise against a dynasty; everyone else, and every other event, is untouched.
+  const dynastyShift =
+    CAREER_DYNASTY.shiftPerTitle > 0 && CAREER_DYNASTY.tiers.includes(def.tier) && ctx.userTeam && field.includes(ctx.userTeam)
+      ? Math.min(CAREER_DYNASTY.maxShift, CAREER_DYNASTY.shiftPerTitle * (ctx.userRecentWorldsTitles ?? 0))
+      : 0;
+  if (dynastyShift > 0) {
+    const rivals = new Set(
+      field
+        .filter((t) => !t.isUser)
+        .sort((a, b) => intrinsicRating(b) - intrinsicRating(a) || a.id.localeCompare(b.id))
+        .slice(0, CAREER_DYNASTY.rivals)
+        .map((t) => t.id),
+    );
+    field = field.map((team) =>
+      rivals.has(team.id)
+        ? {
+            ...team,
+            rating: {
+              ...team.rating,
+              total: team.rating.total + dynastyShift,
+              difficultyShift: team.rating.difficultyShift + dynastyShift,
+            },
+          }
+        : team,
+    );
+  }
 
   const fieldQuality = fieldQualityFor(
     field.map((t) => (t.isUser ? t.rating.total : intrinsicRating(t))),
@@ -1691,6 +1785,9 @@ export function agePassAndIntake(
   // played. rc.32: the age clock steps exactly one year a season (rc.31's
   // was two across 2022-23 → 2024), so the step is 1 at every rollover.
   const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
+  const lateWave = CAREER_WORLD.lateIntake;
+  const lateWavePending =
+    lateWave.enabled && toSeasonIndex >= CAREER_SEASONS.length && toSeasonIndex <= lateWave.atSeasonIndex;
   const rollsRetirement = (view: CareerPlayerView): boolean => {
     if (view.kind === "real") {
       // Anchor protection: a real player plays every season he has a club
@@ -1699,6 +1796,8 @@ export function agePassAndIntake(
       // player already past it retires at that first rollover.
       const last = lastDatasetCardOrder(view.id);
       if (last !== undefined && last >= orderNow) return false;
+      // rc.39 (R109): a player of the late wave plays its season first.
+      if (lateWavePending && lateWavePlayers().has(view.id)) return false;
     }
     const p = retirementChanceFor({
       age: view.age - calendarStep,
@@ -2142,8 +2241,9 @@ export function realOrgIntake(
   /** rc.33 (RTW-03): orgs whose history was over and whose seat an entrant took. */
   left: { ref: string; name: string; region: Region }[];
 } {
-  if (toSeasonIndex <= 0 || toSeasonIndex >= CAREER_SEASONS.length) return { world, entered: [], left: [] };
-  const seasonId = CAREER_SEASONS[toSeasonIndex].seasonId;
+  // rc.39 (R109): the late wave (RLCS 2027) enters at its infinite-era season.
+  const seasonId = intakeSeasonIdFor(toSeasonIndex);
+  if (toSeasonIndex <= 0 || !seasonId) return { world, entered: [], left: [] };
   const next: WorldState = {
     ...world,
     orgs: { ...world.orgs },
@@ -2216,6 +2316,8 @@ export function datasetOrgName(ref: string): string | undefined {
 
 /** rc.33 (RTW-03): career season index → the orgs with a club lineup that season (memoized). */
 let orgsBySeason: Set<string>[] | null = null;
+/** rc.39 (R109): the orgs of the late wave (memoized). */
+let lateWaveOrgs: Set<string> | null = null;
 
 /**
  * rc.33 (RTW-03): an org's history is over at a season when it has no club
@@ -2232,6 +2334,15 @@ export function orgHistoryOverAt(ref: string, seasonIndex: number): boolean {
     });
   }
   for (let s = Math.max(0, seasonIndex); s < orgsBySeason.length; s++) if (orgsBySeason[s].has(ref)) return false;
+  // rc.39 (R109): in the infinite era an org of the late wave still has its
+  // season to play. The timeline's own answers are unchanged.
+  const late = CAREER_WORLD.lateIntake;
+  if (late.enabled && seasonIndex >= orgsBySeason.length && seasonIndex <= late.atSeasonIndex) {
+    lateWaveOrgs ??= new Set(
+      lineups.filter((l) => l.seasonId === late.seasonId && !l.rareSpawn && !l.national).map((l) => l.orgId),
+    );
+    if (lateWaveOrgs.has(ref)) return false;
+  }
   return true;
 }
 

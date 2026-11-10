@@ -49,7 +49,7 @@ export function deliverNews(save: CareerSave, item: NewsDraft): void {
   const channel = newsChannelOf(item);
   if (channel === "quiet") return;
   if (channel === "mail") {
-    const competition = /qualified|missed|resultUser|regionalSkipped/.test(item.titleKey);
+    const competition = /qualified|missed|resultUser|regionalSkipped|eventMissedNoReserve/.test(item.titleKey);
     deliverMail(save, { kind: "club", titleKey: item.titleKey, bodyKey: item.titleKey, params: item.params, fromKey: competition ? "league" : "staff", linkTo: competition ? "/career/calendar" : "/career" });
     return;
   }

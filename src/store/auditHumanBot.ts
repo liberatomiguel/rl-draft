@@ -12,7 +12,7 @@
  * matrix runner and the report live in the test file.
  */
 
-import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS, CAREER_WORLD } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
@@ -69,6 +69,9 @@ import {
   simEventToEnd,
   spendAlertFlow,
   squadIsShort,
+  canSkipShortSquadEvent,
+  skipShortSquadEventFlow,
+  uncoveredAbsenceOf,
   startEvent,
   takeBankLoanFlow,
   payDebtFlow,
@@ -444,7 +447,8 @@ export interface ArcSeason {
   market?: ArcMarketLevel | null;
   /**
    * rc.34 (DEV-03, TRAINING-CONTRACT §7): the season's training — periods
-   * filed, prompts the manager met (t1), the package objective per period
+   * filed, training decisions the manager made (t1: a proposal approved or, since rc.37 F6, a plan picked at a
+   * cycle start), the package objective per period
    * ("base" = none), package scrims won / lost, the scrims' share of each
    * player's period gain (t4, p90), players ruled out by the pre-event roll,
    * and each player's season gain split by source. Absent in older dumps.
@@ -726,6 +730,8 @@ interface Candidate {
   lengthSeasons?: 2 | 3;
   /** rc.37: his ask before any talk (the listing's price, the same for every manager). */
   ask: number;
+  /** A free agent (no fee; `cost` is then his signing bonus). */
+  free?: boolean;
 }
 
 function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
@@ -771,6 +777,7 @@ function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
       lengthSeasons: policy?.negotiate ? 3 : 2,
       potentialRead: (band.min + band.max) / 2,
       ask: pack.salaryPerSplit,
+      free: splitsRemaining === null,
     });
   };
   for (const view of listing.freeAgents) add(view, null);
@@ -827,6 +834,47 @@ function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candida
       (squadIsShort(save) ? byCost.find((x) => !tried.has(x.view.id)) : undefined);
     if (!c) break;
     tried.add(c.view.id);
+    save = sign(save, c, t) ?? save;
+  }
+  return save;
+}
+
+/**
+ * rc.39 F6 (R103): a starter is ruled out of the committed event and nobody
+ * covers his seat. What a manager does on the eve: sign a free agent as the
+ * reserve — the best one whose wage is small beside the starters' (at most
+ * half the cheapest starter's) and fits the policy's budget, else the
+ * cheapest in the pool (never refused for money: emptySeatPriceFor) — and, if
+ * nobody signs, sit a regional or its qualifier out. He stays as the reserve
+ * for the length of his deal, so the next absence is covered.
+ */
+function coverAbsence(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  let save = signReserve(input, policy, t, true);
+  if (uncoveredAbsenceOf(save) && canSkipShortSquadEvent(save)) {
+    const skipped = skipShortSquadEventFlow(save);
+    if (!skipped.error) save = alerted(save, skipped.save);
+  }
+  return save;
+}
+
+/**
+ * rc.39 F6 (R103, Miguel 10/11): a reserve only signs in a transfer window.
+ * A manager who read the rule keeps one from the season it applies: in a
+ * window, with no reserve, the best free agent whose wage is small beside the
+ * starters' (at most half the cheapest starter's) and fits the budget; with a
+ * starter already ruled out (`must`), the cheapest one if nobody fits.
+ */
+function signReserve(input: CareerSave, policy: ArcPolicy, t: Tally, must: boolean): CareerSave {
+  let save = input;
+  if (!isWindowWeek(weekOfDay(save.clock.day)) || save.squad.length !== 3 || starters(save).length !== 3) return save;
+  const pool = candidatesFor(save, policy).filter((c) => c.free);
+  const starterWage = Math.min(...starters(save).map((p) => p.salaryPerSplit));
+  const modest = pool
+    .filter((c) => c.salaryPerSplit <= starterWage / 2 && affordable(save, c.cost, c.salaryPerSplit, policy))
+    .sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
+  const byCost = [...pool].sort((a, b) => a.salaryPerSplit - b.salaryPerSplit || b.view.overall - a.view.overall);
+  for (const c of [...modest.slice(0, 2), ...(must ? byCost.slice(0, 6) : [])]) {
+    if (save.squad.length !== 3) break;
     save = sign(save, c, t) ?? save;
   }
   return save;
@@ -1101,6 +1149,17 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   save = answerMoneyNotices(save, policy, t);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
+  // rc.39 F6 (R103): ...and covers a ruled-out starter before his event.
+  if (!save.activeEvent && save.phase === "running" && uncoveredAbsenceOf(save)) save = coverAbsence(save, policy, t);
+  // ...and keeps a reserve from the season the rule applies (signed in a window, once a week at most).
+  if (
+    !save.activeEvent && save.phase === "running" &&
+    CAREER_WORLD.unavailabilityWithoutReserve === "short" &&
+    save.clock.seasonIndex >= CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
+    save.squad.length === 3 && dayOfWeekOf(save.clock.day) === 1
+  ) {
+    save = signReserve(save, policy, t, false);
+  }
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
   if (save.activeEvent) {
     save = simEventToEnd(save);
@@ -1210,7 +1269,11 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
     save = approveTrainingProposalFlow(save).save;
   }
+  const hadPlan = Boolean(trainingOf(save).plan?.package);
   save = startArcCycle(save, policy);
+  // rc.37 F6: since rc.36 (front T2) no proposal waits — the manager picks the plan at a cycle start;
+  // that pick is the training decision `prompts` counts (it read 0 in every season of the 06/11 battery).
+  if (!hadPlan && trainingOf(save).plan?.package) t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
   // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
   if ((opts.bootcamp || policy.fullSupport) && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {

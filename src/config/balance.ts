@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 15;
+export const BALANCE_VERSION = 16;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1141,6 +1141,32 @@ export const CAREER_CHEMISTRY = {
    * dents chemistry (~85% → ~60%) instead of halving it.
    */
   newcomerGraceFactor: 0.35,
+  /**
+   * rc.39 F6 (R102, Miguel 09/11: "chemistry grows with time AND official
+   * matches together up to 100 %; nationality only sets a newcomer's base").
+   * Until rc.38 a pair's connection stopped at connMaxPerPair, so a trio from
+   * three regions sat at 67 % for ever and only shared heritage reached
+   * Perfect. Past the fast phase (connMaxPerPair, two splits) each further
+   * split-unit together adds `bondPerSplitTogether`, until heritage +
+   * connection fills the pair (maxRawPerPair): heritage is where a pair
+   * starts, time is where it ends. 0 = rc.38 (no late phase, no pair cap).
+   * Time together runs about five split-units a season (scrims and packages
+   * count). Measured on Normal against the battery (seed 17019, 147 careers
+   * an arm; staging: Worlds titles 22 %, the youth path 76 %, buying 0 %):
+   * no late phase 17 % / 52 % / 5 %; 0.10 21 % / 62 % / 7 %; 0.15 25 % / 74 %
+   * / 10 % (the youth path keeps a mixed trio for years, so it gains most).
+   * 0.10 ships: the package's overall difficulty back at staging's with the
+   * youth path still cut. A no-heritage trio is Perfect about four seasons
+   * in, a same-region trio within its first.
+   */
+  bondPerSplitTogether: 0.1,
+  /**
+   * ...and every official series (qualifier, regional, Major, Worlds) the
+   * fielded players play adds this to their time together (splitsTogether),
+   * beside the split boundary's +1: a team that plays deep bonds sooner.
+   * 0 = rc.38 (events add nothing).
+   */
+  officialSeriesCredit: 0.02,
 } as const;
 
 /**
@@ -1910,7 +1936,14 @@ export const CAREER_ECONOMY = {
 
 export const CAREER_SALARY = {
   basePerSplit: 1_500,
-  growthPerPoint: 1.2,
+  /**
+   * rc.39 F6 (R100): 1.20 → 1.17. A flatter ask curve above the anchor (an 85
+   * asks −31 %, a 90 −40 %; a 65 +13 %): on 1.20 a star cost more than any
+   * S1–S10 income, so nobody bought and only "raise your own" won the Worlds
+   * (battery 06/11). Paired triage: `ambitious` 0 % → 24–33 % Worlds titles,
+   * bankruptcies down. Coaches keep their own curve.
+   */
+  growthPerPoint: 1.17,
   anchorOverall: 70,
   /**
    * rc.33 — ECO-09 (Miguel, 30/10: "wages feel too low, or should grow more
@@ -2002,8 +2035,13 @@ export const CAREER_SALARY = {
    * prospect climbs to his value over two renewals, not one: rc.33's first
    * re-measure had the prospects' renewals at ×3.9 p50 / ×12 p90 (up to
    * ×25), which broke every hands-off prospects career in EU/NA on Normal.
+   * rc.39 F6 (R100): 2.5 → 4.0 (with CAREER_RENEWAL_TENURE.jumpMax 5.0). On
+   * ×2.5 a developed wonderkid renewed at 2–5 % of his market ask and the
+   * youth path won 52 % of Normal careers against 0–5 % for every other
+   * style; the flatter curve above (growthPerPoint 1.17) is what keeps the
+   * hands-off payroll whole at the larger step.
    */
-  renewalMaxJump: 2.5,
+  renewalMaxJump: 4.0,
   /**
    * rc.33 (ECONOMY-CONTRACT M6 lever 3, the title raise; Claude's call —
    * tested at Gate 2): a player renews dearer for the titles the user won
@@ -2179,9 +2217,20 @@ export const CAREER_RENEWAL_TENURE = {
    * ...up to this: one notch above the first renewal (rc.33 broke hands-off
    * prospects careers at ×3.9 p50). With premiumMax no renewal multiplies a
    * wage by more than 3.0 × 1.45 = ×4.35 (rc.36 ×4.47). Fallback if the
-   * battery's hands-off prospects payroll breaks: 2.75.
+   * battery's hands-off prospects payroll breaks: 2.75. rc.39 F6 (R100):
+   * 3.0 → 5.0 (×4.0, ×4.25 … ×5.0 by tenure; measured p90 ×6.2 a renewal).
    */
-  jumpMax: 3.0,
+  jumpMax: 5.0,
+  /**
+   * rc.39 F6 (R100): the jump by difficulty — the ladder above (first jump
+   * and jumpMax alike) times this. The larger step fits Normal's and Easy's
+   * income; on Hard it broke the careers that renew everyone (battery-paired,
+   * 77 careers: insolvency 18 % → 27 %, hands-off prospects 64 %, Worlds
+   * titles 9 % → 1 %). 1 = the same ladder on every difficulty. Hard 0.625 =
+   * rc.37's ladder (×2.5 first, ×3.125 at most): paired arms on Hard put the
+   * insolvency at 23 % (×4.0), 18 % (×3.25) and 11–14 % (×2.5; staging 14 %).
+   */
+  jumpScaleByDifficulty: { easy: 1, normal: 1, hard: 0.625 } as Record<string, number>,
   /**
    * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
    * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
@@ -2195,6 +2244,90 @@ export const CAREER_RENEWAL_TENURE = {
    * min(premiumMax, premiumStackCap / repPremium).
    */
   premiumStackCap: 2.2,
+  /**
+   * rc.37 F6 (experiment lever, off): a VALUE floor the jump never caps — a
+   * renewal never prices below this share of his core fresh ask, by his
+   * renewalCount at the club (index 0 = his first renewal, the last entry for
+   * every later one). The rc.37 floor above (renewalMarketFloor 0.6) is held
+   * at maxJump × his wage, so a developed wonderkid renews at 2–5 % of his
+   * market ask (battery 06/11, RELATORIO-COMPLETO Parte 7). 0 everywhere =
+   * rc.37's rule exactly.
+   */
+  valueFloorByRenewal: [0, 0, 0] as readonly number[],
+} as const;
+
+/**
+ * rc.37 F6 (experiment levers, off): a region's scene strength for the user's
+ * climb, with the Worlds slots untouched (Miguel, 09/11: the slots stay, the
+ * deepest pools stay the hardest). The battery (06/11) sent Normal careers
+ * to the Worlds by S10 in 100 % (SSA, median S1) down to 4 % (EU).
+ *  - `shift`: rating added to the AI sides of the regional-level events
+ *    (`tiers`) of that region, beside the difficulty's opponentRatingShift
+ *    (`rating.difficultyShift` carries both, so seeding and field quality,
+ *    which read the intrinsic rating, are unchanged). Major and Worlds never
+ *    read it.
+ *  - `starterOvrOffset`: added to the overall AND potential of the three
+ *    founding roster offers in that region (the user's day-one strength).
+ * 0 everywhere = rc.37 exactly.
+ */
+export const CAREER_REGION_FIELD = {
+  tiers: ["qualifier", "regional"] as readonly string[],
+  // rc.39 F6 (R101): the easy regions start slower. Paired triage (P2): the
+  // first Worlds of SSA and APAC moves from S2 to S3, APAC's reach by S10
+  // 100 % → 67 %; EU, NA, SAM and MENA untouched.
+  shift: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0.5, APAC: 1.5, SSA: 2 } as Record<Region, number>,
+  /**
+   * ...times this by the career's difficulty. The doses above were measured
+   * on Normal; on Hard (AI sides already 0.4 stronger) the same scene sent
+   * APAC's Worlds reach from 100 % to 0–14 % and SSA's from 71–75 % to
+   * 25–29 % (paired arms PK-H, HX0). Hard keeps the slower start (the
+   * founders' offset cannot read the difficulty: the wizard shows the roster
+   * before the difficulty is picked) without the stronger scene.
+   */
+  shiftScaleByDifficulty: { easy: 1, normal: 1, hard: 0 } as Record<string, number>,
+  starterOvrOffset: { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: -2, APAC: -3, SSA: -4 } as Record<Region, number>,
+  /**
+   * rc.39 F6 (R102): the counterpart of chemistry by time together. A stable
+   * squad now reaches 100 % (rc.38: 67–75 % for most, worth about +0.5 rating
+   * on Normal), which is felt where titles are decided. Rating added to every
+   * AI side of these tiers, in every region, beside the difficulty's shift
+   * (carried in difficultyShift like `shift`). The climb — qualifiers and
+   * regionals — is untouched. 0 = rc.38.
+   */
+  tierShift: { major: 0, worlds: 0 } as Record<string, number>,
+} as const;
+
+/**
+ * rc.37 F6 (experiment lever, off): the title defence. The battery's paired
+ * test raised the opponents of the user's FIRST Worlds (+0.5: −19 % titles);
+ * this raises them only once the user holds a Worlds title — rating added to
+ * the AI sides of the user's Worlds per title held (stats.titlesWorlds), up
+ * to maxTitles, carried in difficultyShift. 0 = rc.37.
+ */
+export const CAREER_TITLE_DEFENSE = {
+  worldsShiftPerTitle: 0,
+  maxTitles: 1,
+} as const;
+
+/**
+ * rc.39 F6 (R106 — a lever, OFF until Miguel approves a dose): rivals rise
+ * against a dynasty. In the endless a champion wins the Worlds in 54 % of the
+ * following seasons (squad ~96 against AI sides at 90–93), and lifting every
+ * Worlds opponent (CAREER_TITLE_DEFENSE, measured +0.5 / +1.0) brakes little
+ * and bankrupts champions through early exits. This lifts only the
+ * `rivals` strongest AI sides of the user's Major and Worlds fields, by
+ * `shiftPerTitle` per Worlds title the user won in the last `windowSeasons`
+ * finished seasons, up to `maxShift`: the early rounds (and their prize) stay
+ * as they are, the semi-finals and the final become a contest, and when the
+ * dynasty stops winning the rivals come back down. Carried in difficultyShift
+ * like every other field shift. shiftPerTitle 0 = off (rc.38 exactly).
+ */
+export const CAREER_DYNASTY = {
+  tiers: ["major", "worlds"] as readonly string[],
+  windowSeasons: 3,
+  rivals: 3,
+  shiftPerTitle: 0,
+  maxShift: 3,
 } as const;
 
 export const CAREER_SPONSOR = {
@@ -2524,6 +2657,37 @@ export const CAREER_REP = {
   newcomer: { repCeiling: 25, t3SemiMinSeed: 3, deepRunWins: 1, deepRunsPerSplit: 1 },
   softCapAt: 60,
   softCapFactor: 0.5,
+  /**
+   * rc.39 F6 (R104, Miguel 09/11: "reputation in proportion: a small org
+   * earns from qualifiers and regionals, a big one needs bigger results; a
+   * title never pays zero"). Replaces the flat soft cap above (every gain
+   * halved from 60, so a Worlds berth paid a contender half and a qualifier
+   * Saturday still paid an elite org +1). The org's tier is the number of
+   * `tierAt` gates its reputation has passed (0 newcomer, 1 established,
+   * 2 contender, 3 elite); each result has a `level`. A result at or above
+   * the org's tier pays in full; one level below pays `belowFactor` (rounded
+   * UP: it still counts); further below, nothing. A title (`titles`) never
+   * pays less than `titleFloor`. Measured (F3, 10/11): rounding down stalled
+   * mid orgs at ~50 (reputation at S10 67 → 46, Worlds reach 49 % → 39 %), so
+   * a contender keeps rc.38's +1 for getting through and for a regional top
+   * 8 / top 4 and gains the Major and Worlds results whole; only an elite org
+   * (75+) stops earning from them. `enabled: false` = rc.38's soft cap.
+   */
+  proportional: {
+    enabled: true,
+    tierAt: [25, 50, 75] as readonly number[],
+    level: {
+      t3Win: 0, t3Final: 0, t3Semi: 0, qualifierDeepRun: 0, regionalSwissExit: 0,
+      qualifierAdvance: 1, regionalTop8: 1, regionalTop4: 1, t2Final: 1, t2Win: 1,
+      regionalWin: 2, majorQualify: 2,
+      majorTop4: 3, majorWin: 3, worldsQualify: 3, worldsTop4: 3,
+    } as Record<string, number>,
+    belowFactor: 0.5,
+    titles: ["t3Win", "t2Win", "regionalWin", "majorWin"] as readonly string[],
+    titleFloor: 1,
+    /** The season's Worlds champion never loses reputation to a missed season goal. */
+    championKeepsGoalRep: true,
+  },
   /** Reputation FALLS on missed telegraphed expectations (v0.1 adjustment). */
   lossMajorMissAtRep: 40,
   lossMajorMiss: 2,
@@ -2616,8 +2780,10 @@ export const CAREER_GEAR = {
   bootcampSplitEdgeShare: 1,
   /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
   psychologistRep: 46,
-  psychologistPerSplit: 4_000,
-  psychologistStatBonus: { clutch: 3, consistency: 3 } as Record<string, number>,
+  // rc.39 F6 (R105): +3/+3 → +5/+5 and 4,000 → 4,500 (Miguel, 10/11: 6,000 was 22 % of the payroll when she unlocks,
+  // 2.6× the wage price of the same rating) — a stronger hire that is worth its retainer (f6Probes prices the edge).
+  psychologistPerSplit: 4_500,
+  psychologistStatBonus: { clutch: 5, consistency: 5 } as Record<string, number>,
   /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
   tempRatingMax: 2.0,
 } as const;
@@ -2928,6 +3094,19 @@ export const CAREER_BANK = {
    * emergency one past its deadline.
    */
   blockedWhileBacker: true,
+  /**
+   * rc.39 F6 (R107, Miguel's staging playtest 10/11: "if we are in the red,
+   * the loan is already the emergency one — I get several loan offers when the
+   * career should already be bankrupt"). No voluntary loan while the balance
+   * is below $0: neither the Monday offer (CAREER_CREDIT_OFFER) nor a request
+   * on Finances. The voluntary loan is for books still in the black (a short
+   * runway seen coming); once in the red the only bank money is the emergency
+   * loan at the floor, and those are counted (CAREER_LOAN.emergency.maxLoans:
+   * the career ends on the breach after the last one). Until rc.38 the offer
+   * also came "when already negative", every cooldown, so a structural
+   * deficit could chain voluntary loans and never reach the floor.
+   */
+  blockedWhileNegative: true,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -3026,6 +3205,17 @@ export const CAREER_WORLD = {
   /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
   anchorFidelity: 0.85,
   anchorFidelityTop: 0.95,
+  /**
+   * rc.39 (R109, Miguel 10/11): the dataset already holds RLCS 2027 lineups,
+   * one season past the career timeline (which still ends in 2026). They
+   * arrive in the infinite era at `atSeasonIndex` (8 = the ninth season): at
+   * that rollover the orgs enter like any dataset intake
+   * (`worldSim.realOrgIntake`) and the preseason anchor pass brings their
+   * rosters in with the usual fidelity. A player with a card of that season
+   * does not retire before it. One wave, one season; `enabled: false` is the
+   * rc.38 infinite era (no real intake at all).
+   */
+  lateIntake: { enabled: true, seasonId: "rlcs-2027", atSeasonIndex: 8 },
   /** v0.3: 0.25 → 0.35 — the mid-season market was too quiet. */
   midWindowMoveRate: 0.35,
   /**
@@ -3174,11 +3364,35 @@ export const CAREER_WORLD = {
   historyOverFreeAgentLeaveChance: 0.5,
   /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
   unavailabilityChancePerWeek: 0.02,
-  /** The pre-event roll multiplies the weekly chance by this (≈ a month's risk). */
-  unavailabilityEventMult: 4,
+  /**
+   * The pre-event roll multiplies the weekly chance by this. rc.39 F6 (R103):
+   * 4 → 2 (8 % → 4 % an official event, about one absence every two seasons).
+   * Until rc.38 a three-player squad was immune, so the rate was never felt;
+   * with every squad exposed, 8 % cost about one event a season and the
+   * Worlds reach fell 8 pp on Normal (arms G0–G2).
+   */
+  unavailabilityEventMult: 2,
   unavailabilityMaxPerSplit: 1,
   /** Novice guard: no random events in Split 1 of Season 1. */
   unavailabilityGraceSplits: 1,
+  /**
+   * rc.39 F6 (R103, Miguel 09/11: "a three-player roster is ruled out too;
+   * without a reserve the team does not play"). Until rc.38 nobody was ruled
+   * out without a reserve ("immune"), so a reserve only ever brought the risk
+   * he covers. "short": a starter of a three-player squad is ruled out like
+   * any other, the lineup is short for that event and RTW-05's rules apply —
+   * the clock holds before it, a free agent signs as the reserve at any time
+   * (the cheapest one whatever the cash), a regional or its qualifier can be
+   * sat out, a Major or Worlds slot waits for the signing.
+   */
+  unavailabilityWithoutReserve: "short" as "immune" | "short",
+  /**
+   * ...but never in the first N seasons of a career: the first season
+   * teaches the rule (the Squad screen says so from day one) while the
+   * founding budget cannot carry a fourth wage yet. A squad WITH a reserve
+   * keeps rc.38's rule (only Split 1 of Season 1 is exempt).
+   */
+  unavailabilityNoReserveGraceSeasons: 1,
 } as const;
 
 export const CAREER_NEWS = {
@@ -3444,7 +3658,10 @@ export const CAREER_SUNDAY = {
   // rc.37 F3 — explicit bracket rounds, not the user's number of series played.
   championshipBriefing: {
     keep: { quarters: 0.1, semis: 0.1, other: 0.1, final: 0.1 },
-    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.4 },
+    // rc.39 F6 (R105): final 0.4 → 0.6. On 0.4 "recover" never beat "keep" (f6Probes: a favourite's
+    // title chance 42.2 % vs 42.9 %); on 0.6 it is the favourite's plan (+1.0 pp title) while
+    // "prepare" stays the way through the quarter-final for a side that is not.
+    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.6 },
     prepare: { quarters: 0.4, semis: 0.25, other: 0, final: -0.15 },
   },
   defaultBriefing: "keep",

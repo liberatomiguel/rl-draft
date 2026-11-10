@@ -2057,6 +2057,151 @@ R99. **rc.37 integration — the emergency sale honours F1's two-window resale
      `careerRc37Integration.test.ts`. BALANCE_VERSION 14; provisional until
      the battery report and Miguel's review.
 
+R100. **rc.37 F6 — two ways to win: renewals climb faster, the ask curve is
+     flatter (Miguel, 09/11).** The 06/11 battery (4,914 careers) had the
+     youth path at 52 % Worlds titles on Normal and every other style at
+     0–5 %: a formed prospect renewed at 2–5 % of his market ask, and a star
+     cost more than any S1–S10 income, so nobody bought. Applied together:
+     `CAREER_SALARY.renewalMaxJump` 2.5 → 4.0 with
+     `CAREER_RENEWAL_TENURE.jumpMax` 3.0 → 5.0 (no value floor: 55/70/80 %
+     and 30/45/60 % were measured and rejected, they erase the return on
+     developing and reprice up to 38–54×), and `CAREER_SALARY.growthPerPoint`
+     1.20 → 1.17. Paired triage (Normal, 147 careers): youth 52 % → 38 %,
+     buying 0 % → 24 %, overall title 16 % → 15 %, bankruptcies 3 % → 2 %;
+     youth ÷ best non-youth ~10× → 1.6×. Also rejected, measured: a cheaper
+     transfer fee, a higher signing cap by reputation, a Worlds title
+     defence by rating (+0.5 no effect, +1 bankrupts 8 % of champions) and
+     `CAREER_AGE.growthMult` (it does not drive the growth contract).
+     Existing saves: signed deals keep their wage; future asks, values, fees
+     and renewals read the new numbers. Contract e2's snowball brake moves
+     from ≤ 1.5 × to ≤ 2 × three 85s' wages. BALANCE_VERSION 16. Evidence:
+     `docs/battery-rc37/F6-EXPERIMENTOS.md` (E1, E2, P1).
+
+R101. **rc.37 F6 — the easy regions start slower; the slots and the deep
+     pools stay (Miguel, 09/11).** SSA and APAC reached the Worlds in 100 %
+     of Normal careers (median S1–S2) and then lost in the Swiss. Founders:
+     `CAREER_REGION_FIELD.starterOvrOffset` SSA −4 / APAC −3 / OCE −2,
+     overall and potential (so the Prospects headliner there sits under his
+     EU twin); MENA stays 0 (a cheaper founding payroll became market there
+     and the reach rose). Scene: `.shift` SSA +2.0 / APAC +1.5 / OCE +0.5,
+     qualifier and regional AI sides only; Major and Worlds never read it.
+     Paired (P2): first Worlds of SSA and APAC S2 → S3; reach by S10 APAC
+     100 % → 67 %, SSA 100 % → 81 %. EU and NA are untouched on Normal
+     ("the strongest pool is the hardest", Miguel). Founders apply to new
+     careers; the scene applies from the next regional event of a save there.
+
+R102. **rc.37 F6 — chemistry grows with time and official matches together,
+     up to 100 %; heritage is only the base (Miguel, 09/11).** Until rc.38 a
+     pair's connection stopped at `connMaxPerPair`, so a trio from three
+     regions sat at 67 % for ever. Past the fast phase (two splits) each
+     further split-unit together adds `CAREER_CHEMISTRY.bondPerSplitTogether`
+     (0.10) until heritage + connection fills the pair, and every official
+     series the fielded players play adds `officialSeriesCredit` (0.02) to
+     their time together. The newcomer's grace covers the fast phase only:
+     swapping one starter of a long-standing core costs 100 % → 78 % and is
+     earned back (rc.38: nothing, once the core was old). Time together runs
+     about five split-units a season, so a no-heritage trio is Perfect about
+     four seasons in. Dose, measured on Normal against the battery (seed
+     17019, 147 careers an arm; staging: Worlds titles 22 %, the youth path
+     76 %, buying 0 %): no late phase 17 % / 52 % / 5 %; 0.10 21 % / 62 % /
+     7 %; 0.15 25 % / 74 % / 10 % — the youth path keeps a mixed trio for
+     years, so it gains most. 0.10 ships: the overall difficulty back at
+     staging's, the youth path still cut. A counterpart on the Major /
+     Worlds AI sides (`CAREER_REGION_FIELD.tierShift`, +0.5) was measured
+     and rejected — on the whole package it only removed titles (10 % →
+     6 %); the lever stays at 0.
+
+R103. **rc.37 F6 — a three-player squad is ruled out too; a reserve only
+     signs in a transfer window (Miguel, 09–10/11).** `CAREER_WORLD
+     .unavailabilityWithoutReserve` "short": the pre-event roll no longer
+     skips a squad without a reserve. With the starter out and nobody on the
+     bench the team does not enter that event, whatever its tier — the hold
+     card offers "Sit this event out" (and the Market only while a window is
+     open); an absence is not an empty seat, so no free agent signs outside a
+     window for it (a squad UNDER three keeps R67). Claude's calls: a
+     career's first season is exempt for a squad without a reserve
+     (`unavailabilityNoReserveGraceSeasons` 1), three players under contract
+     still scrim, and the rate halves — `unavailabilityEventMult` 4 → 2 (4 %
+     an official event, about one absence every two seasons): until rc.38
+     nobody without a reserve felt the rate, and at 8 % it cost about one
+     event a season and 8 pp of Worlds reach on Normal. The player is told
+     before it can happen: the Squad screen's empty reserve slot, the help
+     entry, a club mail at the start of the second season; the absence mail
+     says there is no reserve and the missed event is a club mail. The audit
+     bots keep a modest reserve from season two, signed in a window.
+     "immune" restores rc.38.
+
+R104. **rc.37 F6 — reputation in proportion to the org (Miguel, 09/11).**
+     `CAREER_REP.proportional` replaces the flat soft cap (every gain halved
+     from 60). Org tier = reputation gates passed (25 / 50 / 75); each result
+     has a level (0 local cups and qualifier runs, 1 qualifier advance and
+     regional top 8 / top 4, 2 regional title and Major berth, 3 Major
+     results and the Worlds). At or above the org's tier a result pays in
+     full, one level below half ROUNDED UP, further below nothing; a title
+     never pays under 1. Rounding down was measured first and stalled mid
+     orgs at ~50 (reputation at S10 67 → 46). As shipped: under 60 nothing
+     of note changes; from 60 a contender keeps rc.38's +1 for getting
+     through and earns titles, Majors and the Worlds whole (rc.38 half); an
+     elite org (75+) stops earning from qualifiers and regional places. The
+     season's Worlds champion no longer loses reputation to a missed season
+     goal.
+
+R105. **rc.37 F6 — the psychologist is a stronger hire; "recover" is the
+     favourite's plan.** `CAREER_GEAR.psychologistStatBonus` +3/+3 → +5/+5,
+     `psychologistPerSplit` 4,000 → 4,500 (Miguel, 10/11: 6,000 was 22 % of
+     the payroll when she unlocks). Priced by match.ts Monte Carlo
+     (`f6Probes.test.ts`) at +0.23 to +0.50 rating (rc.38 +0.13 to +0.31), a
+     54–56 % series against an equal side. `CAREER_SUNDAY
+     .championshipBriefing.recover.final` 0.4 → 0.6: on 0.4 "recover" never
+     beat "keep"; on 0.6 it adds about one point of title chance for a
+     favourite, and "prepare" stays the way through the quarter-final.
+
+R106. **rc.37 F6 — rivals rise against a dynasty: a lever, off (Miguel
+     decides the dose).** `CAREER_DYNASTY`: the `rivals` (3) strongest AI
+     sides of the user's Major and Worlds fields gain `shiftPerTitle` per
+     Worlds title the user won in the last `windowSeasons` (3), up to
+     `maxShift` (3). Unlike the rejected title defence it leaves the early
+     rounds and their prize alone and relaxes when the dynasty stops
+     winning. `shiftPerTitle` 0 ships (rc.38 exactly).
+
+R107. **rc.37 F6 — in the red the bank writes no ordinary loan (Miguel's
+     staging playtest, 10/11).** The Monday credit offer (rc.37 F2) also
+     came "when already negative", every cooldown, so a structural deficit
+     chained ordinary loans and never reached the floor where the counted
+     emergency loans end a career. `CAREER_BANK.blockedWhileNegative`: no
+     voluntary loan — offer or Finances request — while the balance is below
+     $0 (`bankLoanRefusal` "negative", its own line on Finances). The
+     ordinary loan is for books still in the black; in the red the only
+     bank money is the emergency loan at the floor, counted
+     (`CAREER_LOAN.emergency.maxLoans`). The floor itself is unchanged.
+
+R108. **rc.37 F6 — Hard reads the package through its own two scales.** The
+     approved package (R100, R101) is neutral on Normal and broke Hard
+     (battery-paired: Worlds titles 9 % → 1 %, insolvency 18 % → 27 %,
+     hands-off prospects 64 %; APAC's Worlds reach 100 % → 0–14 %).
+     `CAREER_RENEWAL_TENURE.jumpScaleByDifficulty.hard` 0.625 (rc.37's ×2.5
+     / ×3.125 ladder: insolvency 23 % at ×4.0, 18 % at ×3.25, 11–14 % at
+     ×2.5) and `CAREER_REGION_FIELD.shiftScaleByDifficulty.hard` 0 (no
+     stronger scene; the founders' offset stays, because the wizard shows
+     the roster before the difficulty is picked). The flatter ask curve
+     stays on Hard: restoring 1.20 there did not help (titles 7 % → 2 %).
+
+R109. **rc.39 — the RLCS 2027 lineups arrive in the infinite era at season
+     nine (Miguel, 10/11).** The game still ends in 2026: the timeline is
+     the six seasons of `CAREER_SEASONS` and the labels do not change
+     (season seven is still called "RLCS 2027"). The dataset's 2027 lineups
+     are a late wave: `CAREER_WORLD.lateIntake` { `seasonId` "rlcs-2027",
+     `atSeasonIndex` 8 } — at that rollover the orgs enter (the same rules
+     as every dataset intake) and the preseason anchor pass seats the
+     rosters with `anchorFidelity`; a player with a card of the wave does
+     not retire before it. Season nine as Miguel asked ("na s9 na era
+     infinita"); the reading taken is the ninth career season, the wave
+     being the endless era's first fresh challenge after the season-eight
+     title target. One number moves it (`atSeasonIndex`), `enabled: false`
+     removes it. Not done: the real players' card overalls still follow
+     the calendar (a 2027 card reads from season seven on, as in rc.38), so
+     the wave regroups and adds players, it does not re-rate them.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
