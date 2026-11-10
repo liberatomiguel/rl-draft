@@ -1814,7 +1814,13 @@ export function bankLoanRefusal(
   if (fin.bankLoan) return "active";
   if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
   // rc.39 F6 (R107): in the red the only bank money is the emergency loan (counted).
-  if (CAREER_BANK.blockedWhileNegative && fin.balance < 0) return "negative";
+  // rc.42 (R111): a shallow red still borrows — the hole within negativeDepthOfLimit of the limit.
+  if (
+    CAREER_BANK.blockedWhileNegative &&
+    fin.balance < 0 &&
+    -fin.balance > bankLoanLimitFor(rep, seasonIndex) * CAREER_BANK.negativeDepthOfLimit
+  )
+    return "negative";
   if (principal < bankMinAmountFor(seasonIndex) || principal !== quantize(principal)) return "amount";
   if (principal > bankLoanLimitFor(rep, seasonIndex)) return "limit";
   return null;
