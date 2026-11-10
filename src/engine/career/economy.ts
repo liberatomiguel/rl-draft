@@ -1802,7 +1802,7 @@ export function bankInstalmentsLeft(loan: Pick<BankLoanState, "remaining" | "wee
   return Math.ceil(loan.remaining / Math.max(1, loan.weeklyPayment));
 }
 
-export type BankLoanRefusal = "active" | "backer" | "amount" | "limit";
+export type BankLoanRefusal = "active" | "backer" | "negative" | "amount" | "limit";
 
 /** Why a loan request would be refused right now (null = allowed). */
 export function bankLoanRefusal(
@@ -1813,6 +1813,8 @@ export function bankLoanRefusal(
 ): BankLoanRefusal | null {
   if (fin.bankLoan) return "active";
   if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
+  // rc.39 F6 (R107): in the red the only bank money is the emergency loan (counted).
+  if (CAREER_BANK.blockedWhileNegative && fin.balance < 0) return "negative";
   if (principal < bankMinAmountFor(seasonIndex) || principal !== quantize(principal)) return "amount";
   if (principal > bankLoanLimitFor(rep, seasonIndex)) return "limit";
   return null;

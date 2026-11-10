@@ -54,6 +54,8 @@ import {
   acceptCreditOfferFlow,
   acknowledgeMoneyNoticeFlow,
   backerLineOf,
+  creditOfferOf,
+  takeBankLoanFlow,
   buyGearFlow,
   createCareerSave,
   declineBidFlow,
@@ -333,7 +335,7 @@ describe("rc.37 F2 — a one-off spend that brings the floor close raises its no
     return save;
   };
 
-  it("buying gear that leaves the next breach within reach: the notice, with the bank's offer", () => {
+  it("buying gear that leaves the next breach within reach: the notice — in the red, without the bank's ordinary loan (R107)", () => {
     const prev = tuesday(0);
     const burn = -weeklyStatementOf(prev).net;
     const price = gearPriceFor(CAREER_GEAR.items[0].cost, null, 0);
@@ -345,9 +347,13 @@ describe("rc.37 F2 — a one-off spend that brings the floor close raises its no
     expect(notice.kind).toBe("spendRisk");
     expect(notice.params.spent).toBe(price);
     expect(Number(notice.params.mondays)).toBeLessThanOrEqual(4);
-    expect(notice.params.offer).toBe(1);
-    expect(Number(notice.params.principal)).toBeGreaterThan(0);
-    expect(next.finances.creditOfferAt).toBeDefined();
+    // rc.39 F6 (R107): a balance this close to the floor is below $0 — the only bank money left is
+    // the emergency loan, so the notice warns and offers nothing.
+    expect(prev.finances.balance - price).toBeLessThan(0);
+    expect(notice.params.offer).toBe(0);
+    expect(notice.params.principal).toBeUndefined();
+    expect(creditOfferOf(next)).toBeNull();
+    expect(takeBankLoanFlow(next, 1_000).error).toBe("bankNegative");
     for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
       expect(moneyNoticeTextOf(C, notice, next.clock).title.length).toBeGreaterThan(5);
     }

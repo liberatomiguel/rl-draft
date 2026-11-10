@@ -2220,6 +2220,14 @@ export const CAREER_RENEWAL_TENURE = {
    */
   jumpMax: 5.0,
   /**
+   * rc.39 F6 (R100): the jump by difficulty — the ladder above (first jump
+   * and jumpMax alike) times this. The larger step fits Normal's and Easy's
+   * income; on Hard it broke the careers that renew everyone (battery-paired,
+   * 77 careers: insolvency 18 % → 27 %, hands-off prospects 64 %, Worlds
+   * titles 9 % → 1 %). 1 = the same ladder on every difficulty.
+   */
+  jumpScaleByDifficulty: { easy: 1, normal: 1, hard: 1 } as Record<string, number>,
+  /**
    * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
    * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
    * the dominant team's title brake whole (Blockbuster + 3 titles = 1.43); a
@@ -3073,6 +3081,19 @@ export const CAREER_BANK = {
    * emergency one past its deadline.
    */
   blockedWhileBacker: true,
+  /**
+   * rc.39 F6 (R107, Miguel's staging playtest 10/11: "if we are in the red,
+   * the loan is already the emergency one — I get several loan offers when the
+   * career should already be bankrupt"). No voluntary loan while the balance
+   * is below $0: neither the Monday offer (CAREER_CREDIT_OFFER) nor a request
+   * on Finances. The voluntary loan is for books still in the black (a short
+   * runway seen coming); once in the red the only bank money is the emergency
+   * loan at the floor, and those are counted (CAREER_LOAN.emergency.maxLoans:
+   * the career ends on the breach after the last one). Until rc.38 the offer
+   * also came "when already negative", every cooldown, so a structural
+   * deficit could chain voluntary loans and never reach the floor.
+   */
+  blockedWhileNegative: true,
 } as const;
 
 // ---------------------------------------------------------------------------

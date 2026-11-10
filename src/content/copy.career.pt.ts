@@ -1482,6 +1482,7 @@ export const CAREER_PT: CareerCopy = {
       loanActive: "Sem transferências com taxa enquanto houver dívida do empréstimo emergencial.",
       bankActive: "Um empréstimo bancário por vez — quite o atual primeiro.",
       bankBacker: "O banco não faz outro empréstimo enquanto o emergencial estiver aberto — quite esse primeiro.",
+      bankNegative: "Com o caixa no vermelho o banco não faz empréstimo comum. O único dinheiro agora é o empréstimo emergencial, no piso — e esses são contados.",
       bankAmount: "Informe um valor válido.",
       bankLimit: "Acima do que o banco oferece para a sua reputação.",
       unknown: "Esse negócio não está mais disponível.",

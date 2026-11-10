@@ -2803,6 +2803,7 @@ export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResu
   const refusal = bankLoanRefusal(save.finances, save.reputation, amount, save.clock.seasonIndex);
   if (refusal === "active") return { save: input, error: "bankActive" };
   if (refusal === "backer") return { save: input, error: "bankBacker" };
+  if (refusal === "negative") return { save: input, error: "bankNegative" };
   if (refusal === "amount") return { save: input, error: "bankAmount" };
   if (refusal === "limit") return { save: input, error: "bankLimit" };
   save.finances = takeBankLoan(save.finances, amount, {

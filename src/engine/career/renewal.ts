@@ -95,6 +95,8 @@ export function titlePremiumFor(titles: RenewalTitles | undefined): number {
 export function renewalLadderFor(
   player: Partial<Pick<SquadPlayer, "joinedSeason" | "renewalCount">>,
   seasonIndex: number,
+  /** rc.39 F6 (R100): the career's difficulty scales the jump (CAREER_RENEWAL_TENURE.jumpScaleByDifficulty). */
+  difficulty?: CareerDifficulty,
 ): { tenure: number; tenureSteps: number; floorShare: number; maxJump: number } {
   const R = CAREER_RENEWAL_TENURE;
   const S = CAREER_SALARY;
@@ -104,7 +106,9 @@ export function renewalLadderFor(
     tenure,
     tenureSteps,
     floorShare: Math.min(R.floorMax, S.renewalMarketFloor + R.floorPerSeason * tenureSteps),
-    maxJump: Math.min(R.jumpMax, S.renewalMaxJump + R.jumpPerSeason * tenureSteps),
+    maxJump:
+      Math.min(R.jumpMax, S.renewalMaxJump + R.jumpPerSeason * tenureSteps) *
+      (difficulty ? (R.jumpScaleByDifficulty[difficulty] ?? 1) : 1),
   };
 }
 
@@ -142,7 +146,7 @@ export function renewalTermsFor(
   const oldWage = player.salaryPerSplit;
   const core = ambitious || refused ? renewalAskFor(player, { ...askCtx, surcharges: false }) : freshAsk;
   // rc.37 (F1): the floor and the jump climb with his seasons at the club.
-  const ladder = renewalLadderFor(player, ctx.seasonIndex);
+  const ladder = renewalLadderFor(player, ctx.seasonIndex, ctx.difficulty);
   const raiseCap = quantize(oldWage * S.renewalRaiseCap);
   // rc.33: the floor never lifts him more than maxJump × in one renewal.
   const fullFloor = quantize(core * ladder.floorShare);
