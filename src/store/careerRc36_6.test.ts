@@ -121,7 +121,7 @@ describe("rc.36.6 — editorial channels and partner events", () => {
     expect(CAREER_INSERTS_CATALOG.some(i => i.id === "ins-5050-showmatch")).toBe(true);
     expect(CAREER_INSERTS_CATALOG.some(i => i.id === "ins-duds-showmatch")).toBe(true);
     expect(CAREER_EN.inserts.items["ins-5050-showmatch"].title).toContain("50/50");
-    expect(CAREER_PT.inserts.items["ins-duds-showmatch"].title).toContain("duds");
+    expect(CAREER_PT.inserts.items["ins-duds-showmatch"].title).toContain("DudsMelow");
     save.clock.day = regionalDayFor(first) + 2;
     save.finances.balance = 100000;
     save.finances.incomeTally = { s: 0, earned: 100000, other: 0, period: 0, otherCount: 0 };

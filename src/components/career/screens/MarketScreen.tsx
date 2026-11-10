@@ -16,7 +16,7 @@
  * surface the store's real lastError via career.market.errors.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CAREER_CONTRACT,
   CAREER_EMERGENCY_SALE,
@@ -211,6 +211,8 @@ export function MarketScreen() {
   const [tab, setTab] = useState<Tab>(() =>
     typeof window !== "undefined" && window.location.hash === "#coaches" ? "coaches" : "free",
   );
+  const markMailRead = useCareerStore(s => s.markMailRead);
+  useEffect(() => { if (tab === "coaches") for (const m of save?.mail ?? []) if (!m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) markMailRead(m.id); }, [tab, save?.mail, markMailRead]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("ovr");
   /** v0.3: flips the current sort key's natural direction. */
@@ -257,6 +259,7 @@ export function MarketScreen() {
       careerSeed: save.careerSeed,
       // rc.32: always a page of free agents this org can actually sign.
       signableCap: signableOverallCap(save.reputation),
+      freeAgentsOnly: save.reputation < CAREER_UNLOCKS.contractedRep,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [save?.world.version, save?.clock.seasonIndex, save?.careerSeed, squadKey, save?.reputation]);
@@ -347,7 +350,7 @@ export function MarketScreen() {
   const emptySeatOpen = !windowOpen && rosterIsShort(save);
   const freeAgentSignable = windowOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
-  const targetLocked = target ? !signableAtRep(target.view.overall, save.reputation) : false;
+  const targetLocked = target ? (!signableAtRep(target.view.overall, save.reputation) || (target.orgRef !== null && save.reputation < CAREER_UNLOCKS.contractedRep)) : false;
   const nextWindowStop = windowOpen
     ? null
     : (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null);
@@ -472,6 +475,7 @@ export function MarketScreen() {
             className="min-h-10 px-3.5 text-[11px]"
           >
             {label}
+            {k === "coaches" && save.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) ? <span className="h-2 w-2 rounded-full bg-orange" aria-label={C.toolbox.newTag} /> : null}
             {k === "deals" && bids.length > 0 ? (
               <span className="rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal text-orange-bright">
                 {bids.length}
@@ -482,6 +486,7 @@ export function MarketScreen() {
       </div>
 
       {/* ================= player tabs ================= */}
+      {tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep ? <Panel className="p-4 text-sm text-sub">{C.market.errors.contractedRep}</Panel> : null}
       {tab === "free" || tab === "contracted" ? (
         <>
           {/* Toolbar: search · sort · region */}
@@ -555,7 +560,7 @@ export function MarketScreen() {
                 {visible.slice(0, shown).map((r) => {
                   // v0.3 visible signing gate: over-cap players stay browsable
                   // but read as locked, with the rep that opens the door.
-                  const repLocked = !signableAtRep(r.view.overall, save.reputation);
+                  const repLocked = !signableAtRep(r.view.overall, save.reputation) || (tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep);
                   // rc.35 (front C): an org signed him in this window — no offer until the next one.
                   const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
                   const locked = repLocked || justSigned;
@@ -698,6 +703,7 @@ export function MarketScreen() {
             <>
               {bids.map((o) => {
                 const orgName = o.otherRef ? nameOfRef(save, o.otherRef) : "?";
+                const squadPlayer = save.squad.find(p => p.id === o.playerId);
                 const orgStars = o.otherRef ? (save.world.orgs[o.otherRef]?.stars ?? 0) : 0;
                 const daysLeft = Math.max(0, o.resolveDay - save.clock.day);
                 return (
@@ -724,6 +730,7 @@ export function MarketScreen() {
                           {o.emergency ? <Badge tone="bad">{C.market.emergencyBadge}</Badge> : null}
                           <MarketValueTag offer={o} />
                         </div>
+                        {squadPlayer ? <p className="mt-1 flex flex-wrap gap-3 text-xs text-sub"><span>{C.common.ovr} <strong className="text-ink">{Math.round(squadPlayer.overall)}</strong></span><span>{C.squad.wage} <strong className="text-ink">{wageLabel(C, squadPlayer.salaryPerSplit)}</strong></span></p> : null}
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (
                           <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">

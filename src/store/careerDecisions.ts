@@ -186,6 +186,7 @@ function eventDecisionOf(save: CareerSave): PendingDecision | null {
   // rc.36 (SUN-01): a paused Saturday not started yet is the "sunday" stop instead.
   if (active && isEventPaused(save) && sundayStopHolds(save)) return null;
   if (active) return dueNow("event", `event:${active.def.id}`, !isEventPaused(save));
+  if (sundayStopHolds(save)) return null;
   // R67: a short squad's matchday is the squad's decision first.
   if (squadHoldFor(save)) return null;
   const pending = save.pendingEventDef;

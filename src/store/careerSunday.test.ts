@@ -206,7 +206,7 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     expect(pendingDecisionsOf(sun).some((d) => d.kind === "sunday")).toBe(false);
   });
 
-  it("another decision holding the clock is answered first; a direct seed never gets the stop", () => {
+  it("another decision holding the clock is answered first; a direct seed with a coach receives the same briefing", () => {
     const eve = regionalSaturdayEvening();
     const insert = { ...eve, pendingInsert: { id: "x", day: eve.clock.day } };
     expect(startSundayFlow(insert).error).toBe("decisionPending");
@@ -215,8 +215,18 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     direct.competition.splitPoints.SAM = { ...direct.competition.splitPoints.SAM, user: 10_000 };
     direct = advanceTo(advanceDayFlow(direct), qualifierDayFor(W));
     expect(direct.pendingEventDef).toMatchObject({ tier: "regional" });
-    expect(sundayAheadOf(direct)).toBeNull();
-    expect(advanceDayFlow(direct).clock.day).toBe(regionalDayFor(W));
+    expect(sundayAheadOf(direct)).toMatchObject({ kind: "regional", briefing: null });
+    expect(advanceDayFlow(direct)).toBe(direct);
+    const sunday = startSundayFlow(reload(direct), "prepare").save;
+    expect(sunday.clock.day).toBe(regionalDayFor(W));
+    expect(sunday.weekend?.briefing).toBe("prepare");
+    const legacySunday = reload({ ...sunday, weekend: undefined });
+    expect(sundayAheadOf(legacySunday)).toMatchObject({ kind: "regional", sundayDay: regionalDayFor(W) });
+    expect(pendingDecisionsOf(legacySunday).find(d => d.kind === "sunday")?.holds).toBe(true);
+    const briefedToday = startSundayFlow(legacySunday, "recover").save;
+    expect(briefedToday.clock).toEqual(legacySunday.clock);
+    expect(briefedToday.weekend?.briefing).toBe("recover");
+    expect(sundayAheadOf(briefedToday)).toBeNull();
   });
 
   it("an rc.35 save on that Saturday evening (no weekend record) keeps playing as it did", () => {

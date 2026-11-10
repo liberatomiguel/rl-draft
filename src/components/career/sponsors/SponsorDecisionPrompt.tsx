@@ -3,6 +3,7 @@
 /** Sponsor offers open as soon as the decision is active. Closing before
  * the deadline parks the existing persisted decision; deadline holds remain. */
 
+import { useCareerStore } from "@/store/careerStore";
 import { useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
@@ -14,9 +15,7 @@ import { SponsorDecision } from "./SponsorOfferCard";
 export function SponsorDecisionPrompt({
   save,
   C,
-  canWait,
   onSign,
-  onLater,
 }: {
   save: CareerSave;
   C: CareerCopy;
@@ -26,6 +25,7 @@ export function SponsorDecisionPrompt({
   /** Park the decision until its deadline day. */
   onLater: () => void;
 }) {
+  const decline = useCareerStore(s => s.declineSponsorOffers);
   const [open, setOpen] = useState(true);
   const decision = sponsorDecisionOf(save);
   if (!decision) return null;
@@ -38,21 +38,8 @@ export function SponsorDecisionPrompt({
         wide
         onClose={() => {
           setOpen(false);
-          if (canWait) onLater();
         }}
-        actions={
-          canWait ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setOpen(false);
-                onLater();
-              }}
-            >
-              {C.hub.sponsorLater}
-            </Button>
-          ) : undefined
-        }
+        actions={<Button variant="danger" onClick={decline}>{C.market.decline}</Button>}
       >
         <SponsorDecision
           save={save}

@@ -51,6 +51,7 @@ import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
 import { ToolboxBlock } from "@/components/career/hub/ToolboxBlock";
 import { SeasonGoalBlock } from "@/components/career/hub/SeasonGoalBlock";
+import { ICON_TONE, MailKindIcon } from "../news/MailKindIcon";
 import { resolveMail } from "@/components/career/news/newsText";
 import { NewsFeed } from "@/components/career/news/NewsFeed";
 import { OrgMark } from "@/components/career/OrgMark";
@@ -140,10 +141,7 @@ export function HubScreen() {
             <NewsFeed save={save} C={C} lang={lang} />
           </div>
 
-          {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
-          <div className="order-10">
-            <TransferWirePanel save={save} C={C} D={D} />
-          </div>
+
         </div>
 
         {/* ============ side column (1fr) ============ */}
@@ -186,10 +184,7 @@ export function HubScreen() {
                       const r = resolveMail(withMoneyParams(m), C);
                       return (
                         <li key={m.id} className="flex items-start gap-2 border-b border-line py-1.5 last:border-0">
-                          <span
-                            className={cx("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", m.read ? "bg-white/15" : "bg-orange")}
-                            aria-hidden
-                          />
+                          <span className={cx("relative mt-0.5 shrink-0", ICON_TONE[m.kind])}><MailKindIcon kind={m.kind} className="h-4 w-4" />{!m.read ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-orange" /> : null}</span>
                           <div className="min-w-0 flex-1">
                             <p className={cx("truncate text-xs", m.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
                             <p className="text-[10px] text-faint">
@@ -206,6 +201,10 @@ export function HubScreen() {
             </AppLink>
           </div>
 
+          {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
+          <div className="order-10">
+            <TransferWirePanel save={save} C={C} D={D} />
+          </div>
         </div>
       </div>
 
@@ -230,7 +229,7 @@ export function HubScreen() {
 // v0.3 — THE TRANSFER WIRE (window panel: every move, all regions, filterable)
 // ---------------------------------------------------------------------------
 
-const TRANSFER_PREVIEW = 6;
+const TRANSFER_PREVIEW = 3;
 /** Keep the wire visible this many days past the last logged move. */
 const TRANSFER_LINGER_DAYS = 14;
 

@@ -27,6 +27,10 @@
  * phase comes from the flow (eventDayPhaseOf) — never from local state.
  */
 
+import { EventRewardsTable } from "../event/EventRewardsTable";
+import { NowSunday } from "../hub/SundayCard";
+import { sundayAheadOf } from "@/store/careerSunday";
+import { EventBrand } from "../event/EventBrand";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { useRouter } from "next/navigation";
@@ -189,6 +193,8 @@ function EventScreenContent() {
   }
 
   const def = save.pendingEventDef ?? save.unofficialOffer;
+  const briefing = sundayAheadOf(save);
+  if (briefing?.sundayDay === save.clock.day && !briefing.briefing) return <div className="mx-auto max-w-5xl p-4"><NowSunday save={save} C={C} ahead={briefing} /></div>;
   if (def) return <EventLobby save={save} def={def} />;
 
   // No event on the horizon — friendly hand-off to the calendar.
@@ -310,6 +316,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         ) : null}
       </div>
 
+      <EventBrand name={def.name} />
+      <EventRewardsTable save={save} def={def} C={C} />
       {/* stakes */}
       <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
         <p className="kicker mb-2.5 text-[10px]">{C.calendar.stakes}</p>

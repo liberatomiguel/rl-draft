@@ -225,6 +225,10 @@ export const CAREER_EN = {
   },
 
   wizard: {
+    references: "Club inspirations",
+    iconColor: "Emblem colour",
+    tertiaryColor: "Third colour",
+    referenceNames: { rio: "Rio", paulista: "São Paulo", gaucho: "Porto Alegre", "buenos-aires": "La Boca", tricolor: "Laranjeiras", nautical: "Nautical", "los-angeles": "Los Angeles", milan: "Milan" },
     title: "Found your organization",
     step: (n: number, total: number) => `Step ${n} of ${total}`,
     quickStart: "Quick start",
@@ -968,6 +972,8 @@ export const CAREER_EN = {
   },
 
   training: {
+    weekSummary: "Squad growth this week",
+    weekChemistry: "Chemistry",
     weekScrims: "This week’s scrims",
     weekScrimsEmpty: "No scrims recorded this week yet.",
     title: "Training",
@@ -1517,6 +1523,7 @@ export const CAREER_EN = {
       blocked: "Not right now.",
       none: "Nothing to do.",
       invalid: "Invalid selection.",
+      contractedRep: "Signing contracted players unlocks at reputation 20.",
       repGate: "The org's reputation is too low for a player of this level.",
       /** rc.35 (front C): an org signed him in this window. */
       justSigned: "He just signed elsewhere in this window — try again in the next one.",
@@ -2347,7 +2354,7 @@ export const CAREER_EN = {
     items: {
       "ins-showmatch": { title: "A streamer wants a showmatch", body: "An invitation arrives for a friendly on stream. The appearance fee is agreed, but the squad would need to give up an afternoon of practice.", a: "Play it", b: "Pass" },
       "ins-5050-showmatch": { title: "An invitation from 50/50", body: "50/50 is putting together a showmatch and would like your org on the broadcast. There is an appearance fee and a chance to meet a new audience; the staff will have to move an afternoon of practice.", a: "Join the 50/50 showmatch", b: "Keep the training schedule" },
-      "ins-duds-showmatch": { title: "duds has a spot on stream", body: "duds is organizing a showmatch with the community and has invited your squad. The players are keen, and the appearance fee helps; it would mean cutting practice short that day.", a: "Accept duds' invitation", b: "Sit this one out" },
+      "ins-duds-showmatch": { title: "DudsMelow has a spot on stream", body: "DudsMelow is organizing a showmatch with the community and has invited your squad. The players are keen, and the appearance fee helps; it would mean cutting practice short that day.", a: "Accept DudsMelow' invitation", b: "Sit this one out" },
       "ins-charity-cup": { title: "Charity cup appearance", body: "A local charity cup wants your org on the poster. It costs a little and buys goodwill.", a: "Show up", b: "Decline" },
       "ins-pc-dies": { title: "A PC dies mid-week", body: "One of the tournament rigs gave out. Replace it now, or borrow a spare and lose practice time.", a: "Replace it", b: "Borrow a spare" },
       "ins-fan-meetup": { title: "Fans ask for a meetup", body: "The fanbase wants a meetup after practice. A small cost, a little standing.", a: "Host it", b: "Not this week" },
@@ -2361,6 +2368,11 @@ export const CAREER_EN = {
   },
 
   club: {
+    honorsTitle: "Chasing history",
+    honorsHint: "Real titles through Season 9, plus results in this career. RLCS Majors begin in Season X.",
+    honorsOrgs: "Organizations",
+    honorsPlayers: "Players",
+    honorsLegacy: "In older saves, individual titles are recorded from this update onward.",
     title: "Club",
     identity: "Identity",
     manager: "Manager",
@@ -2415,6 +2427,8 @@ export const CAREER_EN = {
   },
 
   event: {
+    placementLabel: "Placement",
+    rewardsTable: "Rewards by placement",
     communityLineup: (n: number) => `Your ${n}v${n} lineup`,
     communityLineupHint: "Choose who represents the org in this community event. Each selected player brings their own rating and attributes.",
     communitySeat: (n: number) => `Player ${n}`,
@@ -2547,6 +2561,8 @@ export const CAREER_EN = {
 
   // rc.36 (SUN-01..03, R88) — the weekend: Saturday → HQ → Sunday.
   sunday: {
+    today: "Today",
+    todayHint: "Your briefing applies to this event. The calendar stays on Sunday.",
     backToCalendar: "Advance",
     tomorrow: "Tomorrow",
     qualifiedLine: "Through Saturday's qualifier",
@@ -2834,6 +2850,11 @@ export const CAREER_EN = {
   // money notice, one per event that changes the stakes (careerFlow.moneyNoticeOf). The modal
   // passes the notice's params with money formatted and `dlDate` (the deadline's date) added.
   moneyNotice: {
+    otherTerms: "Other loan terms",
+    received: "Cash received",
+    repayTotal: "Total to repay",
+    weeklyPayment: "Weekly payment",
+    termWeeks: "Weeks",
     ok: "Understood",
     toFinances: "Open Finances",
     loanOpened: (p: Record<string, string | number>): MoneyNoticeText => ({

@@ -297,11 +297,11 @@ describe("rc.34 review — a Worlds-window renewal survives the rollover (no way
     const w31 = renewalAtW31(34_062, 0);
     const id = sponsorDecisionOf(w31)!.id;
     const parked = parkDecisionFlow(w31, id);
-    expect(parked.error).toBeUndefined();
+    expect(parked.error).toBe("cannotWait");
     // Before its deadline it waits under the block, not holding the clock.
     const eve = { ...parked.save, clock: { seasonIndex: 2, day: DAYS_PER_SEASON - 1 } };
-    expect(pendingDecisionsOf(eve).find((x) => x.kind === "sponsor")).toMatchObject({ parked: true, holds: false });
-    expect(clockHoldOf(eve)?.kind).not.toBe("sponsor");
+    expect(pendingDecisionsOf(eve).find((x) => x.kind === "sponsor")).toMatchObject({ parked: false, holds: true });
+    expect(clockHoldOf(eve)?.kind).toBe("sponsor");
     // Day 224 opens the season review: the decision holds the rollover until answered.
     const review = atReview(parked.save);
     expect(rolloverHoldOf(review)).toMatchObject({ kind: "sponsor", id, holds: true, canWait: false });
@@ -708,8 +708,8 @@ describe("rc.36 front S2 — the sponsor choice: 'Decide later' only, and what t
     expect(CAREER_SPONSOR.deadlineRule).toBe("hold");
     const save = decisionAtW11(36_001);
     const early = pendingDecisionsOf(save).find((x) => x.kind === "sponsor")!;
-    expect(early.canWait).toBe(true);
-    expect(parkDecisionFlow(save, early.id).error).toBeUndefined();
+    expect(early.canWait).toBe(false);
+    expect(parkDecisionFlow(save, early.id).error).toBe("cannotWait");
     const atDeadline = sundayOf(save, 13);
     const d = pendingDecisionsOf(atDeadline).find((x) => x.kind === "sponsor")!;
     expect(d.canWait).toBe(false);
@@ -785,7 +785,7 @@ describe("rc.36 front S2 — the sponsor choice: 'Decide later' only, and what t
     for (const s of [save, parked]) {
       const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(s)))!;
       expect(sponsorDecisionOf(loaded)?.offers).toHaveLength(3);
-      expect(pendingDecisionsOf(loaded).find((x) => x.kind === "sponsor")?.parked).toBe(s === parked);
+      expect(pendingDecisionsOf(loaded).find((x) => x.kind === "sponsor")?.parked).toBe(false);
       expect(sign(loaded, "balanced").sponsor?.terms?.profile).toBe("balanced");
     }
   });

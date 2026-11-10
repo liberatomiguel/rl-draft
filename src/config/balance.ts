@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 17;
+export const BALANCE_VERSION = 18;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2700,6 +2700,7 @@ export const CAREER_REP = {
 
 /** Non-gear unlock gates (gear/staff gates live on the CAREER_GEAR ladder). */
 export const CAREER_UNLOCKS = {
+  contractedRep: 20,
   t2InvitationalRep: 30,
   relocationRep: 70,
   /** v0.3: hiring a coach is earned early (between peripherals and monitors). */
@@ -3045,12 +3046,10 @@ export const CAREER_PAYROLL = {
  */
 export const CAREER_HQ = {
   /**
-   * Decision 1-B: the decision kinds that offer "Later" — bids and sponsor
-   * offers, up to their deadline day, when the clock stops again until they
-   * are answered. Every other needed decision holds the clock until answered
-   * (like the weekly insert). Why: Miguel's 30/10 answer to HQ-CONTRACT §6.1.
+   * rc.40 (R110): incoming bids and sponsor choices must be accepted or
+   * declined before advancing. Existing parked IDs no longer bypass a hold.
    */
-  laterKinds: ["bid", "sponsor"] as readonly string[],
+  laterKinds: [] as readonly string[],
   /**
    * UX-06b: from this week of a contract's final season the HQ squad card
    * warns (the time left), the contract counts as an urgent "New" item and

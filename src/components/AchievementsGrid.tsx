@@ -175,7 +175,7 @@ export function AchievementsGrid({
                   key={def.id}
                   earned={has}
                   style={style}
-                  icon={<AchievementIcon group="career" className="h-4.5 w-4.5" />}
+                  icon={<AchievementIcon group="career" id={def.id} className="h-4.5 w-4.5" />}
                   title={item.name}
                   tier={ACH_UI.careerTier[def.tier] ?? def.tier}
                   body={item.desc}
@@ -191,7 +191,7 @@ export function AchievementsGrid({
 }
 
 /** One trophy card (draft or Road to Worlds) — the same visual for both. */
-function AchievementCard({
+export function AchievementCard({
   earned,
   style,
   icon,

@@ -110,7 +110,7 @@ function SundayHeader({
     <div>
       <div className="flex flex-wrap items-center gap-2">
         <p className="kicker !text-[10px] text-orange-bright">
-          {C.sunday.tomorrow} · {formatDateShort(C.dates, dateOfDay(save.clock.seasonIndex, ahead.sundayDay))}
+          {ahead.sundayDay === save.clock.day ? C.sunday.today : C.sunday.tomorrow} · {formatDateShort(C.dates, dateOfDay(save.clock.seasonIndex, ahead.sundayDay))}
         </p>
         <TierChip tier={ahead.def.tier} />
         {ahead.def.region ? <Badge className={REGION_BADGE[ahead.def.region]}>{ahead.def.region}</Badge> : null}
@@ -273,7 +273,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => go(choice)}>
           {C.sunday.start}
         </Button>
-        <span className="text-[11px] text-faint">{C.sunday.startHint}</span>
+        <span className="text-[11px] text-faint">{ahead.sundayDay === save.clock.day ? C.sunday.todayHint : C.sunday.startHint}</span>
       </div>
     </div>
   );

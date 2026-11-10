@@ -328,47 +328,22 @@ describe("rc.34 UX-01a — Championship Sunday holds too", () => {
 });
 
 describe("rc.34 decision 1-B — Later only for a bid and the sponsor offers, up to their deadline", () => {
-  it("a bid parks until its last day, when the clock stops again; then only an answer moves it", () => {
+  it("bids hold immediately, including a previously parked save, until accepted or declined", () => {
     const base = fresh();
-    const save = { ...base, pendingOffers: [bidFor(base, 3)] };
+    const save = { ...base, pendingOffers: [bidFor(base, 3)], parkedDecisions: ["bid:test:1"] };
     const d = pendingDecisionsOf(save)[0];
-    expect(d).toMatchObject({ kind: "bid", canWait: true, parked: false, holds: true });
-    const parked = parkDecisionFlow(save, d.id);
-    expect(parked.error).toBeUndefined();
-    expect(parked.save.parkedDecisions).toEqual([d.id]);
-    let s = parked.save;
-    expect(pendingDecisionsOf(s)[0]).toMatchObject({ parked: true, holds: false });
-    expect(clockHoldOf(s)).toBeNull();
-    expect(continueKind(s)).toBe("advance");
-    // Parked, the clock moves day by day up to the deadline…
-    for (let i = 0; i < 3; i++) s = advanceDayFlow(s);
-    expect(s.clock.day).toBe(base.clock.day + 3);
-    // …where it stops: no "Later" any more, and walking on is refused.
-    const due = pendingDecisionsOf(s)[0];
-    expect(due).toMatchObject({ kind: "bid", canWait: false, parked: false, holds: true });
-    expect(advanceDayFlow(s)).toBe(s);
-    expect(parkDecisionFlow(s, due.id).error).toBe("cannotWait");
-    // The answer — decline (or accept) — moves it; the bid never lapses on its own.
-    const answered = declineBidFlow(s, due.id);
-    expect(advanceDayFlow(answered).clock.day).toBe(s.clock.day + 1);
+    expect(d).toMatchObject({ kind: "bid", canWait: false, parked: false, holds: true });
+    expect(parkDecisionFlow(save, d.id).error).toBe("cannotWait");
+    expect(advanceDayFlow(reload(save)).clock.day).toBe(save.clock.day);
+    expect(advanceDayFlow(declineBidFlow(save, d.id)).clock.day).toBe(save.clock.day + 1);
   });
-
-  it("the sponsor offers park until the Sunday before the next split boundary; there: sign or decline", () => {
-    const base = holding("sponsor").save;
-    const d = pendingDecisionsOf(base).find((x) => x.kind === "sponsor")!;
-    // rc.34 (front F): the decision's own deadline (sponsorDecisionOf.deadlineOn).
-    expect(d.deadline).toEqual(sponsorDecisionOf(base)!.deadlineOn);
-    expect(d.canWait).toBe(true);
-    let s = parkDecisionFlow(base, d.id).save;
-    expect(clockHoldOf(s)).toBeNull();
-    s = { ...s, clock: { ...s.clock, day: d.deadline!.day } };
-    const due = pendingDecisionsOf(s).find((x) => x.kind === "sponsor")!;
-    expect(due).toMatchObject({ canWait: false, holds: true, parked: false });
-    expect(advanceDayFlow(s)).toBe(s);
-    // Declined, the sponsor no longer holds the clock (rc.33-shaped offers carry the season's end as deadline).
-    const declined = declineSponsorOffersFlow(s).save;
-    expect(sponsorDecisionOf(declined)).toBeNull();
-    expect(clockHoldOf(declined)?.kind).not.toBe("sponsor");
+  it("sponsor offers hold immediately until a deal is signed or declined", () => {
+    const save = holding("sponsor").save;
+    const d = pendingDecisionsOf(save).find(x => x.kind === "sponsor")!;
+    expect(d).toMatchObject({ canWait: false, holds: true, parked: false });
+    expect(parkDecisionFlow(save, d.id).error).toBe("cannotWait");
+    expect(advanceDayFlow(save)).toBe(save);
+    expect(sponsorDecisionOf(declineSponsorOffersFlow(save).save)).toBeNull();
   });
 
   it("no Later for anything else: insert, invite, a matchday, a short squad, a notice, the training proposal", () => {
@@ -400,26 +375,8 @@ describe("rc.34 — the queue's order: urgent first", () => {
       "bid:soon",
       "bid:late",
     ]);
-    // Parked ones go last; the top block shows the first that is not parked.
-    const parked = parkDecisionFlow(save, "bid:soon").save;
-    expect(pendingDecisionsOf(parked).map((d) => d.id).slice(-1)).toEqual(["bid:soon"]);
-    expect(topDecisionOf(parked)?.kind).toBe("sponsor");
-    const deferred = parkDecisionFlow(parked, sponsorDecisionOf(save)!.id).save;
-    expect(topDecisionOf(resolveInsertFlow(deferred, "b").save)?.id).toBe("bid:late");
-    // A notice outranks what is due today; a short squad's eve too.
-    const was = DECISION_SOURCES.notice;
-    DECISION_SOURCES.notice = () => ({ id: "notice:x" });
-    try {
-      expect(pendingDecisionsOf(save)[0].kind).toBe("sponsor");
-      expect(pendingDecisionsOf({ ...save, sponsorOffers: null })[0].kind).toBe("notice");
-    } finally {
-      DECISION_SOURCES.notice = was;
-    }
-    const short = holding("squadShort", { ...save, sponsorOffers: null }).save;
-    expect(pendingDecisionsOf(short)[0].kind).toBe("squadShort");
-    // The matchday comes first of all.
-    const matchday = { ...save, sponsorOffers: null, pendingEventDef: cupOn(save, save.clock.day) };
-    expect(pendingDecisionsOf(matchday)[0].kind).toBe("event");
+    expect(parkDecisionFlow(save, "bid:soon").error).toBe("cannotWait");
+    expect(topDecisionOf(save)?.kind).toBe("sponsor");
   });
 });
 

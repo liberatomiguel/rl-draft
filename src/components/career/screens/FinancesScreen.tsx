@@ -21,6 +21,7 @@
  * panel. Every gate and price reads from CAREER_* constants — zero literals.
  */
 
+import { LoanSummary } from "../finances/LoanSummary";
 import { useState } from "react";
 import {
   CAREER_BANK,
@@ -244,28 +245,6 @@ function PayDown({
  * (the old `open={Boolean(fin.loan || fin.bankLoan)}` was controlled by the
  * debt, so "Pay it all" collapsed the panel and hid the bank's Request).
  */
-function LoansDetails({
-  hasDebt,
-  className,
-  children,
-}: {
-  hasDebt: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const [userOpen, setUserOpen] = useState<boolean | null>(null);
-  const [debtSeen, setDebtSeen] = useState(hasDebt);
-  if (hasDebt && !debtSeen) setDebtSeen(true);
-  return (
-    <details
-      open={userOpen ?? debtSeen}
-      onToggle={(e) => setUserOpen(e.currentTarget.open)}
-      className={className}
-    >
-      {children}
-    </details>
-  );
-}
 
 /**
  * ECO-02 (R46): the bank loan's schedule as the Monday funnel books it — the
@@ -336,17 +315,7 @@ function BankLoanRequest({
   return (
     <div className="mt-3 border-t border-line pt-3">
       <p className="text-[11px] font-semibold text-sub">{C.finances.bankAvailable(formatMoney(limit))}</p>
-      {suggested ? (
-        <p className="mt-1.5 text-xs leading-snug text-cyan">
-          {C.finances.creditSuggest(
-            formatMoney(suggested.net),
-            formatMoney(suggested.total),
-            formatMoney(suggested.weeklyPayment),
-            suggested.termWeeks,
-            suggested.coversMondays,
-          )}
-        </p>
-      ) : null}
+      <LoanSummary C={C} received={amount} total={terms.total} weekly={terms.weeklyPayment} weeks={terms.termWeeks} />
       <div className="mt-2 flex items-center gap-2">
         <button
           type="button"
@@ -371,13 +340,6 @@ function BankLoanRequest({
           +
         </button>
       </div>
-      <p className="mt-2 text-xs text-sub">
-        {C.finances.bankTerms(
-          formatMoney(terms.weeklyPayment, { compact: true }),
-          terms.termWeeks,
-          formatMoney(terms.total, { compact: true }),
-        )}
-      </p>
       {refusal ? (
         <p className="mt-2 text-xs font-semibold text-bad">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
       ) : null}
@@ -927,10 +889,12 @@ export function FinancesScreen() {
         </Panel>
 
         <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
-          <p className="kicker text-[10px]">{C.finances.projected}</p>
+          <p className="kicker mb-2 text-[10px]">{C.finances.weeklyStatement}</p>
+          <StatementLines st={statement} />
+          <p className="kicker mt-3 border-t border-line pt-3 text-[10px]">{C.finances.projected}</p>
           <p
             className={cx(
-              "display mt-1 text-3xl font-bold leading-none",
+              "display mt-1 text-xl font-bold leading-none",
               projected < 0 ? "text-bad" : "text-ink",
             )}
           >
@@ -1048,13 +1012,6 @@ export function FinancesScreen() {
 
         {/* ================= right column: statement + sponsors + ledger ================= */}
         <div className="space-y-4 lg:col-span-2">
-          {/* Weekly statement */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "140ms" }}>
-            <p className="kicker mb-1 text-[11px]">{C.finances.weeklyStatement}</p>
-            <p className="mb-3 text-[11px] text-faint">{C.finances.statementHint}</p>
-            <StatementLines st={statement} />
-          </Panel>
-
           {/* Sponsors */}
           <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
@@ -1336,19 +1293,12 @@ export function FinancesScreen() {
               </div>
             )}
           </Panel>
-        </div>
-      </div>
-
       {/* ================= Loans & debt (v2.0; rc.2: folded away unless a loan is live) ================= */}
-      <LoansDetails
-        hasDebt={Boolean(fin.loan || fin.bankLoan)}
+      <section
         className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
       >
-        <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="kicker text-[10px]">
-            <span className="mr-1.5 inline-block transition-transform group-open:rotate-90" aria-hidden>
-              ▸
-            </span>
             {C.finances.loans}
             {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
           </span>
@@ -1356,9 +1306,9 @@ export function FinancesScreen() {
           <span className="text-[10px] text-faint">
             {nextBreach === "insolvent" ? C.finances.loansHintEnd : C.finances.loansHint}
           </span>
-        </summary>
+        </div>
         <div className="px-4 pb-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3">
           {/* Bank */}
           <div className="rounded-lg border border-line bg-white/[0.02] p-3">
             <p className="display text-sm font-bold uppercase tracking-wide text-ink">
@@ -1502,7 +1452,10 @@ export function FinancesScreen() {
           </div>
         </div>
       </div>
-      </LoansDetails>
+      </section>
+
+        </div>
+      </div>
 
       {/* rc.33 (UX-07): the expanded balance chart (portal Modal; 360 px, no horizontal scroll). */}
       <Modal

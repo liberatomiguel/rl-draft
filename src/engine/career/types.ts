@@ -28,6 +28,8 @@ export interface CareerColors {
   /** Hex like "#f97316". Applied to the tintable crest + org accents. */
   primary: string;
   secondary: string;
+  /** Optional third field colour; old saves default to white. */
+  tertiary?: string;
 }
 
 export interface CareerIdentity {
@@ -245,6 +247,7 @@ export interface TrainingSummary {
 
 /** rc.34 (DEV-03): the career's training state (CareerSave.training). */
 export interface TrainingState {
+  weekly?: { seasonIndex: number; week: number; players: Record<string, { overall: number; name: string }>; chemistry: number };
   mode: TrainingMode;
   /** "Repeat until I change it": the last package runs again at the boundary. */
   repeat: boolean;
@@ -1602,6 +1605,10 @@ export interface CareerSave {
   scouted: Record<string, number>;
   /** This season's compiled events (archived into history at rollover). */
   eventResults: CompactEventResult[];
+  /** Career-long title ledger; roster snapshots survive transfers and season rollover. */
+  honors?: import("./honors").CareerHonor[];
+  /** True only for a career created with the complete title recorder. */
+  honorsComplete?: boolean;
   /**
    * rc.37 (F1): the user's titles per season (regional, Major or Worlds),
    * counted when he wins them — the renewal title raise's window reads it

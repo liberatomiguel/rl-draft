@@ -12,6 +12,10 @@
  * there is no mutation path for identity.colors yet (see build report).
  */
 
+import { CareerHonorsTable } from "../CareerHonorsTable";
+import { AchievementCard } from "@/components/AchievementsGrid";
+import { AchievementIcon } from "@/components/AchievementIcon";
+import { achievementStyle } from "@/components/achievementStyle";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { CareerLifetimeStats } from "@/engine/career/types";
@@ -243,7 +247,7 @@ export function ClubScreen() {
 
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-5">
         {/* 2 — Reputation track */}
-        <div className="flex flex-col gap-4 md:col-span-2">
+        <div className="flex flex-col gap-4 md:col-span-3">
           <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
             <p className="kicker mb-1">{copy.club.reputation}</p>
             <p className="display text-4xl font-bold text-ink">
@@ -272,6 +276,61 @@ export function ClubScreen() {
             ) : null}
           </Panel>
 
+      {/* 4 — Trophy room */}
+      <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
+        <p className="kicker mb-3">{copy.club.trophies}</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {/* The Worlds pedestal — visible from day one (design §11). */}
+          <div
+            className={cx(
+              "col-span-2 flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-colors sm:col-span-1",
+              stats.titlesWorlds > 0
+                ? "border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
+                : "border-dashed border-line-strong bg-white/3",
+            )}
+          >
+            <WorldsPedestal
+              won={stats.titlesWorlds > 0}
+              className={cx(
+                "h-14 w-14",
+                stats.titlesWorlds > 0
+                  ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                  : "text-faint",
+              )}
+            />
+            {stats.titlesWorlds > 0 ? (
+              <p className="display mt-1 text-2xl font-bold text-amber-300">
+                {stats.titlesWorlds}
+              </p>
+            ) : null}
+            <p className={cx("kicker mt-1 !text-[9px]", stats.titlesWorlds > 0 && "text-amber-300")}>
+              {stats.titlesWorlds > 0 ? copy.common.tier.worlds : copy.club.worldsPedestal}
+            </p>
+          </div>
+
+          {shelf.map((t) => (
+            <div
+              key={t.key}
+              className={cx(
+                "flex flex-col items-center justify-center rounded-xl border border-line bg-white/3 p-4 text-center transition-all",
+                t.count === 0 ? "opacity-45" : "hover:border-line-strong hover:bg-white/5",
+              )}
+            >
+              <TrophyCup
+                dashed={t.count === 0}
+                className={cx("h-10 w-10", t.count > 0 ? TROPHY_TINT[t.key] : "text-faint")}
+              />
+              <p className="display mt-1 text-2xl font-bold text-ink">{t.count}</p>
+              <p className="kicker mt-1 !text-[9px]">{copy.common.tier[t.key]}</p>
+            </div>
+          ))}
+        </div>
+        {titlesTotal === 0 ? (
+          <p className="mt-3 text-center text-xs text-faint">{copy.club.trophyEmpty}</p>
+        ) : null}
+      </Panel>
+
+
           {/* 5 — Records */}
           <div>
             <p className="kicker mb-2">{copy.club.records}</p>
@@ -297,7 +356,7 @@ export function ClubScreen() {
         </div>
 
         {/* 3 — Progression Track (the unlock ladder, never hidden) */}
-        <Panel className="rise-in p-5 md:col-span-3" style={{ animationDelay: "90ms" }}>
+        <Panel className="rise-in p-5 md:col-span-2" style={{ animationDelay: "90ms" }}>
           <p className="kicker mb-0.5">{copy.club.progression}</p>
           <p className="mb-3 text-xs text-faint">{copy.club.progressionDesc}</p>
           <ul>
@@ -364,60 +423,6 @@ export function ClubScreen() {
         </Panel>
       </div>
 
-      {/* 4 — Trophy room */}
-      <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "150ms" }}>
-        <p className="kicker mb-3">{copy.club.trophies}</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {/* The Worlds pedestal — visible from day one (design §11). */}
-          <div
-            className={cx(
-              "col-span-2 flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-colors sm:col-span-1",
-              stats.titlesWorlds > 0
-                ? "border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
-                : "border-dashed border-line-strong bg-white/3",
-            )}
-          >
-            <WorldsPedestal
-              won={stats.titlesWorlds > 0}
-              className={cx(
-                "h-14 w-14",
-                stats.titlesWorlds > 0
-                  ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-                  : "text-faint",
-              )}
-            />
-            {stats.titlesWorlds > 0 ? (
-              <p className="display mt-1 text-2xl font-bold text-amber-300">
-                {stats.titlesWorlds}
-              </p>
-            ) : null}
-            <p className={cx("kicker mt-1 !text-[9px]", stats.titlesWorlds > 0 && "text-amber-300")}>
-              {stats.titlesWorlds > 0 ? copy.common.tier.worlds : copy.club.worldsPedestal}
-            </p>
-          </div>
-
-          {shelf.map((t) => (
-            <div
-              key={t.key}
-              className={cx(
-                "flex flex-col items-center justify-center rounded-xl border border-line bg-white/3 p-4 text-center transition-all",
-                t.count === 0 ? "opacity-45" : "hover:border-line-strong hover:bg-white/5",
-              )}
-            >
-              <TrophyCup
-                dashed={t.count === 0}
-                className={cx("h-10 w-10", t.count > 0 ? TROPHY_TINT[t.key] : "text-faint")}
-              />
-              <p className="display mt-1 text-2xl font-bold text-ink">{t.count}</p>
-              <p className="kicker mt-1 !text-[9px]">{copy.common.tier[t.key]}</p>
-            </div>
-          ))}
-        </div>
-        {titlesTotal === 0 ? (
-          <p className="mt-3 text-center text-xs text-faint">{copy.club.trophyEmpty}</p>
-        ) : null}
-      </Panel>
-
       {/* 5b — Career achievements (v2.0 R32) */}
       <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "165ms" }}>
         <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
@@ -434,37 +439,12 @@ export function ClubScreen() {
           {CAREER_ACHIEVEMENTS.map((a) => {
             const at = achievements.unlocked[a.id];
             const item = ACH_UI.careerItems[a.id] ?? { name: a.id, desc: "" };
-            return (
-              <div
-                key={a.id}
-                className={cx(
-                  "flex flex-col rounded-lg border p-3",
-                  at
-                    ? a.tier === "legend"
-                      ? "border-amber-300/50 bg-amber-300/[0.06]"
-                      : "border-good/40 bg-good/[0.05]"
-                    : "border-line bg-white/[0.02] opacity-70",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={cx("display text-xs font-bold uppercase tracking-[0.1em]", at ? "text-ink" : "text-sub")}>
-                    {item.name}
-                  </span>
-                  <Badge tone={a.tier === "legend" ? "gold" : a.tier === "epic" ? "orange" : a.tier === "rare" ? "blue" : "neutral"}>
-                    {copy.achievements.tier[a.tier]}
-                  </Badge>
-                </div>
-                <p className="mt-1 flex-1 text-[11px] leading-snug text-sub">{item.desc}</p>
-                <p className={cx("mt-1.5 text-[10px] font-semibold", at ? "text-good" : "text-faint")}>
-                  {at ? copy.achievements.unlockedOn(new Date(at).toLocaleDateString()) : copy.achievements.lockedLabel}
-                  {" · "}
-                  {copy.achievements.xp(a.xp)}
-                </p>
-              </div>
-            );
+            return <AchievementCard key={a.id} earned={Boolean(at)} style={achievementStyle({ id: a.id, category: a.tier })} icon={<AchievementIcon group="career" id={a.id} className="h-5 w-5" />} title={item.name} tier={ACH_UI.careerTier[a.tier]} body={item.desc} foot={at ? copy.achievements.unlockedOn(new Date(at).toLocaleDateString()) : copy.achievements.xp(a.xp)} />;
           })}
         </div>
       </Panel>
+
+      <CareerHonorsTable save={save} C={copy} />
 
       {/* 6 — Season history */}
       {save.history.length > 0 ? (

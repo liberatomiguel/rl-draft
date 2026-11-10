@@ -250,7 +250,7 @@ export function CareerTopBar() {
               )}
             >
               {copy.nav[tab.key as keyof typeof copy.nav]}
-              {(tab.key === "squad" && dots?.squad) || (tab.key === "finances" && dots?.finances) ? (
+              {(tab.key === "squad" && dots?.squad) || (tab.key === "finances" && (dots?.finances || save?.mail.some(m => !m.read && (m.kind === "sponsor" || (m.kind === "unlock" && String(m.params?.name).startsWith("sponsors")))))) || (tab.key === "market" && save?.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name)))) || (tab.key === "hub" && dots?.finances) ? (
                 <NewDot className="ml-1 inline-block align-middle" label={copy.toolbox.newTag} />
               ) : null}
               {tab.key === "news" && unreadMail > 0 ? (

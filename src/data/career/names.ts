@@ -18,5 +18,5 @@ export const T3_EVENT_NAMES = [
 ];
 export const T2_EVENT_NAMES = [
   "Champions Invitational", "Prime Showdown", "Elite Eight", "Signature Series",
-  "Crown Circuit", "Velocity Invitational", "Apex Gathering", "Masters Table",
+  "Crown Circuit", "Velocity Invitational", "Apex Gathering", "Masters Table", "Duds Cup Invitational",
 ];

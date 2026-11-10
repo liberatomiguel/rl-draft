@@ -97,12 +97,12 @@ type Tone = { text: string; ring: string; bg: string };
 
 const QUIET_TONE: Tone = { text: "text-ink", ring: "border-line", bg: "bg-white/[0.02]" };
 export const OBJECTIVE_TONE: Record<TrainingObjective, Tone> = {
-  development: { text: "text-good", ring: "border-good/25", bg: "bg-good/[0.04]" },
-  preparation: { text: "text-blue-bright", ring: "border-blue/30", bg: "bg-blue/[0.04]" },
-  recovery: { text: "text-cyan", ring: "border-cyan/25", bg: "bg-cyan/[0.04]" },
+  development: { text: "text-good", ring: "border-good/60", bg: "bg-good/10" },
+  preparation: { text: "text-blue-bright", ring: "border-blue/60", bg: "bg-blue/10" },
+  recovery: { text: "text-orange-bright", ring: "border-orange/60", bg: "bg-orange/10" },
 };
 const NEUTRAL_TONE = QUIET_TONE;
-const HEAVY_TONE: Tone = { text: "text-orange-bright", ring: "border-orange/25", bg: "bg-orange/[0.04]" };
+const HEAVY_TONE: Tone = { text: "text-orange-bright", ring: "border-orange/60", bg: "bg-orange/10" };
 const FOCUS_TONE = OBJECTIVE_TONE.preparation;
 
 export function RecommendedTag({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -507,7 +507,7 @@ export function PlanPicker({
             icon={<IntensityBars workload={w} />}
             title={Y.intensities[w]}
             effect={Y.intensityEffect[w]}
-            tone={w === "heavy" ? HEAVY_TONE : NEUTRAL_TONE}
+            tone={w === "heavy" ? HEAVY_TONE : w === "light" ? OBJECTIVE_TONE.development : OBJECTIVE_TONE.preparation}
           />
         ))}
       </Step>
@@ -522,7 +522,7 @@ export function PlanPicker({
               onClick={() => set({ scrims: s })}
               icon={s === "off" ? <BaseDotIcon className="h-5 w-5" /> : <SwordsIcon className="h-5 w-5" />}
               title={Y.scrimChoices[s]}
-              tone={s === "hard" ? HEAVY_TONE : NEUTRAL_TONE}
+              tone={s === "hard" ? HEAVY_TONE : s === "easy" ? OBJECTIVE_TONE.development : s === "even" ? OBJECTIVE_TONE.preparation : { text: "text-ink", ring: "border-ink/60", bg: "bg-white/10" }}
             />
           ))}
         </Step>

@@ -153,14 +153,16 @@ export function WizardScreen() {
   const [crestShape, setCrestShape] = useState<CrestId>("shield");
   const [crestSymbol, setCrestSymbol] = useState<SymbolId | null>(null);
   const [crestPattern, setCrestPattern] = useState<PatternId | null>(null);
+  const [iconColor, setIconColor] = useState<"primary" | "secondary">("secondary");
   const [crestLayout, setCrestLayout] = useState<LayoutId>("emblem");
   const [colors, setColors] = useState<CareerColors>({
     primary: DEFAULT_CREST_COLORS.primary,
     secondary: DEFAULT_CREST_COLORS.secondary,
+    tertiary: DEFAULT_CREST_COLORS.tertiary ?? "#f5f7fa",
   });
   const [buffType, setBuffType] = useState<StatKey>("offense");
   /** The composite crestId written to identity ("shape[:symbol[:pattern[:layout]]]"). */
-  const crestId = composeCrestId({ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout });
+  const crestId = composeCrestId({ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout, iconColor });
   // Step 3 — region (null = derived from country)
   const [regionPick, setRegionPick] = useState<Region | null>(null);
   // Step 4 — starter roster
@@ -415,12 +417,13 @@ export function WizardScreen() {
               statKeys={STAT_KEYS}
               orgName={nameTrim}
               abbrev={abbrev}
-              pick={{ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout }}
+              pick={{ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout, iconColor }}
               onPick={(next) => {
                 if (next.shape !== undefined) setCrestShape(next.shape);
                 if (next.symbol !== undefined) setCrestSymbol(next.symbol);
                 if (next.pattern !== undefined) setCrestPattern(next.pattern);
                 if (next.layout !== undefined) setCrestLayout(next.layout);
+                if (next.iconColor !== undefined) setIconColor(next.iconColor);
               }}
               colors={colors}
               onColors={setColors}

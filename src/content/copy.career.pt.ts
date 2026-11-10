@@ -209,6 +209,10 @@ export const CAREER_PT: CareerCopy = {
   },
 
   wizard: {
+    references: "Inspirações de clubes",
+    iconColor: "Cor do emblema",
+    tertiaryColor: "Terceira cor",
+    referenceNames: { rio: "Rio", paulista: "São Paulo", gaucho: "Porto Alegre", "buenos-aires": "La Boca", tricolor: "Laranjeiras", nautical: "Náutico", "los-angeles": "Los Angeles", milan: "Milão" },
     title: "Funde sua organização",
     step: (n: number, total: number) => `Etapa ${n} de ${total}`,
     quickStart: "Início rápido",
@@ -948,6 +952,8 @@ export const CAREER_PT: CareerCopy = {
   },
 
   training: {
+    weekSummary: "Evolução do elenco nesta semana",
+    weekChemistry: "Entrosamento",
     effectDescription: {
       offense: "Cria pressão e oportunidades de gol ao longo de cada jogo.",
       defense: "Mantém o time competitivo ao conter o adversário em cada jogo.",
@@ -1494,6 +1500,7 @@ export const CAREER_PT: CareerCopy = {
       blocked: "Agora não.",
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
+      contractedRep: "A contratação de jogadores sob contrato libera na reputação 20.",
       repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
       /** rc.35 (front C): uma org o contratou nesta janela. */
       justSigned: "Ele acabou de assinar com outra org nesta janela — tente na próxima.",
@@ -2322,7 +2329,7 @@ export const CAREER_PT: CareerCopy = {
     items: {
       "ins-showmatch": { title: "Um streamer quer um showmatch", body: "Chegou um convite para um amistoso ao vivo. O cachê já está combinado, mas o elenco precisaria abrir mão de uma tarde de treino.", a: "Jogar", b: "Passar" },
       "ins-5050-showmatch": { title: "Um convite do 50/50", body: "O 50/50 está preparando um showmatch e quer sua organização na transmissão. Há um cachê pela participação e a chance de alcançar um novo público; a comissão precisará remanejar uma tarde de treino.", a: "Participar do showmatch do 50/50", b: "Manter a agenda de treinos" },
-      "ins-duds-showmatch": { title: "O duds tem uma vaga na live", body: "O duds está organizando um showmatch com a comunidade e convidou seu elenco. Os jogadores se animaram e o cachê ajuda, mas o treino daquele dia terminaria mais cedo.", a: "Aceitar o convite do duds", b: "Ficar de fora desta vez" },
+      "ins-duds-showmatch": { title: "O DudsMelow tem uma vaga na live", body: "O DudsMelow está organizando um showmatch com a comunidade e convidou seu elenco. Os jogadores se animaram e o cachê ajuda, mas o treino daquele dia terminaria mais cedo.", a: "Aceitar o convite do DudsMelow", b: "Ficar de fora desta vez" },
       "ins-charity-cup": { title: "Copa beneficente", body: "Uma copa beneficente local quer sua org no cartaz. Custa pouco e compra boa vontade.", a: "Aparecer", b: "Recusar" },
       "ins-pc-dies": { title: "Um PC morre no meio da semana", body: "Uma das máquinas de torneio pifou. Troque agora ou empreste uma reserva e perca tempo de treino.", a: "Trocar", b: "Emprestar uma reserva" },
       "ins-fan-meetup": { title: "A torcida pede um encontro", body: "A torcida quer um encontro depois do treino. Um custo pequeno, um pouco de prestígio.", a: "Organizar", b: "Não esta semana" },
@@ -2336,6 +2343,11 @@ export const CAREER_PT: CareerCopy = {
   },
 
   club: {
+    honorsTitle: "Corrida pela história",
+    honorsHint: "Títulos reais até a Season 9, somados aos resultados desta carreira. Majors RLCS começam na Season X.",
+    honorsOrgs: "Organizações",
+    honorsPlayers: "Jogadores",
+    honorsLegacy: "Em saves antigos, títulos individuais são registrados a partir desta atualização.",
     title: "Clube",
     identity: "Identidade",
     manager: "Manager",
@@ -2389,6 +2401,8 @@ export const CAREER_PT: CareerCopy = {
   },
 
   event: {
+    placementLabel: "Colocação",
+    rewardsTable: "Premiação por colocação",
     communityLineup: (n: number) => `Seu elenco para o ${n}v${n}`,
     communityLineupHint: "Escolha quem representa a organização neste campeonato comunitário. Cada participante entra com seu próprio nível e seus atributos.",
     communitySeat: (n: number) => `Jogador ${n}`,
@@ -2523,6 +2537,8 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-01..03, R88) — o fim de semana: sábado → QG → domingo.
   sunday: {
+    today: "Hoje",
+    todayHint: "A preleção vale para este evento. O calendário permanece no domingo.",
     backToCalendar: "Avançar",
     tomorrow: "Amanhã",
     qualifiedLine: "Classificado pela qualificatória de sábado",
@@ -2809,6 +2825,11 @@ export const CAREER_PT: CareerCopy = {
   // de dinheiro, um por evento que muda o jogo (careerFlow.moneyNoticeOf). O modal passa os params
   // do aviso com o dinheiro formatado e `dlDate` (a data do prazo) incluída.
   moneyNotice: {
+    otherTerms: "Demais condições do empréstimo",
+    received: "Crédito na conta",
+    repayTotal: "Total a pagar",
+    weeklyPayment: "Por semana",
+    termWeeks: "Semanas",
     ok: "Entendi",
     toFinances: "Abrir Finanças",
     loanOpened: (p: Record<string, string | number>): MoneyNoticeText => ({

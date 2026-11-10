@@ -339,6 +339,7 @@ describe("UX-07 — the Market", () => {
         const planned = signingPlanFor(save, v.id, { lengthSeasons: 2 });
         const error = "error" in planned ? planned.error : null;
         if (error === "tooYoung" || error === "alreadySigned") continue;
+        if (error === "contractedRep") { expect(rep).toBeLessThan(20); continue; }
         expect(error === "repGate", `${v.id} @${rep}`).toBe(!signableAtRep(v.overall, rep));
         checked += 1;
       }

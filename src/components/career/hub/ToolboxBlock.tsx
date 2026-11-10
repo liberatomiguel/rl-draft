@@ -20,6 +20,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
+import { NewDot } from "@/components/ui/NewDot";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 export function toolboxNameOf(C: CareerCopy, id: ToolboxItemId): string {
@@ -80,7 +81,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const L = C.ladder;
 
   const items = useMemo(() => toolboxOf(save), [save]);
-  const rungs = useMemo(() => ladderOf(save), [save]);
+  const rungs = useMemo(() => ladderOf(save).filter(r => items.some(i => rungOfItem(i.id) === r.id)), [save, items]);
   const ended = save.phase === "ended";
   const fresh = careerNewSummary(save).keys;
   const available = items.filter((i) => i.status === "buyable" && !ended);
@@ -131,7 +132,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   return (
     <Panel id="career-progression" className={cx("rise-in scroll-mt-24 p-4", hasNew && "!border-blue-bright/70 bg-blue/10")} style={{ animationDelay: "150ms" }}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <p className="kicker text-[10px]">{L.title}</p>
+        <p className="kicker flex items-center gap-2 text-[10px]">{L.title}{hasNew ? <NewDot label={C.toolbox.newTag} /> : null}</p>
         <span className="rounded-full border border-orange/35 bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange-bright">
           {L.rep(rep)}
         </span>
@@ -157,6 +158,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                 ) : <p className="text-xs font-semibold text-sub">{L.rung[rung.id]}</p>}
                 <p className="mt-0.5 text-[10px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
               </div>
+              {item?.status === "owned" ? <span className="text-[10px] font-semibold text-good">{C.finances.ownedLabel}</span> : null}
               {item && rung.status !== "locked" && !["owned", "active", "used", "superseded"].includes(item.status) ? <Button size="sm" variant={canBuy ? "primary" : "ghost"} className={canBuy ? "shadow-none" : undefined} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
             </li>
           );

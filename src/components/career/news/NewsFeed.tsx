@@ -167,7 +167,7 @@ export function NewsTypeIcon({ type, className }: { type: NewsType | "archive"; 
 // ---------------------------------------------------------------------------
 
 /** The partner art's id under public/partners/ (assets.partnerLogoSrc). */
-const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty" };
+const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty", duds: "duds" };
 
 export function BrandMark({ brand, name, small = false }: { brand: string; name: string; small?: boolean }) {
   const art = PARTNER_ART[brand];

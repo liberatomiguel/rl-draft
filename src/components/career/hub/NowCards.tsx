@@ -9,6 +9,8 @@
  * block; rc.33's NowSponsorChoice is gone.)
  */
 
+import { EventBrand } from "../event/EventBrand";
+import { EventRewardsTable } from "../event/EventRewardsTable";
 import { CommunityLineup } from "../CommunityLineup";
 import { useRouter } from "next/navigation";
 import { CAREER_EMERGENCY_SALE, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
@@ -54,6 +56,7 @@ export function NowInsert({
   if (!def || !item) return null;
   return (
     <div>
+      <EventBrand name={id} />
       <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
@@ -154,7 +157,7 @@ export function NowInvite({
   return (
     <div>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
-        {C.hub.inviteTitle(def.name)}
+        <EventBrand name={def.name} />{C.hub.inviteTitle(def.name)}
       </h2>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <TierChip tier={def.tier} />
@@ -165,6 +168,7 @@ export function NowInvite({
       <p className="mt-3 max-w-md text-sm text-sub">
         {C.hub.inviteBody(formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day)))}
       </p>
+      <EventRewardsTable save={save} def={def} C={C} compact />
       <CommunityLineup save={save} def={def} C={C} />
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="md" onClick={onAccept}>
@@ -270,6 +274,7 @@ export function NowEvent({
   primaryLabel,
   onPrimary,
   onAdvanceDay,
+  onPass,
   stage,
   day,
 }: {
@@ -281,6 +286,7 @@ export function NowEvent({
   primaryLabel: React.ReactNode;
   onPrimary: () => void;
   onAdvanceDay?: () => void;
+  onPass?: () => void;
   /**
    * v2.0 (R40): the weekend phase, in place of the matchday badge — "Swiss
    * stage" / "Swiss stage complete" (Saturday) / "Championship Sunday".
@@ -341,6 +347,7 @@ export function NowEvent({
       </div>
       <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
 
+      <EventBrand name={def.name} />
       {unavailable ? (
         <p className="mt-3 rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-xs text-bad">
           {C.event.unavailableNotice(unavailable.name)}
@@ -349,9 +356,10 @@ export function NowEvent({
 
       <CommunityLineup save={save} def={def} C={C} />
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onPrimary}>
+        <Button variant="primary" size="lg" className="flex-1 sm:flex-none" onClick={onPrimary}>
           {primaryLabel}
         </Button>
+        {onPass ? <Button variant="ghost" size="lg" onClick={onPass}>{C.hub.invitePass}</Button> : null}
         {onAdvanceDay ? (
           <Button variant="ghost" size="md" className="min-h-11" onClick={onAdvanceDay}>
             {C.hub.advanceDay}

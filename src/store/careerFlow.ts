@@ -243,7 +243,8 @@ import {
 import { signableAtRep } from "@/engine/career/market";
 import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
-import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
+import { isLocalRef, localRegionOf, localTeamName, localPlayerNames } from "@/engine/career/localScene";
+import { recordHonor } from "@/engine/career/honors";
 import { deepRunKeyFor, newcomerRepKindOf } from "@/engine/career/reputation";
 // rc.34 (ECO-04/05, SPONSOR-CONTRACT): the deals, their goals, fines and the other-income cap.
 import {
@@ -487,7 +488,7 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
         bodyKey: "unlock",
         params: { name: key },
         fromKey: "board",
-        linkTo: "/career#career-progression",
+        linkTo: key === "coach" || key === "exProCoach" ? "/career/market#coaches" : key.startsWith("sponsors") ? "/career/finances" : "/career#career-progression",
       });
     }
   }
@@ -798,13 +799,13 @@ function loanCoverOf(save: CareerSave, weeksLeft: number | null): { projected: n
 
 /** The oldest money notice not yet acknowledged (null = none). */
 export function moneyNoticeOf(save: CareerSave): MoneyNotice | null {
-  return save.moneyNotices?.[0] ?? null;
+  return save.moneyNotices?.find(n => n.kind !== "creditOffer" && n.kind !== "spendRisk") ?? null;
 }
 
 /** Acknowledge a money notice (the head when `id` is omitted); a no-op for an unknown id. */
 export function acknowledgeMoneyNoticeFlow(input: CareerSave, id?: string): CareerSave {
   const queue = input.moneyNotices ?? [];
-  const target = id ?? queue[0]?.id;
+  const target = id ?? moneyNoticeOf(input)?.id;
   if (!target || !queue.some((n) => n.id === target)) return input;
   const save = clone(input);
   save.moneyNotices = queue.filter((n) => n.id !== target);
@@ -815,7 +816,7 @@ export function acknowledgeMoneyNoticeFlow(input: CareerSave, id?: string): Care
 function pushMoneyNotice(save: CareerSave, kind: MoneyNoticeKind, params: Record<string, string | number>): void {
   const { seasonIndex, day } = save.clock;
   const id = `${kind}:${seasonIndex}:${day}`;
-  const queue = (save.moneyNotices ?? []).filter((n) => n.id !== id);
+  const queue = (save.moneyNotices ?? []).filter((n) => n.id !== id && !((kind === "creditOffer" || kind === "spendRisk") && n.kind === kind));
   queue.push({ id, kind, seasonIndex, day, params });
   save.moneyNotices = queue;
 }
@@ -823,7 +824,7 @@ function pushMoneyNotice(save: CareerSave, kind: MoneyNoticeKind, params: Record
 /** Was a money notice raised today (the batched Advance and the autoplay stop on it)? */
 export function moneyNoticeRaisedToday(save: CareerSave): boolean {
   return (save.moneyNotices ?? []).some(
-    (n) => n.seasonIndex === save.clock.seasonIndex && n.day === save.clock.day,
+    (n) => n.kind !== "creditOffer" && n.kind !== "spendRisk" && n.seasonIndex === save.clock.seasonIndex && n.day === save.clock.day,
   );
 }
 
@@ -2097,6 +2098,13 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
 }
 
 function ingestResult(save: CareerSave, result: CompactEventResult): void {
+  if (result.tier === "major" || result.tier === "worlds") {
+    const ids = result.championRef === "user" ? save.activeEvent?.fieldedIds ?? save.starterIds : save.world.orgs[result.championRef]?.playerIds ?? [];
+    const players = isLocalRef(result.championRef)
+      ? localPlayerNames(result.championRef, save.careerSeed).map((name, i) => ({ id: `${result.championRef}:${i}`, name }))
+      : ids.map(id => { const p = save.squad.find(p => p.id === id) ?? playerViewById(id, { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world }); return { id, name: p?.name ?? id }; });
+    recordHonor(save, result, players);
+  }
   save.competition = applyResultToStandings(save.competition, result, (ref) =>
     regionOfRef(save, ref),
   );
@@ -3000,6 +3008,7 @@ function offerCreditOnRunway(save: CareerSave, runway: number, net: number): voi
     ...nextBreachParamsOf(save),
   };
   stampCreditOffer(save);
+  // Retain the quoted offer for legacy acceptance; it never opens a modal or holds the clock.
   pushMoneyNotice(save, "creditOffer", params);
   pushMail(save, {
     kind: "finance",
@@ -3052,6 +3061,7 @@ export function spendAlertFlow(prev: CareerSave, next: CareerSave): CareerSave {
   };
   if (offer) stampCreditOffer(save);
   pushMoneyNotice(save, "spendRisk", params);
+  pushMail(save, { kind: "finance", titleKey: offer ? "creditOffer" : "cashWarning", bodyKey: offer ? "creditOffer" : "cashWarning", params, fromKey: "bank", linkTo: "/career/finances" });
   return save;
 }
 
@@ -4438,6 +4448,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     firedBeatIds: [],
     scouted: {},
     eventResults: [],
+    honors: [],
+    honorsComplete: true,
     history: [],
     seasonGoals: seasonGoalsFor({ rep: CAREER_REP.start, seasonIndex: 0 }),
     end: { ended: false, infinite: false },
@@ -4934,6 +4946,7 @@ export function signingPlanFor(
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   // RTW-05 (rc.33): the empty seat outside a window takes a free agent only.
   if (emptySeat && onOrg) return { error: "windowClosed" };
+  if (onOrg && save.reputation < CAREER_UNLOCKS.contractedRep) return { error: "contractedRep" };
   // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
   if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 

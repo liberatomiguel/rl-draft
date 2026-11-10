@@ -50,6 +50,7 @@ import { createRng } from "@/lib/rng";
 import {
   acceptBidFlow,
   advanceDayFlow,
+  declineBidFlow,
   advanceToNextStopFlow,
   continueEventToNextDayFlow,
   createCareerSave,
@@ -822,13 +823,14 @@ describe("roster moves wait for the event (rc.30, rc.29 review)", { timeout: 30_
     expect(sold.save.squad.map((p) => p.id)).toContain(starter);
     // rc.34 (UX-01a): the bid holds the clock, the Saturday pause included — "Later" parks it to its deadline.
     expect(advanceToNextStopFlow(withBid)).toBe(withBid);
-    const parked = parkDecisionFlow(withBid, "bid:test").save;
+    expect(parkDecisionFlow(withBid, "bid:test").error).toBe("cannotWait");
+    const parked = declineBidFlow(withBid, "bid:test");
     // rc.36 (SUN-01): parked, the bid stops holding — Sunday is started from HQ.
     expect(advanceToNextStopFlow(parked)).toBe(parked);
     // Sunday: the playoffs, the finish — then the market is open for business again.
     const done = finishEvent(simEventToEnd(startSundayFlow(parked).save));
     expect(done.activeEvent).toBeNull();
-    const after = acceptBidFlow(done, "bid:test");
+    const after = acceptBidFlow({ ...done, pendingOffers: withBid.pendingOffers }, "bid:test");
     expect(after.error).toBeUndefined();
     expect(after.save.squad.map((p) => p.id)).not.toContain(starter);
   });

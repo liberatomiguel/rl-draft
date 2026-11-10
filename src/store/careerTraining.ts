@@ -639,6 +639,8 @@ export function trainingDayStart(save: CareerSave): void {
   if (!save.training) save.training = initialTrainingState(save.difficulty);
   if (save.phase === "ended") return;
   const t = save.training;
+  const week = weekOfDay(save.clock.day);
+  if (!t.weekly || t.weekly.seasonIndex !== save.clock.seasonIndex || t.weekly.week !== week) t.weekly = { seasonIndex: save.clock.seasonIndex, week, players: Object.fromEntries(save.squad.map(p => [p.id, { overall: p.overall, name: p.name }])), chemistry: teamChemistryOf(save) };
   const day = save.clock.day;
   const plan = t.plan;
   // rc.36 (front T2): the plan's own window decides (an rc.35 14-day cycle runs

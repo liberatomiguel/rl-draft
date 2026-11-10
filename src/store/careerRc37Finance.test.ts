@@ -343,7 +343,9 @@ describe("rc.37 F2 — a one-off spend that brings the floor close raises its no
     const bought = buyGearFlow(prev, CAREER_GEAR.items[0].id);
     expect(bought.error).toBeUndefined();
     const next = spendAlertFlow(prev, bought.save);
-    const notice = moneyNoticeOf(next)!;
+    const notice = next.moneyNotices!.find(n => n.kind === "spendRisk")!;
+    expect(moneyNoticeOf(next)).toBeNull();
+    expect(next.mail.some(m => m.kind === "finance")).toBe(true);
     expect(notice.kind).toBe("spendRisk");
     expect(notice.params.spent).toBe(price);
     expect(Number(notice.params.mondays)).toBeLessThanOrEqual(4);
@@ -377,7 +379,9 @@ describe("rc.37 F2 — a one-off spend that brings the floor close raises its no
     prev.finances.balance = backerLineOf(prev).floor + 5.5 * burn;
     const next = structuredClone(prev);
     next.finances.balance -= 2 * burn;
-    const notice = moneyNoticeOf(spendAlertFlow(prev, next))!;
+    const warned = spendAlertFlow(prev, next);
+    expect(moneyNoticeOf(warned)).toBeNull();
+    const notice = warned.moneyNotices!.find(n => n.kind === "spendRisk")!;
     expect(notice.kind).toBe("spendRisk");
     expect(notice.params.offer).toBe(0);
     expect(notice.params.principal).toBeUndefined();

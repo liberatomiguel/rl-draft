@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.39.1**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.40**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,25 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added — rc.40 (2026-11-10), Road to Worlds feedback
+- Eight editable club-inspired crest combinations, third field colour and primary/secondary emblem colour; a career-long Major/Worlds title ledger with pre-X real champions and frozen winning lineups, plus Organization/Player tables in Club. Historical source audit: CAREER-HONORS-SOURCES.md.
+- Duds Cup Invitational, supplied DudsMelow avatar, 50/50 tournament art and complete pre-event prize/points tables from the settlement engine. Weekly squad growth/chemistry recap beside HQ scrims; individual career achievement glyphs shared with Profile.
+
+### Changed — rc.40
+- Harmonized crest patterns, corrected ring/sash fields and clearer emblem/letter layouts; revised kits and defaults. HQ progression now shows direct purchases only, with a novelty dot; coach unlock mail opens Coaches and its unread marker. HQ uses Inbox glyphs; compact transfer wire sits below Inbox.
+- Green/blue/orange selected training options; explicit selected None. Attribute panels show value bars and effect context. Club's trophy room sits above Records in the larger left column, with shared Profile achievement cards.
+- Weekly Statement replaces the standalone Monday projection card and keeps its forecast/runway. Loans stay expanded below Movements in the narrow column. Credit offers arrive as email with numeric terms; emergency dialogs prioritize amounts, deadline and repayment, with secondary conditions expandable.
+- Bids and sponsorships require accept/decline before advancing; no Later, including old parked decisions. Community Pass sits next to Continue. My Deals shows the player's overall and weekly salary. Full request mapping: CAREER-FEEDBACK-rc40.md.
+
+### Balance — rc.40
+- Contracted players unlock at reputation 20 in both the market listing and signing flow. The existing overall cap still applies. BALANCE_VERSION 17 → 18; frozen save contracts unchanged.
+
+### Fixed — rc.40
+- Direct regional qualifiers now receive coach pre-match briefings, including an old save already on Sunday. Root cause: the old selector required the Saturday winner's weekend record. Same-day recovery records the briefing without moving the date.
+- Routine credit/spend warnings no longer trigger the emergency popup or hold autoplay. Root cause: ordinary proposals shared the blocking emergency notice selector. Legacy quotes remain usable; only emergency notices can interrupt.
+- Contrasting initials remain readable on striped crests. Root cause: text ink was chosen from the primary field even when the letters fell over the secondary stripe.
+- Simulated titles retain winners and roster snapshots across transfers/season resets. Previously only short-lived event results and user totals existed; no player-level title history survived rollover. Existing saves explicitly disclose incomplete past player records.
 
 ### Changed — rc.39.1 (2026-11-10), the 2027 wave moves to the first infinite season
 - `CAREER_WORLD.lateIntake.atSeasonIndex` 8 → **6** (R109 corrected): the RLCS 2027 lineups arrive in

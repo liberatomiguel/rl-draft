@@ -36,6 +36,7 @@ import {
   advanceDayFlow,
   finishEvent,
   isEventPaused,
+  userIsDirect,
   startChampionshipSundayFlow,
   type FlowResult,
 } from "./careerFlow";
@@ -79,7 +80,11 @@ export function sundayAheadOf(save: CareerSave): SundayAhead | null {
   }
   if (save.activeEvent) return null;
   const pending = save.pendingEventDef;
-  if (pending?.tier === "regional" && pending.day === save.clock.day + 1 && save.weekend?.eventId === pending.id) {
+  // An older save may already be on Sunday without the newly added Saturday stop.
+  if (pending?.tier === "regional" && pending.day === save.clock.day && save.coach && userIsDirect(save) && !recorded(pending.id)) {
+    return { kind: "regional", def: pending, playing: true, sundayDay: pending.day, briefing: null };
+  }
+  if (pending?.tier === "regional" && pending.day === save.clock.day + 1 && (save.weekend?.eventId === pending.id || (save.coach && userIsDirect(save)))) {
     return { kind: "regional", def: pending, playing: true, sundayDay: pending.day, briefing: recorded(pending.id) };
   }
   return null;
@@ -125,6 +130,7 @@ export function startSundayFlow(
     return { save: input, error: "decisionPending" };
   }
   const recorded = recordSundayBriefingFlow(input, choice).save;
+  if (ahead.sundayDay === input.clock.day) return { save: recorded };
   let save = advanceDayFlow(recorded);
   if (save.clock.day !== input.clock.day + 1) return { save: input, error: "blocked" };
   if (ahead.kind === "championship" && !ahead.playing && save.activeEvent) {

@@ -2204,6 +2204,33 @@ R109. **rc.39 / rc.39.1 — the RLCS 2027 lineups arrive in the infinite
      the calendar (a 2027 card reads from season seven on, as in rc.38):
      with the wave in season seven, rosters and ratings now arrive together.
 
+## R110 — 10 November 2026: career feedback package (rc.40)
+
+Miguel's 19-item request supersedes the earlier Later decision: incoming bids
+and sponsorships must be accepted or declined before the clock advances.
+The legacy park action refuses them, including already parked saves. Closing
+a sponsor dialog leaves its decision pending; Decline is an explicit action.
+Normal bank offers are inbox-only; emergency debt retains the popup.
+
+Contracted signings open at reputation 20 as well as meeting the existing
+overall rule. Direct regional seeds receive the coach briefing; a legacy save
+already on Sunday answers on that same date. Coachless direct entries need
+no new Saturday stop.
+
+HQ progression contains direct purchases only. Coaches and sponsorships use
+mail and their relevant screen markers. The requested visual/layout changes,
+colours, loan readouts and partner events are mapped in CAREER-FEEDBACK-rc40.md.
+Third crest colour and weekly growth baseline are additive save fields; the
+emblem colour role is encoded as an optional fifth crest-id segment.
+
+Historical title counting is RLCS-only, cut off before X: eight Worlds,
+zero Majors, with the actual winning org and playing trio. Post-start results
+are alternate history, recorded once per event with roster snapshots that
+survive transfers/rollovers. Missing player rosters in older saves are never
+invented; known org/user totals remain available. Sources: CAREER-HONORS-SOURCES.md.
+The Duds Cup joins the existing invitational rotation. BALANCE_VERSION 18;
+persist keys, persist version 3 and saveVersion 5 stay frozen.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

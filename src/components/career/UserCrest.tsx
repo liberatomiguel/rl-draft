@@ -86,6 +86,16 @@ export const PATTERN_IDS_RC36 = ["hoops", "halves", "cross", "border"] as const;
 export const PATTERN_IDS_CLUB = ["club-hoops", "club-stripes", "tricolor", "yoke", "club-ring"] as const;
 export const ALL_PATTERN_IDS = [...PATTERN_IDS, ...PATTERN_IDS_RC36, ...PATTERN_IDS_CLUB] as const;
 export const WIZARD_PATTERN_IDS = [...PATTERN_IDS_CLUB, ...PATTERN_IDS, "halves", "cross", "border"] as const;
+export const CREST_REFERENCES = [
+  { id: "rio", shape: "heater", symbol: "flame", pattern: "club-hoops", primary: "#000000", secondary: "#b51f35", tertiary: "#f5f7fa" },
+  { id: "paulista", shape: "circle", symbol: "star", pattern: "border", primary: "#16633e", secondary: "#f5f7fa", tertiary: "#c5a12a" },
+  { id: "gaucho", shape: "roundshield", symbol: "star", pattern: "club-stripes", primary: "#82bef0", secondary: "#000000", tertiary: "#f5f7fa" },
+  { id: "buenos-aires", shape: "badge", symbol: "star", pattern: "club-ring", primary: "#17345d", secondary: "#c5a12a", tertiary: "#c5a12a" },
+  { id: "tricolor", shape: "heater", symbol: "gem", pattern: "tricolor", primary: "#631e38", secondary: "#16633e", tertiary: "#f5f7fa" },
+  { id: "nautical", shape: "tapered", symbol: "anchor", pattern: "sash", primary: "#000000", secondary: "#f5f7fa", tertiary: "#b51f35" },
+  { id: "los-angeles", shape: "shield", symbol: "wings", pattern: "border", primary: "#000000", secondary: "#c5a12a", tertiary: "#f5f7fa" },
+  { id: "milan", shape: "roundshield", symbol: "bolt", pattern: "club-stripes", primary: "#b51f35", secondary: "#000000", tertiary: "#b51f35" },
+] as const;
 export type PatternId = (typeof ALL_PATTERN_IDS)[number];
 
 /**
@@ -153,19 +163,11 @@ export const CREST_WIZARD_PALETTE: { id: string; hex: string }[] = [
   { id: "olive", hex: "#67762d" }, { id: "olive-light", hex: "#c7d59a" },
 ];
 
-export const CREST_WIZARD_KITS: { id: string; primary: string; secondary: string }[] = [
-  { id: "black-scarlet", primary: "#000000", secondary: "#b51f35" },
-  { id: "burgundy-forest", primary: "#631e38", secondary: "#16633e" },
-  { id: "navy-gold", primary: "#17345d", secondary: "#c5a12a" },
-  { id: "royal-white", primary: "#234fd1", secondary: "#f5f7fa" },
-  { id: "sky-black", primary: "#82bef0", secondary: "#000000" },
-  { id: "forest-white", primary: "#16633e", secondary: "#f5f7fa" },
-  { id: "white-scarlet", primary: "#f5f7fa", secondary: "#b51f35" },
-  { id: "plum-gold", primary: "#6635a5", secondary: "#ead886" },
-  { id: "teal-silver", primary: "#0d7475", secondary: "#cbd5e1" },
-  { id: "orange-black", primary: "#c85b17", secondary: "#000000" },
-  { id: "navy-sky", primary: "#17345d", secondary: "#82bef0" },
-  { id: "olive-gold", primary: "#67762d", secondary: "#ead886" },
+export const CREST_WIZARD_KITS: { id: string; primary: string; secondary: string; tertiary?: string }[] = [
+  { id: "navy-gold", primary: "#17345d", secondary: "#c5a12a", tertiary: "#f5f7fa" },
+  ...CREST_REFERENCES.filter(k => k.id !== "buenos-aires").map(({ id, primary, secondary, tertiary }) => ({ id, primary, secondary, tertiary })),
+  { id: "royal-white", primary: "#234fd1", secondary: "#f5f7fa", tertiary: "#c5a12a" },
+  { id: "orange-black", primary: "#c85b17", secondary: "#000000", tertiary: "#f5f7fa" },
 ];
 
 /** Legacy curated pairs — kept for old call sites; every color is in CREST_PALETTE. */
@@ -245,16 +247,17 @@ export interface CrestConfig {
   pattern?: PatternId;
   /** rc.36: absent = "emblem" (every id saved before rc.36). */
   layout?: LayoutId;
+  iconColor?: "primary";
 }
 
 /** Parse any crestId string; unknown/absent parts fall back (legacy-safe). */
 export function parseCrestId(raw: string): CrestConfig {
-  const [s, sy, pt, ly] = (raw ?? "").split(":");
+  const [s, sy, pt, ly, ic] = (raw ?? "").split(":");
   const shape = (ALL_CREST_IDS as readonly string[]).includes(s) ? (s as CrestId) : "shield";
   const symbol = (ALL_SYMBOL_IDS as readonly string[]).includes(sy) ? (sy as SymbolId) : undefined;
   const pattern = (ALL_PATTERN_IDS as readonly string[]).includes(pt) ? (pt as PatternId) : undefined;
   const layout = ly && ly !== "emblem" && (LAYOUT_IDS as readonly string[]).includes(ly) ? (ly as LayoutId) : undefined;
-  return { shape, symbol, pattern, layout };
+  return { shape, symbol, pattern, layout, ...(ic === "primary" ? { iconColor: "primary" as const } : {}) };
 }
 
 /**
@@ -266,7 +269,9 @@ export function composeCrestId(cfg: {
   symbol?: string | null;
   pattern?: string | null;
   layout?: string | null;
+  iconColor?: "primary" | "secondary";
 }): string {
+  if (cfg.iconColor === "primary") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout ?? "emblem"}:primary`;
   if (cfg.layout && cfg.layout !== "emblem") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout}`;
   if (cfg.pattern) return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern}`;
   if (cfg.symbol) return `${cfg.shape}:${cfg.symbol}`;
@@ -370,11 +375,7 @@ const SYMBOL_PATHS: Record<SymbolId, string[]> = {
       "M28.6 43.2 L32 49.5 L35.4 43.2 L32 45.1 Z",
   ],
   // Front-facing angular wolf mask, ears up, eye notches cut out.
-  wolf: [
-    "M20 18.5 L27.2 23.6 L32 22.2 L36.8 23.6 L44 18.5 L45 29.6 L40.2 35.8 L36.4 39.8 L32 47.5 L27.6 39.8 L23.8 35.8 L19 29.6 Z " +
-      "M26.4 30.2 L31 31.9 L27.4 34.6 Z " +
-      "M37.6 30.2 L33 31.9 L36.6 34.6 Z",
-  ],
+  wolf: ["M18 17 L28 23 L36 23 L46 17 L43 36 L38 46 L32 51 L26 46 L21 36 Z M23 28 L29 31 L25 34 Z M41 28 L35 31 L39 34 Z M28 39 L36 39 L32 44 Z"],
   // Dragon head in profile (facing right): swept horn, snout, jaw barbs.
   dragon: [
     "M23.5 18.5 C29.8 18.7 34.2 21.8 36.2 26.2 L46.5 30.2 L38.2 32.6 L45 39.2 L35 36.8 L31.6 45.5 L28.8 37.8 L20.5 41 " +
@@ -596,7 +597,7 @@ const PATTERN_DEFS: Record<PatternId, string> = {
   // Annulus ring around center.
   ring: "M32 11 A21 21 0 1 1 31.99 11 Z M32 18 A14 14 0 1 1 31.99 18 Z",
   // v0.3 — one thick heraldic sash (top-left → bottom-right).
-  sash: "M-22 12 L12 -22 L86 52 L52 86 Z",
+  sash: "M-12 0 L0 -12 L76 64 L64 76 Z",
   // v0.3 — quartered field (two opposite quarters filled).
   quarters: "M-2 -2 H32 V32 H-2 Z M32 32 H66 V66 H32 Z",
   // rc.36 (UX-04) — three horizontal hoops.
@@ -613,7 +614,7 @@ const PATTERN_DEFS: Record<PatternId, string> = {
   "club-stripes": "M8 -2 H18 V66 H8 Z M28 -2 H38 V66 H28 Z M48 -2 H58 V66 H48 Z",
   tricolor: "M41 -2 H66 V66 H41 Z",
   yoke: "M32 23 H66 V66 H32 Z",
-  "club-ring": "M17 17 H25 V47 H17 Z M39 17 H47 V47 H39 Z",
+  "club-ring": "M-2 25 H66 V39 H-2 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -630,8 +631,8 @@ const SYMBOL_SHADOW = "rgba(5,8,15,0.5)";
 /** rc.36 (UX-04): the stacked / band letters need this many pixels to read (smaller: the emblem alone). */
 const LAYOUT_LETTERS_MIN_PX = 40;
 /** rc.36: the emblem's size and rise when it shares the crest with the letters. */
-const LAYOUT_SYMBOL_SCALE = 0.72;
-const LAYOUT_SYMBOL_LIFT = 6;
+const LAYOUT_SYMBOL_SCALE = 0.82;
+const LAYOUT_SYMBOL_LIFT = 8;
 
 export function UserCrest({
   crestId,
@@ -647,7 +648,7 @@ export function UserCrest({
   className?: string;
 }) {
   const uid = useId();
-  const { shape, symbol, pattern, layout = "emblem" } = parseCrestId(crestId);
+  const { shape, symbol, pattern, layout = "emblem", iconColor } = parseCrestId(crestId);
   const px = SIZE[size];
   // rc.36 (UX-04): stacked / band letters only where they read (the band itself always shows).
   const layoutLetters = Boolean(abbrev) && px >= LAYOUT_LETTERS_MIN_PX;
@@ -656,10 +657,10 @@ export function UserCrest({
   // Symbol crests drop the monogram at every size — the emblem IS the mark.
   const showTag = Boolean(abbrev) && px >= 28 && !symbol && !band;
   const legacy = !symbol && !pattern && !band;
-  const clubPattern = pattern && (PATTERN_IDS_CLUB as readonly string[]).includes(pattern);
+  const trim = colors.tertiary ?? CLUB_TRIM;
   const clipId = `crest-clip-${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const neutralCenter = pattern === "tricolor" || pattern === "club-ring";
-  const ink = neutralCenter || crestLuminance(colors.primary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
+  const centerColor = pattern === "tricolor" ? trim : pattern === "club-ring" || pattern === "club-stripes" ? colors.secondary : colors.primary;
+  const ink = crestLuminance(centerColor) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
   const bandInk = crestLuminance(colors.secondary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
   const fit = SYMBOL_FIT[shape];
   // The emblem shrinks and rises to make room for the letters / the band.
@@ -667,9 +668,9 @@ export function UserCrest({
   const symbolScale = lifted ? fit.s * LAYOUT_SYMBOL_SCALE : fit.s;
   const symbolY = lifted ? fit.cy - LAYOUT_SYMBOL_LIFT : fit.cy;
   const symbolTransform = `translate(${fit.cx} ${symbolY}) scale(${symbolScale}) translate(-32 -34)`;
-  const bandY = fit.cy + (symbol ? 6 : -6);
+  const bandY = fit.cy + (symbol ? 8 : -6);
   const letters = abbrev ?? "";
-  const letterSize = letters.length > 3 ? 9.5 : 11;
+  const letterSize = letters.length > 3 ? 9 : 10.5;
 
   return (
     <svg
@@ -692,30 +693,14 @@ export function UserCrest({
       <path d={BASE_PATH[shape]} fill={colors.primary} opacity={0.92} />
 
       {/* 2 — pattern, clipped inside the base (rc.36 "border": a thick inner outline) */}
-      {clubPattern && pattern ? (
+      {pattern ? (
         <g clipPath={`url(#${clipId})`}>
-          {pattern === "club-ring" ? (
-            <>
-              <circle cx={32} cy={32} r={23} fill={CLUB_TRIM} />
-              <circle cx={32} cy={32} r={20} fill={colors.primary} />
-              <path d="M28 13 H36 V51 H28 Z" fill={CLUB_TRIM} />
-              <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} />
-            </>
-          ) : (
-            <>
-              <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} />
-              {pattern === "tricolor" ? <path d="M23 -2 H41 V66 H23 Z" fill={CLUB_TRIM} /> : null}
-              {pattern === "yoke" ? <path d="M-2 -2 H66 V23 H-2 Z" fill={CLUB_TRIM} /> : null}
-            </>
-          )}
-        </g>
-      ) : pattern === "border" ? (
-        <g clipPath={`url(#${clipId})`}>
-          <path d={BASE_PATH[shape]} fill="none" stroke={colors.secondary} strokeWidth={9} opacity={0.45} />
-        </g>
-      ) : pattern ? (
-        <g clipPath={`url(#${clipId})`}>
-          <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} opacity={0.35} fillRule="evenodd" />
+          {pattern === "border" ? <path d={BASE_PATH[shape]} fill="none" stroke={colors.secondary} strokeWidth={7} /> :
+            <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} fillRule="evenodd" />}
+          {pattern === "tricolor" ? <path d="M25 -2 H39 V66 H25 Z" fill={trim} /> : null}
+          {pattern === "yoke" ? <path d="M-2 -2 H66 V21 H-2 Z" fill={trim} /> : null}
+          {pattern === "club-stripes" ? <path d="M19 -2 H23 V66 H19 Z M41 -2 H45 V66 H41 Z" fill={trim} /> : null}
+          {pattern === "club-ring" ? <circle cx={32} cy={32} r={21} fill="none" stroke={trim} strokeWidth={3} /> : null}
         </g>
       ) : null}
 
@@ -752,24 +737,27 @@ export function UserCrest({
             ))}
           </g>
           {SYMBOL_PATHS[symbol].map((d, i) => (
-            <path key={i} d={d} fill={colors.secondary} opacity={0.9} fillRule="evenodd" />
+            <path key={i} d={d} fill={iconColor === "primary" ? colors.primary : colors.secondary} stroke={crestLuminance(iconColor === "primary" ? colors.primary : colors.secondary) > 0.4 ? DARK_INK : LIGHT_INK} strokeWidth={0.45} paintOrder="stroke" fillRule="evenodd" />
           ))}
         </g>
       ) : null}
 
       {/* rc.36 (UX-04): the stacked layout's letters under the raised emblem */}
       {stacked ? (
+        <g>
+        <rect x={letters.length > 3 ? 18 : 21} y={Math.min(52, fit.cy + 17) - 9} width={letters.length > 3 ? 28 : 22} height={12} rx={2} fill={DARK_INK} />
         <text
           x="32"
-          y={Math.min(56, fit.cy + 17)}
+          y={Math.min(52, fit.cy + 17)}
           textAnchor="middle"
           fontSize={letterSize}
           fontWeight={700}
-          fill={ink}
+          fill={LIGHT_INK}
           style={{ fontFamily: "var(--font-rajdhani), sans-serif", letterSpacing: 0.6 }}
         >
           {letters}
         </text>
+        </g>
       ) : null}
 
       {/* 4 — outline */}

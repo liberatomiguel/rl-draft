@@ -153,6 +153,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
               daysAway={0}
               day={today}
               stage={stage}
+              onPass={cupLobby ? passUnofficial : undefined}
               primaryLabel={phase === "paused" ? <ContinueToSundayLabel /> : ev.teamSize ? C.event.watch : C.hub.continue}
               onPrimary={() => {
                 beginCareerNavigation("/career/event");
@@ -162,14 +163,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 router.push("/career/event");
               }}
             />
-            {cupLobby ? (
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Button variant="ghost" size="md" className="min-h-11" onClick={passUnofficial}>
-                  {C.hub.invitePass}
-                </Button>
-                <span className="text-xs text-faint">{C.calendar.skipHint}</span>
-              </div>
-            ) : null}
+
           </>
         );
       }

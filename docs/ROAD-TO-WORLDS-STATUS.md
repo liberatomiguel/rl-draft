@@ -1,85 +1,66 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-10**. Candidate: **v2.0.0-rc.39.1**, `staging` (the
-> rc.37 round — F1 market, F2 finance, F3 matchday, F4a battery tooling,
-> handoffs `HANDOFF-rc37-*.md` — plus the F6 balance package, R100–R108,
-> BALANCE_VERSION 16, and the RLCS 2027 wave in season seven, R109).
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R109.
-> Battery (4,914 careers): `docs/battery-rc37/RELATORIO-COMPLETO.md`. F6
-> report and Miguel's open decisions: `docs/battery-rc37/F6-EXPERIMENTOS.md`
-> Parts 7–8 (experiment runner `src/store/auditHumanExperiment.test.ts`).
-> Gate: `CAREER-FEEDBACK-rc36-6.md`.
-> Note: new careers grow on the growth contract (`contractPacePerWeek`,
-> `CAREER_DEV.seasonGainCap`); `CAREER_AGE.growthMult` only drives model 1 and the
-> AI world pass.
+> Updated **2026-11-10**. Candidate **v2.0.0-rc.40**, staging.
+> Decisions R1–R110. BALANCE_VERSION **18**. Feedback: CAREER-FEEDBACK-rc40.md.
+
+## Current candidate
+
+rc.40 applies Miguel's 19-item feedback over rc.39.1. The crest builder has
+consistent fields, eight editable club inspirations, third field colour,
+primary/secondary emblem choice, revised kits and readable letters. Existing
+IDs remain valid. HQ limits progression to direct purchases, shares Inbox
+glyphs and moves the compact transfer wire below Inbox. Coach unlock emails
+point to Coaches and its unread dot; direct purchases retain novelty markers.
+
+Training selections use green/blue/orange and a visible None state; attribute
+panels carry current values and context. HQ records weekly overall/chemistry
+change beside scrims. Club puts trophies above Records in its larger left
+column and shares Profile achievement cards, with distinct career glyphs.
+
+Weekly Statement keeps the Monday/split projections and runway in the old
+projection slot. Loans stay expanded below Movements. Normal credit/spend
+offers arrive by email without popup/calendar hold; emergency notices use
+numeric tiles, visible deadline/repayment/risk and expandable secondary terms.
+
+Bids and sponsors require accept or decline before advancing, including old
+parked saves. Direct regional seeds with a coach receive the Sunday briefing;
+old saves already on Sunday answer without moving the clock. Contracted
+signings unlock at reputation 20 and keep the overall cap. My Deals shows
+the player's overall and weekly wage. Pass sits beside Continue.
+
+Pre-event tables read the actual prize/points settlement. Club's title ledger
+starts with real pre-X Worlds and zero Majors, then stores each simulated
+Major/Worlds winner with its playing roster. Transfers/rollovers preserve it.
+Legacy saves disclose missing past individual records. Historical sources:
+CAREER-HONORS-SOURCES.md. Duds Cup joins the invitational rotation; 50/50 and
+Duds events use their supplied art and DudsMelow invitation copy.
 
 ## Run and verify
 
-- Dev: home → Road to Worlds → wizard → HQ. Staging enables
-  NEXT_PUBLIC_CAREER_MODE=1 and noindex; production awaits approved cutover.
-- Pure seeded engine in `src/engine/career`; flows in `src/store/career*`;
-  screens in `src/components/career`; bilingual career copy and balance tunables.
-- rc.36.6: 968 affected regression tests pass, 15 optional skipped;
-  typecheck and changed-file lint clean. See its feedback report for build,
-  data/persist and browser evidence. Prior full-suite baseline: rc.36.5.
-- Economy/growth probes: CAREER_ARC alone, CAREER_ECON by ECON_REGIONS,
-  CAREER_GROWTH, CAREER_TRAINING. Paid support/endgame: rc36-4 report;
-  63 paired opening cells and four six-season SAM pairs: rc36-5 report.
-  No new economy/title-pacing claim in this feedback release.
+Dev: Home → Road to Worlds → wizard → HQ. Staging uses
+NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1. Production remains off
+until the approved cutover. Final regressions, static-export and browser
+evidence are recorded in CAREER-FEEDBACK-rc40.md. This release makes no new
+economy/growth/title-pacing claim.
 
-## Gate 3b candidate
-
-rc.36.8: in-place article expansion, compact partner rows, fast scrims,
-visual HQ lineups, spectator speed/Advance, knockout brackets and departure
-guards. 141 targeted tests, types/lint/static export pass. Visual acceptance
-remains on staging: this session’s browser preview timed out.
-
-Etapa 3 is integrated. Miguel's playtest acceptance is still required.
-
-- Training uses 28-day Evolve/Gel/Recover plans with focus, intensity, wear,
-  coach renewal and history. Hidden reports consume/continue the completed
-  plan automatically, including with a coach, without duplicate rewards.
-  Attribute explanations sit higher, with actual values and baseline context.
-- Practice happens Tuesday/Wednesday. A compact recorded-series clock/score
-  reveal pauses the day briefly; autoplay resumes on completion. Skip crosses practice days; the quick score reveal lives in the weekly list,
-  with no clock/banner. Reload never re-simulates.
-  Legacy Thursday bookings move forward to a legal day.
-- Calendar advance follows clock holds to the right decision/event/season.
-  Failed qualifiers leave regionals visible as not playing. Every transfer
-  window day has a blue marker. Spectator cards offer watch/results/calendar;
-  no redundant clock cluster or follow CTA beside private bids.
-- HQ highlights newly buyable progression items. Locked bootcamps have no
-  purchase action; purpose, duration and active/used states are clearer.
-- 50/50 presents public transfers, competition and major-org reporting.
-  Private squad/contract/finance decisions use formatted mail; routine technical
-  chatter is silent. Old communications are reclassified additively on load.
-  The historical scripted news corpus remains partial.
-- New 50/50 and duds showmatches, rotating 50/50 community cup, rare community
-  1v1/2v2 brackets with selected roster members. Random weekly events start
-  after the first regional. Standard circuit remains 3v3.
-- Shared supplied name catalogs: 834 players, 280 orgs, seeded allocation
-  across all generic roles. New careers use version 3; old identities survive.
-- Founding economy, growth, late support, sponsor/contract talks, goals,
-  crests and Sunday decisions remain as in rc.36.5. Regional timing, star
-  affordability and historical Worlds titles remain open. Staging runs
-  BALANCE_VERSION 17.
+rc.39's F6 balance remains unchanged apart from rc.40's explicit gates:
+R100–R109, report F6-EXPERIMENTOS.md Parts 7–8. RLCS 2027 lineups enter the
+first infinite season. The 4,914-career battery is in docs/battery-rc37.
 
 ## System map
 
 | System | Engine → flow → screen |
 |---|---|
-| Calendar, weekend, follow | calendar/sunday/follow → careerFlow/careerSunday → CalendarScreen, SundayCard, ChampionshipSunday, FollowScreen |
-| Fields, small cups, local scene | worldSim/community/localScene/careerResults → careerFlow → EventScreen, StandingsScreen |
-| Growth, training, coaches | development/training → careerTraining/careerStore → TrainingScreen, TrainingBlock, ScrimBroadcast |
-| Money, gear, sponsors, contracts | economy/sponsorDeals/market/renewal/contract → careerFlow/careerHq → FinancesScreen, MarketScreen, ToolboxBlock |
-| News, goals, names | communications/beats/seasonGoals/names → careerFlow/careerNew → NewsFeed, NewsScreen, WizardScreen |
-| Queue, migration | types/difficulty → careerDecisions/careerFlow → DecisionBlock |
+| Calendar/weekend | calendar/sunday → careerFlow/careerSunday/careerDecisions → Calendar, SundayCard, Event |
+| Fields/results/titles | worldSim/careerResults/honors → careerFlow → Event, Standings, CareerHonorsTable |
+| Training/coaches | development/training → careerTraining → Training, TrainingBlock |
+| Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, Toolbox |
+| News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
 
 ## Open and frozen contracts
 
-- Next chat: close progression/economy, then seek Gate 3b acceptance.
-  Scope/prompt/remaining sessions: `ROADMAP-NEXT-2026-11-03.md`.
-- Persist version **3**, saveVersion **5**, unchanged. Repairs additive;
-  permanent achievement marks survive save/season resets.
-- Organization relocation as player action, t1 circuit and PvP remain deferred.
-  Etapa 4 starts after Gate 3b approval; no production deploy in this package.
+Gate 3b pacing/affordability and Miguel's playtest acceptance remain open;
+see ROADMAP-NEXT-2026-11-05.md and the rc.37 handoffs. No production deploy.
+Persist version **3**, saveVersion **5**, unchanged. New colour/weekly/title
+fields are additive. Permanent achievements survive save/season resets.
+Organization relocation as a player action, T1 and PvP remain deferred.

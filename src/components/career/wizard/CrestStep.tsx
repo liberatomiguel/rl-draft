@@ -24,6 +24,7 @@ import {
   WIZARD_SYMBOL_IDS,
   composeCrestId,
   CREST_PALETTE,
+  CREST_REFERENCES,
   CREST_WIZARD_KITS,
   CREST_WIZARD_PALETTE,
   LAYOUT_IDS,
@@ -46,6 +47,7 @@ export interface CrestPick {
   symbol: SymbolId | null;
   pattern: PatternId | null;
   layout: LayoutId;
+  iconColor?: "primary" | "secondary";
 }
 
 const sameHex = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
@@ -103,6 +105,12 @@ export function CrestStep({
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="sm" />
         </div>
 
+        <p className="kicker mb-2">{W.references}</p>
+        <div className="mb-5 grid grid-cols-4 gap-2 sm:grid-cols-8">
+          {CREST_REFERENCES.map((ref) => <button key={ref.id} type="button" title={W.referenceNames[ref.id]} aria-label={W.referenceNames[ref.id]} onClick={() => { onPick({ shape: ref.shape, symbol: ref.symbol, pattern: ref.pattern, layout: "emblem", iconColor: "secondary" }); onColors({ primary: ref.primary, secondary: ref.secondary, tertiary: ref.tertiary }); }} className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-lg border border-line bg-black/20 p-1 hover:border-blue-bright">
+            <UserCrest crestId={composeCrestId(ref)} colors={ref} size="md" /><span className="text-[9px] text-sub">{W.referenceNames[ref.id]}</span>
+          </button>)}
+        </div>
         {/* Shape */}
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="kicker">{W.crestLabel}</p>
@@ -131,6 +139,10 @@ export function CrestStep({
           ))}
         </div>
 
+        {pick.symbol ? <div className="mt-4 flex flex-wrap items-center gap-2" role="radiogroup" aria-label={W.iconColor}>
+          <span className="mr-2 text-xs text-sub">{W.iconColor}</span>
+          {(["primary", "secondary"] as const).map(role => <button key={role} type="button" role="radio" aria-checked={(pick.iconColor ?? "secondary") === role} onClick={() => onPick({ iconColor: role })} className={cx("min-h-11 rounded-lg border px-3 text-xs", (pick.iconColor ?? "secondary") === role ? "border-blue-bright bg-blue/15 text-ink" : "border-line text-sub")}><span className="mr-2 inline-block h-3 w-3 rounded-full border border-white/30" style={{ background: colors[role] }} />{role === "primary" ? W.primaryColor : W.secondaryColor}</button>)}
+        </div> : null}
         {/* Layout (rc.36): the emblem alone, over the letters, or a band carrying them */}
         <p className="kicker mb-3 mt-6">{W.crestLayout}</p>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={W.crestLayout}>
@@ -178,7 +190,7 @@ export function CrestStep({
                 aria-checked={active}
                 aria-label={kitName}
                 title={kitName}
-                onClick={() => onColors({ primary: k.primary, secondary: k.secondary })}
+                onClick={() => onColors({ primary: k.primary, secondary: k.secondary, tertiary: k.tertiary ?? "#f5f7fa" })}
                 className={cx(
                   "relative h-11 overflow-hidden rounded-lg border transition-transform hover:scale-105",
                   active ? "border-orange ring-2 ring-orange/50" : "border-line-strong",
@@ -202,6 +214,7 @@ export function CrestStep({
           onPick={(hex) => onColors({ ...colors, secondary: hex })}
         />
 
+        {pick.pattern && ["tricolor", "yoke", "club-stripes", "club-ring"].includes(pick.pattern) ? <ColorRow label={W.tertiaryColor} value={colors.tertiary ?? "#f5f7fa"} nameOf={nameOf} onPick={hex => onColors({ ...colors, tertiary: hex })} /> : null}
         <p className="kicker mb-1 mt-6">{W.identityBuff}</p>
         <p className="mb-3 text-xs text-sub">{W.identityBuffHint}</p>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={W.identityBuff}>
