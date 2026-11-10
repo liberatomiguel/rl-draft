@@ -29,6 +29,7 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CHEMISTRY,
   CAREER_CONTRACT,
   CAREER_DEV,
   CAREER_GEAR,
@@ -3660,6 +3661,14 @@ export function finishEvent(input: CareerSave): CareerSave {
       Object.assign(p, next);
       // rc.34 (DEV-03 T7): the period's summary counts the series he played.
       if (wasFielded) noteSeriesXp(save, p.id, seriesPlayed, p.overall - before);
+    }
+  }
+
+  // rc.39 F6 (R102): official series played together are time together too.
+  if (CAREER_CHEMISTRY.officialSeriesCredit > 0 && !def.teamSize && def.tier !== "t3" && def.tier !== "t2") {
+    const credit = seriesPlayed * CAREER_CHEMISTRY.officialSeriesCredit;
+    for (const p of save.squad) {
+      if (fielded.includes(p.id)) p.splitsTogether = Math.round((p.splitsTogether + credit) * 1e4) / 1e4;
     }
   }
 

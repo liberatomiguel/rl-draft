@@ -542,7 +542,7 @@ function squadMemberView(p: SquadPlayer, psychologist: boolean): MemberView {
  * A brand-new squad sits near the floor; a core kept 2+ splits together
  * climbs to High. Swapping a starter drops it (the new pair has 0 tenure).
  */
-function careerChemistry(fielded: SquadPlayer[]): {
+export function careerChemistry(fielded: SquadPlayer[]): {
   raw: number;
   max: number;
   percent: number;
@@ -572,7 +572,11 @@ function careerChemistry(fielded: SquadPlayer[]): {
     const a = fielded[i];
     const b = fielded[j];
     const effTenure = Math.max(tenure, graceTenure);
-    const conn = Math.min(C.connMaxPerPair, effTenure * C.connPerSplitTogether);
+    const fast = Math.min(C.connMaxPerPair, effTenure * C.connPerSplitTogether);
+    // rc.39 F6 (R102): past the fast phase the pair keeps bonding, slowly, to its full value.
+    const lateTenure = Math.max(0, effTenure - C.connMaxPerPair / C.connPerSplitTogether);
+    const bond = C.bondPerSplitTogether > 0 ? lateTenure * C.bondPerSplitTogether : 0;
+    let conn = fast + bond;
     let her = 0;
     let herLabel = "";
     if (a.country && b.country && a.country === b.country) {
@@ -582,6 +586,8 @@ function careerChemistry(fielded: SquadPlayer[]): {
       her = C.herRegion;
       herLabel = `Same region (${a.region})`;
     }
+    // ...heritage is the pair's base: together they never count past a full pair.
+    if (C.bondPerSplitTogether > 0) conn = Math.max(0, Math.min(conn, C.maxRawPerPair - her));
     raw += conn + her;
     if (conn > 0) items.push({ label: `${a.name} · ${b.name} — time together`, points: conn });
     if (her > 0) items.push({ label: `${a.name} · ${b.name} — ${herLabel}`, points: her });

@@ -1141,6 +1141,26 @@ export const CAREER_CHEMISTRY = {
    * dents chemistry (~85% → ~60%) instead of halving it.
    */
   newcomerGraceFactor: 0.35,
+  /**
+   * rc.39 F6 (R102, Miguel 09/11: "chemistry grows with time AND official
+   * matches together up to 100 %; nationality only sets a newcomer's base").
+   * Until rc.38 a pair's connection stopped at connMaxPerPair, so a trio from
+   * three regions sat at 67 % for ever and only shared heritage reached
+   * Perfect. Past the fast phase (connMaxPerPair, two splits) each further
+   * split-unit together adds `bondPerSplitTogether`, until heritage +
+   * connection fills the pair (maxRawPerPair): heritage is where a pair
+   * starts, time is where it ends. 0 = rc.38 (no late phase, no pair cap).
+   * At 0.25 a no-heritage trio is Perfect about two seasons in, a same-region
+   * trio within its first season.
+   */
+  bondPerSplitTogether: 0.25,
+  /**
+   * ...and every official series (qualifier, regional, Major, Worlds) the
+   * fielded players play adds this to their time together (splitsTogether),
+   * beside the split boundary's +1: a team that plays deep bonds sooner.
+   * 0 = rc.38 (events add nothing).
+   */
+  officialSeriesCredit: 0.02,
 } as const;
 
 /**
