@@ -205,7 +205,9 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 1.3,
     opponentChemistryMaxBonus: 1.3,
-    opponentRatingShift: -2.0,
+    // C3: restore the MAIN-calibrated WW Easy curve after expansion.
+    // All challenge stars have legal replays; two solution paths were renewed.
+    opponentRatingShift: -2.4,
     opponentSpecialChance: 0.02,
     opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
     xpMultiplier: 0.75,
@@ -338,11 +340,14 @@ export const REGION_LOCK = {
   // and OCE/MENA Legacy no longer reward grinding (OCE grinders won ≈32 %).
   // A negative value lets the regional field play below its nominal rating.
   opponentRatingBoost: {
-    SAM: { easy: -1.85, normal: -0.35, hard: 1.45, legacy: 3.95 },
-    EU: { easy: -0.05, normal: 0.45, hard: 0.9, legacy: 1.5 },
-    NA: { easy: 0.4, normal: 1.15, hard: 2.55, legacy: 2.15 },
-    MENA: { easy: -0.55, normal: 1.45, hard: 2.9, legacy: 4.05 },
-    OCE: { easy: 0.25, normal: 1.35, hard: 3.5, legacy: 5.35 },
+    // C3: reset policy fitted on MAIN v1.4.8 + the October report, then
+    // transferred unchanged to rc.45. See C3-difficulty-matrix.md. Each Easy
+    // boost first offsets the -0.4 shared shift, then applies its own retune.
+    SAM: { easy: -1.85, normal: -0.55, hard: 1.45, legacy: 3.95 },
+    EU: { easy: 0.55, normal: 0.45, hard: 1.1, legacy: 1.5 },
+    NA: { easy: 0.8, normal: 1.15, hard: 2.55, legacy: 2.15 },
+    MENA: { easy: -0.15, normal: 1.45, hard: 2.9, legacy: 4.05 },
+    OCE: { easy: 0.45, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
   /**
    * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
