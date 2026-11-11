@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-10**. Candidate **v2.0.0-rc.45**, staging.
-> Decisions R1–R120. BALANCE_VERSION **22**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-11**. Staging **v2.0.0-rc.45**; candidate **rc.46** on branch `claude/rc42-balance`.
+> Decisions R1–R121. BALANCE_VERSION **23**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
@@ -53,6 +53,7 @@ until the approved cutover. Final regressions, static-export and browser
 evidence are recorded in CAREER-FEEDBACK-rc42.md. This release makes no new
 economy/growth/title-pacing claim.
 
+rc.46 prices and gates elite talent (CAREER_TALENT.elite; economy.eliteFactorFor, signingLevelOf).
 rc.45 adds four support-staff retainers (CAREER_STAFF; economy.staffOn, careerFlow.setStaffFlow,
 Finances and the ladder). rc.44 adds the dataset's real coaches to the coach market (market.staffCoachCandidatesFor),
 lifts ex-pros, pays the bench 60 % of series XP and slows the squad's decline (R118–R119).
