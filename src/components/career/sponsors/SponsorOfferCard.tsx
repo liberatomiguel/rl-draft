@@ -22,7 +22,7 @@
  * `dealView.ts`.
  */
 
-import { goalDeadlineOf, slotsOfDeal, settleDayOf, slotSeason, slotSplit } from "@/engine/career/sponsorDeals";
+import { goalDeadlineOf, goalSplitLabelOf, isContractGoal, slotsOfDeal, settleDayOf, slotSeason, slotSplit } from "@/engine/career/sponsorDeals";
 import { CAREER_SPONSOR } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
@@ -102,6 +102,16 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
 
 function ContractGoals({ view }: { view: OfferView }) {
   const C = useCareerCopy(); const T = C.finances.deal;
+  // v2.0 (C1): one goal for the whole contract, counted from the signature — a single entry, not one per split.
+  const whole = view.goals.find(g => isContractGoal(g));
+  if (whole) {
+    const by = goalDeadlineOf(whole);
+    return <section className="mt-3 rounded-lg border border-line bg-black/15 p-3">
+      <h3 className="kicker mb-2 text-[10px]">{C.launch.sponsorSchedule}</h3>
+      <p className="text-xs font-semibold leading-relaxed text-ink">{T.goal(whole.kind, whole.count, whole.place ?? 0, 0)}</p>
+      <p className="mt-0.5 text-[10px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))} · {whole.hitOn ? T.goalReached : whole.missed !== undefined ? T.goalMissed : T.goalOpen}</p>
+    </section>;
+  }
   return <section className="mt-3 rounded-lg border border-line bg-black/15 p-3">
     <h3 className="kicker mb-2 text-[10px]">{C.launch.sponsorSchedule}</h3>
     <ol className="space-y-3">{slotsOfDeal(view).map((slot, i) => {
@@ -191,7 +201,7 @@ function OfferCard({
         {view.goal ? (
           <div className="-mt-0.5 pb-1.5">
             <p className="text-[11px] leading-snug text-ink">
-              {T.goal(view.goal.kind, view.goal.count, view.goal.place ?? 0, (view.goal.slot % 3) + 1)}
+              {T.goal(view.goal.kind, view.goal.count, view.goal.place ?? 0, goalSplitLabelOf(view.goal))}
             </p>
             {view.goalBy ? <p className="text-[10px] text-faint">{T.goalBy(formatDateShort(D, view.goalBy))}</p> : null}
           </div>
@@ -484,7 +494,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
             </span>
           </div>
           <p className="mt-1.5 text-sm font-semibold text-ink">
-            {T.goal(cur.goal.kind, cur.goal.count, cur.goal.place ?? 0, (cur.goal.slot % 3) + 1)}
+            {T.goal(cur.goal.kind, cur.goal.count, cur.goal.place ?? 0, goalSplitLabelOf(cur.goal))}
           </p>
           <div className="mt-2 flex items-center gap-1" role="img" aria-label={T.progress(cur.progress.done, cur.progress.target)}>
             {Array.from({ length: cur.progress.target }).map((_, i) => (

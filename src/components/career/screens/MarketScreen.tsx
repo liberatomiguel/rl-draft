@@ -49,6 +49,7 @@ import { cx } from "@/lib/util";
 import {
   backerLineOf,
   coachCandidatesFor,
+  coachContractOf,
   emptySeatPriceFor,
   justSignedElsewhere,
   nextBreachOutcomeOf,
@@ -57,6 +58,7 @@ import {
   rosterIsShort,
   weeklyStatementOf,
 } from "@/store/careerFlow";
+import { seasonLabelFor } from "@/engine/career/calendar";
 import { blockbusterWhatOf } from "@/components/career/hub/NowCards";
 import { AppLink } from "@/components/ui/AppLink";
 import { useCareerStore } from "@/store/careerStore";
@@ -207,6 +209,8 @@ export function MarketScreen() {
   const declineBid = useCareerStore((s) => s.declineBid);
   const hireCoach = useCareerStore((s) => s.hireCoach);
   const fireCoach = useCareerStore((s) => s.fireCoach);
+  const renewCoach = useCareerStore((s) => s.renewCoach);
+  const coachDeal = useMemo(() => (save ? coachContractOf(save) : null), [save]);
   const buyScoutReport = useCareerStore((s) => s.buyScoutReport);
 
   // v2.0 (R22): deep link — /career/market#coaches opens the coaches tab.
@@ -671,6 +675,21 @@ export function MarketScreen() {
                 <div className="text-right leading-none"><div className="display text-2xl font-bold text-ink">{Math.round(save.coach.overall)}</div><div className="kicker text-[9px] text-faint">{C.common.ovr}</div></div>
                 <Button variant="ghost" size="sm" className="col-span-2 justify-self-start text-bad" onClick={() => setConfirmFire(true)}>{C.finances.dropLabel}</Button>
               </div>
+              {coachDeal ? (
+                <div className={cx("mt-3 space-y-2 rounded-lg border p-3", coachDeal.lastSeason ? "border-orange/50 bg-orange/5" : "border-line bg-black/15")}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <p className={cx("text-xs font-semibold", coachDeal.lastSeason ? "text-orange-bright" : "text-ink")}>
+                      {coachDeal.endsSeason === null ? C.launch.coachDealOpen : coachDeal.lastSeason ? C.launch.coachDealLast : C.launch.coachDealEnds(seasonLabelFor(coachDeal.endsSeason))}
+                    </p>
+                    <p className="text-[11px] text-sub">{C.launch.coachRenewAsk} <span className="ml-1 text-sm font-bold text-ink">{wageLabel(C, coachDeal.renewalWagePerSplit)}</span></p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {coachDeal.lengths.map((n) => (
+                      <Button key={n} variant={coachDeal.lastSeason ? "primary" : "ghost"} size="sm" onClick={() => renewCoach(n)}>{C.launch.coachRenewFor(n)}</Button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-3"><CoachDevelopment coach={save.coach} C={C} /></div>
               <div className="mt-2.5"><CoachAttributeLines save={save} coach={save.coach} C={C} statLabels={t.STAT_LABELS} showImpact={false} compact /></div>
             </Panel>

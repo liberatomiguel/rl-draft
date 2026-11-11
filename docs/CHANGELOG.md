@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.45**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.47**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,36 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.47 (2026-11-11), the launch wave: six parallel fronts integrated (R122–R128, BALANCE_VERSION 24)
+
+Full per-front notes, numbers and validation lists: `docs/handoff-2.0/` (C1 career engine, C2 progression, C3 draft difficulty, C4 web, G1 career screens, G2 draft and menu).
+
+#### Added
+- Road to Worlds: sponsor goals count over the whole contract from the signature (one goal, one bonus, one fine); Worlds of Season X is cancelled with its own headline; headline news and non-purchasable unlocks open as a pop-up once; contracted players are listed below reputation 20, locked; the sponsor-funded bootcamp starts by itself; coaches have dated contracts, renewal on the players' rule, slow growth of quality and wage, and an edge for professionals and former pros; a coach rated 65 or below now trains better than no coach (DEV-03).
+- Road to Worlds screens: ordered progression with a full "see more", training attribute icons, offers above renewals, lineup swaps from HQ, the coach market by type, a single sponsor contract view, a visual season review with season and career titles, a planned calendar, a six-entry title race with clearer filters, and milestone moments for a Major title, a Worlds title and reaching Championship Sunday. Rocket Street LATAM Championship joins the SAM invitationals.
+- Road to Worlds pays profile XP (series, events, titles, season); Season Rating stays draft-only.
+- 21 new achievements; veterans keep the rank achievements of their pre-season rank.
+- Daily Quiz: one clue at a time, five guesses, a more visual modal. Challenges use the career scoreboard with the running clock. BETA tag on Road to Worlds and a reviewed main menu; the national albums get their own cover in the Collection.
+- Web: six search-intent pages (EN and PT), the public RLCS database and regional pages, one metadata helper, structured data and internal links; the PT chrome links to PT pages (WEB-01).
+
+#### Changed
+- The coach card and the season's contract review show the coach's contract and renew it (1 to 3 seasons); the sponsor card shows a contract goal once, "during the deal", instead of one entry per split.
+- Footer always below the first screen; security headers in `public/_headers`.
+
+#### Balance
+- Season ranks: Bronze 200, Silver 5k, Gold 15k, Platinum 35k, Diamond 75k, Champion 150k, Grand Champion 320k, Supersonic Legend 675k (was 60k). Read from 423 profiles: 39 % had reached SSL on the old curve.
+- Season Rating: only the top 4 scores, a Swiss exit costs points (Easy 2/1/0/-2, Normal 4/2/1/-4, Hard 7/3/1/-5, Legacy 36/18/8/-7). XP by difficulty: Easy x0.75, Legacy x2.5.
+- Rank unlocks: Bronze opens Collection and Challenges; special cards start at Silver (rare), Gold (epic and the FIFAe national teams), Platinum (mythic), Diamond (legendary).
+- Draft difficulty recalibrated against production on the enlarged dataset (289 to 484 lineups): worldwide Easy eased, regional boosts compensated, SAM Normal and EU Hard brought to the worldwide curve. All 135 challenge stars and 365 dailies still solve; two three-star paths renewed on the same seeds.
+- `CAREER_XP` on C2's recalibration (events, titles, season), with the per-series values at half of the proposal (25 + 15 on a win) because Skip can simulate a season in minutes: about 6–7k XP a season before titles.
+- Sponsor fine cap x3 for a contract goal (still under the season cap); elite pricing of rc.46 kept in the contracted-market lock.
+
+#### Fixed
+- Elevate brought its Asian players to SAM. Root cause: a region move always carried the org's current lineup; it now carries the roster only when at least two of its players are in the new region's lineup of the database.
+- Eight pages (`/play`, `/collection`, ...) exported `index, follow` on the staging build. Root cause: pages that declared their own `robots` overrode the NOINDEX build's blanket rule; no page sets `robots` now and the postexport step fails the build otherwise.
+- CLS 0.14–0.35 on phones. Root cause: the footer sat in view while profile-driven pages changed height on hydration.
+- Integration: the season's contract review held the rollover for a coach alone but rendered nothing (no way forward); the review now lists him with his renewal. The audit bot renews its coach like the arc bot.
 
 ### Balance — rc.46 (2026-11-11), elite talent (R121, BALANCE_VERSION 23)
 - Miguel's playtest (SAM, Normal): signed nass very early and won Worlds in 2025. The rc.45 runs agree on the cause: the only two bot careers that held nass paid a $145k fee and $41k a split for an 87 with potential 97, he reached 95 in one season and kept that wage for three (a ready 93 cost $530k and $160k). Root cause: the fee and the wage read today's overall; the upside factor topped at x1.20 for a gap of ten, whatever the top he could reach.

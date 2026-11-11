@@ -2305,3 +2305,31 @@ Playtest: too few things to unlock and buy. Miguel chose four of six proposals (
 ## R121 — 11 November 2026: elite talent costs more and signs later (rc.46)
 
 Miguel won Worlds in 2025 on SAM Normal after signing nass early. `CAREER_TALENT.elite`: from a reachable top of 93 the shared valuation (fee, wage ask, AI bids, renewals' fresh ask) is multiplied by up to x2.2, and the reputation gate reads overall + 40 % of the gap to the potential while he grows (`economy.signingLevelOf`, read by `market.signableAtRep`). Chosen over a lower season growth cap (it would slow every prospect) and over a yearly wage step in multi-season deals (contract and screen work; open for after launch). Side effect measured: titles by season 10 on Normal 14 to 9 in the bots; watch it in the next playtest. valuePerPoint 0 and gateShare 0 restore rc.45.
+
+## R122 — 11 November 2026: one sponsor goal per contract (rc.47)
+
+Miguel: the goal must run for the contract, counted from the signature, not for one split. One goal, one bonus (the whole pot, paid later in the season) and one fine per contract; the fine cap is x3 (a contract covers three splits), still under the season cap. A Steady partner's patience is spent in proportion to the shortfall. Cash effect not measured in a battery.
+
+## R123 — 11 November 2026: region moves follow the database (rc.47)
+
+An org that changes region takes its roster only when at least two of its players are in the new region's lineup. Elevate leaves SAM for APAC with a new roster; FURIA goes to NA with its players and returns in 2024. The origin region keeps one org fewer; no filler replaces it.
+
+## R124 — 11 November 2026: Season X has no Worlds (rc.47)
+
+Cancelled by the pandemic: a headline on the Monday of W24, W32 empty. The qualified field is still computed and shown, without reputation change and without counting as a Worlds qualification.
+
+## R125 — 11 November 2026: headlines and automatic sponsor bootcamps (rc.47)
+
+`headline: true` marks bombshell news (HEADLINE_BEATS / KEYS / UNLOCKS in communications.ts); the UI opens each once. Non-purchasable unlocks announce through the progression ladder, so their mail copies do not open a second pop-up. A sponsor's free bootcamp starts on the first day of a split while an allowance remains.
+
+## R126 — 11 November 2026: contracted players visible below reputation 20 (rc.47)
+
+Listed and locked; the lock reads the higher of the contracted-market gate and the player's own reputation gate (rc.46 elite level).
+
+## R127 — 11 November 2026: coaches have contracts (rc.47)
+
+Two-season deals, renewed on the players' rule (raise cap and market floor on the coach's market wage) with no negotiation, for 1 to 3 seasons, from the coach card or the season's contract review; not renewed, he leaves at the rollover. Quality and experience grow slowly to a ceiling; professionals and former pros carry a source edge (`sourceEfficiency` 0 / 0.04 / 0.07); a hired coach never trains below `hiredFloor` 0.62 (DEV-03). All values provisional.
+
+## R128 — 11 November 2026: the career pays profile XP (rc.47)
+
+`CAREER_XP`: series 25 (+15 on a win), events 100–800, titles 200–5,000, a completed season 1,500, at most 10,000 a write. C2 proposed 50 / 30 a series for about 10k a season; halved because Skip simulates a season in minutes. Season Rating stays draft-only.

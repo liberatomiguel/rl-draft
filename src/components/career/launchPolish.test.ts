@@ -68,12 +68,12 @@ describe("G1 sponsor-funded automatic bootcamp", () => {
     expect(next.save.finances.freeBootcampsUsedThisSeason).toBe(save.finances.freeBootcampsUsedThisSeason + 1);
     expect(sponsorBootcampReady(next.save)).toBe(false);
   });
-  it("shows all contract periods, distinguishing future goals from fixed ones", () => {
+  it("shows the contract goal once for the whole deal, not one entry per split", () => {
     const save = eligible();
     save.sponsor = sponsorDecisionFor({ tier: 3, today: {seasonIndex:0,day:1}, careerSeed:save.careerSeed, difficulty:save.difficulty, level:sponsorLevelOf(save) })[1];
     const html = renderToStaticMarkup(createElement(SponsorDealPanel, {save}));
     expect(html).toContain(CAREER_EN.launch.sponsorSchedule);
-    expect(html).toContain(CAREER_EN.launch.futureGoal);
+    expect(html).not.toContain(CAREER_EN.launch.futureGoal);
     expect(html).toContain(CAREER_EN.launch.automaticCamp);
   });
   it("waits for reputation and never spends money after free allowance is exhausted", () => {

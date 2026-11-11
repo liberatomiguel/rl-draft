@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 23;
+export const BALANCE_VERSION = 24;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3868,23 +3868,24 @@ export const CAREER_SIM = {
  *
  * PROVISIONAL (session C2 calibrates). Sized against the draft: a classic
  * run pays roughly 200–500 XP in ~10 minutes; a career season is ~70–90
- * series and ~15 events over an hour or two, so at these figures it pays
- * about 1,000–1,400 XP before titles — two to four runs' worth.
+ * series and ~15 events over an hour or two, so at these figures (rc.47, C2's recalibration) it pays
+ * about 6,000–7,000 XP before titles — an hour of career close to an hour of draft.
+ *    The per-series values are half of C2's proposal: Skip can simulate a season in minutes.
  *  - seriesPlayed / seriesWinBonus: every series the user plays (scrims are
  *    not series), plus the bonus on a win.
  *  - eventFinished: an event the user played to its end, by tier.
  *  - title: winning it, by tier (on top of eventFinished).
  *  - seasonCompleted: the season review filed.
  *  - maxPerWrite: a safety cap on one save write (a Worlds title + its event
- *    + the season is 750; nothing legitimate reaches it).
+ *    + the season is 7,300; nothing legitimate reaches it).
  */
 export const CAREER_XP = {
-  seriesPlayed: 6,
-  seriesWinBonus: 4,
-  eventFinished: { t3: 10, t2: 20, qualifier: 10, regional: 30, major: 60, worlds: 100 } as Record<string, number>,
-  title: { t3: 20, t2: 40, regional: 80, major: 200, worlds: 500 },
-  seasonCompleted: 150,
-  maxPerWrite: 1_500,
+  seriesPlayed: 25,
+  seriesWinBonus: 15,
+  eventFinished: { t3: 100, t2: 150, qualifier: 100, regional: 250, major: 500, worlds: 800 } as Record<string, number>,
+  title: { t3: 200, t2: 400, regional: 800, major: 2_000, worlds: 5_000 },
+  seasonCompleted: 1_500,
+  maxPerWrite: 10_000,
 } as const;
 
 export const CAREER_SAVE = {

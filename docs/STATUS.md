@@ -1,13 +1,14 @@
 # Project Status — current state only
 
-> Updated: **2026-11-10**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-11**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md.
 
 ## Current builds
 
 - Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
   Season 1 has no production approval.
-- Staging candidate **v2.0.0-rc.46** (R121: elite talent costs more and signs later; Normal measured only). It also holds: rc.43 mid-career balance (R113–R117), rc.44 real coaches, better ex-pros, bench growth and slower squad decline (R118–R119), rc.45 four support-staff retainers (R120). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy. rc.42 revised rc.41: Miguel's
+- Staging candidate **v2.0.0-rc.47**: the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu); notes and validation lists in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: mobile pass, copy clean-up and tutorial, final special cards (then repeat the draft matrix and challenge replays). BALANCE_VERSION 24.
+- Before it, **rc.46** (R121: elite talent costs more and signs later; Normal measured only). It also holds: rc.43 mid-career balance (R113–R117), rc.44 real coaches, better ex-pros, bench growth and slower squad decline (R118–R119), rc.45 four support-staff retainers (R120). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy. rc.42 revised rc.41: Miguel's
   Road to Worlds feedback. Manual crest builder, HQ/Club/Training/Finances layouts,
   inbox-only routine loans, mandatory accept/decline, direct-seed coach
   briefings, title ledger, partner events and reputation-20 contracted market.
