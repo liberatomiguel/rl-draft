@@ -30,7 +30,7 @@ import { useRewardToasts } from "@/store/rewardToastStore";
 import { Button } from "@/components/ui/Button";
 import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { BadgeEmblem, BannerSurface, TIER_ACCENT, TitleTag, useCosmeticCopy } from "./CosmeticViews";
-import { sourceLabel } from "./CosmeticsLocker";
+import { sourceLabel } from "./sourceLabel";
 
 const TIER_RING: Record<CosmeticDef["tier"], string> = {
   common: "rgba(148, 163, 184, 0.45)",

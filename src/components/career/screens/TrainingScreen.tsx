@@ -58,10 +58,12 @@ import {
 } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { AlertIcon, BaseDotIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
+import { BoltIcon, ScaleIcon, ShieldIcon, TargetIcon, FlameIcon, StarCoachIcon, AlertIcon, BaseDotIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Toggle } from "@/components/ui/Toggle";
+
+const ATTRIBUTE_ICONS = { mechanics: BoltIcon, consistency: ScaleIcon, clutch: FlameIcon, offense: TargetIcon, defense: ShieldIcon, experience: StarCoachIcon } as const;
 
 const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral", unknown: "neutral" } as const;
 
@@ -263,14 +265,16 @@ export function TrainingScreen() {
         <p className="mt-1 text-xs text-sub">{C.training.effectsHint}</p>
         <p className="mt-1 text-xs leading-relaxed text-sub">{C.training.effectBaseline(SIMULATION.statBaseline)}</p>
         <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          {effects.map((e) => (
+          {effects.map((e) => {
+            const Icon = ATTRIBUTE_ICONS[e.key];
+            return (
             <div key={e.key} className="rounded-xl border border-line bg-black/20 p-3">
-              <div className="flex items-baseline justify-between gap-2"><h3 className="text-sm font-semibold text-ink">{t.STAT_LABELS[e.key]}</h3><span className="font-mono text-sm font-bold text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
+              <div className="flex items-baseline justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold text-ink"><span aria-hidden><Icon className="h-5 w-5 shrink-0 text-blue-bright" /></span>{t.STAT_LABELS[e.key]}</h3><span className="font-mono text-sm font-bold text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
               <ProgressBar value={teamNow.stats[e.key] / 100} tone="blue" className="mt-2 h-1.5" label={t.STAT_LABELS[e.key]} />
               <p className="mt-2 min-h-10 text-xs leading-relaxed text-sub">{C.training.effectDescription[e.key]}</p>
               <p className={cx("mt-1 text-xs font-semibold", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>{e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)} · {C.training.effectWhen[e.when]}</p>
             </div>
-          ))}
+          ); })}
         </div>
       </Panel>
 

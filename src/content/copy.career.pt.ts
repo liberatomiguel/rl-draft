@@ -136,6 +136,8 @@ const ordinalPt = (n: number): string => ["primeira", "segunda", "terceira", "qu
  * colocação e split (sponsorDeals.SponsorGoal).
  */
 const sponsorGoalPt = (kind: string, count: number, place: number, split: number): string => {
+  // v2.0 (C1): split 0 = meta de contrato, contada da assinatura ao fim do contrato.
+  if (!split) return sponsorContractGoalPt(kind, count, place);
   const regionals = `${count} dos 3 regionais do Split ${split}`;
   switch (kind) {
     case "enterEvents":
@@ -149,6 +151,26 @@ const sponsorGoalPt = (kind: string, count: number, place: number, split: number
       return `Classificar para o Major do Split ${split}`;
     case "majorFinish":
       return place <= 1 ? `Vencer o Major do Split ${split}` : `Top ${place} no Major do Split ${split}`;
+    default:
+      return "";
+  }
+};
+
+/** v2.0 (C1): a meta de contrato em palavras: vale pelo contrato inteiro, a partir da assinatura. */
+const sponsorContractGoalPt = (kind: string, count: number, place: number): string => {
+  const n = (one: string, many: string) => (count === 1 ? one : many);
+  switch (kind) {
+    case "enterEvents":
+      return `Disputar ${count} ${n("evento", "eventos")} durante o contrato`;
+    case "regionalReach":
+      return `Chegar a ${n("um regional", `${count} regionais`)} durante o contrato`;
+    case "regionalFinish":
+      if (place <= 1) return `Vencer ${n("um regional", `${count} regionais`)} durante o contrato`;
+      return `Top ${place} em ${n("um regional", `${count} regionais`)} durante o contrato`;
+    case "majorQualify":
+      return `Classificar para ${n("um Major", `${count} Majors`)} durante o contrato`;
+    case "majorFinish":
+      return place <= 1 ? `Vencer um Major durante o contrato` : `Top ${place} em um Major durante o contrato`;
     default:
       return "";
   }
@@ -631,6 +653,11 @@ export const CAREER_PT: CareerCopy = {
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: a meta do Split ${p.goalSplit}`,
       sponsorEnded: (p: Record<string, string | number>) => `${p.name}: contrato concluído`,
       foundingHandover: () => `O parceiro fundador passa o bastão`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) => `${p.name}: seu bootcamp está reservado`,
+      coachContractExpiring: (p: Record<string, string | number>) => `${p.coach}: contrato na última temporada`,
+      coachRenewed: (p: Record<string, string | number>) => `${p.coach} renova`,
+      coachLeft: (p: Record<string, string | number>) => `${p.coach} sai ao fim do contrato`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -739,6 +766,21 @@ export const CAREER_PT: CareerCopy = {
         `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta — o mercado é onde começa o próximo capítulo.`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) =>
+        `Faz parte do contrato: a marca paga o bootcamp deste split. Ele já começou, sem custo, e a vantagem vale até o fim do split. ${
+          Number(p.left) > 0
+            ? `Restam ${p.left} nesta temporada, cada um começando com o seu split.`
+            : `Essa é a cota desta temporada (${p.perSeason}); o próximo começa com a próxima temporada.`
+        }`,
+      coachContractExpiring: (p: Record<string, string | number>) =>
+        `O contrato de ${p.coach} termina com esta temporada. Para ficar, ele pede ${p.wage} por semana (hoje ${p.old}). Renove na página de Treinadores antes do fim da temporada; se não renovar, ele sai na virada e não há multa.`,
+      coachRenewed: (p: Record<string, string | number>) =>
+        Number(p.raised)
+          ? `${p.coach} assinou por mais ${p.seasons} temporadas. Ele evoluiu no cargo, e o salário acompanha: ${p.wage} por semana, antes ${p.old}.`
+          : `${p.coach} assinou por mais ${p.seasons} temporadas com o mesmo salário, ${p.wage} por semana.`,
+      coachLeft: (p: Record<string, string | number>) =>
+        `O contrato de ${p.coach} acabou e não foi renovado. Não há multa. O elenco treina sem treinador até você contratar outro.`,
     },
   },
 
@@ -2191,6 +2233,9 @@ export const CAREER_PT: CareerCopy = {
       flavor3: () => `O microfone de um caster pegou uma análise bem sincera no intervalo`,
       flavor4: () => `Reclamações de ping registradas. Reclamações de ping arquivadas.`,
       flavor5: () => `Uma montage da comunidade está bombando esta semana`,
+      // v2.0 (C1)
+      worldsCancelled: () => `Mundial cancelado pela pandemia`,
+      orgRelocates: (p: Record<string, string | number>) => `${p.org} troca ${p.from} por ${p.to}`,
     },
     // v0.2 — corpo de texto por template (mesmos params; o feed do QG renderiza).
     body: {
@@ -2312,6 +2357,13 @@ export const CAREER_PT: CareerCopy = {
         `A org colocou ${p.player} no mercado. Uma proposta de um time que o escalaria chega em poucos dias de janela.`,
       repDown: (p: Record<string, string | number>) =>
         `As expectativas foram declaradas e não cumpridas; o prestígio de ${p.org} sente. Reputação se recupera do mesmo jeito que se constrói.`,
+      // v2.0 (C1)
+      orgRelocates: (p: Record<string, string | number>) =>
+        Number(p.withRoster)
+          ? `${p.org} está deixando ${p.from}. A org se inscreveu em ${p.to} para a nova temporada e leva o elenco junto: os mesmos jogadores, uma região nova para provar seu valor.`
+          : `${p.org} está trocando ${p.from} por ${p.to} e recomeça lá com um elenco novo. Os jogadores que ficam para trás estão livres no mercado.`,
+      worldsCancelled: () =>
+        `A liga cancelou o Mundial desta temporada: com as viagens fechadas pela pandemia, não há como reunir as regiões. O Split 3 e o seu Major seguem como planejado, e a temporada termina depois deles. Nenhum título mundial é entregue neste ano; a corrida recomeça na próxima temporada.`,
     },
   },
 
@@ -3018,4 +3070,25 @@ export const CAREER_PT: CareerCopy = {
       worlds: "Worlds",
     },
   },
+  launch: {
+    seasonDetailUnavailable: "Os resultados detalhados desta temporada não foram preservados neste save.",
+    competition: "Competição",
+    futureGoal: "Meta definida no início deste split",
+    careerStats: "Totais da carreira",
+    lineup: "Alterar escalação", swapWith: (name: string) => `Trocar com ${name}`,
+    unlocked: "Novas possibilidades", open: "Explorar", breaking: "Notícia bombástica",
+    coachTypes: { generated: "Coach comum", dataset: "Coach profissional", real: "Ex-jogador profissional" },
+    coachDetails: "Efeitos e evolução", coachGrowth: (quality: number, ceiling: number) => `Qualidade ${quality} → potencial ${ceiling}`,
+    coachRetainer: "Contrato com prazo · renove antes do fim ou o coach sai",
+    coachDealEnds: (season: string) => `Contrato até ${season}`, coachDealLast: "Última temporada do contrato", coachDealOpen: "Contrato datado no próximo balanço de temporada",
+    coachRenewAsk: "Pede para renovar", coachRenewFor: (n: number) => `Renovar ${n} ${n === 1 ? "temporada" : "temporadas"}`,
+    coachEvolution: "Qualidade e experiência evoluem no balanço de cada temporada, até o potencial do coach.",
+    coachShortlist: "Coaches disponíveis", coachCompare: "Compare tipo, qualidade, especialidade e salário semanal. Abra os detalhes para ver os efeitos no treino.",
+    sponsorSchedule: "Metas durante este contrato", automaticCamp: "Bootcamp pago pelo patrocinador · ativa sozinho quando elegível; não precisa comprar.",
+    seasonTitles: "Títulos nesta temporada", totalTitles: "Títulos na carreira", events: "Eventos disputados", wins: "Séries vencidas", losses: "Séries perdidas", games: "Jogos V–D", goals: "Gols marcados / sofridos", winRate: "Vitórias em séries", podiums: "Pódios",
+    calendarPlan: "Planeje sua temporada", calendarHint: "Escolha um mês e selecione um dia para ver a agenda e as ações.", calendarOverview: "Progresso na temporada", calendarLegend: "Legenda do calendário",
+    sundayQualified: "Vaga no Championship Sunday garantida", majorChampion: "Campeões de Major", worldsChampion: "Campeões mundiais",
+    rocketStreet: "Rocket Street",
+  },
+
 };

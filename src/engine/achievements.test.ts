@@ -1,3 +1,4 @@
+import achievementsJson from "@/data/achievements.json";
 import { describe, expect, it } from "vitest";
 import { achievements, playerById, playerCardById, playerCards } from "@/data";
 import { liveAchievements, teamAchievements } from "./achievements";
@@ -93,6 +94,35 @@ describe("evaluateCounterAchievements", () => {
     expect(
       evaluateCounterAchievements({ ...base, runsCompleted: 10 }, new Set(["ach-runs-10"])),
     ).not.toContain("ach-runs-10");
+  });
+
+  it("v2.0 tiers: volume, the Season ladder, Season Rating and the Legacy streak", () => {
+    const got = (over: Partial<typeof base> & { seasonRating?: number; legacyStreakBest?: number }) =>
+      evaluateCounterAchievements({ ...base, ...over }, earnedNone);
+    expect(got({ runsCompleted: 499 })).not.toContain("ach-runs-500");
+    expect(got({ runsCompleted: 1000 })).toEqual(expect.arrayContaining(["ach-runs-500", "ach-runs-1000"]));
+    expect(got({ titlesTotal: 250 })).toEqual(expect.arrayContaining(["ach-titles-100", "ach-titles-250"]));
+    expect(got({ legacyTitles: 25 })).toContain("ach-legacy-25");
+    expect(got({ rankId: "platinum" })).not.toContain("ach-rank-diamond");
+    expect(got({ rankId: "champion" })).toEqual(expect.arrayContaining(["ach-rank-diamond", "ach-rank-champion"]));
+    expect(got({ rankId: "champion" })).not.toContain("ach-rank-gc");
+    expect(got({ rankId: "supersonic-legend" })).toEqual(expect.arrayContaining(["ach-rank-gc", "ach-ssl"]));
+    expect(got({ seasonRating: 999 })).not.toContain("ach-rating-1000");
+    expect(got({ seasonRating: 5000 })).toEqual(expect.arrayContaining(["ach-rating-1000", "ach-rating-2500", "ach-rating-5000"]));
+    expect(got({})).not.toContain("ach-rating-1000"); // the backfill passes no rating
+    expect(got({ legacyStreakBest: 1 })).not.toContain("ach-legacy-streak-2");
+    expect(got({ legacyStreakBest: 2 })).toContain("ach-legacy-streak-2");
+  });
+
+  it("every id the engine can award exists in achievements.json", () => {
+    const all = evaluateCounterAchievements(
+      { ...base, runsCompleted: 1e6, titlesTotal: 1e6, legacyTitles: 1e6, gamesWon: 1e6, goalsScored: 1e6, specialsOwned: 80, dailyStreak: 99, rankId: "supersonic-legend", seasonRating: 1e6, legacyStreakBest: 99 },
+      earnedNone,
+    );
+    const known = new Set((achievementsJson as { id: string }[]).map((a) => a.id));
+    for (const id of [...all, "ach-legacy-undefeated", "ach-challenge-perfect", "ach-challenge-all", "ach-quiz-first-try", "ach-national-first", "ach-national-all"]) {
+      expect(known.has(id), id).toBe(true);
+    }
   });
 });
 

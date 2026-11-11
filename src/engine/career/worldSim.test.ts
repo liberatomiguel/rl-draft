@@ -12,7 +12,15 @@
  *  - orgs enter by era: none before its first dataset season.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { playSeasonXWorldsForTests } from "@/engine/career/worldsForTests";
+
+// v2.0 (C1): Season X's Worlds is cancelled in the game; this suite plays the Worlds mechanics in a first season.
+let restoreWorlds: () => void;
+beforeAll(() => {
+  restoreWorlds = playSeasonXWorldsForTests();
+});
+afterAll(() => restoreWorlds());
 import { CAREER_SEASONS, CAREER_SLOTS, CAREER_UNOFFICIAL, CAREER_WORLD, TOURNAMENT } from "@/config/balance";
 import { lineups, playerCardById } from "@/data";
 import type { Region, TournamentTeam } from "../types";
@@ -77,7 +85,8 @@ function userTeamAt(rating: number): TournamentTeam {
 const regionalWeek = seasonSchedule().find((w) => w.kind === "regional")!.week;
 const majorWeek = seasonSchedule().find((w) => w.kind === "major")!.week;
 const majorDef = officialEventDefsForWeek(0, majorWeek)[0];
-const worldsDef = officialEventDefsForWeek(0, 32)[0];
+// v2.0 (C1): Season X has no Worlds — the first season that does is index 1.
+const worldsDef = officialEventDefsForWeek(1, 32)[0];
 const qualifierOf = (region: Region): CareerEventDef =>
   qualifierDefsForWeek(0, regionalWeek).find((d) => d.region === region)!;
 const intrinsic = (t: TournamentTeam) => t.rating.total - t.rating.difficultyShift;

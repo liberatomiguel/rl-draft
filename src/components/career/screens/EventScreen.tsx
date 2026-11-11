@@ -28,6 +28,7 @@
  */
 
 import { EventRewardsTable } from "../event/EventRewardsTable";
+import { MilestoneMoment } from "../event/MilestoneMoment";
 import { NowSunday } from "../hub/SundayCard";
 import { sundayAheadOf } from "@/store/careerSunday";
 import { EventBrand } from "../event/EventBrand";
@@ -1197,6 +1198,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           <div className="celebrate-rays pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         ) : null}
         <div className="relative">
+          {isChamp && (def.tier === "major" || def.tier === "worlds") ? <MilestoneMoment kind={def.tier} title={def.tier === "worlds" ? C.launch.worldsChampion : C.launch.majorChampion} /> : null}
+          <EventBrand name={def.name} />
           <div className="flex items-center justify-center gap-2">
             <p className="kicker !text-[11px]">{def.name}</p>
             <TierChip tier={def.tier} />
@@ -1204,7 +1207,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           <p
             className={cx(
               "display mt-3 text-4xl font-bold uppercase tracking-wide sm:text-5xl",
-              isChamp ? "champion-title text-orange-bright" : qualified ? "text-good" : "text-ink",
+              isChamp ? "text-orange-bright" : qualified ? "text-good" : "text-ink",
             )}
           >
             {heroTitle}

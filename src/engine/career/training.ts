@@ -98,6 +98,8 @@ export interface CoachTrainingProfile {
   specialty: TrainingObjective;
   /** Quality → focus efficiency: the share of a package's effect that lands. */
   efficiency: number;
+  /** v2.0 (C1): the part of `efficiency` his background adds (an ex-pro, a career professional; 0 for a generic coach). */
+  sourceEdge: number;
   /** Experience → plan quality: the share his own plan lands when he runs it alone. */
   planQuality: number;
   /** Experience → recovery: the share of wear he takes off. */
@@ -108,10 +110,28 @@ export interface CoachTrainingProfile {
 }
 
 /** Focus efficiency for a coach quality (null = no coach: CAREER_PLAN.coach.coachless). */
-export function coachEfficiencyFor(quality: number | null): number {
+export function coachEfficiencyFor(quality: number | null, source?: CoachState["source"]): number {
   const c = CAREER_PLAN.coach;
   if (quality === null) return c.coachless;
-  return round2(clamp(c.efficiencyAt60 + (quality - 60) * c.efficiencyPerPoint, c.efficiencyRange[0], c.efficiencyRange[1]));
+  // v2.0 (C1): a hired coach never lands less than `hiredFloor` (DEV-03), and his background adds to his quality.
+  const lo = Math.max(c.efficiencyRange[0], c.hiredFloor);
+  return round2(clamp(c.efficiencyAt60 + (quality - 60) * c.efficiencyPerPoint + coachSourceEdgeFor(source), lo, c.efficiencyRange[1]));
+}
+
+/** v2.0 (C1): the focus efficiency a coach's background adds (CAREER_PLAN.coach.sourceEfficiency). */
+export function coachSourceEdgeFor(source: CoachState["source"] | undefined): number {
+  return source ? (CAREER_PLAN.coach.sourceEfficiency[source] ?? 0) : 0;
+}
+
+/**
+ * v2.0 (C1): the share of a package a coach lands — his efficiency, × his
+ * plan quality when he runs the plan alone, never below `hiredFloor`; no
+ * coach = `coachless`. The one reading every package effect uses.
+ */
+export function coachStrengthOf(coach: Pick<CoachTrainingProfile, "efficiency" | "planQuality"> | null, unsupervised = false): number {
+  const c = CAREER_PLAN.coach;
+  if (!coach) return c.coachless;
+  return Math.max(c.hiredFloor, coach.efficiency * (unsupervised ? coach.planQuality : 1));
 }
 
 /** Plan quality for an experience (seasons): 0.85 at 0, +0.015 a season, at most 1. */
@@ -159,7 +179,8 @@ export function coachProfileOf(coach: CoachState | null | undefined): CoachTrain
     quality: coach.overall,
     experience,
     specialty: coach.specialty ?? defaultCoachSpecialty(coach),
-    efficiency: coachEfficiencyFor(coach.overall),
+    efficiency: coachEfficiencyFor(coach.overall, coach.source),
+    sourceEdge: coachSourceEdgeFor(coach.source),
     planQuality: planQualityFor(experience),
     wearCut: coachWearCutFor(experience),
     bonusType: coach.bonusType,
@@ -286,8 +307,7 @@ export function packageEffectFor(
   const obj = CAREER_PLAN.objectives[pkg.objective];
   const load = CAREER_PLAN.workloads[tweak?.workload ?? pkg.workload] ?? CAREER_PLAN.workloads.normal;
   const spec = coach && coach.specialty === pkg.objective ? 1 + CAREER_PLAN.coach.specialtyBoost : 1;
-  const strength =
-    (coach ? coach.efficiency : CAREER_PLAN.coach.coachless) * spec * (coach && opts.unsupervised ? coach.planQuality : 1);
+  const strength = coachStrengthOf(coach, opts.unsupervised) * spec;
   const coachless = CAREER_PLAN.coach.coachless;
   const boost = obj.boost * load.boostScale;
   let sessionMult = 1 + boost * strength;
@@ -323,7 +343,7 @@ export function packageEffectFor(
 export function objectiveEffectPct(objective: TrainingObjective, coach: CoachTrainingProfile | null): number {
   const obj = CAREER_PLAN.objectives[objective];
   const spec = coach && coach.specialty === objective ? 1 + CAREER_PLAN.coach.specialtyBoost : 1;
-  const strength = (coach ? coach.efficiency : CAREER_PLAN.coach.coachless) * spec;
+  const strength = coachStrengthOf(coach) * spec;
   const main = objective === "development" ? obj.boost : objective === "preparation" ? obj.scrimBonus : obj.wearCut;
   return Math.round(main * strength * 100);
 }

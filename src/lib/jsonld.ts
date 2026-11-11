@@ -7,6 +7,7 @@
  * from SITE.url so canonical host stays consistent.
  */
 import { SITE } from "@/config/site";
+import { CONTENT_DATE } from "@/content/pageRoutes";
 
 /** Absolute URL on the canonical host for a route path ("/" → site root). */
 export function absoluteUrl(path: string): string {
@@ -16,9 +17,12 @@ export function absoluteUrl(path: string): string {
 
 type Crumb = { name: string; path: string };
 
-/** BreadcrumbList for a content/hub page. Always lead with Home. */
-export function breadcrumbJsonLd(crumbs: Crumb[]) {
-  const items = [{ name: "Home", path: "/" }, ...crumbs];
+/**
+ * BreadcrumbList for a content/hub page. Always lead with the home page: the
+ * EN home by default, the PT landing page ("Início", /pt) for a PT page.
+ */
+export function breadcrumbJsonLd(crumbs: Crumb[], home: Crumb = { name: "Home", path: "/" }) {
+  const items = [home, ...crumbs];
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -80,5 +84,46 @@ export function itemListJsonLd(opts: { name: string; items: ItemEntry[] }) {
       ...(it.url ? { url: absoluteUrl(it.url) } : {}),
       ...(it.description ? { description: it.description } : {}),
     })),
+  };
+}
+
+/**
+ * Article — one long-form content page, attributed to the site and its author
+ * (v2.0, WEB-01). `dateModified` is the content date the sitemap also reports.
+ */
+export function articleJsonLd(opts: {
+  headline: string;
+  description: string;
+  path: string;
+  inLanguage: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: opts.headline,
+    description: opts.description,
+    inLanguage: opts.inLanguage,
+    url: absoluteUrl(opts.path),
+    mainEntityOfPage: absoluteUrl(opts.path),
+    image: absoluteUrl("/opengraph-image.png"),
+    dateModified: CONTENT_DATE,
+    author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
+    publisher: { "@type": "Organization", name: SITE.name, url: SITE.url },
+    isPartOf: { "@type": "WebSite", name: SITE.name, url: SITE.url },
+  };
+}
+
+/**
+ * WebSite — the site's name for search results ("Rocket Draft", with the
+ * one-word spelling people also search for) and its languages.
+ */
+export function webSiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE.name,
+    alternateName: ["RocketDraft", SITE.domain],
+    url: SITE.url,
+    inLanguage: ["en", "pt-BR"],
   };
 }

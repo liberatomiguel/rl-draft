@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
 import { AppLink } from "@/components/ui/AppLink";
 import { PT } from "@/content/copy.pt";
+import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
+import { pageMetadata } from "@/lib/contentMeta";
+import { PAGE_ROUTES, isPageLive } from "@/content/pageRoutes";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { SyncLocale } from "@/components/content/SyncLocale";
 
 /**
- * PT-BR landing page (/pt). Brazil is the #1 click source and the competitor is
- * English-only, so this gives the Portuguese audience a crawlable, indexable
- * home in their language. Focused landing (PT hero + CTA + SEO content) that
+ * PT-BR landing page (/pt). The competitor is English-only, so this gives the
+ * Portuguese audience a crawlable, indexable home in their language. Focused landing (PT hero + CTA + SEO content) that
  * funnels into the shared game at /play — not a second copy of the interactive
  * menu. hreflang ties it to the EN home at "/".
  */
-export const metadata: Metadata = {
-  title: { absolute: `${SITE.name} — Jogo de Draft da RLCS Grátis` },
-  description: PT.APP.description,
-  alternates: {
-    canonical: "/pt",
-    languages: { "en-US": "/", "pt-BR": "/pt", "x-default": "/" },
-  },
-  openGraph: {
-    url: `${SITE.url}/pt`,
-    title: `${SITE.name} — Jogo de Draft da RLCS`,
-    description: PT.APP.description,
-    locale: "pt_BR",
-  },
-};
+export const metadata: Metadata = pageMetadata({
+  // v2.0 (WEB-01): a build that ships Road to Worlds names the career mode.
+  title: FEATURES.careerMode
+    ? `${SITE.name} — Jogo de Draft da RLCS e Manager de Rocket League`
+    : `${SITE.name} — Jogo de Draft da RLCS Grátis`,
+  description: FEATURES.careerMode
+    ? "Jogue o Rocket Draft, um jogo de draft da RLCS gratuito. Monte um elenco com lineups reais do Rocket League esports e vença o torneio, ou comande um clube no modo carreira Road to Worlds."
+    : PT.APP.description,
+  path: "/pt",
+  locale: "pt",
+  twins: { en: "/", pt: "/pt" },
+});
 
 const SEO_LINKS = [
   { label: PT.HOME_SEO.links.play, href: "/play" },
@@ -34,6 +34,10 @@ const SEO_LINKS = [
   { label: PT.HOME_SEO.links.specialCards, href: "/pt/cartas-especiais" },
   { label: PT.HOME_SEO.links.strategy, href: "/pt/estrategia" },
   { label: PT.HOME_SEO.links.sam, href: "/pt/sam" },
+  { label: PT.HOME_SEO.links.simulator, href: PAGE_ROUTES.simulator.pt },
+  { label: PT.HOME_SEO.links.fantasy, href: PAGE_ROUTES.fantasy.pt },
+  { label: PT.HOME_SEO.links.database, href: "/rlcs" },
+  ...(isPageLive("manager") ? [{ label: PT.HOME_SEO.links.manager, href: PAGE_ROUTES.manager.pt }] : []),
   { label: PT.HOME_SEO.links.faq, href: "/pt/faq" },
   { label: PT.HOME_SEO.links.about, href: "/pt/sobre" },
 ];

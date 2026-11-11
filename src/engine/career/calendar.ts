@@ -28,13 +28,14 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CANCELLED_WORLDS,
   CAREER_QUALIFIER,
   CAREER_SEASONS,
   CAREER_SLOTS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
 } from "@/config/balance";
-import { T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
+import { ROCKET_STREET_EVENT_NAME, T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
 import type { Region } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type { CalendarWeek, CareerEventDef } from "./types";
@@ -363,6 +364,11 @@ export function regionalForQualifier(def: CareerEventDef): CareerEventDef | null
   );
 }
 
+/** v2.0 (C1): this season's World Championship is not played (CAREER_CANCELLED_WORLDS — Season X, the pandemic). */
+export function worldsCancelledIn(seasonIndex: number): boolean {
+  return CAREER_CANCELLED_WORLDS.seasonIndexes.includes(seasonIndex);
+}
+
 /**
  * The official events scheduled on a given week: one regional PER REGION on a
  * regional week (all 7 resolve in the same world tick), one cross-region Major
@@ -409,6 +415,8 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
   }
 
   if (wk.kind === "worlds") {
+    // v2.0 (C1): Season X's Worlds was cancelled — the week has no event.
+    if (worldsCancelledIn(seasonIndex)) return [];
     return [
       {
         id: eventIdFor(seasonIndex, "worlds"),
@@ -433,13 +441,13 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
  * The unofficial-tournament offer for an open week, if any. Deterministic per
  * (careerSeed, seasonIndex, week) — no RNG cursor. Every open week has a t2
  * Invitational above the reputation gate or a t3 Community Cup below it.
- * The def carries no region — unofficials are local to the user org, which the
- * store knows.
+ * Unofficials are local to the user org. The regional partner event also
+ * carries SAM explicitly; omitted context preserves the legacy rotation.
  */
 export function unofficialOfferFor(
   seasonIndex: number,
   week: number,
-  ctx: { userTeamRating: number; rep: number; t3EntriesThisSplit: number; careerSeed: number },
+  ctx: { userTeamRating: number; rep: number; t3EntriesThisSplit: number; careerSeed: number; region?: Region },
 ): CareerEventDef | null {
   const wk = weekAt(week);
   if (wk.kind !== "open") return null;
@@ -458,7 +466,10 @@ export function unofficialOfferFor(
   if (
     ctx.rep >= CAREER_UNOFFICIAL.t2RepGate
   ) {
-    return { ...base, tier: "t2", name: T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length] };
+    // Keep the rotation length: extending it to an even size aliases open-week parity.
+    const regularName = T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length];
+    const name = ctx.region === "SAM" && regularName === T2_EVENT_NAMES[0] ? ROCKET_STREET_EVENT_NAME : regularName;
+    return { ...base, tier: "t2", name, ...(name === ROCKET_STREET_EVENT_NAME ? { region: "SAM" as const } : {}) };
   }
 
   if (

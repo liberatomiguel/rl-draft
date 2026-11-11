@@ -99,6 +99,8 @@ export const PT: Copy = {
     careerDesc:
       "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
     careerCta: "Construa uma org do zero. Vença o Mundial.",
+    careerBetaNote: "Beta: o balanceamento ainda está em ajuste. Conte no Discord o que achou.",
+    discordDesc: "Converse sobre drafts, reporte bugs e acompanhe as novidades.",
   },
 
   HOME_SEO: {
@@ -131,6 +133,11 @@ export const PT: Copy = {
         title: "Ratings revisados à mão e transparentes",
         body: "Cada overall é revisado à mão, não tirado de uma única linha de estatística — desempenho individual, resultados e contexto histórico entram na conta, e cartas especiais podem subir acima das versões base. A gente publica a metodologia para os ratings ficarem honestos e a comunidade poder contestar.",
       },
+      {
+        id: "career",
+        title: "Road to Worlds — um modo manager de Rocket League",
+        body: "O Road to Worlds transforma o draft em carreira. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada — eventos regionais, Majors e o World Championship — em um mundo simulado ao seu redor.",
+      },
     ],
     links: {
       heading: "Explore o Rocket Draft",
@@ -142,6 +149,10 @@ export const PT: Copy = {
       faq: "Perguntas frequentes",
       about: "Sobre o projeto",
       play: "Jogue o jogo de draft da RLCS",
+      simulator: "Simulador de Rocket League esports",
+      fantasy: "Draft fantasy da RLCS",
+      manager: "Road to Worlds, o manager de Rocket League",
+      database: "Rosters, times e overalls da RLCS",
     },
   },
 
@@ -160,6 +171,11 @@ export const PT: Copy = {
     by: "por",
     balancedBy: "Overalls balanceados por",
     newHere: "Novidade aqui",
+    joinDiscord: "Entrar no Discord",
+    beta: "Beta",
+    moreGuides: "Mais do Rocket Draft",
+    home: "Início",
+    database: "Base da RLCS",
   },
 
   RUN_UI: {
@@ -306,6 +322,17 @@ export const PT: Copy = {
     seriesScore: (a: number, b: number) => `${a}–${b}`,
     retry: "Tentar de novo",
     backToChallenges: "Voltar aos desafios",
+    board: {
+      live: "AO VIVO",
+      series: "Série",
+      goal: "GOL",
+      goldenGoal: "GOL DE OURO",
+      overtime: "PRORROGAÇÃO",
+      endOfRegulation: "Fim do tempo normal",
+      deciding: "Jogo decisivo",
+      gameClock: "Relógio da partida",
+      playByPlay: "Lance a lance",
+    },
   },
 
   LEADERBOARDS_UI: {
@@ -1582,14 +1609,14 @@ export const PT: Copy = {
   QUIZ_UI: {
     kicker: "Quiz diário",
     title: "Guess the Player",
-    subtitle: "Quem é este jogador de RLCS? Um jogador por dia UTC, três tentativas. Novas pistas aparecem antes de cada palpite; todas estão disponíveis no último.",
+    subtitle: "Quem é este jogador de RLCS? Um jogador por dia UTC, cinco tentativas. Você começa com uma pista; cada erro abre a próxima.",
     question: "Quem é este jogador de RLCS?",
     clue: (n: number) => `Pista ${n}`,
     attemptsLeft: (n: number) => (n === 1 ? "1 tentativa restante" : `${n} tentativas restantes`),
     placeholder: "Digite um nickname…",
     guess: "Chutar",
-    wrong: "Não é esse — confira as novas pistas.",
-    solved: (attempt: number) => (attempt === 1 ? "De primeira! Pontuação máxima." : attempt === 2 ? "Acertou na segunda tentativa." : "Acertou na última tentativa."),
+    wrong: "Não é esse. Uma nova pista foi aberta.",
+    solved: (attempt: number) => (attempt === 1 ? "De primeira! Pontuação máxima." : `Acertou na tentativa ${attempt}.`),
     solvedToast: (attempt: number) => (attempt === 1 ? "Acertou de primeira" : `Acertou na tentativa ${attempt}`),
     failed: "Acabaram as tentativas. A resposta era:",
     answerWas: "O jogador era",
@@ -1611,6 +1638,20 @@ export const PT: Copy = {
       peak: (overall: number, org: string, year: number) => `Carta de pico: ${overall} de overall na ${org} (${year}).`,
     },
     dayLabel: (n: number) => `Quiz #${n}`,
+    attemptOf: (n: number, max: number) => `Tentativa ${n} de ${max}`,
+    clueKinds: {
+      country: "Nacionalidade",
+      era: "Época",
+      orgs: "Orgs",
+      teammate: "Companheiro",
+      nickname: "Nickname",
+      peak: "Carta de pico",
+    },
+    lockedClue: "Bloqueada",
+    nextClueHint: "Abre no seu próximo erro",
+    yourGuesses: "Seus palpites",
+    mystery: "Jogador misterioso",
+    attemptState: { miss: "Erro", hit: "Acerto", current: "Tentativa atual", open: "Não usada" },
   },
 
   NATIONAL_UI: {
@@ -1704,6 +1745,63 @@ export const PT: Copy = {
       reach_playoffs: () => "Chegue aos playoffs",
       team_overall_under: (n: number) => `Vença o título com um time de no máximo ${n} OVR`,
     },
+  },
+
+  // v2.0 (WEB-01): the public RLCS database pages (/rlcs/**).
+  DATABASE_UI: {
+    kicker: "Base da RLCS",
+    hubTitle: "Rosters, Times e Overalls de Jogadores da RLCS",
+    hubIntro: (lineups: number, teams: number, players: number, seasons: number) =>
+      `Todos os rosters do Rocket Draft: ${lineups} lineups reais da RLCS de ${teams} times e ${players} jogadores em ${seasons} temporadas, cada um com o overall que o jogo dá. Pesquisados à mão na Liquipedia e revisados à mão.`,
+    hubDescription: (lineups: number, teams: number, players: number) =>
+      `Veja ${lineups} rosters reais da RLCS de ${teams} times e ${players} jogadores, temporada por temporada, com o overall de cada jogador no Rocket Draft. Grátis, sem login.`,
+    seasons: "Temporadas",
+    regions: "Regiões",
+    teams: "Times",
+    players: "Jogadores",
+    allTeams: "Todos os times",
+    allPlayers: "Todos os jogadores",
+    backToDatabase: "Base da RLCS",
+    rosterCount: (n: number) => `${n} roster${n === 1 ? "" : "s"}`,
+    teamCount: (n: number) => `${n} time${n === 1 ? "" : "s"}`,
+    playerCount: (n: number) => `${n} jogador${n === 1 ? "" : "es"}`,
+    seasonTitle: (season: string) => `Rosters e Overalls da ${season}`,
+    seasonIntro: (season: string, rosters: number, regions: number) =>
+      `Todos os rosters da ${season} no Rocket Draft: ${rosters} times em ${regions} ${regions === 1 ? "região" : "regiões"}, do mais forte ao mais fraco, com o overall de cada jogador.`,
+    teamTitle: (team: string) => `Rosters da ${team} na RLCS por Temporada`,
+    teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
+      rosters === 1
+        ? `${team} (${region}) no Rocket Draft: o roster da ${first}, com o overall de cada jogador.`
+        : `${team} (${region}) no Rocket Draft: ${rosters} rosters, da ${first} à ${last}, com o overall de cada jogador.`,
+    playerTitle: (player: string) => `${player} — Overall e Times na RLCS`,
+    playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
+      `${player} (${region}) no Rocket Draft: ${seasons} ${seasons === 1 ? "temporada" : "temporadas"} de RLCS, com overall máximo de ${peak} pela ${peakTeam} na ${peakSeason}.`,
+    teamsIndexTitle: "Times da RLCS — Todas as Organizações por Região",
+    teamsIndexIntro: (teams: number) =>
+      `Os ${teams} times com roster no Rocket Draft, região por região. Abra um time para ver os lineups temporada por temporada.`,
+    playersIndexTitle: "Jogadores da RLCS — Overall de Cada Jogador",
+    playersIndexIntro: (players: number) =>
+      `Os ${players} jogadores com carta no Rocket Draft, com o overall máximo de cada um. Abra um jogador para ver cada temporada e time.`,
+    colSeason: "Temporada",
+    colTeam: "Time",
+    colRegion: "Região",
+    colPlayer: "Jogador",
+    colCountry: "País",
+    colOverall: "Overall",
+    colPeak: "Máximo",
+    colAverage: "Média do time",
+    coach: "Coach",
+    sub: "Substitute",
+    regionOnly: "Roster regional",
+    regionOnlyHint: "Joga apenas no Region-Locked Draft da sua região.",
+    regionTeams: (region: string) => `Times e rosters da ${region}`,
+    regionBest: (region: string) => `Rosters mais fortes da ${region}`,
+    regionMost: (region: string) => `Times da ${region} com mais rosters`,
+    regionTop: (region: string) => `Jogadores da ${region} com maior overall`,
+    regionAllPlayers: (region: string) => `Todos os jogadores da ${region}`,
+    ratingsNote: "Os overalls são as notas do próprio Rocket Draft: uma base calculada mais uma revisão à mão.",
+    ratingsLink: "Como os ratings são feitos",
+    cta: "Draftar estes rosters",
   },
 };
 

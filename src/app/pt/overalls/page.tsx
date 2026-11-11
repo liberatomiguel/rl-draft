@@ -9,12 +9,13 @@ export const metadata = contentMetadata(PAGES_PT.ratings, { enPath: R.en, ptPath
 export default function PtOverallsPage() {
   return (
     <ContentPage
+      slug="ratings"
       en={PAGES_EN.ratings}
       pt={PAGES_PT.ratings}
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

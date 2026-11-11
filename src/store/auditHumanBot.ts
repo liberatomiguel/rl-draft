@@ -79,6 +79,8 @@ import {
   userSeedRatingFor,
   weeklyStatementOf,
   type CreateCareerInput,
+  coachLeavingAtRolloverOf,
+  renewCoachFlow,
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
 import { recordSundayBriefingFlow, sundayAheadOf, sundayStopHolds } from "./careerSunday";
@@ -1556,7 +1558,7 @@ export function advanceArcRun(run: ArcRun, seasons: number, hooks: ArcHooks = {}
         if (save.phase === "seasonReview") {
           // rc.34 (UX-06b): the explicit contract review before the rollover — the
           // bot renewed whom it wanted at W24 and lets the rest go.
-          run.save = reviewContractsFlow(save).save;
+          run.save = reviewContractsFlow(coachLeavingAtRolloverOf(save) ? renewCoachFlow(save, 2).save : save).save;
           const hold = rolloverHoldOf(run.save);
           if (hold) {
             run.out.softlock = `season ${run.save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;

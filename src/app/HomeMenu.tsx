@@ -27,6 +27,7 @@ import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
+import { quizDayFinished } from "@/engine/quizState";
 import { dailyInfo } from "@/lib/dailyPlan";
 import { dailyDescription, dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
@@ -37,6 +38,7 @@ import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/la
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useNewDots } from "@/store/useNewItems";
 import { Badge } from "@/components/ui/Badge";
+import { DiscordIcon } from "@/components/ui/icons";
 import { NewDot } from "@/components/ui/NewDot";
 import { buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -105,7 +107,7 @@ export default function HomeMenu() {
 
   const daily = useMemo(() => dailyInfo(today), [today]);
   const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
-  const quizDone = mounted ? Boolean(quizToday && (quizToday.solved || quizToday.attempts >= 3)) : false;
+  const quizDone = mounted ? quizDayFinished(quizToday) : false;
 
   useEffect(() => {
     if (mounted) clearRunInProgress();
@@ -118,6 +120,10 @@ export default function HomeMenu() {
     { label: HOME_SEO.links.specialCards, href: localePath("special-cards", active) },
     { label: HOME_SEO.links.strategy, href: localePath("strategy", active) },
     { label: HOME_SEO.links.sam, href: localePath("sam", active) },
+    { label: HOME_SEO.links.simulator, href: localePath("simulator", active) },
+    { label: HOME_SEO.links.fantasy, href: localePath("fantasy", active) },
+    { label: HOME_SEO.links.database, href: "/rlcs" },
+    ...(FEATURES.careerMode ? [{ label: HOME_SEO.links.manager, href: localePath("manager", active) }] : []),
     { label: HOME_SEO.links.faq, href: localePath("faq", active) },
     { label: HOME_SEO.links.about, href: localePath("about", active) },
   ];
@@ -156,6 +162,32 @@ export default function HomeMenu() {
             </>
           ) : null}
         </div>
+
+        {/* Community pills (v2.0): right under the rank tags, where they are seen. */}
+        {SITE.discordUrl || SITE.supportUrl ? (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+            {SITE.discordUrl ? (
+              <a
+                href={SITE.discordUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
+              >
+                <DiscordIcon className="h-4 w-4" /> {HOME.joinDiscord}
+              </a>
+            ) : null}
+            {SITE.supportUrl ? (
+              <a
+                href={SITE.supportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
+              >
+                <CoffeeGlyph /> {HOME.support}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <div className="rise-in">
@@ -210,8 +242,10 @@ export default function HomeMenu() {
                   <div className="mb-2 flex items-center gap-2.5">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
                     <Badge tone="blue">{HOME.careerBadge}</Badge>
+                    <Badge tone="gold">{NAV_UI.beta}</Badge>
                   </div>
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
+                  <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
                 </div>
                 <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
                   {HOME.careerCta}
@@ -373,53 +407,48 @@ export default function HomeMenu() {
           </Tile>
         </section>
 
-        <p className="mt-10 text-center">
+        {/* Discord once more at the end of the menu (v2.0): one slim strip. */}
+        {SITE.discordUrl ? (
+          <a
+            href={SITE.discordUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mx-auto mt-8 flex max-w-2xl items-center gap-3 rounded-xl border border-[#5865F2]/35 bg-[#5865F2]/[0.08] px-4 py-3 transition-colors hover:border-[#5865F2]/70 hover:bg-[#5865F2]/[0.14]"
+          >
+            <span className="shrink-0 text-[#aab1ff]" aria-hidden>
+              <DiscordIcon className="h-6 w-6" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="display block text-sm font-bold uppercase tracking-wide text-ink">{HOME.joinDiscord}</span>
+              <span className="block text-xs leading-relaxed text-sub">{HOME.discordDesc}</span>
+            </span>
+            <span className="shrink-0 text-[#aab1ff] transition-transform group-hover:translate-x-0.5" aria-hidden>
+              →
+            </span>
+          </a>
+        ) : null}
+
+        <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
           <AppLink href="/how-to-play" className="text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline">
             {HOME.howToPlay} →
           </AppLink>
+          {SITE.authorUrl ? (
+            <a
+              href={SITE.authorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline"
+            >
+              <XGlyph /> {HOME.followTwitter}
+            </a>
+          ) : null}
         </p>
 
         <HomeSignInNudge />
-
-        {SITE.discordUrl || SITE.supportUrl ? (
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-            {SITE.discordUrl ? (
-              <a
-                href={SITE.discordUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
-              >
-                <DiscordGlyph /> {HOME.joinDiscord}
-              </a>
-            ) : null}
-            {SITE.authorUrl ? (
-              <a
-                href={SITE.authorUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-line-strong hover:text-ink"
-              >
-                <XGlyph /> {HOME.followTwitter}
-              </a>
-            ) : null}
-            {SITE.supportUrl ? (
-              <a
-                href={SITE.supportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
-              >
-                <CoffeeGlyph /> {HOME.support}
-              </a>
-            ) : null}
-          </div>
-        ) : null}
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
 
       <Modal open={quizOpen && !playtest} title={QUIZ_UI.title} onClose={() => setQuizOpen(false)} wide>
-        <p className="mb-4 text-xs leading-relaxed text-sub">{QUIZ_UI.subtitle}</p>
         <QuizPanel compact />
         <p className="mt-3 text-right">
           <AppLink href="/quiz" className="text-[11px] font-semibold text-faint underline-offset-4 hover:text-sub hover:underline">
@@ -477,7 +506,7 @@ function Tile({
 }) {
   return (
     <AppLink href={href} className="group">
-      <Panel className="relative flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-line-strong">
+      <Panel className="relative flex h-full flex-col items-start justify-between gap-2 p-4 transition-colors group-hover:!border-line-strong min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-3">
         {dot ? <NewDot className="absolute right-2 top-2" label={dotLabel} /> : null}
         <div className="min-w-0">
           <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
@@ -543,17 +572,9 @@ function TrophyGlyph() {
   );
 }
 
-function DiscordGlyph() {
+function CoffeeGlyph({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path d="M19.3 5.3a16 16 0 0 0-4-1.2l-.2.4a11 11 0 0 1 3.5 1.2 13 13 0 0 0-11.2 0A11 11 0 0 1 11 4.5l-.3-.4a16 16 0 0 0-4 1.2C4 8.5 3.4 11.7 3.6 14.8a16 16 0 0 0 4.9 2.5l.4-.5c-.4-.2-.9-.4-1.3-.7l.3-.2a9.3 9.3 0 0 0 8 0l.3.2c-.4.3-.9.5-1.3.7l.4.5a16 16 0 0 0 4.9-2.5c.3-3.6-.6-6.8-2.9-9.5ZM9.5 13c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Zm5 0c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Z" />
-    </svg>
-  );
-}
-
-function CoffeeGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" strokeLinejoin="round" />
       <path d="M17 9h2.2a2.3 2.3 0 0 1 0 4.6H17" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M8 3c-.5.7-.5 1.3 0 2M11.5 3c-.5.7-.5 1.3 0 2" strokeLinecap="round" />

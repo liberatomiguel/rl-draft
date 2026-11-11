@@ -17,6 +17,9 @@ export type ContentPageCopy = {
   ctaLabel: string;
 };
 
+/** A link to another content page, in the article's language. */
+export type RelatedLink = { href: string; label: string };
+
 /**
  * Server-rendered article shell for content pages (/about, /faq, /ratings,
  * /strategy, /special-cards, /sam and their /pt mirrors). Static HTML → fully
@@ -28,12 +31,17 @@ export function ContentArticle({
   ctaHref,
   backHref,
   backLabel,
+  related,
+  relatedLabel,
   children,
 }: {
   copy: ContentPageCopy;
   ctaHref: string;
   backHref: string;
   backLabel: string;
+  /** The other content pages, in this article's language (v2.0, WEB-01). */
+  related?: RelatedLink[];
+  relatedLabel?: string;
   /** Optional extra blocks rendered after the CTA (e.g. card showcase). */
   children?: React.ReactNode;
 }) {
@@ -88,6 +96,24 @@ export function ContentArticle({
           {copy.ctaLabel}
         </AppLink>
       </p>
+
+      {related && related.length > 0 ? (
+        <nav aria-label={relatedLabel} className="mt-12 border-t border-line pt-8">
+          <h2 className="kicker mb-3">{relatedLabel}</h2>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+            {related.map((l) => (
+              <li key={l.href}>
+                <AppLink
+                  href={l.href}
+                  className="text-blue-bright underline-offset-4 transition-colors hover:text-cyan hover:underline"
+                >
+                  {l.label}
+                </AppLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </article>
   );
 }

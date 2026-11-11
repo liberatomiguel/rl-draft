@@ -1178,7 +1178,7 @@ function forecastWeek(save: CareerSave, week: number, t3Entries: number): WeekFo
       userTeamRating: approxUserRating(save),
       rep: save.reputation,
       t3EntriesThisSplit: t3Entries,
-      careerSeed: save.careerSeed,
+      careerSeed: save.careerSeed, region: save.identity.region,
     });
     if (offer) return { share: prep, bonus: false, t3: offer.tier === "t3" };
   }

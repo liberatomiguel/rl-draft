@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 23;
+export const BALANCE_VERSION = 24;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -205,10 +205,12 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 1.3,
     opponentChemistryMaxBonus: 1.3,
-    opponentRatingShift: -2.0,
+    // C3: restore the MAIN-calibrated WW Easy curve after expansion.
+    // All challenge stars have legal replays; two solution paths were renewed.
+    opponentRatingShift: -2.4,
     opponentSpecialChance: 0.02,
     opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
-    xpMultiplier: 1.0,
+    xpMultiplier: 0.75,
   },
   normal: {
     label: "Normal",
@@ -294,7 +296,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     opponentRatingShift: 1.6,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
-    xpMultiplier: 2.0,
+    xpMultiplier: 2.5,
     requiresLegacyUnlock: true,
   },
 };
@@ -338,11 +340,14 @@ export const REGION_LOCK = {
   // and OCE/MENA Legacy no longer reward grinding (OCE grinders won ≈32 %).
   // A negative value lets the regional field play below its nominal rating.
   opponentRatingBoost: {
-    SAM: { easy: -1.85, normal: -0.35, hard: 1.45, legacy: 3.95 },
-    EU: { easy: -0.05, normal: 0.45, hard: 0.9, legacy: 1.5 },
-    NA: { easy: 0.4, normal: 1.15, hard: 2.55, legacy: 2.15 },
-    MENA: { easy: -0.55, normal: 1.45, hard: 2.9, legacy: 4.05 },
-    OCE: { easy: 0.25, normal: 1.35, hard: 3.5, legacy: 5.35 },
+    // C3: reset policy fitted on MAIN v1.4.8 + the October report, then
+    // transferred unchanged to rc.45. See C3-difficulty-matrix.md. Each Easy
+    // boost first offsets the -0.4 shared shift, then applies its own retune.
+    SAM: { easy: -1.85, normal: -0.55, hard: 1.45, legacy: 3.95 },
+    EU: { easy: 0.55, normal: 0.45, hard: 1.1, legacy: 1.5 },
+    NA: { easy: 0.8, normal: 1.15, hard: 2.55, legacy: 2.15 },
+    MENA: { easy: -0.15, normal: 1.45, hard: 2.9, legacy: 4.05 },
+    OCE: { easy: 0.45, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
   /**
    * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
@@ -713,9 +718,14 @@ export function mmrBackfillFloor(wins: Record<Difficulty, number>): number {
  * everyone at `start`.
  *
  * PHILOSOPHY: results, not volume. Every finished tournament run moves the rating by
- * a placement × difficulty delta: titles pay well, a deep run pays a little, and an
- * early exit at the higher difficulties COSTS a few points (floor `floor`), so spamming
- * runs with bad results does not climb. The first `placementRuns` runs of a season
+ * a placement × difficulty delta. Only a top-4 finish pays; a bracket exit below
+ * that is worth 0 and a Swiss exit COSTS points (floor `floor`), most of all in
+ * Legacy. v2.0 retune (C2): the first table paid the average player +4.5 a run on
+ * Easy and +2 on Legacy (measured title rates: Easy 65%, Normal 31%, Hard 18%,
+ * Legacy 5%; Legacy Swiss exits 43%), so volume on Easy out-climbed results on
+ * Legacy. Now the average player nets ~+1.5 a run on Easy / Normal / Hard and
+ * ~+1 on Legacy, while the best fifth of Legacy players net ~+7: the top of the
+ * season board lands around 7-9k from the 400 start. No per-difficulty ceiling. The first `placementRuns` runs of a season
  * never lose rating (a soft landing after the reset). Daily and Quick scale by
  * `modeMultiplier`; hidden overalls add `hiddenOverallBonus` to GAINS only.
  * Challenge runs and Road to Worlds never touch it (Season XP only).
@@ -729,10 +739,10 @@ export const SEASON_RATING = {
   placementRuns: 5,
   /** Placement deltas per difficulty. `playoffs` = top 8/6/4 exits (made the bracket). */
   delta: {
-    easy: { champion: 6, runner_up: 3, third: 2, fourth: 1, playoffs: 0, swiss_exit: -2 },
-    normal: { champion: 10, runner_up: 5, third: 3, fourth: 2, playoffs: 0, swiss_exit: -3 },
-    hard: { champion: 16, runner_up: 9, third: 5, fourth: 3, playoffs: 1, swiss_exit: -4 },
-    legacy: { champion: 26, runner_up: 14, third: 8, fourth: 5, playoffs: 2, swiss_exit: -5 },
+    easy: { champion: 2, runner_up: 1, third: 0, fourth: 0, playoffs: 0, swiss_exit: -2 },
+    normal: { champion: 4, runner_up: 2, third: 1, fourth: 1, playoffs: 0, swiss_exit: -4 },
+    hard: { champion: 7, runner_up: 3, third: 1, fourth: 1, playoffs: 0, swiss_exit: -5 },
+    legacy: { champion: 36, runner_up: 18, third: 8, fourth: 8, playoffs: 0, swiss_exit: -7 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
@@ -775,23 +785,43 @@ export function seasonRatingAfter(mmr: number, delta: number): number {
 }
 
 /**
- * Rank ladder (v0.3 curve). Target: Supersonic Legend in ~100-150 runs.
- * An average run earns ~150-300 XP, a winning run ~500-800.
+ * Rank ladder (v2.0 Season curve). The pre-season curve closed at 60k and 39% of
+ * the registered players finished it in Supersonic Legend (163 of 423, median
+ * 34.6k XP, ~500 XP per run). The Season curve is ~11x longer at the top:
+ * a casual player (~7.5k XP a week) ends a 9-week season in Platinum, a regular
+ * one (~21k) in Champion, and a hardcore one (~75k) reaches Supersonic Legend in
+ * the last week. Weekly rates are estimates (lifetime XP / account age): the
+ * profile stores no weekly series. Recalibrate with Season 1 data.
+ * Bronze stays at 200 so a first run opens the Collection and Challenges.
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  // Bronze stays at 200 so even a losing first run clears the Unranked on-ramp and
-  // opens the Collection immediately. v1.3.5: the rest of the ladder is stretched
-  // (SSL 50k → 60k, mid-ranks redistributed) for a longer, steadier endgame climb
-  // with progressively larger gaps.
   { id: "bronze", label: "Bronze", minXp: 200 },
-  { id: "silver", label: "Silver", minXp: 1500 },
-  { id: "gold", label: "Gold", minXp: 4000 },
-  { id: "platinum", label: "Platinum", minXp: 8500 },
-  { id: "diamond", label: "Diamond", minXp: 15000 },
-  { id: "champion", label: "Champion", minXp: 24000 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 38000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 60000 },
+  { id: "silver", label: "Silver", minXp: 5000 },
+  { id: "gold", label: "Gold", minXp: 15000 },
+  { id: "platinum", label: "Platinum", minXp: 35000 },
+  { id: "diamond", label: "Diamond", minXp: 75000 },
+  { id: "champion", label: "Champion", minXp: 150000 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 320000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 675000 },
+] as const;
+
+/**
+ * The pre-season ladder (v1.3.5), FROZEN. Only the pre-season snapshot reads it
+ * (`src/engine/season.ts`): the rank a player finished the pre-season in is
+ * judged by the curve they played on, so a 60k Supersonic Legend keeps the
+ * legacy badge and title after the Season curve stretched. Never retune.
+ */
+export const PRESEASON_RANKS = [
+  { id: "unranked", minXp: 0 },
+  { id: "bronze", minXp: 200 },
+  { id: "silver", minXp: 1500 },
+  { id: "gold", minXp: 4000 },
+  { id: "platinum", minXp: 8500 },
+  { id: "diamond", minXp: 15000 },
+  { id: "champion", minXp: 24000 },
+  { id: "grand-champion", minXp: 38000 },
+  { id: "supersonic-legend", minXp: 60000 },
 ] as const;
 
 /**
@@ -812,23 +842,25 @@ export const RANK_REWARDS: Record<
   string,
   { rarities: string[]; specialChance: number; collection: boolean; hardMode: boolean }
 > = {
-  // Each rank Bronze→Platinum unlocks ONE new VISIBLE rarity (rare→epic→mythic→legendary);
-  // from Diamond on, nothing new unlocks but the appearance chance RAMPS (v1.4 retune:
-  // legendary moved Diamond→Platinum, ramp now starts at Diamond, not Champion).
-  // `creator` is the SECRET easter-egg card (the dev card): eligible from Bronze at its
-  // own tiny rate, but never surfaced as an "unlocks at" message (the Collection's rarity
-  // grid omits it), so it just rarely turns up. Unranked unlocks nothing.
-  // `community` (content-creator cards) rides alongside `creator`: eligible from
-  // Bronze at its own rate so the creator nods can turn up for everyone (v1.4).
+  // v2.0 Season curve (C2): Bronze opens the Collection and Challenges and
+  // nothing else; the special-card curve STARTS at Silver and each rank up to
+  // Diamond adds one visible rarity (rare → epic → mythic → legendary). The
+  // FIFAe national teams ride the same list as `national`: from Gold they can
+  // show in a classic / quick draft (`runStore` reads it; challenges and events
+  // that carry a national team are not gated). From Diamond on nothing new
+  // unlocks and the appearance chance ramps to the 16% of Supersonic Legend.
+  // `creator` (the secret dev card), `wings` and `community` (content-creator
+  // cards) become eligible with the first rarity, at their own rates, and are
+  // never surfaced as an "unlocks at" message.
   unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
-  bronze: { rarities: ["rare", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  silver: { rarities: ["rare", "epic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  gold: { rarities: ["rare", "epic", "mythic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  platinum: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.06, collection: true, hardMode: true },
-  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.09, collection: true, hardMode: true },
-  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.12, collection: true, hardMode: true },
-  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.16, collection: true, hardMode: true },
+  bronze: { rarities: [], specialChance: 0, collection: true, hardMode: true },
+  silver: { rarities: ["rare", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  gold: { rarities: ["rare", "epic", "national", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  platinum: { rarities: ["rare", "epic", "mythic", "national", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.05, collection: true, hardMode: true },
+  champion: { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.08, collection: true, hardMode: true },
+  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.12, collection: true, hardMode: true },
+  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.16, collection: true, hardMode: true },
 };
 
 export const HISTORY_LIMIT = 25;
@@ -853,6 +885,12 @@ export const CHALLENGE = {
   starXp: { common: 40, rare: 70, epic: 110, legend: 160 } as Record<string, number>,
   /** Star-track milestones (cosmetics in src/data/cosmetics.ts read the same counts). */
   starMilestones: [10, 25, 45],
+  /**
+   * v2.0 (G2): the boss series plays on the Road to Worlds running-clock board
+   * (CAREER_MATCH_CLOCK pacing ÷ this factor). 2× keeps a full Bo7 near 20 s;
+   * the Skip link is always there.
+   */
+  seriesClockSpeed: 2,
 } as const;
 
 /**
@@ -873,14 +911,18 @@ export const MISSIONS = {
 } as const;
 
 /**
- * Daily Quiz — "Guess the Player" (v2.0). One player per UTC day, three attempts,
- * a new clue after every miss. XP by the attempt that solved it; a miss on all
- * three reveals the answer and pays nothing (the mission "play the quiz" still
- * counts). Players need at least `minLineups` lineups to be a fair answer.
+ * Daily Quiz — "Guess the Player" (v2.0). One player per UTC day, five attempts,
+ * ONE clue at a time: the first clue is open, every miss opens the next. XP by
+ * the attempt that solved it; five misses reveal the answer and pay nothing
+ * (the mission "play the quiz" still counts). Players need at least
+ * `minLineups` lineups to be a fair answer.
  */
 export const QUIZ = {
-  attempts: 3,
-  xpByAttempt: { 1: 120, 2: 80, 3: 50 } as Record<number, number>,
+  attempts: 5,
+  /** The limit before the five-guess rule. A stored day without its own `max`
+   *  was played under it, so a day lost on three misses stays finished. */
+  legacyAttempts: 3,
+  xpByAttempt: { 1: 120, 2: 95, 3: 75, 4: 55, 5: 40 } as Record<number, number>,
   minLineups: 2,
   /** Daily results kept on the profile (older days are pruned). */
   historyDays: 90,
@@ -934,6 +976,18 @@ export const CAREER_SEASONS = [
   { seasonId: "rlcs-2025", label: "RLCS 2025", shortLabel: "2025", year: "2025", order: 14, startDate: "2025-01-06" },
   { seasonId: "rlcs-2026", label: "RLCS 2026", shortLabel: "2026", year: "2026", order: 15, startDate: "2026-01-05" },
 ] as const;
+
+/**
+ * v2.0 (C1): the seasons whose World Championship was never played. Season X
+ * (2020-21, index 0): cancelled over the pandemic. The season still runs its
+ * three splits and Majors; W32 has no event, the news says so early in split
+ * 3 (`announceWeek`), and the season review opens on the season's last day.
+ */
+export const CAREER_CANCELLED_WORLDS = {
+  seasonIndexes: [0] as readonly number[],
+  /** The Monday the cancellation is announced: the second week of split 3 (W23 opens it). */
+  announceWeek: 24,
+} as const;
 
 /**
  * Season shape: 32 weeks — W1-2 preseason (window), 3 × [8-week split:
@@ -1718,6 +1772,22 @@ export const CAREER_PLAN = {
     planQualityPerExperience: 0.015,
     wearCutPerExperience: 0.03,
     wearCutMax: 0.3,
+    /**
+     * v2.0 (C1, DEV-03: "a coach rated 65 or below trains like no coach").
+     * The share of a package a HIRED coach lands is never below this,
+     * whatever his quality and whether he supervises or runs the plan alone
+     * (efficiency × plan quality): a quality-60 rookie running his own plan
+     * landed 0.6 × 0.85 = 0.51 against the coachless 0.5. 0.62 keeps the
+     * cheapest hire a visible step over none (+24 % of the package's effect).
+     */
+    hiredFloor: 0.62,
+    /**
+     * v2.0 (C1): what a coach's background adds to his focus efficiency, on
+     * top of his quality — a former pro and a career professional (the
+     * dataset's real coaches) teach more than a generic hire of the same
+     * rating. Added before the range's cap (1.1).
+     */
+    sourceEfficiency: { generated: 0, real: 0.04, dataset: 0.07 } as Record<string, number>,
   },
   /**
    * T3 / decision 6-A: wear feeds today's pre-event unavailability roll — no
@@ -2954,6 +3024,18 @@ export const CAREER_COACH_MARKET = {
     ceilingRoom: [3, 8] as const,
     ceilingMax: 95,
   },
+  /**
+   * v2.0 (C1): a coach's deal works like a player's. A hire signs for
+   * `lengthSeasons` seasons; in the deal's last season the board is told
+   * (the Monday of `noticeWeek`) what he asks to stay, and the manager
+   * renews him for 1–3 seasons or lets the deal run out — not renewed, he
+   * leaves at the rollover, and the season review lists him with the
+   * players whose deals end. The ask is the players' renewal rule
+   * (CAREER_SALARY.renewalRaiseCap / renewalMarketFloor / renewalMaxJump) on
+   * his market wage at the quality and experience he has grown to. A coach
+   * hired before v2.0 has no end date: he gets one at his next rollover.
+   */
+  contract: { lengthSeasons: 2, noticeWeek: 21 },
 } as const;
 
 export const CAREER_SUB = {
@@ -3776,6 +3858,34 @@ export const CAREER_SIM = {
   /** Per-frame world-sim budget during multi-week skips before yielding. */
   advanceBudgetMs: 80,
   teamCache: true,
+} as const;
+
+/**
+ * v2.0 (C1) — PROFILE XP FROM THE CAREER. Road to Worlds pays the same Season
+ * XP the draft does (XP above): a series played, an event finished, a title,
+ * a season completed (engine/career/careerXp.ts; the store grants it on each
+ * write). MMR / Season Rating is NOT touched: it stays the draft's alone.
+ *
+ * PROVISIONAL (session C2 calibrates). Sized against the draft: a classic
+ * run pays roughly 200–500 XP in ~10 minutes; a career season is ~70–90
+ * series and ~15 events over an hour or two, so at these figures (rc.47, C2's recalibration) it pays
+ * about 6,000–7,000 XP before titles — an hour of career close to an hour of draft.
+ *    The per-series values are half of C2's proposal: Skip can simulate a season in minutes.
+ *  - seriesPlayed / seriesWinBonus: every series the user plays (scrims are
+ *    not series), plus the bonus on a win.
+ *  - eventFinished: an event the user played to its end, by tier.
+ *  - title: winning it, by tier (on top of eventFinished).
+ *  - seasonCompleted: the season review filed.
+ *  - maxPerWrite: a safety cap on one save write (a Worlds title + its event
+ *    + the season is 7,300; nothing legitimate reaches it).
+ */
+export const CAREER_XP = {
+  seriesPlayed: 25,
+  seriesWinBonus: 15,
+  eventFinished: { t3: 100, t2: 150, qualifier: 100, regional: 250, major: 500, worlds: 800 } as Record<string, number>,
+  title: { t3: 200, t2: 400, regional: 800, major: 2_000, worlds: 5_000 },
+  seasonCompleted: 1_500,
+  maxPerWrite: 10_000,
 } as const;
 
 export const CAREER_SAVE = {

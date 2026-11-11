@@ -135,9 +135,9 @@ describe("rc.36 POL-02 — HQ finances: the balance, the weekly out, the chart, 
 describe("rc.36 POL-02 — the progression card: three item rows and next unlock below", () => {
   it("shows neighbors of the latest unlock, including when earlier gear is still unbought", () => {
     const save = fresh();
-    save.reputation = 22; // peripherals, monitors and PCs open
+    save.reputation = 22; // assistant and PCs reached; ex-pro coach is next
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    for (const name of [CAREER_EN.finances.gear.monitors, CAREER_EN.finances.gear.pcs, CAREER_EN.finances.bootcampT1]) expect(html).toContain(name);
+    for (const name of [CAREER_EN.ladder.rung.assistant, CAREER_EN.finances.gear.pcs, CAREER_EN.ladder.rung.exProCoach]) expect(html).toContain(name);
     expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
     expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
     expect(html).not.toContain("grid grid-cols-2 gap-2");
@@ -150,7 +150,7 @@ describe("rc.36 POL-02 — the progression card: three item rows and next unlock
     const save = fresh();
     save.reputation = 100;
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    for (const name of [CAREER_EN.finances.bootcampT2, CAREER_EN.finances.psychologist, CAREER_EN.finances.gear.perfCenter]) expect(html).toContain(name);
+    for (const name of [CAREER_EN.ladder.rung.sponsors3, CAREER_EN.finances.gear.perfCenter, CAREER_EN.ladder.rung.sponsors4]) expect(html).toContain(name);
     expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
     expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
     expect(html).toContain(CAREER_EN.ladder.top);

@@ -106,7 +106,17 @@ export function signableAtRep(
 
 export interface MarketListing {
   freeAgents: CareerPlayerView[];
-  contracted: { view: CareerPlayerView; orgRef: string; splitsRemaining: number }[];
+  contracted: {
+    view: CareerPlayerView;
+    orgRef: string;
+    splitsRemaining: number;
+    /**
+     * v2.0 (C1): listed but not for sale to this org yet — its reputation is
+     * under CAREER_UNLOCKS.contractedRep. The row is browsable (name, overall,
+     * club, contract); every offer on it is refused ("contractedRep").
+     */
+    locked?: "contractedRep";
+  }[];
 }
 
 const LISTING_CAP = 120;
@@ -125,8 +135,15 @@ export function listingFor(ctx: {
   careerSeed: number;
   /** rc.32: the org's signing cap (economy.signableOverallCap) — tops the free agents up with signable ones. */
   signableCap?: number;
-  /** Skip the contracted players (an empty `contracted`) — the free-agent page only. */
+  /**
+   * The org may only sign free agents (reputation under
+   * CAREER_UNLOCKS.contractedRep). v2.0 (C1): the contracted players are
+   * still LISTED, each flagged `locked: "contractedRep"` — before, the page
+   * came back empty. For the free-agent page alone, pass `skipContracted`.
+   */
   freeAgentsOnly?: boolean;
+  /** Skip the contracted players altogether (an empty `contracted`) — a caller that only reads free agents. */
+  skipContracted?: boolean;
 }): MarketListing {
   const viewCtx: ViewCtx = {
     careerSeed: ctx.careerSeed,
@@ -145,7 +162,7 @@ export function listingFor(ctx: {
   freeAgents.sort((a, b) => b.overall - a.overall);
 
   const contracted: MarketListing["contracted"] = [];
-  for (const org of ctx.freeAgentsOnly ? [] : Object.values(ctx.world.orgs)) {
+  for (const org of ctx.skipContracted ? [] : Object.values(ctx.world.orgs)) {
     for (const id of org.playerIds) {
       if (squad.has(id)) continue;
       const view = playerViewById(id, viewCtx);
@@ -154,6 +171,7 @@ export function listingFor(ctx: {
         view,
         orgRef: org.ref,
         splitsRemaining: contractedSplitsRemaining(id, ctx.seasonIndex, ctx.careerSeed),
+        ...(ctx.freeAgentsOnly ? { locked: "contractedRep" as const } : {}),
       });
     }
   }
@@ -465,7 +483,7 @@ export function resaleLocked(
 }
 
 /** This season's real dataset lineups (the anchor targets). Empty when infinite. */
-function anchorLineupsFor(seasonIndex: number): { orgId: string; playerIds: string[] }[] {
+function anchorLineupsFor(seasonIndex: number): { orgId: string; region: Region; playerIds: string[] }[] {
   // rc.39 (R109): the late wave (RLCS 2027) anchors at its infinite-era season.
   const seasonId = intakeSeasonIdFor(seasonIndex);
   if (!seasonId) return [];
@@ -473,6 +491,7 @@ function anchorLineupsFor(seasonIndex: number): { orgId: string; playerIds: stri
     .filter((l) => l.seasonId === seasonId && !l.rareSpawn)
     .map((l) => ({
       orgId: l.orgId,
+      region: l.region,
       playerIds: l.playerCardIds.map((cid) => playerCardById.get(cid)!.playerId),
     }));
 }
@@ -684,6 +703,12 @@ export function aiWindowMoves(
         if (next.retiredIds.includes(playerId)) continue;
         const view = viewOf(playerId);
         if (!view) continue; // not debuted yet / unresolvable
+        // v2.0 (C1): the dataset reuses an org id across regions (Elevate: SAM
+        // in 2021-22, APAC after). The world keeps the org where it entered,
+        // so a lineup from another region only brings the players who are
+        // from the org's own region (FURIA's Brazilians in its NA season) —
+        // never the other region's roster.
+        if (anchor.region !== org.region && view.region !== org.region) continue;
         if (!rng.chance(fidelity)) continue; // per-slot break
         execMove(playerId, anchor.orgId);
       }

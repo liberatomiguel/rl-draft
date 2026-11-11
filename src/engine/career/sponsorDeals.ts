@@ -171,9 +171,11 @@ export function mondaysLeftOf(terms: Pick<SponsorTerms, "endsOn">, today: Career
 }
 
 /** The day a goal's last counting event ends: the split's third regional, the Major's field or its final. */
-export function goalDeadlineOf(goal: Pick<SponsorGoal, "slot" | "kind">): CareerDay {
-  const w = splitWeeksOf(goal.slot);
-  const seasonIndex = slotSeason(goal.slot);
+export function goalDeadlineOf(goal: Pick<SponsorGoal, "slot" | "kind"> & Pick<Partial<SponsorGoal>, "span">): CareerDay {
+  // v2.0 (C1): a contract goal's last counting event is in the deal's last split.
+  const slot = goal.slot + Math.max(1, goal.span ?? 1) - 1;
+  const w = splitWeeksOf(slot);
+  const seasonIndex = slotSeason(slot);
   const sunday = (week: number) => week * CAREER_CALENDAR.daysPerWeek;
   switch (goal.kind) {
     case "regionalFinish":
@@ -382,6 +384,163 @@ export function pickGoal(word: SponsorGoalWord, level: TeamLevel, slot: number, 
   return goal;
 }
 
+// ---------------------------------------------------------------------------
+// v2.0 (C1): the contract goal — one goal for the whole deal, from signing
+// ---------------------------------------------------------------------------
+
+/** Is this a contract goal (v2.0) rather than an rc.34 per-split one? */
+export function isContractGoal(goal: Pick<Partial<SponsorGoal>, "span">): boolean {
+  return (goal.span ?? 0) >= 1;
+}
+
+/** The split a goal's wording names: 0 for a contract goal ("during the deal"), else its split (1–3). */
+export function goalSplitLabelOf(goal: Pick<SponsorGoal, "slot"> & Pick<Partial<SponsorGoal>, "span">): 0 | 1 | 2 | 3 {
+  return isContractGoal(goal) ? 0 : slotSplit(goal.slot);
+}
+
+/** The events still ahead of `from` through the split `lastSlot`: the tries a contract goal counts. */
+export interface ContractTries {
+  regionals: number;
+  majors: number;
+}
+
+const sundayAbs = (seasonIndex: number, week: number) => seasonIndex * DAYS_PER_SEASON + week * CAREER_CALENDAR.daysPerWeek;
+
+/** Does an event of this season and week end after `from` (the day a contract goal starts counting)? */
+function endsAfter(seasonIndex: number, week: number, from: CareerDay): boolean {
+  return sundayAbs(seasonIndex, week) > absDayOf(from);
+}
+
+export function contractTriesOf(from: CareerDay, lastSlot: number): ContractTries {
+  let regionals = 0;
+  let majors = 0;
+  for (let slot = slotOf(from.seasonIndex, 1); slot <= lastSlot; slot++) {
+    const season = slotSeason(slot);
+    const w = splitWeeksOf(slot);
+    for (const off of CAREER_CALENDAR.regionalOffsets) if (endsAfter(season, w.start + off - 1, from)) regionals += 1;
+    if (endsAfter(season, w.major, from)) majors += 1;
+  }
+  return { regionals, majors };
+}
+
+type GoalShape = Pick<SponsorGoal, "kind" | "count" | "place">;
+
+/** Every goal a contract offers for its tries, easiest first in each family. */
+export function contractGoalCandidates(tries: ContractTries): GoalShape[] {
+  const out: GoalShape[] = [];
+  if (tries.regionals > 0) {
+    out.push({ kind: "enterEvents", count: Math.max(1, Math.round((M.enterEvents.count * tries.regionals) / 3)) });
+  }
+  for (let k = 1; k <= tries.regionals; k++) out.push({ kind: "regionalReach", count: k });
+  for (const place of [8, 6, 4, 1]) {
+    for (let k = 1; k <= tries.regionals; k++) out.push({ kind: "regionalFinish", count: k, place });
+  }
+  for (let k = 1; k <= tries.majors; k++) out.push({ kind: "majorQualify", count: k });
+  if (tries.majors > 0) {
+    out.push({ kind: "majorFinish", count: 1, place: 4 });
+    out.push({ kind: "majorFinish", count: 1, place: 1 });
+  }
+  return out;
+}
+
+/** The engine's estimate that a contract goal is reached over its tries (the split model, repeated). */
+export function contractGoalChance(goal: GoalShape, level: TeamLevel, tries: ContractTries): number {
+  switch (goal.kind) {
+    case "enterEvents":
+      return M.enterEvents.p;
+    case "regionalFinish":
+      return binomialTail(tries.regionals, goal.count, regionalChance(level, goal.place ?? 8));
+    case "regionalReach":
+      return binomialTail(tries.regionals, goal.count, regionalChance(level, 16));
+    case "majorQualify":
+      return binomialTail(tries.majors, goal.count, majorQualifyChance(level));
+    case "majorFinish": {
+      const one =
+        majorQualifyChance(level) *
+        ((goal.place ?? 4) >= 4 ? curve(level.vsMajor4, M.majorTop4) : curve(level.vsMajor1, M.majorWin));
+      return binomialTail(tries.majors, goal.count, one);
+    }
+  }
+}
+
+/** P(at least k successes in n tries at p) for every k (index k, 0..n) — one pass instead of a sum per k. */
+function binomialTails(n: number, p: number): number[] {
+  const pmf: number[] = new Array(n + 1).fill(0);
+  pmf[0] = 1;
+  for (let i = 0; i < n; i++) {
+    for (let k = i + 1; k >= 1; k--) pmf[k] = pmf[k] * (1 - p) + pmf[k - 1] * p;
+    pmf[0] *= 1 - p;
+  }
+  const tails: number[] = new Array(n + 2).fill(0);
+  for (let k = n; k >= 0; k--) tails[k] = Math.min(1, tails[k + 1] + pmf[k]);
+  return tails;
+}
+
+/**
+ * Every contract goal with its chance — the same goals and figures as
+ * `contractGoalCandidates` × `contractGoalChance` (the sponsor suite checks
+ * the two agree), computed with one pass per family: an offer rates ~60
+ * goals, and a decision makes three offers.
+ */
+export function ratedContractGoals(level: TeamLevel, tries: ContractTries): (GoalShape & { chance: number })[] {
+  const out: (GoalShape & { chance: number })[] = [];
+  const R = tries.regionals;
+  if (R > 0) {
+    out.push({ kind: "enterEvents", count: Math.max(1, Math.round((M.enterEvents.count * R) / 3)), chance: M.enterEvents.p });
+  }
+  const reach = binomialTails(R, regionalChance(level, 16));
+  for (let k = 1; k <= R; k++) out.push({ kind: "regionalReach", count: k, chance: reach[k] });
+  for (const place of [8, 6, 4, 1]) {
+    const tails = binomialTails(R, regionalChance(level, place));
+    for (let k = 1; k <= R; k++) out.push({ kind: "regionalFinish", count: k, place, chance: tails[k] });
+  }
+  const q = majorQualifyChance(level);
+  const qualify = binomialTails(tries.majors, q);
+  for (let k = 1; k <= tries.majors; k++) out.push({ kind: "majorQualify", count: k, chance: qualify[k] });
+  if (tries.majors > 0) {
+    out.push({ kind: "majorFinish", count: 1, place: 4, chance: binomialTails(tries.majors, q * curve(level.vsMajor4, M.majorTop4))[1] });
+    out.push({ kind: "majorFinish", count: 1, place: 1, chance: binomialTails(tries.majors, q * curve(level.vsMajor1, M.majorWin))[1] });
+  }
+  return out;
+}
+
+/**
+ * The deal's goal at a word (v2.0, C1): it runs from `from` (the signing day)
+ * to the end of the deal's last split, over every event still ahead — never
+ * a goal tied to one split. Same rule as `pickGoal`: among the goals rated at
+ * least `wordMin.stretch`, the closest to the word's chance.
+ */
+export function pickContractGoal(
+  word: SponsorGoalWord,
+  level: TeamLevel,
+  firstSlot: number,
+  span: number,
+  from: CareerDay,
+  maxChance = 1,
+): SponsorGoal {
+  const tries = contractTriesOf(from, firstSlot + span - 1);
+  const target = CAREER_SPONSOR.wordChance[word];
+  const all = ratedContractGoals(level, tries);
+  const reachable = all.filter((c) => c.chance >= CAREER_SPONSOR.wordMin.stretch);
+  const capped = reachable.filter((c) => c.chance <= maxChance + 1e-9);
+  const rated = capped.length > 0 ? capped : reachable.length > 0 ? reachable : all;
+  const pool = rated.some((c) => wordOf(c.chance) === word) ? rated.filter((c) => wordOf(c.chance) === word) : rated;
+  let best: GoalShape & { chance: number } = pool[0] ?? { kind: "enterEvents", count: 1, chance: M.enterEvents.p };
+  for (const c of pool) if (Math.abs(c.chance - target) < Math.abs(best.chance - target) - 1e-9) best = c;
+  const chance = Math.round(best.chance * 1000) / 1000;
+  const goal: SponsorGoal = {
+    slot: firstSlot,
+    kind: best.kind,
+    count: best.count,
+    chance,
+    word: wordOf(chance),
+    span,
+    from: { ...from },
+  };
+  if (best.place !== undefined) goal.place = best.place;
+  return goal;
+}
+
 /** The nearest pre-rc.34 objective kind of a goal (the analytics' `objectiveKind`, the deal's legacy field). */
 export function legacyKindOf(goal: Pick<SponsorGoal, "kind">): SponsorObjectiveKind {
   switch (goal.kind) {
@@ -424,9 +583,10 @@ export interface GoalProgress {
  * the user is in the split's announced Major field right now.
  */
 export function goalProgressOf(
-  goal: Pick<SponsorGoal, "slot" | "kind" | "count" | "place">,
-  ctx: { results: readonly CompactEventResult[]; inMajorField?: boolean },
+  goal: Pick<SponsorGoal, "slot" | "kind" | "count" | "place"> & Pick<Partial<SponsorGoal>, "span" | "from">,
+  ctx: { results: readonly CompactEventResult[]; inMajorField?: boolean; fieldSlot?: number },
 ): GoalProgress {
+  if (isContractGoal(goal)) return contractProgressOf(goal, ctx);
   const season = slotSeason(goal.slot);
   const split = slotSplit(goal.slot);
   const w = splitWeeksOf(goal.slot);
@@ -453,6 +613,56 @@ export function goalProgressOf(
       break;
     case "majorFinish":
       done = mine.some((r) => r.tier === "major" && PLACE[r.userPlacement!] <= (goal.place ?? 4)) ? 1 : 0;
+      break;
+  }
+  return { done: Math.min(done, target), target, hit: done >= target };
+}
+
+/**
+ * v2.0 (C1): a contract goal's progress — the user's results from the day it
+ * was signed (`from`) to the end of the deal's last split, whatever the split.
+ * `fieldSlot`: the split whose announced Major field the user is in right now
+ * (it counts as a qualification until that Major is played).
+ */
+function contractProgressOf(
+  goal: Pick<SponsorGoal, "slot" | "kind" | "count" | "place"> & Pick<Partial<SponsorGoal>, "span" | "from">,
+  ctx: { results: readonly CompactEventResult[]; fieldSlot?: number },
+): GoalProgress {
+  const lastSlot = goal.slot + Math.max(1, goal.span ?? 1) - 1;
+  const from = goal.from ?? splitStartDayOf(goal.slot);
+  const slotOfResult = (r: CompactEventResult): number => {
+    if (r.split !== undefined) return slotOf(r.seasonIndex, r.split);
+    for (const split of [1, 2, 3] as const) if (r.week <= SPLIT_WEEKS[split].major) return slotOf(r.seasonIndex, split);
+    return slotOf(r.seasonIndex, 3) + 1; // the Worlds window: past every split
+  };
+  const mine = ctx.results.filter(
+    (r) => r.userPlacement !== undefined && endsAfter(r.seasonIndex, r.week, from) && slotOfResult(r) <= lastSlot,
+  );
+  const target = Math.max(1, goal.count);
+  let done = 0;
+  switch (goal.kind) {
+    case "enterEvents":
+      done = mine.length;
+      break;
+    case "regionalFinish":
+      done = mine.filter((r) => r.tier === "regional" && PLACE[r.userPlacement!] <= (goal.place ?? 8)).length;
+      break;
+    case "regionalReach":
+      done = mine.filter((r) => r.tier === "regional").length;
+      break;
+    case "majorQualify": {
+      const played = mine.filter((r) => r.tier === "major");
+      const fieldSlot = ctx.fieldSlot;
+      const pending =
+        fieldSlot !== undefined &&
+        fieldSlot <= lastSlot &&
+        endsAfter(slotSeason(fieldSlot), splitWeeksOf(fieldSlot).major, from) &&
+        !played.some((r) => slotOfResult(r) === fieldSlot);
+      done = played.length + (pending ? 1 : 0);
+      break;
+    }
+    case "majorFinish":
+      done = mine.filter((r) => r.tier === "major" && PLACE[r.userPlacement!] <= (goal.place ?? 4)).length;
       break;
   }
   return { done: Math.min(done, target), target, hit: done >= target };
@@ -601,6 +811,8 @@ export function quoteDeal(input: {
   chance?: number;
   /** The share of the tier's value paid at the team's level (levelValueShareOf; default 1). */
   valueShare?: number;
+  /** v2.0 (C1): a contract goal covers this many splits — its one fine is capped at that many splits' worth (default 1). */
+  goalSpan?: number;
 }): DealQuote {
   const row = profileRow(input.profile);
   const p = Math.min(0.99, Math.max(0.01, input.chance ?? CAREER_SPONSOR.wordChance[row.word]));
@@ -613,7 +825,7 @@ export function quoteDeal(input: {
   const ceilingTotal = row.ceilingOfValue * value;
   const weekly = Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(row.ceilingOfValue * row.weeklyOfCeiling * perMonday));
   const fineShare = fines ? row.fineShare : 0;
-  const fineCap = fines ? quantize(row.fineCapWeeks * weekly) : 0;
+  const fineCap = fines ? quantize(row.fineCapWeeks * weekly * Math.max(1, input.goalSpan ?? 1)) : 0;
   // The rest of the ceiling: the fixed part (fx of it) and the bonuses (bx of it, over n goals).
   const c = Math.max(0, ceilingTotal - weekly * mondays);
   const fx = row.fixedShare / (row.fixedShare + row.bonusShare);
@@ -768,7 +980,8 @@ export function sponsorDecisionFor(input: {
   return profiles.slice(0, access?.offers ?? 3).map((profile, i) => {
     const row = profileRow(profile);
     const endsOn = settleDayOf(firstSlot + row.lengthSplits - 1);
-    const goal = pickGoal(row.word, level, firstSlot, maxChance);
+    // v2.0 (C1): one goal for the whole deal, counted from signing — not one per split.
+    const goal = pickContractGoal(row.word, level, firstSlot, row.lengthSplits, today, maxChance);
     maxChance = goal.chance;
     const quote = quoteDeal({
       profile,
@@ -776,7 +989,8 @@ export function sponsorDecisionFor(input: {
       seasonIndex: today.seasonIndex,
       difficulty,
       mondays: mondaysBetween(today, endsOn),
-      goals: row.lengthSplits,
+      goals: 1,
+      goalSpan: row.lengthSplits,
       chance: goal.chance,
       valueShare,
     });
@@ -856,7 +1070,12 @@ export function upToMoneyOf(state: Pick<SponsorState, "bonus" | "terms">, today:
   const terms = state.terms!;
   const settled = terms.goals.filter((g) => g.hitOn || g.missed !== undefined).length;
   const milestone = terms.fixedKind === "milestone" && !terms.fixedPaid ? terms.fixed : 0;
-  return sureMoneyOf(terms, today) + milestone + state.bonus * Math.max(0, terms.lengthSplits - settled);
+  return sureMoneyOf(terms, today) + milestone + state.bonus * Math.max(0, goalsOfDeal(terms) - settled);
+}
+
+/** The goals a deal sets over its life: one (a v2.0 contract goal) or one per split (rc.34). */
+export function goalsOfDeal(terms: Pick<SponsorTerms, "goals" | "lengthSplits">): number {
+  return terms.goals.some(isContractGoal) ? 1 : terms.lengthSplits;
 }
 
 /** The slots a deal covers (its splits), first to last. */
@@ -866,7 +1085,9 @@ export function slotsOfDeal(terms: Pick<SponsorTerms, "firstSlot" | "lengthSplit
 
 /** The deal's goal for a split, once set. */
 export function goalForSlot(terms: Pick<SponsorTerms, "goals">, slot: number): SponsorGoal | null {
-  return terms.goals.find((g) => g.slot === slot) ?? null;
+  return (
+    terms.goals.find((g) => (isContractGoal(g) ? slot >= g.slot && slot < g.slot + g.span! : g.slot === slot)) ?? null
+  );
 }
 
 // ---------------------------------------------------------------------------

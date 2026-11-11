@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { SITE } from "@/config/site";
+import { pageMetadata } from "@/lib/contentMeta";
 import { PrivacyView } from "./PrivacyView";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
+export const metadata: Metadata = pageMetadata({
+  title: `Privacy Policy · ${SITE.name}`,
   description: `How ${SITE.name} handles your data — short version: it stays on your device.`,
-  alternates: { canonical: "/privacy" },
-  robots: { index: true, follow: true },
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return <PrivacyView />;

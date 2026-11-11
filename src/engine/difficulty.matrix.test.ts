@@ -9,11 +9,13 @@
  * difficulty and any pool (WW or a region), plus the "population" metric (every
  * lineup of the pool as the user's team — close to the live analytics blend).
  * Knobs: SIM_DIFFS, SIM_SESSIONS, SIM_RESETS, SIM_PER, SIM_POP_PER,
- * SIM_SKIP_REAL / SIM_SKIP_POP, and SIM_BOOST={"EU":{"hard":1.2}} to sweep a
- * region's boost without editing balance.ts. Writes JSON to $SIM_OUT.
+ * SIM_SKIP_REAL / SIM_SKIP_POP, and SIM_BOOST={"EU":{"hard":1.2}} to override a
+ * region's boost without editing balance.ts. SIM_SWEEP=-0.4,0.2,0.4 measures
+ * additive deltas with cached drafts and paired tournament seeds. Writes JSON
+ * (including the reset schedule and per-session results) to $SIM_OUT.
  */
 import { writeFileSync } from "node:fs";
-import { it } from "vitest";
+import { expect, it } from "vitest";
 import * as balance from "@/config/balance";
 import { coachById, lineupPoolForRegion, lineups, playerById, playerCardById, specialCardById, subById } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
@@ -22,6 +24,7 @@ import { rosterFromLineup } from "./challenges";
 import { applyFreeReroll, applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
 import { displayTeamOverall } from "./rating";
 import { buildUserTeam } from "./teams";
+import { generateOpponents } from "./opponents";
 import { fastForward, initTournament, userPlacement } from "./tournament";
 import type { CardKind, Difficulty, DraftOfferCard, Region, Roster, RosterPick, TournamentTeam } from "./types";
 
@@ -142,9 +145,9 @@ function play(team: TournamentTeam, d: Difficulty, seed: number, pool: string[] 
   const t = fastForward(initTournament(team, d, rng, { poolLineupIds: pool, opponentRatingBoost: boost }), d, rng);
   return userPlacement(t);
 }
-function realistic(poolName: string, d: Difficulty) {
+const draftCache = new Map<string, ReturnType<typeof draftBestOf>>();
+function realistic(poolName: string, d: Difficulty, boost = boostFor(poolName, d)) {
   const pool = poolIds(poolName);
-  const boost = boostFor(poolName, d);
   const tally: Record<string, { n: number; t: number; f: number }> = {};
   const ovrs: number[] = [];
   /** One row per session: [resets, kept OVR, titles, finals] out of PER tourneys. */
@@ -152,7 +155,9 @@ function realistic(poolName: string, d: Difficulty) {
   let n = 0, t = 0, f = 0;
   for (let i = 0; i < SESS; i++) {
     const r = resetsFor(i);
-    const got = draftBestOf(d, 200000 + i * 131, pool, r);
+    const cacheKey = `${poolName}/${d}/${i}/${r}`;
+    if (!draftCache.has(cacheKey)) draftCache.set(cacheKey, draftBestOf(d, 200000 + i * 131, pool, r));
+    const got = draftCache.get(cacheKey);
     if (!got) continue;
     ovrs.push(got.ovr);
     const key = BUCKETS.find(([, hit]) => hit(got.ovr))![0];
@@ -167,6 +172,7 @@ function realistic(poolName: string, d: Difficulty) {
     sessions.push([r, got.ovr, st, sf]);
   }
   ovrs.sort((a, b) => a - b);
+  expect(sessions).toHaveLength(SESS);
   const q = (p: number) => ovrs[Math.min(ovrs.length - 1, Math.floor(p * ovrs.length))];
   return {
     boost, blendedTitle: t / n, blendedFinal: f / n,
@@ -193,13 +199,19 @@ function population(poolName: string, d: Difficulty) {
 }
 
 it.skipIf(!env.SIM_MATRIX)("difficulty matrix", () => {
-  const out: Record<string, unknown> = { label: env.SIM_LABEL ?? "", params: { SESS, RESETS, PER, POP_PER } };
+  const out: Record<string, unknown> = { label: env.SIM_LABEL ?? "", params: { SESS, RESETS, PER, POP_PER, RESET_SET, POOLS, DIFFS } };
   for (const pool of POOLS) {
     for (const d of DIFFS) {
       const t0 = Date.now();
       const r = SKIP_REAL ? null : realistic(pool, d);
       const p = SKIP_POP ? null : population(pool, d);
-      out[`${pool}/${d}`] = { realistic: r, population: p };
+      // Reuse the exact drafts and match seeds when sweeping shifts. This avoids
+      // redrafting every candidate and makes comparisons paired experiments.
+      const sweep = env.SIM_SWEEP ? Object.fromEntries(env.SIM_SWEEP.split(",").map(Number).map(delta => {
+        const boost = boostFor(pool, d) + delta;
+        return [delta, realistic(pool, d, boost)];
+      })) : undefined;
+      out[`${pool}/${d}`] = { realistic: r, population: p, sweep };
       const fmt = (x: number | undefined) => (x == null ? "  -  " : (x * 100).toFixed(1).padStart(5));
       console.log(
         `${pool}/${d}`.padEnd(14),
@@ -212,3 +224,15 @@ it.skipIf(!env.SIM_MATRIX)("difficulty matrix", () => {
     }
   }
 }, 3_600_000);
+
+it("Legacy can draw every eligible lineup, including expansions, in each open pool", () => {
+  for (const region of [undefined, ...balance.REGION_LOCK.regions]) {
+    const ids = region ? lineupPoolForRegion(region) : undefined;
+    const eligible = lineups.filter(l => (ids ? ids.includes(l.id) : !l.samOnly) && !l.rareSpawn && !l.national);
+    // Asking for the full pool also exercises the org-unique first pass and
+    // repeat-org fallback; no low-probability sampling assertion is needed.
+    const opponents = generateOpponents("legacy", createRng(314159), eligible.length, ids);
+    expect(opponents.map(t => t.lineupId).sort()).toEqual(eligible.map(l => l.id).sort());
+    expect(eligible.every(l => balance.DIFFICULTY.legacy.opponentTierWeights[l.historicalStrength] > 0)).toBe(true);
+  }
+});

@@ -30,7 +30,7 @@ import { dateOfDay, seasonLabelFor } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { withMoneyParams } from "@/components/career/hub/hubShared";
 import { resolveNews } from "@/components/career/news/newsText";
-import { leadStoryOf, newsActionOf, newsCrestsOf, newsRegionOf } from "@/components/career/news/newsView";
+import { rocketStreetNews, leadStoryOf, newsActionOf, newsCrestsOf, newsRegionOf } from "@/components/career/news/newsView";
 
 type DatesCopy = CareerCopy["dates"];
 
@@ -167,16 +167,16 @@ export function NewsTypeIcon({ type, className }: { type: NewsType | "archive"; 
 // ---------------------------------------------------------------------------
 
 /** The partner art's id under public/partners/ (assets.partnerLogoSrc). */
-const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty", duds: "duds" };
+const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty", duds: "duds", rocketStreet: "rocketstreet" };
 
 export function BrandMark({ brand, name, small = false }: { brand: string; name: string; small?: boolean }) {
   const art = PARTNER_ART[brand];
   const src = art ? partnerLogoSrc(art) : null;
-  const [failed, setFailed] = useState(false);
-  if (src && !failed) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  if (src && failedSrc !== src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production)
-      <img src={src} alt={name} className={cx("w-auto object-contain", small ? "h-4 max-w-8" : "h-7 max-w-24")} onError={() => setFailed(true)} />
+      <img src={src} alt={name} className={cx("w-auto object-contain", small ? "h-4 max-w-8" : "h-7 max-w-24")} onError={() => setFailedSrc(src)} />
     );
   }
   // The styled fallback: the game's own broadcast glyph and the desk's name in plain text — never a redrawn logo.
@@ -199,7 +199,8 @@ export function BrandMark({ brand, name, small = false }: { brand: string; name:
 // Pieces of a story
 // ---------------------------------------------------------------------------
 
-function Crests({ refs, save, size, type, archive }: { refs: string[]; save: CareerSave; size: "sm" | "md"; type: NewsType; archive: boolean }) {
+function Crests({ item, refs, save, size, type, archive }: { item: NewsItem; refs: string[]; save: CareerSave; size: "sm" | "md"; type: NewsType; archive: boolean }) {
+  if (rocketStreetNews(item)) return <BrandMark brand="rocketStreet" name="Rocket Street" small={size === "sm"} />;
   if (refs.length === 0 && CAREER_NEWS.brand === "fiftyFifty") return <BrandMark brand="fiftyFifty" name="50/50" small={size === "sm"} />;
   if (refs.length === 0) {
     return (
@@ -275,10 +276,10 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
       </div>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} />
+          <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} />
           <h3 className="mt-2 text-lg font-semibold leading-snug text-ink sm:text-xl">{r.title}</h3>
         </div>
-        <Crests refs={refs.slice(0, 1)} save={save} size="md" type={item.type} archive={archive} />
+        <Crests item={item} refs={refs.slice(0, 1)} save={save} size="md" type={item.type} archive={archive} />
       </div>
       {r.body ? <p className="mt-2 max-w-prose text-xs leading-relaxed text-sub">{r.body}</p> : null}
       {archive ? <p className="mt-2 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
@@ -293,10 +294,10 @@ function StoryRow({ item, save, C, lang, brandKicker, compact, onSelect }: { ite
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
     <article className="flex items-start gap-2.5 border-b border-line/60 py-2.5 last:border-0">
-      <Crests refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
+      <Crests item={item} refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
       <div className="min-w-0 flex-1">
         <button type="button" onClick={onSelect} className="block w-full cursor-pointer rounded text-left hover:text-blue-bright focus-visible:outline-2 focus-visible:outline-blue">
-        {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} /> : null}
+        {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} /> : null}
         <p className={cx("text-xs leading-relaxed", item.read ? "text-sub" : "font-medium text-ink")}>{r.title}</p>
         {!compact && r.body ? <p className="mt-0.5 text-xs leading-relaxed text-sub">{r.body}</p> : null}
         </button>

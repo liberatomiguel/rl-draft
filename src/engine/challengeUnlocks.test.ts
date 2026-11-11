@@ -11,7 +11,7 @@ describe("progressive challenge unlocks", () => {
   it("every challenge can be opened by Draft progression alone, without a circular milestone", () => {
     const completed: Record<string,string> = {}, stars: Record<string,number> = {};
     for (let pass=0; pass<challenges.length; pass++) {
-      for (const ch of challenges) if (challengeStatus(ch, 60_000, completed, {challengeStars:stars}) !== "locked") {
+      for (const ch of challenges) if (challengeStatus(ch, RANKS[RANKS.length - 1].minXp, completed, {challengeStars:stars}) !== "locked") {
         completed[ch.id] = "2026-11-09"; stars[ch.id] = 7;
       }
     }
@@ -22,8 +22,8 @@ describe("progressive challenge unlocks", () => {
     const ch = challengeById.get("ch-gauntlet-final-bosses")!;
     const marks = {careerMarks:["car-first-worlds"]};
     expect(challengeStatus(ch,0,{},marks)).toBe("locked");
-    expect(challengeStatus(ch,60_000,{},marks)).toBe("locked");
-    expect(challengeStatus(ch,60_000,{[ch.prereq!]:"done"},marks)).toBe("available");
+    expect(challengeStatus(ch,RANKS[RANKS.length - 1].minXp,{},marks)).toBe("locked");
+    expect(challengeStatus(ch,RANKS[RANKS.length - 1].minXp,{[ch.prereq!]:"done"},marks)).toBe("available");
     expect(challengeStatus(ch,0,{[ch.id]:"already done"})).toBe("cleared");
   });
   it("counter gates open exactly at the target and OR alternatives do not require both", () => {
@@ -42,7 +42,7 @@ describe("progressive challenge unlocks", () => {
     expect(challengeStatus(ch,xp-1,{}, {careerMarks:["car-first-regional"]})).toBe("locked");
   });
   it("the New dot uses exactly the same career, stars and quiz gates as the catalog", () => {
-    const base={xp:60_000,unlockedSpecials:{},challengesCompleted:{}};
+    const base={xp:RANKS[RANKS.length - 1].minXp,unlockedSpecials:{},challengesCompleted:{}};
     const id="ch-desert-rising";
     expect(profileAvailableKeys(base)).not.toContain(challengeKey(id));
     expect(profileAvailableKeys({...base,careerMarks:["car-first-regional"]})).toContain(challengeKey(id));
@@ -53,7 +53,7 @@ describe("progressive challenge unlocks", () => {
 describe("unlock enforcement through the real store",()=>{
   beforeEach(()=>{useProfileStore.getState().resetAll();useRunStore.setState({run:null});});
   it("refuses a locked start without replacing another run, then accepts the mirrored Regional achievement",()=>{
-    useProfileStore.setState({xp:4_000});
+    useProfileStore.setState({xp:RANKS.find(r=>r.id===challengeById.get("ch-desert-rising")!.rankRequired)!.minXp});
     useRunStore.getState().startChallenge("ch-first-final");
     const before=useRunStore.getState().run;
     useRunStore.getState().startChallenge("ch-desert-rising");

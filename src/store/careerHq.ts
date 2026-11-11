@@ -134,6 +134,8 @@ export interface ToolboxItem {
   price: number;
   /** Before the sponsor discount / free run. */
   listPrice: number;
+  /** v2.0 (C1): the camp running now came with the sponsor deal — it started by itself, nothing was bought. */
+  sponsorProvided?: boolean;
   /** A sponsor-perk free bootcamp covers the next run. */
   free: boolean;
   repGate: number;
@@ -208,6 +210,8 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
   for (const camp of CAREER_GEAR.bootcamp) {
     const id: ToolboxItemId = camp.tier === 2 ? "bootcamp2" : "bootcamp1";
     const running = fin.bootcampSharp > 0 && tier === camp.tier;
+    // v2.0 (C1): the running camp is the sponsor's free one (it started by itself).
+    const fromSponsor = running && Boolean(fin.bootcampFromSponsor);
     const status: ToolboxStatus =
       rep < camp.repGate
         ? "locked"
@@ -228,6 +232,7 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
       price: freeNext && tier === camp.tier ? 0 : listPrice,
       listPrice,
       free: freeNext && tier === camp.tier,
+      ...(fromSponsor ? { sponsorProvided: true } : {}),
       repGate: camp.repGate,
       ratingEdge: running ? fin.bootcampSharp : camp.sharpRating * (lastsSplit ? CAREER_GEAR.bootcampSplitEdgeShare : 1),
       chemistry: camp.chemistryCredit,

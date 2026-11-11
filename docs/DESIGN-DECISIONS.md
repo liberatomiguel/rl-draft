@@ -1946,3 +1946,18 @@ are visible during the draft/review regardless of overall visibility and
 collection ownership, restoring the pre-rc.38 rule. Hidden-overall runs still
 hide overall numbers; existing rarity/collection masks are unchanged. The
 rc.38 art-masking notes and captures are historical, superseded by this decision.
+
+## 2026-11-11 — rc.47, launch wave (progression, draft, web)
+
+- **Season rank curve x11.** SSL at 675k XP (was 60k), from the real distribution of 423 profiles; nine-week targets: casual Platinum, regular Champion, hardcore SSL in the last week. Pre-season veterans keep the rank achievements of the rank they held.
+- **Season Rating** scores the top 4 only and a Swiss exit costs points; no cap by difficulty.
+- **Rank unlocks.** Bronze: Collection and Challenges. Special cards from Silver; FIFAe national teams at Gold.
+- **Draft difficulty** is calibrated against production (main) on the same bot policy, not against raw bot averages; details in `docs/handoff-2.0/C3.md`.
+- **Daily Quiz:** one clue at a time, five guesses; a six-clue ladder opens its last two on the final guess. XP 120/95/75/55/40.
+- **Challenge scoreboard** reuses the career clock at 2x (a Bo7 in about 20 s).
+- **Footer below the first screen.** `<main>` has `min-h-svh`; a footer in view moved while profile pages hydrated (CLS 0.14–0.35 on a phone).
+- **Search-intent and career-only pages.** `PAGE_ROUTES` gains `simulator`, `manager`, `fantasy`; `CAREER_ONLY_PAGES` exist only with `FEATURES.careerMode` and `scripts/postexport.mjs` deletes their export otherwise. Their URLs must not contain `/career`.
+- **One metadata helper.** Every page uses `pageMetadata` (`src/lib/contentMeta.ts`); no page sets `robots`, so the NOINDEX build's blanket rule holds; the build fails otherwise.
+- **Entrance animation starts at opacity 0.01**, so server-rendered text counts as the LCP at first paint.
+- **No inline CSS** (`experimental.inlineCss` rejected: it duplicates the stylesheet in every HTML).
+- **Security headers without a script policy** in `public/_headers` (HSTS, `X-Frame-Options: SAMEORIGIN`, COOP, partial CSP). The game no longer loads inside a third-party iframe.

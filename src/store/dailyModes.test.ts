@@ -3,7 +3,7 @@ import { QUIZ } from "@/config/balance";
 import { quizForDate, quizFacts, cluesFor } from "@/engine/quiz";
 import { visibleClues, mergeQuiz } from "@/engine/quizState";
 import { todayKey } from "@/lib/dailyPlan";
-import { coachById, playerCardById, subById } from "@/data";
+import { achievements, coachById, playerCardById, subById } from "@/data";
 import { finalOverall } from "@/engine/cards";
 import { slotsForKind } from "@/engine/draft";
 import type { DraftOfferCard, RunHistoryEntry, RunResults } from "@/engine/types";
@@ -18,7 +18,7 @@ beforeEach(() => {
 afterEach(() => { useProfileStore.setState({ applyMissionEvent: originalMission }); vi.useRealTimers(); });
 
 describe("CH-03: Daily Quiz", () => {
-  for (const attempt of [1, 2, 3]) it(`solves on attempt ${attempt}, survives reload and pays once`, () => {
+  for (const attempt of [1, 2, 3, 4, 5]) it(`solves on attempt ${attempt}, survives reload and pays once`, () => {
     const mission = vi.fn(originalMission);
     useProfileStore.setState({ applyMissionEvent: mission });
     const puzzle = quizForDate(todayKey());
@@ -26,10 +26,12 @@ describe("CH-03: Daily Quiz", () => {
       useProfileStore.getState().guessQuiz(puzzle, null, `miss-${i}`);
       useProfileStore.setState({ quiz: JSON.parse(JSON.stringify(useProfileStore.getState().quiz)) });
     }
-    expect(visibleClues(puzzle, attempt - 1).length).toBeGreaterThanOrEqual(2);
+    expect(visibleClues(puzzle, attempt - 1).length).toBeGreaterThanOrEqual(attempt);
     const before = useProfileStore.getState().xp;
     expect(useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer")).toMatchObject({ correct: true, xp: QUIZ.xpByAttempt[attempt], attempts: attempt });
-    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt]);
+    // A first-guess solve also earns "Called It" (v2.0, C2), once.
+    const calledIt = attempt === 1 ? achievements.find((a) => a.id === "ach-quiz-first-try")!.xp : 0;
+    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt] + calledIt);
     const snapshot = JSON.parse(JSON.stringify(useProfileStore.getState().quiz));
     const xp = useProfileStore.getState().xp;
     for (let i = 0; i < 3; i++) useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer");
@@ -37,7 +39,7 @@ describe("CH-03: Daily Quiz", () => {
     expect(useProfileStore.getState().quiz).toEqual(snapshot);
     expect(mission).toHaveBeenCalledTimes(1);
   });
-  it("three misses finish once; a fourth guess cannot solve or advance a weekly mission", () => {
+  it("five misses finish once; a sixth guess cannot solve or advance a weekly mission", () => {
     const mission = vi.fn(originalMission); useProfileStore.setState({ applyMissionEvent: mission });
     const puzzle = quizForDate(todayKey());
     for (let i = 0; i < QUIZ.attempts; i++) useProfileStore.getState().guessQuiz(puzzle, null, `miss-${i}`);

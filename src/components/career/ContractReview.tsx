@@ -14,6 +14,7 @@ import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { useCareerStore } from "@/store/careerStore";
 import { contractReviewFlagFor, leavingAtRolloverOf, rolloverHoldOf } from "@/store/careerDecisions";
+import { coachContractOf, coachLeavingAtRolloverOf } from "@/store/careerFlow";
 import { squadAge, wageLabel } from "@/components/career/careerUi";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -26,19 +27,24 @@ export function rolloverBlocked(save: CareerSave): boolean {
 
 export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const reviewContracts = useCareerStore((s) => s.reviewContracts);
+  const renewCoach = useCareerStore((s) => s.renewCoach);
   if (save.phase !== "seasonReview") return null;
   const leaving = leavingAtRolloverOf(save);
+  // v2.0: the coach whose deal ends is reviewed with the players (the review holds the rollover for him alone too).
+  const coachLeaving = coachLeavingAtRolloverOf(save);
+  const coachDeal = coachLeaving ? coachContractOf(save) : null;
+  const count = leaving.length + (coachLeaving ? 1 : 0);
   const reviewed = Boolean(save.flags[contractReviewFlagFor(save.clock.seasonIndex)]);
   const hold = rolloverHoldOf(save);
   const otherHold = hold && hold.kind !== "contractReview" ? hold : null;
-  if (leaving.length === 0 && !otherHold) return null;
+  if (count === 0 && !otherHold) return null;
 
   return (
     <Panel glow={reviewed ? undefined : "orange"} className="rise-in p-4 sm:p-5">
-      {leaving.length > 0 ? (
+      {count > 0 ? (
         <>
           <p className="kicker mb-1 text-[10px] text-orange-bright">{C.squad.reviewTitle}</p>
-          <p className="text-sm text-sub">{C.squad.reviewBody(leaving.length)}</p>
+          <p className="text-sm text-sub">{C.squad.reviewBody(count)}</p>
           <ul className="mt-3 space-y-1.5">
             {leaving.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-line bg-white/[0.02] px-3 py-2 text-xs">
@@ -49,6 +55,22 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
                 <span className="text-faint">{wageLabel(C, p.salaryPerSplit)}</span>
               </li>
             ))}
+            {coachLeaving && coachDeal ? (
+              <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-line bg-white/[0.02] px-3 py-2 text-xs">
+                <span className="min-w-0 flex-1 truncate font-semibold text-ink">{coachLeaving.name}</span>
+                <span className="text-sub">
+                  {Math.round(coachLeaving.overall)} {C.common.ovr} · {C.launch.coachTypes[coachLeaving.source]}
+                </span>
+                <span className="text-faint">{C.launch.coachRenewAsk} {wageLabel(C, coachDeal.renewalWagePerSplit)}</span>
+                {reviewed ? null : (
+                  <span className="flex w-full flex-wrap gap-2">
+                    {coachDeal.lengths.map((n) => (
+                      <Button key={n} variant="secondary" size="sm" onClick={() => renewCoach(n)}>{C.launch.coachRenewFor(n)}</Button>
+                    ))}
+                  </span>
+                )}
+              </li>
+            ) : null}
           </ul>
           {reviewed ? (
             <p className="mt-3 text-xs font-semibold text-good">{C.squad.reviewDone}</p>
@@ -58,7 +80,7 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
                 {C.squad.reviewRenew}
               </AppLink>
               <Button variant="danger" size="md" className="min-h-11" onClick={reviewContracts}>
-                {C.squad.reviewConfirm(leaving.length)}
+                {C.squad.reviewConfirm(count)}
               </Button>
             </div>
           )}

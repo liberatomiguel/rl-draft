@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { SITE } from "@/config/site";
+import { pageMetadata } from "@/lib/contentMeta";
 import { HOWTO } from "@/content/copy.en";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, howToJsonLd } from "@/lib/jsonld";
 import { HowToPlayView } from "./HowToPlayView";
 
-export const metadata: Metadata = {
-  title: "How to Play",
+export const metadata: Metadata = pageMetadata({
+  title: `How to Play ${SITE.name} — RLCS Draft Rules & Chemistry`,
   description: `Learn how to play ${SITE.name}: draft a roster from iconic RLCS lineups, build team chemistry, and survive an RLCS-style tournament bracket. Rules, chemistry and difficulty modes explained.`,
-  alternates: { canonical: "/how-to-play" },
-  robots: { index: true, follow: true },
-};
+  path: "/how-to-play",
+});
 
 const HOW_TO = howToJsonLd({
   name: `How to play ${SITE.name}`,

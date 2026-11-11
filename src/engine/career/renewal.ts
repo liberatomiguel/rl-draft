@@ -73,6 +73,23 @@ export interface RenewalTerms {
   premiumMult: number;
 }
 
+/**
+ * v2.0 (C1): a coach's renewal, priced by the players' rule (capFloor) on his
+ * market wage: his fresh ask, held to the raise cap (× renewalRaiseCap of his
+ * wage) unless the market floor (renewalMarketFloor of the fresh ask, at most
+ * × renewalMaxJump of his wage) is higher. No tenure ladder, ambition or
+ * title premium — those are the players'.
+ */
+export function coachRenewalTermsFor(oldWage: number, freshWage: number): { ask: number; bound: "fresh" | "cap" | "floor" } {
+  const S = CAREER_SALARY;
+  if (S.renewalRule !== "capFloor") return { ask: freshWage, bound: "fresh" };
+  const raiseCap = quantize(oldWage * S.renewalRaiseCap);
+  const floor = Math.min(quantize(freshWage * S.renewalMarketFloor), Math.max(quantize(oldWage * S.renewalMaxJump), raiseCap));
+  const bounded = Math.max(raiseCap, floor);
+  if (freshWage <= bounded) return { ask: freshWage, bound: "fresh" };
+  return { ask: bounded, bound: floor > raiseCap ? "floor" : "cap" };
+}
+
 /** The titles the user won while this player was in the squad, inside the premium's window. */
 export interface RenewalTitles {
   majorOrWorlds: number;
