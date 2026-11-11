@@ -15,7 +15,7 @@ export default function RatingsPage() {
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

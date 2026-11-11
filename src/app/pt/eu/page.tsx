@@ -15,7 +15,7 @@ export default function PtEuPage() {
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

@@ -15,7 +15,7 @@ export default function FantasyDraftPage() {
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

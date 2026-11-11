@@ -19,7 +19,7 @@ export default function SpecialCardsPage() {
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

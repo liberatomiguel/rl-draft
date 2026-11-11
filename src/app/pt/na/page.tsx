@@ -15,7 +15,7 @@ export default function PtNaPage() {
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

@@ -19,7 +19,7 @@ export default function PtCartasEspeciaisPage() {
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

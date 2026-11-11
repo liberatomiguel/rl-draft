@@ -77,7 +77,7 @@ export function HowToPlayView() {
 
       <p className="mt-10 text-center">
         <AppLink
-          href="/play"
+          href="/"
           className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.3)] transition-all hover:brightness-110"
         >
           {HOWTO.startFirst}

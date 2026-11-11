@@ -23,7 +23,7 @@ export default function ManagerPage() {
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/career"
+      ctaHref="/"
     />
   );
 }
