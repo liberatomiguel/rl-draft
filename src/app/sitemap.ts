@@ -1,12 +1,11 @@
 import type { MetadataRoute } from "next";
 import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
-import { PAGE_ROUTES } from "@/content/pages";
+import { CONTENT_DATE, LIVE_PAGE_SLUGS, PAGE_ROUTES } from "@/content/pageRoutes";
 
 // Required by `output: "export"`: written to out/sitemap.xml at build time.
 export const dynamic = "force-static";
 
-const LAST_MODIFIED = "2026-10-16"; // v2.0 — bump on meaningful content change
 const abs = (path: string) => `${SITE.url}${path === "/" ? "" : path}`;
 
 type Freq = "daily" | "weekly" | "monthly" | "yearly";
@@ -15,23 +14,25 @@ type Freq = "daily" | "weekly" | "monthly" | "yearly";
  * Sitemap. The run flow lives behind one `/play` route; the rest are content /
  * hub pages. Localized content pages emit both their EN and PT URLs with
  * hreflang alternates so Google serves the right language and folds the twins.
- * (Profile/settings are per-device and intentionally omitted.)
+ * Every indexable page is listed; `noindex` pages (/settings, /missions) and
+ * the career app (/career, never listed — scripts/postexport.mjs enforces it)
+ * are not. /profile is per-device and stays out, as before.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [];
-  const homeLangs = { "en-US": abs("/"), "pt-BR": abs("/pt") };
+  const homeLangs = { "en-US": abs("/"), "pt-BR": abs("/pt"), "x-default": abs("/") };
 
   // Home (EN) + PT landing — twins via hreflang.
   entries.push({
     url: abs("/"),
-    lastModified: LAST_MODIFIED,
+    lastModified: CONTENT_DATE,
     changeFrequency: "weekly",
     priority: 1.0,
     alternates: { languages: homeLangs },
   });
   entries.push({
     url: abs("/pt"),
-    lastModified: LAST_MODIFIED,
+    lastModified: CONTENT_DATE,
     changeFrequency: "weekly",
     priority: 0.8,
     alternates: { languages: homeLangs },
@@ -43,7 +44,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Cut from the playtest build (the route 404s there).
     ...(FEATURES.playtest ? [] : [{ path: "/quiz", priority: 0.7, changeFrequency: "daily" as const }]),
     { path: "/how-to-play", priority: 0.7, changeFrequency: "monthly" },
+    { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
     { path: "/collection", priority: 0.6, changeFrequency: "weekly" },
+    { path: "/leaderboards", priority: 0.5, changeFrequency: "daily" },
     { path: "/achievements", priority: 0.4, changeFrequency: "monthly" },
     { path: "/changelog", priority: 0.4, changeFrequency: "weekly" },
     { path: "/privacy", priority: 0.2, changeFrequency: "yearly" },
@@ -51,26 +54,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
   for (const r of solo) {
     entries.push({
       url: abs(r.path),
-      lastModified: LAST_MODIFIED,
+      lastModified: CONTENT_DATE,
       changeFrequency: r.changeFrequency,
       priority: r.priority,
     });
   }
 
-  // Localized content pages — EN + PT twins with hreflang.
-  for (const key of Object.keys(PAGE_ROUTES) as (keyof typeof PAGE_ROUTES)[]) {
+  // Localized content pages — EN + PT twins with hreflang. A page that
+  // describes Road to Worlds is listed only by a build that ships the mode.
+  for (const key of LIVE_PAGE_SLUGS) {
     const { en, pt } = PAGE_ROUTES[key];
-    const languages = { "en-US": abs(en), "pt-BR": abs(pt) };
+    const languages = { "en-US": abs(en), "pt-BR": abs(pt), "x-default": abs(en) };
     entries.push({
       url: abs(en),
-      lastModified: LAST_MODIFIED,
+      lastModified: CONTENT_DATE,
       changeFrequency: "monthly",
       priority: 0.7,
       alternates: { languages },
     });
     entries.push({
       url: abs(pt),
-      lastModified: LAST_MODIFIED,
+      lastModified: CONTENT_DATE,
       changeFrequency: "monthly",
       priority: 0.6,
       alternates: { languages },

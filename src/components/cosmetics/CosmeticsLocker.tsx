@@ -18,10 +18,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { RANKS } from "@/config/balance";
-import { SEASON } from "@/config/season";
-import { challengeById } from "@/data/catalog";
-import { cosmeticById, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
+import { cosmeticById, type CosmeticDef, type CosmeticKind } from "@/data/cosmetics";
 import { addBadge, lockerItems, MAX_BADGES, placeBadgeAt, removeBadgeAt, resolveEquipped, swapBadges, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
@@ -31,51 +28,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { NewDot } from "@/components/ui/NewDot";
 import { BadgeEmblem, CosmeticArt, TIER_ACCENT, TIER_RING, useCosmeticCopy } from "./CosmeticViews";
+import { sourceLabel } from "./sourceLabel";
 
 export const LOCKER_KINDS: CosmeticKind[] = ["title", "badge", "banner"];
 
-const rankLabel = (id: string): string => RANKS.find((r) => r.id === id)?.label ?? id;
-
-export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy>["COSMETICS"]): string {
-  switch (source.type) {
-    case "legacy-participation":
-      return C.sources["legacy-participation"];
-    case "legacy-rank":
-      return C.sources["legacy-rank"](rankLabel(source.rankId));
-    case "legacy-position":
-      return C.sources["legacy-position"](source.minPosition, source.maxPosition);
-    case "grant":
-      return C.sources[`grant-${source.grantId}`];
-    case "season-rank":
-      return C.sources["season-rank"](rankLabel(source.rankId), SEASON.name);
-    case "login-streak":
-      return C.sources["login-streak"](source.days);
-    case "challenge-stars":
-      return C.sources["challenge-stars"](source.stars);
-    case "quiz-solved":
-      return C.sources["quiz-solved"](source.count);
-    case "missions-completed":
-      return C.sources["missions-completed"](source.count);
-    case "runs-won":
-      return C.sources["runs-won"](source.count);
-    case "runs-won-since-s1":
-      return C.sources["runs-won-since-s1"](source.count);
-    case "runs-finished-since-s1":
-      return C.sources["runs-finished-since-s1"](source.count);
-    case "legacy-streak":
-      return C.sources["legacy-streak"](source.count);
-    case "specials-owned":
-      return C.sources["specials-owned"](source.count);
-    case "challenge-perfect":
-      return C.sources["challenge-perfect"](challengeById.get(source.challengeId)?.title ?? source.challengeId);
-    case "career-mark":
-      return C.sources["career-mark"];
-    case "career-worlds":
-      return C.sources["career-worlds"](source.count);
-    case "season-feat":
-      return C.sources["season-feat"];
-  }
-}
+// `sourceLabel` lives in its own module (the root layout's unlock pop-up uses it
+// without the locker); re-exported here for the callers that import it from the locker.
+export { sourceLabel };
 
 /** Count of owned items the player has not looked at yet (profile badge). */
 export function useUnseenCosmetics(): number {

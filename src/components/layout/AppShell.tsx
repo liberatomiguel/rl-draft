@@ -201,7 +201,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
+        {/* min-h-svh (v2.0, WEB-02): the footer always starts below the first
+            screen. The pages that render from the saved profile (collection,
+            profile, challenges, play) change height when they hydrate, and a
+            footer in view moved with them: a layout shift of 0.14–0.35 on a
+            phone. Out of view, it cannot shift anything the player sees. */}
+        <main className="mx-auto min-h-svh w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
           {children}
         </main>
 

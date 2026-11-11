@@ -118,6 +118,9 @@ export default function HomeMenu() {
     { label: HOME_SEO.links.specialCards, href: localePath("special-cards", active) },
     { label: HOME_SEO.links.strategy, href: localePath("strategy", active) },
     { label: HOME_SEO.links.sam, href: localePath("sam", active) },
+    { label: HOME_SEO.links.simulator, href: localePath("simulator", active) },
+    { label: HOME_SEO.links.fantasy, href: localePath("fantasy", active) },
+    ...(FEATURES.careerMode ? [{ label: HOME_SEO.links.manager, href: localePath("manager", active) }] : []),
     { label: HOME_SEO.links.faq, href: localePath("faq", active) },
     { label: HOME_SEO.links.about, href: localePath("about", active) },
   ];

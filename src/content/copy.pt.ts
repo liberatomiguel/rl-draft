@@ -131,6 +131,11 @@ export const PT: Copy = {
         title: "Ratings revisados à mão e transparentes",
         body: "Cada overall é revisado à mão, não tirado de uma única linha de estatística — desempenho individual, resultados e contexto histórico entram na conta, e cartas especiais podem subir acima das versões base. A gente publica a metodologia para os ratings ficarem honestos e a comunidade poder contestar.",
       },
+      {
+        id: "career",
+        title: "Road to Worlds — um modo manager de Rocket League",
+        body: "O Road to Worlds transforma o draft em carreira. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada — eventos regionais, Majors e o World Championship — em um mundo simulado ao seu redor.",
+      },
     ],
     links: {
       heading: "Explore o Rocket Draft",
@@ -142,6 +147,9 @@ export const PT: Copy = {
       faq: "Perguntas frequentes",
       about: "Sobre o projeto",
       play: "Jogue o jogo de draft da RLCS",
+      simulator: "Simulador de Rocket League esports",
+      fantasy: "Draft fantasy da RLCS",
+      manager: "Road to Worlds, o manager de Rocket League",
     },
   },
 
@@ -160,6 +168,8 @@ export const PT: Copy = {
     by: "por",
     balancedBy: "Overalls balanceados por",
     newHere: "Novidade aqui",
+    moreGuides: "Mais do Rocket Draft",
+    home: "Início",
   },
 
   RUN_UI: {

@@ -143,6 +143,12 @@ export const HOME_SEO = {
       title: "Transparent, hand-reviewed player ratings",
       body: "Every overall is reviewed by hand, not scraped from a single stat line — individual performance, results and historical context all feed the number, and special cards can climb above their base versions. We publish the methodology so the ratings stay honest and the community can push back on them.",
     },
+    // v2.0 (WEB-01): shown only by a build that ships Road to Worlds (HomeSeoContent).
+    {
+      id: "career",
+      title: "Road to Worlds — a Rocket League manager mode",
+      body: "Road to Worlds turns the draft into a career. Found a club, sign and develop real RLCS players, manage wages, sponsors and transfers, and play the RLCS calendar season after season — regional events, Majors and the World Championship — in a world that is simulated around you.",
+    },
   ],
   /** Descriptive internal links (no \"click here\"). Hrefs live in the component. */
   links: {
@@ -155,6 +161,10 @@ export const HOME_SEO = {
     faq: "Rocket Draft FAQ",
     about: "About the project",
     play: "Play the RLCS draft game",
+    // v2.0 (WEB-01): the search-intent pages.
+    simulator: "Rocket League esports simulator",
+    fantasy: "RLCS fantasy draft",
+    manager: "Road to Worlds, the Rocket League manager game",
   },
 };
 
@@ -174,6 +184,9 @@ export const NAV_UI = {
   balancedBy: "Overalls balanced by",
   /** rc.33: the green dot on a nav item / tile with something not opened yet. */
   newHere: "Something new here",
+  /** v2.0 (WEB-01): the links under every content article, and the breadcrumb root. */
+  moreGuides: "More from Rocket Draft",
+  home: "Home",
 };
 
 export const RUN_UI = {

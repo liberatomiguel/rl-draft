@@ -1,7 +1,7 @@
 {
   "about": {
-    "metaTitle": "Sobre o Rocket Draft — RLCS Draft Game Fã",
-    "metaDescription": "Rocket Draft é um RLCS draft game gratuito e fan-made, criado pelo LiberatoRL. Monte um roster com lineups reais da história do Rocket League esports e jogue um tournament.",
+    "metaTitle": "Sobre o Rocket Draft — Jogo de Draft da RLCS Feito por Fã",
+    "metaDescription": "Rocket Draft é um jogo de draft da RLCS gratuito e feito por fã, criado por LiberatoRL. Monte um roster com lineups reais da RLCS e vença o torneio.",
     "kicker": "Sobre",
     "title": "Sobre o Rocket Draft",
     "intro": "Rocket Draft é um RLCS draft game gratuito e fan-made — um construtor de roster do Rocket League esports que transforma a história da cena em um draft jogável. Aqui está o que ele é, quem o criou e por que ele existe.",
@@ -16,7 +16,7 @@
       },
       {
         "heading": "O que o torna diferente",
-        "body": "Duas coisas destacam o Rocket Draft. A primeira é o Region-Locked Draft: a América do Sul (SAM) já está no ar, pesquisada à mão a partir do Liquipedia, cobrindo times brasileiros e sul-americanos — os rosters de World Championship mais o Top 8 regional que nunca chegou ao Worlds, com bancos mais profundos e underdogs cultuados, como o yanxnz. Mais regiões estão a caminho. A segunda é a transparência dos ratings: todo overall é uma base calculada somada a uma revisão manual feita à mão, atualizada com o tempo e aberta a contestação da comunidade."
+        "body": "Duas coisas diferenciam o Rocket Draft. A primeira é o Region-Locked Draft: América do Norte, Europa, América do Sul (SAM), MENA e Oceania têm cada uma o seu pool, pesquisado à mão a partir da Liquipedia — os rosters de World Championship de uma cena mais os times regionais que nunca chegaram ao Worlds, com bancos mais profundos e azarões de culto como o yanxnz. A segunda são os ratings transparentes: cada overall é uma base calculada mais uma revisão manual à mão, revisado com o tempo e aberto à contestação da comunidade."
       },
       {
         "heading": "Um projeto de fã, sem afiliação",
@@ -27,8 +27,8 @@
     "faqs": []
   },
   "faq": {
-    "metaTitle": "FAQ do Rocket Draft",
-    "metaDescription": "Respostas para as dúvidas mais comuns do Rocket Draft: é gratuito, precisa de conta, joga no celular, como os overalls são calculados, special cards e SAM.",
+    "metaTitle": "FAQ do Rocket Draft — Dúvidas sobre o Jogo de Draft da RLCS",
+    "metaDescription": "FAQ do Rocket Draft: é gratuito, precisa de conta, roda no celular, como os overalls da RLCS são calculados, special cards, regiões e como funciona o draft.",
     "kicker": "Ajuda",
     "title": "FAQ do Rocket Draft",
     "intro": "Respostas rápidas para as dúvidas mais frequentes sobre o Rocket Draft — o jogo de draft de RLCS gratuito e feito por fã, construído sobre a história real do esports de Rocket League.",
@@ -46,7 +46,7 @@
       },
       {
         "q": "Preciso de conta para jogar?",
-        "a": "Não precisa de conta. Dá para começar um draft na hora. Seu progresso fica salvo no seu próprio dispositivo, então não há cadastro nem login."
+        "a": "Não precisa de conta. Dá para começar um draft na hora e o seu progresso fica salvo no seu próprio dispositivo. Entrar é opcional: um código por e-mail faz o backup do progresso na nuvem e coloca você nos leaderboards globais."
       },
       {
         "q": "Dá para jogar no celular?",
@@ -62,7 +62,7 @@
       },
       {
         "q": "O que são special cards?",
-        "a": "Special cards são versões raras de jogadores ligadas a momentos icônicos do esports de Rocket League — runs de MVP em Worlds e Majors, lendas e jogadas marcantes. São 84 no total e podem aparecer em qualquer draft. Pegue uma e termine a run, com vitória ou derrota, para desbloqueá-la na sua coleção para sempre. No jogo, as cartas bloqueadas aparecem como ??? até serem desbloqueadas. A página Special Cards é uma vitrine curada de lendas e não revela o seu progresso de desbloqueio."
+        "a": "Special cards são versões raras de jogadores ligadas a momentos icônicos do esports de Rocket League — runs de MVP em Worlds e Majors, lendas e jogadas marcantes. São {specialCards} no total e podem aparecer em qualquer draft. Pegue uma e termine a run, com vitória ou derrota, para desbloqueá-la na sua coleção para sempre. No jogo, as cartas bloqueadas aparecem como ??? até serem desbloqueadas. A página Special Cards é uma vitrine curada de lendas e não revela o seu progresso de desbloqueio."
       },
       {
         "q": "Como funciona o draft?",
@@ -70,15 +70,15 @@
       },
       {
         "q": "O que é o SAM, o modo regional?",
-        "a": "O Region-Locked Draft restringe o pool à profundidade total de uma cena — os times de World Championship dela mais o Top 8 regional que nunca chegou aos Worlds, ou seja, benches mais profundos e zebras locais que você não vê no mundial. A South America (SAM) já está no ar, pesquisada à mão pelo Liquipedia, cobrindo times brasileiros e sul-americanos (por exemplo, yanxnz). Mais regiões estão a caminho."
+        "a": "SAM é a região da América do Sul no Rocket League esports. No Rocket Draft também é um Region-Locked Draft: o pool se restringe à profundidade total de uma cena — os times de World Championship dela mais os elencos regionais que nunca chegaram ao Worlds, ou seja, bancos mais profundos e zebras locais que você não vê no draft mundial (por exemplo, o yanxnz). América do Norte, Europa, MENA e Oceania também têm os seus drafts regionais."
       },
       {
         "q": "Mais jogadores e times estão sendo adicionados?",
-        "a": "Sim. O roster cobre lineups reais da RLCS de 2016 até hoje, os ratings são revisados e atualizados com o tempo e mais regiões além da SAM estão a caminho. A comunidade também pode contestar os ratings."
+        "a": "Sim. O roster cobre lineups reais da RLCS de 2016 até hoje, os ratings são revisados e atualizados com o tempo, e APAC e África Subsaariana entram como drafts regionais quando as suas bases estiverem profundas o bastante. A comunidade também pode contestar os ratings."
       },
       {
         "q": "Como meu progresso é salvo?",
-        "a": "O progresso é salvo localmente no dispositivo em que você joga — sua coleção, perfil e configurações ficam no seu navegador. Não é preciso conta nem login, então não há nada para acessar para continuar jogando."
+        "a": "O progresso é salvo localmente no dispositivo em que você joga — sua coleção, perfil e configurações ficam no seu navegador, sem precisar de login. Se você entrar com o seu e-mail, o mesmo progresso ganha backup na nuvem e é mesclado, nunca perdido."
       },
       {
         "q": "O Rocket Draft é um jogo de draft de RLCS?",
@@ -90,13 +90,26 @@
       },
       {
         "q": "Dá para fazer um draft de RLCS por região (tipo um draft da SAM / América do Sul)?",
-        "a": "Sim. O Draft Regional restringe o pool à profundidade total de um cenário — seus times de Mundial mais o Top 8 regional. A América do Sul (SAM) já está disponível como um draft de RLCS dedicado de times brasileiros e sul-americanos, com mais regiões a caminho."
+        "a": "Sim. O Region-Locked Draft restringe o pool à profundidade total de uma cena — seus times de World Championship mais os elencos regionais que não chegaram lá. América do Norte, Europa, América do Sul (SAM), MENA e Oceania estão no ar, cada uma como um draft de RLCS dedicado aos times daquela região."
+      },
+      {
+        "q": "O Rocket Draft é um simulador de Rocket League?",
+        "a": "Ele simula o lado esports do Rocket League, não a física dos carros. Você monta um roster com lineups reais da RLCS e o jogo simula um torneio de 16 times em volta dele: fase Swiss em melhor de 5 e depois um chaveamento de dupla eliminação em melhor de 7, série por série, até um time levar o título."
+      },
+      {
+        "q": "O Rocket Draft é uma liga de fantasy da RLCS?",
+        "a": "É um draft no estilo fantasy, não uma liga de fantasy de temporada inteira. Não há pontuação ao vivo de partidas reais nem prêmios: você monta o time com toda a história da RLCS e o torneio é simulado na hora. O Daily Challenge entrega o mesmo draft com seed para todo mundo comparar."
+      },
+      {
+        "q": "Existe um modo carreira ou manager?",
+        "a": "Sim. Road to Worlds é o modo carreira: você funda um clube, contrata e desenvolve jogadores reais da RLCS, cuida de patrocínios, salários e transferências, e joga temporada após temporada do calendário da RLCS até vencer o World Championship. É gratuito e roda no navegador, como o draft.",
+        "requires": "career"
       }
     ]
   },
   "ratings": {
-    "metaTitle": "Ratings de Jogadores da RLCS: Como os Overalls São Construídos",
-    "metaDescription": "Entenda como o Rocket Draft calcula o overall de cada jogador da RLCS: as duas camadas por trás do número, o que o cálculo pondera e por que alguns special cards superam suas versões base.",
+    "metaTitle": "Overalls da RLCS — Como os Ratings São Feitos",
+    "metaDescription": "Como o Rocket Draft calcula o overall de cada jogador da RLCS: as duas camadas do número, o que o cálculo pondera e por que special cards superam a versão base.",
     "kicker": "Ratings",
     "title": "Como o Rocket Draft Avalia os Jogadores da RLCS",
     "intro": "Este é o detalhamento transparente de como o overall de cada jogador é construído — as duas camadas por trás do número, o que o cálculo leva em conta e por que alguns special cards ficam acima de suas versões base. Se você já se perguntou por que um jogador carrega o overall que tem, a resposta está aqui.",
@@ -115,7 +128,7 @@
       },
       {
         "heading": "Por que special cards podem superar cards base",
-        "body": "Os special cards são versões raras ligadas a momentos icônicos do esports de Rocket League — campanhas de MVP em Worlds e Majors, lendas, jogadas autorais. Por capturarem um pico, um special card pode ficar acima de sua versão base. Pinch God (kuxir97, Campeão Mundial e Worlds MVP da Season 2) ou Four Times World Champion (Turbopolsa) não são apenas reskins — o efeito cresce junto com o momento. Há 84 special cards para desbloquear, bastando concluir uma run com um deles draftado."
+        "body": "Os special cards são versões raras ligadas a momentos icônicos do esports de Rocket League — campanhas de MVP em Worlds e Majors, lendas, jogadas autorais. Por capturarem um pico, um special card pode ficar acima de sua versão base. Pinch God (kuxir97, Campeão Mundial e Worlds MVP da Season 2) ou Four Times World Champion (Turbopolsa) não são apenas reskins — o efeito cresce junto com o momento. Há {specialCards} special cards para desbloquear, bastando concluir uma run com um deles draftado."
       },
       {
         "heading": "Como funciona o rating de equipe: o overall continua dominante",
@@ -134,8 +147,8 @@
     "faqs": []
   },
   "strategy": {
-    "metaTitle": "Estratégia no Rocket Draft: Melhores Picks e Como Vencer",
-    "metaDescription": "Guia de estratégia do Rocket Draft: estrelas contra profundidade, como criar chemistry de verdade, quando gastar um slot em coach, sub ou org, uso inteligente de reroll e os picks que te levam longe no Hard e no Legacy.",
+    "metaTitle": "Estratégia no Rocket Draft — Melhores Picks e Como Vencer",
+    "metaDescription": "Guia de estratégia do Rocket Draft: estrelas ou profundidade, como criar chemistry, quando usar coach, sub e org, rerolls e os picks para vencer no Hard e no Legacy.",
     "kicker": "Guia",
     "title": "Guia de Estratégia do Rocket Draft",
     "intro": "Como vencer de verdade no Rocket Draft: estrelas contra profundidade, como construir chemistry real, quando gastar um slot em um coach, sub ou org, uso inteligente de reroll e os picks que te carregam pelo Hard e pelo Legacy.",
@@ -169,11 +182,11 @@
     "faqs": []
   },
   "special-cards": {
-    "metaTitle": "Cartas Especiais RLCS — Cartas de Esports",
-    "metaDescription": "Uma vitrine das 84 cartas especiais RLCS do Rocket Draft — versões raras ligadas a momentos icônicos do esports de Rocket League. Faça o draft, termine a run e desbloqueie para sempre.",
+    "metaTitle": "Cartas Especiais da RLCS — Coleção de Rocket League",
+    "metaDescription": "Uma vitrine das {specialCards} cartas especiais da RLCS no Rocket Draft, ligadas a momentos icônicos do Rocket League esports. Drafte, termine a run e desbloqueie.",
     "kicker": "Cartas Especiais",
     "title": "Cartas Especiais RLCS",
-    "intro": "As cartas especiais são o lado raro e colecionável do Rocket Draft — versões de jogadores reais ligadas aos maiores momentos da história da RLCS. São 84 para caçar, e todas se conquistam do mesmo jeito: faça o draft, termine a run e fique com ela para sempre.",
+    "intro": "As cartas especiais são o lado raro e colecionável do Rocket Draft — versões de jogadores reais ligadas aos maiores momentos da história da RLCS. São {specialCards} para caçar, e todas se conquistam do mesmo jeito: faça o draft, termine a run e fique com ela para sempre.",
     "sections": [
       {
         "heading": "O que são as cartas especiais",
@@ -196,20 +209,24 @@
         "body": "Uma carta especial nunca é vitória garantida — o rating do seu time vem principalmente dos overalls dos jogadores, com chemistry, buffs de organização, coaches e efeitos especiais somando a vantagem por cima. A jogada inteligente é encaixar a especial num lineup que já tem overall e chemistry, e não correr atrás de uma carta brilhante para um roster que não se sustenta. Use uma para afiar o build e deixe a run decidir se ela entra na sua Collection."
       },
       {
-        "heading": "84 para colecionar — com o mistério intacto",
-        "body": "São 84 cartas especiais no total, e a Collection no jogo mantém o mistério: as cartas bloqueadas continuam como ??? até você conquistá-las, então o seu progresso de desbloqueio é só seu. Esta página é uma vitrine pública e curada das lendas — uma celebração da história da RLCS, não um spoiler do seu progresso. Vá para o Play, faça o draft de um lineup histórico real e comece a caçar a sua primeira."
+        "heading": "{specialCards} para colecionar — com o mistério intacto",
+        "body": "São {specialCards} cartas especiais no total, e a Collection no jogo mantém o mistério: as cartas bloqueadas continuam como ??? até você conquistá-las, então o seu progresso de desbloqueio é só seu. Esta página é uma vitrine pública e curada das lendas — uma celebração da história da RLCS, não um spoiler do seu progresso. Vá para o Play, faça o draft de um lineup histórico real e comece a caçar a sua primeira."
       }
     ],
     "ctaLabel": "Comece um draft e cace cartas especiais",
     "faqs": []
   },
   "sam": {
-    "metaTitle": "Draft RLCS Brasil — SAM (América do Sul)",
-    "metaDescription": "Trave o draft na América do Sul: todos os times de Worlds da SAM mais o Top 8 regional que nunca chegou ao Worlds. Rosters BR e sul-americanos pesquisados à mão. Grátis.",
-    "kicker": "Region-Locked Draft",
-    "title": "Draft SAM — Brasil e América do Sul",
-    "intro": "O Region-Locked Draft restringe o pool à profundidade total de uma cena. A América do Sul (SAM) foi a primeira região no ar — um gauntlet pesquisado à mão da história do RLCS brasileiro e sul-americano, grátis no seu navegador.",
+    "metaTitle": "SAM no Rocket League — América do Sul na RLCS",
+    "metaDescription": "O que é SAM no Rocket League esports: a região sul-americana da RLCS, os times liderados pelo Brasil e um draft grátis com mais de 100 lineups da SAM.",
+    "kicker": "América do Sul",
+    "title": "SAM no Rocket League — A Região da América do Sul",
+    "intro": "SAM é a região da América do Sul no Rocket League esports. O Rocket Draft cobre a cena a fundo: uma base pesquisada à mão de lineups brasileiros e sul-americanos da RLCS e um Region-Locked Draft que só entrega cartas dela — grátis no seu navegador.",
     "sections": [
+      {
+        "heading": "O que significa SAM no Rocket League",
+        "body": "SAM é a sigla de South America, a América do Sul. É uma das regiões da Rocket League Championship Series, ao lado de América do Norte (NA), Europa (EU), Oceania (OCE), Oriente Médio e Norte da África (MENA), Ásia-Pacífico (APAC) e África Subsaariana (SSA). Cada região tem os seus qualifiers e eventos regionais, e os melhores times ficam com as vagas da região nos Majors internacionais e no World Championship. A cena da SAM é liderada pelo Brasil, com jogadores e times da Argentina, do Chile e do resto do continente ao lado. Organizações como FURIA, Team Secret, KRÜ Esports, MIBR, w7m esports, INTZ e Ninjas in Pyjamas já tiveram rosters na SAM, e todas estão no jogo."
+      },
       {
         "heading": "O que é o draft region-locked da SAM",
         "body": "A SAM é um Region-Locked Draft: em vez de sortear do pool global, cada round entrega cartas de toda a profundidade da América do Sul. O draft funciona igual — você pega uma carta por lineup até montar 3 players, 1 coach, 1 sub e 1 org — mas cada carta vem da cena SAM. A América do Sul foi a primeira região no ar, pesquisada à mão na Liquipedia, cobrindo times brasileiros e sul-americanos da história do RLCS."
@@ -233,5 +250,150 @@
     ],
     "ctaLabel": "Jogar o draft SAM de Rocket League",
     "faqs": []
+  },
+  "simulator": {
+    "metaTitle": "Simulador de Rocket League — Simule a RLCS Grátis",
+    "metaDescription": "Um simulador gratuito de Rocket League esports no navegador: monte um roster com a história da RLCS e simule um torneio de 16 times, da fase Swiss à grande final.",
+    "kicker": "Simulador da RLCS",
+    "title": "Simulador de Rocket League Esports",
+    "intro": "O Rocket Draft é um simulador gratuito de Rocket League para o lado esports do jogo. Você monta um roster com lineups reais da RLCS e o jogo simula um torneio completo no estilo RLCS em volta dele, série por série, até um time levantar o troféu.",
+    "sections": [
+      {
+        "heading": "O que este simulador de Rocket League simula",
+        "body": "Ele não simula a física dos carros nem uma partida em campo. Simula a competição: rosters, ratings, séries e chaveamentos. Cada carta é um jogador, coach, substitute ou organização real da história da RLCS, de 2016 até hoje. Cada jogador tem um overall e seis stats internos — Offense, Defense, Mechanics, Consistency, Experience e Clutch — revisados à mão, e são esses números que decidem como uma série se desenrola."
+      },
+      {
+        "heading": "Como funciona a simulação do torneio da RLCS",
+        "body": "Dezesseis times entram. A fase Swiss é em melhor de 5: três vitórias classificam, três derrotas eliminam. Os oito melhores vão para um chaveamento de dupla eliminação em melhor de 7, em que perder na upper bracket manda você para a lower bracket, não para fora do evento. O rating do seu time vem principalmente dos overalls dos jogadores; a chemistry, o buff da organização, o coach e os efeitos dos special cards dão a vantagem extra. Zebras fazem parte do modelo: um time de rating menor ainda pode levar uma série."
+      },
+      {
+        "heading": "Simule no seu ritmo",
+        "body": "Jogue o torneio uma série por vez e leia como cada uma terminou, ou pule para o fim e vá direto para a classificação final. Nos dois casos a tela de resultados destrincha a run: onde você terminou, quem eliminou você e como o seu roster foi avaliado."
+      },
+      {
+        "heading": "Quatro dificuldades, um draft justo",
+        "body": "Easy, Normal e Hard ajustam a força dos times contra os quais você simula. O draft em si é totalmente aleatório em todas as dificuldades, então a sorte é igual para todo mundo. Vencer no Hard libera o Legacy: um gauntlet de todos os tempos com rosters campeões e overalls escondidos, para o conhecimento da cena fazer o trabalho."
+      },
+      {
+        "heading": "Simule uma região ou o mundo todo",
+        "body": "O draft mundial mistura todas as regiões e eras. O Region-Locked Draft restringe as cartas que você recebe e os times do chaveamento a uma única cena: América do Norte, Europa, América do Sul (SAM), MENA ou Oceania, cada uma com os elencos regionais que nunca chegaram a um World Championship."
+      },
+      {
+        "heading": "De um torneio para uma carreira inteira",
+        "body": "O Road to Worlds estende a simulação por várias temporadas. Você funda um clube, contrata jogadores reais da RLCS, treina o elenco, equilibra salários e patrocínios e joga o calendário de eventos regionais, Majors e World Championship enquanto o resto do mundo é simulado ao seu redor.",
+        "requires": "career"
+      },
+      {
+        "heading": "Grátis, no navegador",
+        "body": "Não há nada para baixar nem conta para criar. O Rocket Draft roda em qualquer navegador moderno, no desktop e no celular, e o seu progresso fica salvo no seu dispositivo. É um projeto feito por fã, sem afiliação com a Psyonix ou a Epic Games."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Existe um simulador de Rocket League grátis?",
+        "a": "Sim. O Rocket Draft é gratuito e roda no navegador. Ele simula torneios de Rocket League esports — você monta um roster com a história da RLCS e o chaveamento é simulado série por série."
+      },
+      {
+        "q": "Dá para simular um torneio da RLCS?",
+        "a": "Sim. Toda run termina em um evento simulado no estilo RLCS: 16 times, fase Swiss em melhor de 5 e playoffs de dupla eliminação em melhor de 7, contra lineups históricos reais."
+      },
+      {
+        "q": "Ele simula a jogabilidade real do Rocket League?",
+        "a": "Não. Aqui não há carros nem física. A simulação trabalha com ratings de times e jogadores, chemistry e formatos de série, como em um jogo de gerenciamento esportivo."
+      }
+    ],
+    "ctaLabel": "Simular um torneio da RLCS"
+  },
+  "manager": {
+    "metaTitle": "Manager de Rocket League — Modo Carreira Grátis",
+    "metaDescription": "Road to Worlds é um manager de Rocket League gratuito: funde um clube, contrate jogadores reais da RLCS, treine, cuide das finanças e vença o World Championship.",
+    "kicker": "Modo carreira",
+    "title": "Road to Worlds — Manager de Rocket League",
+    "intro": "Road to Worlds é o modo carreira do Rocket Draft: um jogo de manager de Rocket League esports, gratuito, que roda no seu navegador. Funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
+    "sections": [
+      {
+        "heading": "Funde o seu clube",
+        "body": "Uma carreira começa com um clube vazio. Escolha a região em que quer competir, dê nome à organização, desenhe o escudo e as cores e defina a dificuldade. A dificuldade determina o orçamento inicial e o quanto as finanças perdoam. Depois você contrata o primeiro roster e a temporada começa."
+      },
+      {
+        "heading": "Um calendário completo da RLCS",
+        "body": "A carreira começa na RLCS Season X e passa por todas as temporadas até 2026. Cada temporada é dividida em eventos regionais com qualifiers abertos; os pontos regionais levam os melhores times aos Majors, e os pontos da temporada decidem quem chega ao World Championship. As semanas livres trazem copas da comunidade e torneios por convite. Se o título não vier até o fim de 2026, a carreira pode seguir em um modo infinito com novas temporadas."
+      },
+      {
+        "heading": "Contrate, treine e desenvolva jogadores",
+        "body": "O mercado de transferências funciona em janelas, com valores de compra, salários, contratos e propostas de rivais. O seu elenco tem quatro jogadores — três titulares e um substitute. O treino mira atributos individuais, os coaches definem a velocidade da evolução, e coaches reais da RLCS aparecem no mercado. Os jogadores evoluem com partidas e treino e caem com o passar dos anos, então o roster precisa ser renovado."
+      },
+      {
+        "heading": "Cuide do negócio",
+        "body": "Premiações, patrocinadores e reputação pagam o elenco. Salários, staff e transferências levam o dinheiro embora. A tela de Finanças mostra o extrato semanal e a projeção da temporada, e os empréstimos estão lá para quando o saldo fica no vermelho. A equipe de apoio — auxiliar técnico, analista de adversários, preparador físico e gerente de marca — ajuda cada um em uma área."
+      },
+      {
+        "heading": "Um mundo simulado que não para",
+        "body": "Todos os outros clubes jogam a própria temporada. Os resultados de todas as regiões são simulados semana a semana, os rivais contratam e vendem jogadores, e a classificação e o histórico de títulos registram cada campeão de Major e de World Championship, começando pelos campeões reais das primeiras temporadas da RLCS."
+      },
+      {
+        "heading": "Os mesmos dados do draft",
+        "body": "O Road to Worlds usa a mesma base revisada à mão do jogo de draft: jogadores, coaches e organizações reais da história da RLCS, com os mesmos overalls e stats. É gratuito, não precisa de download e salva no seu dispositivo."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Existe um jogo de manager de Rocket League?",
+        "a": "Road to Worlds, o modo carreira do Rocket Draft, é um manager de Rocket League esports gratuito e feito por fã. Você comanda um clube: contratações, treino, finanças e o calendário da RLCS."
+      },
+      {
+        "q": "O simulador de carreira de Rocket League é gratuito?",
+        "a": "Sim. É gratuito, roda no navegador, no desktop e no celular, e não precisa de download nem de conta."
+      },
+      {
+        "q": "Ele usa jogadores e times reais da RLCS?",
+        "a": "Sim. O mercado de jogadores e coaches é montado com a mesma base de lineups reais da RLCS, de 2016 até hoje, usada no jogo de draft."
+      }
+    ],
+    "ctaLabel": "Começar uma carreira no Road to Worlds"
+  },
+  "fantasy": {
+    "metaTitle": "Fantasy da RLCS — Draft Fantasy de Rocket League",
+    "metaDescription": "Procurando fantasy de Rocket League? O Rocket Draft é um draft fantasy da RLCS gratuito: escolha jogadores de todas as eras do esports e simule o torneio.",
+    "kicker": "Draft fantasy",
+    "title": "Draft Fantasy da RLCS",
+    "intro": "O Rocket Draft é um draft fantasy de Rocket League esports com uma diferença: em vez de pontuar com as partidas do próximo fim de semana, você monta o time com toda a história da RLCS e o torneio é simulado na hora.",
+    "sections": [
+      {
+        "heading": "Fantasy de Rocket League sem esperar o dia do jogo",
+        "body": "Uma liga de fantasy clássica precisa de uma temporada ao vivo, de um grupo de amigos e de semanas de paciência. O Rocket Draft é um draft fantasy para um jogador que termina em poucos minutos: monte um roster, veja o time jogar um chaveamento completo no estilo RLCS e comece de novo com outros picks."
+      },
+      {
+        "heading": "Como funciona o draft fantasy",
+        "body": "Cada round entrega um lineup real e histórico da RLCS e você pega exatamente uma carta dele — um jogador, o coach, o substitute ou a organização — até ter três jogadores, um coach, um sub e uma org. Ninguém escolhe do mesmo pool duas vezes: os lineups são aleatórios a cada run, então a habilidade está em ler o que cada um oferece."
+      },
+      {
+        "heading": "Rosters de todos os tempos, não só desta temporada",
+        "body": "A base cobre lineups da RLCS de 2016 até hoje. Dá para colocar um campeão da Season 1 ao lado de uma estrela atual, e a chemistry decide se funciona: jogadores do mesmo lineup, do mesmo país ou da mesma organização se fortalecem, então um time coerente pode vencer uma pilha de nomes grandes."
+      },
+      {
+        "heading": "O que ele não é",
+        "body": "O Rocket Draft não é uma liga de fantasy de temporada inteira. Não há pontuação ao vivo de partidas reais, nem ligas privadas, nem prêmios ou dinheiro de qualquer tipo. É um jogo gratuito, feito por fã, sobre a história da cena."
+      },
+      {
+        "heading": "O mesmo draft para todo mundo, uma vez por dia",
+        "body": "O Daily Challenge é o mais próximo de uma liga: um draft com seed por dia, os mesmos lineups para todos os jogadores, com uma sequência para defender. Entrar com a conta é opcional e coloca os seus melhores rosters nos leaderboards globais."
+      },
+      {
+        "heading": "Grátis, no navegador",
+        "body": "Não precisa de download nem de conta. O Rocket Draft roda em qualquer navegador moderno, no desktop e no celular, e a sua coleção e o seu progresso ficam salvos no seu dispositivo."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Existe um jogo de fantasy de Rocket League esports?",
+        "a": "O Rocket Draft é um draft gratuito no estilo fantasy para Rocket League esports: você escolhe jogadores de lineups reais da RLCS e o jogo simula um torneio com o seu roster."
+      },
+      {
+        "q": "O fantasy da RLCS aqui usa resultados de partidas ao vivo?",
+        "a": "Não. Nada depende de partidas reais que ainda vão acontecer. O draft usa lineups históricos e o chaveamento é simulado na hora."
+      }
+    ],
+    "ctaLabel": "Começar um draft fantasy"
   }
 }

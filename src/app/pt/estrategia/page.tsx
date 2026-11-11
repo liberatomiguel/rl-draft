@@ -9,6 +9,7 @@ export const metadata = contentMetadata(PAGES_PT.strategy, { enPath: R.en, ptPat
 export default function PtEstrategiaPage() {
   return (
     <ContentPage
+      slug="strategy"
       en={PAGES_EN.strategy}
       pt={PAGES_PT.strategy}
       initialLocale="pt"

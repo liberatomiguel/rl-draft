@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
+import { webSiteJsonLd } from "@/lib/jsonld";
 import { AppShell } from "@/components/layout/AppShell";
 import { LocaleRoot } from "@/components/layout/LocaleRoot";
 import { PostHogProvider } from "@/components/PostHogProvider";
@@ -83,7 +84,9 @@ export const metadata: Metadata = {
     "Rocket Draft",
     "free browser game",
   ],
-  alternates: { canonical: "/" },
+  // No `alternates` here on purpose: a canonical set in the root layout is
+  // inherited by every page without its own (it pointed /profile, /settings
+  // and /missions at the home page). Each page declares its own canonical.
   openGraph: {
     type: "website",
     siteName: SITE.name,
@@ -136,9 +139,14 @@ const JSON_LD = {
   genre: ["Sports", "Strategy", "Esports", "Card game"],
   gamePlatform: "Web",
   inLanguage: ["en", "pt-BR"],
+  playMode: "SinglePlayer",
+  image: `${SITE.url}/opengraph-image.png`,
   author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", availability: "https://schema.org/InStock" },
 };
+
+/** The site's name in search results (and its one-word spelling). */
+const SITE_JSON_LD = webSiteJsonLd();
 
 export default function RootLayout({
   children,
@@ -155,6 +163,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
         />
         <PostHogProvider>
           <AppShell>{children}</AppShell>

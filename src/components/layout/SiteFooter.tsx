@@ -1,7 +1,8 @@
 "use client";
 
 import { AppLink } from "@/components/ui/AppLink";
-import { useCopy } from "@/content/copy";
+import { useCopy, useUiLocale } from "@/content/copy";
+import { localePath } from "@/content/pageRoutes";
 import { SITE } from "@/config/site";
 
 const linkCls =
@@ -33,6 +34,8 @@ function ExternalLink({
 /** Global footer (v1.0): attribution, credits, community/support and version. */
 export function SiteFooter() {
   const { APP, NAV_UI } = useCopy();
+  // WEB-01: a PT reader is sent to the PT pages (/pt/sobre), not the EN twins.
+  const locale = useUiLocale();
   return (
     <footer className="border-t border-line">
       {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
@@ -45,10 +48,10 @@ export function SiteFooter() {
             <AppLink href="/how-to-play" className={linkCls}>
               {NAV_UI.howToPlay}
             </AppLink>
-            <AppLink href="/about" className={linkCls}>
+            <AppLink href={localePath("about", locale)} className={linkCls}>
               {NAV_UI.about}
             </AppLink>
-            <AppLink href="/faq" className={linkCls}>
+            <AppLink href={localePath("faq", locale)} className={linkCls}>
               {NAV_UI.faq}
             </AppLink>
             <AppLink href="/privacy" className={linkCls}>

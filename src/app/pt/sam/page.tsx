@@ -9,6 +9,7 @@ export const metadata = contentMetadata(PAGES_PT.sam, { enPath: R.en, ptPath: R.
 export default function PtSamPage() {
   return (
     <ContentPage
+      slug="sam"
       en={PAGES_EN.sam}
       pt={PAGES_PT.sam}
       initialLocale="pt"
