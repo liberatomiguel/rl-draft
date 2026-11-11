@@ -27,6 +27,7 @@ import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
+import { quizDayFinished } from "@/engine/quizState";
 import { dailyInfo } from "@/lib/dailyPlan";
 import { dailyDescription, dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
@@ -37,6 +38,7 @@ import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/la
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useNewDots } from "@/store/useNewItems";
 import { Badge } from "@/components/ui/Badge";
+import { DiscordIcon } from "@/components/ui/icons";
 import { NewDot } from "@/components/ui/NewDot";
 import { buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -105,7 +107,7 @@ export default function HomeMenu() {
 
   const daily = useMemo(() => dailyInfo(today), [today]);
   const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
-  const quizDone = mounted ? Boolean(quizToday && (quizToday.solved || quizToday.attempts >= 3)) : false;
+  const quizDone = mounted ? quizDayFinished(quizToday) : false;
 
   useEffect(() => {
     if (mounted) clearRunInProgress();
@@ -132,20 +134,20 @@ export default function HomeMenu() {
       <FirstRunTutorial />
       {playtest ? null : <SeasonRecap />}
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
-      <section className="px-2 pb-6 pt-10 text-center md:pt-14">
+      <section className="px-2 pb-6 pt-6 text-center md:pt-9">
         <p className="kicker mb-4">{APP.tagline}</p>
         <h1 className="display mx-auto max-w-3xl text-5xl font-bold uppercase leading-[0.95] tracking-[0.08em] md:text-7xl">
           <span className="text-ink">Rocket</span>
           <span className="bg-gradient-to-r from-orange to-orange-bright bg-clip-text text-transparent">Draft</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
 
         {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-7 flex min-h-[132px] max-w-2xl flex-col items-center gap-3">
+        <div className="mx-auto mt-5 flex min-h-[132px] max-w-2xl flex-col items-center justify-center gap-3 sm:min-h-[88px] sm:flex-row sm:gap-4">
           {mounted ? (
             <>
               <RankBadge rank={rank} variant="menu" size="md" />
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:justify-start">
                 <Badge tone="blue">{rank.label}</Badge>
                 <Badge tone="orange">
                   {HOME.seasonStrip.rating} {mmr}
@@ -209,9 +211,10 @@ export default function HomeMenu() {
                 <div className="relative">
                   <div className="mb-2 flex items-center gap-2.5">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
-                    <Badge tone="blue">{HOME.careerBadge}</Badge>
+                    <Badge tone="gold">{HOME.careerBadge}</Badge>
                   </div>
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
+                  <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
                 </div>
                 <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
                   {HOME.careerCta}
@@ -373,48 +376,52 @@ export default function HomeMenu() {
           </Tile>
         </section>
 
-        <p className="mt-10 text-center">
+        {/* ---- COMMUNITY (v2.0): Discord and Ko-fi as real cards, not footer pills. */}
+        {SITE.discordUrl || SITE.supportUrl ? (
+          <>
+            <p className="kicker mb-2 mt-7">{HOME.sectionCommunity}</p>
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {SITE.discordUrl ? (
+                <CommunityCard
+                  href={SITE.discordUrl}
+                  tone="discord"
+                  icon={<DiscordIcon className="h-7 w-7" />}
+                  title={HOME.discordTitle}
+                  desc={HOME.discordDesc}
+                  cta={HOME.discordCta}
+                />
+              ) : null}
+              {SITE.supportUrl ? (
+                <CommunityCard
+                  href={SITE.supportUrl}
+                  tone="support"
+                  icon={<CoffeeGlyph className="h-7 w-7" />}
+                  title={HOME.supportTitle}
+                  desc={HOME.supportDesc}
+                  cta={HOME.support}
+                />
+              ) : null}
+            </section>
+          </>
+        ) : null}
+
+        <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
           <AppLink href="/how-to-play" className="text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline">
             {HOME.howToPlay} →
           </AppLink>
+          {SITE.authorUrl ? (
+            <a
+              href={SITE.authorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline"
+            >
+              <XGlyph /> {HOME.followTwitter}
+            </a>
+          ) : null}
         </p>
 
         <HomeSignInNudge />
-
-        {SITE.discordUrl || SITE.supportUrl ? (
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-            {SITE.discordUrl ? (
-              <a
-                href={SITE.discordUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
-              >
-                <DiscordGlyph /> {HOME.joinDiscord}
-              </a>
-            ) : null}
-            {SITE.authorUrl ? (
-              <a
-                href={SITE.authorUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-line-strong hover:text-ink"
-              >
-                <XGlyph /> {HOME.followTwitter}
-              </a>
-            ) : null}
-            {SITE.supportUrl ? (
-              <a
-                href={SITE.supportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
-              >
-                <CoffeeGlyph /> {HOME.support}
-              </a>
-            ) : null}
-          </div>
-        ) : null}
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
 
@@ -459,6 +466,66 @@ function CardHit({
   );
 }
 
+/** v2.0: a community link with the weight of a menu card (brand tint, icon, CTA). */
+function CommunityCard({
+  href,
+  tone,
+  icon,
+  title,
+  desc,
+  cta,
+}: {
+  href: string;
+  tone: "discord" | "support";
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  cta: string;
+}) {
+  const discord = tone === "discord";
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="group block">
+      <Panel
+        className={cx(
+          "relative flex h-full items-center gap-4 overflow-hidden p-4 transition-all group-hover:-translate-y-0.5 sm:p-5",
+          discord
+            ? "!border-[#5865F2]/45 group-hover:!border-[#5865F2]/80"
+            : "!border-[#FF5E5B]/40 group-hover:!border-[#FF5E5B]/75",
+        )}
+      >
+        <div
+          className={cx(
+            "pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full blur-3xl",
+            discord ? "bg-[#5865F2]/20" : "bg-[#FF5E5B]/15",
+          )}
+          aria-hidden
+        />
+        <span
+          aria-hidden
+          className={cx(
+            "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+            discord ? "bg-[#5865F2] text-white" : "bg-[#FF5E5B] text-white",
+          )}
+        >
+          {icon}
+        </span>
+        <div className="relative min-w-0 flex-1">
+          <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
+          <p className="mt-0.5 text-xs leading-relaxed text-sub">{desc}</p>
+          <span
+            className={cx(
+              "display mt-2 inline-flex text-[11px] font-bold uppercase tracking-[0.14em]",
+              discord ? "text-[#aab1ff]" : "text-[#ff9c99]",
+            )}
+          >
+            {cta} →
+          </span>
+        </div>
+      </Panel>
+    </a>
+  );
+}
+
 function Tile({
   href,
   title,
@@ -477,7 +544,7 @@ function Tile({
 }) {
   return (
     <AppLink href={href} className="group">
-      <Panel className="relative flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-line-strong">
+      <Panel className="relative flex h-full flex-col items-start justify-between gap-2 p-4 transition-colors group-hover:!border-line-strong min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-3">
         {dot ? <NewDot className="absolute right-2 top-2" label={dotLabel} /> : null}
         <div className="min-w-0">
           <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
@@ -543,17 +610,9 @@ function TrophyGlyph() {
   );
 }
 
-function DiscordGlyph() {
+function CoffeeGlyph({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path d="M19.3 5.3a16 16 0 0 0-4-1.2l-.2.4a11 11 0 0 1 3.5 1.2 13 13 0 0 0-11.2 0A11 11 0 0 1 11 4.5l-.3-.4a16 16 0 0 0-4 1.2C4 8.5 3.4 11.7 3.6 14.8a16 16 0 0 0 4.9 2.5l.4-.5c-.4-.2-.9-.4-1.3-.7l.3-.2a9.3 9.3 0 0 0 8 0l.3.2c-.4.3-.9.5-1.3.7l.4.5a16 16 0 0 0 4.9-2.5c.3-3.6-.6-6.8-2.9-9.5ZM9.5 13c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Zm5 0c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Z" />
-    </svg>
-  );
-}
-
-function CoffeeGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" strokeLinejoin="round" />
       <path d="M17 9h2.2a2.3 2.3 0 0 1 0 4.6H17" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M8 3c-.5.7-.5 1.3 0 2M11.5 3c-.5.7-.5 1.3 0 2" strokeLinecap="round" />

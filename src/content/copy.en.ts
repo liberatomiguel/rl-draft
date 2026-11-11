@@ -101,10 +101,18 @@ export const HOME = {
   // Road to Worlds home card (career mode). Kept here, not in the career
   // dictionary, so the home page doesn't load the whole career copy.
   careerTitle: "Road to Worlds",
-  careerBadge: "NEW",
+  careerBadge: "Beta",
   careerDesc:
     "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
   careerCta: "Build an org from nothing. Win the World Championship.",
+  // v2.0 (G2): beta note on the career card + the community band.
+  careerBetaNote: "Beta: balance is still being tuned. Tell us what you think on Discord.",
+  sectionCommunity: "Community",
+  discordTitle: "Discord",
+  discordDesc: "Talk drafts, report bugs and follow what ships next.",
+  discordCta: "Join the server",
+  supportTitle: "Support Rocket Draft",
+  supportDesc: "Free and fan-made. A coffee on Ko-fi helps keep it running.",
 };
 
 /**
@@ -174,6 +182,9 @@ export const NAV_UI = {
   balancedBy: "Overalls balanced by",
   /** rc.33: the green dot on a nav item / tile with something not opened yet. */
   newHere: "Something new here",
+  // v2.0 (G2): header Discord icon + the beta tag on Road to Worlds.
+  joinDiscord: "Join the Discord",
+  beta: "Beta",
 };
 
 export const RUN_UI = {
@@ -1641,14 +1652,14 @@ export const SEASON_RECAP = {
 export const QUIZ_UI = {
   kicker: "Daily Quiz",
   title: "Guess the Player",
-  subtitle: "Who is this RLCS player? One player per UTC day, three attempts. More clues open before each guess; all are available for the last one.",
+  subtitle: "Who is this RLCS player? One player per UTC day, five attempts. You start with one clue; every miss opens the next.",
   question: "Who is this RLCS player?",
   clue: (n: number) => `Clue ${n}`,
   attemptsLeft: (n: number) => (n === 1 ? "1 attempt left" : `${n} attempts left`),
   placeholder: "Type a nickname…",
   guess: "Guess",
-  wrong: "Not them — check the new clues.",
-  solved: (attempt: number): string => (attempt === 1 ? "First try! Maximum score." : attempt === 2 ? "Solved on the second attempt." : "Solved on the last attempt."),
+  wrong: "Not them. A new clue is open.",
+  solved: (attempt: number): string => (attempt === 1 ? "First try! Maximum score." : `Solved on attempt ${attempt}.`),
   solvedToast: (attempt: number) => (attempt === 1 ? "Solved on the first try" : `Solved on attempt ${attempt}`),
   failed: "Out of attempts. The answer was:",
   answerWas: "The player was",
@@ -1670,6 +1681,21 @@ export const QUIZ_UI = {
     peak: (overall: number, org: string, year: number) => `Peak card: ${overall} overall with ${org} (${year}).`,
   },
   dayLabel: (n: number) => `Quiz #${n}`,
+  // v2.0 (G2): the visual quiz card (one clue per attempt, five attempts).
+  attemptOf: (n: number, max: number) => `Attempt ${n} of ${max}`,
+  clueKinds: {
+    country: "Nationality",
+    era: "Era",
+    orgs: "Orgs",
+    teammate: "Teammate",
+    nickname: "Nickname",
+    peak: "Peak card",
+  },
+  lockedClue: "Locked",
+  nextClueHint: "Opens after your next miss",
+  yourGuesses: "Your guesses",
+  mystery: "Mystery player",
+  attemptState: { miss: "Miss", hit: "Solved", current: "Current attempt", open: "Not used" },
 };
 
 /** National teams (v2.0) — the FIFAe national rosters: a rare draw of their own

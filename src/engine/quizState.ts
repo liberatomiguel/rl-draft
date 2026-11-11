@@ -26,8 +26,12 @@ export interface QuizDayResult {
   solved: boolean;
   /** Attempts used (1..attempts). */
   attempts: number;
-  /** 3 / 2 / 1 for a solve on the 1st / 2nd / 3rd attempt, 0 for a miss. */
+  /** Attempts left when it was solved, plus one (5..1 under the five-guess
+   *  rule, 3..1 on days played before it); 0 for a miss. */
   score: number;
+  /** The attempt limit this day was played under. Absent on days recorded
+   *  before the five-guess rule (additive field; see `quizLimit`). */
+  max?: number;
   /** Guesses made so far (player ids or raw text), for the in-progress state. */
   guesses: string[];
 }
@@ -42,11 +46,28 @@ export interface QuizState {
 
 export const EMPTY_QUIZ: QuizState = { results: {}, solved: 0, played: 0, streak: 0, bestStreak: 0 };
 
-/** How many clues are visible after `attemptsUsed` misses (at least 1). */
+/** The attempt limit a stored day runs under. A day recorded before the
+ *  five-guess rule has no `max`: if it already ended under the old limit it
+ *  stays ended, and if it was still open it continues under the current one. */
+export function quizLimit(result: QuizDayResult | undefined): number {
+  if (!result) return QUIZ.attempts;
+  if (result.max !== undefined) return result.max;
+  return result.attempts >= QUIZ.legacyAttempts ? QUIZ.legacyAttempts : QUIZ.attempts;
+}
+
+/** A day is over once it is solved or its attempts are spent. */
+export function quizDayFinished(result: QuizDayResult | undefined): boolean {
+  return !!result && (result.solved || result.attempts >= quizLimit(result));
+}
+
+/** Clues visible after `attemptsUsed` misses: one at a time, the first is open
+ *  and each miss opens the next. */
 export function visibleClues(puzzle: QuizPuzzle, attemptsUsed: number): QuizClue[] {
-  // Spread the entire ladder across the available guesses. The decisive clues
-  // must be visible BEFORE the final guess, rather than only after a failure.
-  const count = Math.ceil(puzzle.clues.length * Math.min(QUIZ.attempts, Math.max(0, attemptsUsed) + 1) / QUIZ.attempts);
+  const step = Math.min(QUIZ.attempts, Math.max(0, attemptsUsed) + 1);
+  // The decisive clues must be visible BEFORE the final guess, not only after a
+  // failure: a ladder longer than the attempts (the nickname tie-break adds a
+  // sixth clue) opens whatever is left on the last guess.
+  const count = step >= QUIZ.attempts ? puzzle.clues.length : step;
   return puzzle.clues.slice(0, count);
 }
 
@@ -60,16 +81,18 @@ export interface GuessOutcome {
 /** Apply one guess to the day's result (pure). */
 export function applyGuess(puzzle: QuizPuzzle, prev: QuizDayResult | undefined, guessPlayerId: string | null, rawText: string): GuessOutcome {
   const base: QuizDayResult = prev ?? { solved: false, attempts: 0, score: 0, guesses: [] };
-  if (base.solved || base.attempts >= QUIZ.attempts) return { result: base, correct: false, finished: true, xp: 0 };
+  if (quizDayFinished(base)) return { result: base, correct: false, finished: true, xp: 0 };
+  const max = quizLimit(prev);
   const attempts = base.attempts + 1;
   const correct = guessPlayerId !== null && guessPlayerId === puzzle.playerId;
-  const finished = correct || attempts >= QUIZ.attempts;
-  const score = correct ? QUIZ.attempts - attempts + 1 : 0;
+  const finished = correct || attempts >= max;
+  const score = correct ? max - attempts + 1 : 0;
   const result: QuizDayResult = {
     solved: correct,
     attempts,
     score,
     guesses: [...base.guesses, guessPlayerId ?? rawText.trim()],
+    max,
   };
   return { result, correct, finished, xp: correct ? QUIZ.xpByAttempt[attempts] ?? 0 : 0 };
 }
@@ -77,7 +100,7 @@ export function applyGuess(puzzle: QuizPuzzle, prev: QuizDayResult | undefined, 
 /** Fold a FINISHED day into the counters (streak = consecutive solved days by date order). */
 export function foldQuizDay(state: QuizState, date: string, result: QuizDayResult): QuizState {
   const previous = state.results[date];
-  if (previous && (previous.solved || previous.attempts >= QUIZ.attempts)) return state;
+  if (quizDayFinished(previous)) return state;
   const results = { ...state.results, [date]: result };
   // Prune old days.
   const keys = Object.keys(results).sort();

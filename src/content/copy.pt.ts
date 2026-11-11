@@ -95,10 +95,17 @@ export const PT: Copy = {
     runs: (n: number) => `${n} ${n === 1 ? "run" : "runs"}`,
     titles: (n: number) => `${n} títulos`,
     careerTitle: "Road to Worlds",
-    careerBadge: "NOVO",
+    careerBadge: "Beta",
     careerDesc:
       "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
     careerCta: "Construa uma org do zero. Vença o Mundial.",
+    careerBetaNote: "Beta: o balanceamento ainda está em ajuste. Conte no Discord o que achou.",
+    sectionCommunity: "Comunidade",
+    discordTitle: "Discord",
+    discordDesc: "Converse sobre drafts, reporte bugs e acompanhe as novidades.",
+    discordCta: "Entrar no servidor",
+    supportTitle: "Apoie o Rocket Draft",
+    supportDesc: "Gratuito e feito por fã. Um café no Ko-fi ajuda a manter o jogo no ar.",
   },
 
   HOME_SEO: {
@@ -160,6 +167,8 @@ export const PT: Copy = {
     by: "por",
     balancedBy: "Overalls balanceados por",
     newHere: "Novidade aqui",
+    joinDiscord: "Entrar no Discord",
+    beta: "Beta",
   },
 
   RUN_UI: {
@@ -1582,14 +1591,14 @@ export const PT: Copy = {
   QUIZ_UI: {
     kicker: "Quiz diário",
     title: "Guess the Player",
-    subtitle: "Quem é este jogador de RLCS? Um jogador por dia UTC, três tentativas. Novas pistas aparecem antes de cada palpite; todas estão disponíveis no último.",
+    subtitle: "Quem é este jogador de RLCS? Um jogador por dia UTC, cinco tentativas. Você começa com uma pista; cada erro abre a próxima.",
     question: "Quem é este jogador de RLCS?",
     clue: (n: number) => `Pista ${n}`,
     attemptsLeft: (n: number) => (n === 1 ? "1 tentativa restante" : `${n} tentativas restantes`),
     placeholder: "Digite um nickname…",
     guess: "Chutar",
-    wrong: "Não é esse — confira as novas pistas.",
-    solved: (attempt: number) => (attempt === 1 ? "De primeira! Pontuação máxima." : attempt === 2 ? "Acertou na segunda tentativa." : "Acertou na última tentativa."),
+    wrong: "Não é esse. Uma nova pista foi aberta.",
+    solved: (attempt: number) => (attempt === 1 ? "De primeira! Pontuação máxima." : `Acertou na tentativa ${attempt}.`),
     solvedToast: (attempt: number) => (attempt === 1 ? "Acertou de primeira" : `Acertou na tentativa ${attempt}`),
     failed: "Acabaram as tentativas. A resposta era:",
     answerWas: "O jogador era",
@@ -1611,6 +1620,20 @@ export const PT: Copy = {
       peak: (overall: number, org: string, year: number) => `Carta de pico: ${overall} de overall na ${org} (${year}).`,
     },
     dayLabel: (n: number) => `Quiz #${n}`,
+    attemptOf: (n: number, max: number) => `Tentativa ${n} de ${max}`,
+    clueKinds: {
+      country: "Nacionalidade",
+      era: "Época",
+      orgs: "Orgs",
+      teammate: "Companheiro",
+      nickname: "Nickname",
+      peak: "Carta de pico",
+    },
+    lockedClue: "Bloqueada",
+    nextClueHint: "Abre no seu próximo erro",
+    yourGuesses: "Seus palpites",
+    mystery: "Jogador misterioso",
+    attemptState: { miss: "Erro", hit: "Acerto", current: "Tentativa atual", open: "Não usada" },
   },
 
   NATIONAL_UI: {
