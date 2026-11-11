@@ -8,6 +8,7 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
+import { RANKS } from "@/config/balance";
 import { lineupById, nationalSpecialIdsByLineupId } from "@/data";
 import { isNationalTeamDiscovered, nationalCardIdsOf } from "@/engine/collection";
 import { neededKinds, slotsForKind } from "@/engine/draft";
@@ -22,6 +23,8 @@ const profile = () => useProfileStore.getState();
 
 beforeEach(() => {
   useProfileStore.getState().resetAll();
+  // v2.0 (C2): national teams join the draft at Gold (RANK_REWARDS `national`).
+  useProfileStore.setState({ xp: RANKS.find((r) => r.id === "gold")!.minXp });
   useRewardToasts.setState({ queue: [] });
   useRunStore.setState({ run: null });
 });

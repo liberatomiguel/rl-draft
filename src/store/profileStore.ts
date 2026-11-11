@@ -53,6 +53,7 @@ import {
 import {
   freshSeason,
   normalizeToSeason,
+  preseasonRankIdForXp,
   pushRatingHistory,
   type LegacyState,
   type SeasonState,
@@ -395,6 +396,10 @@ function backfillSatisfiedCounters(
   p: Pick<ProfileState, "xp" | "runsCompleted" | "wins" | "gamesWon" | "goalsScored" | "unlockedSpecials">,
   alreadyEarned: ReadonlySet<string>,
   now: string,
+  /** v2.0 (C2): the rank the rank achievements are judged by. A veteran is
+   *  credited with the rank they HELD in the pre-season (frozen ladder), never
+   *  with their old XP read against the longer Season curve. */
+  rankId: string = rankForXp(p.xp ?? 0).id,
 ): Record<string, string> {
   const specialIds = new Set(Object.keys(p.unlockedSpecials ?? {}).filter((id) => !isNationalSpecialId(id)));
   const ids = evaluateCounterAchievements(
@@ -408,13 +413,21 @@ function backfillSatisfiedCounters(
       totalSpecials: COUNTS.specialCards,
       specialIds,
       dailyStreak: 0,
-      rankId: rankForXp(p.xp ?? 0).id,
+      rankId,
     },
     alreadyEarned,
   );
   const out: Record<string, string> = {};
   for (const id of ids) out[id] = now;
   return out;
+}
+
+/** The rank a migrating save is credited with: a pre-season save by the frozen
+ *  pre-season ladder, a Season save by the Season curve, and never below the
+ *  pre-season rank already archived in `legacy.preseason`. */
+export function backfillRankId(preseasonSave: boolean, xp: number, archivedRankId: string | undefined): string {
+  const own = preseasonSave ? preseasonRankIdForXp(xp) : rankForXp(xp).id;
+  return archivedRankId && rankIndexOf(archivedRankId) > rankIndexOf(own) ? archivedRankId : own;
 }
 
 /** What the mission picker may hand this player (v2.0). Career missions need the
@@ -572,6 +585,8 @@ export const useProfileStore = create<ProfileState>()(
               specialIds: new Set(Object.keys(unlockedSpecials).filter((id) => !isNationalSpecialId(id))),
               dailyStreak: selectDailyStreak({ ...state, dailyResults } as ProfileState),
               rankId: rankForXp(xpAfterRun).id,
+              seasonRating: mmr,
+              legacyStreakBest: legacyStreak.best,
             },
             new Set(Object.keys(achievements)),
           );
@@ -996,6 +1011,8 @@ export const useProfileStore = create<ProfileState>()(
         if (out.correct) useRewardToasts.getState().push([{ kind: "quiz", attempt: out.attempts, xp: out.xp }]);
         if (accepted && out.finished) {
           get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
+          // v2.0 (C2): "Called It", solved on the first guess.
+          if (out.correct && out.attempts === 1) get().awardAchievements(["ach-quiz-first-try"]);
         }
         return out;
       },
@@ -1073,6 +1090,7 @@ export const useProfileStore = create<ProfileState>()(
           merged,
           new Set(Object.keys(merged.achievements)),
           new Date().toISOString(),
+          backfillRankId(version < 12 || !base.season, merged.xp ?? 0, base.legacy?.preseason?.rankId),
         );
         const v11 = {
           ...merged,
@@ -1153,6 +1171,17 @@ export function selectHardUnlocked(state: ProfileState): boolean {
  *  keeps access — the gate is an on-ramp, not a lock on what they earned. */
 export function selectCollectionUnlocked(state: ProfileState): boolean {
   return rankRewardsForXp(state.xp).collection || Object.keys(state.unlockedSpecials).length > 0;
+}
+
+/** Challenges open at Bronze. v2.0 (C2): a player who had the mode before the
+ *  Season 1 reset (a pre-season rank, or any clear) keeps it at 0 Season XP. */
+export function selectChallengesUnlocked(
+  state: Pick<ProfileState, "xp" | "legacy" | "challengesCompleted">,
+): boolean {
+  if (rankForXp(state.xp).id !== "unranked") return true;
+  const preseason = state.legacy?.preseason;
+  if (preseason && (preseason.rankId !== "unranked" || preseason.challengesCleared > 0)) return true;
+  return Object.keys(state.challengesCompleted ?? {}).length > 0;
 }
 
 /** The first-run tour (home) is still due: never seen AND no run finished yet.

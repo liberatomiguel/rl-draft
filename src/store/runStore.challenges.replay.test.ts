@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { RANKS } from "@/config/balance";
 import { challenges } from "@/data";
 import solutionsJson from "@/engine/__fixtures__/challenge-solutions.json";
 import type { ChallengeAction } from "@/engine/testing/challengeReplay";
@@ -29,7 +30,7 @@ describe("CH-02: solutions through the real store, reload and rewards", () => {
   for (const ch of challenges) it(`${ch.id}: 3 stars persist; replay/reload never repay them`, () => {
     // Reach the authored gates first, without pre-awarding the target's stars.
     const others = challenges.filter(c => c.id !== ch.id);
-    useProfileStore.setState({ xp: 60_000,
+    useProfileStore.setState({ xp: RANKS[RANKS.length - 1].minXp,
       challengesCompleted: Object.fromEntries(others.map(c => [c.id, "2026-11-01"])),
       challengeStars: Object.fromEntries(others.map(c => [c.id, 7])),
     });

@@ -15,8 +15,10 @@ import { persist } from "zustand/middleware";
 import { DIFFICULTY, regionOpponentBoost, SPECIALS } from "@/config/balance";
 import {
   challengeById,
+  challenges,
   lineupById,
   lineupPoolForRegion,
+  nationalSpecialIdsByLineupId,
   playerById,
   playerCardById,
   seasonById,
@@ -25,7 +27,7 @@ import {
 } from "@/data";
 import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
 import { rankRewardsForXp } from "@/engine/progression";
-import { challengeStatus } from "@/engine/challengeStars";
+import { ALL_STARS, challengeStatus } from "@/engine/challengeStars";
 import {
   applyFreeReroll,
   applyPick,
@@ -69,7 +71,7 @@ import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
 import { registerRunStore } from "./lazyRunStore";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
-import { useProfileStore } from "./profileStore";
+import { selectChallengesUnlocked, useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
 /**
@@ -198,7 +200,10 @@ export const useRunStore = create<RunStore>()(
             eventSpecials: eventSpecialsFor(specialCards, todayKey(), useProfileStore.getState().events),
             // National teams (v2.0): a rare draw of their own in classic/quick,
             // favouring the teams the player has not completed (rc.33).
-            nationalTeams: { complete: completeNationalLineups(useProfileStore.getState().unlockedSpecials) },
+            // v2.0 (C2): rank-gated like the special rarities (`national`, Gold).
+            ...(rewards.rarities.includes("national")
+              ? { nationalTeams: { complete: completeNationalLineups(useProfileStore.getState().unlockedSpecials) } }
+              : {}),
           }),
           rng,
         );
@@ -297,6 +302,7 @@ export const useRunStore = create<RunStore>()(
         const profile = useProfileStore.getState();
         if (challengeStatus(challenge, profile.xp, profile.challengesCompleted, {
           challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved,
+          veteran: selectChallengesUnlocked(profile),
         }) === "locked") return;
         // Deterministic per-challenge seed → a repeatable, solvable puzzle.
         const rng = createRng(challenge.seed);
@@ -659,6 +665,14 @@ export const useRunStore = create<RunStore>()(
           entry,
           run.daily ? { date: run.daily.date, label: run.daily.label } : undefined,
         );
+        // v2.0 (C2): FIFAe album achievements, read after the run's cards landed.
+        {
+          const complete = completeNationalLineups(useProfileStore.getState().unlockedSpecials).length;
+          const ids: string[] = [];
+          if (complete >= 1) ids.push("ach-national-first");
+          if (nationalSpecialIdsByLineupId.size > 0 && complete >= nationalSpecialIdsByLineupId.size) ids.push("ach-national-all");
+          if (ids.length) useProfileStore.getState().awardAchievements(ids);
+        }
         // Special Hunt (v2.0): every event card live during this run counts a run
         // toward its boost threshold.
         if (run.draft.eventSpecials?.active.length) {
@@ -721,6 +735,14 @@ export const useRunStore = create<RunStore>()(
           const had = profile.challengeStars[challenge.id] ?? 0;
           const xpForNew = starRewardXp(challenge, had, starsEarned);
           starsNew = profile.recordChallengeResult(challenge.id, starsEarned, xpForNew, challenge.reward);
+          // v2.0 (C2): challenge achievements, read from the profile after the result.
+          {
+            const after = useProfileStore.getState();
+            const ids: string[] = [];
+            if (Object.values(after.challengeStars).some((m) => (m & ALL_STARS) === ALL_STARS)) ids.push("ach-challenge-perfect");
+            if (challenges.every((c) => after.challengesCompleted[c.id])) ids.push("ach-challenge-all");
+            if (ids.length) after.awardAchievements(ids);
+          }
           if (starsNew) {
             useProfileStore.getState().applyMissionEvent({
               type: "challenge_cleared",

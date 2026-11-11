@@ -13,7 +13,7 @@
  * No React, no storage, no randomness.
  */
 
-import { MMR, mmrBackfillFloor, RANKS, SEASON_RATING } from "@/config/balance";
+import { MMR, mmrBackfillFloor, PRESEASON_RANKS, RANKS, SEASON_RATING } from "@/config/balance";
 import { PRESEASON_ID, SEASON } from "@/config/season";
 import type { Difficulty, Placement, RunMode } from "./types";
 import { rankForXp } from "./progression";
@@ -93,6 +93,17 @@ export function freshSeason(now = new Date().toISOString()): SeasonState {
   };
 }
 
+/**
+ * The rank a pre-season XP total reached, on the FROZEN pre-season ladder. The
+ * Season curve is far longer, so reading a pre-season total against `RANKS`
+ * would demote every veteran (60k was Supersonic Legend; it is Platinum now).
+ */
+export function preseasonRankIdForXp(xp: number): string {
+  let id: string = PRESEASON_RANKS[0].id;
+  for (const r of PRESEASON_RANKS) if (xp >= r.minXp) id = r.id;
+  return id;
+}
+
 /** Titles across every difficulty. */
 export function titlesOf(wins: Record<Difficulty, number>): number {
   return (wins.easy ?? 0) + (wins.normal ?? 0) + (wins.hard ?? 0) + (wins.legacy ?? 0);
@@ -116,7 +127,7 @@ export function snapshotPreseason(
     // A row saved before MMR existed (or before the v11 correction) is seeded from
     // its title history — the same floor the v1.4 cloud sync applied.
     mmr: Math.max(p.mmr ?? MMR.start, mmrBackfillFloor(wins)),
-    rankId: rankForXp(xp).id,
+    rankId: preseasonRankIdForXp(xp),
     runsCompleted,
     titles: titlesOf(wins),
     challengesCleared: Object.keys(p.challengesCompleted ?? {}).length,
@@ -138,7 +149,7 @@ export function mergeSnapshots(
   return {
     xp,
     mmr: Math.max(a.mmr, b.mmr),
-    rankId: rankForXp(xp).id,
+    rankId: preseasonRankIdForXp(xp),
     runsCompleted: Math.max(a.runsCompleted, b.runsCompleted),
     titles: Math.max(a.titles, b.titles),
     challengesCleared: Math.max(a.challengesCleared, b.challengesCleared),
