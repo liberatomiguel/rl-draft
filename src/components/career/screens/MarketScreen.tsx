@@ -90,7 +90,7 @@ import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { LockIcon } from "@/components/ui/icons";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
-import { CoachAttributeLines, CoachHireCard } from "@/components/career/training/CoachHireCard";
+import { CoachAttributeLines, CoachHireCard, CoachDevelopment } from "@/components/career/training/CoachHireCard";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { objectiveEffectPct } from "@/engine/career/training";
 import { Badge } from "@/components/ui/Badge";
@@ -195,6 +195,7 @@ function Chip({
 
 export function MarketScreen() {
   const mounted = useMounted();
+  const [coachType, setCoachType] = useState<"all" | "generated" | "dataset" | "real">("all");
   const save = useCareerSave();
   const t = useCopy();
   const C = useCareerCopy();
@@ -211,6 +212,12 @@ export function MarketScreen() {
   const [tab, setTab] = useState<Tab>(() =>
     typeof window !== "undefined" && window.location.hash === "#coaches" ? "coaches" : "free",
   );
+  useEffect(() => {
+    const syncHash = () => { if (window.location.hash === "#coaches") setTab("coaches"); };
+    const frame = requestAnimationFrame(syncHash);
+    window.addEventListener("hashchange", syncHash);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("hashchange", syncHash); };
+  }, []);
   const markMailRead = useCareerStore(s => s.markMailRead);
   useEffect(() => { if (tab === "coaches") for (const m of save?.mail ?? []) if (!m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) markMailRead(m.id); }, [tab, save?.mail, markMailRead]);
   const [search, setSearch] = useState("");
@@ -259,7 +266,7 @@ export function MarketScreen() {
       careerSeed: save.careerSeed,
       // rc.32: always a page of free agents this org can actually sign.
       signableCap: signableOverallCap(save.reputation),
-      freeAgentsOnly: save.reputation < CAREER_UNLOCKS.contractedRep,
+      freeAgentsOnly: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [save?.world.version, save?.clock.seasonIndex, save?.careerSeed, squadKey, save?.reputation]);
@@ -612,7 +619,7 @@ export function MarketScreen() {
                         <LockIcon className="h-3 w-3" />
                         {justSigned
                           ? C.market.justSignedTag
-                          : C.market.lockedAtRep(repNeededForOverall(Math.round(r.view.overall)))}
+                          : C.market.lockedAtRep(Math.max(repNeededForOverall(Math.round(r.view.overall)), r.orgRef ? CAREER_UNLOCKS.contractedRep : 0))}
                       </span>
                     </div>
                   );
@@ -655,20 +662,26 @@ export function MarketScreen() {
           {save.coach ? (
             <Panel className="p-3">
               <p className="kicker mb-2 text-[10px]">{C.market.currentCoach}</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="min-w-0 flex-1">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2"><span className="display truncate text-base font-bold text-ink">{save.coach.name}</span><Badge tone={save.coach.source === "generated" ? "neutral" : "gold"}>{save.coach.source === "real" ? C.market.coachRealTag : save.coach.source === "dataset" ? C.market.coachProTag : C.market.coachGenTag}</Badge></div>
                   <p className="mt-1 text-[11px] text-sub">{C.training.cycle.coach.wage} <span className="ml-1 text-sm font-bold text-ink">{wageLabel(C, save.coach.salaryPerSplit)}</span></p>
                 </div>
                 <div className="text-right leading-none"><div className="display text-2xl font-bold text-ink">{Math.round(save.coach.overall)}</div><div className="kicker text-[9px] text-faint">{C.common.ovr}</div></div>
-                <Button variant="ghost" size="sm" className="text-bad" onClick={() => setConfirmFire(true)}>{C.finances.dropLabel}</Button>
+                <Button variant="ghost" size="sm" className="col-span-2 justify-self-start text-bad" onClick={() => setConfirmFire(true)}>{C.finances.dropLabel}</Button>
               </div>
+              <div className="mt-3"><CoachDevelopment coach={save.coach} C={C} /></div>
               <div className="mt-2.5"><CoachAttributeLines save={save} coach={save.coach} C={C} statLabels={t.STAT_LABELS} showImpact={false} compact /></div>
             </Panel>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {coaches.map((c) => (
+          <div className="space-y-3">
+            <h2 className="display text-lg font-bold text-ink">{C.launch.coachShortlist}</h2>
+            <p className="text-xs leading-relaxed text-sub">{C.launch.coachCompare}</p>
+            <div className="flex flex-wrap gap-2" role="group" aria-label={C.launch.coachShortlist}>{(["all", "generated", "dataset", "real"] as const).map(type => <button key={type} type="button" aria-pressed={coachType === type} onClick={() => setCoachType(type)} className={cx("min-h-11 rounded-lg border px-3 text-xs", coachType === type ? "border-blue bg-blue/15 text-ink" : "border-line text-sub")}>{type === "all" ? C.news.filter.all : C.launch.coachTypes[type]} <span className="font-mono text-faint">{coaches.filter(c => type === "all" || c.source === type).length}</span></button>)}</div>
+          </div>
+          <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {coaches.filter(c => coachType === "all" || c.source === coachType).map((c) => (
               // rc.34 (DEV-03 T4): the hire card compares wage, specialty, the package effect and the expected impact.
               <CoachHireCard
                 key={c.id}
@@ -706,7 +719,7 @@ export function MarketScreen() {
                 const daysLeft = Math.max(0, o.resolveDay - save.clock.day);
                 return (
                   <Panel key={o.id} className="p-4">
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap">
                       {o.otherRef ? (
                         <button
                           type="button"
@@ -717,9 +730,9 @@ export function MarketScreen() {
                           <OrgMark save={save} orgRef={o.otherRef} size="md" />
                         </button>
                       ) : null}
-                      <div className="min-w-0 flex-1">
+                      <div className={cx("min-w-0 sm:flex-1", !o.otherRef && "col-span-2")}>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="display truncate text-base font-bold text-ink">
+                          <span className="display break-words text-base font-bold text-ink">
                             {o.playerName}
                           </span>
                           {o.blockbuster ? (
@@ -761,13 +774,13 @@ export function MarketScreen() {
                           {D.daysShort(daysLeft)}
                         </p>
                       </div>
-                      <div className="shrink-0 text-right">
+                      <div className="col-span-2 flex items-center justify-between gap-3 sm:block sm:shrink-0 sm:text-right">
                         <p className="kicker text-[9px]">{C.market.fee}</p>
                         <p className="display text-xl font-bold text-orange-bright">
                           {formatMoney(o.fee, { compact: true })}
                         </p>
                       </div>
-                      <div className="flex w-full gap-2 sm:w-auto">
+                      <div className="col-span-2 flex w-full gap-2 sm:w-auto">
                         <Button
                           variant="primary"
                           size="sm"

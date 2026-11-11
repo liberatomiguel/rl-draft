@@ -3018,4 +3018,22 @@ export const CAREER_PT: CareerCopy = {
       worlds: "Worlds",
     },
   },
+  launch: {
+    seasonDetailUnavailable: "Os resultados detalhados desta temporada não foram preservados neste save.",
+    competition: "Competição",
+    futureGoal: "Meta definida no início deste split",
+    careerStats: "Totais da carreira",
+    lineup: "Alterar escalação", swapWith: (name: string) => `Trocar com ${name}`,
+    unlocked: "Novas possibilidades", open: "Explorar", breaking: "Notícia bombástica",
+    coachTypes: { generated: "Coach comum", dataset: "Coach profissional", real: "Ex-jogador profissional" },
+    coachDetails: "Efeitos e evolução", coachGrowth: (quality: number, ceiling: number) => `Qualidade ${quality} → potencial ${ceiling}`,
+    coachRetainer: "Contrato contínuo · renovação automática pelo salário atual",
+    coachEvolution: "Qualidade e experiência evoluem no balanço de cada temporada, até o potencial do coach.",
+    coachShortlist: "Coaches disponíveis", coachCompare: "Compare tipo, qualidade, especialidade e salário semanal. Abra os detalhes para ver os efeitos no treino.",
+    sponsorSchedule: "Metas durante este contrato", automaticCamp: "Bootcamp pago pelo patrocinador · ativa sozinho quando elegível; não precisa comprar.",
+    seasonTitles: "Títulos nesta temporada", totalTitles: "Títulos na carreira", events: "Eventos disputados", wins: "Séries vencidas", losses: "Séries perdidas", games: "Jogos V–D", goals: "Gols marcados / sofridos", winRate: "Vitórias em séries", podiums: "Pódios",
+    calendarPlan: "Planeje sua temporada", calendarHint: "Escolha um mês e selecione um dia para ver a agenda e as ações.", calendarOverview: "Progresso na temporada", calendarLegend: "Legenda do calendário",
+    sundayQualified: "Vaga no Championship Sunday garantida", majorChampion: "Campeões de Major", worldsChampion: "Campeões mundiais",
+  },
+
 };

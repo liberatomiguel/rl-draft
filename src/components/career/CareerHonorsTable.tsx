@@ -18,13 +18,13 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
   const [tier, setTier] = useState<"major" | "worlds">("worlds");
   const field = tier === "major" ? "majors" : "worlds";
   const rows = honorsTableOf(save, mode)
-    .filter(r => r[field] > 0 || (mode === "orgs" && r.id === "user"))
+    .filter(r => compact || r[field] > 0 || (mode === "orgs" && r.id === "user"))
     .sort((a, b) => b[field] - a[field] || a.name.localeCompare(b.name));
-  const leaders = compact ? rows.filter(r => r.id !== "user").slice(0, 3) : rows;
+  const leaders = compact ? rows.filter(r => r.id !== "user").slice(0, 6) : rows;
   const ownTitles = tier === "major" ? save.stats.titlesMajor : save.stats.titlesWorlds;
   const filterClass = (selected: boolean) => cx(
-    "display min-h-9 min-w-0 flex-1 rounded-md border px-2 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors focus-visible:outline-2 focus-visible:outline-blue-bright",
-    selected ? "border-blue/50 bg-blue/15 text-blue-bright" : "border-transparent text-sub hover:text-ink",
+    "display min-h-11 min-w-0 flex-1 rounded-md border px-2 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors focus-visible:outline-2 focus-visible:outline-blue-bright",
+    selected ? "border-blue/70 bg-blue/25 text-ink shadow-sm" : "border-transparent text-sub hover:text-ink",
   );
 
   return (
@@ -34,12 +34,13 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
         <TrophyIcon className="h-4 w-4 shrink-0 text-faint" />
       </div>
       <div className={cx("mb-3 grid gap-2", !compact && "sm:max-w-lg sm:grid-cols-2")}>
-        <div role="group" aria-label={C.club.honorsEntityFilter} className="flex gap-1 rounded-lg border border-line bg-black/20 p-1">
+        <fieldset className="min-w-0"><legend className="mb-1 text-[10px] text-faint">{C.club.honorsEntityFilter}</legend><div role="group" aria-label={C.club.honorsEntityFilter} className="flex gap-1 rounded-lg border border-line bg-black/20 p-1">
           {(["orgs", "players"] as const).map(k => <button key={k} type="button" aria-pressed={mode === k} onClick={() => setMode(k)} className={filterClass(mode === k)}>{k === "orgs" ? C.club.honorsOrgs : C.club.honorsPlayers}</button>)}
         </div>
-        <div role="group" aria-label={C.club.honorsEventFilter} className="flex gap-1 rounded-lg border border-line bg-black/20 p-1">
+        </fieldset><fieldset className="min-w-0"><legend className="mb-1 text-[10px] text-faint">{C.club.honorsEventFilter}</legend><div role="group" aria-label={C.club.honorsEventFilter} className="flex gap-1 rounded-lg border border-line bg-black/20 p-1">
           {(["major", "worlds"] as const).map(k => <button key={k} type="button" aria-pressed={tier === k} onClick={() => setTier(k)} className={filterClass(tier === k)}><span className="inline-flex items-center justify-center gap-1.5"><EventTierIcon tier={k} className="h-3.5 w-3.5 shrink-0" />{k === "major" ? C.race.majorToggle : C.race.worldsToggle}</span></button>)}
         </div>
+        </fieldset>
       </div>
       {!compact ? <p className="mb-3 text-xs text-sub">{C.club.honorsHint}</p> : null}
       {leaders.length > 0 ? (

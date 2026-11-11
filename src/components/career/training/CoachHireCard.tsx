@@ -19,7 +19,7 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { coachEffectsFor } from "@/engine/career/development";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 import { cx } from "@/lib/util";
-import { coachImpactFor, type CoachImpact } from "@/store/careerTraining";
+import { coachTrainingProfileOf, coachImpactFor, type CoachImpact } from "@/store/careerTraining";
 import { wageLabel } from "@/components/career/careerUi";
 import { OBJECTIVE_TONE, ObjectiveIcon } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
@@ -158,6 +158,15 @@ export function CoachAttributeLines({
   );
 }
 
+export function CoachDevelopment({ coach, C }: { coach: CoachState; C: CareerCopy }) {
+  const profile = coachTrainingProfileOf(coach)!;
+  return <div className="space-y-2 rounded-lg border border-line bg-black/15 p-3">
+    <p className="text-xs font-semibold text-ink">{C.launch.coachGrowth(Math.round(profile.quality), profile.ceiling)}</p>
+    <p className="text-[11px] leading-relaxed text-sub">{C.launch.coachEvolution}</p>
+    <p className="text-[11px] leading-relaxed text-faint">{C.launch.coachRetainer}</p>
+  </div>;
+}
+
 /** One coach on the shortlist: identity → expected effect → meters → wage → Hire. */
 export function CoachHireCard({
   save,
@@ -189,15 +198,17 @@ export function CoachHireCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="display truncate text-sm font-bold text-ink">{coach.name}</div>
-          {coach.source === "real" ? <Badge tone="gold">{K.exPro}</Badge> : coach.source === "dataset" ? <Badge tone="gold">{K.proCoach}</Badge> : <Badge tone="neutral">{K.staff}</Badge>}
+          <Badge tone={coach.source === "generated" ? "neutral" : "gold"}>{C.launch.coachTypes[coach.source]}</Badge>
         </div>
         <div className="shrink-0 text-right leading-none">
           <div className="display text-2xl font-bold text-ink">{Math.round(coach.overall)}</div>
           <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
         </div>
       </div>
-      <div className="mt-3 flex-1">
-        <CoachAttributeLines save={save} coach={coach} C={C} statLabels={statLabels} showImpact />
+      <div className="mt-3 flex-1 space-y-3">
+        <p className="flex items-center gap-2 text-xs font-semibold text-cyan"><ObjectiveIcon objective={coachTrainingProfileOf(coach)!.specialty} className="h-4 w-4" />{C.training.cycle.objectives[coachTrainingProfileOf(coach)!.specialty]}</p>
+        <CoachDevelopment coach={coach} C={C} />
+        <details className="rounded-lg border border-line p-2.5"><summary className="cursor-pointer text-xs font-semibold text-blue-bright">{C.launch.coachDetails}</summary><div className="mt-3"><CoachAttributeLines save={save} coach={coach} C={C} statLabels={statLabels} showImpact /></div></details>
       </div>
       <p className="mt-3 flex items-center gap-1.5 border-t border-line pt-2.5 text-xs text-sub">
         <WalletIcon className="h-4 w-4 text-orange-bright" />

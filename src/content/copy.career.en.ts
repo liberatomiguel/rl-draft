@@ -3043,6 +3043,24 @@ export const CAREER_EN = {
       worlds: "Worlds",
     },
   },
+  launch: {
+    seasonDetailUnavailable: "Detailed results from this season were not kept in this save.",
+    competition: "Competition",
+    futureGoal: "Goal set at the start of this split",
+    careerStats: "Career totals",
+    lineup: "Change lineup", swapWith: (name: string) => `Swap with ${name}`,
+    unlocked: "New possibilities", open: "Explore", breaking: "Breaking news",
+    coachTypes: { generated: "Common coach", dataset: "Professional coach", real: "Former pro" },
+    coachDetails: "Effects and development", coachGrowth: (quality: number, ceiling: number) => `Quality ${quality} → potential ${ceiling}`,
+    coachRetainer: "Rolling contract · renews automatically at the current wage",
+    coachEvolution: "Quality and experience develop at each season review, up to the coach’s ceiling.",
+    coachShortlist: "Available coaches", coachCompare: "Compare type, quality, specialty and weekly wage. Open details for training effects.",
+    sponsorSchedule: "Goals across this contract", automaticCamp: "Sponsor-funded bootcamp · activates automatically when eligible; no purchase needed.",
+    seasonTitles: "Titles this season", totalTitles: "Career titles", events: "Events played", wins: "Series won", losses: "Series lost", games: "Games W–L", goals: "Goals scored / conceded", winRate: "Series win rate", podiums: "Podiums",
+    calendarPlan: "Plan your season", calendarHint: "Choose a month, then select a day for its schedule and actions.", calendarOverview: "Season progress", calendarLegend: "Calendar key",
+    sundayQualified: "Championship Sunday secured", majorChampion: "Major champions", worldsChampion: "World champions",
+  },
+
 };
 
 export type CareerCopy = typeof CAREER_EN;

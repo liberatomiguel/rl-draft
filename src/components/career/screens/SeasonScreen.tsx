@@ -29,6 +29,8 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
 import { seasonLabelFor, squadAge, useCareerSave } from "@/components/career/careerUi";
 import { ContractReview, rolloverBlocked } from "@/components/career/ContractReview";
+import { MilestoneMoment } from "../event/MilestoneMoment";
+import { SeasonStatistics } from "../SeasonStatistics";
 import { SeasonOutlook } from "@/components/career/finances/SeasonOutlook";
 import { SeasonGoalRows, seasonGoalText } from "@/components/career/SeasonGoalRows";
 import { seasonGoalsViewOf } from "@/engine/career/seasonGoals";
@@ -118,6 +120,7 @@ export function SeasonScreen() {
       >
         {wonWorlds ? <div className="celebrate-rays" aria-hidden /> : null}
         <div className="relative rise-in">
+          {wonWorlds ? <MilestoneMoment title={C.launch.worldsChampion} kind="worlds" /> : null}
           {isInsolvent ? (
             <>
               <p className="kicker text-[11px] text-bad">
@@ -327,6 +330,7 @@ export function SeasonScreen() {
         ) : null}
       </div>
 
+      <SeasonStatistics save={save} C={C} />
       {/* 5 — Final region table snapshot */}
       {last && last.regionTable.length > 0 ? (
         <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "180ms" }}>
@@ -456,7 +460,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border border-line bg-white/[0.02] p-2.5">
-      <p className="kicker truncate !text-[10px]">{label}</p>
+      <p className="kicker !text-[10px]">{label}</p>
       <p
         className={cx(
           "display truncate text-lg font-bold",
@@ -480,7 +484,7 @@ function BizStat({
 }) {
   return (
     <div className="min-w-0">
-      <p className="kicker truncate !text-[10px]">{label}</p>
+      <p className="kicker !text-[10px]">{label}</p>
       <p className={cx("display truncate text-xl font-bold", cls ?? "text-ink")}>{value}</p>
     </div>
   );

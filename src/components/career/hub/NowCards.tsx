@@ -310,6 +310,7 @@ export function NowEvent({
 
   return (
     <div>
+      <EventBrand name={def.name} />
       <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
         {def.name}
       </h2>

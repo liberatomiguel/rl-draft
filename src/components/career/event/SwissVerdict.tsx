@@ -11,6 +11,7 @@
  * screen reader announces the moment it appears.
  */
 
+import { MilestoneMoment } from "./MilestoneMoment";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { cx } from "@/lib/util";
@@ -53,6 +54,7 @@ export function SwissVerdict({
 
   return (
     <div role="status">
+      {through && context === "twoDay" ? <MilestoneMoment title={C.launch.sundayQualified} kind="sunday" /> : null}
       {verdict ? (
         <div
           className={cx(
