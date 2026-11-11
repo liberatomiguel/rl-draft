@@ -653,6 +653,8 @@ export const CAREER_PT: CareerCopy = {
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: a meta do Split ${p.goalSplit}`,
       sponsorEnded: (p: Record<string, string | number>) => `${p.name}: contrato concluído`,
       foundingHandover: () => `O parceiro fundador passa o bastão`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) => `${p.name}: seu bootcamp está reservado`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -761,6 +763,13 @@ export const CAREER_PT: CareerCopy = {
         `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta — o mercado é onde começa o próximo capítulo.`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) =>
+        `Faz parte do contrato: a marca paga o bootcamp deste split. Ele já começou, sem custo, e a vantagem vale até o fim do split. ${
+          Number(p.left) > 0
+            ? `Restam ${p.left} nesta temporada, cada um começando com o seu split.`
+            : `Essa é a cota desta temporada (${p.perSeason}); o próximo começa com a próxima temporada.`
+        }`,
     },
   },
 

@@ -22,7 +22,7 @@ export const HEADLINE_BEATS: ReadonlySet<string> = new Set([
   "sx-bds-rise", "s1-kc-enters", "s1-lan-back", "s2-furia-north", "s2-falcons-project",
   "s3-vitality-zen", "s3-vatira-kc", "s5-final-season",
 ]);
-export const HEADLINE_KEYS: ReadonlySet<string> = new Set(["worldsCancelled", "sponsorBootcamp"]);
+export const HEADLINE_KEYS: ReadonlySet<string> = new Set(["worldsCancelled"]);
 export const HEADLINE_UNLOCKS: ReadonlySet<string> = new Set([
   "coach", "exProCoach", "sponsors1", "sponsors2", "sponsors3", "sponsors4", "t2", "relocation",
 ]);

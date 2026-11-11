@@ -671,6 +671,8 @@ export const CAREER_EN = {
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: the Split ${p.goalSplit} goal`,
       sponsorEnded: (p: Record<string, string | number>) => `${p.name}: the deal is complete`,
       foundingHandover: () => `The founding partner hands over`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) => `${p.name}: your bootcamp is booked`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -779,6 +781,13 @@ export const CAREER_EN = {
         `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now and can turn up on the coach shortlist.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} played his final season and leaves the scene for good. His slot is open — the market is where the next chapter starts.`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) =>
+        `Part of the deal: the brand pays for this split's bootcamp. It has started already, at no cost, and its edge lasts until the split ends. ${
+          Number(p.left) > 0
+            ? `${p.left} more this season, each starting with its split.`
+            : `That is this season's allowance (${p.perSeason}); the next one starts with next season.`
+        }`,
     },
   },
 

@@ -780,6 +780,12 @@ export interface FinanceState {
   /** Sponsor-perk free bootcamps consumed this season. */
   freeBootcampsUsedThisSeason: number;
   /**
+   * v2.0 (C1): the camp running now is the sponsor's free one — it started
+   * by itself (no purchase). Cleared when the edge ends or a paid camp runs.
+   * Absent on older saves (= a bought camp).
+   */
+  bootcampFromSponsor?: boolean;
+  /**
    * rc.34 (ECO-04): missed goals' fines still to book, each spread over its
    * Mondays (CAREER_SPONSOR.fines.spreadMondays). Absent / empty = none.
    */

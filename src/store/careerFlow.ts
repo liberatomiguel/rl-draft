@@ -1083,6 +1083,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
   if (campUntil && (seasonIndex > campUntil.seasonIndex || (seasonIndex === campUntil.seasonIndex && day > campUntil.day))) {
     save.finances.bootcampSharp = 0;
     save.finances.bootcampUntil = null;
+    delete save.finances.bootcampFromSponsor;
   }
 
   // rc.34 review (Gate 3b): a fresh invite never holds the clock — not
@@ -2647,6 +2648,8 @@ function runSplitBoundary(save: CareerSave): void {
     p.gainedThisSplit = 0;
   }
   save.finances.bootcampUsedThisSplit = false;
+  // v2.0 (C1): the sponsor's free bootcamp starts by itself with the new split.
+  startSponsorBootcamp(save);
 
   // Sponsor offers appear once the org has earned some standing.
   maybeOfferSponsors(save);
@@ -4262,6 +4265,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.36 (UX-02): the season's goal, once the new season's world and clock are set.
   attachSeasonGoal(save, nextSeason, lastGoalMet);
   if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
+  // v2.0 (C1): a running deal's free bootcamp covers the new season's first split.
+  startSponsorBootcamp(save);
 
   return processDayArrival(save);
 }
@@ -5402,6 +5407,8 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
     ? { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) }
     : null;
   save.finances.bootcampUsedThisSplit = true;
+  if (isFree) save.finances.bootcampFromSponsor = true;
+  else delete save.finances.bootcampFromSponsor;
   // Shared-week grind: a permanent chemistry-accrual bump (time-together
   // convention; the structured camp bonds harder).
   for (const p of save.squad) p.splitsTogether += camp.chemistryCredit;
@@ -5826,6 +5833,78 @@ function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
   // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
   // rc.34 (S6): it hands over over two splits instead (beginFoundingHandover).
   if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) beginFoundingHandover(save);
+  // v2.0 (C1): a deal with free bootcamps starts the first one on signing.
+  startSponsorBootcamp(save);
+}
+
+/**
+ * v2.0 (C1): the sponsor's free bootcamp runs by itself — no purchase. On the
+ * first day of a split (the rollover, a split boundary) and on signing, a
+ * deal with free bootcamps left this season (sponsorFreeBootcampsOf) starts
+ * one when no camp ran this split: the same edge, span and chemistry credit
+ * as a bought camp of the org's tier, at no cost. `finances.bootcampFromSponsor`
+ * tells the UI whose camp is running (sponsorBootcampOf reads the whole state).
+ */
+function startSponsorBootcamp(save: CareerSave): boolean {
+  const fin = save.finances;
+  const allowance = sponsorFreeBootcampsOf(save.sponsor);
+  if (allowance <= 0 || fin.freeBootcampsUsedThisSeason >= allowance) return false;
+  if (save.activeEvent || fin.bootcampUsedThisSplit || fin.bootcampSharp > 0) return false;
+  if (save.phase !== "running") return false;
+  const tier = Math.max(1, bootcampTierFor(save.reputation)) as 1 | 2;
+  const camp = CAREER_GEAR.bootcamp[tier - 1];
+  const lastsSplit = CAREER_GEAR.bootcampSpan === "split";
+  fin.freeBootcampsUsedThisSeason += 1;
+  fin.bootcampSharp = camp.sharpRating * (lastsSplit ? CAREER_GEAR.bootcampSplitEdgeShare : 1);
+  fin.bootcampUntil = lastsSplit ? { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) } : null;
+  fin.bootcampUsedThisSplit = true;
+  fin.bootcampFromSponsor = true;
+  for (const p of save.squad) p.splitsTogether += camp.chemistryCredit;
+  // The first one a career ever gets is a bombshell (an unlock nobody buys); the rest are plain mail.
+  const first = !save.flags.sponsorBootcampSeen;
+  save.flags.sponsorBootcampSeen = true;
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorBootcamp",
+    bodyKey: "sponsorBootcamp",
+    params: { name: save.sponsor!.sponsorId, tier, left: allowance - fin.freeBootcampsUsedThisSeason, perSeason: allowance },
+    fromKey: "sponsor",
+    linkTo: "/career#career-progression",
+    ...(first ? { headline: true as const } : {}),
+  });
+  return true;
+}
+
+/** v2.0 (C1): the sponsor's free bootcamps, as the UI shows them. */
+export interface SponsorBootcampView {
+  /** Free bootcamps a season the running deal grants (0 = the perk is not held). */
+  perSeason: number;
+  /** Used this season, and still to come. */
+  used: number;
+  left: number;
+  /** The sponsor's camp is running now, through `until` (the split's last day). */
+  active: boolean;
+  until: { seasonIndex: number; day: number } | null;
+  /** When the next free one starts by itself: the next split, the next season, or never (no perk / none left and the deal ends). */
+  next: "nextSplit" | "nextSeason" | null;
+}
+
+export function sponsorBootcampOf(save: CareerSave): SponsorBootcampView {
+  const fin = save.finances;
+  const perSeason = sponsorFreeBootcampsOf(save.sponsor);
+  const used = Math.min(perSeason, fin.freeBootcampsUsedThisSeason ?? 0);
+  const left = Math.max(0, perSeason - used);
+  const active = Boolean(fin.bootcampFromSponsor) && fin.bootcampSharp > 0;
+  const week = weekOfDay(save.clock.day);
+  const lastSplit = week >= 21;
+  return {
+    perSeason,
+    used,
+    left,
+    active,
+    until: active ? (fin.bootcampUntil ?? null) : null,
+    next: perSeason <= 0 ? null : left > 0 && !lastSplit ? "nextSplit" : "nextSeason",
+  };
 }
 
 // ---------------------------------------------------------------------------
