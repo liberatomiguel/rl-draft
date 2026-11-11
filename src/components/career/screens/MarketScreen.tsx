@@ -33,6 +33,7 @@ import {
   runwayWeeksAfter,
   scoutReportCostFor,
   signableOverallCap,
+  signingLevelOf,
 } from "@/engine/career/economy";
 import { signableAtRep } from "@/engine/career/market";
 import type { ContractOffer } from "@/engine/career/contract";
@@ -297,7 +298,7 @@ export function MarketScreen() {
   }, [listing, tab, save]);
 
   const signableCount = useMemo(
-    () => (save ? rows.filter((r) => signableAtRep(r.view.overall, save.reputation)).length : 0),
+    () => (save ? rows.filter((r) => signableAtRep(r.view, save.reputation)).length : 0),
     [rows, save],
   );
   const visible = useMemo(() => {
@@ -306,7 +307,7 @@ export function MarketScreen() {
     if (q) out = out.filter((r) => r.view.name.toLowerCase().includes(q));
     if (regionFilter !== "all") out = out.filter((r) => r.view.region === regionFilter);
     // rc.33 (UX-07): the one rule a signing checks (market.signableAtRep).
-    if (signableOnly && save) out = out.filter((r) => signableAtRep(r.view.overall, save.reputation));
+    if (signableOnly && save) out = out.filter((r) => signableAtRep(r.view, save.reputation));
     const sorted = [...out];
     switch (sort) {
       case "ovr":
@@ -350,7 +351,7 @@ export function MarketScreen() {
   const emptySeatOpen = !windowOpen && rosterIsShort(save);
   const freeAgentSignable = windowOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
-  const targetLocked = target ? (!signableAtRep(target.view.overall, save.reputation) || (target.orgRef !== null && save.reputation < CAREER_UNLOCKS.contractedRep)) : false;
+  const targetLocked = target ? (!signableAtRep(target.view, save.reputation) || (target.orgRef !== null && save.reputation < CAREER_UNLOCKS.contractedRep)) : false;
   const nextWindowStop = windowOpen
     ? null
     : (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null);
@@ -560,7 +561,7 @@ export function MarketScreen() {
                 {visible.slice(0, shown).map((r) => {
                   // v0.3 visible signing gate: over-cap players stay browsable
                   // but read as locked, with the rep that opens the door.
-                  const repLocked = !signableAtRep(r.view.overall, save.reputation) || (tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep);
+                  const repLocked = !signableAtRep(r.view, save.reputation) || (tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep);
                   // rc.35 (front C): an org signed him in this window — no offer until the next one.
                   const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
                   const locked = repLocked || justSigned;
@@ -612,7 +613,7 @@ export function MarketScreen() {
                         <LockIcon className="h-3 w-3" />
                         {justSigned
                           ? C.market.justSignedTag
-                          : C.market.lockedAtRep(repNeededForOverall(Math.round(r.view.overall)))}
+                          : C.market.lockedAtRep(repNeededForOverall(signingLevelOf(r.view)))}
                       </span>
                     </div>
                   );
@@ -838,7 +839,7 @@ export function MarketScreen() {
                   <Badge tone="neutral">
                     🔒{" "}
                     {C.market.lockedAtRep(
-                      repNeededForOverall(Math.round(target.view.overall)),
+                      repNeededForOverall(signingLevelOf(target.view)),
                     )}
                   </Badge>
                 </span>

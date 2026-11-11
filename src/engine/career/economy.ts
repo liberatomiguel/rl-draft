@@ -453,6 +453,28 @@ export function upsideFactorFor(reachGap: number): number {
   return f;
 }
 
+/** rc.46 (R121): the elite factor on a talent's value and wage (CAREER_TALENT.elite); 1 under the elite line. */
+export function eliteFactorFor(overall: number, reachGap: number): number {
+  const E = CAREER_TALENT.elite;
+  if (reachGap <= 0 || E.valuePerPoint <= 0) return 1;
+  const above = overall + reachGap - (E.fromPotential - 1);
+  if (above <= 0) return 1;
+  return Math.min(E.valueMax, 1 + E.valuePerPoint * above * Math.min(1, reachGap / E.valueFullGap));
+}
+
+/**
+ * rc.46 (R121): the level the reputation gate reads for a new signing: his
+ * overall, plus CAREER_TALENT.elite.gateShare of the gap to his potential
+ * while he is still growing toward an elite one.
+ */
+export function signingLevelOf(p: { overall: number; potential?: number; age?: number; peakAge?: number }): number {
+  const E = CAREER_TALENT.elite;
+  const overall = Math.round(p.overall);
+  if (p.potential == null || p.potential < E.fromPotential || p.potential <= p.overall) return overall;
+  if (p.age != null && p.peakAge != null && p.age > p.peakAge) return overall;
+  return Math.round(p.overall + E.gateShare * (p.potential - p.overall));
+}
+
 /** rc.37 (F1): the talent tiers (engine and tests; a UI label must come from the scouted band). */
 export type TalentTier = "promising" | "high" | "exceptional" | "generational";
 const TALENT_TIERS: readonly TalentTier[] = ["promising", "high", "exceptional", "generational"];
@@ -505,7 +527,8 @@ export function talentFactorsFor(x: {
   return {
     reachGap,
     age: ageFactorFor(x.age, reachGap),
-    potential: hasArc ? upsideFactorFor(reachGap) : potentialFactorFor(x.overall, x.potential),
+    // rc.46 (R121): a talent who can still reach the elite pays for it.
+    potential: hasArc ? upsideFactorFor(reachGap) * eliteFactorFor(x.overall, reachGap) : potentialFactorFor(x.overall, x.potential),
     hasArc,
   };
 }

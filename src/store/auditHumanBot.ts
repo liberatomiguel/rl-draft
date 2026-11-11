@@ -25,7 +25,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
-import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, staffOn, staffPerSplitFor, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, signingLevelOf, staffOn, staffPerSplitFor, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import { userTeamFor } from "@/engine/career/worldSim";
 import type {
@@ -747,7 +747,7 @@ function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
   });
   const out: Candidate[] = [];
   const add = (view: CareerPlayerView, splitsRemaining: number | null) => {
-    if (Math.round(view.overall) > cap) return;
+    if (signingLevelOf(view) > cap) return;
     const pack = askPackageFor(view, {
       rep: save.reputation,
       seasonIndex: save.clock.seasonIndex,

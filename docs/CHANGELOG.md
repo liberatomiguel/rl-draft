@@ -25,6 +25,12 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Balance — rc.46 (2026-11-11), elite talent (R121, BALANCE_VERSION 23)
+- Miguel's playtest (SAM, Normal): signed nass very early and won Worlds in 2025. The rc.45 runs agree on the cause: the only two bot careers that held nass paid a $145k fee and $41k a split for an 87 with potential 97, he reached 95 in one season and kept that wage for three (a ready 93 cost $530k and $160k). Root cause: the fee and the wage read today's overall; the upside factor topped at x1.20 for a gap of ten, whatever the top he could reach.
+- A young player who can still reach 93 or more costs more: value and wage ask x(1 + 0.2 a point of his reachable top above 92), in full from a reach gap of five, at most x2.2. Players under that line are priced as before.
+- He signs later: the reputation gate reads his overall plus 40 % of the gap to his potential while he is still growing (an 87 with potential 97 needs reputation 50, was 40). The Market's lock, its "signable" filter and the signing itself read the same rule.
+- Measured (Normal, 63 paired careers, NA/EU/SAM, rc.45 against rc.46): nass now costs $293-328k and about twice the wage; title by 2026 2 to 2, by 2027 3 to 4, by season 10 14 to 9; early endings 7 to 8. The early titles did not move in the bots (they rarely find him); the late ones fell with the dearer youth path. Hard and Easy not measured.
+
 ### Added — rc.45 (2026-11-10), support staff (R120, BALANCE_VERSION 22)
 - Four support-staff retainers in Finances and on the progression ladder, each a weekly fee, unlocked by reputation, hired and released at will (the psychologist's rules, including the loan lock):
   - Assistant coach (reputation 16, $1.5k a split): reserves bank 80 % of the team's series XP instead of 60 %.

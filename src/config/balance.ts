@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 22;
+export const BALANCE_VERSION = 23;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2172,6 +2172,22 @@ export const CAREER_TALENT = {
    * a 70/85 (now 1.67×). The first slope must equal
    * CAREER_SALARY.potentialPerPoint (the bulk stays bit-identical; a test pins it).
    */
+  /**
+   * rc.46 (R121, Miguel's playtest 11/11: "I signed nass very early and won
+   * Worlds in 2025"): a young player who can still reach the elite. In the
+   * rc.45 runs nass (87 at 18, potential 97) cost a $145k fee and $41k a
+   * split, grew to 95 in one season and kept that wage for three, against
+   * $530k and $160k for a ready 93. From a reachable top of `fromPotential`
+   * his value and wage ask are multiplied by 1 + `valuePerPoint` a point of
+   * that top above `fromPotential` - 1, in full from a reach gap of
+   * `valueFullGap` (a 92 who can reach 93 pays a fifth of it), never above
+   * `valueMax`: an 87 who reaches 97 pays x2.0. And he signs later: the
+   * reputation gate reads his overall + `gateShare` of the gap to his
+   * potential while he is still growing (87/97 reads 91, reputation 50, was
+   * 40). Everyone under `fromPotential` is priced and gated as before.
+   * valuePerPoint 0 and gateShare 0 = rc.45.
+   */
+  elite: { fromPotential: 93, valuePerPoint: 0.2, valueFullGap: 5, valueMax: 2.2, gateShare: 0.4 },
   upsideTiers: [
     { upTo: 10, perPoint: 0.02 }, // "promising" from CAREER_TRANSFER.prospectUpside (6)
     { upTo: 15, perPoint: 0.04 }, // "high potential"

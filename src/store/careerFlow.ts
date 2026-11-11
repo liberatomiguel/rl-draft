@@ -4909,7 +4909,7 @@ export function emptySeatPriceFor(
   });
   let best: { playerId: string; name: string; cost: number; wagePerSplit: number } | null = null;
   for (const view of listing.freeAgents) {
-    if (!isCompetitiveAge(view.age) || !signableAtRep(view.overall, save.reputation)) continue;
+    if (!isCompetitiveAge(view.age) || !signableAtRep(view, save.reputation)) continue;
     const pack = askPackageFor(view, {
       rep: save.reputation,
       seasonIndex: save.clock.seasonIndex,
@@ -4968,7 +4968,7 @@ export function signingPlanFor(
 
   // v0.3 visible signing gate: new signings accept only up to the rep cap
   // (rc.33 UX-07: the one rule the Market's "signable at my reputation" filter reads).
-  if (!signableAtRep(view.overall, save.reputation)) return { error: "repGate" };
+  if (!signableAtRep(view, save.reputation)) return { error: "repGate" };
   // rc.35 (front C): a player an org signed in this window takes no other offer before it closes.
   if (justSignedElsewhere(save, playerId)) return { error: "justSigned" };
 
