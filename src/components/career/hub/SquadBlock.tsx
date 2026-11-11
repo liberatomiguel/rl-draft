@@ -260,6 +260,8 @@ function EmptySeat({ C }: { C: CareerCopy }) {
 export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: CareerCopy; team: TournamentTeam; chemTiers: Record<string, string> }) {
   const t = useCopy();
   const markCareerSeen = useCareerStore((s) => s.markCareerSeen);
+  const setStarters = useCareerStore(s => s.setStarters);
+  const [sheetPlayerId, setSheetPlayerId] = useState<string | null>(null);
   const runBootcamp = useCareerStore((s) => s.runBootcamp);
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
   const starters = save.starterIds
@@ -291,6 +293,7 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
   );
 
   const open = (p: SquadPlayer) => {
+    setSheetPlayerId(p.id);
     // UX-06: opening the player is opening his contract — its "New" mark clears.
     markCareerSeen([contractNewKey(p.id, p.contractEndSeason)]);
     setSheet({
@@ -373,7 +376,22 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
           </div>
         </div>
       ) : null}
-      <PlayerSheet data={sheet} onClose={() => setSheet(null)} />
+      <PlayerSheet data={sheet} onClose={() => setSheet(null)} actions={sheetPlayerId ? (
+        <div className="w-full space-y-2">
+          <p className="kicker text-[10px]">{C.launch.lineup}</p>
+          {save.activeEvent ? <p className="text-xs text-orange-bright">{C.event.lineupLocked}</p> : null}
+          <div className="flex flex-wrap gap-2">{save.squad.filter(p => p.id !== sheetPlayerId && (save.starterIds.includes(p.id) || save.starterIds.includes(sheetPlayerId))).map(p => (
+            <Button key={p.id} size="sm" variant="secondary" className="min-h-11" disabled={Boolean(save.activeEvent) || save.phase === "ended"} onClick={() => {
+              const next = [...save.starterIds] as [string, string, string];
+              const from = next.indexOf(sheetPlayerId); const to = next.indexOf(p.id);
+              if (from >= 0 && to >= 0) [next[from], next[to]] = [next[to], next[from]];
+              else if (from >= 0) next[from] = p.id;
+              else if (to >= 0) next[to] = sheetPlayerId;
+              setStarters(next); setSheet(null);
+            }}>{C.launch.swapWith(p.name)}</Button>
+          ))}</div>
+        </div>
+      ) : undefined} />
     </Panel>
   );
 }

@@ -22,6 +22,7 @@
  * `dealView.ts`.
  */
 
+import { goalDeadlineOf, slotsOfDeal, settleDayOf, slotSeason, slotSplit } from "@/engine/career/sponsorDeals";
 import { CAREER_SPONSOR } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
@@ -97,6 +98,21 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
       <div className="min-w-0 text-right">{children}</div>
     </div>
   );
+}
+
+function ContractGoals({ view }: { view: OfferView }) {
+  const C = useCareerCopy(); const T = C.finances.deal;
+  return <section className="mt-3 rounded-lg border border-line bg-black/15 p-3">
+    <h3 className="kicker mb-2 text-[10px]">{C.launch.sponsorSchedule}</h3>
+    <ol className="space-y-3">{slotsOfDeal(view).map((slot, i) => {
+      const goal = view.goals.find(g => g.slot === slot);
+      const by = goal ? goalDeadlineOf(goal) : settleDayOf(slot);
+      return <li key={slot} className="flex gap-2 text-xs">
+        <span className={cx("flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono", goal?.hitOn ? "bg-good/15 text-good" : goal?.missed !== undefined ? "bg-bad/15 text-bad" : "bg-blue/15 text-blue-bright")}>{i + 1}</span>
+        <div><p className="mb-1 text-[10px] text-faint">{seasonLabelFor(slotSeason(slot))} · {C.calendar.split(slotSplit(slot))}</p><p className="font-semibold leading-relaxed text-ink">{goal ? T.goal(goal.kind, goal.count, goal.place ?? 0, slotSplit(slot)) : C.launch.futureGoal}</p><p className="mt-0.5 text-[10px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))}{goal ? ` · ${goal.hitOn ? T.goalReached : goal.missed !== undefined ? T.goalMissed : T.goalOpen}` : ""}</p></div>
+      </li>;
+    })}</ol>
+  </section>;
 }
 
 /** One sponsor's card: the brand head, the six rows, an optional note and its Sign button. */
@@ -201,6 +217,8 @@ function OfferCard({
         </Row>
       </div>
 
+      <ContractGoals view={view} />
+      {view.freeBootcamps > 0 ? <p className="my-3 rounded-lg border border-good/35 bg-good/10 p-3 text-xs font-semibold leading-relaxed text-good">{C.launch.automaticCamp}</p> : null}
       {note}
       {onSign ? (
         <Button
@@ -381,10 +399,10 @@ function Tile({
     <div className="min-w-0 rounded-md bg-white/[0.03] p-2">
       <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-faint">
         <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
-        <span className="truncate">{label}</span>
+        <span className="leading-relaxed">{label}</span>
       </p>
-      <p className={cx("mt-1 truncate text-sm font-bold", tone ?? "text-ink")}>{value}</p>
-      {sub ? <p className="truncate text-[10px] text-faint">{sub}</p> : null}
+      <p className={cx("mt-1 break-words text-sm font-bold", tone ?? "text-ink")}>{value}</p>
+      {sub ? <p className="text-[10px] leading-relaxed text-faint">{sub}</p> : null}
     </div>
   );
 }
@@ -547,7 +565,9 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
           <span className="text-[10px] text-faint">{C.finances.patience(view.patienceMisses, patienceMax)}</span>
         </div>
       ) : null}
-      {perks}
+      <ContractGoals view={view} />
+      {view.freeBootcamps > 0 ? <p className="mt-3 rounded-lg border border-good/35 bg-good/10 p-3 text-xs font-semibold leading-relaxed text-good">{C.launch.automaticCamp}</p> : null}
+      <details className="mt-3 text-xs text-sub"><summary className="min-h-8 cursor-pointer font-semibold">{C.finances.sponsorPerks}</summary>{perks}</details>
     </div>
   );
 }

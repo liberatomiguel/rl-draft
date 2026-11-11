@@ -9,6 +9,7 @@
 import { CAREER_CALENDAR, CAREER_SPONSOR } from "@/config/balance";
 import { dateOfDay, firstDayOfWeek, type CareerDate } from "@/engine/career/calendar";
 import {
+  sponsorFreeBootcampsOf,
   fineMaxOf,
   mondaysBetween,
   goalDeadlineOf,
@@ -61,6 +62,9 @@ export interface OfferView {
   risk: DealRisk;
   /** The first split's goal and the day its last counting event ends. */
   goal: SponsorGoal | null;
+  goals: SponsorGoal[];
+  firstSlot: number;
+  freeBootcamps: number;
   goalBy: CareerDate | null;
   /** More splits follow (a new goal each). */
   laterGoals: boolean;
@@ -118,6 +122,9 @@ export function offerViewOf(offer: SponsorState, today: CareerDay): OfferView | 
     endsOn: dateOf(terms.endsOn),
     risk: riskOf(offer),
     goal,
+    goals: terms.goals,
+    firstSlot: terms.firstSlot,
+    freeBootcamps: sponsorFreeBootcampsOf(offer),
     goalBy: goal ? dateOf(goalDeadlineOf(goal)) : null,
     laterGoals: terms.lengthSplits > 1,
     bonus: offer.bonus,

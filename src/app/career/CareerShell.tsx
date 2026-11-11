@@ -22,6 +22,8 @@ import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecis
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
+import { SponsorAutoBootcamp } from "@/components/career/sponsors/SponsorAutoBootcamp";
+import { CareerAnnouncement } from "@/components/career/news/CareerAnnouncement";
 import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
 import { ScrimBroadcast } from "@/components/career/ScrimBroadcast";
@@ -98,6 +100,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <ScrimBroadcast />
           <CareerAutopilot />
           <CareerToaster />
+          <CareerAnnouncement />
+          <SponsorAutoBootcamp />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}
           {sponsor && save ? <SponsorDecisionPrompt key={sponsor.id} save={save} C={C} canWait={sponsor.canWait} onSign={id => useCareerStore.getState().chooseSponsor(id)} onLater={() => useCareerStore.getState().parkDecision(sponsor.id)} /> : <MoneyNoticeModal />}
           {/* rc.35 (front T): a finished training cycle's results, once per cycle. */}

@@ -20,3 +20,6 @@ export const T2_EVENT_NAMES = [
   "Champions Invitational", "Prime Showdown", "Elite Eight", "Signature Series",
   "Crown Circuit", "Velocity Invitational", "Apex Gathering", "Masters Table", "Duds Cup Invitational",
 ];
+
+/** Regional partner event; never part of the worldwide name pool. */
+export const ROCKET_STREET_EVENT_NAME = "Rocket Street LATAM Championship";

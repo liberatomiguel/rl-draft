@@ -461,7 +461,7 @@ export function CalendarScreen() {
   const splits = [1, 2, 3] as const;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4">
       {/* 1 — header: date chip + season/split badges ------------------------ */}
       <div className="rise-in">
         <SectionTitle
@@ -486,59 +486,12 @@ export function CalendarScreen() {
         </Panel>
       ) : null}
 
-      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
-      <section className="rise-in">
-        <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {stops.map((stop, i) => {
-            const title = stop.event
-              ? stop.event.name
-              : stop.kind === "window"
-                ? C.calendar.window
-                : stop.kind === "payday"
-                  ? C.calendar.payday
-                  : C.calendar.seasonEnd;
-            return (
-              <button
-                key={`${stop.kind}-${stop.day}`}
-                type="button"
-                onClick={() => selectDay(stop.day)}
-                className={cx(
-                  "min-w-[10.5rem] shrink-0 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                  i === 0
-                    ? "border-orange/50 bg-orange/[0.06] hover:bg-orange/10"
-                    : "border-line bg-white/[0.02] hover:border-line-strong",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    {stop.event ? (
-                      <EventTierIcon tier={stop.event.tier} className={cx("h-3.5 w-3.5 shrink-0", TIER_ICON_TONE[stop.event.tier])} />
-                    ) : null}
-                    <span className="display truncate text-xs font-bold text-ink">{title}</span>
-                  </span>
-                  {stop.event ? (
-                    <TierChip tier={stop.event.tier} className="!px-1.5 !text-[9px]" />
-                  ) : stop.kind === "window" ? (
-                    <Badge tone="blue" className="!px-1.5 !text-[9px]">
-                      {C.calendar.windowOpen}
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-[11px] text-sub">
-                  {formatDateTiny(D, stop.date)}
-                  <span className="text-faint"> · {formatDaysAway(D, stop.daysAway)}</span>
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 3 — month calendar grid -------------------------------------------- */}
-      <section>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+        <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
+      <section className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="kicker text-[11px]">{C.calendar.monthView}</p>
+          <div><h2 className="display text-lg font-bold text-ink">{C.launch.calendarPlan}</h2><p className="mt-1 text-xs leading-relaxed text-sub">{C.launch.calendarHint}</p></div>
+          <label className="flex w-full items-center gap-2 text-xs text-sub">{C.calendar.monthView}<select aria-label={C.calendar.monthView} value={visibleMonthIndex} onChange={e => changeMonth(Number(e.target.value))} className="min-h-11 min-w-0 flex-1 rounded-lg border border-line bg-raised px-2 text-ink">{months.map((m, i) => <option key={m.key} value={i}>{D.months[m.m - 1]} {m.y}</option>)}</select></label>
           <button
             type="button"
             onClick={() => setShowWorld((v) => !v)}
@@ -556,8 +509,9 @@ export function CalendarScreen() {
 
         {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
             (payroll stays in Finances) */}
+        <details className="mt-3 rounded-lg border border-line p-2.5"><summary className="cursor-pointer text-xs font-semibold text-sub">{C.launch.calendarLegend}</summary>
         <div
-          className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
+          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
           aria-label={C.calendar.legend}
         >
           <span className="inline-flex items-center gap-1">
@@ -586,6 +540,7 @@ export function CalendarScreen() {
           ) : null}
         </div>
 
+        </details>
         <div className="mt-3 space-y-5">
           {months.filter((g) => g.key === visibleMonth?.key).map((g) => {
             return (
@@ -709,6 +664,55 @@ export function CalendarScreen() {
         </div>
       </section>
 
+</div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
+      <section className="rise-in">
+        <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
+        <div className="grid grid-cols-1 gap-2">
+          {stops.map((stop, i) => {
+            const title = stop.event
+              ? stop.event.name
+              : stop.kind === "window"
+                ? C.calendar.window
+                : stop.kind === "payday"
+                  ? C.calendar.payday
+                  : C.calendar.seasonEnd;
+            return (
+              <button
+                key={`${stop.kind}-${stop.day}`}
+                type="button"
+                onClick={() => selectDay(stop.day)}
+                className={cx(
+                  "w-full min-w-0 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                  i === 0
+                    ? "border-orange/50 bg-orange/[0.06] hover:bg-orange/10"
+                    : "border-line bg-white/[0.02] hover:border-line-strong",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {stop.event ? (
+                      <EventTierIcon tier={stop.event.tier} className={cx("h-3.5 w-3.5 shrink-0", TIER_ICON_TONE[stop.event.tier])} />
+                    ) : null}
+                    <span className="display text-xs font-bold text-ink">{title}</span>
+                  </span>
+                  {stop.event ? (
+                    <TierChip tier={stop.event.tier} className="!px-1.5 !text-[9px]" />
+                  ) : stop.kind === "window" ? (
+                    <Badge tone="blue" className="!px-1.5 !text-[9px]">
+                      {C.calendar.windowOpen}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-[11px] text-sub">
+                  {formatDateTiny(D, stop.date)}
+                  <span className="text-faint"> · {formatDaysAway(D, stop.daysAway)}</span>
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* 4 — unofficial invite ------------------------------------------------ */}
       {save.unofficialOffer && !save.pendingEventDef ? (
         <Panel glow="blue" className="rise-in p-4">
@@ -740,7 +744,7 @@ export function CalendarScreen() {
 
       {/* 5 — season overview strip -------------------------------------------- */}
       <Panel className="p-4">
-        <p className="kicker mb-3 text-[11px]">{C.calendar.seasonOverview}</p>
+        <p className="kicker mb-3 text-[11px]">{C.launch.calendarOverview}</p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {splits.map((sp) => (
             <div key={sp} className="flex items-center gap-1.5">
@@ -783,6 +787,8 @@ export function CalendarScreen() {
           </Badge>
         </div>
       </Panel>
+
+</aside></div>
 
       {/* 6 — footer actions ----------------------------------------------------- */}
       {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered

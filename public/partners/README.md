@@ -18,3 +18,5 @@ rc.36.6: Miguel supplied `5050.svg` and requested the partnership on
 2026-11-03. The exact source is kept in `data-sources/partners/5050.svg`;
 `fiftyfifty.png` is its transparent raster conversion for the existing asset
 pipeline. EN/PT credit: news presented by 50/50.
+
+Rocket Street: `rocketstreet.png` — logo supplied by Miguel for the SAM LATAM Championship and curated regional news. Run `npm run build:images` after replacing it.

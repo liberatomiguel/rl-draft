@@ -699,7 +699,7 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
     }
     return def;
   }
-  const cup = unofficialOfferFor(seasonIndex, week, { userTeamRating: approxUserRating(save), rep: save.reputation, t3EntriesThisSplit: save.t3EntriesThisSplit, careerSeed: save.careerSeed });
+  const cup = unofficialOfferFor(seasonIndex, week, { userTeamRating: approxUserRating(save), rep: save.reputation, t3EntriesThisSplit: save.t3EntriesThisSplit, careerSeed: save.careerSeed, region: save.identity.region });
   if (cup && day >= save.clock.day && day === cup.day && !save.eventResults.some(r => r.eventId === cup.id) && !save.flags[`unofficialPassed:${cup.id}`]) return cup;
   return null;
 }
@@ -1418,7 +1418,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
         userTeamRating: userRating,
         rep: save.reputation,
         t3EntriesThisSplit: save.t3EntriesThisSplit,
-        careerSeed: save.careerSeed,
+        careerSeed: save.careerSeed, region: save.identity.region,
       });
       if (offer) {
         save.unofficialOffer = offer;

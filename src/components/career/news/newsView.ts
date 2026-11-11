@@ -152,3 +152,8 @@ export function leadStoryOf(save: CareerSave, minPriority: number, maxAgeDays: n
   }
   return lead;
 }
+
+/** Curated regional coverage: never infer sponsorship from a club's SAM region. */
+export function rocketStreetNews(item: NewsItem): boolean {
+  return item.beatId === "sx-sam-hungry" || (item.titleKey === "rookieClass" && newsRegionOf(item) === "SAM");
+}
