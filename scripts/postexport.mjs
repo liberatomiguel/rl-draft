@@ -455,7 +455,7 @@ async function checkPageLanguages(ctx) {
  * INDEXABILITY (v2.0, WEB-01). The one switch is NEXT_PUBLIC_NOINDEX=1 (the
  * staging and playtest builds): the root layout then emits a noindex meta on
  * every page and robots.txt disallows everything. A page that sets its own
- * `robots` REPLACES the layout's, so until v2.0 nine pages said
+ * `robots` REPLACES the layout's, so until v2.0 eight pages said
  * "index, follow" on staging too; nothing checked it. Now:
  *  - NOINDEX build: every page carries noindex and robots.txt is Disallow: /.
  *  - production build: robots.txt allows crawling and names the sitemap; only
