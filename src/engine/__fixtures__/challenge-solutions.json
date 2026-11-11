@@ -169,8 +169,8 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "dudewiththenose-sub-nrg-esports-s4",
-        "slot": "sub"
+        "refId": "fireburner-nrg-esports-s4",
+        "slot": "player1"
       },
       {
         "kind": "pick",
@@ -181,33 +181,30 @@
         "kind": "reroll"
       },
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
+        "kind": "pick",
+        "refId": "caard-furia-2223",
+        "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "joreuz-dignitas-2122",
-        "slot": "player1"
+        "refId": "smw-twisted-minds-2024",
+        "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "team-vitality",
+        "refId": "dignitas",
         "slot": "org"
       },
       {
         "kind": "reroll"
       },
       {
-        "kind": "pick",
-        "refId": "kevin-tsm-2026",
-        "slot": "player2"
+        "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "remkoe-northern-gaming-s1",
-        "slot": "player3"
+        "refId": "deboer-sub-northern-gaming-s1",
+        "slot": "sub"
       }
     ]
   },
@@ -826,7 +823,7 @@
       },
       {
         "kind": "pick",
-        "refId": "hntr-chiefs-esports-club-2024-ewc",
+        "refId": "kaka-chiefs-esports-club-2024-ewc",
         "slot": "player3"
       },
       {
@@ -835,13 +832,16 @@
         "slot": "org"
       },
       {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "jahzo-coach-g2-esports-x",
+        "refId": "stl-coach-furia-x",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "fasi-sub-lowkey-esports-s7",
+        "refId": "jessie-sub-dignitas-x",
         "slot": "sub"
       }
     ]
