@@ -3069,6 +3069,8 @@ export const CAREER_PT: CareerCopy = {
       major: "Major",
       worlds: "Worlds",
     },
+    // v2.0 (P1): an action that failed inside the game (the save is untouched).
+    actionFailed: "Essa ação não foi concluída, e nada mudou no seu save. Tente de novo; se continuar acontecendo, avise a gente no Discord.",
   },
   launch: {
     seasonDetailUnavailable: "Os resultados detalhados desta temporada não foram preservados neste save.",

@@ -81,6 +81,9 @@ export function errorTextFor(C: CareerCopy, key: string, nextBreach: BreachOutco
       return C.squad.reviewHeld;
     case "cannotWait":
       return C.hub.lastDay;
+    // v2.0 (P1): the action threw inside the game — the store left the save untouched (careerStore.guarded).
+    case "actionFailed":
+      return C.common.actionFailed;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.

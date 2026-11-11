@@ -350,13 +350,16 @@ export interface SharedEvents {
     step: number;
     outcome: "completed" | "skipped";
   };
-  /** A persisted store failed to save or load ("write" = a non-quota write error). */
+  /**
+   * A persisted store failed to save or load ("write" = a non-quota write error).
+   * v2.0 (P1): "action" = a career action threw and the save was left untouched.
+   */
   quality_save_error: {
     gameMode: GameMode;
     /** save_error:store:kind — one report per store and kind per session. */
     actionId: string;
     store: PersistedStoreId;
-    kind: "quota" | "parse" | "migrate" | "write";
+    kind: "quota" | "parse" | "migrate" | "write" | "action";
   };
   /** A save was upgraded to a newer shape (persist version or career saveVersion). */
   quality_migration: {

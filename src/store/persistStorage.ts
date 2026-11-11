@@ -29,7 +29,7 @@ function isQuotaError(error: unknown): boolean {
 }
 
 /** One report per store and kind per session (a full disk fails every write). */
-export function reportSaveError(store: PersistedStoreId, kind: "quota" | "parse" | "migrate" | "write"): void {
+export function reportSaveError(store: PersistedStoreId, kind: "quota" | "parse" | "migrate" | "write" | "action"): void {
   trackEvent("quality_save_error", {
     gameMode: GAME_MODE[store],
     actionId: `save_error:${store}:${kind}`,

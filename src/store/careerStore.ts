@@ -128,7 +128,7 @@ import {
 import type { ContractOffer } from "@/engine/career/contract";
 import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
-import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persistStorage";
+import { reportingJSONStorage, reportingMigrate, reportMigration, reportSaveError } from "./persistStorage";
 
 /** A popup toast mirrored from a new mail/news item (session-only). */
 export interface CareerToast {
@@ -400,6 +400,28 @@ export const useCareerStore = create<CareerStoreState>()(
         return true;
       };
 
+      /**
+       * v2.0 (P1): a flow that throws must never be a dead button. Flows work on
+       * a copy, so the save is untouched: the error is surfaced (`lastError`
+       * "actionFailed", the autoplay stops) and reported once per session.
+       * The launch-wave soft lock was exactly this — `fieldForEvent` threw
+       * inside the day's arrival and "Advance" silently did nothing.
+       */
+      const guarded = <T,>(run: () => T): { ok: true; value: T } | { ok: false } => {
+        try {
+          return { ok: true, value: run() };
+        } catch (error) {
+          console.error("[career] action failed; the save was left untouched", error);
+          try {
+            reportSaveError("career", "action");
+          } catch {
+            /* reporting must never throw into gameplay */
+          }
+          set({ lastError: "actionFailed", autoAdvance: false });
+          return { ok: false };
+        }
+      };
+
       const withSave = (
         fn: (save: CareerSave) => CareerSave,
         opts?: { allowEnded?: boolean; track?: CareerAction },
@@ -410,7 +432,9 @@ export const useCareerStore = create<CareerStoreState>()(
         const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
-        const next = fn(slots[activeSlot]!);
+        const ran = guarded(() => fn(slots[activeSlot]!));
+        if (!ran.ok) return;
+        const next = ran.value;
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = next !== prevSave ? seedCareerNew(prevSave, next) : undefined;
         if (seeded) next.newItems = seeded;
@@ -452,10 +476,13 @@ export const useCareerStore = create<CareerStoreState>()(
         if (refuseEnded()) return;
         const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
-        const result = fn(slots[activeSlot]!);
-        const error = result.error;
         // rc.37 F2 (package 4): a one-off spend that brings the floor within reach raises its notice at once.
-        const save = spendAlertFlow(prevSave, result.save);
+        const ran = guarded(() => {
+          const out = fn(slots[activeSlot]!);
+          return { error: out.error, save: spendAlertFlow(prevSave, out.save) };
+        });
+        if (!ran.ok) return;
+        const { error, save } = ran.value;
         const changed = save !== slots[activeSlot];
         // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
         if (changed) grantCareerXp(prevSave, save);

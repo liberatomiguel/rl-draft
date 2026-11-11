@@ -3094,6 +3094,8 @@ export const CAREER_EN = {
       major: "Major",
       worlds: "Worlds",
     },
+    // v2.0 (P1): an action that failed inside the game (the save is untouched).
+    actionFailed: "That did not go through, and nothing in your save changed. Try again; if it keeps happening, tell us on Discord.",
   },
   launch: {
     seasonDetailUnavailable: "Detailed results from this season were not kept in this save.",

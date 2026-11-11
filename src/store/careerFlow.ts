@@ -3459,16 +3459,33 @@ export function setCommunityParticipantsFlow(input: CareerSave, ids: string[]): 
   return { save };
 }
 
+/**
+ * v2.0 (P1): why the user's event cannot start today — the ONE rule `startEvent`
+ * and the event lobby share, so the lobby never offers a button the flow
+ * refuses (the soft lock: a starter ruled out with no reserve left "Play it
+ * out" and "Instant result" on screen, and both did nothing). Null = it starts.
+ */
+export type EventStartBlock =
+  /** Not its matchday (the lobby is a read-only preview). */
+  | "notToday"
+  /** RTW-05 (rc.33): fewer players under contract than the event seats. */
+  | "rosterShort"
+  /** rc.39 F6 (R103): a starter ruled out and no reserve to take his seat. */
+  | "absentNoReserve";
+
+export function eventStartBlockOf(save: CareerSave, def: CareerEventDef): EventStartBlock | null {
+  if (save.clock.day !== def.day) return "notToday";
+  if (save.squad.length < (def.teamSize ?? LINEUP_SEATS)) return "rosterShort";
+  if (!def.teamSize && uncoveredAbsenceOf(save)) return "absentNoReserve";
+  return null;
+}
+
 export function startEvent(input: CareerSave, watch: boolean): CareerSave {
+  const pending = input.pendingEventDef;
+  // v2.0 (P1): every refusal hands the SAME save back (no clone, no write).
+  if (!pending || input.activeEvent || eventStartBlockOf(input, pending)) return input;
   const save = clone(input);
-  const def = save.pendingEventDef;
-  if (!def || save.activeEvent) return save;
-  // The lobby opens on the matchday only (the day clock stops there).
-  if (save.clock.day !== def.day) return save;
-  // RTW-05 (rc.33): never with fewer than three players (no stand-in).
-  if (save.squad.length < (def.teamSize ?? LINEUP_SEATS)) return input;
-  // rc.39 F6 (R103): nor with a starter ruled out and no reserve to take his seat.
-  if (!def.teamSize && uncoveredAbsenceOf(save)) return input;
+  const def = save.pendingEventDef!;
 
   const { team, fieldedIds } = userTeamForEvent(save, def);
   const { field, fieldQuality } = fieldForEvent(def, {
