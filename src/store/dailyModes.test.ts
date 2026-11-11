@@ -3,7 +3,7 @@ import { QUIZ } from "@/config/balance";
 import { quizForDate, quizFacts, cluesFor } from "@/engine/quiz";
 import { visibleClues, mergeQuiz } from "@/engine/quizState";
 import { todayKey } from "@/lib/dailyPlan";
-import { coachById, playerCardById, subById } from "@/data";
+import { achievements, coachById, playerCardById, subById } from "@/data";
 import { finalOverall } from "@/engine/cards";
 import { slotsForKind } from "@/engine/draft";
 import type { DraftOfferCard, RunHistoryEntry, RunResults } from "@/engine/types";
@@ -29,7 +29,9 @@ describe("CH-03: Daily Quiz", () => {
     expect(visibleClues(puzzle, attempt - 1).length).toBeGreaterThanOrEqual(2);
     const before = useProfileStore.getState().xp;
     expect(useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer")).toMatchObject({ correct: true, xp: QUIZ.xpByAttempt[attempt], attempts: attempt });
-    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt]);
+    // A first-guess solve also earns "Called It" (v2.0, C2), once.
+    const calledIt = attempt === 1 ? achievements.find((a) => a.id === "ach-quiz-first-try")!.xp : 0;
+    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt] + calledIt);
     const snapshot = JSON.parse(JSON.stringify(useProfileStore.getState().quiz));
     const xp = useProfileStore.getState().xp;
     for (let i = 0; i < 3; i++) useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer");

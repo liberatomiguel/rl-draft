@@ -15,8 +15,10 @@ import { persist } from "zustand/middleware";
 import { DIFFICULTY, regionOpponentBoost, SPECIALS } from "@/config/balance";
 import {
   challengeById,
+  challenges,
   lineupById,
   lineupPoolForRegion,
+  nationalSpecialIdsByLineupId,
   playerById,
   playerCardById,
   seasonById,
@@ -25,7 +27,7 @@ import {
 } from "@/data";
 import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
 import { rankRewardsForXp } from "@/engine/progression";
-import { challengeStatus } from "@/engine/challengeStars";
+import { ALL_STARS, challengeStatus } from "@/engine/challengeStars";
 import {
   applyFreeReroll,
   applyPick,
@@ -663,6 +665,14 @@ export const useRunStore = create<RunStore>()(
           entry,
           run.daily ? { date: run.daily.date, label: run.daily.label } : undefined,
         );
+        // v2.0 (C2): FIFAe album achievements, read after the run's cards landed.
+        {
+          const complete = completeNationalLineups(useProfileStore.getState().unlockedSpecials).length;
+          const ids: string[] = [];
+          if (complete >= 1) ids.push("ach-national-first");
+          if (nationalSpecialIdsByLineupId.size > 0 && complete >= nationalSpecialIdsByLineupId.size) ids.push("ach-national-all");
+          if (ids.length) useProfileStore.getState().awardAchievements(ids);
+        }
         // Special Hunt (v2.0): every event card live during this run counts a run
         // toward its boost threshold.
         if (run.draft.eventSpecials?.active.length) {
@@ -725,6 +735,14 @@ export const useRunStore = create<RunStore>()(
           const had = profile.challengeStars[challenge.id] ?? 0;
           const xpForNew = starRewardXp(challenge, had, starsEarned);
           starsNew = profile.recordChallengeResult(challenge.id, starsEarned, xpForNew, challenge.reward);
+          // v2.0 (C2): challenge achievements, read from the profile after the result.
+          {
+            const after = useProfileStore.getState();
+            const ids: string[] = [];
+            if (Object.values(after.challengeStars).some((m) => (m & ALL_STARS) === ALL_STARS)) ids.push("ach-challenge-perfect");
+            if (challenges.every((c) => after.challengesCompleted[c.id])) ids.push("ach-challenge-all");
+            if (ids.length) after.awardAchievements(ids);
+          }
           if (starsNew) {
             useProfileStore.getState().applyMissionEvent({
               type: "challenge_cleared",

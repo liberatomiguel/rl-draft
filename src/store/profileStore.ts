@@ -572,6 +572,8 @@ export const useProfileStore = create<ProfileState>()(
               specialIds: new Set(Object.keys(unlockedSpecials).filter((id) => !isNationalSpecialId(id))),
               dailyStreak: selectDailyStreak({ ...state, dailyResults } as ProfileState),
               rankId: rankForXp(xpAfterRun).id,
+              seasonRating: mmr,
+              legacyStreakBest: legacyStreak.best,
             },
             new Set(Object.keys(achievements)),
           );
@@ -996,6 +998,8 @@ export const useProfileStore = create<ProfileState>()(
         if (out.correct) useRewardToasts.getState().push([{ kind: "quiz", attempt: out.attempts, xp: out.xp }]);
         if (accepted && out.finished) {
           get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
+          // v2.0 (C2): "Called It", solved on the first guess.
+          if (out.correct && out.attempts === 1) get().awardAchievements(["ach-quiz-first-try"]);
         }
         return out;
       },

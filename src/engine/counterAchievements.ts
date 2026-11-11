@@ -19,7 +19,15 @@ export interface CounterSnapshot {
   specialIds: ReadonlySet<string>;
   dailyStreak: number;
   rankId: string;
+  /** v2.0 (C2): Season Rating after the run. Optional so the backfill stays valid. */
+  seasonRating?: number;
+  /** v2.0 (C2): best run of consecutive Legacy titles. */
+  legacyStreakBest?: number;
 }
+
+/** Rank ladder order, lowest first (ids only: this file imports no dataset). */
+const RANK_ORDER = ["unranked", "bronze", "silver", "gold", "platinum", "diamond", "champion", "grand-champion", "supersonic-legend"];
+const rankAtLeast = (have: string, need: string): boolean => RANK_ORDER.indexOf(have) >= RANK_ORDER.indexOf(need);
 
 export function evaluateCounterAchievements(
   s: CounterSnapshot,
@@ -46,5 +54,22 @@ export function evaluateCounterAchievements(
   if (s.specialIds.has(CREATOR_SPECIAL_ID)) ids.push("ach-creator");
   if (s.dailyStreak >= 7) ids.push("ach-daily-7");
   if (s.rankId === "supersonic-legend") ids.push("ach-ssl");
+  // v2.0 (C2): higher volume tiers, the Season ladder and the Season Rating.
+  if (s.runsCompleted >= 500) ids.push("ach-runs-500");
+  if (s.runsCompleted >= 1000) ids.push("ach-runs-1000");
+  if (s.titlesTotal >= 100) ids.push("ach-titles-100");
+  if (s.titlesTotal >= 250) ids.push("ach-titles-250");
+  if (s.gamesWon >= 1000) ids.push("ach-games-1000");
+  if (s.goalsScored >= 2500) ids.push("ach-goals-2500");
+  if (s.legacyTitles >= 25) ids.push("ach-legacy-25");
+  if (s.specialsOwned >= 100) ids.push("ach-specials-100");
+  if (rankAtLeast(s.rankId, "diamond")) ids.push("ach-rank-diamond");
+  if (rankAtLeast(s.rankId, "champion")) ids.push("ach-rank-champion");
+  if (rankAtLeast(s.rankId, "grand-champion")) ids.push("ach-rank-gc");
+  const rating = s.seasonRating ?? 0;
+  if (rating >= 1000) ids.push("ach-rating-1000");
+  if (rating >= 2500) ids.push("ach-rating-2500");
+  if (rating >= 5000) ids.push("ach-rating-5000");
+  if ((s.legacyStreakBest ?? 0) >= 2) ids.push("ach-legacy-streak-2");
   return [...new Set(ids)].filter((id) => !earned.has(id));
 }

@@ -223,6 +223,7 @@ function conditionAchievements(
     if (run.difficulty === "legacy" && run.regionLock) ids.push("ach-legacy-regional");
     if (run.mode === "daily") ids.push("ach-daily-win");
     if (userSeries(t).every(userWon)) ids.push("ach-undefeated");
+    if (run.difficulty === "legacy" && userSeries(t).every(userWon)) ids.push("ach-legacy-undefeated");
     if (goalsConceded(t) === 0 && userSeries(t).length > 0) ids.push("ach-clean-sheet");
     // Lower-bracket title: lost an upper-bracket series on the way.
     if (userPlayoffSeries(t.playoffs).some((e) => e.round.startsWith("ub_") && !userWon(e.series))) {
