@@ -150,6 +150,8 @@ const ordinalEn = (n: number): string =>
  * the mails.
  */
 const sponsorGoalEn = (kind: string, count: number, place: number, split: number): string => {
+  // v2.0 (C1): split 0 = a contract goal, counted from signing to the deal's end.
+  if (!split) return sponsorContractGoalEn(kind, count, place);
   const regionals = `Split ${split}'s 3 regionals`;
   switch (kind) {
     case "enterEvents":
@@ -163,6 +165,26 @@ const sponsorGoalEn = (kind: string, count: number, place: number, split: number
       return `Qualify for the Split ${split} Major`;
     case "majorFinish":
       return place <= 1 ? `Win the Split ${split} Major` : `Top ${place} at the Split ${split} Major`;
+    default:
+      return "";
+  }
+};
+
+/** v2.0 (C1): a contract goal in words: it runs for the whole deal, from the day it is signed. */
+const sponsorContractGoalEn = (kind: string, count: number, place: number): string => {
+  const n = (one: string, many: string) => (count === 1 ? one : many);
+  switch (kind) {
+    case "enterEvents":
+      return `Enter ${count} ${n("event", "events")} during the deal`;
+    case "regionalReach":
+      return `Reach ${n("a regional", `${count} regionals`)} during the deal`;
+    case "regionalFinish":
+      if (place <= 1) return `Win ${n("a regional", `${count} regionals`)} during the deal`;
+      return `Top ${place} at ${n("a regional", `${count} regionals`)} during the deal`;
+    case "majorQualify":
+      return `Qualify for ${n("a Major", `${count} Majors`)} during the deal`;
+    case "majorFinish":
+      return place <= 1 ? `Win a Major during the deal` : `Top ${place} at a Major during the deal`;
     default:
       return "";
   }
@@ -649,6 +671,11 @@ export const CAREER_EN = {
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: the Split ${p.goalSplit} goal`,
       sponsorEnded: (p: Record<string, string | number>) => `${p.name}: the deal is complete`,
       foundingHandover: () => `The founding partner hands over`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) => `${p.name}: your bootcamp is booked`,
+      coachContractExpiring: (p: Record<string, string | number>) => `${p.coach}: deal in its final season`,
+      coachRenewed: (p: Record<string, string | number>) => `${p.coach} renews`,
+      coachLeft: (p: Record<string, string | number>) => `${p.coach} leaves at the end of his deal`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -757,6 +784,21 @@ export const CAREER_EN = {
         `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now and can turn up on the coach shortlist.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} played his final season and leaves the scene for good. His slot is open — the market is where the next chapter starts.`,
+      // v2.0 (C1)
+      sponsorBootcamp: (p: Record<string, string | number>) =>
+        `Part of the deal: the brand pays for this split's bootcamp. It has started already, at no cost, and its edge lasts until the split ends. ${
+          Number(p.left) > 0
+            ? `${p.left} more this season, each starting with its split.`
+            : `That is this season's allowance (${p.perSeason}); the next one starts with next season.`
+        }`,
+      coachContractExpiring: (p: Record<string, string | number>) =>
+        `${p.coach}'s deal ends with this season. To stay he asks ${p.wage} a week (now ${p.old}). Renew him on the Coaches page before the season ends; if you do not, he leaves at the rollover and no severance is owed.`,
+      coachRenewed: (p: Record<string, string | number>) =>
+        Number(p.raised)
+          ? `${p.coach} signed for ${p.seasons} more seasons. He has grown in the job, and his wage follows: ${p.wage} a week, up from ${p.old}.`
+          : `${p.coach} signed for ${p.seasons} more seasons on the same wage, ${p.wage} a week.`,
+      coachLeft: (p: Record<string, string | number>) =>
+        `${p.coach}'s deal ran out and was not renewed. No severance is owed. The squad trains without a coach until you hire one.`,
     },
   },
 
@@ -2216,6 +2258,9 @@ export const CAREER_EN = {
       flavor3: () => `A caster's mic caught a very honest halftime take`,
       flavor4: () => `Ping complaints filed. Ping complaints dismissed.`,
       flavor5: () => `A community montage is doing numbers this week`,
+      // v2.0 (C1)
+      worldsCancelled: () => `World Championship cancelled over the pandemic`,
+      orgRelocates: (p: Record<string, string | number>) => `${p.org} moves from ${p.from} to ${p.to}`,
     },
     // v0.2 — body text per template (same params; HQ feed renders these).
     body: {
@@ -2337,6 +2382,13 @@ export const CAREER_EN = {
         `The org put ${p.player} on the market. An offer from a side that would start him comes within a few window days.`,
       repDown: (p: Record<string, string | number>) =>
         `Expectations were stated and missed; ${p.org}'s standing takes the hit. Reputation is earned back the same way it was built.`,
+      // v2.0 (C1)
+      orgRelocates: (p: Record<string, string | number>) =>
+        Number(p.withRoster)
+          ? `${p.org} is leaving ${p.from}. The org has registered in ${p.to} for the new season and takes its squad along: the same players, a new region to prove themselves in.`
+          : `${p.org} is leaving ${p.from} for ${p.to}, and starts over there with a new squad. The players it leaves behind are free agents.`,
+      worldsCancelled: () =>
+        `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. Split 3 and its Major go ahead as planned, and the season ends after them. No world title is awarded this year; the race starts again next season.`,
     },
   },
 

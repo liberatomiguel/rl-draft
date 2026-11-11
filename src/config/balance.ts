@@ -936,6 +936,18 @@ export const CAREER_SEASONS = [
 ] as const;
 
 /**
+ * v2.0 (C1): the seasons whose World Championship was never played. Season X
+ * (2020-21, index 0): cancelled over the pandemic. The season still runs its
+ * three splits and Majors; W32 has no event, the news says so early in split
+ * 3 (`announceWeek`), and the season review opens on the season's last day.
+ */
+export const CAREER_CANCELLED_WORLDS = {
+  seasonIndexes: [0] as readonly number[],
+  /** The Monday the cancellation is announced: the second week of split 3 (W23 opens it). */
+  announceWeek: 24,
+} as const;
+
+/**
  * Season shape: 32 weeks — W1-2 preseason (window), 3 × [8-week split:
  * open, R1, open, R2, open, R3, open, Major] with 2-week windows after
  * splits 1 & 2, then the 1-week Worlds window (W31) and Worlds (W32).
@@ -1718,6 +1730,22 @@ export const CAREER_PLAN = {
     planQualityPerExperience: 0.015,
     wearCutPerExperience: 0.03,
     wearCutMax: 0.3,
+    /**
+     * v2.0 (C1, DEV-03: "a coach rated 65 or below trains like no coach").
+     * The share of a package a HIRED coach lands is never below this,
+     * whatever his quality and whether he supervises or runs the plan alone
+     * (efficiency × plan quality): a quality-60 rookie running his own plan
+     * landed 0.6 × 0.85 = 0.51 against the coachless 0.5. 0.62 keeps the
+     * cheapest hire a visible step over none (+24 % of the package's effect).
+     */
+    hiredFloor: 0.62,
+    /**
+     * v2.0 (C1): what a coach's background adds to his focus efficiency, on
+     * top of his quality — a former pro and a career professional (the
+     * dataset's real coaches) teach more than a generic hire of the same
+     * rating. Added before the range's cap (1.1).
+     */
+    sourceEfficiency: { generated: 0, real: 0.04, dataset: 0.07 } as Record<string, number>,
   },
   /**
    * T3 / decision 6-A: wear feeds today's pre-event unavailability roll — no
@@ -2954,6 +2982,18 @@ export const CAREER_COACH_MARKET = {
     ceilingRoom: [3, 8] as const,
     ceilingMax: 95,
   },
+  /**
+   * v2.0 (C1): a coach's deal works like a player's. A hire signs for
+   * `lengthSeasons` seasons; in the deal's last season the board is told
+   * (the Monday of `noticeWeek`) what he asks to stay, and the manager
+   * renews him for 1–3 seasons or lets the deal run out — not renewed, he
+   * leaves at the rollover, and the season review lists him with the
+   * players whose deals end. The ask is the players' renewal rule
+   * (CAREER_SALARY.renewalRaiseCap / renewalMarketFloor / renewalMaxJump) on
+   * his market wage at the quality and experience he has grown to. A coach
+   * hired before v2.0 has no end date: he gets one at his next rollover.
+   */
+  contract: { lengthSeasons: 2, noticeWeek: 21 },
 } as const;
 
 export const CAREER_SUB = {
@@ -3776,6 +3816,33 @@ export const CAREER_SIM = {
   /** Per-frame world-sim budget during multi-week skips before yielding. */
   advanceBudgetMs: 80,
   teamCache: true,
+} as const;
+
+/**
+ * v2.0 (C1) — PROFILE XP FROM THE CAREER. Road to Worlds pays the same Season
+ * XP the draft does (XP above): a series played, an event finished, a title,
+ * a season completed (engine/career/careerXp.ts; the store grants it on each
+ * write). MMR / Season Rating is NOT touched: it stays the draft's alone.
+ *
+ * PROVISIONAL (session C2 calibrates). Sized against the draft: a classic
+ * run pays roughly 200–500 XP in ~10 minutes; a career season is ~70–90
+ * series and ~15 events over an hour or two, so at these figures it pays
+ * about 1,000–1,400 XP before titles — two to four runs' worth.
+ *  - seriesPlayed / seriesWinBonus: every series the user plays (scrims are
+ *    not series), plus the bonus on a win.
+ *  - eventFinished: an event the user played to its end, by tier.
+ *  - title: winning it, by tier (on top of eventFinished).
+ *  - seasonCompleted: the season review filed.
+ *  - maxPerWrite: a safety cap on one save write (a Worlds title + its event
+ *    + the season is 750; nothing legitimate reaches it).
+ */
+export const CAREER_XP = {
+  seriesPlayed: 6,
+  seriesWinBonus: 4,
+  eventFinished: { t3: 10, t2: 20, qualifier: 10, regional: 30, major: 60, worlds: 100 } as Record<string, number>,
+  title: { t3: 20, t2: 40, regional: 80, major: 200, worlds: 500 },
+  seasonCompleted: 150,
+  maxPerWrite: 1_500,
 } as const;
 
 export const CAREER_SAVE = {

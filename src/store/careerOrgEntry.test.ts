@@ -18,10 +18,12 @@
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_SEASONS } from "@/config/balance";
-import { lineups } from "@/data";
+import { lineups, playerCards, players } from "@/data";
+import { CAREER_EN } from "@/content/copy.career.en";
+import { CAREER_PT } from "@/content/copy.career.pt";
 import type { CareerSave, WorldState } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
-import { createCareerSave, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
+import { advanceDayFlow, createCareerSave, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -121,5 +123,85 @@ describe("DATA-01: each org enters the career in its right season (the real roll
     }
     // Every region still fields its events from 16 by the existing seeding.
     expect(Object.values(save.world.orgs).filter((o) => o.region === "EU").length).toBeGreaterThanOrEqual(16);
+  });
+});
+
+describe("v2.0 (C1): an org changes region when its dataset lineup does, case by case", { timeout: 60_000 }, () => {
+  const idsOf = (orgId: string, seasonId: string) =>
+    lineups.filter((l) => l.orgId === orgId && l.seasonId === seasonId)[0].playerCardIds.map((cid) => playerCards.find((c) => c.id === cid)!.playerId);
+  const play = (seed: number, visit: (s: number, save: CareerSave, moved: CareerSave["news"]) => void) => {
+    let save: CareerSave = createCareerSave(INPUT, seed);
+    for (let s = 1; s < CAREER_SEASONS.length; s++) {
+      const known = new Set(save.news.map((n) => n.id));
+      save = rolloverToNextSeason(save);
+      const moved = save.news.filter((n) => n.titleKey === "orgRelocates" && !known.has(n.id));
+      // The preseason market (the anchor pass) runs on the first days.
+      for (let d = 0; d < 3; d++) save = advanceDayFlow({ ...save, pendingOffers: [], sponsorOffers: null, pendingInsert: null, unofficialOffer: null });
+      visit(s, save, moved);
+    }
+  };
+
+  it("Elevate enters SAM with a SAM squad, then starts over in APAC: its Asian lineup never plays in SAM, its SAM players stay behind", () => {
+    const apac = new Set([...idsOf("elevate", "rlcs-2022-23"), ...idsOf("elevate", "rlcs-2024")]);
+    for (const seed of [4242, 77]) {
+      let samSquad: string[] = [];
+      play(seed, (s, save, moved) => {
+        const org = save.world.orgs["elevate"];
+        if (s === 1) {
+          expect(org.region).toBe("SAM");
+          expect(org.playerIds.filter((id) => apac.has(id))).toEqual([]);
+          samSquad = [...org.playerIds];
+        }
+        if (s === 2) {
+          expect(org.region).toBe("APAC");
+          // A new project: nobody of the SAM squad travelled.
+          expect(org.playerIds.filter((id) => samSquad.includes(id))).toEqual([]);
+          const news = moved.find((n) => n.params?.org === "Elevate")!;
+          expect(news.params).toMatchObject({ from: "SAM", to: "APAC", withRoster: 0 });
+          // The user is in SAM: it is a bombshell there.
+          expect(news.headline).toBe(true);
+        }
+        // No SAM org ever fields the APAC lineup.
+        for (const o of Object.values(save.world.orgs)) {
+          if (o.region === "SAM") expect(o.playerIds.filter((id) => apac.has(id)), `${o.ref} S${s}`).toEqual([]);
+        }
+      });
+    }
+  });
+
+  it("FURIA goes north with its own squad and comes back with it: a bombshell both times", () => {
+    const north = idsOf("furia", "rlcs-2022-23");
+    expect(north.every((id) => players.find((p) => p.id === id)!.region === "SAM")).toBe(true);
+    let checked = 0;
+    for (const seed of [4242, 77, 2026]) {
+      let before: string[] = [];
+      play(seed, (s, save, moved) => {
+        const org = save.world.orgs["furia"];
+        if (s === 1) before = [...org.playerIds];
+        if (s === 2) {
+          expect(org.region).toBe("NA");
+          const news = moved.find((n) => n.params?.org === "FURIA")!;
+          expect(news.params).toMatchObject({ from: "SAM", to: "NA" });
+          expect(news.headline).toBe(true);
+          expect(CAREER_EN.news.body.orgRelocates(news.params!)).toContain("FURIA");
+          expect(CAREER_PT.news.body.orgRelocates(news.params!)).toContain("FURIA");
+          if (before.filter((id) => north.includes(id)).length >= 2) {
+            // The squad it had travelled with it (the anchor pass may then finish the real lineup).
+            expect(news.params!.withRoster).toBe(1);
+            expect(org.playerIds.filter((id) => before.includes(id) || north.includes(id))).toHaveLength(3);
+            checked += 1;
+          }
+        }
+        if (s === 3) {
+          expect(org.region).toBe("SAM");
+          expect(moved.some((n) => n.params?.org === "FURIA" && n.params?.to === "SAM")).toBe(true);
+        }
+        // Every region keeps a full field.
+        for (const region of ["SAM", "NA", "EU", "APAC"] as Region[]) {
+          expect(Object.values(save.world.orgs).filter((o) => o.region === region).length, `${region} S${s}`).toBeGreaterThanOrEqual(12);
+        }
+      });
+    }
+    expect(checked).toBeGreaterThanOrEqual(1);
   });
 });

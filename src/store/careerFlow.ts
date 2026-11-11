@@ -29,6 +29,8 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CANCELLED_WORLDS,
+  CAREER_COACH_MARKET,
   CAREER_CHEMISTRY,
   CAREER_DYNASTY,
   CAREER_CONTRACT,
@@ -59,7 +61,8 @@ import {
   CAREER_STAFF,
 } from "@/config/balance";
 import { SITE } from "@/config/site";
-import { prioritizeScrimVariety } from "@/engine/career/training";
+import { coachProfileOf, prioritizeScrimVariety } from "@/engine/career/training";
+import { coachRenewalTermsFor } from "@/engine/career/renewal";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
 import { deliverMail, deliverNews, repairCommunicationsOnLoad } from "@/engine/career/communications";
@@ -84,6 +87,7 @@ import {
   isWindowStartWeek,
   isWindowWeek,
   officialEventDefsForWeek,
+  worldsCancelledIn,
   playoffsDayFor,
   qualifierDayFor,
   qualifierDefsForWeek,
@@ -187,6 +191,7 @@ import {
   payLoanDown,
   payrollProjection,
   pushLedger,
+  coachWageFor,
   quantize,
   recordMondayBalance,
   repGainFor,
@@ -256,6 +261,9 @@ import {
   firstSlotFrom,
   goalForSlot,
   goalProgressOf,
+  goalSplitLabelOf,
+  goalsOfDeal,
+  isContractGoal,
   isAfter,
   offerTierFor,
   cappedSeasonFine,
@@ -292,6 +300,7 @@ import {
   LINEUP_SEATS,
   localSeedRowsFor,
   localSceneSeasonRating,
+  orgRelocations,
   realOrgIntake,
   regionalSeedingFor,
   repairLegacyWorld,
@@ -496,6 +505,14 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
       });
     }
   }
+}
+
+/** v2.0 (C1): the Worlds cancellation, on the wire once a season (the flag survives the news cap). */
+function announceWorldsCancelled(save: CareerSave): void {
+  const flag = `worldsCancelled:${save.clock.seasonIndex}`;
+  if (save.flags[flag]) return;
+  save.flags[flag] = true;
+  pushNews(save, { type: "milestone", priority: 3, titleKey: "worldsCancelled", headline: true });
 }
 
 function isInfinite(save: CareerSave): boolean {
@@ -1079,6 +1096,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
   if (campUntil && (seasonIndex > campUntil.seasonIndex || (seasonIndex === campUntil.seasonIndex && day > campUntil.day))) {
     save.finances.bootcampSharp = 0;
     save.finances.bootcampUntil = null;
+    delete save.finances.bootcampFromSponsor;
   }
 
   // rc.34 review (Gate 3b): a fresh invite never holds the clock — not
@@ -1129,6 +1147,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
     //     step between here and the old step 5 reads the turnover; the offers
     //     read the reputation before W31's Worlds-field gain (a career that
     //     crosses the first-offer gate on that very gain hears a split later).
+    // v2.0 (C1): Season X's Worlds is called off early in split 3 — the bombshell, once.
+    if (worldsCancelledIn(seasonIndex) && week === CAREER_CANCELLED_WORLDS.announceWeek) announceWorldsCancelled(save);
     if (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek) {
       runSplitBoundary(save);
       if (save.phase === "ended") return capNews(save);
@@ -1330,7 +1350,12 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
     if (week === CAREER_CALENDAR.worldsWindowWeek && !save.competition.worldsFieldRefs) {
       save.competition.worldsFieldRefs = worldsFieldFor(save.competition, save.careerSeed);
-      if (save.competition.worldsFieldRefs.includes("user")) {
+      if (worldsCancelledIn(seasonIndex)) {
+        // v2.0 (C1): Season X — the field is the final table, but there is no
+        // event: no reputation moves on it. The news came early in split 3
+        // (announceWorldsCancelled); a save loaded past that week hears it here.
+        announceWorldsCancelled(save);
+      } else if (save.competition.worldsFieldRefs.includes("user")) {
         gainRep(save, "worldsQualify");
         save.stats.worldsQualified += 1;
         pushNews(save, { type: "milestone", priority: 3, titleKey: "qualifiedWorlds" });
@@ -1592,6 +1617,19 @@ export function processDayArrival(input: CareerSave): CareerSave {
       enterSeasonReview(save, worldsResult);
       return capNews(save);
     }
+  }
+  // v2.0 (C1): a season with no Worlds (Season X) closes on its last day all
+  // the same — straight to the review, no champion.
+  if (
+    worldsCancelledIn(seasonIndex) &&
+    day === DAYS_PER_SEASON &&
+    save.phase !== "seasonReview" &&
+    save.phase !== "ended" &&
+    !save.activeEvent &&
+    save.pendingEventDef?.tier !== "worlds"
+  ) {
+    enterSeasonReview(save, null);
+    return capNews(save);
   }
 
   return capNews(save);
@@ -1959,7 +1997,19 @@ function lapseSponsorOffers(save: CareerSave): void {
  * Major field).
  */
 export function sponsorGoalProgressOf(save: CareerSave, goal: SponsorGoal): GoalProgress {
-  return goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+  return goalProgressOf(goal, {
+    results: save.eventResults,
+    inMajorField: inMajorFieldOf(save, goal.slot),
+    fieldSlot: majorFieldSlotOf(save),
+  });
+}
+
+/** v2.0 (C1): the split whose announced Major field the user is in right now (a contract goal counts it). */
+function majorFieldSlotOf(save: CareerSave): number | undefined {
+  const week = weekOfDay(save.clock.day);
+  const fieldSplit = week < 3 ? 0 : week < 13 ? 1 : week < 23 ? 2 : 3;
+  if (fieldSplit === 0 || !(save.competition.majorFieldRefs?.includes("user") ?? false)) return undefined;
+  return slotOf(save.clock.seasonIndex, fieldSplit as 1 | 2 | 3);
 }
 
 /** Is the user in the announced Major field of this split (the field resets at each split's first Monday)? */
@@ -1986,7 +2036,7 @@ function checkSponsorGoals(save: CareerSave): void {
   const week = weekOfDay(day);
   for (const goal of s.terms.goals) {
     if (goal.hitOn || goal.missed !== undefined) continue;
-    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+    const progress = sponsorGoalProgressOf(save, goal);
     if (!progress.hit) continue;
     goal.hitOn = { seasonIndex, day };
     save.finances = pushLedger(save.finances, { seasonIndex, week, day, kind: "sponsorBonus", amount: s.bonus, refName: s.sponsorId });
@@ -2014,7 +2064,8 @@ function goalParamsOf(goal: SponsorGoal): Record<string, string | number> {
     goalKind: goal.kind,
     goalCount: goal.count,
     goalPlace: goal.place ?? 0,
-    goalSplit: slotSplit(goal.slot),
+    // v2.0 (C1): 0 = a contract goal ("during the deal"), worded without a split.
+    goalSplit: goalSplitLabelOf(goal),
     word: goal.word,
     // The estimate it was set at (the harness scores the words on it; the copy never prints a percentage).
     chance: goal.chance,
@@ -2054,8 +2105,10 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
   if (!s?.terms) return;
   checkSponsorGoals(save);
   const goal = goalForSlot(s.terms, slot);
-  if (goal && !goal.hitOn && goal.missed === undefined) {
-    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, slot) });
+  // v2.0 (C1): a contract goal runs to the deal's end — a split boundary inside the deal settles nothing.
+  const running = goal !== null && isContractGoal(goal) && absDayOf(todayOf(save)) < absDayOf(s.terms.endsOn);
+  if (goal && !running && !goal.hitOn && goal.missed === undefined) {
+    const progress = sponsorGoalProgressOf(save, goal);
     const shortfall = shortfallOf(progress);
     goal.missed = shortfall;
     // rc.35 (front S): a season's fines never pass fines.seasonCapWeeks weeks of the deal's pay.
@@ -2068,7 +2121,12 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
       const from = { seasonIndex: save.clock.seasonIndex, day: save.clock.day + 1 };
       save.finances.sponsorFines = [...(save.finances.sponsorFines ?? []), { ...schedule, from }];
     }
-    if (s.terms.profile === "steady") s.missedCount += 1;
+    if (s.terms.profile === "steady") {
+      // v2.0 (C1): one goal a deal — the patience it costs scales with the shortfall (a full miss spends it all).
+      s.missedCount += isContractGoal(goal)
+        ? Math.max(1, Math.round(shortfall * CAREER_SPONSOR.patienceMisses))
+        : 1;
+    }
     pushNews(save, { type: "org", priority: 2, titleKey: "objectiveMissed", params: { name: s.sponsorId } });
     pushMail(save, {
       kind: "sponsor",
@@ -2099,7 +2157,7 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
     kind: "sponsor",
     titleKey: "sponsorEnded",
     bodyKey: "sponsorEnded",
-    params: { name: s.sponsorId, hits: s.terms.goals.filter((g) => g.hitOn).length, goals: s.terms.lengthSplits, demoted: demote ? 1 : 0 },
+    params: { name: s.sponsorId, hits: s.terms.goals.filter((g) => g.hitOn).length, goals: goalsOfDeal(s.terms), demoted: demote ? 1 : 0 },
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
@@ -2556,6 +2614,8 @@ function runSplitBoundary(save: CareerSave): void {
   const week = weekOfDay(day);
   // rc.34 (S6): the founding partner's handover steps once a split.
   stepFoundingHandover(save);
+  // v2.0 (C1): the coach's renewal notice, in his deal's last season.
+  if (week === CAREER_COACH_MARKET.contract.noticeWeek) noticeCoachContract(save);
   // rc.34 (ECO-04): an rc.34 deal settles this split's goal (and may end).
   if (save.sponsor?.terms) {
     settleSponsorSplit(save, slotOf(seasonIndex, week === 11 ? 1 : week === 21 ? 2 : 3));
@@ -2606,6 +2666,8 @@ function runSplitBoundary(save: CareerSave): void {
     p.gainedThisSplit = 0;
   }
   save.finances.bootcampUsedThisSplit = false;
+  // v2.0 (C1): the sponsor's free bootcamp starts by itself with the new split.
+  startSponsorBootcamp(save);
 
   // Sponsor offers appear once the org has earned some standing.
   maybeOfferSponsors(save);
@@ -4054,6 +4116,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.34 (DEV-03 T6/T4): the season's last period is filed at the rollover,
   // before the squad ages; the coach in post grows with his season.
   trainingSeasonEnd(save);
+  // v2.0 (C1): then his deal — it renews at his new wage, or ends, when its last season is over.
+  settleCoachContract(save, nextSeason);
 
   // 1. World: aging, retirement, rookie intake (procedural era included).
   const pass = agePassAndIntake(
@@ -4074,6 +4138,20 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
       priority: org.region === save.identity.region ? 2 : 1,
       titleKey: "orgEnters",
       params: { org: org.name, region: org.region },
+    });
+  }
+  // v2.0 (C1): an org whose lineup this season is in another region moves there (with its squad, or as a new project).
+  const relocation = orgRelocations(save.world, nextSeason);
+  save.world = relocation.world;
+  for (const m of relocation.moved) {
+    const mine = m.from === save.identity.region || m.to === save.identity.region;
+    pushNews(save, {
+      type: "milestone",
+      priority: mine || m.withRoster ? 3 : 1,
+      titleKey: "orgRelocates",
+      params: { org: m.name, from: m.from, to: m.to, withRoster: m.withRoster ? 1 : 0 },
+      // A bombshell when the squad travels with the org, or when it touches the user's own region.
+      ...(mine || m.withRoster ? { headline: true as const } : {}),
     });
   }
   // rc.33 (RTW-03): an org whose history is over gave its seat to an entrant.
@@ -4221,6 +4299,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.36 (UX-02): the season's goal, once the new season's world and clock are set.
   attachSeasonGoal(save, nextSeason, lastGoalMet);
   if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
+  // v2.0 (C1): a running deal's free bootcamp covers the new season's first split.
+  startSponsorBootcamp(save);
 
   return processDayArrival(save);
 }
@@ -4905,7 +4985,7 @@ export function emptySeatPriceFor(
     seasonIndex: save.clock.seasonIndex,
     careerSeed: save.careerSeed,
     signableCap: signableOverallCap(save.reputation),
-    freeAgentsOnly: true,
+    skipContracted: true,
   });
   let best: { playerId: string; name: string; cost: number; wagePerSplit: number } | null = null;
   for (const view of listing.freeAgents) {
@@ -5361,6 +5441,8 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
     ? { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) }
     : null;
   save.finances.bootcampUsedThisSplit = true;
+  if (isFree) save.finances.bootcampFromSponsor = true;
+  else delete save.finances.bootcampFromSponsor;
   // Shared-week grind: a permanent chemistry-accrual bump (time-together
   // convention; the structured camp bonds harder).
   for (const p of save.squad) p.splitsTogether += camp.chemistryCredit;
@@ -5436,7 +5518,11 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
       refName: save.coach.name,
     });
   }
-  save.coach = valid;
+  // v2.0 (C1): he signs for CAREER_COACH_MARKET.contract.lengthSeasons seasons, this one included.
+  save.coach = {
+    ...valid,
+    contractEndSeason: save.clock.seasonIndex + CAREER_COACH_MARKET.contract.lengthSeasons - 1,
+  };
   pushNews(save, {
     type: "org",
     priority: 2,
@@ -5446,6 +5532,128 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
   // rc.34 (DEV-03 f5): the period runs on — each day uses the coach present.
   onCoachChanged(save, "hired", valid.name);
   return { save };
+}
+
+/**
+ * v2.0 (C1): a coach's deal, as the UI shows it. It works like a player's:
+ * it has a last season, the manager renews it (`renewCoachFlow`) or lets it
+ * run out, the season review lists him with the players whose deals end
+ * (`coachLeavingAtRolloverOf`), and at the rollover a coach not renewed leaves.
+ */
+export interface CoachContractView {
+  /** The last season index the deal covers (null: hired before v2.0 — dated at the next rollover). */
+  endsSeason: number | null;
+  /** This is the deal's last season: not renewed, he leaves at the rollover. */
+  lastSeason: boolean;
+  /** His wage per split now, and what he asks to renew (the players' renewal rule on his market wage). */
+  wagePerSplit: number;
+  renewalWagePerSplit: number;
+  /** What priced the ask (renewal.coachRenewalTermsFor): his market wage, the raise cap or the market floor. */
+  bound: "fresh" | "cap" | "floor";
+  /** The lengths a renewal can run. */
+  lengths: readonly (1 | 2 | 3)[];
+}
+
+/** His market wage today: the hire ask of a coach of his quality, experience and background (market.ts's figure). */
+function coachFreshWageOf(save: CareerSave, coach: CoachState): number {
+  const M = CAREER_COACH_MARKET;
+  const prof = coachProfileOf(coach)!;
+  const mult = coach.source === "real" ? M.exPro.wageMult : coach.source === "dataset" ? M.staff.wageMult : 1;
+  return quantize(
+    coachWageFor({ quality: coach.overall, experience: prof.experience, exPro: false }, save.clock.seasonIndex, save.difficulty) * mult,
+  );
+}
+
+/** v2.0 (C1): what the coach asks to renew — the players' renewal rule (raise cap and market floor) on his market wage. */
+export function coachRenewalWageOf(save: CareerSave): number {
+  const coach = save.coach;
+  if (!coach) return 0;
+  return coachRenewalTermsFor(coach.salaryPerSplit, coachFreshWageOf(save, coach)).ask;
+}
+
+export function coachContractOf(save: CareerSave): CoachContractView | null {
+  const coach = save.coach;
+  if (!coach) return null;
+  const endsSeason = coach.contractEndSeason ?? null;
+  const terms = coachRenewalTermsFor(coach.salaryPerSplit, coachFreshWageOf(save, coach));
+  return {
+    endsSeason,
+    lastSeason: endsSeason !== null && endsSeason <= save.clock.seasonIndex,
+    wagePerSplit: coach.salaryPerSplit,
+    renewalWagePerSplit: terms.ask,
+    bound: terms.bound,
+    lengths: [1, 2, 3],
+  };
+}
+
+/** v2.0 (C1): the coach whose deal ends with this season — he leaves at the rollover unless renewed (the players' `leavingAtRolloverOf`). */
+export function coachLeavingAtRolloverOf(save: CareerSave): CoachState | null {
+  const coach = save.coach;
+  return coach && coach.contractEndSeason !== undefined && coach.contractEndSeason <= save.clock.seasonIndex ? coach : null;
+}
+
+/**
+ * v2.0 (C1): renew the coach, as a player is renewed (renewPlayerFlow): at
+ * what he asks (`coachRenewalWageOf`), for `lengthSeasons` seasons from the
+ * current one, his wage moving on signature. Allowed any day of a running
+ * season and in the season review. No negotiation: a coach takes his ask.
+ */
+export function renewCoachFlow(input: CareerSave, lengthSeasons: 1 | 2 | 3): FlowResult {
+  if (!input.coach) return { save: input, error: "none" };
+  if (input.phase === "ended") return { save: input, error: "blocked" };
+  if (![1, 2, 3].includes(lengthSeasons)) return { save: input, error: "invalid" };
+  const wage = coachRenewalWageOf(input);
+  // While the bank is owed, a raise must not shorten the runway (the hire's rule).
+  const delta = weeklyWageBill([], wage) - weeklyWageBill([], input.coach.salaryPerSplit);
+  if (delta > 0 && backerLocks(input, input.coach.salaryPerSplit, delta)) return { save: input, error: "loanRunway" };
+  const save = clone(input);
+  const coach = save.coach!;
+  const old = coach.salaryPerSplit;
+  coach.salaryPerSplit = wage;
+  coach.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
+  pushMail(save, {
+    kind: "contract",
+    titleKey: "coachRenewed",
+    bodyKey: "coachRenewed",
+    params: { coach: coach.name, wage: weeklyOf(wage), old: weeklyOf(old), seasons: lengthSeasons, raised: wage > old ? 1 : 0 },
+    fromKey: "agent",
+    linkTo: "/career/market#coaches",
+  });
+  return { save };
+}
+
+/** v2.0 (C1): the Monday of contract.noticeWeek in the deal's last season — the board hears what the coach asks to stay. */
+function noticeCoachContract(save: CareerSave): void {
+  const coach = coachLeavingAtRolloverOf(save);
+  if (!coach) return;
+  pushMail(save, {
+    kind: "contract",
+    titleKey: "coachContractExpiring",
+    bodyKey: "coachContractExpiring",
+    params: { coach: coach.name, wage: weeklyOf(coachRenewalWageOf(save)), old: weeklyOf(coach.salaryPerSplit) },
+    fromKey: "agent",
+    linkTo: "/career/market#coaches",
+  });
+}
+
+/**
+ * v2.0 (C1): the coach's deal at the rollover into `nextSeason`, like a
+ * player's: past its last season and not renewed, he leaves (no severance).
+ * A coach from before v2.0 has no end date — he gets one here (the coming
+ * season, so the manager has a whole season to renew him), wage untouched.
+ */
+function settleCoachContract(save: CareerSave, nextSeason: number): void {
+  const coach = save.coach;
+  if (!coach) return;
+  if (coach.contractEndSeason === undefined) {
+    coach.contractEndSeason = nextSeason;
+    return;
+  }
+  if (coach.contractEndSeason >= nextSeason) return;
+  const name = coach.name;
+  save.coach = null;
+  pushMail(save, { kind: "contract", titleKey: "coachLeft", bodyKey: "coachLeft", params: { coach: name }, fromKey: "agent", linkTo: "/career/market#coaches" });
+  onCoachChanged(save, "fired", name);
 }
 
 export function fireCoachFlow(input: CareerSave): FlowResult {
@@ -5747,6 +5955,8 @@ function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
     const terms: SponsorTerms = structuredClone(offer.terms);
     delete terms.decideBy;
     delete terms.demoted;
+    // v2.0 (C1): the contract goal counts from the signing day.
+    for (const g of terms.goals) if (isContractGoal(g)) g.from = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
     save.sponsor = { ...offer, terms, progress: 0, hitThisSplit: false, missedCount: 0 };
     save.sponsorOffers = null;
     // The fixed part on signing (Steady, Balanced); Bold's is the milestone.
@@ -5783,6 +5993,78 @@ function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
   // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
   // rc.34 (S6): it hands over over two splits instead (beginFoundingHandover).
   if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) beginFoundingHandover(save);
+  // v2.0 (C1): a deal with free bootcamps starts the first one on signing.
+  startSponsorBootcamp(save);
+}
+
+/**
+ * v2.0 (C1): the sponsor's free bootcamp runs by itself — no purchase. On the
+ * first day of a split (the rollover, a split boundary) and on signing, a
+ * deal with free bootcamps left this season (sponsorFreeBootcampsOf) starts
+ * one when no camp ran this split: the same edge, span and chemistry credit
+ * as a bought camp of the org's tier, at no cost. `finances.bootcampFromSponsor`
+ * tells the UI whose camp is running (sponsorBootcampOf reads the whole state).
+ */
+function startSponsorBootcamp(save: CareerSave): boolean {
+  const fin = save.finances;
+  const allowance = sponsorFreeBootcampsOf(save.sponsor);
+  if (allowance <= 0 || fin.freeBootcampsUsedThisSeason >= allowance) return false;
+  if (save.activeEvent || fin.bootcampUsedThisSplit || fin.bootcampSharp > 0) return false;
+  if (save.phase !== "running") return false;
+  const tier = Math.max(1, bootcampTierFor(save.reputation)) as 1 | 2;
+  const camp = CAREER_GEAR.bootcamp[tier - 1];
+  const lastsSplit = CAREER_GEAR.bootcampSpan === "split";
+  fin.freeBootcampsUsedThisSeason += 1;
+  fin.bootcampSharp = camp.sharpRating * (lastsSplit ? CAREER_GEAR.bootcampSplitEdgeShare : 1);
+  fin.bootcampUntil = lastsSplit ? { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) } : null;
+  fin.bootcampUsedThisSplit = true;
+  fin.bootcampFromSponsor = true;
+  for (const p of save.squad) p.splitsTogether += camp.chemistryCredit;
+  // The first one a career ever gets is a bombshell (an unlock nobody buys); the rest are plain mail.
+  const first = !save.flags.sponsorBootcampSeen;
+  save.flags.sponsorBootcampSeen = true;
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorBootcamp",
+    bodyKey: "sponsorBootcamp",
+    params: { name: save.sponsor!.sponsorId, tier, left: allowance - fin.freeBootcampsUsedThisSeason, perSeason: allowance },
+    fromKey: "sponsor",
+    linkTo: "/career#career-progression",
+    ...(first ? { headline: true as const } : {}),
+  });
+  return true;
+}
+
+/** v2.0 (C1): the sponsor's free bootcamps, as the UI shows them. */
+export interface SponsorBootcampView {
+  /** Free bootcamps a season the running deal grants (0 = the perk is not held). */
+  perSeason: number;
+  /** Used this season, and still to come. */
+  used: number;
+  left: number;
+  /** The sponsor's camp is running now, through `until` (the split's last day). */
+  active: boolean;
+  until: { seasonIndex: number; day: number } | null;
+  /** When the next free one starts by itself: the next split, the next season, or never (no perk / none left and the deal ends). */
+  next: "nextSplit" | "nextSeason" | null;
+}
+
+export function sponsorBootcampOf(save: CareerSave): SponsorBootcampView {
+  const fin = save.finances;
+  const perSeason = sponsorFreeBootcampsOf(save.sponsor);
+  const used = Math.min(perSeason, fin.freeBootcampsUsedThisSeason ?? 0);
+  const left = Math.max(0, perSeason - used);
+  const active = Boolean(fin.bootcampFromSponsor) && fin.bootcampSharp > 0;
+  const week = weekOfDay(save.clock.day);
+  const lastSplit = week >= 21;
+  return {
+    perSeason,
+    used,
+    left,
+    active,
+    until: active ? (fin.bootcampUntil ?? null) : null,
+    next: perSeason <= 0 ? null : left > 0 && !lastSplit ? "nextSplit" : "nextSeason",
+  };
 }
 
 // ---------------------------------------------------------------------------

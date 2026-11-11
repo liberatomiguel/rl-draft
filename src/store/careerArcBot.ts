@@ -52,6 +52,8 @@ import {
   isEventPaused,
   moneyNoticeOf,
   releasePlayerFlow,
+  coachLeavingAtRolloverOf,
+  renewCoachFlow,
   renewPlayerFlow,
   renewalTalkFor,
   resolveInsertFlow,
@@ -1059,6 +1061,8 @@ export function playArcCareer(cfg: {
     if (save.phase === "seasonReview") {
       // rc.34 (UX-06b): the explicit contract review before the rollover — the
       // bot renewed whom it wanted at W24 and lets the rest go.
+      // v2.0 (C1): a coach whose deal ends is renewed like a player (two seasons); refused (the bank), he leaves.
+      if (coachLeavingAtRolloverOf(save)) save = renewCoachFlow(save, 2).save;
       save = reviewContractsFlow(save).save;
       const hold = rolloverHoldOf(save);
       if (hold) {

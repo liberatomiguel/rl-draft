@@ -36,6 +36,8 @@ import {
   type CareerAchievementMemory,
 } from "@/engine/career/achievements";
 import { useProfileStore } from "@/store/profileStore";
+import { careerXpBetween } from "@/engine/career/careerXp";
+import { skipUnchangedWrites } from "./careerPersist";
 import { persist } from "zustand/middleware";
 import { CAREER_SAVE, CAREER_SEASONS } from "@/config/balance";
 import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
@@ -78,6 +80,7 @@ import {
   endCareer,
   finishEvent,
   fireCoachFlow,
+  renewCoachFlow,
   hireCoachFlow,
   migrateSaveToV5,
   payBankLoanFlow,
@@ -272,6 +275,8 @@ interface CareerStoreState {
   buyScoutReport: (playerId: string) => void;
   hireCoach: (coach: CoachState) => void;
   fireCoach: () => void;
+  /** v2.0 (C1): renew the coach for 1–3 seasons at what he asks (coachContractOf) — as a player is renewed. */
+  renewCoach: (lengthSeasons: 1 | 2 | 3) => void;
   chooseSponsor: (sponsorId: string) => void;
   /** v0.3: manual pay-down of the emergency loan (rc.33: the Backer's debt). */
   payDebt: (amount: number) => void;
@@ -326,6 +331,16 @@ function trackCareerWrite(prev: CareerSave, next: CareerSave, action?: CareerAct
     if (analyticsAllowed()) trackEvents(careerEventsFor(prev, next, action));
   } catch {
     // analytics must never break a save
+  }
+}
+
+/** v2.0 (C1): the profile XP one career write earned (careerXp.careerXpBetween) — granted once, never throws into gameplay. */
+function grantCareerXp(prev: CareerSave, next: CareerSave): void {
+  try {
+    const gain = careerXpBetween(prev, next);
+    if (gain.total > 0) useProfileStore.getState().grantXp(gain.total);
+  } catch {
+    // XP must never break a save
   }
 }
 
@@ -403,6 +418,8 @@ export const useCareerStore = create<CareerStoreState>()(
         // (World Champion / Dynasty badges). Read before the flow mutates.
         const worldsWon = (next.stats.titlesWorlds ?? 0) - prevWorlds;
         if (worldsWon > 0) useProfileStore.getState().addCareerWorlds(worldsWon);
+        // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
+        grantCareerXp(prevSave, next);
         next.lastPlayedAt = Date.now();
         const nextSlots = [...slots];
         nextSlots[activeSlot] = next;
@@ -440,6 +457,8 @@ export const useCareerStore = create<CareerStoreState>()(
         // rc.37 F2 (package 4): a one-off spend that brings the floor within reach raises its notice at once.
         const save = spendAlertFlow(prevSave, result.save);
         const changed = save !== slots[activeSlot];
+        // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
+        if (changed) grantCareerXp(prevSave, save);
         if (changed) save.lastPlayedAt = Date.now();
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = changed ? seedCareerNew(prevSave, save) : undefined;
@@ -565,6 +584,7 @@ export const useCareerStore = create<CareerStoreState>()(
           withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
         fireCoach: () => withResult(fireCoachFlow, { kind: "fireCoach" }),
+        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons)),
         chooseSponsor: (sponsorId) =>
           withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
@@ -656,7 +676,8 @@ export const useCareerStore = create<CareerStoreState>()(
     {
       name: "rocket-draft:career:v1",
       version: 3,
-      storage: reportingJSONStorage("career"),
+      // v2.0 (C1): a `set` that changed nothing persisted (a toast, an error, the scrim playback) no longer rewrites every slot.
+      storage: skipUnchangedWrites(reportingJSONStorage("career"), ["slots", "activeSlot", "achievements"]),
       // ADDITIVE migrate, forever: upgrade each slot in place — new versions
       // add defaults for new fields per slot instead of resetting saves.
       migrate: reportingMigrate("career", 3, (persisted) => {

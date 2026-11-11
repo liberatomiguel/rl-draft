@@ -2307,6 +2307,64 @@ export function realOrgIntake(
 }
 
 /**
+ * v2.0 (C1) — AN ORG CHANGES REGION WHEN THE DATASET SAYS SO. Each case is
+ * read from the org's own lineups: at the rollover into a dataset season, an
+ * org already in the world whose lineup that season is in ANOTHER region
+ * moves there. What happens to the squad is read from that lineup too:
+ *  - `withRoster`: at least two of the players it has are in the new
+ *    region's lineup (FURIA's Brazilians in its NA season, and back) — the
+ *    whole squad travels with the org;
+ *  - otherwise it is a new project in the new region (Elevate's APAC side,
+ *    Dignitas in NA, NiP in EU): the squad stays behind as free agents and
+ *    three fresh filler players keep the seats warm until the preseason
+ *    anchor pass signs the real lineup (as realOrgIntake does).
+ * The user's players are never touched. Deterministic (file order).
+ */
+export interface OrgRelocation {
+  ref: string;
+  name: string;
+  from: Region;
+  to: Region;
+  withRoster: boolean;
+}
+
+export function orgRelocations(
+  world: WorldState,
+  toSeasonIndex: number,
+): { world: WorldState; moved: OrgRelocation[] } {
+  const seasonId = intakeSeasonIdFor(toSeasonIndex);
+  if (toSeasonIndex <= 0 || !seasonId) return { world, moved: [] };
+  const moved: OrgRelocation[] = [];
+  let next: WorldState | null = null;
+  const seen = new Set<string>();
+  for (const lineup of lineups) {
+    if (lineup.seasonId !== seasonId || lineup.rareSpawn || lineup.national) continue;
+    if (seen.has(lineup.orgId)) continue;
+    seen.add(lineup.orgId);
+    const org = (next ?? world).orgs[lineup.orgId];
+    if (!org || org.region === lineup.region) continue;
+    next ??= { ...world, orgs: { ...world.orgs }, freeAgentIds: [...world.freeAgentIds] };
+    const wanted = new Set(lineup.playerCardIds.map((cardId) => playerCardById.get(cardId)!.playerId));
+    const withRoster = org.playerIds.filter((id) => wanted.has(id)).length >= 2;
+    let playerIds = [...org.playerIds] as [string, string, string];
+    if (!withRoster) {
+      const ids: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const id = nextFillerId(lineup.region, next);
+        ids.push(id);
+        next.freeAgentIds.push(id); // reserves the number for the next mint
+      }
+      next.freeAgentIds = [...next.freeAgentIds.filter((id) => !ids.includes(id)), ...org.playerIds];
+      playerIds = ids as [string, string, string];
+    }
+    next.orgs[org.ref] = { ...org, region: lineup.region, playerIds };
+    next.version += 1;
+    moved.push({ ref: org.ref, name: org.name, from: org.region, to: lineup.region, withRoster });
+  }
+  return { world: next ?? world, moved };
+}
+
+/**
  * rc.33 (RTW-03): a real org's dataset name — the label an org that left the
  * world (its seat taken by an entrant) keeps in old results and the wire.
  */

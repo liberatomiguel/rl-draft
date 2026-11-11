@@ -10,7 +10,29 @@ const PUBLIC_KEYS = new Set([
   "beat", "beatArchive", "beatPreempted", "transfer", "transferFee", "transferFa",
   "userSigned", "userSold", "userReleased", "result", "resultUser", "seasonChampion",
   "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
+  "worldsCancelled", "orgRelocates",
 ]);
+
+/**
+ * v2.0 (C1): the bombshells — news the UI opens as a pop-up (`headline: true`).
+ * The scripted beats that changed the scene, the keys that are always one,
+ * and the unlocks nobody buys (the `unlock` item's `params.name`).
+ */
+export const HEADLINE_BEATS: ReadonlySet<string> = new Set([
+  "sx-bds-rise", "s1-kc-enters", "s1-lan-back", "s2-furia-north", "s2-falcons-project",
+  "s3-vitality-zen", "s3-vatira-kc", "s5-final-season",
+]);
+export const HEADLINE_KEYS: ReadonlySet<string> = new Set(["worldsCancelled"]);
+export const HEADLINE_UNLOCKS: ReadonlySet<string> = new Set([
+  "coach", "exProCoach", "sponsors1", "sponsors2", "sponsors3", "sponsors4", "t2", "relocation",
+]);
+
+/** Is this item a bombshell? A live beat of the list, a headline key, or a non-purchasable unlock. */
+export function isHeadline(item: { titleKey: string; params?: Record<string, string | number>; beatId?: string }): boolean {
+  if (item.titleKey === "beat" && item.beatId !== undefined) return HEADLINE_BEATS.has(item.beatId);
+  if (item.titleKey === "unlock") return HEADLINE_UNLOCKS.has(String(item.params?.name ?? ""));
+  return HEADLINE_KEYS.has(item.titleKey);
+}
 const QUIET_KEYS = new Set([
   "flavor1", "flavor2", "flavor3", "flavor4", "flavor5", "registryRepair", "digest",
   "trainingReport", "trainingPeriod", "scrimWeek", "scrimWin", "scrimLoss",
@@ -29,7 +51,8 @@ function sameMessage(a: MailItem, b: Pick<MailDraft, "titleKey" | "params">, sea
   return identity(a.params) === identity(b.params);
 }
 
-export function deliverMail(save: CareerSave, item: MailDraft): void {
+export function deliverMail(save: CareerSave, draft: MailDraft): void {
+  const item: MailDraft = !draft.headline && isHeadline(draft) ? { ...draft, headline: true } : draft;
   if (PUBLIC_KEYS.has(item.titleKey) && !(item.titleKey === "resultUser" && item.params?.tier === "qualifier")) return;
   // The league's Sunday notice already contains the qualifier outcome.
   if (item.titleKey === "qualifiedRegional" || item.titleKey === "missedRegional") {
@@ -54,7 +77,7 @@ export function deliverNews(save: CareerSave, item: NewsDraft): void {
     return;
   }
   save.seq += 1;
-  save.news.unshift({ ...item, id: `n:${save.seq}`, seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), day: save.clock.day, read: false });
+  save.news.unshift({ ...item, ...(item.headline || isHeadline(item) ? { headline: true as const } : {}), id: `n:${save.seq}`, seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), day: save.clock.day, read: false });
   if (save.news.length > CAREER_SAVE.newsCap) save.news.length = CAREER_SAVE.newsCap;
 }
 

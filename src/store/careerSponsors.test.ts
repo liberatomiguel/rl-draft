@@ -156,7 +156,7 @@ function sign(save: CareerSave, profile: string): CareerSave {
 function withGoal(save: CareerSave, goal: Omit<SponsorGoal, "chance" | "word">): CareerSave {
   const next = structuredClone(save);
   const terms = next.sponsor!.terms!;
-  terms.goals = [...terms.goals.filter((g) => g.slot !== goal.slot), { ...goal, chance: 0.5, word: "even" }];
+  terms.goals = [...terms.goals.filter((g) => g.slot !== goal.slot && g.span === undefined), { ...goal, chance: 0.5, word: "even" }];
   return next;
 }
 
@@ -810,4 +810,73 @@ describe("rc.36 front S2 — one card per sponsor, horizontal difficulty bars, H
   });
 
 
+});
+
+// ===========================================================================
+// v2.0 (C1) — the goal runs for the deal, from signing
+// ===========================================================================
+
+describe("v2.0 (C1) — the sponsor goal runs for the whole deal", () => {
+  const contractGoal = (save: CareerSave, over: Partial<SponsorGoal>): CareerSave => {
+    const next = structuredClone(save);
+    Object.assign(next.sponsor!.terms!.goals[0], over);
+    return next;
+  };
+
+  it("signing stamps the goal's start; a split boundary inside the deal settles nothing; the deal's end settles it once", () => {
+    let save = sign(decisionAtW11(20_101), "balanced");
+    const terms = save.sponsor!.terms!;
+    expect(terms.goals).toHaveLength(1);
+    expect(terms.goals[0].span).toBe(terms.lengthSplits);
+    expect(terms.goals[0].from).toEqual({ seasonIndex: save.clock.seasonIndex, day: save.clock.day });
+    // An unreachable goal: the W21 boundary (inside the deal) neither settles nor sets a new split goal.
+    save = contractGoal(save, { kind: "regionalFinish", count: 9, place: 1 });
+    save = mondayAfter(save, 20);
+    expect(save.sponsor!.terms!.goals).toHaveLength(1);
+    expect(save.sponsor!.terms!.goals[0].missed).toBeUndefined();
+    expect(mailsOf(save, "sponsorGoalMissed")).toHaveLength(0);
+    expect(mailsOf(save, "sponsorGoalSet")).toHaveLength(0);
+    // The deal's last boundary: one miss, one fine (capped), the deal ends and the renewal is offered.
+    const end = save.sponsor!.terms!.endsOn;
+    const done = mondayAfter(save, weekOfDay(end.day) - 1, end.seasonIndex);
+    expect(done.sponsor).toBeNull();
+    expect(mailsOf(done, "sponsorGoalMissed")).toHaveLength(1);
+    expect((done.finances.sponsorFines ?? []).length).toBe(1);
+    expect(done.sponsorOffers?.length ?? 0).toBeGreaterThan(0);
+    // The mail words a contract goal without a split, EN and PT.
+    const p = mailsOf(done, "sponsorGoalMissed")[0].params!;
+    expect(p.goalSplit).toBe(0);
+    expect(CAREER_EN.mail.body.sponsorGoalMissed(p)).toContain("during the deal");
+    expect(CAREER_PT.mail.body.sponsorGoalMissed(p)).toContain("durante o contrato");
+  });
+
+  it("results from any split after the signing reach it — the bonus is paid that day, once", () => {
+    let save = sign(decisionAtW11(20_102), "balanced");
+    save = contractGoal(save, { kind: "regionalFinish", count: 2, place: 8 });
+    const s = save.clock.seasonIndex;
+    // One top 8 in split 2 and one in split 3: neither split alone reaches it.
+    save.eventResults = [...save.eventResults, userResult(s, 2, 14, "regional", "top8"), userResult(s, 3, 24, "regional", "top4")];
+    save = mondayAfter(save, 24);
+    save = mondayAfter(save, 30);
+    expect(save.sponsor!.terms!.goals[0].hitOn).toBeDefined();
+    expect(ledgerOf(save, "sponsorBonus")).toHaveLength(1);
+    expect(ledgerOf(save, "sponsorBonus")[0].amount).toBe(save.sponsor!.bonus);
+  });
+
+  it("a Steady miss spends patience with the shortfall: a full miss renews one tier lower, a near miss does not", () => {
+    const run = (count: number, results: number) => {
+      let save = sign(decisionAtW11(20_103, 30), "steady");
+      save = contractGoal(save, { kind: "regionalFinish", count, place: 8 });
+      const s = save.clock.seasonIndex;
+      for (let i = 0; i < results; i++) save.eventResults = [...save.eventResults, userResult(s, 2, 14 + 2 * i, "regional", "top8")];
+      const end = save.sponsor!.terms!.endsOn;
+      save.reputation = 30;
+      return mondayAfter(save, weekOfDay(end.day) - 1, end.seasonIndex);
+    };
+    const full = run(4, 0);
+    expect(full.sponsorOffers!.every((o) => o.terms!.demoted)).toBe(true);
+    const near = run(4, 3);
+    expect(near.sponsorOffers!.some((o) => o.terms!.demoted)).toBe(false);
+    expect((full.finances.sponsorFines ?? []).length).toBe(0);
+  });
 });

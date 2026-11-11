@@ -780,6 +780,12 @@ export interface FinanceState {
   /** Sponsor-perk free bootcamps consumed this season. */
   freeBootcampsUsedThisSeason: number;
   /**
+   * v2.0 (C1): the camp running now is the sponsor's free one — it started
+   * by itself (no purchase). Cleared when the edge ends or a paid camp runs.
+   * Absent on older saves (= a bought camp).
+   */
+  bootcampFromSponsor?: boolean;
+  /**
    * rc.34 (ECO-04): missed goals' fines still to book, each spread over its
    * Mondays (CAREER_SPONSOR.fines.spreadMondays). Absent / empty = none.
    */
@@ -955,6 +961,15 @@ export interface SponsorGoal {
   hitOn?: { seasonIndex: number; day: number };
   /** Settled as missed on its split's boundary Monday: the shortfall (0–1) the fine scales with. */
   missed?: number;
+  /**
+   * v2.0 (C1): a CONTRACT goal — it runs for the whole deal, not one split.
+   * `span` is the number of splits the deal covers from `slot`; `from` is the
+   * day it was signed (offered, until signed): every event that ends after
+   * that day and by the deal's end counts. Absent = an rc.34 per-split goal
+   * (deals signed before v2.0 keep their rules to their end).
+   */
+  span?: number;
+  from?: { seasonIndex: number; day: number };
 }
 
 /** rc.34 (ECO-04): an rc.34 deal's terms, fixed when it is offered (a signed deal keeps its figures). */
@@ -1028,6 +1043,13 @@ export interface CoachState {
   ceiling?: number;
   /** rc.34 (T4): an ex-pro's career-best card (his quality's source, printed on the card). */
   bestCard?: number;
+  /**
+   * v2.0 (C1): the last season index his deal covers, as a player's
+   * `contractEndSeason`: not renewed, he leaves at that season's rollover.
+   * Absent on a coach hired before v2.0 and on a market candidate: set on
+   * hiring, or at the next rollover.
+   */
+  contractEndSeason?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -1202,6 +1224,12 @@ export interface NewsItem {
   /** Scripted beats resolve their EN/PT text from the beats data by this id. */
   beatId?: string;
   read: boolean;
+  /**
+   * v2.0 (C1): a bombshell — the UI opens it as a pop-up once (a headline
+   * beat, Worlds cancelled, an unlock nobody buys). Set by
+   * communications.deliverNews; absent on everything else and on older saves.
+   */
+  headline?: true;
 }
 
 /**
@@ -1225,6 +1253,8 @@ export interface MailItem {
   read: boolean;
   /** Deep link into the app (route suffix under /career). */
   linkTo?: string;
+  /** v2.0 (C1): a bombshell delivered to the inbox (an unlock nobody buys) — same contract as NewsItem.headline. */
+  headline?: true;
 }
 
 // ---------------------------------------------------------------------------
