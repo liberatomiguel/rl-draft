@@ -6,19 +6,33 @@
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_CANCELLED_WORLDS } from "@/config/balance";
-import { firstDayOfWeek, officialEventDefsForWeek, worldsCancelledIn } from "@/engine/career/calendar";
+import { DAYS_PER_SEASON, firstDayOfWeek, officialEventDefsForWeek, worldsCancelledIn } from "@/engine/career/calendar";
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { HEADLINE_BEATS, isHeadline } from "@/engine/career/communications";
 import { SEASON_GOAL_CANDIDATES } from "@/engine/career/seasonGoals";
-import type { CareerSave } from "@/engine/career/types";
+import type { CareerSave, CoachState, TrainingPackage } from "@/engine/career/types";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
-import { CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
+import { coachProfileOf, coachStrengthOf, packageEffectFor } from "@/engine/career/training";
 import { signableOverallCap } from "@/engine/career/economy";
 import { listingFor } from "@/engine/career/market";
 import { playArcCareer } from "./careerArcBot";
-import { advanceDayFlow, chooseSponsorFlow, createCareerSave, runBootcampFlow, signingPlanFor, sponsorBootcampOf, type CreateCareerInput } from "./careerFlow";
+import {
+  advanceDayFlow,
+  chooseSponsorFlow,
+  coachCandidatesFor,
+  coachContractOf,
+  createCareerSave,
+  hireCoachFlow,
+  rolloverToNextSeason,
+  runBootcampFlow,
+  setCoachRenewalFlow,
+  signingPlanFor,
+  sponsorBootcampOf,
+  type CreateCareerInput,
+} from "./careerFlow";
 import { toolboxOf } from "./careerHq";
 
 const INPUT: CreateCareerInput = {
@@ -187,5 +201,84 @@ describe("v2.0 (C1) — the sponsor's free bootcamp runs by itself", () => {
     expect(save.finances.bootcampSharp).toBe(0);
     expect(save.mail.some((m) => m.titleKey === "sponsorBootcamp")).toBe(false);
     expect(sponsorBootcampOf(save)).toMatchObject({ perSeason: 0, active: false, next: null });
+  });
+});
+
+describe("v2.0 (C1) — coaches", () => {
+  const coach = (over: Partial<CoachState>): CoachState => ({
+    id: "c1-test", name: "Test Coach", overall: 60, bonusType: "mechanics", bonusLevel: "~", salaryPerSplit: 600,
+    source: "generated", experience: 0, specialty: "recovery", ceiling: 70, ...over,
+  });
+  const pkg: TrainingPackage = { objective: "development", workload: "normal" } as TrainingPackage;
+
+  it("DEV-03: any hired coach — rated 65 or below, alone or supervised — trains clearly better than no coach", () => {
+    const none = packageEffectFor(pkg, null, "p");
+    for (const overall of [50, 55, 60, 65])
+      for (const unsupervised of [false, true]) {
+        const prof = coachProfileOf(coach({ overall }))!;
+        expect(coachStrengthOf(prof, unsupervised)).toBeGreaterThanOrEqual(CAREER_PLAN.coach.hiredFloor);
+        const fx = packageEffectFor(pkg, prof, "p", { unsupervised });
+        // At least a fifth more of the package's boost lands than with nobody.
+        expect((fx.sessionMult - 1) / (none.sessionMult - 1)).toBeGreaterThanOrEqual(1.2);
+      }
+    expect(CAREER_PLAN.coach.hiredFloor).toBeGreaterThan(CAREER_PLAN.coach.coachless);
+  });
+
+  it("an ex-pro and a career professional out-train a generic coach of the same rating", () => {
+    const at = (source: CoachState["source"]) => coachProfileOf(coach({ overall: 78, source, experience: 3 }))!;
+    expect(at("real").efficiency).toBeGreaterThan(at("generated").efficiency);
+    expect(at("dataset").efficiency).toBeGreaterThan(at("real").efficiency);
+    expect(at("generated").sourceEdge).toBe(0);
+    expect(packageEffectFor(pkg, at("dataset"), "p").sessionMult).toBeGreaterThan(packageEffectFor(pkg, at("generated"), "p").sessionMult);
+  });
+
+  const atReview = (save: CareerSave): CareerSave =>
+    ({ ...save, phase: "seasonReview", clock: { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON }, pendingOffers: [], sponsorOffers: null });
+
+  it("a hire signs for two seasons; the deal renews by itself with a slow wage step; 'release' lets him go for free", () => {
+    let save = createCareerSave(INPUT, 20_701);
+    save.reputation = 30;
+    const pick = coachCandidatesFor(save).find((c) => c.source === "generated")!;
+    const hired = hireCoachFlow(save, pick);
+    expect(hired.error).toBeUndefined();
+    save = hired.save;
+    const L = CAREER_COACH_MARKET.contract;
+    expect(save.coach!.contractEndSeason).toBe(L.lengthSeasons - 1);
+    expect(coachContractOf(save)).toMatchObject({ endsSeason: 1, lastSeason: false, atEnd: "renew" });
+    const wage0 = save.coach!.salaryPerSplit;
+    // Season 0 → 1: inside the deal, nothing moves.
+    save = rolloverToNextSeason(atReview(save));
+    expect(save.coach!.salaryPerSplit).toBe(wage0);
+    expect(coachContractOf(save)!.lastSeason).toBe(true);
+    // The notice in the last season (W21's Monday) quotes the ask.
+    const noticed = mondayAfter({ ...save, sponsorOffers: null }, L.noticeWeek - 1);
+    const notice = noticed.mail.find((m) => m.titleKey === "coachContractExpiring")!;
+    expect(notice).toBeDefined();
+    expect(CAREER_EN.mail.body.coachContractExpiring(notice.params!)).toContain(save.coach!.name);
+    expect(CAREER_PT.mail.body.coachContractExpiring(notice.params!)).toContain(save.coach!.name);
+    // Season 1 → 2: renewed, the wage never down and at most raiseCap up, two more seasons.
+    const kept = rolloverToNextSeason(atReview(save));
+    expect(kept.coach!.id).toBe(pick.id);
+    expect(kept.coach!.contractEndSeason).toBe(2 + L.lengthSeasons - 1);
+    expect(kept.coach!.salaryPerSplit).toBeGreaterThanOrEqual(wage0);
+    expect(kept.coach!.salaryPerSplit).toBeLessThanOrEqual(Math.ceil(wage0 * (1 + L.raiseCap)) + 50);
+    expect(kept.mail.some((m) => m.titleKey === "coachRenewed")).toBe(true);
+    // Released instead: he leaves, nothing is paid.
+    const releasing = setCoachRenewalFlow(save, "release").save;
+    expect(coachContractOf(releasing)!.atEnd).toBe("release");
+    const gone = rolloverToNextSeason(atReview(releasing));
+    expect(gone.coach).toBeNull();
+    expect(gone.mail.some((m) => m.titleKey === "coachLeft")).toBe(true);
+    expect(gone.finances.ledger.some((l) => l.kind === "severance")).toBe(false);
+  });
+
+  it("a coach hired before v2.0 (no end date) keeps his wage and gets his date at the next rollover", () => {
+    let save = createCareerSave(INPUT, 20_702);
+    save.coach = coach({ overall: 74, salaryPerSplit: 900 });
+    delete save.coach.contractEndSeason;
+    expect(coachContractOf(save)).toMatchObject({ endsSeason: null, lastSeason: false });
+    save = rolloverToNextSeason(atReview(save));
+    expect(save.coach!.salaryPerSplit).toBe(900);
+    expect(save.coach!.contractEndSeason).toBe(1);
   });
 });

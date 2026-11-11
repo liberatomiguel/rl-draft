@@ -1726,6 +1726,22 @@ export const CAREER_PLAN = {
     planQualityPerExperience: 0.015,
     wearCutPerExperience: 0.03,
     wearCutMax: 0.3,
+    /**
+     * v2.0 (C1, DEV-03: "a coach rated 65 or below trains like no coach").
+     * The share of a package a HIRED coach lands is never below this,
+     * whatever his quality and whether he supervises or runs the plan alone
+     * (efficiency × plan quality): a quality-60 rookie running his own plan
+     * landed 0.6 × 0.85 = 0.51 against the coachless 0.5. 0.62 keeps the
+     * cheapest hire a visible step over none (+24 % of the package's effect).
+     */
+    hiredFloor: 0.62,
+    /**
+     * v2.0 (C1): what a coach's background adds to his focus efficiency, on
+     * top of his quality — a former pro and a career professional (the
+     * dataset's real coaches) teach more than a generic hire of the same
+     * rating. Added before the range's cap (1.1).
+     */
+    sourceEfficiency: { generated: 0, real: 0.04, dataset: 0.07 } as Record<string, number>,
   },
   /**
    * T3 / decision 6-A: wear feeds today's pre-event unavailability roll — no
@@ -2946,6 +2962,17 @@ export const CAREER_COACH_MARKET = {
     ceilingRoom: [3, 8] as const,
     ceilingMax: 95,
   },
+  /**
+   * v2.0 (C1): a coach signs for `lengthSeasons` seasons. In his deal's last
+   * season the board is told (the Monday of `noticeWeek`) what he asks to
+   * stay: his market wage at the quality and experience he has grown to,
+   * never below what he earns and at most `raiseCap` above it — the slow
+   * wage step that follows the slow quality step (growth). At the rollover
+   * the deal renews at that wage unless the manager chose to let him go
+   * (or renewed him early at the same terms). A coach hired before v2.0 has
+   * no end date: he gets one at his next rollover, with no wage change.
+   */
+  contract: { lengthSeasons: 2, raiseCap: 0.2, noticeWeek: 21 },
 } as const;
 
 export const CAREER_SUB = {
