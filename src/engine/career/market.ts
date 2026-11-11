@@ -100,7 +100,17 @@ export function signableAtRep(overall: number, rep: number): boolean {
 
 export interface MarketListing {
   freeAgents: CareerPlayerView[];
-  contracted: { view: CareerPlayerView; orgRef: string; splitsRemaining: number }[];
+  contracted: {
+    view: CareerPlayerView;
+    orgRef: string;
+    splitsRemaining: number;
+    /**
+     * v2.0 (C1): listed but not for sale to this org yet — its reputation is
+     * under CAREER_UNLOCKS.contractedRep. The row is browsable (name, overall,
+     * club, contract); every offer on it is refused ("contractedRep").
+     */
+    locked?: "contractedRep";
+  }[];
 }
 
 const LISTING_CAP = 120;
@@ -119,8 +129,15 @@ export function listingFor(ctx: {
   careerSeed: number;
   /** rc.32: the org's signing cap (economy.signableOverallCap) — tops the free agents up with signable ones. */
   signableCap?: number;
-  /** Skip the contracted players (an empty `contracted`) — the free-agent page only. */
+  /**
+   * The org may only sign free agents (reputation under
+   * CAREER_UNLOCKS.contractedRep). v2.0 (C1): the contracted players are
+   * still LISTED, each flagged `locked: "contractedRep"` — before, the page
+   * came back empty. For the free-agent page alone, pass `skipContracted`.
+   */
   freeAgentsOnly?: boolean;
+  /** Skip the contracted players altogether (an empty `contracted`) — a caller that only reads free agents. */
+  skipContracted?: boolean;
 }): MarketListing {
   const viewCtx: ViewCtx = {
     careerSeed: ctx.careerSeed,
@@ -139,7 +156,7 @@ export function listingFor(ctx: {
   freeAgents.sort((a, b) => b.overall - a.overall);
 
   const contracted: MarketListing["contracted"] = [];
-  for (const org of ctx.freeAgentsOnly ? [] : Object.values(ctx.world.orgs)) {
+  for (const org of ctx.skipContracted ? [] : Object.values(ctx.world.orgs)) {
     for (const id of org.playerIds) {
       if (squad.has(id)) continue;
       const view = playerViewById(id, viewCtx);
@@ -148,6 +165,7 @@ export function listingFor(ctx: {
         view,
         orgRef: org.ref,
         splitsRemaining: contractedSplitsRemaining(id, ctx.seasonIndex, ctx.careerSeed),
+        ...(ctx.freeAgentsOnly ? { locked: "contractedRep" as const } : {}),
       });
     }
   }

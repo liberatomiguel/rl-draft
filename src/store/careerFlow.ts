@@ -4946,7 +4946,7 @@ export function emptySeatPriceFor(
     seasonIndex: save.clock.seasonIndex,
     careerSeed: save.careerSeed,
     signableCap: signableOverallCap(save.reputation),
-    freeAgentsOnly: true,
+    skipContracted: true,
   });
   let best: { playerId: string; name: string; cost: number; wagePerSplit: number } | null = null;
   for (const view of listing.freeAgents) {
