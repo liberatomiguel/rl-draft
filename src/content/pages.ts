@@ -20,7 +20,7 @@
 import type { ContentPageCopy } from "@/components/content/ContentArticle";
 import { FEATURES } from "@/config/balance";
 import { COUNTS } from "@/data/counts";
-import { regionFacts } from "@/lib/database";
+import { regionFacts, regionHighlights } from "@/lib/database";
 import { REGION_PAGES, type PageSlug } from "./pageRoutes";
 import enJson from "./pages.en.json";
 import ptJson from "./pages.pt.json";
@@ -46,7 +46,9 @@ type RawPage = Omit<ContentPageCopy, "sections" | "faqs"> & {
 // `{NA.players}`, `{NA.seasons}`, `{NA.firstSeason}`, `{NA.lastSeason}`, `{NA.topOrgs}`.
 const TOKENS: Record<string, string> = { specialCards: String(COUNTS.specialCards) };
 for (const region of Object.values(REGION_PAGES)) {
-  for (const [key, value] of Object.entries(regionFacts(region))) TOKENS[`${region}.${key}`] = value;
+  for (const [key, value] of Object.entries({ ...regionFacts(region), ...regionHighlights(region) })) {
+    TOKENS[`${region}.${key}`] = value;
+  }
 }
 const fill = (text: string): string =>
   text.replace(/\{([\w.]+)\}/g, (whole, key: string) => TOKENS[key] ?? whole);

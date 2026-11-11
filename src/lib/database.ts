@@ -211,3 +211,51 @@ export const DB_TOTALS = {
   players: DB_PLAYERS.length,
   seasons: DB_SEASONS.length,
 };
+
+/** What a regional page shows from the database: its best rosters, its longest-running teams, its top players. */
+export type DbRegionShowcase = {
+  region: string;
+  rosters: { team: { id: string; name: string }; season: { slug: string; label: string }; average: number }[];
+  teams: { id: string; name: string; rosters: number }[];
+  players: { id: string; nickname: string; peak: number }[];
+};
+
+export function regionShowcase(region: string): DbRegionShowcase {
+  const lineups = DB_LINEUPS.filter((l) => l.region === region);
+  const byName = (a: string, b: string) => a.localeCompare(b, "en");
+  return {
+    region,
+    rosters: [...lineups]
+      .sort((a, b) => b.average - a.average || byName(a.name, b.name))
+      .slice(0, 6)
+      .map((l) => ({ team: l.team, season: l.season, average: l.average })),
+    teams: DB_TEAMS.filter((t) => t.region === region)
+      .sort((a, b) => b.lineups.length - a.lineups.length || byName(a.name, b.name))
+      .slice(0, 8)
+      .map((t) => ({ id: t.id, name: t.name, rosters: t.lineups.length })),
+    players: DB_PLAYERS.filter((p) => p.region === region)
+      .sort((a, b) => b.peak - a.peak || byName(a.nickname, b.nickname))
+      .slice(0, 8)
+      .map((p) => ({ id: p.id, nickname: p.nickname, peak: p.peak })),
+  };
+}
+
+/** The standout numbers of a region, for the regional pages' prose (`{NA.bestRoster}` …). */
+export function regionHighlights(region: string): Record<string, string> {
+  const show = regionShowcase(region);
+  const best = show.rosters[0];
+  const veteran = DB_PLAYERS.filter((p) => p.region === region)
+    .map((p) => ({ nickname: p.nickname, seasons: new Set(p.entries.map((e) => e.season.slug)).size }))
+    .sort((a, b) => b.seasons - a.seasons || a.nickname.localeCompare(b.nickname, "en"))[0];
+  return {
+    bestRoster: best?.team.name ?? "",
+    bestSeason: best?.season.label ?? "",
+    bestAverage: String(best?.average ?? ""),
+    topPlayer: show.players[0]?.nickname ?? "",
+    topOverall: String(show.players[0]?.peak ?? ""),
+    mostTeam: show.teams[0]?.name ?? "",
+    mostCount: String(show.teams[0]?.rosters ?? ""),
+    veteran: veteran?.nickname ?? "",
+    veteranSeasons: String(veteran?.seasons ?? ""),
+  };
+}

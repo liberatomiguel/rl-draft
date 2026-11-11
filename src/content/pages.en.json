@@ -232,6 +232,10 @@
         "body": "The SAM database holds {SAM.lineups} lineups from {SAM.orgs} organizations and {SAM.players} players, across {SAM.seasons} seasons from {SAM.firstSeason} to {SAM.lastSeason}. The team and player pages list each of them season by season."
       },
       {
+        "heading": "The SAM numbers that stand out",
+        "body": "The highest-rated SAM roster in the database is {SAM.bestRoster} in {SAM.bestSeason}, with a team average of {SAM.bestAverage}. {SAM.topPlayer} holds the region’s highest overall, {SAM.topOverall}. {SAM.mostTeam} has the most rosters on file, {SAM.mostCount}, and {SAM.veteran} appears in the most seasons, {SAM.veteranSeasons}. The lists below link to each of them."
+      },
+      {
         "heading": "What the SAM region-locked draft is",
         "body": "SAM is a Region-Locked Draft: instead of pulling from the global pool, every round deals from South America's full depth. You still draft the same way — take one card per lineup until you have 3 players, 1 coach, 1 sub and 1 org — but every card comes from the SAM scene. South America was the first region live, hand-researched from Liquipedia, covering Brazilian and South American teams from RLCS history."
       },
@@ -416,6 +420,10 @@
         "body": "The NA database holds {NA.lineups} lineups from {NA.orgs} organizations and {NA.players} players, across {NA.seasons} seasons from {NA.firstSeason} to {NA.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
       },
       {
+        "heading": "The NA numbers that stand out",
+        "body": "The highest-rated NA roster in the database is {NA.bestRoster} in {NA.bestSeason}, with a team average of {NA.bestAverage}. {NA.topPlayer} holds the region’s highest overall, {NA.topOverall}. {NA.mostTeam} has the most rosters on file, {NA.mostCount}, and {NA.veteran} appears in the most seasons, {NA.veteranSeasons}. The lists below link to each of them."
+      },
+      {
         "heading": "The NA region-locked draft",
         "body": "Region-Locked Draft narrows the game to one scene. Pick NA in the setup and every round deals a NA lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is NA too, so the bracket you survive is the region's own history."
       },
@@ -444,6 +452,10 @@
       {
         "heading": "EU in the Rocket Draft database",
         "body": "The EU database holds {EU.lineups} lineups from {EU.orgs} organizations and {EU.players} players, across {EU.seasons} seasons from {EU.firstSeason} to {EU.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The EU numbers that stand out",
+        "body": "The highest-rated EU roster in the database is {EU.bestRoster} in {EU.bestSeason}, with a team average of {EU.bestAverage}. {EU.topPlayer} holds the region’s highest overall, {EU.topOverall}. {EU.mostTeam} has the most rosters on file, {EU.mostCount}, and {EU.veteran} appears in the most seasons, {EU.veteranSeasons}. The lists below link to each of them."
       },
       {
         "heading": "The EU region-locked draft",
@@ -476,6 +488,10 @@
         "body": "The MENA database holds {MENA.lineups} lineups from {MENA.orgs} organizations and {MENA.players} players, across {MENA.seasons} seasons from {MENA.firstSeason} to {MENA.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
       },
       {
+        "heading": "The MENA numbers that stand out",
+        "body": "The highest-rated MENA roster in the database is {MENA.bestRoster} in {MENA.bestSeason}, with a team average of {MENA.bestAverage}. {MENA.topPlayer} holds the region’s highest overall, {MENA.topOverall}. {MENA.mostTeam} has the most rosters on file, {MENA.mostCount}, and {MENA.veteran} appears in the most seasons, {MENA.veteranSeasons}. The lists below link to each of them."
+      },
+      {
         "heading": "The MENA region-locked draft",
         "body": "Region-Locked Draft narrows the game to one scene. Pick MENA in the setup and every round deals a MENA lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is MENA too, so the bracket you survive is the region's own history."
       },
@@ -504,6 +520,10 @@
       {
         "heading": "OCE in the Rocket Draft database",
         "body": "The OCE database holds {OCE.lineups} lineups from {OCE.orgs} organizations and {OCE.players} players, across {OCE.seasons} seasons from {OCE.firstSeason} to {OCE.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The OCE numbers that stand out",
+        "body": "The highest-rated OCE roster in the database is {OCE.bestRoster} in {OCE.bestSeason}, with a team average of {OCE.bestAverage}. {OCE.topPlayer} holds the region’s highest overall, {OCE.topOverall}. {OCE.mostTeam} has the most rosters on file, {OCE.mostCount}, and {OCE.veteran} appears in the most seasons, {OCE.veteranSeasons}. The lists below link to each of them."
       },
       {
         "heading": "The OCE region-locked draft",

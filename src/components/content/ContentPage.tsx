@@ -2,6 +2,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { DATABASE_UI, NAV_UI } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
 import { LIVE_PAGE_SLUGS, PAGES_EN, PAGES_PT, PAGE_ROUTES, REGION_PAGES, type PageSlug } from "@/content/pages";
+import { regionShowcase } from "@/lib/database";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import type { ContentPageCopy, RelatedLink } from "./ContentArticle";
 import { LocaleContent } from "./LocaleContent";
@@ -71,6 +72,7 @@ export function ContentPage({
         pt={pt}
         relatedEn={relatedLinks(slug, "en")}
         relatedPt={relatedLinks(slug, "pt")}
+        region={REGION_PAGES[slug] ? regionShowcase(REGION_PAGES[slug]) : undefined}
         initialLocale={initialLocale}
         backHref={backHref}
         ctaHref={ctaHref}

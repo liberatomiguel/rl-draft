@@ -21,6 +21,7 @@ import { RewardToaster } from "@/components/RewardToaster";
 import { LoginStreakModal } from "@/components/LoginStreakModal";
 import { CosmeticUnlockModal } from "@/components/cosmetics/CosmeticUnlockModal";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
+import { PlayStrip } from "./PlayStrip";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
 
@@ -211,6 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Footer */}
+        <PlayStrip />
         <SiteFooter />
 
         {/* Bottom nav (mobile) */}

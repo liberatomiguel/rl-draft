@@ -232,6 +232,10 @@
         "body": "A base da SAM tem {SAM.lineups} lineups de {SAM.orgs} organizações e {SAM.players} jogadores, em {SAM.seasons} temporadas, de {SAM.firstSeason} a {SAM.lastSeason}. As páginas de times e de jogadores listam cada um, temporada por temporada."
       },
       {
+        "heading": "Os números que se destacam na SAM",
+        "body": "O roster da SAM com a maior nota na base é {SAM.bestRoster} ({SAM.bestSeason}), com média de time de {SAM.bestAverage}. {SAM.topPlayer} tem o maior overall da região, {SAM.topOverall}. Quem tem mais rosters registrados é {SAM.mostTeam}, com {SAM.mostCount}, e {SAM.veteran} aparece em mais temporadas, {SAM.veteranSeasons}. As listas abaixo levam a cada um deles."
+      },
+      {
         "heading": "O que é o draft region-locked da SAM",
         "body": "A SAM é um Region-Locked Draft: em vez de sortear do pool global, cada round entrega cartas de toda a profundidade da América do Sul. O draft funciona igual — você pega uma carta por lineup até montar 3 players, 1 coach, 1 sub e 1 org — mas cada carta vem da cena SAM. A América do Sul foi a primeira região no ar, pesquisada à mão na Liquipedia, cobrindo times brasileiros e sul-americanos da história do RLCS."
       },
@@ -416,6 +420,10 @@
         "body": "A base da NA tem {NA.lineups} lineups de {NA.orgs} organizações e {NA.players} jogadores, em {NA.seasons} temporadas, de {NA.firstSeason} a {NA.lastSeason}. Todo roster é real, pesquisado à mão na Liquipedia, e todo jogador tem um overall revisado à mão. As páginas de times e de jogadores listam cada um, temporada por temporada."
       },
       {
+        "heading": "Os números que se destacam na NA",
+        "body": "O roster da NA com a maior nota na base é {NA.bestRoster} ({NA.bestSeason}), com média de time de {NA.bestAverage}. {NA.topPlayer} tem o maior overall da região, {NA.topOverall}. Quem tem mais rosters registrados é {NA.mostTeam}, com {NA.mostCount}, e {NA.veteran} aparece em mais temporadas, {NA.veteranSeasons}. As listas abaixo levam a cada um deles."
+      },
+      {
         "heading": "O draft regional da NA",
         "body": "O Region-Locked Draft restringe o jogo a uma cena. Escolha NA no setup e cada round entrega um lineup da NA; você continua pegando uma carta por lineup até ter três jogadores, um coach, um substitute e uma organização. O torneio também é só da NA, então o chaveamento que você enfrenta é a história da própria região."
       },
@@ -444,6 +452,10 @@
       {
         "heading": "A EU na base do Rocket Draft",
         "body": "A base da EU tem {EU.lineups} lineups de {EU.orgs} organizações e {EU.players} jogadores, em {EU.seasons} temporadas, de {EU.firstSeason} a {EU.lastSeason}. Todo roster é real, pesquisado à mão na Liquipedia, e todo jogador tem um overall revisado à mão. As páginas de times e de jogadores listam cada um, temporada por temporada."
+      },
+      {
+        "heading": "Os números que se destacam na EU",
+        "body": "O roster da EU com a maior nota na base é {EU.bestRoster} ({EU.bestSeason}), com média de time de {EU.bestAverage}. {EU.topPlayer} tem o maior overall da região, {EU.topOverall}. Quem tem mais rosters registrados é {EU.mostTeam}, com {EU.mostCount}, e {EU.veteran} aparece em mais temporadas, {EU.veteranSeasons}. As listas abaixo levam a cada um deles."
       },
       {
         "heading": "O draft regional da EU",
@@ -476,6 +488,10 @@
         "body": "A base da MENA tem {MENA.lineups} lineups de {MENA.orgs} organizações e {MENA.players} jogadores, em {MENA.seasons} temporadas, de {MENA.firstSeason} a {MENA.lastSeason}. Todo roster é real, pesquisado à mão na Liquipedia, e todo jogador tem um overall revisado à mão. As páginas de times e de jogadores listam cada um, temporada por temporada."
       },
       {
+        "heading": "Os números que se destacam na MENA",
+        "body": "O roster da MENA com a maior nota na base é {MENA.bestRoster} ({MENA.bestSeason}), com média de time de {MENA.bestAverage}. {MENA.topPlayer} tem o maior overall da região, {MENA.topOverall}. Quem tem mais rosters registrados é {MENA.mostTeam}, com {MENA.mostCount}, e {MENA.veteran} aparece em mais temporadas, {MENA.veteranSeasons}. As listas abaixo levam a cada um deles."
+      },
+      {
         "heading": "O draft regional da MENA",
         "body": "O Region-Locked Draft restringe o jogo a uma cena. Escolha MENA no setup e cada round entrega um lineup da MENA; você continua pegando uma carta por lineup até ter três jogadores, um coach, um substitute e uma organização. O torneio também é só da MENA, então o chaveamento que você enfrenta é a história da própria região."
       },
@@ -504,6 +520,10 @@
       {
         "heading": "A OCE na base do Rocket Draft",
         "body": "A base da OCE tem {OCE.lineups} lineups de {OCE.orgs} organizações e {OCE.players} jogadores, em {OCE.seasons} temporadas, de {OCE.firstSeason} a {OCE.lastSeason}. Todo roster é real, pesquisado à mão na Liquipedia, e todo jogador tem um overall revisado à mão. As páginas de times e de jogadores listam cada um, temporada por temporada."
+      },
+      {
+        "heading": "Os números que se destacam na OCE",
+        "body": "O roster da OCE com a maior nota na base é {OCE.bestRoster} ({OCE.bestSeason}), com média de time de {OCE.bestAverage}. {OCE.topPlayer} tem o maior overall da região, {OCE.topOverall}. Quem tem mais rosters registrados é {OCE.mostTeam}, com {OCE.mostCount}, e {OCE.veteran} aparece em mais temporadas, {OCE.veteranSeasons}. As listas abaixo levam a cada um deles."
       },
       {
         "heading": "O draft regional da OCE",

@@ -5,6 +5,8 @@ import { useMounted } from "@/store/useMounted";
 import { NAV_UI } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
 import { ContentArticle, type ContentPageCopy, type RelatedLink } from "./ContentArticle";
+import { RegionShowcase } from "@/components/database/RegionShowcase";
+import type { DbRegionShowcase } from "@/lib/database";
 import { SyncLocale } from "./SyncLocale";
 
 /**
@@ -20,6 +22,7 @@ export function LocaleContent({
   pt,
   relatedEn,
   relatedPt,
+  region,
   initialLocale,
   backHref,
   ctaHref,
@@ -28,6 +31,8 @@ export function LocaleContent({
   pt: ContentPageCopy;
   relatedEn: RelatedLink[];
   relatedPt: RelatedLink[];
+  /** A regional page's data from the public database (its showcase block). */
+  region?: DbRegionShowcase;
   initialLocale: "en" | "pt";
   backHref: string;
   ctaHref: string;
@@ -48,7 +53,9 @@ export function LocaleContent({
         backLabel={nav.backToMenu}
         related={isPt ? relatedPt : relatedEn}
         relatedLabel={nav.moreGuides}
-      />
+      >
+        {region ? <RegionShowcase data={region} /> : null}
+      </ContentArticle>
     </>
   );
 }
