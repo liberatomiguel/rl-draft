@@ -208,7 +208,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     opponentRatingShift: -2.0,
     opponentSpecialChance: 0.02,
     opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
-    xpMultiplier: 1.0,
+    xpMultiplier: 0.75,
   },
   normal: {
     label: "Normal",
@@ -294,7 +294,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     opponentRatingShift: 1.6,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
-    xpMultiplier: 2.0,
+    xpMultiplier: 2.5,
     requiresLegacyUnlock: true,
   },
 };
