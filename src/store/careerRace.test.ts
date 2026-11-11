@@ -20,7 +20,15 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { playSeasonXWorldsForTests } from "@/engine/career/worldsForTests";
+
+// v2.0 (C1): Season X's Worlds is cancelled in the game; this suite plays the Worlds mechanics in a first season.
+let restoreWorlds: () => void;
+beforeAll(() => {
+  restoreWorlds = playSeasonXWorldsForTests();
+});
+afterAll(() => restoreWorlds());
 import { CAREER_CALENDAR, CAREER_SLOTS } from "@/config/balance";
 import {
   dayOfWeekOf,

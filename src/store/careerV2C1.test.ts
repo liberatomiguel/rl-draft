@@ -6,8 +6,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_CANCELLED_WORLDS } from "@/config/balance";
-import { DAYS_PER_SEASON, firstDayOfWeek, officialEventDefsForWeek, worldsCancelledIn } from "@/engine/career/calendar";
-import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
+import { DAYS_PER_SEASON, firstDayOfWeek, officialEventDefsForWeek, weekOfDay, worldsCancelledIn } from "@/engine/career/calendar";
+import { slotOf, sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { HEADLINE_BEATS, isHeadline } from "@/engine/career/communications";
 import { SEASON_GOAL_CANDIDATES } from "@/engine/career/seasonGoals";
 import type { CareerSave, CoachState, CompactEventResult, TrainingPackage } from "@/engine/career/types";
@@ -30,6 +30,7 @@ import {
   coachContractOf,
   createCareerSave,
   hireCoachFlow,
+  migrateSaveToV5,
   rolloverToNextSeason,
   runBootcampFlow,
   setCoachRenewalFlow,
@@ -379,4 +380,79 @@ describe("v2.0 (C1) — performance: the career store's writes", () => {
     expect(size).toBeGreaterThan(50_000);
     expect(size).toBeLessThan(CAREER_SAVE.maxSaveBytes);
   }, 120_000);
+});
+
+describe("v2.0 (C1) — an rc.45 save loads and plays on", () => {
+  /** The save as rc.45 wrote it: none of this session's fields, a per-split sponsor goal, a coach with no end date. */
+  function asRc45(save: CareerSave): CareerSave {
+    const old = JSON.parse(JSON.stringify(save)) as CareerSave;
+    for (const n of old.news) delete n.headline;
+    for (const m of old.mail) delete m.headline;
+    delete old.finances.bootcampFromSponsor;
+    delete (old.flags as Record<string, unknown>).sponsorBootcampSeen;
+    if (old.coach) {
+      delete old.coach.contractEndSeason;
+      delete old.coach.renewal;
+    }
+    const terms = old.sponsor?.terms;
+    if (terms) {
+      const week = weekOfDay(old.clock.day);
+      const split = week < 13 ? 1 : week < 23 ? 2 : 3;
+      terms.goals = [{ slot: slotOf(old.clock.seasonIndex, split), kind: "regionalReach", count: 1, chance: 0.8, word: "likely" }];
+    }
+    return old;
+  }
+
+  it("migrates untouched, keeps the old deal on its per-split rules to its end, and rolls into the next season", () => {
+    let snap: CareerSave | null = null;
+    playArcCareer({
+      region: "SAM",
+      difficulty: "normal",
+      policy: "tuned",
+      seed: 20_951,
+      seasons: 2,
+      onDay: (save) => {
+        if (!snap && save.clock.seasonIndex === 1 && weekOfDay(save.clock.day) === 14 && save.sponsor?.terms && save.phase === "running" && !save.activeEvent) {
+          snap = structuredClone(save);
+        }
+      },
+    });
+    expect(snap).not.toBeNull();
+    const old = asRc45(snap!);
+    old.coach ??= { id: "legacy-coach", name: "Legacy Coach", overall: 72, bonusType: "mechanics", bonusLevel: "~", salaryPerSplit: 800, source: "generated" };
+    const before = JSON.stringify(old);
+    let save = migrateSaveToV5(JSON.parse(before) as CareerSave)!;
+    expect(save).not.toBeNull();
+    // Loading changes nothing a player can see: same clock, squad, money, deal and goal.
+    expect(save.clock).toEqual(old.clock);
+    expect(save.squad.map((p) => p.id)).toEqual(old.squad.map((p) => p.id));
+    expect(save.finances.balance).toBe(old.finances.balance);
+    expect(save.sponsor!.terms!.goals).toEqual(old.sponsor!.terms!.goals);
+    expect(save.coach!.salaryPerSplit).toBe(old.coach!.salaryPerSplit);
+    expect(save.coach!.contractEndSeason).toBeUndefined();
+    // Idempotent.
+    expect(JSON.stringify(migrateSaveToV5(structuredClone(save))!)).toBe(JSON.stringify(save));
+    // The old deal keeps its per-split rules: the W21 boundary settles split 2's goal (hit or missed, never left open)...
+    const endsOn = save.sponsor!.terms!.endsOn;
+    save = mondayAfter({ ...save, sponsorOffers: null }, 20);
+    const settled = save.sponsor?.terms?.goals.find((g) => g.slot === slotOf(1, 2)) ?? null;
+    if (save.sponsor && settled) expect(settled.hitOn !== undefined || settled.missed !== undefined).toBe(true);
+    // ...and, if the deal is still running, split 3 gets its own goal on its first Monday, as before.
+    if (save.sponsor?.terms && (endsOn.seasonIndex > 1 || endsOn.day > firstDayOfWeek(23))) {
+      save = mondayAfter({ ...save, sponsorOffers: null }, 22);
+      expect(save.sponsor!.terms!.goals.some((g) => g.slot === slotOf(1, 3) && g.span === undefined)).toBe(true);
+    }
+    // The season closes and rolls over; the legacy coach gets his end date, wage untouched.
+    const wage = save.coach?.salaryPerSplit;
+    const rolled = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 1, day: DAYS_PER_SEASON }, pendingOffers: [], sponsorOffers: null });
+    expect(rolled.clock).toEqual({ seasonIndex: 2, day: 1 });
+    if (rolled.coach) {
+      expect(rolled.coach.salaryPerSplit).toBe(wage);
+      expect(rolled.coach.contractEndSeason).toBe(2);
+    }
+    // A few days into the new season run clean.
+    let run = rolled;
+    for (let d = 0; d < 5; d++) run = advanceDayFlow({ ...run, pendingOffers: [], sponsorOffers: null, pendingInsert: null, unofficialOffer: null });
+    expect(run.clock.seasonIndex).toBe(2);
+  }, 180_000);
 });
