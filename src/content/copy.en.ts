@@ -1696,8 +1696,6 @@ export const QUIZ_UI = {
   xpFor: (xp: number) => `+${xp} XP`,
   clues: {
     country: (country: string, region: string) => `Nationality: ${new Intl.DisplayNames(["en"], { type: "region" }).of(country) ?? country} (${region} region).`,
-    era: (first: number, last: number, lineups: number) =>
-      first === last ? `Active in ${first} — ${lineups} RLCS lineup${lineups === 1 ? "" : "s"} in the dataset.` : `Active from ${first} to ${last} — ${lineups} RLCS lineups in the dataset.`,
     orgs: (orgs: string[]) => (orgs.length === 1 ? `Played for ${orgs[0]}.` : `Played for ${orgs[0]} and ${orgs[1]}.`),
     teammate: (name: string) => `Shared a lineup with ${name}.`,
     nickname: (prefix: string) => `Nickname begins with “${prefix}”.`,
@@ -1708,7 +1706,6 @@ export const QUIZ_UI = {
   attemptOf: (n: number, max: number) => `Attempt ${n} of ${max}`,
   clueKinds: {
     country: "Nationality",
-    era: "Era",
     orgs: "Orgs",
     teammate: "Teammate",
     nickname: "Nickname",

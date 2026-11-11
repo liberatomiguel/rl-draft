@@ -93,7 +93,10 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
 
   const reached = rungs.reduce((latest, rung, index) => rung.status !== "locked" ? index : latest, -1);
   const windowStart = Math.max(0, Math.min(Math.max(0, reached - 1), rungs.length - HQ_LADDER_WINDOW));
-  const visibleRungs = rungs.slice(windowStart, windowStart + HQ_LADDER_WINDOW);
+  // rc.49: what can be bought right now comes first; the ladder's window around the reached rung fills the rest.
+  const buyableRungs = rungs.filter((r) => available.some((i) => rungOfItem(i.id) === r.id && !toolboxRefusalOf(save, i.id)));
+  const windowRungs = rungs.slice(windowStart, windowStart + HQ_LADDER_WINDOW).filter((r) => !buyableRungs.includes(r));
+  const visibleRungs = [...buyableRungs, ...windowRungs].slice(0, HQ_LADDER_WINDOW);
   const active = items.filter((i) => i.status === "active");
   const next = rungs.find((r) => r.status === "locked") ?? null;
   const rep = Math.round(save.reputation);

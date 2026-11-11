@@ -498,7 +498,6 @@ export function MarketScreen() {
       </div>
 
       {/* ================= player tabs ================= */}
-      {tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep ? <Panel className="p-4 text-sm text-sub">{C.market.errors.contractedRep}</Panel> : null}
       {tab === "free" || tab === "contracted" ? (
         <>
           {/* Toolbar: search · sort · region */}
@@ -728,17 +727,20 @@ export function MarketScreen() {
       {/* ================= my deals tab ================= */}
       {tab === "deals" ? (
         <div className="rise-in space-y-2.5" style={{ animationDelay: "60ms" }}>
+          {/* rc.49: the offers wear the renewals card's header and empty line (one look for both). */}
+          <Panel className="p-4">
+            <p className="kicker mb-2 text-[10px]">{C.launch.offersTitle}</p>
           {bids.length === 0 ? (
-            <Panel className="p-8 text-center text-sm text-faint">{C.market.dealsEmpty}</Panel>
+            <p className="text-xs text-faint">{C.market.dealsEmpty}</p>
           ) : (
-            <>
+            <div className="space-y-2">
               {bids.map((o) => {
                 const orgName = o.otherRef ? nameOfRef(save, o.otherRef) : "?";
                 const squadPlayer = save.squad.find(p => p.id === o.playerId);
                 const orgStars = o.otherRef ? (save.world.orgs[o.otherRef]?.stars ?? 0) : 0;
                 const daysLeft = Math.max(0, o.resolveDay - save.clock.day);
                 return (
-                  <Panel key={o.id} className="p-4">
+                  <div key={o.id} className="rounded-lg border border-line bg-white/[0.02] p-3">
                     <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap">
                       {o.otherRef ? (
                         <button
@@ -819,11 +821,12 @@ export function MarketScreen() {
                         </Button>
                       </div>
                     </div>
-                  </Panel>
+                  </div>
                 );
               })}
-            </>
+            </div>
           )}
+          </Panel>
           <RenewalsPanel save={save} C={C} />
         </div>
       ) : null}

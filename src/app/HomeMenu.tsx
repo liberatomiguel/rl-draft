@@ -238,11 +238,15 @@ export default function HomeMenu() {
                 className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:p-8"
               >
                 <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/15 blur-3xl" aria-hidden />
+                {/* NEW: a small sticker on the corner, inside the panel so its
+                    overflow-hidden does not clip it. BETA sits beside the title. */}
+                <span className="display pointer-events-none absolute right-2.5 top-2.5 z-10 rotate-6 rounded-md border border-orange/40 bg-orange/15 px-2 py-1 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-orange-bright shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                  {HOME.careerBadge}
+                </span>
                 <div className="relative">
-                  <div className="mb-2 flex items-center gap-2.5">
+                  <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 pr-9">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
-                    <Badge tone="blue">{HOME.careerBadge}</Badge>
-                    <Badge tone="gold">{NAV_UI.beta}</Badge>
+                    <Badge tone="gold" className="shrink-0">{NAV_UI.beta}</Badge>
                   </div>
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
                   <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>

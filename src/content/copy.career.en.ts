@@ -3105,7 +3105,7 @@ export const CAREER_EN = {
     coachTypes: { generated: "Common coach", dataset: "Professional coach", real: "Former pro" },
     coachDetails: "Effects and development", coachGrowth: (quality: number, ceiling: number) => `Quality ${quality} → potential ${ceiling}`,
     coachRetainer: "Fixed-term contract · renew it before it ends or the coach leaves",
-    coachDealEnds: (season: string) => `Contract through ${season}`, coachDealLast: "Final season of the contract", coachDealOpen: "Contract dated at the next season review",
+    offersTitle: "Offers received", coachDealEnds: (season: string) => `Contract through ${season}`, coachDealLast: "Final season of the contract", coachDealOpen: "Contract dated at the next season review",
     coachRenewAsk: "Asks to renew", coachRenewFor: (n: number) => `Renew ${n} ${n === 1 ? "season" : "seasons"}`,
     coachEvolution: "Quality and experience develop at each season review, up to the coach’s ceiling.",
     coachShortlist: "Available coaches", coachCompare: "Compare type, quality, specialty and weekly wage. Open details for training effects.",

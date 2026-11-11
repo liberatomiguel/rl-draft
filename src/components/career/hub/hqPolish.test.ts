@@ -133,26 +133,31 @@ describe("rc.36 POL-02 — HQ finances: the balance, the weekly out, the chart, 
 });
 
 describe("rc.36 POL-02 — the progression card: three item rows and next unlock below", () => {
-  it("shows neighbors of the latest unlock, including when earlier gear is still unbought", () => {
+  // rc.49 (Miguel): what can be bought right now comes first; the ladder's window fills the rest.
+  const rowsOf = (html: string) => html.split('<li class="flex min-h-16').slice(1);
+  it("lists what can be bought now first, then the neighbors of the latest unlock", () => {
     const save = fresh();
     save.reputation = 22; // assistant and PCs reached; ex-pro coach is next
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    for (const name of [CAREER_EN.ladder.rung.assistant, CAREER_EN.finances.gear.pcs, CAREER_EN.ladder.rung.exProCoach]) expect(html).toContain(name);
-    expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
-    expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
+    const rows = rowsOf(html);
+    expect(rows).toHaveLength(3);
+    const buyable = rows.map((r) => r.includes(`>${CAREER_EN.toolbox.buy}<`) && !r.includes(" disabled=\"\""));
+    expect(buyable[0]).toBe(true);
+    // Never a non-buyable row above a buyable one.
+    expect(buyable.join()).not.toContain("false,true");
     expect(html).not.toContain("grid grid-cols-2 gap-2");
     expect(html).toContain(CAREER_EN.ladder.seeMore);
     expect(html).toContain('href="/career/finances"');
-    expect(html).toContain(CAREER_EN.toolbox.buy);
-    expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.indexOf(CAREER_EN.finances.gear.pcs));
+    expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.lastIndexOf('<li class="flex min-h-16'));
   });
-  it("keeps the final three rungs visible at the top of the ladder", () => {
+  it("keeps three rows at the top of the ladder, buyable ones first", () => {
     const save = fresh();
     save.reputation = 100;
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    for (const name of [CAREER_EN.ladder.rung.sponsors3, CAREER_EN.finances.gear.perfCenter, CAREER_EN.ladder.rung.sponsors4]) expect(html).toContain(name);
-    expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
-    expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
+    const rows = rowsOf(html);
+    expect(rows).toHaveLength(3);
+    const buyable = rows.map((r) => r.includes(`>${CAREER_EN.toolbox.buy}<`) && !r.includes(" disabled=\"\""));
+    expect(buyable.join()).not.toContain("false,true");
     expect(html).toContain(CAREER_EN.ladder.top);
   });
 });
