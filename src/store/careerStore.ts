@@ -435,6 +435,13 @@ export const useCareerStore = create<CareerStoreState>()(
         const ran = guarded(() => fn(slots[activeSlot]!));
         if (!ran.ok) return;
         const next = ran.value;
+        // v2.0 (P1): a flow that refuses hands the SAME save back (a held clock, a paused event,
+        // a lobby that cannot start). Nothing changed: no new slots array, so no re-render of
+        // every career screen, no achievement pass and no rewrite of every slot to localStorage.
+        if (next === prevSave) {
+          if (get().lastError !== null) set({ lastError: null });
+          return;
+        }
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = next !== prevSave ? seedCareerNew(prevSave, next) : undefined;
         if (seeded) next.newItems = seeded;

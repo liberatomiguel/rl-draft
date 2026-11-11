@@ -548,9 +548,10 @@ body::before {
 .week-slide {
   animation: week-slide calc(0.45s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
-/* The "today" marker glides between day chips (left is set inline). */
+/* The "today" marker glides between day chips (its translateX is set inline;
+   v2.0 P1: transform, not `left`, so the glide never runs layout). */
 .day-marker {
-  transition: left calc(0.4s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.7, 0.3, 1);
+  transition: transform calc(0.4s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 @keyframes day-tick {
   0% { transform: scale(1); }

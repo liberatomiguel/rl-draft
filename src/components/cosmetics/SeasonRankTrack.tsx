@@ -43,7 +43,7 @@ export function SeasonRankTrack({ xp, peakRankId }: { xp: number; peakRankId: st
           </li>)}
         </ol>
         <div className="pointer-events-none absolute inset-x-0 top-[4.5rem] h-1.5 rounded-full bg-white/8" aria-hidden>
-          <div className="h-full rounded-full bg-orange transition-[width] duration-700" style={{width:`${Math.min(100,fill)}%`}} />
+          <div className="h-full w-full origin-left rounded-full bg-orange transition-transform duration-700" style={{transform:`scaleX(${Math.min(100,fill)/100})`}} />
           {ranks.map((rank,i) => <span key={rank.id} className={cx("absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2", i <= peakIdx ? "border-orange-bright bg-orange-bright" : "border-line-strong bg-raised")} style={{left:`${nodeCenter(i)}%`}} />)}
         </div>
       </div>

@@ -5373,16 +5373,52 @@ export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
 // Purchases (gear ladder), staff & scouting
 // ---------------------------------------------------------------------------
 
-export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
-  const save = clone(input);
+/**
+ * v2.0 (P1): why a purchase would be refused, read without touching the save.
+ * The flows below start from these same rules, and HQ asks them on every
+ * render (careerHq.toolboxRefusalOf). It used to dry-run the whole flow,
+ * which deep-copied the save (about 4 ms on a late career) four to six times
+ * per render: the largest single script cost of a day's advance on HQ.
+ */
+export function gearRefusalOf(save: CareerSave, itemId: GearItemId): string | null {
   const next = gearNextItem(save.finances.gear);
-  if (!next) return { save: input, error: "maxed" };
-  if (next.id !== itemId) return { save: input, error: "locked" }; // strict ladder order
-  if (save.reputation < next.repGate) return { save: input, error: "locked" };
+  if (!next) return "maxed";
+  if (next.id !== itemId) return "locked"; // strict ladder order
+  if (save.reputation < next.repGate) return "locked";
   // rc.34: gear is open while the emergency loan is owed (CAREER_LOAN.lockCommitments; true = rc.33's lock).
-  if (CAREER_LOAN.lockCommitments && save.finances.loan) return { save: input, error: "loanActive" };
+  if (CAREER_LOAN.lockCommitments && save.finances.loan) return "loanActive";
   const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
-  if (save.finances.balance - cost < backerLineOf(save).floor) return { save: input, error: "funds" };
+  if (save.finances.balance - cost < backerLineOf(save).floor) return "funds";
+  return null;
+}
+
+export function psychologistRefusalOf(save: CareerSave, on: boolean): string | null {
+  if (on && !unlocksFor(save.reputation).psychologist) return "locked";
+  // rc.32 (M4, provisional): a new retainer while the Backer is owed must not shorten the runway.
+  if (on && !save.finances.gear.psychologist) {
+    const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, psychologist: true } } });
+    if (backerLocks(save, 0, weeklyStatementOf(save).net - withRetainer.net)) return "loanRunway";
+  }
+  return null;
+}
+
+export function bootcampRefusalOf(save: CareerSave): string | null {
+  // The event team is frozen, including between Saturday and Sunday.
+  if (save.activeEvent) return "bootcampEventActive";
+  const tier = bootcampTierFor(save.reputation);
+  if (tier === 0) return "locked";
+  if (save.finances.bootcampUsedThisSplit) return "used";
+  const isFree = save.finances.freeBootcampsUsedThisSeason < sponsorFreeBootcampsOf(save.sponsor);
+  if (!isFree && save.finances.balance - bootcampCostFor(tier, save.clock.seasonIndex) < backerLineOf(save).floor) return "funds";
+  return null;
+}
+
+export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
+  const refused = gearRefusalOf(input, itemId);
+  if (refused) return { save: input, error: refused };
+  const save = clone(input);
+  const next = gearNextItem(save.finances.gear)!;
+  const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
   save.finances = pushLedger(save.finances, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -5397,13 +5433,9 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
 }
 
 export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult {
+  const refused = psychologistRefusalOf(input, on);
+  if (refused) return { save: input, error: refused };
   const save = clone(input);
-  if (on && !unlocksFor(save.reputation).psychologist) return { save: input, error: "locked" };
-  // rc.32 (M4, provisional): a new retainer while the Backer is owed must not shorten the runway.
-  if (on && !save.finances.gear.psychologist) {
-    const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, psychologist: true } } });
-    if (backerLocks(save, 0, weeklyStatementOf(save).net - withRetainer.net)) return { save: input, error: "loanRunway" };
-  }
   save.finances.gear.psychologist = on;
   return { save };
 }
@@ -5422,21 +5454,17 @@ export function setStaffFlow(input: CareerSave, id: StaffId, on: boolean): FlowR
 }
 
 export function runBootcampFlow(input: CareerSave): FlowResult {
-  // The event team is frozen, including between Saturday and Sunday.
-  if (input.activeEvent) return { save: input, error: "bootcampEventActive" };
+  const refused = bootcampRefusalOf(input);
+  if (refused) return { save: input, error: refused };
   const save = clone(input);
   const tier = bootcampTierFor(save.reputation);
-  if (tier === 0) return { save: input, error: "locked" };
-  if (save.finances.bootcampUsedThisSplit) return { save: input, error: "used" };
+  if (tier === 0) return { save: input, error: "locked" }; // bootcampRefusalOf's rule (narrows the tier)
   const camp = CAREER_GEAR.bootcamp[tier - 1];
   const campCost = bootcampCostFor(tier, save.clock.seasonIndex); // rc.32 (M1): indexed
 
   // Sponsor perk: free bootcamps per season (tier 3+ deals).
   const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const isFree = save.finances.freeBootcampsUsedThisSeason < freeAllowance;
-  if (!isFree && save.finances.balance - campCost < backerLineOf(save).floor) {
-    return { save: input, error: "funds" };
-  }
   if (isFree) {
     save.finances.freeBootcampsUsedThisSeason += 1;
   } else {

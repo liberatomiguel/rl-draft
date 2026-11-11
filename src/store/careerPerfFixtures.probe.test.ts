@@ -10,7 +10,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CareerSave } from "@/engine/career/types";
+import { dayOfWeekOf } from "@/engine/career/calendar";
 import { playArcCareer } from "./careerArcBot";
+import { clockHoldOf } from "./careerDecisions";
+import { advanceDayFlow, eventStartBlockOf } from "./careerFlow";
 
 const ON = process.env.P1_FIX === "1";
 const OUT = process.env.P1_FIX_OUT ?? ".";
@@ -24,8 +27,10 @@ describe.skipIf(!ON)("v2.0 (P1) browser-probe fixtures", () => {
     "writes a season-1 and a late-season career store",
     () => {
       const shots = new Map<string, CareerSave>();
-      // A quiet weekday: no event today, nothing active, a running season.
-      const quiet = (s: CareerSave) => s.phase === "running" && !s.activeEvent && s.pendingEventDef?.day !== s.clock.day;
+      // A quiet Tuesday: no event this week, no invite, nothing to answer — several days of plain clock ahead.
+      const quiet = (s: CareerSave) =>
+        s.phase === "running" && !s.activeEvent && !s.pendingEventDef && !s.unofficialOffer && !s.pendingInsert && !s.sponsorOffers &&
+        s.pendingOffers.every((o) => o.status !== "pending") && dayOfWeekOf(s.clock.day) === 2 && clockHoldOf(s) === null;
       playArcCareer({
         region: "SAM",
         difficulty: "normal",
@@ -51,6 +56,11 @@ describe.skipIf(!ON)("v2.0 (P1) browser-probe fixtures", () => {
               shots.set(kind.replace("Eve", "Day"), onDay);
             }
           }
+          // A late-season matchday morning (the lobby): tomorrow's arrival, computed from the eve.
+          if (save.clock.seasonIndex === LATE && !shots.has("matchday") && save.phase === "running" && !save.activeEvent && def && def.day === save.clock.day + 1 && def.tier === "qualifier" && clockHoldOf(save) === null) {
+            const morning = advanceDayFlow(save);
+            if (morning.pendingEventDef?.id === def.id && morning.clock.day === def.day && eventStartBlockOf(morning, def) === null) shots.set("matchday", morning);
+          }
           const key = save.clock.seasonIndex === 0 ? "s1" : save.clock.seasonIndex === LATE ? "late" : null;
           if (!key || shots.has(key) || save.clock.day < 30 || !quiet(save)) return;
           shots.set(key, structuredClone(save));
@@ -64,7 +74,8 @@ describe.skipIf(!ON)("v2.0 (P1) browser-probe fixtures", () => {
       writeFileSync(join(OUT, "career-s1.json"), store([s1!, null, null]));
       writeFileSync(join(OUT, "career-late.json"), store([late!, null, null]));
       writeFileSync(join(OUT, "career-late-x3.json"), store([late!, structuredClone(late!), structuredClone(s1!)]));
-      for (const [kind, save] of shots) if (kind !== "s1" && kind !== "late") writeFileSync(join(OUT, `career-absent-${kind}.json`), store([save, null, null]));
+      if (shots.has("matchday")) writeFileSync(join(OUT, "career-late-matchday.json"), store([shots.get("matchday")!, null, null]));
+      for (const [kind, save] of shots) if (kind !== "s1" && kind !== "late" && kind !== "matchday") writeFileSync(join(OUT, `career-absent-${kind}.json`), store([save, null, null]));
       console.log(
         `fixtures: s1 ${Math.round(JSON.stringify(s1).length / 1024)} KB (S${s1!.clock.seasonIndex} d${s1!.clock.day}), late ${Math.round(JSON.stringify(late).length / 1024)} KB (S${late!.clock.seasonIndex} d${late!.clock.day})`,
       );
