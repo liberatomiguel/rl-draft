@@ -9,6 +9,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ChallengeMatchBoard, useSeriesPlayback } from "@/components/challenges/ChallengeMatchBoard";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
 import { countStars, rosterFromLineup, starsAvailable, totalStars } from "@/engine/challenges";
@@ -20,7 +21,7 @@ import { CosmeticIcon, useCosmeticCopy } from "@/components/cosmetics/CosmeticVi
 import { Modal } from "@/components/ui/Modal";
 import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
-import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
+import type { RunState, TournamentTeam } from "@/engine/types";
 import { useCopy } from "@/content/copy";
 import { teamDisplayName } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
@@ -54,9 +55,6 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   // render lint hit). On a fresh mount/refresh with a series already present,
   // `started` is false so the whole series shows at once.
   const [started, setStarted] = useState(false);
-  const [revealed, setRevealed] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const GAME_PACE = 780; // ms per game reveal
 
   // Rank-up celebration (v1.4): a challenge clear grants XP, which can cross a rank
   // threshold — fire the same full-screen ceremony the run results use. `xpBefore` was
@@ -66,7 +64,14 @@ export function ChallengeScreen({ run }: { run: RunState }) {
 
   const series = state?.series ?? null;
   const totalGames = series?.games.length ?? 0;
-  const shownGames = started ? Math.min(revealed, totalGames) : totalGames;
+  // v2.0 (G2): the series plays beat by beat on the Road to Worlds clock board;
+  // the cursor counts whole games (and the beats of the one in play).
+  const roundKey = `challenge:${run.challengeId ?? ""}`;
+  const playback = useSeriesPlayback(series, roundKey, started, (g) => {
+    if (g.winnerTeamId === "user") sfx.matchWin();
+    else sfx.matchLose();
+  });
+  const revealed = playback.cursor.game;
   const revealing = started && series != null && revealed < totalGames;
   // rc.29 (DRAFT-02): the clear's XP lands when the series is computed, before
   // it plays — its cosmetic unlocks wait until the series has been shown (and
@@ -79,29 +84,10 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const play = () => {
     sfx.start();
     setStarted(true);
-    setRevealed(0);
+    playback.restart();
     playChallenge(); // computes the full series synchronously
   };
-  const skipReveal = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setRevealed(totalGames); // revealing is derived → false once revealed === total
-  };
-
-  // Drive the reveal: one game per tick, with a per-game win/lose blip. The tick
-  // schedules only while games remain; reaching the end just stops (no setState
-  // in the effect body).
-  useEffect(() => {
-    if (!started || !series || revealed >= series.games.length) return;
-    timerRef.current = setTimeout(() => {
-      const g = series.games[revealed];
-      if (g?.winnerTeamId === "user") sfx.matchWin();
-      else sfx.matchLose();
-      setRevealed((r) => r + 1);
-    }, GAME_PACE);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [started, series, revealed]);
+  const skipReveal = () => playback.finish(); // revealing is derived → false at the end
 
   // One-shot win/lose sting once the whole series has been revealed.
   const stung = useRef(false);
@@ -120,10 +106,6 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const stages = state.stages;
   const stageOpponents = stages?.opponents ?? [];
   const finishedAttempt = Boolean(series) || (stages?.failedAt !== null && stages?.failedAt !== undefined);
-  // Running series score over the games revealed so far.
-  const shown = series ? series.games.slice(0, shownGames) : [];
-  const userWins = shown.filter((g) => g.winnerTeamId === "user").length;
-  const oppWins = shown.length - userWins;
 
   // Did the clear reward cross a rank? Only after the series is revealed (so the
   // ceremony lands with the win, not mid-animation).
@@ -227,35 +209,21 @@ export function ChallengeScreen({ run }: { run: RunState }) {
         </Panel>
       ) : (
         <>
-          {/* Scoreline (running while the games reveal) */}
-          <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-            <p className="display min-w-0 truncate text-base font-bold uppercase tracking-wide text-orange-bright md:text-lg">
-              {teamDisplayName(user, T)}
-            </p>
-            <p className="display shrink-0 text-3xl font-bold tabular-nums">
-              <span className={cx(!revealing && userWins > oppWins ? "text-good" : "text-ink")}>{userWins}</span>
-              <span className="mx-2 text-faint">–</span>
-              <span className={cx(!revealing && oppWins > userWins ? "text-good" : "text-ink")}>{oppWins}</span>
-            </p>
-            <p className="display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide text-ink md:text-lg">
-              {boss.orgName}
-            </p>
-          </div>
-          {revealing ? (
-            <p className="kicker mt-2 flex items-center justify-center gap-1.5 text-orange-bright" aria-live="polite">
-              <span className="live-dot h-2 w-2 rounded-full bg-orange" /> {CH.simulating}
-            </p>
-          ) : null}
-
-          {/* Games — two columns (your wins left, the boss's right), same as the
-              main sim. Cards reveal one per tick. */}
-          <div className="mt-4 grid grid-cols-2 gap-1.5" aria-live={revealing ? "polite" : undefined}>
-            <ol className="flex flex-col gap-1.5">
-              {shown.filter((g) => g.winnerTeamId === "user").map((g) => renderGame(g, true, T))}
-            </ol>
-            <ol className="flex flex-col gap-1.5">
-              {shown.filter((g) => g.winnerTeamId !== "user").map((g) => renderGame(g, false, T))}
-            </ol>
+          {/* The series on the running-clock board (v2.0): goals land on the
+              5:00 clock, overtime counts up, chips fill game by game. */}
+          <div className="mt-6">
+            <ChallengeMatchBoard
+              series={series}
+              roundKey={roundKey}
+              bestOf={challenge.sim.bestOf}
+              teamA={series.teamAId === user.id ? user : opponent}
+              teamB={series.teamAId === user.id ? opponent : user}
+              nameA={series.teamAId === user.id ? teamDisplayName(user, T) : boss.orgName}
+              nameB={series.teamAId === user.id ? boss.orgName : teamDisplayName(user, T)}
+              kicker={`${boss.seasonLabel} · ${CH.bestOf(challenge.sim.bestOf)}`}
+              progress={revealing ? playback.cursor : null}
+              sync={playback.sync}
+            />
           </div>
 
           {revealing ? (
@@ -423,33 +391,6 @@ function StarRewardModal({
         ) : null}
       </div>
     </Modal>
-  );
-}
-
-/** One game card in the two-column series view (matches the main sim's look). */
-function renderGame(
-  game: GameResult,
-  wonByUser: boolean,
-  T: ReturnType<typeof useCopy>["TOURNAMENT_UI"],
-) {
-  return (
-    <li
-      key={game.index}
-      className={cx(
-        "rise-in flex items-center justify-between rounded-md border px-3 py-1.5 text-xs",
-        wonByUser ? "border-good/30 bg-good/5" : "border-bad/30 bg-bad/5",
-      )}
-    >
-      <span className="min-w-0 truncate uppercase tracking-wider text-sub">
-        {T.game(game.index)}
-        {game.overtime ? <span className="ml-1.5 font-bold text-orange-bright">{T.overtime}</span> : null}
-        {game.deciding ? <span className="ml-1.5 font-bold text-cyan">{T.matchPoint}</span> : null}
-      </span>
-      {/* score is [winner, loser]; the card sits in the winner's column. */}
-      <span className="display font-bold text-ink">
-        {game.score[0]}–{game.score[1]}
-      </span>
-    </li>
   );
 }
 

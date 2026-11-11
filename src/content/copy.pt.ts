@@ -315,6 +315,17 @@ export const PT: Copy = {
     seriesScore: (a: number, b: number) => `${a}–${b}`,
     retry: "Tentar de novo",
     backToChallenges: "Voltar aos desafios",
+    board: {
+      live: "AO VIVO",
+      series: "Série",
+      goal: "GOL",
+      goldenGoal: "GOL DE OURO",
+      overtime: "PRORROGAÇÃO",
+      endOfRegulation: "Fim do tempo normal",
+      deciding: "Jogo decisivo",
+      gameClock: "Relógio da partida",
+      playByPlay: "Lance a lance",
+    },
   },
 
   LEADERBOARDS_UI: {

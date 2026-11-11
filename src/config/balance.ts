@@ -853,6 +853,12 @@ export const CHALLENGE = {
   starXp: { common: 40, rare: 70, epic: 110, legend: 160 } as Record<string, number>,
   /** Star-track milestones (cosmetics in src/data/cosmetics.ts read the same counts). */
   starMilestones: [10, 25, 45],
+  /**
+   * v2.0 (G2): the boss series plays on the Road to Worlds running-clock board
+   * (CAREER_MATCH_CLOCK pacing ÷ this factor). 2× keeps a full Bo7 near 20 s;
+   * the Skip link is always there.
+   */
+  seriesClockSpeed: 2,
 } as const;
 
 /**

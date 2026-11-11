@@ -1229,6 +1229,19 @@ export const CHALLENGES_UI = {
   seriesScore: (a: number, b: number) => `${a}–${b}`,
   retry: "Try again",
   backToChallenges: "Back to challenges",
+  // v2.0 (G2): the boss series on the running-clock board (same wording as the
+  // Road to Worlds Match Center).
+  board: {
+    live: "LIVE",
+    series: "Series",
+    goal: "GOAL",
+    goldenGoal: "GOLDEN GOAL",
+    overtime: "OVERTIME",
+    endOfRegulation: "End of regulation",
+    deciding: "Deciding game",
+    gameClock: "Game clock",
+    playByPlay: "Play-by-play",
+  },
 };
 
 export const LEADERBOARDS_UI = {
