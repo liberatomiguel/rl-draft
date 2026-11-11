@@ -2238,6 +2238,8 @@ export const CAREER_EN = {
       flavor3: () => `A caster's mic caught a very honest halftime take`,
       flavor4: () => `Ping complaints filed. Ping complaints dismissed.`,
       flavor5: () => `A community montage is doing numbers this week`,
+      // v2.0 (C1)
+      worldsCancelled: () => `World Championship cancelled over the pandemic`,
     },
     // v0.2 — body text per template (same params; HQ feed renders these).
     body: {
@@ -2359,6 +2361,9 @@ export const CAREER_EN = {
         `The org put ${p.player} on the market. An offer from a side that would start him comes within a few window days.`,
       repDown: (p: Record<string, string | number>) =>
         `Expectations were stated and missed; ${p.org}'s standing takes the hit. Reputation is earned back the same way it was built.`,
+      // v2.0 (C1)
+      worldsCancelled: () =>
+        `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. The season ends with the split standings as they are. No title is awarded, and the race starts again next season.`,
     },
   },
 

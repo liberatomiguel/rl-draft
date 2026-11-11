@@ -84,6 +84,7 @@ import {
   isWindowStartWeek,
   isWindowWeek,
   officialEventDefsForWeek,
+  worldsCancelledIn,
   playoffsDayFor,
   qualifierDayFor,
   qualifierDefsForWeek,
@@ -1333,7 +1334,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
     if (week === CAREER_CALENDAR.worldsWindowWeek && !save.competition.worldsFieldRefs) {
       save.competition.worldsFieldRefs = worldsFieldFor(save.competition, save.careerSeed);
-      if (save.competition.worldsFieldRefs.includes("user")) {
+      if (worldsCancelledIn(seasonIndex)) {
+        // v2.0 (C1): Season X — the field is the final table, but there is no
+        // event: no reputation moves on it, and the wire carries the bombshell.
+        pushNews(save, { type: "milestone", priority: 3, titleKey: "worldsCancelled", headline: true });
+      } else if (save.competition.worldsFieldRefs.includes("user")) {
         gainRep(save, "worldsQualify");
         save.stats.worldsQualified += 1;
         pushNews(save, { type: "milestone", priority: 3, titleKey: "qualifiedWorlds" });
@@ -1595,6 +1600,19 @@ export function processDayArrival(input: CareerSave): CareerSave {
       enterSeasonReview(save, worldsResult);
       return capNews(save);
     }
+  }
+  // v2.0 (C1): a season with no Worlds (Season X) closes on its last day all
+  // the same — straight to the review, no champion.
+  if (
+    worldsCancelledIn(seasonIndex) &&
+    day === DAYS_PER_SEASON &&
+    save.phase !== "seasonReview" &&
+    save.phase !== "ended" &&
+    !save.activeEvent &&
+    save.pendingEventDef?.tier !== "worlds"
+  ) {
+    enterSeasonReview(save, null);
+    return capNews(save);
   }
 
   return capNews(save);

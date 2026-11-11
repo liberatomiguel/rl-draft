@@ -1211,6 +1211,12 @@ export interface NewsItem {
   /** Scripted beats resolve their EN/PT text from the beats data by this id. */
   beatId?: string;
   read: boolean;
+  /**
+   * v2.0 (C1): a bombshell — the UI opens it as a pop-up once (a headline
+   * beat, Worlds cancelled, an unlock nobody buys). Set by
+   * communications.deliverNews; absent on everything else and on older saves.
+   */
+  headline?: true;
 }
 
 /**
@@ -1234,6 +1240,8 @@ export interface MailItem {
   read: boolean;
   /** Deep link into the app (route suffix under /career). */
   linkTo?: string;
+  /** v2.0 (C1): a bombshell delivered to the inbox (an unlock nobody buys) — same contract as NewsItem.headline. */
+  headline?: true;
 }
 
 // ---------------------------------------------------------------------------

@@ -23,7 +23,7 @@
 
 import { CAREER_CALENDAR, CAREER_QUALIFIER, CAREER_SEASON_GOAL, CAREER_SPONSOR, CAREER_UNOFFICIAL } from "@/config/balance";
 import type { Placement, Region } from "../types";
-import { firstDayOfWeek, seasonSchedule, weekOfDay } from "./calendar";
+import { firstDayOfWeek, seasonSchedule, weekOfDay, worldsCancelledIn } from "./calendar";
 import {
   binomialTail,
   goalChance,
@@ -303,10 +303,16 @@ const strip = (c: Rated): SeasonGoalSpec => {
 
 /** The season's goal: the target nearest the aim inside its band, the stretch harder and inside its own. */
 export function seasonGoalPlanFor(input: SeasonGoalInput, cfg: SeasonGoalConfig = G): SeasonGoalPlan {
-  const rated: Rated[] = SEASON_GOAL_CANDIDATES.map((c) => ({
-    ...c,
-    chance: seasonGoalChance(c, input.level, input.cup, cfg),
-  })).filter((c) => c.chance > 0);
+  // v2.0 (C1): no Worlds goal in a season whose Worlds is not played (Season X).
+  const noWorlds = worldsCancelledIn(input.seasonIndex);
+  const rated: Rated[] = SEASON_GOAL_CANDIDATES.filter(
+    (c) => !noWorlds || (c.kind !== "worldsQualify" && c.kind !== "worldsFinish"),
+  )
+    .map((c) => ({
+      ...c,
+      chance: seasonGoalChance(c, input.level, input.cup, cfg),
+    }))
+    .filter((c) => c.chance > 0);
   const aim = seasonGoalAimOf(input, cfg);
   // A target leaves room for a stretch: some goal at least `stretchGap` less likely (a dominant
   // squad's target is never the hardest goal there is).
@@ -470,6 +476,11 @@ export function seasonGoalProgressOf(
       } else {
         done = played && PLACE[played.userPlacement!] <= place ? 1 : 0;
         left = played || lost || after ? 0 : 1;
+        // v2.0 (C1): a Worlds that is not played (an older save's goal in Season X) — making the field is the goal.
+        if (worldsCancelledIn(ctx.seasonIndex)) {
+          done = inField ? 1 : 0;
+          left = inField || lost ? 0 : 1;
+        }
       }
       break;
     }

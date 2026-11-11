@@ -936,6 +936,14 @@ export const CAREER_SEASONS = [
 ] as const;
 
 /**
+ * v2.0 (C1): the seasons whose World Championship was never played. Season X
+ * (2020-21, index 0): cancelled over the pandemic. The season still runs its
+ * three splits and Majors; W32 has no event, the news says so on the Worlds
+ * window's Monday, and the season review opens on the season's last day.
+ */
+export const CAREER_CANCELLED_WORLDS = { seasonIndexes: [0] as readonly number[] } as const;
+
+/**
  * Season shape: 32 weeks — W1-2 preseason (window), 3 × [8-week split:
  * open, R1, open, R2, open, R3, open, Major] with 2-week windows after
  * splits 1 & 2, then the 1-week Worlds window (W31) and Worlds (W32).

@@ -2213,6 +2213,8 @@ export const CAREER_PT: CareerCopy = {
       flavor3: () => `O microfone de um caster pegou uma análise bem sincera no intervalo`,
       flavor4: () => `Reclamações de ping registradas. Reclamações de ping arquivadas.`,
       flavor5: () => `Uma montage da comunidade está bombando esta semana`,
+      // v2.0 (C1)
+      worldsCancelled: () => `Mundial cancelado pela pandemia`,
     },
     // v0.2 — corpo de texto por template (mesmos params; o feed do QG renderiza).
     body: {
@@ -2334,6 +2336,9 @@ export const CAREER_PT: CareerCopy = {
         `A org colocou ${p.player} no mercado. Uma proposta de um time que o escalaria chega em poucos dias de janela.`,
       repDown: (p: Record<string, string | number>) =>
         `As expectativas foram declaradas e não cumpridas; o prestígio de ${p.org} sente. Reputação se recupera do mesmo jeito que se constrói.`,
+      // v2.0 (C1)
+      worldsCancelled: () =>
+        `A liga cancelou o Mundial desta temporada: com as viagens fechadas pela pandemia, não há como reunir as regiões. A temporada termina com a classificação dos splits como está. Nenhum título é entregue, e a corrida recomeça na próxima temporada.`,
     },
   },
 

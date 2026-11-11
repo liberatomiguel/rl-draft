@@ -28,6 +28,7 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CANCELLED_WORLDS,
   CAREER_QUALIFIER,
   CAREER_SEASONS,
   CAREER_SLOTS,
@@ -363,6 +364,11 @@ export function regionalForQualifier(def: CareerEventDef): CareerEventDef | null
   );
 }
 
+/** v2.0 (C1): this season's World Championship is not played (CAREER_CANCELLED_WORLDS — Season X, the pandemic). */
+export function worldsCancelledIn(seasonIndex: number): boolean {
+  return CAREER_CANCELLED_WORLDS.seasonIndexes.includes(seasonIndex);
+}
+
 /**
  * The official events scheduled on a given week: one regional PER REGION on a
  * regional week (all 7 resolve in the same world tick), one cross-region Major
@@ -409,6 +415,8 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
   }
 
   if (wk.kind === "worlds") {
+    // v2.0 (C1): Season X's Worlds was cancelled — the week has no event.
+    if (worldsCancelledIn(seasonIndex)) return [];
     return [
       {
         id: eventIdFor(seasonIndex, "worlds"),
