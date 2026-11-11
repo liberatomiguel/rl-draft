@@ -126,7 +126,15 @@ import {
   setTrainingRepeatFlow,
 } from "./careerTraining";
 import type { ContractOffer } from "@/engine/career/contract";
-import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
+import {
+  analyticsAllowed,
+  anonymousId,
+  noteCareerAdvance,
+  takeCareerActivity,
+  trackEvents,
+  trackOnboardingStep,
+  type TrackedEvent,
+} from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
 import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persistStorage";
 
@@ -327,11 +335,29 @@ function emptySlots(): (CareerSave | null)[] {
  * Production only, and never throws into gameplay.
  */
 function trackCareerWrite(prev: CareerSave, next: CareerSave, action?: CareerAction): void {
+  let events: TrackedEvent[];
   try {
-    if (analyticsAllowed()) trackEvents(careerEventsFor(prev, next, action));
+    if (!analyticsAllowed()) return;
+    events = careerEventsFor(prev, next, action);
   } catch {
-    // analytics must never break a save
+    return; // analytics must never break a save
   }
+  // 2.0: the first tournament of the batch carries the tab visits and the day
+  // advances since the previous one (counters, never events of their own).
+  const first = events.find((e) => e.name === "career_event_completed");
+  if (first?.name === "career_event_completed") {
+    Object.assign(first.props, takeCareerActivity());
+    trackOnboardingStep("career_first_event");
+  }
+  trackEvents(events);
+}
+
+/** 2.0 analytics: how long an advance took on this device (`quality_slow_advance`, the advance counters). */
+function timed(kind: "day" | "stop", run: () => void): void {
+  const clock = typeof performance !== "undefined" ? performance : Date;
+  const started = clock.now();
+  run();
+  noteCareerAdvance(kind, clock.now() - started);
 }
 
 /** v2.0 (C1): the profile XP one career write earned (careerXp.careerXpBetween) — granted once, never throws into gameplay. */
@@ -498,8 +524,8 @@ export const useCareerStore = create<CareerStoreState>()(
           const slots = [...get().slots];
           slots[slot] = save;
           set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, scrimPlayback: null, toasts: [] });
-          const created = careerCreatedEvent(save, input.rosterKey);
-          trackEvent(created.name, created.props);
+          trackEvents([careerCreatedEvent(save, input.rosterKey, slot)]);
+          trackOnboardingStep("career_created");
         },
 
         selectSlot: (slot) => {
@@ -513,8 +539,8 @@ export const useCareerStore = create<CareerStoreState>()(
           set({ slots, activeSlot: active });
         },
 
-        advanceDay: () => { if (!get().scrimPlayback) withSave(advanceDayFlow); },
-        advanceToNextStop: () => { set({ scrimPlayback: null }); withSave(advanceToNextStopFlow); set({ scrimPlayback: null }); },
+        advanceDay: () => { if (!get().scrimPlayback) timed("day", () => withSave(advanceDayFlow)); },
+        advanceToNextStop: () => { set({ scrimPlayback: null }); timed("stop", () => withSave(advanceToNextStopFlow)); set({ scrimPlayback: null }); },
         continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
         startSunday: (choice, mode) => withResult((s) => startSundayFlow(s, choice, mode)),
         followSunday: (choice) => withResult((s) => followSundayFlow(s, choice)),
@@ -568,11 +594,11 @@ export const useCareerStore = create<CareerStoreState>()(
           if (!get().lastError) get().markCareerSeen([toolboxNewKey(itemId)]);
         },
         setPsychologist: (on) => {
-          withResult((s) => setPsychologistFlow(s, on));
+          withResult((s) => setPsychologistFlow(s, on), { kind: "staff", staffId: "psychologist" });
           if (on && !get().lastError) get().markCareerSeen([toolboxNewKey("psych")]);
         },
         setStaff: (id, on) => {
-          withResult((s) => setStaffFlow(s, id, on));
+          withResult((s) => setStaffFlow(s, id, on), { kind: "staff", staffId: id });
         },
         runBootcamp: () => {
           const before = selectActiveSave(get());
@@ -581,10 +607,10 @@ export const useCareerStore = create<CareerStoreState>()(
           if (tier > 0 && !get().lastError) get().markCareerSeen([toolboxNewKey(tier === 2 ? "bootcamp2" : "bootcamp1")]);
         },
         buyScoutReport: (playerId) =>
-          withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
+          withResult((s) => buyScoutReportFlow(s, playerId)),
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
         fireCoach: () => withResult(fireCoachFlow, { kind: "fireCoach" }),
-        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons)),
+        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons), { kind: "renewCoach" }),
         chooseSponsor: (sponsorId) =>
           withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
@@ -659,7 +685,7 @@ export const useCareerStore = create<CareerStoreState>()(
               if (item) item.read = true;
               return next;
             },
-            { allowEnded: true, track: { kind: "readMail", mailId } },
+            { allowEnded: true },
           ),
         markAllMailRead: () =>
           withSave(

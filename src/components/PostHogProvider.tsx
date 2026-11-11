@@ -8,15 +8,21 @@
  * persistence is localStorage (no cookies), `identify()` is never called
  * (`person_profiles: "identified_only"` keeps everyone anonymous), DOM
  * autocapture and session recording are off, and "Do Not Track" is respected.
- * Only pageviews (incl. SPA route changes) and the explicit events we send are
- * collected, all aggregate and non-PII.
+ * Only pageviews and the explicit events we send are collected, all aggregate
+ * and non-PII.
+ *
+ * 2.0 budget (docs/ANALYTICS-EVENTS-2.0.md): the SDK's own pageview capture is
+ * OFF. `lib/analytics.ts` sends `$pageview` itself, once per route per session,
+ * and applies the budget guard to everything. The guard's one input, the static
+ * file `/analytics-budget.json`, is fetched here before the SDK connects (a
+ * missing or broken file leaves the built-in defaults). Uncaught errors and
+ * unhandled rejections are reported as `quality_error`.
  *
  * Lazy load: `posthog-js` (~75 KB gz) is NOT in the page bundle. It is fetched
  * with a dynamic `import()` after the window `load` event, in an idle callback,
  * so it never competes with hydration or first paint. Game events and pathname
  * changes that happen before it is ready are queued by `lib/analytics.ts` and
- * flushed with their original timestamps; the page the player is on when the
- * SDK starts gets the SDK's own initial `$pageview`, exactly as before. The
+ * flushed with their original timestamps. The
  * token, host, `defaults`, persistence (`localStorage`, default persistence
  * name) and the anonymous distinct id are unchanged, so returning players keep
  * their identity and localhost stays flagged internal (via `defaults`).
@@ -33,7 +39,14 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { analyticsAllowed, connectAnalytics, disableAnalytics, notePageview } from "@/lib/analytics";
+import {
+  analyticsAllowed,
+  connectAnalytics,
+  disableAnalytics,
+  notePageview,
+  reportScreenError,
+  setAnalyticsBudget,
+} from "@/lib/analytics";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
@@ -42,6 +55,9 @@ const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
  *  image must not hold analytics back indefinitely). */
 const IDLE_TIMEOUT_MS = 3000;
 const LOAD_WAIT_CAP_MS = 10000;
+/** The budget file must never hold the SDK back: past this, the defaults apply. */
+const BUDGET_WAIT_CAP_MS = 3000;
+const BUDGET_URL = "/analytics-budget.json";
 
 /** Module-level so React strict mode / remounts can never init twice. */
 let scheduled = false;
@@ -69,9 +85,19 @@ function afterLoadThenIdle(run: () => void): void {
   setTimeout(go, LOAD_WAIT_CAP_MS);
 }
 
+/** The budget override (a static asset; never a Worker request). Resolves either way. */
+function loadBudget(): Promise<void> {
+  const fetched = fetch(BUDGET_URL, { cache: "no-cache" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((json) => setAnalyticsBudget(json))
+    .catch(() => undefined);
+  const capped = new Promise<void>((resolve) => setTimeout(resolve, BUDGET_WAIT_CAP_MS));
+  return Promise.race([fetched, capped]);
+}
+
 function loadPostHog(key: string): void {
-  import("posthog-js")
-    .then(({ default: posthog }) => {
+  Promise.all([import("posthog-js"), loadBudget()])
+    .then(([{ default: posthog }]) => {
       if (!posthog.__loaded) {
         posthog.init(key, {
           api_host:
@@ -87,7 +113,9 @@ function loadPostHog(key: string): void {
           // pageviews + our explicit game events. Everything `defaults` would
           // otherwise switch on is off — no DOM/dead-click autocapture, no surveys,
           // no session replay, no web-vitals capture.
-          capture_pageview: "history_change", // SPA-aware pageviews (App Router)
+          // 2.0: pageviews are sent by lib/analytics.ts (once per route per
+          // session, under the budget guard), not by the SDK.
+          capture_pageview: false,
           autocapture: false,
           capture_dead_clicks: false,
           disable_surveys: true,
@@ -106,7 +134,7 @@ function loadPostHog(key: string): void {
     .catch(() => disableAnalytics());
 }
 
-/** Feeds pathname changes to the pre-init queue (no-op once PostHog is up). */
+/** Reports every pathname change: `$pageview` once per route per session, and the career tab counters. */
 function PageviewRecorder() {
   const pathname = usePathname();
   useEffect(() => {
@@ -120,6 +148,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!POSTHOG_KEY || scheduled || !analyticsAllowed()) return;
     scheduled = true;
     afterLoadThenIdle(() => loadPostHog(POSTHOG_KEY));
+    // Health: what no error boundary caught (the boundary reports its own).
+    window.addEventListener("error", (event) => reportScreenError("window", event.error ?? { message: event.message }));
+    window.addEventListener("unhandledrejection", (event) => reportScreenError("promise", event.reason));
   }, []);
 
   return (

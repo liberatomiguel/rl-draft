@@ -59,6 +59,7 @@ import {
 } from "./profileStore";
 import type { ProfileState } from "./profileStore";
 import { CLOUD_SYNC } from "@/config/balance";
+import { registerSessionProps, trackEvent } from "@/lib/analytics";
 import type { DurableProfile } from "@/lib/profileSync";
 
 type Status = "loading" | "signedOut" | "signedIn";
@@ -178,6 +179,7 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // be treated as "no row" (fresh device + one 5xx would wipe the cloud copy).
     if (row.status === "error") {
       keepName(session);
+      trackEvent("account_sync_failed", { actionId: "sync_failed:read", stage: "read" });
       return "aborted";
     }
     // The stored name is known now — show it even if the push below fails.
@@ -239,6 +241,7 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     const pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
     if (pushed.error) {
       keepName(session);
+      trackEvent("account_sync_failed", { actionId: "sync_failed:push", stage: "push" });
       return "aborted";
     }
     if (!cloudName) showName(userId, username); // the fallback name is now the stored one
@@ -325,6 +328,12 @@ export const useAccountStore = create<AccountStore>((set, get) => {
   };
 
   const onAuth = (session: Session | null, event: AuthChangeEvent): void => {
+    // 2.0 analytics: a sign-in completed in this tab (not a restored session, not
+    // the SIGNED_IN Supabase re-emits on refocus: the user is already set then).
+    if (event === "SIGNED_IN" && session && get().session?.user.id !== session.user.id) {
+      const profile = useProfileStore.getState();
+      trackEvent("account_signed_in", { hadLocalProgress: profile.runsCompleted > 0 || profile.xp > 0 });
+    }
     if (get().session?.user.id !== session?.user.id) {
       // Signed out, or another user signed in: the pending push, the last-pushed
       // signature and the shown name all belonged to the previous user.
@@ -433,4 +442,11 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       set({ session: null, username: null, status: "signedOut" });
     },
   };
+});
+
+// 2.0 analytics: whether the player is signed in, for `session_started`
+// (null while the stored session is still being read).
+registerSessionProps(() => {
+  const { status } = useAccountStore.getState();
+  return { signedIn: status === "signedIn" ? true : status === "signedOut" ? false : null };
 });
