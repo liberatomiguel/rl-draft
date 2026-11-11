@@ -18,10 +18,10 @@
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_SEASONS } from "@/config/balance";
-import { lineups } from "@/data";
+import { lineups, playerCards, players } from "@/data";
 import type { CareerSave, WorldState } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
-import { createCareerSave, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
+import { advanceDayFlow, createCareerSave, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -121,5 +121,39 @@ describe("DATA-01: each org enters the career in its right season (the real roll
     }
     // Every region still fields its events from 16 by the existing seeding.
     expect(Object.values(save.world.orgs).filter((o) => o.region === "EU").length).toBeGreaterThanOrEqual(16);
+  });
+});
+
+describe("v2.0 (C1): an org never imports another region's roster", () => {
+  it("Elevate enters SAM in 2021-22 and keeps a SAM squad — its later APAC lineups stay in APAC", () => {
+    const apac = new Set(
+      lineups
+        .filter((l) => l.orgId === "elevate" && l.region === "APAC")
+        .flatMap((l) => l.playerCardIds.map((cid) => playerCards.find((c) => c.id === cid)!.playerId)),
+    );
+    expect(apac.size).toBeGreaterThan(0);
+    let seen = 0;
+    for (const seed of [4242, 77, 2026]) {
+      let save: CareerSave = createCareerSave(INPUT, seed);
+      for (let s = 1; s < CAREER_SEASONS.length; s++) {
+        save = rolloverToNextSeason(save);
+        // The preseason market (the anchor pass) runs on the first days.
+        for (let d = 0; d < 3; d++) save = advanceDayFlow({ ...save, pendingOffers: [], sponsorOffers: null, pendingInsert: null, unofficialOffer: null });
+        const org = save.world.orgs["elevate"];
+        // Once its dataset history is over its seat may go to an entrant (RTW-03).
+        if (!org) continue;
+        seen += 1;
+        expect(org.region, `season ${s}`).toBe("SAM");
+        expect(org.playerIds.filter((id) => apac.has(id)), `season ${s}, seed ${seed}`).toEqual([]);
+      }
+    }
+    expect(seen).toBeGreaterThanOrEqual(6);
+  });
+
+  it("an org that moved with its own players still gets them (FURIA's NA season keeps its Brazilians)", () => {
+    const moved = lineups.filter((l) => l.orgId === "furia" && l.seasonId === "rlcs-2022-23");
+    expect(moved[0]?.region).toBe("NA");
+    const ids = moved[0].playerCardIds.map((cid) => playerCards.find((c) => c.id === cid)!.playerId);
+    expect(ids.every((id) => players.find((p) => p.id === id)!.region === "SAM")).toBe(true);
   });
 });

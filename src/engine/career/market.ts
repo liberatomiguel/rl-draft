@@ -459,7 +459,7 @@ export function resaleLocked(
 }
 
 /** This season's real dataset lineups (the anchor targets). Empty when infinite. */
-function anchorLineupsFor(seasonIndex: number): { orgId: string; playerIds: string[] }[] {
+function anchorLineupsFor(seasonIndex: number): { orgId: string; region: Region; playerIds: string[] }[] {
   // rc.39 (R109): the late wave (RLCS 2027) anchors at its infinite-era season.
   const seasonId = intakeSeasonIdFor(seasonIndex);
   if (!seasonId) return [];
@@ -467,6 +467,7 @@ function anchorLineupsFor(seasonIndex: number): { orgId: string; playerIds: stri
     .filter((l) => l.seasonId === seasonId && !l.rareSpawn)
     .map((l) => ({
       orgId: l.orgId,
+      region: l.region,
       playerIds: l.playerCardIds.map((cid) => playerCardById.get(cid)!.playerId),
     }));
 }
@@ -678,6 +679,12 @@ export function aiWindowMoves(
         if (next.retiredIds.includes(playerId)) continue;
         const view = viewOf(playerId);
         if (!view) continue; // not debuted yet / unresolvable
+        // v2.0 (C1): the dataset reuses an org id across regions (Elevate: SAM
+        // in 2021-22, APAC after). The world keeps the org where it entered,
+        // so a lineup from another region only brings the players who are
+        // from the org's own region (FURIA's Brazilians in its NA season) —
+        // never the other region's roster.
+        if (anchor.region !== org.region && view.region !== org.region) continue;
         if (!rng.chance(fidelity)) continue; // per-slot break
         execMove(playerId, anchor.orgId);
       }
