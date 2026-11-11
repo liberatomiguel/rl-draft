@@ -338,10 +338,13 @@ export const REGION_LOCK = {
   // and OCE/MENA Legacy no longer reward grinding (OCE grinders won ≈32 %).
   // A negative value lets the regional field play below its nominal rating.
   opponentRatingBoost: {
-    SAM: { easy: -1.85, normal: -0.35, hard: 1.45, legacy: 3.95 },
-    EU: { easy: -0.05, normal: 0.45, hard: 0.9, legacy: 1.5 },
-    NA: { easy: 0.4, normal: 1.15, hard: 2.55, legacy: 2.15 },
-    MENA: { easy: -0.55, normal: 1.45, hard: 2.9, legacy: 4.05 },
+    // C3 (rc.45): paired real-draft matrix; keep shared difficulty profiles
+    // unchanged so fixed-seed challenges/dailies retain their legal replays.
+    // Only move cells outside the 2 pp sampling band; see C3-difficulty-matrix.md.
+    SAM: { easy: -1.85, normal: -0.35, hard: 1.05, legacy: 3.95 },
+    EU: { easy: -0.05, normal: 0.45, hard: 1.3, legacy: 1.5 },
+    NA: { easy: 0.6, normal: 1.15, hard: 2.55, legacy: 2.15 },
+    MENA: { easy: -0.15, normal: 1.45, hard: 3.5, legacy: 4.05 },
     OCE: { easy: 0.25, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
   /**
