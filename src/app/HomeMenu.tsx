@@ -134,20 +134,20 @@ export default function HomeMenu() {
       <FirstRunTutorial />
       {playtest ? null : <SeasonRecap />}
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
-      <section className="px-2 pb-6 pt-6 text-center md:pt-9">
+      <section className="px-2 pb-6 pt-10 text-center md:pt-14">
         <p className="kicker mb-4">{APP.tagline}</p>
         <h1 className="display mx-auto max-w-3xl text-5xl font-bold uppercase leading-[0.95] tracking-[0.08em] md:text-7xl">
           <span className="text-ink">Rocket</span>
           <span className="bg-gradient-to-r from-orange to-orange-bright bg-clip-text text-transparent">Draft</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
+        <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
 
         {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-5 flex min-h-[132px] max-w-2xl flex-col items-center justify-center gap-3 sm:min-h-[88px] sm:flex-row sm:gap-4">
+        <div className="mx-auto mt-7 flex min-h-[132px] max-w-2xl flex-col items-center gap-3">
           {mounted ? (
             <>
               <RankBadge rank={rank} variant="menu" size="md" />
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
                 <Badge tone="blue">{rank.label}</Badge>
                 <Badge tone="orange">
                   {HOME.seasonStrip.rating} {mmr}
@@ -158,6 +158,32 @@ export default function HomeMenu() {
             </>
           ) : null}
         </div>
+
+        {/* Community pills (v2.0): right under the rank tags, where they are seen. */}
+        {SITE.discordUrl || SITE.supportUrl ? (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+            {SITE.discordUrl ? (
+              <a
+                href={SITE.discordUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
+              >
+                <DiscordIcon className="h-4 w-4" /> {HOME.joinDiscord}
+              </a>
+            ) : null}
+            {SITE.supportUrl ? (
+              <a
+                href={SITE.supportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
+              >
+                <CoffeeGlyph /> {HOME.support}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <div className="rise-in">
@@ -211,7 +237,8 @@ export default function HomeMenu() {
                 <div className="relative">
                   <div className="mb-2 flex items-center gap-2.5">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
-                    <Badge tone="gold">{HOME.careerBadge}</Badge>
+                    <Badge tone="blue">{HOME.careerBadge}</Badge>
+                    <Badge tone="gold">{NAV_UI.beta}</Badge>
                   </div>
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
                   <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
@@ -376,33 +403,25 @@ export default function HomeMenu() {
           </Tile>
         </section>
 
-        {/* ---- COMMUNITY (v2.0): Discord and Ko-fi as real cards, not footer pills. */}
-        {SITE.discordUrl || SITE.supportUrl ? (
-          <>
-            <p className="kicker mb-2 mt-7">{HOME.sectionCommunity}</p>
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {SITE.discordUrl ? (
-                <CommunityCard
-                  href={SITE.discordUrl}
-                  tone="discord"
-                  icon={<DiscordIcon className="h-7 w-7" />}
-                  title={HOME.discordTitle}
-                  desc={HOME.discordDesc}
-                  cta={HOME.discordCta}
-                />
-              ) : null}
-              {SITE.supportUrl ? (
-                <CommunityCard
-                  href={SITE.supportUrl}
-                  tone="support"
-                  icon={<CoffeeGlyph className="h-7 w-7" />}
-                  title={HOME.supportTitle}
-                  desc={HOME.supportDesc}
-                  cta={HOME.support}
-                />
-              ) : null}
-            </section>
-          </>
+        {/* Discord once more at the end of the menu (v2.0): one slim strip. */}
+        {SITE.discordUrl ? (
+          <a
+            href={SITE.discordUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mx-auto mt-8 flex max-w-2xl items-center gap-3 rounded-xl border border-[#5865F2]/35 bg-[#5865F2]/[0.08] px-4 py-3 transition-colors hover:border-[#5865F2]/70 hover:bg-[#5865F2]/[0.14]"
+          >
+            <span className="shrink-0 text-[#aab1ff]" aria-hidden>
+              <DiscordIcon className="h-6 w-6" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="display block text-sm font-bold uppercase tracking-wide text-ink">{HOME.joinDiscord}</span>
+              <span className="block text-xs leading-relaxed text-sub">{HOME.discordDesc}</span>
+            </span>
+            <span className="shrink-0 text-[#aab1ff] transition-transform group-hover:translate-x-0.5" aria-hidden>
+              →
+            </span>
+          </a>
         ) : null}
 
         <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
@@ -426,7 +445,6 @@ export default function HomeMenu() {
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
 
       <Modal open={quizOpen && !playtest} title={QUIZ_UI.title} onClose={() => setQuizOpen(false)} wide>
-        <p className="mb-4 text-xs leading-relaxed text-sub">{QUIZ_UI.subtitle}</p>
         <QuizPanel compact />
         <p className="mt-3 text-right">
           <AppLink href="/quiz" className="text-[11px] font-semibold text-faint underline-offset-4 hover:text-sub hover:underline">
@@ -463,66 +481,6 @@ function CardHit({
       onFocus={onFocus}
       className="absolute inset-0 z-[1] cursor-pointer rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-orange/70"
     />
-  );
-}
-
-/** v2.0: a community link with the weight of a menu card (brand tint, icon, CTA). */
-function CommunityCard({
-  href,
-  tone,
-  icon,
-  title,
-  desc,
-  cta,
-}: {
-  href: string;
-  tone: "discord" | "support";
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  cta: string;
-}) {
-  const discord = tone === "discord";
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="group block">
-      <Panel
-        className={cx(
-          "relative flex h-full items-center gap-4 overflow-hidden p-4 transition-all group-hover:-translate-y-0.5 sm:p-5",
-          discord
-            ? "!border-[#5865F2]/45 group-hover:!border-[#5865F2]/80"
-            : "!border-[#FF5E5B]/40 group-hover:!border-[#FF5E5B]/75",
-        )}
-      >
-        <div
-          className={cx(
-            "pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full blur-3xl",
-            discord ? "bg-[#5865F2]/20" : "bg-[#FF5E5B]/15",
-          )}
-          aria-hidden
-        />
-        <span
-          aria-hidden
-          className={cx(
-            "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            discord ? "bg-[#5865F2] text-white" : "bg-[#FF5E5B] text-white",
-          )}
-        >
-          {icon}
-        </span>
-        <div className="relative min-w-0 flex-1">
-          <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
-          <p className="mt-0.5 text-xs leading-relaxed text-sub">{desc}</p>
-          <span
-            className={cx(
-              "display mt-2 inline-flex text-[11px] font-bold uppercase tracking-[0.14em]",
-              discord ? "text-[#aab1ff]" : "text-[#ff9c99]",
-            )}
-          >
-            {cta} →
-          </span>
-        </div>
-      </Panel>
-    </a>
   );
 }
 

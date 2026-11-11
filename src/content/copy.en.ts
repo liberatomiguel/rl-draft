@@ -101,18 +101,13 @@ export const HOME = {
   // Road to Worlds home card (career mode). Kept here, not in the career
   // dictionary, so the home page doesn't load the whole career copy.
   careerTitle: "Road to Worlds",
-  careerBadge: "Beta",
+  careerBadge: "NEW",
   careerDesc:
     "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
   careerCta: "Build an org from nothing. Win the World Championship.",
   // v2.0 (G2): beta note on the career card + the community band.
   careerBetaNote: "Beta: balance is still being tuned. Tell us what you think on Discord.",
-  sectionCommunity: "Community",
-  discordTitle: "Discord",
   discordDesc: "Talk drafts, report bugs and follow what ships next.",
-  discordCta: "Join the server",
-  supportTitle: "Support Rocket Draft",
-  supportDesc: "Free and fan-made. A coffee on Ko-fi helps keep it running.",
 };
 
 /**
@@ -1745,11 +1740,6 @@ export const NATIONAL_UI = {
   edition: "Edition",
   flavor: (name: string, nation: string, edition: string) => `${name} wore ${nation}'s colours at ${edition}.`,
   effect: (n: number) => `+${n} to every team attribute — the national colours.`,
-  // v2.0 (G2): the two album covers at the top of the Collection.
-  coverSpecialsDesc: "Legendary moments, champions and creators. Draft a special card and finish the run to keep it.",
-  coverNationalDesc: "The FIFAe national rosters. A rare draw: find a team to open its page, then fill it card by card.",
-  coverOpen: "Open album",
-  coverViewing: "Viewing",
 };
 
 /** rc.30: the Daily Challenge's templates and objectives (src/lib/dailyPlan.ts ids),

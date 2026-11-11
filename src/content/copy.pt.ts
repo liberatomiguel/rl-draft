@@ -95,17 +95,12 @@ export const PT: Copy = {
     runs: (n: number) => `${n} ${n === 1 ? "run" : "runs"}`,
     titles: (n: number) => `${n} títulos`,
     careerTitle: "Road to Worlds",
-    careerBadge: "Beta",
+    careerBadge: "NOVO",
     careerDesc:
       "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
     careerCta: "Construa uma org do zero. Vença o Mundial.",
     careerBetaNote: "Beta: o balanceamento ainda está em ajuste. Conte no Discord o que achou.",
-    sectionCommunity: "Comunidade",
-    discordTitle: "Discord",
     discordDesc: "Converse sobre drafts, reporte bugs e acompanhe as novidades.",
-    discordCta: "Entrar no servidor",
-    supportTitle: "Apoie o Rocket Draft",
-    supportDesc: "Gratuito e feito por fã. Um café no Ko-fi ajuda a manter o jogo no ar.",
   },
 
   HOME_SEO: {
@@ -1675,10 +1670,6 @@ export const PT: Copy = {
     edition: "Edição",
     flavor: (name: string, _nation: string, edition: string) => `${name} defendeu a seleção na ${edition}.`,
     effect: (n: number) => `+${n} em todos os atributos do time — as cores da seleção.`,
-    coverSpecialsDesc: "Momentos lendários, campeões e criadores. Drafte uma carta especial e termine a run para ficar com ela.",
-    coverNationalDesc: "Os elencos das seleções na FIFAe. Aparecem raramente: encontre uma seleção para abrir a página e complete carta por carta.",
-    coverOpen: "Abrir álbum",
-    coverViewing: "Aberto",
   },
   DAILY_TEXT: {
     tag: "Diário",

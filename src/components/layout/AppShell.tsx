@@ -164,8 +164,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   >
                     {t.NAV[item.key]}
                     {item.key === "career" ? (
-                      <span className="rounded border border-amber-400/40 bg-amber-400/10 px-1 py-px text-[9px] font-bold leading-none tracking-[0.08em] text-amber-300">
-                        {t.NAV_UI.beta}
+                      <span className="pointer-events-none absolute -right-2 top-0 rotate-[9deg] rounded border border-blue/50 bg-[#10203f] px-1 py-px text-[9px] font-bold leading-none tracking-[0.08em] text-blue-bright shadow-[0_0_10px_rgba(59,130,246,0.35)]">
+                        {t.HOME.careerBadge}
                       </span>
                     ) : null}
                     {hasDot(item.key) ? (
@@ -183,7 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   rel="noopener noreferrer"
                   aria-label={t.NAV_UI.joinDiscord}
                   title={t.NAV_UI.joinDiscord}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#8f98ff] transition-colors hover:bg-[#5865F2]/20 hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-sub transition-colors hover:bg-white/5 hover:text-ink"
                 >
                   <DiscordIcon className="h-5 w-5" />
                 </a>

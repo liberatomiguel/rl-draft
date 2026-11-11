@@ -35,6 +35,7 @@ import {
 import { ClockStamp, GameClock } from "@/components/career/event/GameClock";
 import { Badge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
+import { TeamLogo } from "@/components/ui/TeamLogo";
 
 /** `game` fully revealed games, `beat` timeline beats shown of games[game]. */
 export interface SeriesCursor {
@@ -174,9 +175,12 @@ export function ChallengeMatchBoard({
 
       {/* scoreboard: goals · clock · goals, the series score under it */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
-        <p className="display min-w-0 truncate text-sm font-bold uppercase tracking-wide text-orange-bright sm:text-lg">
-          {nameA}
-        </p>
+        <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:justify-end sm:gap-3">
+          <p className="display order-2 min-w-0 max-w-full truncate text-xs font-bold uppercase tracking-wide text-orange-bright sm:order-1 sm:text-lg">
+            {nameA}
+          </p>
+          <TeamLogo orgId={teamA.orgId} size="md" className="order-1 shrink-0 sm:order-2" />
+        </div>
         <div className="px-1 text-center">
           {currentGame ? (
             <>
@@ -233,9 +237,12 @@ export function ChallengeMatchBoard({
             ) : null}
           </div>
         </div>
-        <p className="display min-w-0 truncate text-right text-sm font-bold uppercase tracking-wide text-ink sm:text-lg">
-          {nameB}
-        </p>
+        <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
+          <TeamLogo orgId={teamB.orgId} size="md" className="shrink-0" />
+          <p className="display min-w-0 max-w-full truncate text-xs font-bold uppercase tracking-wide text-ink sm:text-lg">
+            {nameB}
+          </p>
+        </div>
       </div>
 
       {/* game chips */}

@@ -22,6 +22,7 @@ import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Badge, CountryChip } from "@/components/ui/Badge";
+import { CrownIcon, FlameIcon, TargetIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { TeamLogo } from "@/components/ui/TeamLogo";
@@ -77,15 +78,9 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
         <div className="h-72 animate-pulse rounded-2xl bg-white/5" aria-busy />
       ) : (
         <>
-          <Panel strong glow="blue" className="relative overflow-hidden p-4 sm:p-5">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-400/10 blur-3xl" aria-hidden />
-            <div className="relative mb-4 flex items-center justify-between gap-2">
-              <h2 className="display text-base font-bold uppercase tracking-wide text-ink sm:text-lg">{Q.question}</h2>
-              <Badge tone="neutral" className="shrink-0">{Q.dayLabel(dailyNumber(date))}</Badge>
-            </div>
-
+          <Panel strong className="p-4 sm:p-5">
             {/* The mystery card + the attempt track: the state of the day at a glance. */}
-            <div className="relative mb-4 flex items-center gap-4">
+            <div className="flex items-center gap-4">
               <MysteryCard
                 label={Q.mystery}
                 state={!finished ? "hidden" : result?.solved ? "solved" : "missed"}
@@ -93,9 +88,18 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                 country={answer?.country}
               />
               <div className="min-w-0 flex-1">
-                <p className="kicker !text-[10px]">
-                  {Q.attemptOf(finished ? attemptsUsed : attemptsUsed + 1, limit)}
-                </p>
+                {compact ? null : (
+                  <h2 className="display mb-2 text-base font-bold uppercase tracking-wide text-ink sm:text-lg">{Q.question}</h2>
+                )}
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="kicker !text-[10px]">{Q.attemptOf(finished ? attemptsUsed : attemptsUsed + 1, limit)}</p>
+                  <p className="shrink-0 whitespace-nowrap text-[11px] text-faint">
+                    {!finished ? (
+                      <span className="display mr-2 font-bold text-orange-bright">{Q.xpFor(QUIZ.xpByAttempt[attemptsUsed + 1] ?? 0)}</span>
+                    ) : null}
+                    {compact ? null : Q.dayLabel(dailyNumber(date))}
+                  </p>
+                </div>
                 <ol className="mt-2 flex gap-1.5">
                   {Array.from({ length: limit }, (_, i) => {
                     const hit = !!result?.solved && i === attemptsUsed - 1;
@@ -106,64 +110,39 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                         key={i}
                         title={hit ? Q.attemptState.hit : miss ? Q.attemptState.miss : current ? Q.attemptState.current : Q.attemptState.open}
                         className={cx(
-                          "display flex h-8 min-w-0 flex-1 items-center justify-center rounded-md border text-xs font-bold",
-                          hit && "border-good/60 bg-good/15 text-good",
-                          miss && "border-bad/50 bg-bad/10 text-bad",
-                          current && "border-orange/70 bg-orange/10 text-orange-bright shadow-[0_0_14px_rgba(249,115,22,0.25)]",
-                          !hit && !miss && !current && "border-line text-faint",
+                          "h-1.5 flex-1 rounded-full",
+                          hit ? "bg-good" : miss ? "bg-bad/70" : current ? "bg-orange" : "bg-white/10",
                         )}
-                      >
-                        {hit ? "✓" : miss ? "×" : i + 1}
-                      </li>
+                      />
                     );
                   })}
                 </ol>
-                {!finished ? (
-                  <p className="display mt-2 text-sm font-bold text-orange-bright">
-                    {Q.xpFor(QUIZ.xpByAttempt[attemptsUsed + 1] ?? 0)}
-                  </p>
-                ) : null}
               </div>
             </div>
 
-            <ol className="relative space-y-2">
+            <ol className="mt-4 divide-y divide-line/50">
               {clues.map((c, i) => {
                 const newest = !finished && i === clues.length - 1 && attemptsUsed > 0;
                 return (
-                  <li
-                    key={i}
-                    className={cx(
-                      "rise-in flex items-center gap-3 rounded-xl border px-3 py-2.5",
-                      newest ? "border-blue/60 bg-blue/10" : "border-line/70 bg-white/[0.02]",
-                    )}
-                  >
+                  <li key={i} className="rise-in flex items-center gap-3 py-2.5">
                     <ClueMedal clue={c} />
                     <div className="min-w-0">
-                      <p className="kicker !text-[10px]">
-                        {Q.clue(i + 1)} · {Q.clueKinds[c.kind]}
-                      </p>
+                      <p className={cx("kicker !text-[10px]", newest && "!text-blue-bright")}>{Q.clueKinds[c.kind]}</p>
                       <p className="mt-0.5 text-sm leading-snug text-ink">{clueText(c, Q)}</p>
                     </div>
                   </li>
                 );
               })}
-              {/* What is still closed, in one compact row: the ladder stays short on a phone. */}
-              {lockedCount > 0 ? (
-                <li className="flex items-center gap-3 rounded-xl border border-dashed border-line/60 px-3 py-2 text-faint">
-                  <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                    {Array.from({ length: lockedCount }, (_, k) => (
-                      <LockGlyph key={k} />
-                    ))}
-                  </span>
-                  <p className="min-w-0 text-[11px] leading-snug">
-                    <span className="kicker !text-[10px] !text-faint">
-                      {Q.clue(clues.length + 1)} · {Q.lockedClue}
-                    </span>
-                    <span className="ml-2">{Q.nextClueHint}</span>
-                  </p>
-                </li>
-              ) : null}
             </ol>
+            {/* What is still closed: one quiet line. */}
+            {lockedCount > 0 ? (
+              <p className="mt-1 flex items-center gap-2 border-t border-line/50 pt-2.5 text-[11px] text-faint">
+                <span className="flex w-11 shrink-0 items-center justify-center gap-0.5" aria-hidden>
+                  <LockGlyph />
+                </span>
+                {Q.nextClueHint}
+              </p>
+            ) : null}
 
             {finished ? (
               <div className="mt-5 text-center">
@@ -190,11 +169,10 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                   if (text.trim()) submit(text);
                 }}
               >
-                <div className="flex items-center justify-between text-xs text-faint">
-                  <span>{Q.attemptsLeft(limit - attemptsUsed)}</span>
-                  {flash ? <span className="font-semibold text-bad">{Q.wrong}</span> : null}
-                </div>
-                <div className="mt-2 flex gap-2">
+                <p className="min-h-4 text-xs font-semibold text-bad" aria-live="polite">
+                  {flash ? Q.wrong : <span className="sr-only">{Q.attemptsLeft(limit - attemptsUsed)}</span>}
+                </p>
+                <div className="mt-1 flex gap-2">
                   <input
                     value={text}
                     onChange={(e) => setText(e.target.value)}
@@ -222,31 +200,24 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                   </ul>
                 ) : null}
                 {result?.guesses.length ? (
-                  <div className="mt-3">
-                    <p className="kicker !text-[10px]">{Q.yourGuesses}</p>
-                    <ul className="mt-1.5 flex flex-wrap gap-1.5">
-                      {result.guesses.map((g, i) => (
-                        <li
-                          key={i}
-                          className="inline-flex max-w-full items-center gap-1 rounded-md border border-bad/40 bg-bad/10 px-2 py-1 text-xs font-semibold text-bad"
-                        >
-                          <span aria-hidden>×</span>
-                          <span className="truncate line-through decoration-bad/60">{playerById.get(g)?.nickname ?? g}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-faint" aria-label={Q.yourGuesses}>
+                    {result.guesses.map((g, i) => (
+                      <li key={i} className="max-w-full truncate line-through decoration-bad/70">
+                        {playerById.get(g)?.nickname ?? g}
+                      </li>
+                    ))}
+                  </ul>
                 ) : null}
               </form>
             )}
           </Panel>
 
-          <div className={cx("mt-4 grid gap-3", compact ? "grid-cols-4" : "grid-cols-2 md:grid-cols-4")}>
-            <Stat label={Q.played} value={String(quiz.played)} compact={compact} />
-            <Stat label={Q.solvedCount} value={String(quiz.solved)} compact={compact} />
-            <Stat label={Q.streak} value={String(quiz.streak)} compact={compact} />
-            <Stat label={Q.best} value={String(quiz.bestStreak)} compact={compact} />
-          </div>
+          <dl className="mt-4 grid grid-cols-4 divide-x divide-line/60 rounded-xl border border-line/70 bg-white/[0.02]">
+            <Stat label={Q.played} value={quiz.played} icon={<TargetIcon className="h-4 w-4" />} />
+            <Stat label={Q.solvedCount} value={quiz.solved} icon={<CheckGlyph />} />
+            <Stat label={Q.streak} value={quiz.streak} icon={<FlameIcon className="h-4 w-4" />} />
+            <Stat label={Q.best} value={quiz.bestStreak} icon={<CrownIcon className="h-4 w-4" />} />
+          </dl>
 
           {compact ? null : <RecentDays results={quiz.results} today={date} />}
         </>
@@ -290,14 +261,14 @@ function MysteryCard({
       role="img"
       aria-label={hidden ? label : nickname}
       className={cx(
-        "relative flex h-24 w-[4.5rem] shrink-0 flex-col items-center justify-center overflow-hidden rounded-xl border-2 bg-gradient-to-b text-center",
-        hidden && "border-violet-400/50 from-violet-500/25 to-blue/10 shadow-[0_0_22px_rgba(167,139,250,0.25)]",
-        state === "solved" && "pop-in border-good/60 from-good/25 to-good/5 shadow-[0_0_22px_rgba(52,211,153,0.25)]",
-        state === "missed" && "pop-in border-bad/50 from-bad/20 to-bad/5",
+        "relative flex h-20 w-16 shrink-0 flex-col items-center justify-center overflow-hidden rounded-xl border bg-gradient-to-b text-center",
+        hidden && "border-line-strong from-white/[0.07] to-white/[0.02]",
+        state === "solved" && "pop-in border-good/60 from-good/20 to-good/5",
+        state === "missed" && "pop-in border-bad/50 from-bad/15 to-bad/5",
       )}
     >
       {hidden ? (
-        <span className="display text-4xl font-bold text-violet-200" aria-hidden>
+        <span className="display text-3xl font-bold text-sub" aria-hidden>
           ?
         </span>
       ) : (
@@ -370,12 +341,25 @@ function LockGlyph() {
   );
 }
 
-function Stat({ label, value, compact }: { label: string; value: string; compact?: boolean }) {
+function Stat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <Panel className={cx("text-center", compact ? "p-2" : "p-3")}>
-      <p className="kicker !text-[10px]">{label}</p>
-      <p className={cx("display mt-1 font-bold text-ink", compact ? "text-base" : "text-xl")}>{value}</p>
-    </Panel>
+    <div className="flex min-w-0 flex-col items-center gap-0.5 px-1 py-2.5 text-center">
+      <span className="text-faint" aria-hidden>
+        {icon}
+      </span>
+      <dd className="display text-lg font-bold leading-none text-ink">{value}</dd>
+      <dt className="w-full text-[10px] leading-tight text-faint">
+        {label}
+      </dt>
+    </div>
+  );
+}
+
+function CheckGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+      <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
