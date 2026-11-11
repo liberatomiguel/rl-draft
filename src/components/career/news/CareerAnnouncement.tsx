@@ -16,7 +16,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { RungIcon } from "../ladder/LadderParts";
 import { resolveNews } from "./newsText";
-import { newsActionOf } from "./newsView";
+import { BrandMark } from "./NewsFeed";
+import { rocketStreetNews, newsActionOf } from "./newsView";
 
 const INITIALIZED = "ui:progression-announcements";
 export function reachedAnnouncementKeys(save: CareerSave): string[] {
@@ -68,6 +69,7 @@ export function CareerAnnouncement() {
   };
   return <Modal open title={content ? C.launch.breaking : C.launch.unlocked} onClose={close} actions={<Button onClick={() => { close(); router.push(notice.href); }}>{C.launch.open} →</Button>}>
     <div className="rounded-xl border border-blue/35 bg-blue/10 p-5">
+      {notice.news && rocketStreetNews(notice.news) ? <div className="mb-3"><BrandMark brand="rocketStreet" name={C.launch.rocketStreet} /></div> : null}
       {notice.rung ? <RungIcon id={notice.rung.id} className="mb-4 h-12 w-12 text-orange-bright" /> : null}
       <h2 className="display text-2xl font-bold text-ink">{content?.title ?? (notice.rung ? C.ladder.rung[notice.rung.id] : "")}</h2>
       <p className="mt-3 text-sm leading-relaxed text-sub">{content?.body ?? (notice.rung ? C.ladder.hint[notice.rung.id] : "")}</p>

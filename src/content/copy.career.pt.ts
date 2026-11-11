@@ -3034,6 +3034,7 @@ export const CAREER_PT: CareerCopy = {
     seasonTitles: "Títulos nesta temporada", totalTitles: "Títulos na carreira", events: "Eventos disputados", wins: "Séries vencidas", losses: "Séries perdidas", games: "Jogos V–D", goals: "Gols marcados / sofridos", winRate: "Vitórias em séries", podiums: "Pódios",
     calendarPlan: "Planeje sua temporada", calendarHint: "Escolha um mês e selecione um dia para ver a agenda e as ações.", calendarOverview: "Progresso na temporada", calendarLegend: "Legenda do calendário",
     sundayQualified: "Vaga no Championship Sunday garantida", majorChampion: "Campeões de Major", worldsChampion: "Campeões mundiais",
+    rocketStreet: "Rocket Street",
   },
 
 };

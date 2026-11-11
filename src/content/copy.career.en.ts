@@ -3059,6 +3059,7 @@ export const CAREER_EN = {
     seasonTitles: "Titles this season", totalTitles: "Career titles", events: "Events played", wins: "Series won", losses: "Series lost", games: "Games W–L", goals: "Goals scored / conceded", winRate: "Series win rate", podiums: "Podiums",
     calendarPlan: "Plan your season", calendarHint: "Choose a month, then select a day for its schedule and actions.", calendarOverview: "Season progress", calendarLegend: "Calendar key",
     sundayQualified: "Championship Sunday secured", majorChampion: "Major champions", worldsChampion: "World champions",
+    rocketStreet: "Rocket Street",
   },
 
 };
