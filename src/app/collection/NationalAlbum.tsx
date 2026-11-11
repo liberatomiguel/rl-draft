@@ -57,6 +57,9 @@ export const NATIONAL_CARD_IDS: string[] = EDITIONS.flatMap((e) =>
   e.teams.flatMap((t) => nationalSpecialIdsByLineupId.get(t.id) ?? []),
 );
 
+/** Every obtainable national team, newest edition first (the album cover's crests). */
+export const NATIONAL_TEAMS: Lineup[] = EDITIONS.flatMap((e) => e.teams);
+
 type SlotRole = "player" | "coach" | "sub";
 const roleOf = (sp: SpecialCard): SlotRole =>
   sp.kind === "coach" ? "coach" : subById.has(sp.baseCardId) ? "sub" : "player";

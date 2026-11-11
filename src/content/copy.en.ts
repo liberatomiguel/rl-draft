@@ -1745,6 +1745,11 @@ export const NATIONAL_UI = {
   edition: "Edition",
   flavor: (name: string, nation: string, edition: string) => `${name} wore ${nation}'s colours at ${edition}.`,
   effect: (n: number) => `+${n} to every team attribute — the national colours.`,
+  // v2.0 (G2): the two album covers at the top of the Collection.
+  coverSpecialsDesc: "Legendary moments, champions and creators. Draft a special card and finish the run to keep it.",
+  coverNationalDesc: "The FIFAe national rosters. A rare draw: find a team to open its page, then fill it card by card.",
+  coverOpen: "Open album",
+  coverViewing: "Viewing",
 };
 
 /** rc.30: the Daily Challenge's templates and objectives (src/lib/dailyPlan.ts ids),

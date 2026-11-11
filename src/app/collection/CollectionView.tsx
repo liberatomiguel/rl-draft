@@ -26,9 +26,10 @@ import { Modal } from "@/components/ui/Modal";
 import { NewDot } from "@/components/ui/NewDot";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
-import { StatBar } from "@/components/ui/ProgressBar";
+import { ProgressBar, StatBar } from "@/components/ui/ProgressBar";
+import { TeamLogo } from "@/components/ui/TeamLogo";
 import { GameCard } from "@/components/cards/GameCard";
-import { NATIONAL_CARD_IDS, NationalAlbum } from "./NationalAlbum";
+import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbum";
 
 // Official catalogue rarities only — the per-rarity tiles + filter chips. The
 // special-person rarities (community/wings/creator) are intentionally absent:
@@ -245,28 +246,50 @@ export function CollectionView() {
         className="mb-6"
       />
 
-      {/* Album switch (v2.0): special cards · national teams */}
-      <div className="mb-6 inline-flex rounded-xl border border-line bg-white/3 p-1" role="tablist">
-        {(["specials", "national"] as Album[]).map((a) => (
-          <button
-            key={a}
-            type="button"
-            role="tab"
-            aria-selected={album === a}
-            onClick={() => setAlbum(a)}
-            className={cx(
-              "display relative rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
-              album === a
-                ? a === "national"
-                  ? "bg-yellow-300/15 text-yellow-100"
-                  : "bg-orange/15 text-orange-bright"
-                : "text-sub hover:text-ink",
-            )}
-          >
-            {a === "specials" ? N.tabSpecials : N.tabNational}
-            {albumDot[a] ? <NewDot className="absolute right-1 top-1" label={NAV_UI.newHere} /> : null}
-          </button>
-        ))}
+      {/* Album covers (v2.0, G2): the two albums side by side, each with its
+          progress. The national album used to sit behind a small tab. */}
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2" role="tablist">
+        <AlbumCover
+          tone="orange"
+          selected={album === "specials"}
+          onSelect={() => setAlbum("specials")}
+          title={N.tabSpecials}
+          desc={N.coverSpecialsDesc}
+          progressLabel={C.progress(unlockedCount, collectibleCards.length)}
+          value={collectibleCards.length ? unlockedCount / collectibleCards.length : 0}
+          stateLabel={album === "specials" ? N.coverViewing : N.coverOpen}
+          dot={albumDot.specials}
+          dotLabel={NAV_UI.newHere}
+        />
+        <AlbumCover
+          tone="gold"
+          selected={album === "national"}
+          onSelect={() => setAlbum("national")}
+          title={N.tabNational}
+          desc={N.coverNationalDesc}
+          progressLabel={N.cardsProgress(nationalGot, NATIONAL_CARD_IDS.length)}
+          value={NATIONAL_CARD_IDS.length ? nationalGot / NATIONAL_CARD_IDS.length : 0}
+          stateLabel={album === "national" ? N.coverViewing : N.coverOpen}
+          dot={albumDot.national}
+          dotLabel={NAV_UI.newHere}
+        >
+          <div className="mt-3 flex items-center gap-2">
+            <span className="flex gap-1" aria-hidden>
+              {NATIONAL_TEAMS.slice(0, COVER_CRESTS).map((t) => (
+                <TeamLogo
+                  key={t.id}
+                  orgId={t.orgId}
+                  seasonId={t.seasonId}
+                  size="sm"
+                  className={cx(!isDiscovered(t.id) && "opacity-60 grayscale")}
+                />
+              ))}
+            </span>
+            <Badge tone="gold">
+              {N.teamsFound(NATIONAL_TEAMS.filter((t) => isDiscovered(t.id)).length, NATIONAL_TEAMS.length)}
+            </Badge>
+          </div>
+        </AlbumCover>
       </div>
 
       {album === "national" ? (
@@ -552,5 +575,90 @@ function LockGlyph() {
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
+  );
+}
+
+/** How many team crests the national cover shows. */
+const COVER_CRESTS = 6;
+
+/** One album as a cover card: title, what it holds, progress. A tab, drawn big. */
+function AlbumCover({
+  tone,
+  selected,
+  onSelect,
+  title,
+  desc,
+  progressLabel,
+  value,
+  stateLabel,
+  dot,
+  dotLabel,
+  children,
+}: {
+  tone: "orange" | "gold";
+  selected: boolean;
+  onSelect: () => void;
+  title: string;
+  desc: string;
+  progressLabel: string;
+  /** 0..1 */
+  value: number;
+  stateLabel: string;
+  dot?: boolean;
+  dotLabel?: string;
+  children?: React.ReactNode;
+}) {
+  const gold = tone === "gold";
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onSelect}
+      className={cx(
+        "panel group relative flex h-full flex-col overflow-hidden p-4 text-left transition-all sm:p-5",
+        selected
+          ? gold
+            ? "!border-yellow-300/70 shadow-[0_0_26px_rgba(253,224,71,0.16)]"
+            : "!border-orange/70 shadow-[0_0_26px_rgba(249,115,22,0.18)]"
+          : gold
+            ? "!border-yellow-300/30 hover:-translate-y-0.5 hover:!border-yellow-300/60"
+            : "!border-orange/30 hover:-translate-y-0.5 hover:!border-orange/60",
+      )}
+    >
+      <span
+        className={cx(
+          "pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl",
+          gold ? "bg-yellow-300/15" : "bg-orange/15",
+        )}
+        aria-hidden
+      />
+      {dot ? <NewDot className="absolute right-2 top-2" label={dotLabel} /> : null}
+      <span className="relative flex items-center justify-between gap-3">
+        <span className={cx("display text-lg font-bold uppercase tracking-wide", gold ? "text-yellow-100" : "text-orange-bright")}>
+          {title}
+        </span>
+        <span
+          className={cx(
+            "display shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]",
+            selected
+              ? gold
+                ? "border-yellow-300/60 bg-yellow-300/15 text-yellow-100"
+                : "border-orange/60 bg-orange/15 text-orange-bright"
+              : "border-line-strong text-sub group-hover:text-ink",
+          )}
+        >
+          {stateLabel}
+        </span>
+      </span>
+      <span className="relative mt-1.5 block text-xs leading-relaxed text-sub">{desc}</span>
+      {children ? <span className="relative block">{children}</span> : null}
+      <span className="relative mt-auto block pt-3">
+        <span className="mb-1.5 flex items-baseline justify-between gap-2">
+          <span className="display text-sm font-bold text-ink">{progressLabel}</span>
+        </span>
+        <ProgressBar value={value} tone={gold ? "gold" : "orange"} className="!h-1.5" label={progressLabel} />
+      </span>
+    </button>
   );
 }

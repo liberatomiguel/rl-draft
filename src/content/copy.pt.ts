@@ -1675,6 +1675,10 @@ export const PT: Copy = {
     edition: "Edição",
     flavor: (name: string, _nation: string, edition: string) => `${name} defendeu a seleção na ${edition}.`,
     effect: (n: number) => `+${n} em todos os atributos do time — as cores da seleção.`,
+    coverSpecialsDesc: "Momentos lendários, campeões e criadores. Drafte uma carta especial e termine a run para ficar com ela.",
+    coverNationalDesc: "Os elencos das seleções na FIFAe. Aparecem raramente: encontre uma seleção para abrir a página e complete carta por carta.",
+    coverOpen: "Abrir álbum",
+    coverViewing: "Aberto",
   },
   DAILY_TEXT: {
     tag: "Diário",
