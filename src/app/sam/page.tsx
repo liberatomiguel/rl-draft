@@ -9,12 +9,13 @@ export const metadata = contentMetadata(PAGES_EN.sam, { enPath: R.en, ptPath: R.
 export default function SamPage() {
   return (
     <ContentPage
+      slug="sam"
       en={PAGES_EN.sam}
       pt={PAGES_PT.sam}
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

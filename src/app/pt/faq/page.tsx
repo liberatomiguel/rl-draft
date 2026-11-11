@@ -9,12 +9,13 @@ export const metadata = contentMetadata(PAGES_PT.faq, { enPath: R.en, ptPath: R.
 export default function PtFaqPage() {
   return (
     <ContentPage
+      slug="faq"
       en={PAGES_EN.faq}
       pt={PAGES_PT.faq}
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

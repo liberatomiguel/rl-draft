@@ -49,6 +49,25 @@ const REQUIRED_FILES = ["index.html", "404.html", "_headers", "opengraph-image.p
  */
 const CAREER_ENTRY = /^career(\.[a-z]+)?$/;
 
+/**
+ * The Road to Worlds landing pages (v2.0, WEB-01): content pages OUTSIDE the
+ * /career route group that describe the mode (/rocket-league-manager and its
+ * PT twin). They are 404 boundaries when the flag is off, so they go with the
+ * career files. Paths relative to out/, without extension — keep in sync with
+ * CAREER_ONLY_PAGES in src/content/pageRoutes.ts.
+ */
+const CAREER_LANDING = ["rocket-league-manager", "pt/manager-rocket-league"];
+
+/** The production origin (src/config/site.ts SITE.url): canonicals and the sitemap use it. */
+const SITE_URL = "https://rocketdraft.app";
+
+/**
+ * Pages that carry `noindex` in a PRODUCTION build on purpose: the 404
+ * boundary, per-device pages, and the career app (its layout never indexes).
+ * Any other page with noindex fails the build (checkIndexability).
+ */
+const NOINDEX_BY_DESIGN = /^\/(404|_not-found|settings|missions|career(\/.*)?)$/;
+
 /** Top-level out/ entries of the routes the playtest build cuts (/quiz, /missions). */
 const PLAYTEST_CUT_ENTRY = /^(quiz|missions)(\.[a-z]+)?$/;
 
@@ -349,6 +368,17 @@ async function stripCareerWhenDisabled(ctx) {
     await rm(p, { recursive: true, force: true });
     removed.push(e.isDirectory() ? `${e.name}/ (${count} files)` : e.name);
   }
+  // The landing pages that describe the mode (404 boundaries with the flag off).
+  for (const page of CAREER_LANDING) {
+    const dir = join(ctx.out, dirname(page));
+    const base = page.split("/").pop();
+    if (!existsSync(dir)) continue;
+    for (const e of await readdir(dir, { withFileTypes: true })) {
+      if (e.name !== base && !e.name.startsWith(`${base}.`)) continue;
+      await rm(join(dir, e.name), { recursive: true, force: true });
+      removed.push(`${dirname(page) === "." ? "" : `${dirname(page)}/`}${e.name}`);
+    }
+  }
   console.log(
     removed.length
       ? `  career mode OFF — removed ${removed.join(", ")} (host now serves 404.html for /career*)`
@@ -367,9 +397,25 @@ async function checkSegmentNames(ctx) {
   const routeDirs = ctx.files
     .filter((f) => f.endsWith("/__next._tree.txt"))
     .map((f) => f.slice(0, -"/__next._tree.txt".length));
+  // A dynamic segment (v2.0: /rlcs/[season], /rlcs/teams/[team],
+  // /rlcs/players/[player]) is named after its PARAMETER, not its value:
+  // rlcs/2026/__next.rlcs.$d$season.__PAGE__.txt. Accept that form when every
+  // other part still matches the route.
+  const hasDynamicForm = (route) => {
+    const parts = route.split("/");
+    const prefix = `${route}/__next.`;
+    const suffix = ".__PAGE__.txt";
+    for (const f of ctx.files) {
+      if (!f.startsWith(prefix) || !f.endsWith(suffix)) continue;
+      const got = f.slice(prefix.length, -suffix.length).split(".");
+      if (got.length === parts.length && got.every((g, i) => g === parts[i] || g.startsWith("$d$"))) return true;
+    }
+    return false;
+  };
   const missing = routeDirs
     .map((route) => `${route}/__next.${route.split("/").join(".")}.__PAGE__.txt`)
-    .filter((expected) => !files.has(expected));
+    .filter((expected) => !files.has(expected))
+    .filter((expected) => !hasDynamicForm(expected.slice(0, expected.lastIndexOf("/"))));
   if (!files.has("__next.__PAGE__.txt")) missing.push("__next.__PAGE__.txt");
   if (missing.length) {
     throw new Error(`missing prefetch segment file(s):\n    ${missing.join("\n    ")}`);
@@ -419,6 +465,93 @@ async function checkPageLanguages(ctx) {
   if (problems.length) throw new Error(`page language:\n    ${problems.join("\n    ")}`);
   const count = (want) => [...chrome[want].values()].reduce((n, files) => n + files.length, 0);
   console.log(`  ${count("pt")} PT page(s) lang="pt-BR" with PT chrome · ${count("en")} EN page(s) lang="en"`);
+}
+
+/**
+ * INDEXABILITY (v2.0, WEB-01). The one switch is NEXT_PUBLIC_NOINDEX=1 (the
+ * staging and playtest builds): the root layout then emits a noindex meta on
+ * every page and robots.txt disallows everything. A page that sets its own
+ * `robots` REPLACES the layout's, so until v2.0 eight pages said
+ * "index, follow" on staging too; nothing checked it. Now:
+ *  - NOINDEX build: every page carries noindex and robots.txt is Disallow: /.
+ *  - production build: robots.txt allows crawling and names the sitemap; only
+ *    the pages in NOINDEX_BY_DESIGN carry noindex; every indexable page has
+ *    exactly one canonical, pointing at itself; every sitemap URL is an
+ *    exported, indexable page.
+ */
+async function checkIndexability(ctx) {
+  const noindexBuild = process.env.NEXT_PUBLIC_NOINDEX === "1";
+  ctx.summary.push(noindexBuild ? "NOINDEX build" : "indexable");
+  const problems = [];
+  const robotsTxt = existsSync(join(OUT, "robots.txt")) ? await readFile(join(OUT, "robots.txt"), "utf8") : "";
+  const disallowAll = /^Disallow:\s*\/\s*$/m.test(robotsTxt);
+  const indexable = new Set();
+  let noindexPages = 0;
+  for (const file of ctx.files.filter((f) => f.endsWith(".html"))) {
+    const route = `/${file.replace(/\.html$/, "")}`.replace(/^\/index$/, "/");
+    const head = (await readFile(join(OUT, file), "utf8")).split("</head>")[0];
+    const robots = [...head.matchAll(/<meta\s+name="robots"\s+content="([^"]*)"/g)].map((m) => m[1]);
+    const noindex = robots.some((r) => /noindex/i.test(r));
+    if (noindex) noindexPages++;
+    if (noindexBuild) {
+      if (!noindex) problems.push(`${file}: no noindex in a NOINDEX build (robots: "${robots.join(" | ") || "none"}")`);
+      continue;
+    }
+    if (noindex) {
+      if (!NOINDEX_BY_DESIGN.test(route)) problems.push(`${file}: noindex in a production build`);
+      continue;
+    }
+    indexable.add(route);
+    const canonicals = [...head.matchAll(/<link\s+rel="canonical"\s+href="([^"]*)"/g)].map((m) => m[1]);
+    const want = route === "/" ? SITE_URL : `${SITE_URL}${route}`;
+    if (canonicals.length !== 1 || canonicals[0] !== want) {
+      problems.push(`${file}: canonical ${canonicals.length ? canonicals.join(" | ") : "missing"} (want ${want})`);
+    }
+  }
+  if (noindexBuild) {
+    if (!disallowAll) problems.push("robots.txt does not disallow everything in a NOINDEX build");
+  } else {
+    if (disallowAll) problems.push("robots.txt disallows everything in a production build");
+    if (!robotsTxt.includes(`Sitemap: ${SITE_URL}/sitemap.xml`)) problems.push("robots.txt does not name the sitemap");
+    const sitemapFile = join(OUT, "sitemap.xml");
+    const xml = existsSync(sitemapFile) ? await readFile(sitemapFile, "utf8") : "";
+    const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    if (!urls.length) problems.push("sitemap.xml lists no URL");
+    for (const url of urls) {
+      const route = url === SITE_URL ? "/" : url.replace(SITE_URL, "");
+      if (!url.startsWith(SITE_URL) || !indexable.has(route)) problems.push(`sitemap.xml lists ${url}, which is not an exported, indexable page`);
+    }
+    const alternates = [...xml.matchAll(/hreflang="[^"]*"\s+href="([^"]+)"/g)].map((m) => m[1]);
+    for (const url of new Set(alternates)) {
+      const route = url === SITE_URL ? "/" : url.replace(SITE_URL, "");
+      if (!indexable.has(route)) problems.push(`sitemap.xml hreflang points at ${url}, which is not an exported, indexable page`);
+    }
+    console.log(`  ${indexable.size} indexable page(s) with a self canonical · ${urls.length} sitemap URL(s) · ${noindexPages} noindex by design`);
+  }
+  if (problems.length) throw new Error(`indexability:\n    ${problems.join("\n    ")}`);
+  if (noindexBuild) console.log(`  NOINDEX build: all ${noindexPages} page(s) carry noindex · robots.txt Disallow: /`);
+}
+
+/**
+ * NEXT POLYFILLS (v2.0, WEB-02). next.config.ts aliases Next's
+ * `polyfill-module` (ES2019–ES2022 polyfills no supported browser needs) to
+ * src/lib/nextPolyfills.js. The alias matches Next's own request string, so a
+ * Next upgrade can silently undo it: this says which one shipped. A warning,
+ * not a failure — the stock polyfills are only dead weight. The `noModule`
+ * bundle (core-js, for browsers without ES modules) is not counted: a modern
+ * browser never downloads it.
+ */
+async function reportNextPolyfills(ctx) {
+  const stock = [];
+  for (const file of ctx.files.filter((f) => f.startsWith("_next/static/chunks/") && f.endsWith(".js"))) {
+    const js = await readFile(join(OUT, file), "utf8");
+    if (js.includes("String.prototype.trimLeft") && !js.includes("Bad Promise constructor")) stock.push(file);
+  }
+  console.log(
+    stock.length
+      ? `  WARNING: Next's stock polyfill-module ships in ${stock.join(", ")} — the next.config.ts alias no longer matches`
+      : "  Next's polyfill-module is replaced by src/lib/nextPolyfills.js (URL.canParse only)",
+  );
 }
 
 async function checkRequiredFiles(ctx) {
@@ -530,6 +663,8 @@ const STEPS = [
   { name: "strip cut routes on the playtest build", run: stripPlaytestCuts, mutates: true },
   { name: "check prefetch segment names", run: checkSegmentNames },
   { name: "check page languages", run: checkPageLanguages },
+  { name: "check indexability", run: checkIndexability },
+  { name: "report Next polyfills", run: reportNextPolyfills },
   { name: "check required files", run: checkRequiredFiles },
   { name: "check generated images", run: checkGeneratedImages },
   { name: "check Cloudflare limits", run: checkHostLimits },

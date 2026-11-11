@@ -33,14 +33,17 @@
 /badges/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+# 30 days (PageSpeed flagged the 7-day TTL as a short cache lifetime). Not a
+# year: the header logo and the web manifest request /icon.svg bare, with no
+# content hash, so a new icon must still reach returning players in weeks.
 /icon.svg
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=2592000
 
 /favicon.ico
   Cache-Control: public, max-age=604800
 
 /apple-icon.png
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=2592000
 
 /opengraph-image.png
   Cache-Control: public, max-age=604800
@@ -49,6 +52,21 @@
   Cache-Control: public, max-age=86400
 
 # Security headers for every response (no Cache-Control here — see above).
+# v2.0 (PageSpeed "Best practices"):
+# - HSTS: the whole .app TLD is on the browsers' HSTS preload list, so HTTPS is
+#   already forced; the header states it for clients that read it.
+# - Framing: only the site itself may frame its pages (clickjacking). Both
+#   forms, for old and new browsers.
+# - COOP same-origin-allow-popups isolates the window from pages that open it,
+#   and still lets the site open pop-ups (the Discord / Ko-fi links).
+# - The CSP is deliberately partial: no script-src. A static export has inline
+#   bootstrap scripts and cannot use nonces, so a script policy would need
+#   'unsafe-inline' and protect nothing; PageSpeed keeps listing that item.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: SAMEORIGIN
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

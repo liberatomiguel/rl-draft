@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
   output: "export",
   reactCompiler: true,
 
+  // Next's client entry requires "../build/polyfills/polyfill-module" (ES2019–
+  // ES2022 polyfills for browsers older than this site supports). Turbopack
+  // aliases by request string, so this swaps it for the one polyfill the
+  // browserslist floor still needs — see src/lib/nextPolyfills.js. If a Next
+  // upgrade renames the request, the alias simply stops matching and the stock
+  // polyfills come back; scripts/postexport.mjs reports which one shipped.
+  turbopack: {
+    resolveAlias: {
+      "../build/polyfills/polyfill-module": "./src/lib/nextPolyfills.js",
+    },
+  },
+
   // trailingSlash stays at its default (false) on purpose: pages export as
   // `play.html` and Cloudflare's `html_handling: "auto-trailing-slash"` serves
   // `/play` from it and redirects `/play/` → `/play`, so the app only ever sees

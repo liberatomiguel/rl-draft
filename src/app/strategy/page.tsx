@@ -9,12 +9,13 @@ export const metadata = contentMetadata(PAGES_EN.strategy, { enPath: R.en, ptPat
 export default function StrategyPage() {
   return (
     <ContentPage
+      slug="strategy"
       en={PAGES_EN.strategy}
       pt={PAGES_PT.strategy}
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

@@ -171,6 +171,17 @@ function hashOf(buf, settings) {
   return createHash("sha256").update(buf).update(JSON.stringify(settings)).digest("hex").slice(0, 10);
 }
 
+/**
+ * An SVG source's bytes with LF line ends, for hashing only (v2.0). SVG is
+ * text: a Windows checkout with core.autocrlf writes it with CRLF, while the
+ * repository, the generators and a Linux build have LF. Hashing the raw bytes
+ * gave the same art a different URL hash per checkout, so a fresh worktree
+ * rewrote 129 manifest entries (every badge and banner) and its build failed
+ * "check generated images" against the committed manifest. The pixels never
+ * differed; only the hash input did. latin1 round-trips every byte.
+ */
+const lfBytes = (buf) => Buffer.from(buf.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
+
 /** Widths go into URLs and the manifest; assets.ts assumes this shape. */
 function assertWidths(name, widths) {
   const ok =
@@ -332,7 +343,7 @@ async function plan() {
   for (const name of await listSvgs(badgeDir)) {
     const art = name.replace(/\.svg$/i, "");
     const src = join(badgeDir, name);
-    const hash = hashOf(await read(src), { density: BADGE_SVG_DENSITY, webp: BADGE_WEBP });
+    const hash = hashOf(lfBytes(await read(src)), { density: BADGE_SVG_DENSITY, webp: BADGE_WEBP });
     manifest.badges[art] = hash;
     for (const w of BADGE_WIDTHS) {
       jobs.push({
@@ -345,7 +356,7 @@ async function plan() {
         density: BADGE_SVG_DENSITY,
       });
     }
-    const glowHash = hashOf(await readFile(src), { density: BADGE_SVG_DENSITY, glow: BADGE_GLOW });
+    const glowHash = hashOf(lfBytes(await readFile(src)), { density: BADGE_SVG_DENSITY, glow: BADGE_GLOW });
     manifest.badgeGlows[art] = glowHash;
     jobs.push({
       src,
@@ -391,7 +402,7 @@ async function plan() {
   for (const name of (await listSvgs(bannerDir)).filter(n => !n.endsWith(".anim.svg"))) {
     const art = name.replace(/\.svg$/i, "");
     const src = join(bannerDir, name);
-    const hash = hashOf(await read(src), { density: BANNER_SVG_DENSITY, webp: BANNER_WEBP });
+    const hash = hashOf(lfBytes(await read(src)), { density: BANNER_SVG_DENSITY, webp: BANNER_WEBP });
     manifest.banners[art] = hash;
     for (const w of BANNER_WIDTHS) {
       jobs.push({

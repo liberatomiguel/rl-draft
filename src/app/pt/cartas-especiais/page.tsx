@@ -13,12 +13,13 @@ export const metadata = contentMetadata(PAGES_PT["special-cards"], {
 export default function PtCartasEspeciaisPage() {
   return (
     <ContentPage
+      slug="special-cards"
       en={PAGES_EN["special-cards"]}
       pt={PAGES_PT["special-cards"]}
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/play"
+      ctaHref="/"
     />
   );
 }

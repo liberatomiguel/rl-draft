@@ -1,4 +1,5 @@
 import { AppLink } from "@/components/ui/AppLink";
+import { FEATURES } from "@/config/balance";
 import type { Copy } from "@/content/copy.en";
 
 type SeoLink = { label: string; href: string };
@@ -34,7 +35,10 @@ export function HomeSeoContent({
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-x-10 gap-y-7 md:grid-cols-2">
-        {content.sections.map((s) => (
+        {content.sections
+          // The Road to Worlds section only in a build that ships the mode.
+          .filter((s) => s.id !== "career" || FEATURES.careerMode)
+          .map((s) => (
           <article key={s.id}>
             <h3 className="display text-base font-bold uppercase tracking-wide text-orange-bright">
               {s.title}

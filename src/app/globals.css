@@ -509,8 +509,16 @@ body::before {
    Motion
 --------------------------------------------------------------------------- */
 
+/*
+ * Starts at 0.01, not 0 (v2.0, WEB-02): Chrome does not count a paint at
+ * opacity 0 as contentful, so server-rendered text inside a .rise-in wrapper
+ * (every content article, the /pt landing page) only became the page's Largest
+ * Contentful Paint when hydration repainted it — Lighthouse put the LCP of a
+ * static article at 4.4 s on a phone, against 1.2 s for the home page, whose
+ * hero already sat outside the wrapper for this reason. The fade looks the same.
+ */
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0.01; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
