@@ -463,6 +463,47 @@ export function contractGoalChance(goal: GoalShape, level: TeamLevel, tries: Con
   }
 }
 
+/** P(at least k successes in n tries at p) for every k (index k, 0..n) — one pass instead of a sum per k. */
+function binomialTails(n: number, p: number): number[] {
+  const pmf: number[] = new Array(n + 1).fill(0);
+  pmf[0] = 1;
+  for (let i = 0; i < n; i++) {
+    for (let k = i + 1; k >= 1; k--) pmf[k] = pmf[k] * (1 - p) + pmf[k - 1] * p;
+    pmf[0] *= 1 - p;
+  }
+  const tails: number[] = new Array(n + 2).fill(0);
+  for (let k = n; k >= 0; k--) tails[k] = Math.min(1, tails[k + 1] + pmf[k]);
+  return tails;
+}
+
+/**
+ * Every contract goal with its chance — the same goals and figures as
+ * `contractGoalCandidates` × `contractGoalChance` (the sponsor suite checks
+ * the two agree), computed with one pass per family: an offer rates ~60
+ * goals, and a decision makes three offers.
+ */
+export function ratedContractGoals(level: TeamLevel, tries: ContractTries): (GoalShape & { chance: number })[] {
+  const out: (GoalShape & { chance: number })[] = [];
+  const R = tries.regionals;
+  if (R > 0) {
+    out.push({ kind: "enterEvents", count: Math.max(1, Math.round((M.enterEvents.count * R) / 3)), chance: M.enterEvents.p });
+  }
+  const reach = binomialTails(R, regionalChance(level, 16));
+  for (let k = 1; k <= R; k++) out.push({ kind: "regionalReach", count: k, chance: reach[k] });
+  for (const place of [8, 6, 4, 1]) {
+    const tails = binomialTails(R, regionalChance(level, place));
+    for (let k = 1; k <= R; k++) out.push({ kind: "regionalFinish", count: k, place, chance: tails[k] });
+  }
+  const q = majorQualifyChance(level);
+  const qualify = binomialTails(tries.majors, q);
+  for (let k = 1; k <= tries.majors; k++) out.push({ kind: "majorQualify", count: k, chance: qualify[k] });
+  if (tries.majors > 0) {
+    out.push({ kind: "majorFinish", count: 1, place: 4, chance: binomialTails(tries.majors, q * curve(level.vsMajor4, M.majorTop4))[1] });
+    out.push({ kind: "majorFinish", count: 1, place: 1, chance: binomialTails(tries.majors, q * curve(level.vsMajor1, M.majorWin))[1] });
+  }
+  return out;
+}
+
 /**
  * The deal's goal at a word (v2.0, C1): it runs from `from` (the signing day)
  * to the end of the deal's last split, over every event still ahead — never
@@ -479,7 +520,7 @@ export function pickContractGoal(
 ): SponsorGoal {
   const tries = contractTriesOf(from, firstSlot + span - 1);
   const target = CAREER_SPONSOR.wordChance[word];
-  const all = contractGoalCandidates(tries).map((c) => ({ ...c, chance: contractGoalChance(c, level, tries) }));
+  const all = ratedContractGoals(level, tries);
   const reachable = all.filter((c) => c.chance >= CAREER_SPONSOR.wordMin.stretch);
   const capped = reachable.filter((c) => c.chance <= maxChance + 1e-9);
   const rated = capped.length > 0 ? capped : reachable.length > 0 ? reachable : all;

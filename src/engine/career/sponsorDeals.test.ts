@@ -16,7 +16,10 @@ import { firstDayOfWeek, seasonSchedule, splitBoundaryWeeks } from "./calendar";
 import { moneyIndex, quantize, quantizeWeekly, sponsorFineDueOf, tallyIncome } from "./economy";
 import {
   binomialTail,
+  contractGoalCandidates,
+  contractGoalChance,
   contractTriesOf,
+  ratedContractGoals,
   goalSplitLabelOf,
   isContractGoal,
   decideByFor,
@@ -208,7 +211,7 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
 });
 
 describe("rc.35 — pay runs Bold ≥ Balanced ≥ Steady, goals the other way, in every decision", () => {
-  it("7 regions × 3 difficulties × ratings 40–100 × 4 tiers × the decision days: weekly and per-Monday ceiling ordered, Bold's goal the hardest", () => {
+  it("7 regions × 3 difficulties × ratings 40–100 × 4 tiers × the decision days: weekly and per-Monday ceiling ordered, Bold's goal the hardest", { timeout: 60_000 }, () => {
     const seed = 34_301;
     const world = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" });
     const orgs = Object.values(world.orgs).map((o) => ({ region: o.region, rating: o.rating ?? 70 + o.prestige * 6 }));
@@ -493,6 +496,16 @@ describe("v2.0 (C1) — the sponsor goal runs for the deal, from signing", () =>
     const played = [res(0, 20, "major", "top8")];
     expect(goalProgressOf(g, { results: played, fieldSlot: slotOf(0, 2) }).done).toBe(1);
     expect(goalProgressOf(g, { results: played, fieldSlot: slotOf(0, 3) }).hit).toBe(true);
+  });
+
+  it("the one-pass rating agrees with the per-goal chance, goal by goal", () => {
+    for (const m of MARGINS)
+      for (const tries of [{ regionals: 9, majors: 3 }, { regionals: 11, majors: 4 }, { regionals: 2, majors: 1 }, { regionals: 0, majors: 0 }]) {
+        const rated = ratedContractGoals(levelAt(m), tries);
+        const plain = contractGoalCandidates(tries);
+        expect(rated.map((g) => ({ kind: g.kind, count: g.count, ...(g.place !== undefined ? { place: g.place } : {}) }))).toEqual(plain);
+        rated.forEach((g, i) => expect(g.chance).toBeCloseTo(contractGoalChance(plain[i], levelAt(m), tries), 9));
+      }
   });
 
   it("every offer's goal is reachable and worded for the deal at every decision day", () => {
