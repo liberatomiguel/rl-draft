@@ -136,6 +136,8 @@ const ordinalPt = (n: number): string => ["primeira", "segunda", "terceira", "qu
  * colocação e split (sponsorDeals.SponsorGoal).
  */
 const sponsorGoalPt = (kind: string, count: number, place: number, split: number): string => {
+  // v2.0 (C1): split 0 = meta de contrato, contada da assinatura ao fim do contrato.
+  if (!split) return sponsorContractGoalPt(kind, count, place);
   const regionals = `${count} dos 3 regionais do Split ${split}`;
   switch (kind) {
     case "enterEvents":
@@ -149,6 +151,26 @@ const sponsorGoalPt = (kind: string, count: number, place: number, split: number
       return `Classificar para o Major do Split ${split}`;
     case "majorFinish":
       return place <= 1 ? `Vencer o Major do Split ${split}` : `Top ${place} no Major do Split ${split}`;
+    default:
+      return "";
+  }
+};
+
+/** v2.0 (C1): a meta de contrato em palavras: vale pelo contrato inteiro, a partir da assinatura. */
+const sponsorContractGoalPt = (kind: string, count: number, place: number): string => {
+  const n = (one: string, many: string) => (count === 1 ? one : many);
+  switch (kind) {
+    case "enterEvents":
+      return `Disputar ${count} ${n("evento", "eventos")} durante o contrato`;
+    case "regionalReach":
+      return `Chegar a ${n("um regional", `${count} regionais`)} durante o contrato`;
+    case "regionalFinish":
+      if (place <= 1) return `Vencer ${n("um regional", `${count} regionais`)} durante o contrato`;
+      return `Top ${place} em ${n("um regional", `${count} regionais`)} durante o contrato`;
+    case "majorQualify":
+      return `Classificar para ${n("um Major", `${count} Majors`)} durante o contrato`;
+    case "majorFinish":
+      return place <= 1 ? `Vencer um Major durante o contrato` : `Top ${place} em um Major durante o contrato`;
     default:
       return "";
   }

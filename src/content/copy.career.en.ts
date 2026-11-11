@@ -150,6 +150,8 @@ const ordinalEn = (n: number): string =>
  * the mails.
  */
 const sponsorGoalEn = (kind: string, count: number, place: number, split: number): string => {
+  // v2.0 (C1): split 0 = a contract goal, counted from signing to the deal's end.
+  if (!split) return sponsorContractGoalEn(kind, count, place);
   const regionals = `Split ${split}'s 3 regionals`;
   switch (kind) {
     case "enterEvents":
@@ -163,6 +165,26 @@ const sponsorGoalEn = (kind: string, count: number, place: number, split: number
       return `Qualify for the Split ${split} Major`;
     case "majorFinish":
       return place <= 1 ? `Win the Split ${split} Major` : `Top ${place} at the Split ${split} Major`;
+    default:
+      return "";
+  }
+};
+
+/** v2.0 (C1): a contract goal in words: it runs for the whole deal, from the day it is signed. */
+const sponsorContractGoalEn = (kind: string, count: number, place: number): string => {
+  const n = (one: string, many: string) => (count === 1 ? one : many);
+  switch (kind) {
+    case "enterEvents":
+      return `Enter ${count} ${n("event", "events")} during the deal`;
+    case "regionalReach":
+      return `Reach ${n("a regional", `${count} regionals`)} during the deal`;
+    case "regionalFinish":
+      if (place <= 1) return `Win ${n("a regional", `${count} regionals`)} during the deal`;
+      return `Top ${place} at ${n("a regional", `${count} regionals`)} during the deal`;
+    case "majorQualify":
+      return `Qualify for ${n("a Major", `${count} Majors`)} during the deal`;
+    case "majorFinish":
+      return place <= 1 ? `Win a Major during the deal` : `Top ${place} at a Major during the deal`;
     default:
       return "";
   }

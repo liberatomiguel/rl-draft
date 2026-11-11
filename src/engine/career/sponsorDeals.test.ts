@@ -16,6 +16,9 @@ import { firstDayOfWeek, seasonSchedule, splitBoundaryWeeks } from "./calendar";
 import { moneyIndex, quantize, quantizeWeekly, sponsorFineDueOf, tallyIncome } from "./economy";
 import {
   binomialTail,
+  contractTriesOf,
+  goalSplitLabelOf,
+  isContractGoal,
   decideByFor,
   expectedValueOf,
   fineFor,
@@ -50,7 +53,7 @@ import {
   sponsorFreeBootcampsOf,
   type TeamLevel,
 } from "./sponsorDeals";
-import type { CareerDifficulty, CompactEventResult, SponsorGoalWord } from "./types";
+import type { CareerDifficulty, CompactEventResult, SponsorGoal, SponsorGoalWord } from "./types";
 import { buildWorldAtCreation, computeStars } from "./worldSim";
 
 /** A level `m` rating points from every reference team (m > 0: stronger). */
@@ -132,11 +135,15 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
         expect(goal.slot).toBe(t.firstSlot);
         const by = goalDeadlineOf(goal);
         expect(by.seasonIndex * 1000 + by.day).toBeGreaterThan(today.seasonIndex * 1000 + today.day);
-        const settle = settleDayOf(goal.slot);
+        // v2.0 (C1): one goal for the whole deal, counted from the offer/signing day to the deal's last split.
+        expect(goal.span).toBe(t.lengthSplits);
+        expect(goal.from).toEqual(today);
+        expect(t.goals).toHaveLength(1);
+        const settle = settleDayOf(goal.slot + goal.span! - 1);
         expect(by.seasonIndex * 1000 + by.day).toBeLessThanOrEqual(settle.seasonIndex * 1000 + settle.day);
         expect(t.decideBy).toEqual(decideByFor(today, t.firstSlot));
         // The offer's figures are what it books: weekly × Mondays + fixed + the bonuses.
-        expect(t.ceiling).toBe(t.weekly * mondaysBetween(today, t.endsOn) + t.fixed + o.bonus * t.lengthSplits);
+        expect(t.ceiling).toBe(t.weekly * mondaysBetween(today, t.endsOn) + t.fixed + o.bonus);
       }
     }
   });
@@ -340,7 +347,7 @@ describe("rc.34 sponsors — fines (S3, decision 1-A)", () => {
       const t = o.terms!;
       expect(t.fineShare).toBe(CAREER_SPONSOR.profiles[t.profile].fineShare);
       // rc.35: the cap is per profile (Balanced 1 week, Bold 2).
-      expect(t.fineCap).toBe(quantize(CAREER_SPONSOR.profiles[t.profile].fineCapWeeks * t.weekly));
+      expect(t.fineCap).toBe(quantize(CAREER_SPONSOR.profiles[t.profile].fineCapWeeks * t.weekly * t.lengthSplits));
       const full = fineFor(t, o.bonus, 1);
       expect(full).toBe(quantize(Math.min(t.fineCap, t.fineShare * o.bonus)));
       expect(fineFor(t, o.bonus, 0.5)).toBeLessThanOrEqual(full);
@@ -447,5 +454,56 @@ describe("rc.35 front S — the ladder's sponsor access, the season fine cap, th
       expect(stretch.chance).toBeLessThanOrEqual(target.chance + 1e-9);
       expect(stretch.chance).toBeGreaterThanOrEqual(CAREER_SPONSOR.wordMin.stretch);
     }
+  });
+});
+
+describe("v2.0 (C1) — the sponsor goal runs for the deal, from signing", () => {
+  const goal = (over: Partial<SponsorGoal>): SponsorGoal => ({
+    slot: slotOf(0, 2), kind: "regionalFinish", count: 2, place: 8, chance: 0.5, word: "even", span: 3,
+    from: { seasonIndex: 0, day: firstDayOfWeek(6) }, ...over,
+  });
+  const res = (seasonIndex: number, week: number, tier: CompactEventResult["tier"], userPlacement: CompactEventResult["userPlacement"]): CompactEventResult =>
+    ({ eventId: `c:${seasonIndex}:${week}:${tier}`, tier, seasonIndex, week, name: "T", rows: [], championRef: "x", userPlacement, fieldQuality: 1 });
+
+  it("counts every event after the signing day, in any split of the deal — never one before it", () => {
+    const g = goal({});
+    // W4 is before the signing (W6); W8 is the same split's last regional (after it); W16 is the next split.
+    const before = goalProgressOf(g, { results: [res(0, 4, "regional", "top4")] });
+    expect(before.done).toBe(0);
+    const p = goalProgressOf(g, { results: [res(0, 4, "regional", "top4"), res(0, 8, "regional", "top8"), res(0, 16, "regional", "champion")] });
+    expect(p).toEqual({ done: 2, target: 2, hit: true });
+    // Past the deal's last split (season 1, split 1 ends the three-split deal): split 2 of season 1 no longer counts.
+    const late = goalProgressOf(g, { results: [res(0, 8, "regional", "top8"), res(1, 16, "regional", "top8")] });
+    expect(late.hit).toBe(false);
+    expect(goalProgressOf(g, { results: [res(0, 8, "regional", "top8"), res(1, 6, "regional", "top8")] }).hit).toBe(true);
+  });
+
+  it("its deadline is in the deal's last split, and the tries are the events still ahead of the signing", () => {
+    const g = goal({});
+    expect(goalDeadlineOf(g).seasonIndex).toBe(1);
+    const tries = contractTriesOf(g.from!, g.slot + g.span! - 1);
+    // Signed on W6's Monday: W6 and W8 of split 1 are still ahead, then three full splits... minus none.
+    expect(tries.regionals).toBe(2 + 9);
+    expect(tries.majors).toBe(4);
+  });
+
+  it("a Major qualification counts while the user sits in the announced field, once per Major", () => {
+    const g = goal({ kind: "majorQualify", count: 2, place: undefined });
+    expect(goalProgressOf(g, { results: [], fieldSlot: slotOf(0, 2) }).done).toBe(1);
+    const played = [res(0, 20, "major", "top8")];
+    expect(goalProgressOf(g, { results: played, fieldSlot: slotOf(0, 2) }).done).toBe(1);
+    expect(goalProgressOf(g, { results: played, fieldSlot: slotOf(0, 3) }).hit).toBe(true);
+  });
+
+  it("every offer's goal is reachable and worded for the deal at every decision day", () => {
+    for (const today of MOMENTS)
+      for (const m of MARGINS)
+        for (const o of sponsorDecisionFor({ tier: 2, today, careerSeed: 9, difficulty: "normal", level: levelAt(m) })) {
+          const g = o.terms!.goals[0];
+          expect(isContractGoal(g)).toBe(true);
+          expect(goalSplitLabelOf(g)).toBe(0);
+          expect(g.count).toBeGreaterThanOrEqual(1);
+          expect(g.chance).toBeGreaterThan(0);
+        }
   });
 });

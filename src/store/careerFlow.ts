@@ -256,6 +256,9 @@ import {
   firstSlotFrom,
   goalForSlot,
   goalProgressOf,
+  goalSplitLabelOf,
+  goalsOfDeal,
+  isContractGoal,
   isAfter,
   offerTierFor,
   cappedSeasonFine,
@@ -1959,7 +1962,19 @@ function lapseSponsorOffers(save: CareerSave): void {
  * Major field).
  */
 export function sponsorGoalProgressOf(save: CareerSave, goal: SponsorGoal): GoalProgress {
-  return goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+  return goalProgressOf(goal, {
+    results: save.eventResults,
+    inMajorField: inMajorFieldOf(save, goal.slot),
+    fieldSlot: majorFieldSlotOf(save),
+  });
+}
+
+/** v2.0 (C1): the split whose announced Major field the user is in right now (a contract goal counts it). */
+function majorFieldSlotOf(save: CareerSave): number | undefined {
+  const week = weekOfDay(save.clock.day);
+  const fieldSplit = week < 3 ? 0 : week < 13 ? 1 : week < 23 ? 2 : 3;
+  if (fieldSplit === 0 || !(save.competition.majorFieldRefs?.includes("user") ?? false)) return undefined;
+  return slotOf(save.clock.seasonIndex, fieldSplit as 1 | 2 | 3);
 }
 
 /** Is the user in the announced Major field of this split (the field resets at each split's first Monday)? */
@@ -1986,7 +2001,7 @@ function checkSponsorGoals(save: CareerSave): void {
   const week = weekOfDay(day);
   for (const goal of s.terms.goals) {
     if (goal.hitOn || goal.missed !== undefined) continue;
-    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+    const progress = sponsorGoalProgressOf(save, goal);
     if (!progress.hit) continue;
     goal.hitOn = { seasonIndex, day };
     save.finances = pushLedger(save.finances, { seasonIndex, week, day, kind: "sponsorBonus", amount: s.bonus, refName: s.sponsorId });
@@ -2014,7 +2029,8 @@ function goalParamsOf(goal: SponsorGoal): Record<string, string | number> {
     goalKind: goal.kind,
     goalCount: goal.count,
     goalPlace: goal.place ?? 0,
-    goalSplit: slotSplit(goal.slot),
+    // v2.0 (C1): 0 = a contract goal ("during the deal"), worded without a split.
+    goalSplit: goalSplitLabelOf(goal),
     word: goal.word,
     // The estimate it was set at (the harness scores the words on it; the copy never prints a percentage).
     chance: goal.chance,
@@ -2054,8 +2070,10 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
   if (!s?.terms) return;
   checkSponsorGoals(save);
   const goal = goalForSlot(s.terms, slot);
-  if (goal && !goal.hitOn && goal.missed === undefined) {
-    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, slot) });
+  // v2.0 (C1): a contract goal runs to the deal's end — a split boundary inside the deal settles nothing.
+  const running = goal !== null && isContractGoal(goal) && absDayOf(todayOf(save)) < absDayOf(s.terms.endsOn);
+  if (goal && !running && !goal.hitOn && goal.missed === undefined) {
+    const progress = sponsorGoalProgressOf(save, goal);
     const shortfall = shortfallOf(progress);
     goal.missed = shortfall;
     // rc.35 (front S): a season's fines never pass fines.seasonCapWeeks weeks of the deal's pay.
@@ -2068,7 +2086,12 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
       const from = { seasonIndex: save.clock.seasonIndex, day: save.clock.day + 1 };
       save.finances.sponsorFines = [...(save.finances.sponsorFines ?? []), { ...schedule, from }];
     }
-    if (s.terms.profile === "steady") s.missedCount += 1;
+    if (s.terms.profile === "steady") {
+      // v2.0 (C1): one goal a deal — the patience it costs scales with the shortfall (a full miss spends it all).
+      s.missedCount += isContractGoal(goal)
+        ? Math.max(1, Math.round(shortfall * CAREER_SPONSOR.patienceMisses))
+        : 1;
+    }
     pushNews(save, { type: "org", priority: 2, titleKey: "objectiveMissed", params: { name: s.sponsorId } });
     pushMail(save, {
       kind: "sponsor",
@@ -2099,7 +2122,7 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
     kind: "sponsor",
     titleKey: "sponsorEnded",
     bodyKey: "sponsorEnded",
-    params: { name: s.sponsorId, hits: s.terms.goals.filter((g) => g.hitOn).length, goals: s.terms.lengthSplits, demoted: demote ? 1 : 0 },
+    params: { name: s.sponsorId, hits: s.terms.goals.filter((g) => g.hitOn).length, goals: goalsOfDeal(s.terms), demoted: demote ? 1 : 0 },
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
@@ -5747,6 +5770,8 @@ function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
     const terms: SponsorTerms = structuredClone(offer.terms);
     delete terms.decideBy;
     delete terms.demoted;
+    // v2.0 (C1): the contract goal counts from the signing day.
+    for (const g of terms.goals) if (isContractGoal(g)) g.from = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
     save.sponsor = { ...offer, terms, progress: 0, hitThisSplit: false, missedCount: 0 };
     save.sponsorOffers = null;
     // The fixed part on signing (Steady, Balanced); Bold's is the milestone.

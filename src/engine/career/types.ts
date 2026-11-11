@@ -955,6 +955,15 @@ export interface SponsorGoal {
   hitOn?: { seasonIndex: number; day: number };
   /** Settled as missed on its split's boundary Monday: the shortfall (0–1) the fine scales with. */
   missed?: number;
+  /**
+   * v2.0 (C1): a CONTRACT goal — it runs for the whole deal, not one split.
+   * `span` is the number of splits the deal covers from `slot`; `from` is the
+   * day it was signed (offered, until signed): every event that ends after
+   * that day and by the deal's end counts. Absent = an rc.34 per-split goal
+   * (deals signed before v2.0 keep their rules to their end).
+   */
+  span?: number;
+  from?: { seasonIndex: number; day: number };
 }
 
 /** rc.34 (ECO-04): an rc.34 deal's terms, fixed when it is offered (a signed deal keeps its figures). */
