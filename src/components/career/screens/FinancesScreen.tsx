@@ -106,9 +106,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
-import { RungIcon } from "@/components/career/ladder/LadderParts";
+import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
 import { CheckIcon } from "@/components/ui/icons";
-import type { LadderRungId } from "@/engine/career/ladder";
+import { ladderOf, ladderRungs, type LadderRungId } from "@/engine/career/ladder";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 type LedgerFilter = "all" | "in" | "out";
@@ -524,6 +525,15 @@ function LadderStep({
   );
 }
 
+/** Keep the purchase rail in the same gate order as HQ, including new staff. */
+function OrderedProgression({ children }: { children: ReactNode }) {
+  const order = ladderRungs().map(r => r.id);
+  const steps = Children.toArray(children)
+    .filter(isValidElement<{ rung: LadderRungId; last?: boolean }>)
+    .sort((a, b) => order.indexOf(a.props.rung) - order.indexOf(b.props.rung));
+  return <ol>{steps.map((step, i) => cloneElement(step, { last: i === steps.length - 1 }))}</ol>;
+}
+
 /** Price tag with the base struck through when a sponsor perk discounts it. */
 function PriceTag({ base, price }: { base: number; price: number }) {
   if (price >= base) return null;
@@ -549,6 +559,7 @@ export function FinancesScreen() {
   const payDebt = useCareerStore((s) => s.payDebt);
   const payBankLoan = useCareerStore((s) => s.payBankLoan);
 
+  const [ladderOpen, setLadderOpen] = useState(false);
   const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
   // rc.33 (UX-07): the expanded balance chart.
   const [chartOpen, setChartOpen] = useState(false);
@@ -855,14 +866,15 @@ export function FinancesScreen() {
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-3">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
         <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "120ms" }}>
-          <div className="mb-3 flex justify-end">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="kicker text-[11px]">{C.ladder.title}</h2>
             <span className="shrink-0 text-[10px] font-semibold text-faint">
               {C.common.reputation} {Math.round(rep)}
             </span>
           </div>
 
           {/* rc.36: every step stacked again (rc.34's list), each with its icon. */}
-          <ol>
+          <OrderedProgression>
             {/* 1-3 · peripherals → monitors → PCs */}
             {gearFront.map((item) => (
               <LadderStep
@@ -968,7 +980,9 @@ export function FinancesScreen() {
               aside={gearAside(perfCenter)}
               notes={gearNotes(perfCenter)}
             />
-          </ol>
+          </OrderedProgression>
+          <Button variant="ghost" size="sm" onClick={() => setLadderOpen(true)}>{C.ladder.seeMore}</Button>
+          <Modal open={ladderOpen} title={C.ladder.title} onClose={() => setLadderOpen(false)}><LadderGrid rungs={ladderOf(save)} C={C} /></Modal>
         </Panel>
 
       {/* ================= Loans & debt (always visible below progression) ================= */}
@@ -1348,7 +1362,7 @@ export function FinancesScreen() {
           </Panel>
 
           {/* Ledger */}
-          <Panel className="rise-in flex flex-1 flex-col p-4" style={{ animationDelay: "200ms" }}>
+          <Panel className="rise-in flex flex-col p-4" style={{ animationDelay: "200ms" }}>
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="kicker text-[11px]">{C.finances.ledger}</p>
               <div className="flex gap-1.5">

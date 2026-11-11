@@ -149,8 +149,8 @@ export function LadderGrid({ rungs, C }: { rungs: LadderRungState[]; C: CareerCo
         >
           <RungBadge rung={r} />
           <span className="min-w-0 flex-1">
-            <span className={cx("block truncate text-xs font-semibold", r.status === "locked" ? "text-sub" : "text-ink")}>{L.rung[r.id]}</span>
-            <span className="block truncate text-[10px] text-faint">{L.hint[r.id]}</span>
+            <span className={cx("block break-words text-xs font-semibold", r.status === "locked" ? "text-sub" : "text-ink")}>{L.rung[r.id]}</span>
+            <span className="block text-[10px] leading-relaxed text-faint">{L.hint[r.id]}</span>
           </span>
           <span className="shrink-0 text-[10px] font-semibold text-faint">
             {r.status === "locked" ? L.gate(r.gate) : r.status === "owned" ? L.owned : L.open}

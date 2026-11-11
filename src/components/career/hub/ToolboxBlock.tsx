@@ -81,7 +81,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const L = C.ladder;
 
   const items = useMemo(() => toolboxOf(save), [save]);
-  const rungs = useMemo(() => ladderOf(save).filter(r => items.some(i => rungOfItem(i.id) === r.id)), [save, items]);
+  const rungs = useMemo(() => ladderOf(save), [save]);
   const ended = save.phase === "ended";
   const fresh = careerNewSummary(save).keys;
   const available = items.filter((i) => i.status === "buyable" && !ended);

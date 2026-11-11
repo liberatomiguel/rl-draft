@@ -695,8 +695,6 @@ export function MarketScreen() {
       {/* ================= my deals tab ================= */}
       {tab === "deals" ? (
         <div className="rise-in space-y-2.5" style={{ animationDelay: "60ms" }}>
-          {/* rc.32 (M2, provisional): the renewal rule and both numbers for this season's expiring contracts. */}
-          <RenewalsPanel save={save} C={C} />
           {bids.length === 0 ? (
             <Panel className="p-8 text-center text-sm text-faint">{C.market.dealsEmpty}</Panel>
           ) : (
@@ -793,6 +791,7 @@ export function MarketScreen() {
               })}
             </>
           )}
+          <RenewalsPanel save={save} C={C} />
         </div>
       ) : null}
 
