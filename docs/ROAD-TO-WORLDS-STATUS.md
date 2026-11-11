@@ -1,6 +1,6 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-11**. Staging **v2.0.0-rc.45**; candidate **rc.46** on branch `claude/rc42-balance`.
+> Updated **2026-11-11**. Candidate **v2.0.0-rc.46**, staging.
 > Decisions R1–R121. BALANCE_VERSION **23**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
