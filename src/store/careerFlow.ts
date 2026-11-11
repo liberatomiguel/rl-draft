@@ -298,6 +298,7 @@ import {
   LINEUP_SEATS,
   localSeedRowsFor,
   localSceneSeasonRating,
+  orgRelocations,
   realOrgIntake,
   regionalSeedingFor,
   repairLegacyWorld,
@@ -4124,6 +4125,20 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
       priority: org.region === save.identity.region ? 2 : 1,
       titleKey: "orgEnters",
       params: { org: org.name, region: org.region },
+    });
+  }
+  // v2.0 (C1): an org whose lineup this season is in another region moves there (with its squad, or as a new project).
+  const relocation = orgRelocations(save.world, nextSeason);
+  save.world = relocation.world;
+  for (const m of relocation.moved) {
+    const mine = m.from === save.identity.region || m.to === save.identity.region;
+    pushNews(save, {
+      type: "milestone",
+      priority: mine || m.withRoster ? 3 : 1,
+      titleKey: "orgRelocates",
+      params: { org: m.name, from: m.from, to: m.to, withRoster: m.withRoster ? 1 : 0 },
+      // A bombshell when the squad travels with the org, or when it touches the user's own region.
+      ...(mine || m.withRoster ? { headline: true as const } : {}),
     });
   }
   // rc.33 (RTW-03): an org whose history is over gave its seat to an entrant.

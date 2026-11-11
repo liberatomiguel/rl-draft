@@ -2260,6 +2260,7 @@ export const CAREER_EN = {
       flavor5: () => `A community montage is doing numbers this week`,
       // v2.0 (C1)
       worldsCancelled: () => `World Championship cancelled over the pandemic`,
+      orgRelocates: (p: Record<string, string | number>) => `${p.org} moves from ${p.from} to ${p.to}`,
     },
     // v0.2 — body text per template (same params; HQ feed renders these).
     body: {
@@ -2382,6 +2383,10 @@ export const CAREER_EN = {
       repDown: (p: Record<string, string | number>) =>
         `Expectations were stated and missed; ${p.org}'s standing takes the hit. Reputation is earned back the same way it was built.`,
       // v2.0 (C1)
+      orgRelocates: (p: Record<string, string | number>) =>
+        Number(p.withRoster)
+          ? `${p.org} is leaving ${p.from}. The org has registered in ${p.to} for the new season and takes its squad along: the same players, a new region to prove themselves in.`
+          : `${p.org} is leaving ${p.from} for ${p.to}, and starts over there with a new squad. The players it leaves behind are free agents.`,
       worldsCancelled: () =>
         `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. The season ends with the split standings as they are. No title is awarded, and the race starts again next season.`,
     },

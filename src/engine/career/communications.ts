@@ -10,7 +10,7 @@ const PUBLIC_KEYS = new Set([
   "beat", "beatArchive", "beatPreempted", "transfer", "transferFee", "transferFa",
   "userSigned", "userSold", "userReleased", "result", "resultUser", "seasonChampion",
   "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
-  "worldsCancelled",
+  "worldsCancelled", "orgRelocates",
 ]);
 
 /**
