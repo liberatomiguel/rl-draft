@@ -65,7 +65,7 @@ import {
   type SeenState,
 } from "@/engine/newItems";
 import { profileAvailableKeys } from "@/engine/profileNew";
-import { FEATURES, MISSIONS, QUIZ } from "@/config/balance";
+import { FEATURES, MISSIONS } from "@/config/balance";
 import { todayKey } from "@/lib/dailyPlan";
 import type { DurableProfile } from "@/lib/profileSync";
 import { trackEvent } from "@/lib/analytics";
