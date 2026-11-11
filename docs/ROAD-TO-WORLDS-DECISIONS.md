@@ -2333,3 +2333,7 @@ Two-season deals, renewed on the players' rule (raise cap and market floor on th
 ## R128 — 11 November 2026: the career pays profile XP (rc.47)
 
 `CAREER_XP`: series 25 (+15 on a win), events 100–800, titles 200–5,000, a completed season 1,500, at most 10,000 a write. C2 proposed 50 / 30 a series for about 10k a season; halved because Skip simulates a season in minutes. Season Rating stays draft-only.
+
+## R129 — 11 November 2026: elite talent signs at his overall again (rc.48)
+
+Revises R121. Miguel judged the potential-based reputation gate too strict. `CAREER_TALENT.elite.gateShare` 0.4 to 0: `economy.signingLevelOf` returns the overall, so the gate is rc.45's. The elite price factor (up to x2.2) stays as the only brake on signing a nass early. The rule stays in code behind the knob. Not measured; the rc.46 numbers (titles by season 10 14 to 9) mixed both effects.

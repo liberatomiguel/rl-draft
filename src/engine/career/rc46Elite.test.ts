@@ -1,6 +1,7 @@
 /**
- * rc.46 (R121): a young player who can still reach the elite costs more and
- * signs later (CAREER_TALENT.elite).
+ * rc.46 (R121): a young player who can still reach the elite costs more
+ * (CAREER_TALENT.elite). rc.48 (R129): the reputation gate reads his overall
+ * alone again (gateShare 0); the rule itself stays, behind the knob.
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_TALENT } from "@/config/balance";
@@ -46,17 +47,19 @@ describe("rc.46 (R121): elite talent", () => {
     expect(talentFactorsFor({ overall: 87, potential: 97, age: 27, ...arc }).potential).toBe(1);
   });
 
-  it("the reputation gate reads part of an elite talent's potential while he is growing", () => {
+  it("the reputation gate reads gateShare of an elite talent's gap while he is growing (rc.48: none)", () => {
     const kid = { overall: 87, potential: 97, age: 18, peakAge: 22 };
+    expect(E.gateShare).toBe(0);
     expect(signingLevelOf(kid)).toBe(Math.round(87 + E.gateShare * 10));
+    expect(signingLevelOf(kid)).toBe(87);
     expect(signingLevelOf({ ...kid, potential: 92 })).toBe(87);
     expect(signingLevelOf({ ...kid, age: 25 })).toBe(87);
     expect(signingLevelOf({ overall: 86.6 })).toBe(87);
     const needKid = repNeededForOverall(signingLevelOf(kid));
     const needPlain = repNeededForOverall(87);
-    expect(needKid).toBeGreaterThan(needPlain);
-    expect(signableAtRep(kid, needPlain)).toBe(false);
-    expect(signableAtRep(kid, needKid)).toBe(true);
+    expect(needKid).toBe(needPlain);
+    expect(signableAtRep(kid, needPlain)).toBe(true);
+    if (needPlain > 0) expect(signableAtRep(kid, needPlain - 1)).toBe(false);
     // A bare overall keeps rc.45's rule.
     expect(signableAtRep(87, needPlain)).toBe(true);
     expect(signableOverallCap(needKid)).toBeGreaterThanOrEqual(signingLevelOf(kid));

@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
 > Updated **2026-11-11**. Candidate **v2.0.0-rc.47**, staging.
-> Decisions R1–R128. BALANCE_VERSION **24**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Decisions R1–R129. BALANCE_VERSION **25**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
@@ -45,6 +45,7 @@ including Worlds at season review. Coaches reduce the training-wear portion
 of absence risk by 20%; illness risk stays fixed. Absence notices name the
 cause and unavailable player; Market explicitly explains closed windows.
 
+rc.48 (R129, on the branch, not on staging): CAREER_TALENT.elite.gateShare 0, the reputation gate reads the overall alone; the elite price factor stays.
 rc.47 (R122–R128): contract-long sponsor goals, database-driven region moves, no Worlds in Season X, headline pop-ups, automatic sponsor bootcamps, contracted players listed below reputation 20, coach contracts with renewal and growth, profile XP from the career, lineup swaps at HQ, the redesigned coach market, sponsor contract, season review, calendar and title race, milestone moments. Engine notes: docs/handoff-2.0/C1.md; screens: G1.md. None of it is measured in a battery.
 
 ## Run and verify

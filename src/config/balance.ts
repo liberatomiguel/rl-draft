@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 24;
+export const BALANCE_VERSION = 25;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2251,13 +2251,14 @@ export const CAREER_TALENT = {
    * his value and wage ask are multiplied by 1 + `valuePerPoint` a point of
    * that top above `fromPotential` - 1, in full from a reach gap of
    * `valueFullGap` (a 92 who can reach 93 pays a fifth of it), never above
-   * `valueMax`: an 87 who reaches 97 pays x2.0. And he signs later: the
-   * reputation gate reads his overall + `gateShare` of the gap to his
-   * potential while he is still growing (87/97 reads 91, reputation 50, was
-   * 40). Everyone under `fromPotential` is priced and gated as before.
+   * `valueMax`: an 87 who reaches 97 pays x2.0. `gateShare` can also make him
+   * sign later (the reputation gate would read his overall + that share of
+   * the gap to his potential while he is still growing); rc.48 (R129) turned
+   * it off, 0.4 in rc.46 asked too much reputation, so the gate reads the
+   * overall alone again. Everyone under `fromPotential` is priced as before.
    * valuePerPoint 0 and gateShare 0 = rc.45.
    */
-  elite: { fromPotential: 93, valuePerPoint: 0.2, valueFullGap: 5, valueMax: 2.2, gateShare: 0.4 },
+  elite: { fromPotential: 93, valuePerPoint: 0.2, valueFullGap: 5, valueMax: 2.2, gateShare: 0 },
   upsideTiers: [
     { upTo: 10, perPoint: 0.02 }, // "promising" from CAREER_TRANSFER.prospectUpside (6)
     { upTo: 15, perPoint: 0.04 }, // "high potential"
