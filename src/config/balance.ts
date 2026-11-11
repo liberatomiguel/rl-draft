@@ -3797,6 +3797,33 @@ export const CAREER_SIM = {
   teamCache: true,
 } as const;
 
+/**
+ * v2.0 (C1) — PROFILE XP FROM THE CAREER. Road to Worlds pays the same Season
+ * XP the draft does (XP above): a series played, an event finished, a title,
+ * a season completed (engine/career/careerXp.ts; the store grants it on each
+ * write). MMR / Season Rating is NOT touched: it stays the draft's alone.
+ *
+ * PROVISIONAL (session C2 calibrates). Sized against the draft: a classic
+ * run pays roughly 200–500 XP in ~10 minutes; a career season is ~70–90
+ * series and ~15 events over an hour or two, so at these figures it pays
+ * about 1,000–1,400 XP before titles — two to four runs' worth.
+ *  - seriesPlayed / seriesWinBonus: every series the user plays (scrims are
+ *    not series), plus the bonus on a win.
+ *  - eventFinished: an event the user played to its end, by tier.
+ *  - title: winning it, by tier (on top of eventFinished).
+ *  - seasonCompleted: the season review filed.
+ *  - maxPerWrite: a safety cap on one save write (a Worlds title + its event
+ *    + the season is 750; nothing legitimate reaches it).
+ */
+export const CAREER_XP = {
+  seriesPlayed: 6,
+  seriesWinBonus: 4,
+  eventFinished: { t3: 10, t2: 20, qualifier: 10, regional: 30, major: 60, worlds: 100 } as Record<string, number>,
+  title: { t3: 20, t2: 40, regional: 80, major: 200, worlds: 500 },
+  seasonCompleted: 150,
+  maxPerWrite: 1_500,
+} as const;
+
 export const CAREER_SAVE = {
   maxSlots: 3,
   newsCap: 250,

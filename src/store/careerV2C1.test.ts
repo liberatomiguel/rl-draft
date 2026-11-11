@@ -10,15 +10,18 @@ import { DAYS_PER_SEASON, firstDayOfWeek, officialEventDefsForWeek, worldsCancel
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { HEADLINE_BEATS, isHeadline } from "@/engine/career/communications";
 import { SEASON_GOAL_CANDIDATES } from "@/engine/career/seasonGoals";
-import type { CareerSave, CoachState, TrainingPackage } from "@/engine/career/types";
+import type { CareerSave, CoachState, CompactEventResult, TrainingPackage } from "@/engine/career/types";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
-import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_UNLOCKS, CAREER_XP } from "@/config/balance";
 import { coachProfileOf, coachStrengthOf, packageEffectFor } from "@/engine/career/training";
 import { signableOverallCap } from "@/engine/career/economy";
 import { listingFor } from "@/engine/career/market";
+import { careerXpBetween } from "@/engine/career/careerXp";
 import { playArcCareer } from "./careerArcBot";
+import { useCareerStore } from "./careerStore";
+import { useProfileStore } from "./profileStore";
 import {
   advanceDayFlow,
   chooseSponsorFlow,
@@ -280,5 +283,49 @@ describe("v2.0 (C1) — coaches", () => {
     save = rolloverToNextSeason(atReview(save));
     expect(save.coach!.salaryPerSplit).toBe(900);
     expect(save.coach!.contractEndSeason).toBe(1);
+  });
+});
+
+describe("v2.0 (C1) — the career pays profile XP, never rating", () => {
+  const base = () => createCareerSave(INPUT, 20_801);
+  const res = (id: string, tier: CompactEventResult["tier"], userPlacement?: CompactEventResult["userPlacement"]): CompactEventResult =>
+    ({ eventId: id, tier, seasonIndex: 0, week: 4, name: "T", rows: [], championRef: "x", userPlacement, fieldQuality: 1 });
+
+  it("series, events, titles and a finished season each pay their CAREER_XP figure, once", () => {
+    const prev = base();
+    expect(careerXpBetween(prev, prev).total).toBe(0);
+    expect(careerXpBetween(prev, structuredClone(prev)).total).toBe(0);
+    const next = structuredClone(prev);
+    next.stats.seriesWins += 2;
+    next.stats.seriesLosses += 1;
+    next.stats.titlesRegional += 1;
+    next.eventResults = [...next.eventResults, res("e1", "regional", "champion"), res("e2", "regional")];
+    const gain = careerXpBetween(prev, next);
+    expect(gain.series).toBe(2 * (CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus) + CAREER_XP.seriesPlayed);
+    // Only the event the user played pays (e2 is a watched one).
+    expect(gain.events).toBe(CAREER_XP.eventFinished.regional);
+    expect(gain.titles).toBe(CAREER_XP.title.regional);
+    expect(gain.seasons).toBe(0);
+    expect(gain.total).toBe(gain.series + gain.events + gain.titles);
+    // The same write read again from its own result pays nothing more.
+    expect(careerXpBetween(next, structuredClone(next)).total).toBe(0);
+    // Another career's save is never compared.
+    expect(careerXpBetween(createCareerSave(INPUT, 99), next).total).toBe(0);
+  });
+
+  it("the store reads every career write: one with no activity grants nothing, and MMR never moves", () => {
+    useCareerStore.setState({ slots: [null, null, null], activeSlot: null, achievements: { unlocked: {}, worldsWonOn: {} }, toasts: [] });
+    useProfileStore.getState().resetAll();
+    useCareerStore.getState().createCareer(0, INPUT, 20_802);
+    const xp0 = useProfileStore.getState().xp;
+    const mmr0 = useProfileStore.getState().mmr;
+    useCareerStore.getState().markFlag("c1-xp-probe");
+    expect(useProfileStore.getState().xp).toBe(xp0);
+    // A write that carries a played, won series pays it (the store's own hook, through a flow).
+    const slot = useCareerStore.getState().slots[0]!;
+    const played = structuredClone(slot);
+    played.stats.seriesWins += 1;
+    expect(careerXpBetween(slot, played).total).toBe(CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus);
+    expect(useProfileStore.getState().mmr).toBe(mmr0);
   });
 });
