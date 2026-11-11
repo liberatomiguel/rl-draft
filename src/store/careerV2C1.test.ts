@@ -14,7 +14,9 @@ import type { CareerSave, CoachState, CompactEventResult, TrainingPackage } from
 import { CAREER_BEATS } from "@/data/career/beats";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
-import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SAVE, CAREER_UNLOCKS, CAREER_XP } from "@/config/balance";
+import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SALARY, CAREER_SAVE, CAREER_UNLOCKS, CAREER_XP } from "@/config/balance";
+import { coachRenewalTermsFor } from "@/engine/career/renewal";
+import { pendingDecisionsOf } from "./careerDecisions";
 import { coachProfileOf, coachStrengthOf, packageEffectFor } from "@/engine/career/training";
 import { signableOverallCap } from "@/engine/career/economy";
 import { listingFor } from "@/engine/career/market";
@@ -33,7 +35,9 @@ import {
   migrateSaveToV5,
   rolloverToNextSeason,
   runBootcampFlow,
-  setCoachRenewalFlow,
+  renewCoachFlow,
+  coachRenewalWageOf,
+  coachLeavingAtRolloverOf,
   signingPlanFor,
   sponsorBootcampOf,
   type CreateCareerInput,
@@ -246,7 +250,7 @@ describe("v2.0 (C1) — coaches", () => {
   const atReview = (save: CareerSave): CareerSave =>
     ({ ...save, phase: "seasonReview", clock: { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON }, pendingOffers: [], sponsorOffers: null });
 
-  it("a hire signs for two seasons; the deal renews by itself with a slow wage step; 'release' lets him go for free", () => {
+  it("a coach's deal works like a player's: a hire signs for two seasons, the manager renews at the ask, and a deal left to run out ends at the rollover", () => {
     let save = createCareerSave(INPUT, 20_701);
     save.reputation = 30;
     const pick = coachCandidatesFor(save).find((c) => c.source === "generated")!;
@@ -255,32 +259,53 @@ describe("v2.0 (C1) — coaches", () => {
     save = hired.save;
     const L = CAREER_COACH_MARKET.contract;
     expect(save.coach!.contractEndSeason).toBe(L.lengthSeasons - 1);
-    expect(coachContractOf(save)).toMatchObject({ endsSeason: 1, lastSeason: false, atEnd: "renew" });
+    expect(coachContractOf(save)).toMatchObject({ endsSeason: 1, lastSeason: false });
+    expect(coachLeavingAtRolloverOf(save)).toBeNull();
     const wage0 = save.coach!.salaryPerSplit;
     // Season 0 → 1: inside the deal, nothing moves.
     save = rolloverToNextSeason(atReview(save));
     expect(save.coach!.salaryPerSplit).toBe(wage0);
     expect(coachContractOf(save)!.lastSeason).toBe(true);
+    expect(coachLeavingAtRolloverOf(save)?.id).toBe(pick.id);
     // The notice in the last season (W21's Monday) quotes the ask.
     const noticed = mondayAfter({ ...save, sponsorOffers: null }, L.noticeWeek - 1);
     const notice = noticed.mail.find((m) => m.titleKey === "coachContractExpiring")!;
     expect(notice).toBeDefined();
     expect(CAREER_EN.mail.body.coachContractExpiring(notice.params!)).toContain(save.coach!.name);
     expect(CAREER_PT.mail.body.coachContractExpiring(notice.params!)).toContain(save.coach!.name);
-    // Season 1 → 2: renewed, the wage never down and at most raiseCap up, two more seasons.
-    const kept = rolloverToNextSeason(atReview(save));
+    // The ask is the players' renewal rule on his market wage: never above the raise cap or the market floor.
+    const ask = coachRenewalWageOf(save);
+    expect(ask).toBe(coachContractOf(save)!.renewalWagePerSplit);
+    expect(ask).toBeLessThanOrEqual(Math.max(wage0 * CAREER_SALARY.renewalRaiseCap, wage0 * CAREER_SALARY.renewalMaxJump) + 50);
+    // The season review holds on his contract, as on a player's.
+    const review = atReview(save);
+    expect(pendingDecisionsOf(review).some((d) => d.kind === "contractReview")).toBe(true);
+    // Renewed for three seasons: the wage moves on signature, the deal runs from this season.
+    const renewed = renewCoachFlow(review, 3);
+    expect(renewed.error).toBeUndefined();
+    expect(renewed.save.coach!.salaryPerSplit).toBe(ask);
+    expect(renewed.save.coach!.contractEndSeason).toBe(1 + 3);
+    expect(coachLeavingAtRolloverOf(renewed.save)).toBeNull();
+    expect(renewed.save.mail.some((m) => m.titleKey === "coachRenewed")).toBe(true);
+    const kept = rolloverToNextSeason(renewed.save);
     expect(kept.coach!.id).toBe(pick.id);
-    expect(kept.coach!.contractEndSeason).toBe(2 + L.lengthSeasons - 1);
-    expect(kept.coach!.salaryPerSplit).toBeGreaterThanOrEqual(wage0);
-    expect(kept.coach!.salaryPerSplit).toBeLessThanOrEqual(Math.ceil(wage0 * (1 + L.raiseCap)) + 50);
-    expect(kept.mail.some((m) => m.titleKey === "coachRenewed")).toBe(true);
-    // Released instead: he leaves, nothing is paid.
-    const releasing = setCoachRenewalFlow(save, "release").save;
-    expect(coachContractOf(releasing)!.atEnd).toBe("release");
-    const gone = rolloverToNextSeason(atReview(releasing));
+    // Not renewed: he leaves at the rollover, nothing is paid — never renewed behind the manager's back.
+    const gone = rolloverToNextSeason(review);
     expect(gone.coach).toBeNull();
     expect(gone.mail.some((m) => m.titleKey === "coachLeft")).toBe(true);
+    expect(gone.mail.some((m) => m.titleKey === "coachRenewed")).toBe(false);
     expect(gone.finances.ledger.some((l) => l.kind === "severance")).toBe(false);
+    expect(renewCoachFlow(gone, 1).error).toBe("none");
+  });
+
+  it("the renewal rule: the fresh wage when it is inside the cap, else the raise cap or the market floor", () => {
+    const S = CAREER_SALARY;
+    expect(coachRenewalTermsFor(1000, 1200)).toEqual({ ask: 1200, bound: "fresh" });
+    expect(coachRenewalTermsFor(1000, 900)).toEqual({ ask: 900, bound: "fresh" });
+    const far = coachRenewalTermsFor(1000, 100_000);
+    expect(far.ask).toBeLessThanOrEqual(1000 * Math.max(S.renewalRaiseCap, S.renewalMaxJump) + 50);
+    expect(far.ask).toBeGreaterThan(1000);
+    expect(far.bound).not.toBe("fresh");
   });
 
   it("a coach hired before v2.0 (no end date) keeps his wage and gets his date at the next rollover", () => {
@@ -398,7 +423,6 @@ describe("v2.0 (C1) — an rc.45 save loads and plays on", () => {
     delete (old.flags as Record<string, unknown>).sponsorBootcampSeen;
     if (old.coach) {
       delete old.coach.contractEndSeason;
-      delete old.coach.renewal;
     }
     const terms = old.sponsor?.terms;
     if (terms) {

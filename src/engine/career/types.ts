@@ -1044,13 +1044,12 @@ export interface CoachState {
   /** rc.34 (T4): an ex-pro's career-best card (his quality's source, printed on the card). */
   bestCard?: number;
   /**
-   * v2.0 (C1): the last season index his deal covers (it renews or ends at
-   * that season's rollover). Absent on a coach hired before v2.0 and on a
-   * market candidate: set on hiring, or at the next rollover.
+   * v2.0 (C1): the last season index his deal covers, as a player's
+   * `contractEndSeason`: not renewed, he leaves at that season's rollover.
+   * Absent on a coach hired before v2.0 and on a market candidate: set on
+   * hiring, or at the next rollover.
    */
   contractEndSeason?: number;
-  /** v2.0 (C1): the manager's answer for the deal's end — "release" lets him go at the rollover; absent = renew. */
-  renewal?: "release";
 }
 
 // ---------------------------------------------------------------------------

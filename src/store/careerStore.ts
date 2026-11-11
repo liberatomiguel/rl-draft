@@ -80,7 +80,7 @@ import {
   endCareer,
   finishEvent,
   fireCoachFlow,
-  setCoachRenewalFlow,
+  renewCoachFlow,
   hireCoachFlow,
   migrateSaveToV5,
   payBankLoanFlow,
@@ -275,8 +275,8 @@ interface CareerStoreState {
   buyScoutReport: (playerId: string) => void;
   hireCoach: (coach: CoachState) => void;
   fireCoach: () => void;
-  /** v2.0 (C1): the coach's deal end — "release" lets him go at the rollover (no severance), "renew" is the default. */
-  setCoachRenewal: (atEnd: "renew" | "release") => void;
+  /** v2.0 (C1): renew the coach for 1–3 seasons at what he asks (coachContractOf) — as a player is renewed. */
+  renewCoach: (lengthSeasons: 1 | 2 | 3) => void;
   chooseSponsor: (sponsorId: string) => void;
   /** v0.3: manual pay-down of the emergency loan (rc.33: the Backer's debt). */
   payDebt: (amount: number) => void;
@@ -584,7 +584,7 @@ export const useCareerStore = create<CareerStoreState>()(
           withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
         fireCoach: () => withResult(fireCoachFlow, { kind: "fireCoach" }),
-        setCoachRenewal: (atEnd) => withResult((s) => setCoachRenewalFlow(s, atEnd)),
+        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons)),
         chooseSponsor: (sponsorId) =>
           withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),

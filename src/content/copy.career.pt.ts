@@ -774,13 +774,13 @@ export const CAREER_PT: CareerCopy = {
             : `Essa é a cota desta temporada (${p.perSeason}); o próximo começa com a próxima temporada.`
         }`,
       coachContractExpiring: (p: Record<string, string | number>) =>
-        `O contrato de ${p.coach} termina com esta temporada. Ele fica por mais ${p.seasons} temporadas por ${p.wage} por semana (hoje ${p.old}), e o contrato renova sozinho na virada. Para liberá-lo sem custo, avise na página de Treinadores antes do fim da temporada.`,
+        `O contrato de ${p.coach} termina com esta temporada. Para ficar, ele pede ${p.wage} por semana (hoje ${p.old}). Renove na página de Treinadores antes do fim da temporada; se não renovar, ele sai na virada e não há multa.`,
       coachRenewed: (p: Record<string, string | number>) =>
         Number(p.raised)
           ? `${p.coach} assinou por mais ${p.seasons} temporadas. Ele evoluiu no cargo, e o salário acompanha: ${p.wage} por semana, antes ${p.old}.`
           : `${p.coach} assinou por mais ${p.seasons} temporadas com o mesmo salário, ${p.wage} por semana.`,
       coachLeft: (p: Record<string, string | number>) =>
-        `O contrato de ${p.coach} acabou e, como você pediu, não foi renovado. Não há multa. O elenco treina sem treinador até você contratar outro.`,
+        `O contrato de ${p.coach} acabou e não foi renovado. Não há multa. O elenco treina sem treinador até você contratar outro.`,
     },
   },
 

@@ -2967,16 +2967,17 @@ export const CAREER_COACH_MARKET = {
     ceilingMax: 95,
   },
   /**
-   * v2.0 (C1): a coach signs for `lengthSeasons` seasons. In his deal's last
-   * season the board is told (the Monday of `noticeWeek`) what he asks to
-   * stay: his market wage at the quality and experience he has grown to,
-   * never below what he earns and at most `raiseCap` above it — the slow
-   * wage step that follows the slow quality step (growth). At the rollover
-   * the deal renews at that wage unless the manager chose to let him go
-   * (or renewed him early at the same terms). A coach hired before v2.0 has
-   * no end date: he gets one at his next rollover, with no wage change.
+   * v2.0 (C1): a coach's deal works like a player's. A hire signs for
+   * `lengthSeasons` seasons; in the deal's last season the board is told
+   * (the Monday of `noticeWeek`) what he asks to stay, and the manager
+   * renews him for 1–3 seasons or lets the deal run out — not renewed, he
+   * leaves at the rollover, and the season review lists him with the
+   * players whose deals end. The ask is the players' renewal rule
+   * (CAREER_SALARY.renewalRaiseCap / renewalMarketFloor / renewalMaxJump) on
+   * his market wage at the quality and experience he has grown to. A coach
+   * hired before v2.0 has no end date: he gets one at his next rollover.
    */
-  contract: { lengthSeasons: 2, raiseCap: 0.2, noticeWeek: 21 },
+  contract: { lengthSeasons: 2, noticeWeek: 21 },
 } as const;
 
 export const CAREER_SUB = {

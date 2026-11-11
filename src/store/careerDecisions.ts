@@ -239,7 +239,11 @@ export function contractReviewFlagFor(seasonIndex: number): string {
 function contractReviewDecisionOf(save: CareerSave): PendingDecision | null {
   if (save.phase !== "seasonReview") return null;
   if (save.flags[contractReviewFlagFor(save.clock.seasonIndex)]) return null;
-  return leavingAtRolloverOf(save).length > 0 ? dueNow("contractReview", `contracts:${save.clock.seasonIndex}`) : null;
+  // v2.0 (C1): a coach whose deal ends is reviewed with the players (coachLeavingAtRolloverOf).
+  const coachLeaving = save.coach?.contractEndSeason !== undefined && save.coach.contractEndSeason <= save.clock.seasonIndex;
+  return leavingAtRolloverOf(save).length > 0 || coachLeaving
+    ? dueNow("contractReview", `contracts:${save.clock.seasonIndex}`)
+    : null;
 }
 
 function squadShortDecisionOf(save: CareerSave): PendingDecision | null {

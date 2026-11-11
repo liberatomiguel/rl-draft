@@ -792,13 +792,13 @@ export const CAREER_EN = {
             : `That is this season's allowance (${p.perSeason}); the next one starts with next season.`
         }`,
       coachContractExpiring: (p: Record<string, string | number>) =>
-        `${p.coach}'s deal ends with this season. He will stay for ${p.seasons} more seasons at ${p.wage} a week (now ${p.old}), and the deal renews by itself at the rollover. To let him go for free instead, say so on the Coaches page before the season ends.`,
+        `${p.coach}'s deal ends with this season. To stay he asks ${p.wage} a week (now ${p.old}). Renew him on the Coaches page before the season ends; if you do not, he leaves at the rollover and no severance is owed.`,
       coachRenewed: (p: Record<string, string | number>) =>
         Number(p.raised)
           ? `${p.coach} signed for ${p.seasons} more seasons. He has grown in the job, and his wage follows: ${p.wage} a week, up from ${p.old}.`
           : `${p.coach} signed for ${p.seasons} more seasons on the same wage, ${p.wage} a week.`,
       coachLeft: (p: Record<string, string | number>) =>
-        `${p.coach}'s deal ran out and, as you asked, it was not renewed. No severance is owed. The squad trains without a coach until you hire one.`,
+        `${p.coach}'s deal ran out and was not renewed. No severance is owed. The squad trains without a coach until you hire one.`,
     },
   },
 

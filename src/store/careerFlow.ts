@@ -62,6 +62,7 @@ import {
 } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { coachProfileOf, prioritizeScrimVariety } from "@/engine/career/training";
+import { coachRenewalTermsFor } from "@/engine/career/renewal";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
 import { deliverMail, deliverNews, repairCommunicationsOnLoad } from "@/engine/career/communications";
@@ -5533,116 +5534,126 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
   return { save };
 }
 
-/** v2.0 (C1): a coach's deal, as the UI shows it. */
+/**
+ * v2.0 (C1): a coach's deal, as the UI shows it. It works like a player's:
+ * it has a last season, the manager renews it (`renewCoachFlow`) or lets it
+ * run out, the season review lists him with the players whose deals end
+ * (`coachLeavingAtRolloverOf`), and at the rollover a coach not renewed leaves.
+ */
 export interface CoachContractView {
   /** The last season index the deal covers (null: hired before v2.0 — dated at the next rollover). */
   endsSeason: number | null;
-  /** This is the deal's last season: it renews (or ends) at the rollover. */
+  /** This is the deal's last season: not renewed, he leaves at the rollover. */
   lastSeason: boolean;
-  /** What happens at the deal's end: "renew" (the default) or "release" (the manager lets him go). */
-  atEnd: "renew" | "release";
-  /** His wage per split now, and what he asks to stay (the renewal's wage; equal when nothing moves). */
+  /** His wage per split now, and what he asks to renew (the players' renewal rule on his market wage). */
   wagePerSplit: number;
   renewalWagePerSplit: number;
-  /** The seasons a renewal adds. */
-  renewalSeasons: number;
+  /** What priced the ask (renewal.coachRenewalTermsFor): his market wage, the raise cap or the market floor. */
+  bound: "fresh" | "cap" | "floor";
+  /** The lengths a renewal can run. */
+  lengths: readonly (1 | 2 | 3)[];
 }
 
-/**
- * v2.0 (C1): what the coach asks to renew — his market wage at the quality
- * and experience he has grown to, on next season's money, never below what
- * he earns and at most contract.raiseCap above it.
- */
-export function coachRenewalWageOf(save: CareerSave): number {
-  const coach = save.coach;
-  if (!coach) return 0;
+/** His market wage today: the hire ask of a coach of his quality, experience and background (market.ts's figure). */
+function coachFreshWageOf(save: CareerSave, coach: CoachState): number {
   const M = CAREER_COACH_MARKET;
   const prof = coachProfileOf(coach)!;
   const mult = coach.source === "real" ? M.exPro.wageMult : coach.source === "dataset" ? M.staff.wageMult : 1;
-  const market = quantize(
-    coachWageFor({ quality: coach.overall, experience: prof.experience, exPro: false }, save.clock.seasonIndex + 1, save.difficulty) * mult,
+  return quantize(
+    coachWageFor({ quality: coach.overall, experience: prof.experience, exPro: false }, save.clock.seasonIndex, save.difficulty) * mult,
   );
-  const cap = quantize(coach.salaryPerSplit * (1 + M.contract.raiseCap));
-  return Math.max(coach.salaryPerSplit, Math.min(market, cap));
+}
+
+/** v2.0 (C1): what the coach asks to renew — the players' renewal rule (raise cap and market floor) on his market wage. */
+export function coachRenewalWageOf(save: CareerSave): number {
+  const coach = save.coach;
+  if (!coach) return 0;
+  return coachRenewalTermsFor(coach.salaryPerSplit, coachFreshWageOf(save, coach)).ask;
 }
 
 export function coachContractOf(save: CareerSave): CoachContractView | null {
   const coach = save.coach;
   if (!coach) return null;
   const endsSeason = coach.contractEndSeason ?? null;
+  const terms = coachRenewalTermsFor(coach.salaryPerSplit, coachFreshWageOf(save, coach));
   return {
     endsSeason,
     lastSeason: endsSeason !== null && endsSeason <= save.clock.seasonIndex,
-    atEnd: coach.renewal === "release" ? "release" : "renew",
     wagePerSplit: coach.salaryPerSplit,
-    renewalWagePerSplit: coachRenewalWageOf(save),
-    renewalSeasons: CAREER_COACH_MARKET.contract.lengthSeasons,
+    renewalWagePerSplit: terms.ask,
+    bound: terms.bound,
+    lengths: [1, 2, 3],
   };
 }
 
-/** v2.0 (C1): the manager's answer for the coach's deal end — let him go at the rollover (no severance), or renew (the default). */
-export function setCoachRenewalFlow(input: CareerSave, atEnd: "renew" | "release"): FlowResult {
+/** v2.0 (C1): the coach whose deal ends with this season — he leaves at the rollover unless renewed (the players' `leavingAtRolloverOf`). */
+export function coachLeavingAtRolloverOf(save: CareerSave): CoachState | null {
+  const coach = save.coach;
+  return coach && coach.contractEndSeason !== undefined && coach.contractEndSeason <= save.clock.seasonIndex ? coach : null;
+}
+
+/**
+ * v2.0 (C1): renew the coach, as a player is renewed (renewPlayerFlow): at
+ * what he asks (`coachRenewalWageOf`), for `lengthSeasons` seasons from the
+ * current one, his wage moving on signature. Allowed any day of a running
+ * season and in the season review. No negotiation: a coach takes his ask.
+ */
+export function renewCoachFlow(input: CareerSave, lengthSeasons: 1 | 2 | 3): FlowResult {
   if (!input.coach) return { save: input, error: "none" };
+  if (input.phase === "ended") return { save: input, error: "blocked" };
+  if (![1, 2, 3].includes(lengthSeasons)) return { save: input, error: "invalid" };
+  const wage = coachRenewalWageOf(input);
+  // While the bank is owed, a raise must not shorten the runway (the hire's rule).
+  const delta = weeklyWageBill([], wage) - weeklyWageBill([], input.coach.salaryPerSplit);
+  if (delta > 0 && backerLocks(input, input.coach.salaryPerSplit, delta)) return { save: input, error: "loanRunway" };
   const save = clone(input);
-  if (atEnd === "release") save.coach!.renewal = "release";
-  else delete save.coach!.renewal;
+  const coach = save.coach!;
+  const old = coach.salaryPerSplit;
+  coach.salaryPerSplit = wage;
+  coach.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
+  pushMail(save, {
+    kind: "contract",
+    titleKey: "coachRenewed",
+    bodyKey: "coachRenewed",
+    params: { coach: coach.name, wage: weeklyOf(wage), old: weeklyOf(old), seasons: lengthSeasons, raised: wage > old ? 1 : 0 },
+    fromKey: "agent",
+    linkTo: "/career/market#coaches",
+  });
   return { save };
 }
 
 /** v2.0 (C1): the Monday of contract.noticeWeek in the deal's last season — the board hears what the coach asks to stay. */
 function noticeCoachContract(save: CareerSave): void {
-  const coach = save.coach;
-  if (!coach || coach.contractEndSeason !== save.clock.seasonIndex) return;
+  const coach = coachLeavingAtRolloverOf(save);
+  if (!coach) return;
   pushMail(save, {
     kind: "contract",
     titleKey: "coachContractExpiring",
     bodyKey: "coachContractExpiring",
-    params: {
-      coach: coach.name,
-      wage: weeklyOf(coachRenewalWageOf(save)),
-      old: weeklyOf(coach.salaryPerSplit),
-      seasons: CAREER_COACH_MARKET.contract.lengthSeasons,
-    },
+    params: { coach: coach.name, wage: weeklyOf(coachRenewalWageOf(save)), old: weeklyOf(coach.salaryPerSplit) },
     fromKey: "agent",
     linkTo: "/career/market#coaches",
   });
 }
 
 /**
- * v2.0 (C1): the coach's deal at the rollover into `nextSeason` (after his
- * season's growth). Past its last season it renews at what he asks
- * (coachRenewalWageOf) for contract.lengthSeasons more — or, when the
- * manager chose "release", he leaves with no severance. A coach from before
- * v2.0 gets his end date here (the coming season), his wage untouched.
+ * v2.0 (C1): the coach's deal at the rollover into `nextSeason`, like a
+ * player's: past its last season and not renewed, he leaves (no severance).
+ * A coach from before v2.0 has no end date — he gets one here (the coming
+ * season, so the manager has a whole season to renew him), wage untouched.
  */
 function settleCoachContract(save: CareerSave, nextSeason: number): void {
   const coach = save.coach;
   if (!coach) return;
-  const C = CAREER_COACH_MARKET.contract;
   if (coach.contractEndSeason === undefined) {
     coach.contractEndSeason = nextSeason;
     return;
   }
   if (coach.contractEndSeason >= nextSeason) return;
-  if (coach.renewal === "release") {
-    const name = coach.name;
-    save.coach = null;
-    pushMail(save, { kind: "contract", titleKey: "coachLeft", bodyKey: "coachLeft", params: { coach: name }, fromKey: "agent", linkTo: "/career/market#coaches" });
-    onCoachChanged(save, "fired", name);
-    return;
-  }
-  const old = coach.salaryPerSplit;
-  const wage = coachRenewalWageOf(save);
-  coach.salaryPerSplit = wage;
-  coach.contractEndSeason = nextSeason + C.lengthSeasons - 1;
-  pushMail(save, {
-    kind: "contract",
-    titleKey: "coachRenewed",
-    bodyKey: "coachRenewed",
-    params: { coach: coach.name, wage: weeklyOf(wage), old: weeklyOf(old), seasons: C.lengthSeasons, raised: wage > old ? 1 : 0 },
-    fromKey: "agent",
-    linkTo: "/career/market#coaches",
-  });
+  const name = coach.name;
+  save.coach = null;
+  pushMail(save, { kind: "contract", titleKey: "coachLeft", bodyKey: "coachLeft", params: { coach: name }, fromKey: "agent", linkTo: "/career/market#coaches" });
+  onCoachChanged(save, "fired", name);
 }
 
 export function fireCoachFlow(input: CareerSave): FlowResult {

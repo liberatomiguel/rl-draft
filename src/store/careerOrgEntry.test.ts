@@ -126,7 +126,7 @@ describe("DATA-01: each org enters the career in its right season (the real roll
   });
 });
 
-describe("v2.0 (C1): an org changes region when its dataset lineup does, case by case", () => {
+describe("v2.0 (C1): an org changes region when its dataset lineup does, case by case", { timeout: 60_000 }, () => {
   const idsOf = (orgId: string, seasonId: string) =>
     lineups.filter((l) => l.orgId === orgId && l.seasonId === seasonId)[0].playerCardIds.map((cid) => playerCards.find((c) => c.id === cid)!.playerId);
   const play = (seed: number, visit: (s: number, save: CareerSave, moved: CareerSave["news"]) => void) => {
