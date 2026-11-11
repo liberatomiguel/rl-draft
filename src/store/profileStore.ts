@@ -1155,6 +1155,17 @@ export function selectCollectionUnlocked(state: ProfileState): boolean {
   return rankRewardsForXp(state.xp).collection || Object.keys(state.unlockedSpecials).length > 0;
 }
 
+/** Challenges open at Bronze. v2.0 (C2): a player who had the mode before the
+ *  Season 1 reset (a pre-season rank, or any clear) keeps it at 0 Season XP. */
+export function selectChallengesUnlocked(
+  state: Pick<ProfileState, "xp" | "legacy" | "challengesCompleted">,
+): boolean {
+  if (rankForXp(state.xp).id !== "unranked") return true;
+  const preseason = state.legacy?.preseason;
+  if (preseason && (preseason.rankId !== "unranked" || preseason.challengesCleared > 0)) return true;
+  return Object.keys(state.challengesCompleted ?? {}).length > 0;
+}
+
 /** The first-run tour (home) is still due: never seen AND no run finished yet.
  *  A player whose first stop was /play already knows the game (rc.29, DRAFT-13). */
 export function selectTutorialDue(state: Pick<ProfileState, "flags" | "runsCompleted">): boolean {

@@ -25,7 +25,6 @@ import {
 import { finalOverall, lineupHeader } from "@/engine/cards";
 import { challengeStatus, countStars, rosterFromLineup, starsAvailable, totalStars, type ChallengeStatus } from "@/engine/challenges";
 import { CHALLENGE } from "@/config/balance";
-import { rankForXp } from "@/engine/progression";
 import { challengeUnlockProgress } from "@/engine/challengeStars";
 import { FieldView } from "@/components/cards/FieldView";
 import type { Challenge } from "@/engine/types";
@@ -33,7 +32,7 @@ import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
-import { useProfileStore } from "@/store/profileStore";
+import { selectChallengesUnlocked, useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { useOpenContent, useProfileNew } from "@/store/useNewItems";
 import { challengeKey } from "@/engine/profileNew";
@@ -129,6 +128,8 @@ export function ChallengesView() {
   const mounted = useMounted();
   const { CHALLENGES_UI: CH } = useCopy();
   const xp = useProfileStore((s) => s.xp);
+  // v2.0 (C2): Bronze, or a player who already had the mode before the reset.
+  const modeOpen = useProfileStore(selectChallengesUnlocked);
   const completed = useProfileStore((s) => s.challengesCompleted);
   const starMasks = useProfileStore((s) => s.challengeStars);
   const careerMarks = useProfileStore((s) => s.careerMarks);
@@ -147,7 +148,7 @@ export function ChallengesView() {
 
   // Pre-mount: treat as a guest (everything locked) to avoid hydration mismatch.
   const statusOf = (ch: Challenge): ChallengeStatus =>
-    mounted ? challengeStatus(ch, xp, completed, { challengeStars: starMasks, careerMarks, quizSolved }) : "locked";
+    mounted ? challengeStatus(ch, xp, completed, { challengeStars: starMasks, careerMarks, quizSolved, veteran: modeOpen }) : "locked";
   const clearedCount = mounted ? ordered.filter((c) => completed[c.id]).length : 0;
   const starsEarned = mounted ? totalStars(starMasks) : 0;
   const starsMax = ordered.reduce((n, c) => n + starsAvailable(c), 0);
@@ -159,7 +160,7 @@ export function ChallengesView() {
   const openContent = useOpenContent();
 
   // Whole mode is rank-gated (Bronze, alongside the Collection) — v1.4.
-  const modeLocked = mounted && rankForXp(xp).id === "unranked";
+  const modeLocked = mounted && !modeOpen;
 
   // Group into rarity sections (common → legend), preserving the rank/reward sort
   // within each tier.
@@ -360,7 +361,7 @@ function BriefingModal({
   const starMask = useProfileStore((s) => (challenge ? s.challengeStars[challenge.id] ?? 0 : 0));
   const profile = useProfileStore();
   if (!challenge) return null;
-  const locked = challengeStatus(challenge, profile.xp, profile.challengesCompleted, { challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved }) === "locked";
+  const locked = challengeStatus(challenge, profile.xp, profile.challengesCompleted, { challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved, veteran: selectChallengesUnlocked(profile) }) === "locked";
 
   const header = lineupHeader(challenge.opponentLineupId);
   const twists = twistLabels(challenge, CH);

@@ -69,7 +69,7 @@ import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
 import { registerRunStore } from "./lazyRunStore";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
-import { useProfileStore } from "./profileStore";
+import { selectChallengesUnlocked, useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
 /**
@@ -198,7 +198,10 @@ export const useRunStore = create<RunStore>()(
             eventSpecials: eventSpecialsFor(specialCards, todayKey(), useProfileStore.getState().events),
             // National teams (v2.0): a rare draw of their own in classic/quick,
             // favouring the teams the player has not completed (rc.33).
-            nationalTeams: { complete: completeNationalLineups(useProfileStore.getState().unlockedSpecials) },
+            // v2.0 (C2): rank-gated like the special rarities (`national`, Gold).
+            ...(rewards.rarities.includes("national")
+              ? { nationalTeams: { complete: completeNationalLineups(useProfileStore.getState().unlockedSpecials) } }
+              : {}),
           }),
           rng,
         );
@@ -297,6 +300,7 @@ export const useRunStore = create<RunStore>()(
         const profile = useProfileStore.getState();
         if (challengeStatus(challenge, profile.xp, profile.challengesCompleted, {
           challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved,
+          veteran: selectChallengesUnlocked(profile),
         }) === "locked") return;
         // Deterministic per-challenge seed → a repeatable, solvable puzzle.
         const rng = createRng(challenge.seed);

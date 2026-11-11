@@ -16,6 +16,9 @@ export interface ChallengeUnlockFacts {
   challengeStars?: Record<string, number>;
   careerMarks?: readonly string[];
   quizSolved?: number;
+  /** v2.0 (C2): the player had Challenges before the Season reset, so the rank
+   *  gate never reads below Bronze (`selectChallengesUnlocked`). */
+  veteran?: boolean;
 }
 
 export function challengeUnlockProgress(condition: ChallengeUnlockCondition, completed: Record<string, string>, facts: ChallengeUnlockFacts = {}): { current: number; target: number; met: boolean } {
@@ -46,7 +49,7 @@ export function challengeStatus(
   facts: ChallengeUnlockFacts = {},
 ): ChallengeStatus {
   if (completed[challenge.id]) return "cleared";
-  const haveIdx = rankIndex(rankForXp(xp).id);
+  const haveIdx = Math.max(rankIndex(rankForXp(xp).id), facts.veteran ? rankIndex("bronze") : 0);
   if (haveIdx < rankIndex(challenge.rankRequired)) return "locked";
   if (challenge.prereq && !completed[challenge.prereq]) return "locked";
   if (challenge.unlock && !challenge.unlock.anyOf.some(c => challengeUnlockProgress(c, completed, facts).met)) return "locked";

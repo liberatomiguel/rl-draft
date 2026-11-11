@@ -713,9 +713,14 @@ export function mmrBackfillFloor(wins: Record<Difficulty, number>): number {
  * everyone at `start`.
  *
  * PHILOSOPHY: results, not volume. Every finished tournament run moves the rating by
- * a placement × difficulty delta: titles pay well, a deep run pays a little, and an
- * early exit at the higher difficulties COSTS a few points (floor `floor`), so spamming
- * runs with bad results does not climb. The first `placementRuns` runs of a season
+ * a placement × difficulty delta. Only a top-4 finish pays; a bracket exit below
+ * that is worth 0 and a Swiss exit COSTS points (floor `floor`), most of all in
+ * Legacy. v2.0 retune (C2): the first table paid the average player +4.5 a run on
+ * Easy and +2 on Legacy (measured title rates: Easy 65%, Normal 31%, Hard 18%,
+ * Legacy 5%; Legacy Swiss exits 43%), so volume on Easy out-climbed results on
+ * Legacy. Now the average player nets ~+1.5 a run on Easy / Normal / Hard and
+ * ~+1 on Legacy, while the best fifth of Legacy players net ~+7: the top of the
+ * season board lands around 7-9k from the 400 start. No per-difficulty ceiling. The first `placementRuns` runs of a season
  * never lose rating (a soft landing after the reset). Daily and Quick scale by
  * `modeMultiplier`; hidden overalls add `hiddenOverallBonus` to GAINS only.
  * Challenge runs and Road to Worlds never touch it (Season XP only).
@@ -729,10 +734,10 @@ export const SEASON_RATING = {
   placementRuns: 5,
   /** Placement deltas per difficulty. `playoffs` = top 8/6/4 exits (made the bracket). */
   delta: {
-    easy: { champion: 6, runner_up: 3, third: 2, fourth: 1, playoffs: 0, swiss_exit: -2 },
-    normal: { champion: 10, runner_up: 5, third: 3, fourth: 2, playoffs: 0, swiss_exit: -3 },
-    hard: { champion: 16, runner_up: 9, third: 5, fourth: 3, playoffs: 1, swiss_exit: -4 },
-    legacy: { champion: 26, runner_up: 14, third: 8, fourth: 5, playoffs: 2, swiss_exit: -5 },
+    easy: { champion: 2, runner_up: 1, third: 0, fourth: 0, playoffs: 0, swiss_exit: -2 },
+    normal: { champion: 4, runner_up: 2, third: 1, fourth: 1, playoffs: 0, swiss_exit: -4 },
+    hard: { champion: 7, runner_up: 3, third: 1, fourth: 1, playoffs: 0, swiss_exit: -5 },
+    legacy: { champion: 36, runner_up: 18, third: 8, fourth: 8, playoffs: 0, swiss_exit: -7 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
@@ -775,23 +780,43 @@ export function seasonRatingAfter(mmr: number, delta: number): number {
 }
 
 /**
- * Rank ladder (v0.3 curve). Target: Supersonic Legend in ~100-150 runs.
- * An average run earns ~150-300 XP, a winning run ~500-800.
+ * Rank ladder (v2.0 Season curve). The pre-season curve closed at 60k and 39% of
+ * the registered players finished it in Supersonic Legend (163 of 423, median
+ * 34.6k XP, ~500 XP per run). The Season curve is ~11x longer at the top:
+ * a casual player (~7.5k XP a week) ends a 9-week season in Platinum, a regular
+ * one (~21k) in Champion, and a hardcore one (~75k) reaches Supersonic Legend in
+ * the last week. Weekly rates are estimates (lifetime XP / account age): the
+ * profile stores no weekly series. Recalibrate with Season 1 data.
+ * Bronze stays at 200 so a first run opens the Collection and Challenges.
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  // Bronze stays at 200 so even a losing first run clears the Unranked on-ramp and
-  // opens the Collection immediately. v1.3.5: the rest of the ladder is stretched
-  // (SSL 50k → 60k, mid-ranks redistributed) for a longer, steadier endgame climb
-  // with progressively larger gaps.
   { id: "bronze", label: "Bronze", minXp: 200 },
-  { id: "silver", label: "Silver", minXp: 1500 },
-  { id: "gold", label: "Gold", minXp: 4000 },
-  { id: "platinum", label: "Platinum", minXp: 8500 },
-  { id: "diamond", label: "Diamond", minXp: 15000 },
-  { id: "champion", label: "Champion", minXp: 24000 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 38000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 60000 },
+  { id: "silver", label: "Silver", minXp: 5000 },
+  { id: "gold", label: "Gold", minXp: 15000 },
+  { id: "platinum", label: "Platinum", minXp: 35000 },
+  { id: "diamond", label: "Diamond", minXp: 75000 },
+  { id: "champion", label: "Champion", minXp: 150000 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 320000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 675000 },
+] as const;
+
+/**
+ * The pre-season ladder (v1.3.5), FROZEN. Only the pre-season snapshot reads it
+ * (`src/engine/season.ts`): the rank a player finished the pre-season in is
+ * judged by the curve they played on, so a 60k Supersonic Legend keeps the
+ * legacy badge and title after the Season curve stretched. Never retune.
+ */
+export const PRESEASON_RANKS = [
+  { id: "unranked", minXp: 0 },
+  { id: "bronze", minXp: 200 },
+  { id: "silver", minXp: 1500 },
+  { id: "gold", minXp: 4000 },
+  { id: "platinum", minXp: 8500 },
+  { id: "diamond", minXp: 15000 },
+  { id: "champion", minXp: 24000 },
+  { id: "grand-champion", minXp: 38000 },
+  { id: "supersonic-legend", minXp: 60000 },
 ] as const;
 
 /**
@@ -812,23 +837,25 @@ export const RANK_REWARDS: Record<
   string,
   { rarities: string[]; specialChance: number; collection: boolean; hardMode: boolean }
 > = {
-  // Each rank Bronze→Platinum unlocks ONE new VISIBLE rarity (rare→epic→mythic→legendary);
-  // from Diamond on, nothing new unlocks but the appearance chance RAMPS (v1.4 retune:
-  // legendary moved Diamond→Platinum, ramp now starts at Diamond, not Champion).
-  // `creator` is the SECRET easter-egg card (the dev card): eligible from Bronze at its
-  // own tiny rate, but never surfaced as an "unlocks at" message (the Collection's rarity
-  // grid omits it), so it just rarely turns up. Unranked unlocks nothing.
-  // `community` (content-creator cards) rides alongside `creator`: eligible from
-  // Bronze at its own rate so the creator nods can turn up for everyone (v1.4).
+  // v2.0 Season curve (C2): Bronze opens the Collection and Challenges and
+  // nothing else; the special-card curve STARTS at Silver and each rank up to
+  // Diamond adds one visible rarity (rare → epic → mythic → legendary). The
+  // FIFAe national teams ride the same list as `national`: from Gold they can
+  // show in a classic / quick draft (`runStore` reads it; challenges and events
+  // that carry a national team are not gated). From Diamond on nothing new
+  // unlocks and the appearance chance ramps to the 16% of Supersonic Legend.
+  // `creator` (the secret dev card), `wings` and `community` (content-creator
+  // cards) become eligible with the first rarity, at their own rates, and are
+  // never surfaced as an "unlocks at" message.
   unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
-  bronze: { rarities: ["rare", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  silver: { rarities: ["rare", "epic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  gold: { rarities: ["rare", "epic", "mythic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  platinum: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.06, collection: true, hardMode: true },
-  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.09, collection: true, hardMode: true },
-  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.12, collection: true, hardMode: true },
-  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.16, collection: true, hardMode: true },
+  bronze: { rarities: [], specialChance: 0, collection: true, hardMode: true },
+  silver: { rarities: ["rare", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  gold: { rarities: ["rare", "epic", "national", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  platinum: { rarities: ["rare", "epic", "mythic", "national", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.05, collection: true, hardMode: true },
+  champion: { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.08, collection: true, hardMode: true },
+  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.12, collection: true, hardMode: true },
+  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "national", "creator", "wings", "community"], specialChance: 0.16, collection: true, hardMode: true },
 };
 
 export const HISTORY_LIMIT = 25;

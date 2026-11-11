@@ -96,6 +96,11 @@ describe("normalizeToSeason (v2.0 season reset)", () => {
 });
 
 describe("snapshots + season merges", () => {
+  it("the pre-season rank is judged on the frozen pre-season ladder, not the Season curve", () => {
+    expect(snapshotPreseason(preseasonSave({ xp: 60000 }), NOW)?.rankId).toBe("supersonic-legend");
+    expect(snapshotPreseason(preseasonSave({ xp: 38000 }), NOW)?.rankId).toBe("grand-champion");
+    expect(snapshotPreseason(preseasonSave({ xp: 250 }), NOW)?.rankId).toBe("bronze");
+  });
   it("mergeSnapshots: MAX numbers, earliest date, best known position", () => {
     const a = snapshotPreseason(preseasonSave({ xp: 5000 }), "2026-10-20T00:00:00.000Z")!;
     const b = { ...snapshotPreseason(preseasonSave({ xp: 3000, runsCompleted: 50 }), "2026-10-21T00:00:00.000Z")!, position: 12 };
@@ -140,25 +145,25 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
   const base = { mode: "classic", hiddenOverall: false, seasonRunsBefore: 10 } as const;
 
   it("titles pay by difficulty; playoffs buckets collapse; Swiss exits cost", () => {
-    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(10);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(26);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(1);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(1);
+    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(36);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(0);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "easy", placement: "top4" })).toBe(0);
-    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "swiss_exit" })).toBe(-3);
+    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "swiss_exit" })).toBe(-4);
   });
 
   it("the first placement runs never lose rating", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: 0 })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns - 1 })).toBe(0);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-5);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-7);
   });
 
   it("mode multipliers and the hidden-overall bonus (gains only)", () => {
-    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "quick" })).toBe(5);
-    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "daily" })).toBe(13);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "champion", hiddenOverall: true })).toBe(18);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "swiss_exit", hiddenOverall: true })).toBe(-4);
+    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "quick" })).toBe(2);
+    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "daily" })).toBe(5);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "champion", hiddenOverall: true })).toBe(8);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "swiss_exit", hiddenOverall: true })).toBe(-5);
   });
 
   it("seasonRatingAfter floors at SEASON_RATING.floor", () => {
