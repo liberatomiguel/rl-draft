@@ -18,7 +18,7 @@ beforeEach(() => {
 afterEach(() => { useProfileStore.setState({ applyMissionEvent: originalMission }); vi.useRealTimers(); });
 
 describe("CH-03: Daily Quiz", () => {
-  for (const attempt of [1, 2, 3]) it(`solves on attempt ${attempt}, survives reload and pays once`, () => {
+  for (const attempt of [1, 2, 3, 4, 5]) it(`solves on attempt ${attempt}, survives reload and pays once`, () => {
     const mission = vi.fn(originalMission);
     useProfileStore.setState({ applyMissionEvent: mission });
     const puzzle = quizForDate(todayKey());
@@ -26,7 +26,7 @@ describe("CH-03: Daily Quiz", () => {
       useProfileStore.getState().guessQuiz(puzzle, null, `miss-${i}`);
       useProfileStore.setState({ quiz: JSON.parse(JSON.stringify(useProfileStore.getState().quiz)) });
     }
-    expect(visibleClues(puzzle, attempt - 1).length).toBeGreaterThanOrEqual(2);
+    expect(visibleClues(puzzle, attempt - 1).length).toBeGreaterThanOrEqual(attempt);
     const before = useProfileStore.getState().xp;
     expect(useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer")).toMatchObject({ correct: true, xp: QUIZ.xpByAttempt[attempt], attempts: attempt });
     // A first-guess solve also earns "Called It" (v2.0, C2), once.
@@ -39,7 +39,7 @@ describe("CH-03: Daily Quiz", () => {
     expect(useProfileStore.getState().quiz).toEqual(snapshot);
     expect(mission).toHaveBeenCalledTimes(1);
   });
-  it("three misses finish once; a fourth guess cannot solve or advance a weekly mission", () => {
+  it("five misses finish once; a sixth guess cannot solve or advance a weekly mission", () => {
     const mission = vi.fn(originalMission); useProfileStore.setState({ applyMissionEvent: mission });
     const puzzle = quizForDate(todayKey());
     for (let i = 0; i < QUIZ.attempts; i++) useProfileStore.getState().guessQuiz(puzzle, null, `miss-${i}`);

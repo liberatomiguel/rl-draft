@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { QUIZ } from "@/config/balance";
 import { playerById } from "@/data";
 import { cluesFor, normalizeGuess, quizFacts, quizForDate, quizSuggestions, resolveGuess } from "./quiz";
-import { applyGuess, EMPTY_QUIZ, foldQuizDay, mergeQuiz, visibleClues } from "./quizState";
+import { applyGuess, EMPTY_QUIZ, foldQuizDay, mergeQuiz, quizDayFinished, visibleClues, type QuizDayResult } from "./quizState";
 
 describe("quiz puzzle generation", () => {
   it("is deterministic per date and picks a player with enough history", () => {
@@ -23,11 +23,16 @@ describe("quiz puzzle generation", () => {
     }
   });
 
-  it("visibleClues grows with misses and never exceeds the ladder", () => {
-    const p = quizForDate("2026-10-22");
-    expect(visibleClues(p, 0)).toHaveLength(Math.ceil(p.clues.length / QUIZ.attempts));
-    expect(visibleClues(p, QUIZ.attempts - 1)).toEqual(p.clues);
-    expect(visibleClues(p, 99).length).toBe(p.clues.length);
+  it("visibleClues opens one clue per miss and the whole ladder before the last guess", () => {
+    expect(QUIZ.attempts).toBe(5);
+    for (const facts of quizFacts().values()) {
+      const p = { date: "2026-10-22", playerId: facts.player.id, clues: cluesFor(facts) };
+      for (let used = 0; used < QUIZ.attempts - 1; used++) {
+        expect(visibleClues(p, used)).toEqual(p.clues.slice(0, used + 1));
+      }
+      expect(visibleClues(p, QUIZ.attempts - 1)).toEqual(p.clues);
+      expect(visibleClues(p, 99)).toEqual(p.clues);
+    }
   });
 });
 
@@ -66,10 +71,36 @@ describe("guessing", () => {
     expect(applyGuess(p, solve.result, p.playerId, "x").finished).toBe(true);
 
     let r = applyGuess(p, undefined, null, "a").result;
-    r = applyGuess(p, r, null, "b").result;
+    for (let i = 2; i < QUIZ.attempts; i++) {
+      const o = applyGuess(p, r, null, `miss-${i}`);
+      expect(o.finished).toBe(false);
+      r = o.result;
+    }
     const last = applyGuess(p, r, null, "c");
     expect(last).toMatchObject({ finished: true, correct: false, xp: 0 });
-    expect(last.result.score).toBe(0);
+    expect(last.result).toMatchObject({ score: 0, attempts: QUIZ.attempts, max: QUIZ.attempts });
+    expect(applyGuess(p, last.result, p.playerId, "late")).toMatchObject({ correct: false, finished: true, xp: 0 });
+  });
+
+  it("every attempt pays, less each time", () => {
+    for (let a = 1; a <= QUIZ.attempts; a++) expect(QUIZ.xpByAttempt[a]).toBeGreaterThan(0);
+    for (let a = 2; a <= QUIZ.attempts; a++) expect(QUIZ.xpByAttempt[a]).toBeLessThan(QUIZ.xpByAttempt[a - 1]);
+  });
+
+  it("a day stored before the five-guess rule keeps its outcome; an open one continues", () => {
+    const p = quizForDate("2026-10-24");
+    // Lost on the old three misses: no `max` on the record. It stays lost.
+    const lost: QuizDayResult = { solved: false, attempts: 3, score: 0, guesses: ["a", "b", "c"] };
+    expect(quizDayFinished(lost)).toBe(true);
+    expect(applyGuess(p, lost, p.playerId, "x")).toMatchObject({ correct: false, finished: true, xp: 0 });
+    expect(foldQuizDay({ ...EMPTY_QUIZ, results: { [p.date]: lost }, played: 1 }, p.date, lost).played).toBe(1);
+    // Still open under the old rule: it carries on with the five-guess limit.
+    const open: QuizDayResult = { solved: false, attempts: 2, score: 0, guesses: ["a", "b"] };
+    expect(quizDayFinished(open)).toBe(false);
+    const next = applyGuess(p, open, null, "c");
+    expect(next).toMatchObject({ finished: false });
+    expect(next.result).toMatchObject({ attempts: 3, max: QUIZ.attempts });
+    expect(quizDayFinished(next.result)).toBe(false);
   });
 
   it("first-try solve pays the maximum", () => {

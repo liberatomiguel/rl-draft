@@ -46,6 +46,7 @@ import {
 import {
   applyGuess,
   EMPTY_QUIZ,
+  quizDayFinished,
   foldQuizDay,
   type QuizPuzzle,
   type QuizState,
@@ -65,7 +66,7 @@ import {
   type SeenState,
 } from "@/engine/newItems";
 import { profileAvailableKeys } from "@/engine/profileNew";
-import { FEATURES, MISSIONS, QUIZ } from "@/config/balance";
+import { FEATURES, MISSIONS } from "@/config/balance";
 import { todayKey } from "@/lib/dailyPlan";
 import type { DurableProfile } from "@/lib/profileSync";
 import { trackEvent } from "@/lib/analytics";
@@ -988,7 +989,7 @@ export const useProfileStore = create<ProfileState>()(
           accepted = true;
           // In-progress days live in `results` too (so a reload keeps the attempts);
           // the counters only move when the day finishes.
-          const wasFinished = !!prev && (prev.solved || prev.attempts >= QUIZ.attempts);
+          const wasFinished = quizDayFinished(prev);
           const quiz: QuizState =
             o.finished && !wasFinished
               ? foldQuizDay(state.quiz, puzzle.date, o.result)

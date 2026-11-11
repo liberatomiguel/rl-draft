@@ -560,3 +560,12 @@ export function GlobeIcon({ className }: { className?: string }) {
     </Glyph>
   );
 }
+
+/** The Discord mark (v2.0): header icon and the home community card. */
+export function DiscordIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M19.3 5.3a16 16 0 0 0-4-1.2l-.2.4a11 11 0 0 1 3.5 1.2 13 13 0 0 0-11.2 0A11 11 0 0 1 11 4.5l-.3-.4a16 16 0 0 0-4 1.2C4 8.5 3.4 11.7 3.6 14.8a16 16 0 0 0 4.9 2.5l.4-.5c-.4-.2-.9-.4-1.3-.7l.3-.2a9.3 9.3 0 0 0 8 0l.3.2c-.4.3-.9.5-1.3.7l.4.5a16 16 0 0 0 4.9-2.5c.3-3.6-.6-6.8-2.9-9.5ZM9.5 13c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Zm5 0c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Z" />
+    </svg>
+  );
+}

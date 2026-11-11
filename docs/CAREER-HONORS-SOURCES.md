@@ -41,3 +41,30 @@ before transfers or season rollover. Repeated settlement is idempotent.
 Existing saves keep known organization results and the user's lifetime counts;
 missing past individual rosters are never reconstructed from today's squads.
 Their table explicitly states that individual recording starts at this update.
+
+## Regional champions before RLCS X (research, not wired)
+
+Researched 11 November 2026 (session G2) for the title race. Data file:
+`docs/handoff-2.0/G2-regionais.json`. Nothing in the game reads it yet.
+
+Confirmed on the Liquipedia page itself (wikitext read through the MediaWiki
+API; grand-final block, not cross-checked against the prize table):
+
+| Season | Region | Champion | Runner-up | Source |
+|---|---|---|---|---|
+| S2 | EU | FlipSid3 Tactics | Northern Gaming | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_2/Europe) |
+| S3 | EU | Mock-It eSports EU | FlipSid3 Tactics | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_3/Europe) |
+| S4 | EU | Gale Force eSports | Method | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_4/Europe) |
+| S5 | EU | Gale Force eSports | Renault Vitality | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_5/Europe) |
+| S6 | EU | Team Dignitas | We Dem Girlz | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_6/Europe) |
+| S7 | EU | Renault Vitality | FC Barcelona | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_7/Europe) |
+| S8 | EU | Team Reciprocity | Renault Vitality | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_8/Europe) |
+| S9 | EU | Dignitas | Renault Vitality | [Liquipedia](https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_9/Europe) |
+
+Not confirmed, and therefore left out of the usable list: EU Season 1 (two
+qualifiers), every North American season (S1–S9), Oceania (S3–S9) and South
+America (S7–S9). Liquipedia rate-limited the research machine before those
+pages could be opened; the names seen in search snippets are kept in the
+file's `unconfirmed` block with the page to open for each. No official
+rocketleague.com article was read (403). Liquipedia's API terms ask for one
+`action=parse` request about every 30 seconds.

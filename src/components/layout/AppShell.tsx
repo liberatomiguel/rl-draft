@@ -14,6 +14,8 @@ import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
 import { useNewDots } from "@/store/useNewItems";
 import { rankForXp } from "@/engine/progression";
+import { SITE } from "@/config/site";
+import { DiscordIcon } from "@/components/ui/icons";
 import { NewDot } from "@/components/ui/NewDot";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
@@ -136,37 +138,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
-          <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-            <GuardedHomeLink href="/" className="flex items-center gap-2" aria-label={t.APP.name}>
+          {/* v2.0 (G2): three zones. Brand (home) · destinations, left-aligned
+              beside it · utilities on the right, with language and account
+              split off by a rule. The logo is the Home link on desktop, so the
+              nav carries destinations only. */}
+          <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 lg:gap-4">
+            <GuardedHomeLink href="/" className="flex shrink-0 items-center gap-2" aria-label={t.APP.name}>
               <LogoMark />
-              {/* Wordmark hidden on mobile — the icon alone keeps the header tight. */}
-              <Logo className="hidden text-sm sm:inline-block" />
+              {/* Wordmark hidden where the bar is tight (phones, and tablets with the full nav). */}
+              <Logo className="hidden text-sm sm:inline-block md:hidden lg:inline-block" />
             </GuardedHomeLink>
-            <div className="flex items-center gap-1">
-              <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-                {NAV_ITEMS.map((item) => {
-                  const active =
-                    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-                  return (
-                    <NavLink
-                      key={item.href}
-                      item={item}
-                      className={cx(
-                        "display relative rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
-                        active
-                          ? "bg-orange/12 text-orange-bright"
-                          : "text-sub hover:bg-white/5 hover:text-ink",
-                      )}
-                    >
-                      {t.NAV[item.key]}
-                      {hasDot(item.key) ? (
-                        <NewDot className="absolute right-1 top-1" label={t.NAV_UI.newHere} />
-                      ) : null}
-                    </NavLink>
-                  );
-                })}
-              </nav>
-              <LangToggle />
+            <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label="Main">
+              {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
+                const active = pathname.startsWith(item.href);
+                return (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    className={cx(
+                      "display relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors lg:px-3.5 lg:text-sm",
+                      active
+                        ? "bg-orange/12 text-orange-bright"
+                        : "text-sub hover:bg-white/5 hover:text-ink",
+                    )}
+                  >
+                    {t.NAV[item.key]}
+                    {item.key === "career" ? (
+                      <span className="pointer-events-none absolute -right-2 top-0 rotate-[9deg] rounded border border-blue/50 bg-[#10203f] px-1 py-px text-[9px] font-bold leading-none tracking-[0.08em] text-blue-bright shadow-[0_0_10px_rgba(59,130,246,0.35)]">
+                        {t.HOME.careerBadge}
+                      </span>
+                    ) : null}
+                    {hasDot(item.key) ? (
+                      <NewDot className="absolute right-1 top-1" label={t.NAV_UI.newHere} />
+                    ) : null}
+                  </NavLink>
+                );
+              })}
+            </nav>
+            <div className="ml-auto flex shrink-0 items-center gap-0.5">
+              {SITE.discordUrl ? (
+                <a
+                  href={SITE.discordUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t.NAV_UI.joinDiscord}
+                  title={t.NAV_UI.joinDiscord}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-sub transition-colors hover:bg-white/5 hover:text-ink"
+                >
+                  <DiscordIcon className="h-5 w-5" />
+                </a>
+              ) : null}
               <AppLink
                 href="/leaderboards"
                 aria-label={t.NAV.leaderboards}
@@ -195,6 +216,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <GearIcon className="h-5 w-5" />
               </AppLink>
+              <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+              <LangToggle />
               <AccountChip />
             </div>
           </div>
@@ -288,7 +311,7 @@ function LangToggle() {
   // The URL's language in the static HTML (PT on /pt pages), then the player's.
   const active = useUiLocale();
   return (
-    <div className="mr-0.5 flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
+    <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
       {(["en", "pt"] as const).map((l) => (
         <button
           key={l}

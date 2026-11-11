@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "what": "RLCS regional champions before RLCS X (Seasons 1-9), for the career title ledger. NOT wired into the game.",
+    "format": "Each entry follows src/data/career/historicalHonors.ts (season, org = dataset org id, name = org as written at the event, players = [dataset player id, nickname]) plus region, event, runnerUp, score, date and source.",
+    "researched": "2026-11-11",
+    "rule": "Only entries read on the Liquipedia page itself are in `confirmed`. Entries seen only in search-engine snippets of Liquipedia pages are in `unconfirmed` and must not be used until someone opens the page.",
+    "caveat": "The confirmed entries were read from each page's wikitext through the MediaWiki API (action=parse) on 2026-11-11 and extracted from the grand-final match block. They were not cross-checked against the prize-pool table: Liquipedia rate-limited this machine before that pass. No official rocketleague.com article was read (the site returned 403).",
+    "playersRule": "`players` holds the starting three. A substitute the page flags as having played during the regional season is listed in `subsPlayed`; whether they played the final itself was not established."
+  },
+  "confirmed": [
+    {
+      "season": 2, "region": "EU", "event": "RLCS Season 2 - Europe", "date": "2016-11-13",
+      "org": "flipsid3-tactics", "name": "FlipSid3 Tactics",
+      "players": [["markydooda", "Markydooda"], ["kuxir97", "kuxir97"], ["greazy", "gReazymeister"]],
+      "subsPlayed": [["jhzer", "JHZER"]],
+      "runnerUp": "Northern Gaming", "score": "4-0",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_2/Europe"
+    },
+    {
+      "season": 3, "region": "EU", "event": "RLCS Season 3 - Europe", "date": "2017-05-07",
+      "org": "mock-it-esports", "name": "Mock-It eSports EU",
+      "players": [["miztik", "miztik"], ["kaydop", "Kaydop"], ["fairypeak", "Fairy Peak!"]],
+      "subsPlayed": [["sniper", "Sniper"]],
+      "runnerUp": "FlipSid3 Tactics", "score": "4-2",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_3/Europe"
+    },
+    {
+      "season": 4, "region": "EU", "event": "RLCS Season 4 - Europe", "date": "2017-10-15",
+      "org": "gale-force-esports", "name": "Gale Force eSports",
+      "players": [["violentpanda", "ViolentPanda"], ["kaydop", "Kaydop"], ["turbopolsa", "Turbopolsa"]],
+      "subsPlayed": [],
+      "runnerUp": "Method", "score": "4-3",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_4/Europe"
+    },
+    {
+      "season": 5, "region": "EU", "event": "RLCS Season 5 - Europe", "date": "2018-04-22",
+      "org": "gale-force-esports", "name": "Gale Force eSports",
+      "players": [["violentpanda", "ViolentPanda"], ["kaydop", "Kaydop"], ["turbopolsa", "Turbopolsa"]],
+      "subsPlayed": [],
+      "runnerUp": "Renault Vitality", "score": "4-1",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_5/Europe"
+    },
+    {
+      "season": 6, "region": "EU", "event": "RLCS Season 6 - Europe", "date": "2018-10-14",
+      "org": "dignitas", "name": "Team Dignitas",
+      "players": [["violentpanda", "ViolentPanda"], ["kaydop", "Kaydop"], ["turbopolsa", "Turbopolsa"]],
+      "subsPlayed": [],
+      "runnerUp": "We Dem Girlz", "score": "4-0",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_6/Europe"
+    },
+    {
+      "season": 7, "region": "EU", "event": "RLCS Season 7 - Europe", "date": "2019-05-12",
+      "org": "team-vitality", "name": "Renault Vitality",
+      "players": [["fairypeak", "Fairy Peak!"], ["scrubkilla", "Scrub Killa"], ["kaydop", "Kaydop"]],
+      "subsPlayed": [],
+      "runnerUp": "FC Barcelona", "score": "4-2",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_7/Europe"
+    },
+    {
+      "season": 8, "region": "EU", "event": "RLCS Season 8 - Europe", "date": "2019-11-17",
+      "org": "team-reciprocity", "name": "Team Reciprocity",
+      "players": [["ferra", "Ferra"], ["chausette45", "Chausette45"], ["fruity", "fruity"]],
+      "subsPlayed": [],
+      "runnerUp": "Renault Vitality", "score": "4-0",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_8/Europe"
+    },
+    {
+      "season": 9, "region": "EU", "event": "RLCS Season 9 - Europe", "date": "2020-03-29",
+      "org": "dignitas", "name": "Dignitas",
+      "players": [["violentpanda", "ViolentPanda"], ["yukeo", "Yukeo"], ["aztral", "AztraL"]],
+      "subsPlayed": [],
+      "runnerUp": "Renault Vitality", "score": "4-2",
+      "source": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_9/Europe"
+    }
+  ],
+  "unconfirmed": [
+    { "season": 1, "region": "EU", "event": "RLCS Season 1 - Europe Qualifier 1", "seenWinner": "FlipSid3 Tactics", "seenRunnerUp": "We Dem Girlz", "why": "Search snippet only. Roster not read.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_1/Europe/Qualifier_1" },
+    { "season": 1, "region": "EU", "event": "RLCS Season 1 - Europe Qualifier 2", "seenWinner": "We Dem Girlz", "seenRunnerUp": "Supersonic Avengers", "why": "Search snippets only, and one of them contradicts the others on the final. Roster and score not read.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_1/Europe/Qualifier_2" },
+    { "season": 1, "region": "NA", "event": "RLCS Season 1 - North America Qualifier 1", "seenWinner": "iBUYPOWER", "seenRunnerUp": "Kings of Urban", "why": "Search snippet only. Roster inferred from team-page timelines.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_1/North_America/Qualifier_1" },
+    { "season": 1, "region": "NA", "event": "RLCS Season 1 - North America Qualifier 2", "seenWinner": "Kings of Urban", "seenRunnerUp": "Exodus", "why": "Search snippet only. Roster ambiguous (a fourth name appears).", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_1/North_America/Qualifier_2" },
+    { "season": 2, "region": "NA", "event": "RLCS Season 2 - North America", "seenWinner": "NRG eSports", "seenRunnerUp": "Orbit eSports", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_2/North_America" },
+    { "season": 3, "region": "NA", "event": "RLCS Season 3 - North America", "seenWinner": "NRG Esports", "seenRunnerUp": "Atelier", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_3/North_America" },
+    { "season": 4, "region": "NA", "event": "RLCS Season 4 - North America", "seenWinner": "Cloud9", "seenRunnerUp": "Ghost Gaming", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_4/North_America" },
+    { "season": 5, "region": "NA", "event": "RLCS Season 5 - North America", "seenWinner": "G2 Esports", "seenRunnerUp": "NRG Esports", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_5/North_America" },
+    { "season": 6, "region": "NA", "event": "RLCS Season 6 - North America", "seenWinner": "NRG Esports", "seenRunnerUp": "G2 Esports", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_6/North_America" },
+    { "season": 7, "region": "NA", "event": "RLCS Season 7 - North America", "seenWinner": "NRG Esports", "seenRunnerUp": "Cloud9", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_7/North_America" },
+    { "season": 8, "region": "NA", "event": "RLCS Season 8 - North America", "seenWinner": "NRG Esports", "seenRunnerUp": "Pittsburgh Knights", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_8/North_America" },
+    { "season": 9, "region": "NA", "event": "RLCS Season 9 - North America", "seenWinner": "G2 Esports", "seenRunnerUp": "Spacestation Gaming", "why": "Search snippet only. Roster inferred.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_9/North_America" },
+    { "season": 3, "region": "OCE", "event": "Throwdown Esports: RLOC Season 3", "seenWinner": "Alpha Sydney", "seenRunnerUp": "JAM Gaming", "why": "Search snippet only. Roster weak; exact finals page title not seen.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_3/Oceania" },
+    { "season": 4, "region": "OCE", "event": "Throwdown Esports: Rocket League OCE Championship Season 4 - Finals", "seenWinner": "Chiefs Esports Club", "seenRunnerUp": "Pale Horse eSports", "why": "Search snippet only.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_4/Oceania" },
+    { "season": 5, "region": "OCE", "event": "Throwdown Esports: RLOC Season 5 - Finals", "seenWinner": "Chiefs Esports Club", "seenRunnerUp": "Tainted Minds", "why": "Search snippet only.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_5/Oceania" },
+    { "season": 6, "region": "OCE", "event": "Throwdown Esports: RLOC Season 6 - Finals", "seenWinner": "Tainted Minds", "seenRunnerUp": "Chiefs Esports Club", "why": "Search snippet only.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_6/Oceania" },
+    { "season": 7, "region": "OCE", "event": "RLCS Season 7 - Gfinity Rocket League Oceanic Masters: Finals", "seenWinner": "Renegades", "seenRunnerUp": "Out of Order", "why": "Search snippet only. Four names seen for the roster; the sub is unclear.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_7/Oceania" },
+    { "season": 8, "region": "OCE", "event": "RLCS Season 8 - Lets Play Live Rocket League Oceanic Championship: Finals", "seenWinner": "Renegades", "seenRunnerUp": "Canberra Havoc", "why": "Search snippet only.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_8/Oceania" },
+    { "season": 9, "region": "OCE", "event": "RLCS Season 9 - Lets Play Live Rocket League Oceanic Championship: Finals", "seenWinner": "Ground Zero Gaming", "seenRunnerUp": "FURY", "why": "Search snippet only. Snippets disagree on one roster name.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_9/Oceania" },
+    { "season": 7, "region": "SAM", "event": "RLCS Season 7 - South America: Grand Series", "seenWinner": "Lowkey Esports", "seenRunnerUp": "INTZ eSports", "why": "Search snippet only.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_7/South_America" },
+    { "season": 8, "region": "SAM", "event": "RLCS Season 8 - South America: Grand Series", "seenWinner": "The Three Sins", "seenRunnerUp": "Lowkey Esports", "why": "Search snippet only. One listed player's role is ambiguous.", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_8/South_America" },
+    { "season": 9, "region": "SAM", "event": "RLCS Season 9 - South America: Grand Series", "seenWinner": "Ellevens Esports", "seenRunnerUp": "Avidity Esports", "why": "Search snippet only. Final score unclear (possible bracket reset).", "page": "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/Season_9/South_America" }
+  ],
+  "outOfScope": [
+    "RLCS X onward (2020-21 to today): the career starts at X and simulates those regionals itself.",
+    "Regions with no RLCS regional championship before X (MENA, APAC, SSA).",
+    "Season 1 has two qualifiers per region instead of one regional championship: decide whether both, one or neither counts as a regional title."
+  ]
+}

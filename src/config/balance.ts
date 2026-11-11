@@ -885,6 +885,12 @@ export const CHALLENGE = {
   starXp: { common: 40, rare: 70, epic: 110, legend: 160 } as Record<string, number>,
   /** Star-track milestones (cosmetics in src/data/cosmetics.ts read the same counts). */
   starMilestones: [10, 25, 45],
+  /**
+   * v2.0 (G2): the boss series plays on the Road to Worlds running-clock board
+   * (CAREER_MATCH_CLOCK pacing ÷ this factor). 2× keeps a full Bo7 near 20 s;
+   * the Skip link is always there.
+   */
+  seriesClockSpeed: 2,
 } as const;
 
 /**
@@ -905,14 +911,18 @@ export const MISSIONS = {
 } as const;
 
 /**
- * Daily Quiz — "Guess the Player" (v2.0). One player per UTC day, three attempts,
- * a new clue after every miss. XP by the attempt that solved it; a miss on all
- * three reveals the answer and pays nothing (the mission "play the quiz" still
- * counts). Players need at least `minLineups` lineups to be a fair answer.
+ * Daily Quiz — "Guess the Player" (v2.0). One player per UTC day, five attempts,
+ * ONE clue at a time: the first clue is open, every miss opens the next. XP by
+ * the attempt that solved it; five misses reveal the answer and pay nothing
+ * (the mission "play the quiz" still counts). Players need at least
+ * `minLineups` lineups to be a fair answer.
  */
 export const QUIZ = {
-  attempts: 3,
-  xpByAttempt: { 1: 120, 2: 80, 3: 50 } as Record<number, number>,
+  attempts: 5,
+  /** The limit before the five-guess rule. A stored day without its own `max`
+   *  was played under it, so a day lost on three misses stays finished. */
+  legacyAttempts: 3,
+  xpByAttempt: { 1: 120, 2: 95, 3: 75, 4: 55, 5: 40 } as Record<number, number>,
   minLineups: 2,
   /** Daily results kept on the profile (older days are pruned). */
   historyDays: 90,

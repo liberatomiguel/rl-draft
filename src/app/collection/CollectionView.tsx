@@ -28,7 +28,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
-import { NATIONAL_CARD_IDS, NationalAlbum } from "./NationalAlbum";
+import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbum";
 
 // Official catalogue rarities only — the per-rarity tiles + filter chips. The
 // special-person rarities (community/wings/creator) are intentionally absent:
@@ -130,6 +130,7 @@ export function CollectionView() {
     [isUnlocked],
   );
   const nationalGot = mounted ? NATIONAL_CARD_IDS.filter((id) => isUnlocked(id)).length : 0;
+  const nationalFound = NATIONAL_TEAMS.filter((t) => isDiscovered(t.id)).length;
   const unlockedCount = devPreview
     ? collectibleCards.length
     : mounted
@@ -245,8 +246,9 @@ export function CollectionView() {
         className="mb-6"
       />
 
-      {/* Album switch (v2.0): special cards · national teams */}
-      <div className="mb-6 inline-flex rounded-xl border border-line bg-white/3 p-1" role="tablist">
+      {/* Album switch (v2.0): special cards · national teams. Each tab carries
+          its own count, so the second album reads as a place with content. */}
+      <div className="mb-6 inline-flex max-w-full rounded-xl border border-line bg-white/3 p-1" role="tablist">
         {(["specials", "national"] as Album[]).map((a) => (
           <button
             key={a}
@@ -255,7 +257,7 @@ export function CollectionView() {
             aria-selected={album === a}
             onClick={() => setAlbum(a)}
             className={cx(
-              "display relative rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+              "display relative flex min-w-0 items-baseline gap-2 rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
               album === a
                 ? a === "national"
                   ? "bg-yellow-300/15 text-yellow-100"
@@ -263,7 +265,12 @@ export function CollectionView() {
                 : "text-sub hover:text-ink",
             )}
           >
-            {a === "specials" ? N.tabSpecials : N.tabNational}
+            <span className="truncate">{a === "specials" ? N.tabSpecials : N.tabNational}</span>
+            <span className={cx("shrink-0 text-[10px] font-semibold tracking-normal", album === a ? "opacity-70" : "text-faint")}>
+              {a === "specials"
+                ? `${unlockedCount}/${collectibleCards.length}`
+                : `${nationalFound}/${NATIONAL_TEAMS.length}`}
+            </span>
             {albumDot[a] ? <NewDot className="absolute right-1 top-1" label={NAV_UI.newHere} /> : null}
           </button>
         ))}
