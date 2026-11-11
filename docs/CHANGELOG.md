@@ -25,6 +25,9 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Balance — rc.48 (2026-11-11), elite talent signs at his overall again (R129, BALANCE_VERSION 25)
+- Miguel's read of rc.46: the reputation asked for an elite prospect was too much (an 87 with potential 97 needed reputation 50, was 40). `CAREER_TALENT.elite.gateShare` 0.4 to 0: the Market's lock, its "signable" filter and the signing read the overall alone, as in rc.45. The price side of rc.46 stays (fee and wage up to x2.2 from a reachable top of 93). Not measured in a battery.
+
 ### rc.47 (2026-11-11), the launch wave: six parallel fronts integrated (R122–R128, BALANCE_VERSION 24)
 
 Full per-front notes, numbers and validation lists: `docs/handoff-2.0/` (C1 career engine, C2 progression, C3 draft difficulty, C4 web, G1 career screens, G2 draft and menu).
