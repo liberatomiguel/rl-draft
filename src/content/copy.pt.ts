@@ -1630,8 +1630,6 @@ export const PT: Copy = {
     xpFor: (xp: number) => `+${xp} XP`,
     clues: {
       country: (country: string, region: string) => `Nacionalidade: ${new Intl.DisplayNames(["pt-BR"], { type: "region" }).of(country) ?? country} (região ${region}).`,
-      era: (first: number, last: number, lineups: number) =>
-        first === last ? `Ativo em ${first} — ${lineups} line${lineups === 1 ? "" : "s"} de RLCS no dataset.` : `Ativo de ${first} a ${last} — ${lineups} lines de RLCS no dataset.`,
       orgs: (orgs: string[]) => (orgs.length === 1 ? `Jogou pela ${orgs[0]}.` : `Jogou pela ${orgs[0]} e pela ${orgs[1]}.`),
       teammate: (name: string) => `Dividiu uma line com ${name}.`,
       nickname: (prefix: string) => `O nickname começa com “${prefix}”.`,
@@ -1641,7 +1639,6 @@ export const PT: Copy = {
     attemptOf: (n: number, max: number) => `Tentativa ${n} de ${max}`,
     clueKinds: {
       country: "Nacionalidade",
-      era: "Época",
       orgs: "Orgs",
       teammate: "Companheiro",
       nickname: "Nickname",

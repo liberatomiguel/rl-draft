@@ -489,9 +489,7 @@ export function CalendarScreen() {
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
       <section className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div><h2 className="display text-lg font-bold text-ink">{C.launch.calendarPlan}</h2><p className="mt-1 text-xs leading-relaxed text-sub">{C.launch.calendarHint}</p></div>
-          <label className="flex w-full items-center gap-2 text-xs text-sub">{C.calendar.monthView}<select aria-label={C.calendar.monthView} value={visibleMonthIndex} onChange={e => changeMonth(Number(e.target.value))} className="min-h-11 min-w-0 flex-1 rounded-lg border border-line bg-raised px-2 text-ink">{months.map((m, i) => <option key={m.key} value={i}>{D.months[m.m - 1]} {m.y}</option>)}</select></label>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => setShowWorld((v) => !v)}
@@ -609,14 +607,11 @@ export function CalendarScreen() {
                         title={spectating ? `${cellLabel} · ${C.calendar.notQualified}` : cellLabel}
                         className={cx(
                           "relative flex min-h-11 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
-                          d.windowOpen
-                            ? "border-blue/50 bg-blue/15 hover:bg-blue/20"
-                            : ev
-                            ? spectating
-                              ? MATCHDAY_FILL[ev.tier]
-                              : MATCHDAY_FILL[ev.tier]
+                          // rc.49: an event day wears its tier (a spectated Major / Worlds too), even inside a transfer window.
+                          ev
+                            ? MATCHDAY_FILL[ev.tier]
                             : d.windowOpen
-                              ? "border-blue/40 bg-blue/20 hover:bg-blue/25"
+                              ? "border-blue/50 bg-blue/15 hover:bg-blue/20"
                               : "border-line/50 bg-white/[0.015] hover:bg-white/[0.05]",
                           d.isPast && !d.isToday && "opacity-40",
                           d.windowOpen && "shadow-[inset_0_-2px_0_#60a5fa]",

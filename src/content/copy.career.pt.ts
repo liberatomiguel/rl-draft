@@ -3080,7 +3080,7 @@ export const CAREER_PT: CareerCopy = {
     coachTypes: { generated: "Coach comum", dataset: "Coach profissional", real: "Ex-jogador profissional" },
     coachDetails: "Efeitos e evolução", coachGrowth: (quality: number, ceiling: number) => `Qualidade ${quality} → potencial ${ceiling}`,
     coachRetainer: "Contrato com prazo · renove antes do fim ou o coach sai",
-    coachDealEnds: (season: string) => `Contrato até ${season}`, coachDealLast: "Última temporada do contrato", coachDealOpen: "Contrato datado no próximo balanço de temporada",
+    offersTitle: "Propostas recebidas", coachDealEnds: (season: string) => `Contrato até ${season}`, coachDealLast: "Última temporada do contrato", coachDealOpen: "Contrato datado no próximo balanço de temporada",
     coachRenewAsk: "Pede para renovar", coachRenewFor: (n: number) => `Renovar ${n} ${n === 1 ? "temporada" : "temporadas"}`,
     coachEvolution: "Qualidade e experiência evoluem no balanço de cada temporada, até o potencial do coach.",
     coachShortlist: "Coaches disponíveis", coachCompare: "Compare tipo, qualidade, especialidade e salário semanal. Abra os detalhes para ver os efeitos no treino.",

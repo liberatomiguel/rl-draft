@@ -1,6 +1,6 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-11**. Candidate **v2.0.0-rc.47**, staging.
+> Updated **2026-11-11**. Candidate **v2.0.0-rc.49**, staging.
 > Decisions R1–R129. BALANCE_VERSION **25**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate

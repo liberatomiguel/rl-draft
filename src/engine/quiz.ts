@@ -3,8 +3,8 @@
  *
  * One RLCS player per UTC day (seeded by the date, same for everyone), picked
  * among players with enough history to build clues. Clues are generated from
- * the dataset and ordered from broad to specific: nationality → era → orgs →
- * teammate → peak card. The player gets `QUIZ.attempts` tries; every miss reveals
+ * the dataset and ordered from broad to specific: nationality → orgs → two
+ * teammates → peak card. The player gets `QUIZ.attempts` tries; every miss reveals
  * the next clue. Nickname matching is forgiving (case, spaces, punctuation).
  *
  * Clue TEXT is assembled by the UI from `QUIZ_UI.clues` (copy, EN + PT); this
@@ -76,14 +76,19 @@ export function cluesFor(facts: PlayerFacts, rng = createRng(seedFromKey(facts.p
   const { player, appearances } = facts;
   const clues: QuizClue[] = [];
   if (player.country) clues.push({ kind: "country", country: player.country, region: player.region });
-  const years = appearances.map((a) => a.year).filter((y) => y > 0);
-  if (years.length) {
-    clues.push({ kind: "era", firstYear: Math.min(...years), lastYear: Math.max(...years), lineups: appearances.length });
-  }
   const orgIds = [...new Set(appearances.map((a) => a.orgId))];
   if (orgIds.length) clues.push({ kind: "orgs", orgIds: orgIds.slice(0, 2) });
   const teammates = [...new Set(appearances.flatMap((a) => a.teammates))].filter((id) => playerById.has(id));
-  if (teammates.length) clues.push({ kind: "teammate", playerId: teammates[rng.int(0, teammates.length - 1)] });
+  if (teammates.length) {
+    // The first pick is the first draw of the rng, as it always was.
+    const first = teammates[rng.int(0, teammates.length - 1)];
+    clues.push({ kind: "teammate", playerId: first });
+    // A second teammate takes the slot of the old "active from X to Y" clue:
+    // the dataset may miss seasons, so a career span is not a safe fact
+    // (Miguel, 11/11). Only concrete facts stay on the ladder.
+    const others = teammates.filter((id) => id !== first);
+    if (others.length) clues.push({ kind: "teammate", playerId: others[rng.int(0, others.length - 1)] });
+  }
   const peak = appearances.reduce((best, a) => (a.overall > best.overall ? a : best), appearances[0]);
   clues.push({ kind: "peak", overall: peak.overall, orgId: peak.orgId, year: peak.year });
   // Some teammates share nationality, career and peak rating. A short nickname
@@ -104,7 +109,6 @@ export function matchesQuizClues(facts: PlayerFacts, clues: QuizClue[]): boolean
   return clues.every(c => {
     switch (c.kind) {
       case "country": return facts.player.country === c.country;
-      case "era": return Math.min(...a.map(x => x.year)) === c.firstYear && Math.max(...a.map(x => x.year)) === c.lastYear && a.length === c.lineups;
       case "orgs": return c.orgIds.every(id => a.some(x => x.orgId === id));
       case "teammate": return a.some(x => x.teammates.includes(c.playerId));
       case "nickname": return normalizeGuess(facts.player.nickname).startsWith(normalizeGuess(c.prefix));

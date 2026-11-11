@@ -31,7 +31,7 @@ import { EventRewardsTable } from "../event/EventRewardsTable";
 import { MilestoneMoment } from "../event/MilestoneMoment";
 import { NowSunday } from "../hub/SundayCard";
 import { sundayAheadOf } from "@/store/careerSunday";
-import { EventBrand } from "../event/EventBrand";
+import { EventBrand, eventBrandIdOf } from "../event/EventBrand";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { useRouter } from "next/navigation";
@@ -297,11 +297,11 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
     <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
       <ErrorBanner />
 
-      <EventBrand name={def.name} />
+      {/* rc.49: a partner event wears its logo on the right; its tier chip then sits by the date. */}
       <SectionTitle
         kicker={C.event.lobbyTitle}
         title={def.name}
-        right={<TierChip tier={def.tier} />}
+        right={eventBrandIdOf(def.name) ? <EventBrand name={def.name} /> : <TierChip tier={def.tier} />}
       />
 
       <div className="rise-in flex flex-wrap items-center gap-2">
@@ -309,6 +309,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           {isToday ? C.hub.matchdayIn(0) : formatDaysAway(D, daysAway)}
         </Badge>
         <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
+        {eventBrandIdOf(def.name) ? <TierChip tier={def.tier} /> : null}
         {def.region ? <Badge className={REGION_BADGE[def.region]}>{def.region}</Badge> : null}
         {/* rc.36 (SUN-01): the coach's briefing for this Sunday, when one was given. */}
         {save.weekend?.eventId === def.id && save.weekend.briefing && save.weekend.briefing !== "keep" ? (
@@ -1199,8 +1200,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
         ) : null}
         <div className="relative">
           {isChamp && (def.tier === "major" || def.tier === "worlds") ? <MilestoneMoment kind={def.tier} title={def.tier === "worlds" ? C.launch.worldsChampion : C.launch.majorChampion} /> : null}
-          <EventBrand name={def.name} />
           <div className="flex items-center justify-center gap-2">
+            <EventBrand name={def.name} size="sm" />
             <p className="kicker !text-[11px]">{def.name}</p>
             <TierChip tier={def.tier} />
           </div>

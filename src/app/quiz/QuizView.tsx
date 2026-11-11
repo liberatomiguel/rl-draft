@@ -230,8 +230,6 @@ function clueText(c: QuizClue, Q: ReturnType<typeof useCopy>["QUIZ_UI"]): string
   switch (c.kind) {
     case "country":
       return Q.clues.country(c.country, c.region);
-    case "era":
-      return Q.clues.era(c.firstYear, c.lastYear, c.lineups);
     case "orgs":
       return Q.clues.orgs(c.orgIds.map((id) => orgById.get(id)?.name ?? id));
     case "teammate":
@@ -289,13 +287,6 @@ function ClueMedal({ clue }: { clue: QuizClue }) {
       return (
         <span className={box} aria-hidden>
           <CountryChip code={clue.country} className="scale-150" />
-        </span>
-      );
-    case "era":
-      return (
-        <span className={cx(box, "display flex-col text-[11px] font-bold leading-tight text-cyan")} aria-hidden>
-          <span>{clue.firstYear}</span>
-          {clue.lastYear !== clue.firstYear ? <span>{clue.lastYear}</span> : null}
         </span>
       );
     case "orgs":

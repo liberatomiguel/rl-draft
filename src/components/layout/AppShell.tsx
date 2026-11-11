@@ -165,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   >
                     {t.NAV[item.key]}
                     {item.key === "career" ? (
-                      <span className="pointer-events-none absolute -right-2 top-0 rotate-[9deg] rounded border border-blue/50 bg-[#10203f] px-1 py-px text-[9px] font-bold leading-none tracking-[0.08em] text-blue-bright shadow-[0_0_10px_rgba(59,130,246,0.35)]">
+                      <span className="pointer-events-none -ml-0.5 rounded border border-orange/40 bg-orange/15 px-1 py-0.5 text-[9px] font-bold leading-none tracking-[0.08em] text-orange-bright">
                         {t.HOME.careerBadge}
                       </span>
                     ) : null}

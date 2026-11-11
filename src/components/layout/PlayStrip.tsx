@@ -1,13 +1,17 @@
 "use client";
 
 /**
- * The way back to the game (the home page, its main menu), under every page that has none of its own (v2.0,
- * WEB-01). The content articles and the database pages end with a "play"
- * button; the app pages (collection, profile, challenges, leaderboards, quiz,
- * achievements, changelog, privacy, settings, the 404 page) did not, and
- * several of them render nothing inside <main> until they hydrate, so a
- * crawler found no in-content link there at all. `scripts/link-audit.mjs`
- * checks it on the export.
+ * The way back to the game (the home page, its main menu), under the READING
+ * pages that have no call to play of their own (v2.0, WEB-01): the changelog
+ * and the privacy page. The content articles (`PAGE_ROUTES`), /how-to-play and
+ * the database pages end with their own "play" button, so they do not get a
+ * second one.
+ *
+ * It never renders on a game screen (home, /play, collection, profile,
+ * challenges, leaderboards, quiz, missions, achievements, settings, career):
+ * there it read as an ad for the game inside the game (Miguel, 11/11). The
+ * list below is an allowlist on purpose, so a new game screen starts without
+ * it. `scripts/link-audit.mjs` checks the export and exempts the game screens.
  *
  * It sits BETWEEN <main> and the footer, not inside <main>: <main> is at
  * least one screen tall, so the strip always starts below the first screen and
@@ -17,22 +21,16 @@
 import { usePathname } from "next/navigation";
 import { AppLink } from "@/components/ui/AppLink";
 import { useCopy, useUiLocale } from "@/content/copy";
-import { PAGE_ROUTES, localePath } from "@/content/pageRoutes";
+import { localePath } from "@/content/pageRoutes";
 
-/** Pages that already end with their own call to play, or are the game. */
-const OWN_CTA: ReadonlySet<string> = new Set([
-  "/",
-  "/pt",
-  "/play",
-  "/how-to-play",
-  ...Object.values(PAGE_ROUTES).flatMap((r) => [r.en, r.pt]),
-]);
+/** Reading pages with no call to play of their own. */
+const STRIP_PAGES: ReadonlySet<string> = new Set(["/changelog", "/privacy"]);
 
 export function PlayStrip() {
   const pathname = usePathname() ?? "/";
   const { HOME_SEO, NAV_UI } = useCopy();
   const locale = useUiLocale();
-  if (OWN_CTA.has(pathname) || pathname.startsWith("/rlcs") || pathname.startsWith("/career")) return null;
+  if (!STRIP_PAGES.has(pathname.replace(/\/+$/, ""))) return null;
   const linkCls = "text-sub underline underline-offset-4 transition-colors hover:text-ink";
   return (
     <nav

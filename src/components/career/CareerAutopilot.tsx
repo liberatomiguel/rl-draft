@@ -25,6 +25,8 @@ import { useEffect, useRef } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
 import { inviteSurfacedToday, moneyNoticeOf } from "@/store/careerFlow";
 import { useCareerStore, selectActiveSave } from "@/store/careerStore";
+import { followCardOf } from "@/store/careerSunday";
+import { eventEndDayFor } from "@/engine/career/calendar";
 import { continueKind } from "./careerUi";
 import { useSettings } from "@/store/settingsStore";
 
@@ -57,6 +59,12 @@ export function CareerAutopilot() {
       return;
     }
     if (inviteSurfacedToday(save) && startRef.current !== today) {
+      setAutoAdvance(false);
+      return;
+    }
+    // rc.49: a Major / Worlds the user is out of resolved today — stop once, so HQ can offer watch / results / skip.
+    const followed = followCardOf(save);
+    if (followed && (followed.def.tier === "major" || followed.def.tier === "worlds") && eventEndDayFor(followed.def) === save.clock.day && startRef.current !== today) {
       setAutoAdvance(false);
       return;
     }

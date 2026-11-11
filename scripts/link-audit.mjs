@@ -12,6 +12,8 @@
  *
  * Exits 1 when an indexable page has no in-content link to the home page
  * (the game's main menu; "/" or "/pt"). The /play column is informative.
+ * The game's own screens (GAME_SCREENS) are exempt: the play strip is for
+ * reading pages only (Miguel, 11/11), and the header links home on all of them.
  * The career app (/career/**) is skipped: it is never indexed.
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -37,6 +39,10 @@ const group = (route) =>
         ? "/rlcs/<season>"
         : route;
 
+const GAME_SCREENS = new Set([
+  "/", "/pt", "/play", "/collection", "/profile", "/challenges", "/leaderboards",
+  "/quiz", "/missions", "/achievements", "/settings",
+]);
 const groups = new Map();
 for (const file of walk(out)) {
   const route = "/" + relative(out, file).split(sep).join("/").replace(/\.html$/, "").replace(/^index$/, "");
@@ -58,10 +64,10 @@ for (const [key, rows] of [...groups.entries()].sort()) {
   const play = rows.every((r) => r.play);
   const home = rows.every((r) => r.home);
   const noindex = rows.every((r) => r.noindex);
-  if (!home && !noindex && key !== "/" && key !== "/pt" && key !== "/play") failed++; // the home pages themselves, and the game screen
+  if (!home && !noindex && !GAME_SCREENS.has(key)) failed++; // the home pages themselves, and the game screens
   console.log(
     key.padEnd(30), String(rows.length).padStart(5), String(min).padStart(10),
-    (play ? "yes" : "no").padStart(9), (home ? "yes" : noindex ? "no (noindex)" : "NO").padStart(8),
+    (play ? "yes" : "no").padStart(9), (home ? "yes" : noindex ? "no (noindex)" : GAME_SCREENS.has(key) ? "no (game)" : "NO").padStart(8),
   );
 }
 if (failed) {

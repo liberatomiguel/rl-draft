@@ -56,7 +56,7 @@ export function NowInsert({
   if (!def || !item) return null;
   return (
     <div>
-      <EventBrand name={id} />
+      <EventBrand name={id} size="lg" className="mb-3" />
       <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
@@ -156,7 +156,7 @@ export function NowInvite({
   const daysAway = def.day - save.clock.day;
   return (
     <div>
-      <EventBrand name={def.name} />
+      <EventBrand name={def.name} className="mb-2.5" />
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
         {C.hub.inviteTitle(def.name)}
       </h2>
@@ -310,7 +310,7 @@ export function NowEvent({
 
   return (
     <div>
-      <EventBrand name={def.name} />
+      <EventBrand name={def.name} className="mb-2.5" />
       <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
         {def.name}
       </h2>
@@ -349,7 +349,6 @@ export function NowEvent({
       </div>
       <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
 
-      <EventBrand name={def.name} />
       {unavailable ? (
         <p className="mt-3 rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-xs text-bad">
           {C.event.unavailableNotice(unavailable.name)}

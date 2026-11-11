@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.47**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.49**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,22 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.49 (2026-11-11), Miguel's review of the launch wave
+
+#### Changed
+- Road to Worlds: the headline pop-up is a broadcast card built on the news toast (desk masthead, date, breaking tag, the clubs' crests, title, body); closing it only closes it. The unlock pop-up is a minimal card with the progression badge. The HQ progression card lists what can be bought now first.
+- Partner events (50/50, Duds, Rocket Street): one logo per card and smaller; on the tournament page the logo sits on the right and the tier chip moves beside the date; on the result it is a small mark beside the event name. Rewards by placement are a podium list with medal chips and a bar on the champion's prize.
+- My deals: the offers card wears the renewals card's title and empty line ("Offers received"). The contracted tab no longer shows the reputation-20 notice (the rows already show the lock).
+- Calendar: no "Plan your season" heading or month selector; the arrows and the region filter remain.
+- Navbar: the NEW tag sits beside CAREER, in orange. Home: BETA beside the Road to Worlds title, NEW as a tilted corner sticker.
+- Daily Quiz: the "active from X to Y" clue is gone (the database may be incomplete); its slot is a second "played alongside" clue. The answer of every day is unchanged and the ladder lengths are the same (256 answers with five clues, 3 with six).
+
+#### Fixed
+- A Major or Worlds the user only watches did not show on the calendar during a transfer window. Root cause: the window's fill was chosen before the event's, in the month grid and in the HQ week strip; the event's tier now wins and the window keeps its bottom line.
+- Autoplay ran past the Sunday of a watched Major. Root cause: only the batched Advance stopped on the day the followed event resolved; the autoplay loop had no such stop, so the watch / results / skip card appeared on Monday.
+- The Discord icon was distorted (a hand-drawn path); it is the standard mark on a square box now.
+- "Play the RLCS draft game" appeared under game screens. Root cause: the strip was added to every page without a play button of its own, which meant the game's own screens; it now renders on `/changelog` and `/privacy` only (articles end with their own button).
 
 ### Balance — rc.48 (2026-11-11), elite talent signs at his overall again (R129, BALANCE_VERSION 25)
 - Miguel's read of rc.46: the reputation asked for an elite prospect was too much (an 87 with potential 97 needed reputation 50, was 40). `CAREER_TALENT.elite.gateShare` 0.4 to 0: the Market's lock, its "signable" filter and the signing read the overall alone, as in rc.45. The price side of rc.46 stays (fee and wage up to x2.2 from a reachable top of 93). Not measured in a battery.
