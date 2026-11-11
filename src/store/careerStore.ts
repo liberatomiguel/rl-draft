@@ -37,6 +37,7 @@ import {
 } from "@/engine/career/achievements";
 import { useProfileStore } from "@/store/profileStore";
 import { careerXpBetween } from "@/engine/career/careerXp";
+import { skipUnchangedWrites } from "./careerPersist";
 import { persist } from "zustand/middleware";
 import { CAREER_SAVE, CAREER_SEASONS } from "@/config/balance";
 import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
@@ -671,7 +672,8 @@ export const useCareerStore = create<CareerStoreState>()(
     {
       name: "rocket-draft:career:v1",
       version: 3,
-      storage: reportingJSONStorage("career"),
+      // v2.0 (C1): a `set` that changed nothing persisted (a toast, an error, the scrim playback) no longer rewrites every slot.
+      storage: skipUnchangedWrites(reportingJSONStorage("career"), ["slots", "activeSlot", "achievements"]),
       // ADDITIVE migrate, forever: upgrade each slot in place — new versions
       // add defaults for new fields per slot instead of resetting saves.
       migrate: reportingMigrate("career", 3, (persisted) => {

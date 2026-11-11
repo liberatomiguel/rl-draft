@@ -14,12 +14,13 @@ import type { CareerSave, CoachState, CompactEventResult, TrainingPackage } from
 import { CAREER_BEATS } from "@/data/career/beats";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
-import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_UNLOCKS, CAREER_XP } from "@/config/balance";
+import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SAVE, CAREER_UNLOCKS, CAREER_XP } from "@/config/balance";
 import { coachProfileOf, coachStrengthOf, packageEffectFor } from "@/engine/career/training";
 import { signableOverallCap } from "@/engine/career/economy";
 import { listingFor } from "@/engine/career/market";
 import { careerXpBetween } from "@/engine/career/careerXp";
 import { playArcCareer } from "./careerArcBot";
+import { skipUnchangedWrites } from "./careerPersist";
 import { useCareerStore } from "./careerStore";
 import { useProfileStore } from "./profileStore";
 import {
@@ -328,4 +329,54 @@ describe("v2.0 (C1) — the career pays profile XP, never rating", () => {
     expect(careerXpBetween(slot, played).total).toBe(CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus);
     expect(useProfileStore.getState().mmr).toBe(mmr0);
   });
+});
+
+describe("v2.0 (C1) — performance: the career store's writes", () => {
+  it("a set that changes nothing persisted writes nothing; a changed save, the active slot or a failed write always write", () => {
+    type S = { slots: (object | null)[]; activeSlot: number | null; achievements: object };
+    const written: string[] = [];
+    let fail = false;
+    const inner = {
+      getItem: () => null,
+      removeItem: () => {},
+      setItem: (name: string, value: { state: S; version?: number }) => {
+        if (fail) throw new Error("quota");
+        written.push(JSON.stringify(value));
+      },
+    };
+    const storage = skipUnchangedWrites<S>(inner, ["slots", "activeSlot", "achievements"])!;
+    const slots: S["slots"] = [{ a: 1 }, null, null];
+    const ach = {};
+    const write = (state: S) => storage.setItem("k", { state: { ...state }, version: 3 });
+    write({ slots, activeSlot: 0, achievements: ach });
+    // The "skip to next stop" button: two UI-only sets around one real write — one write, not three.
+    write({ slots, activeSlot: 0, achievements: ach });
+    write({ slots, activeSlot: 0, achievements: ach });
+    expect(written).toHaveLength(1);
+    const next: S["slots"] = [{ a: 2 }, null, null];
+    write({ slots: next, activeSlot: 0, achievements: ach });
+    write({ slots: next, activeSlot: 1, achievements: ach });
+    write({ slots: next, activeSlot: 1, achievements: {} });
+    expect(written).toHaveLength(4);
+    // A failed write is not remembered: the same state is tried again.
+    fail = true;
+    const third: S["slots"] = [{ a: 3 }, null, null];
+    expect(() => write({ slots: third, activeSlot: 1, achievements: ach })).toThrow();
+    fail = false;
+    write({ slots: third, activeSlot: 1, achievements: ach });
+    expect(written).toHaveLength(5);
+    // Removing the key forgets it.
+    storage.removeItem("k");
+    write({ slots: third, activeSlot: 1, achievements: ach });
+    expect(written).toHaveLength(6);
+    expect(skipUnchangedWrites<S>(undefined, ["slots"])).toBeUndefined();
+  });
+
+  it("a long career's save stays inside its size budget (CAREER_SAVE.maxSaveBytes)", () => {
+    // One season is enough for the gate: the long-run numbers are the probe's (careerPerf.probe.test.ts).
+    let size = 0;
+    playArcCareer({ region: "SAM", difficulty: "normal", policy: "tuned", seed: 20_902, seasons: 1, onSeason: (m, s) => { if (m === "end") size = JSON.stringify(s).length; } });
+    expect(size).toBeGreaterThan(50_000);
+    expect(size).toBeLessThan(CAREER_SAVE.maxSaveBytes);
+  }, 120_000);
 });
