@@ -23,7 +23,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
-import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, signingLevelOf, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type {
   CareerDifficulty,
@@ -566,7 +566,7 @@ function candidatesFor(save: CareerSave): Candidate[] {
   });
   const out: Candidate[] = [];
   const add = (view: CareerPlayerView, splitsRemaining: number | null) => {
-    if (Math.round(view.overall) > cap) return;
+    if (signingLevelOf(view) > cap) return;
     const pack = askPackageFor(view, {
       rep: save.reputation,
       seasonIndex: save.clock.seasonIndex,

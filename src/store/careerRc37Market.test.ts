@@ -395,7 +395,9 @@ describe("rc.37 F1 — one valuation for buying, selling and the wage", () => {
       expect(bid?.blockbuster).toBe(true);
       const player = w31.squad.find((p) => p.id === fa.id)!;
       const arcValue = marketValueFor(valueInputOf(player, w31.careerSeed, 0, growthModelOf(w31.world)));
-      expect(bid!.fee).toBe(quantize(arcValue * CAREER_TRANSFER.blockbusterFeeMult));
+      // The fee was struck before the day's training; rc.46's elite factor makes that sliver visible (under 1 %).
+      const struck = quantize(arcValue * CAREER_TRANSFER.blockbusterFeeMult);
+      expect(Math.abs(bid!.fee - struck) / struck).toBeLessThan(0.01);
       expect(arcValue).toBeGreaterThan(marketValueFor({ overall: 70, potential: 98, age: 17, seasonIndex: 0 }) * 1.5);
     } finally {
       CAREER_BEATS.splice(CAREER_BEATS.indexOf(locked), 1);

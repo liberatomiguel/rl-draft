@@ -340,7 +340,7 @@ describe("UX-07 — the Market", () => {
         const error = "error" in planned ? planned.error : null;
         if (error === "tooYoung" || error === "alreadySigned") continue;
         if (error === "contractedRep") { expect(rep).toBeLessThan(20); continue; }
-        expect(error === "repGate", `${v.id} @${rep}`).toBe(!signableAtRep(v.overall, rep));
+        expect(error === "repGate", `${v.id} @${rep}`).toBe(!signableAtRep(v, rep));
         checked += 1;
       }
       expect(checked).toBeGreaterThan(50);

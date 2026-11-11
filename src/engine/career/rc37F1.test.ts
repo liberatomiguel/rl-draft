@@ -31,6 +31,7 @@ import {
   talentTierOf,
   upsideFactorFor,
   type SalaryAskInput,
+  eliteFactorFor,
 } from "./economy";
 import { renewalAskFor, resaleLocked } from "./market";
 import { renewalLadderFor, renewalTermsFor } from "./renewal";
@@ -274,7 +275,8 @@ describe("rc.37 F1 — value by profile (Miguel's checks)", () => {
     const C = value(70, 85, 17, arc(21, 2));
     const D = value(70, 98, 17, arc(22, 3));
     expect(C).toBe(quantize(1_500 * 1.1 * 1.4 * CAREER_TRANSFER.valueMultiple));
-    expect(D).toBe(quantize(1_500 * 1.1 * 2.34 * CAREER_TRANSFER.valueMultiple));
+    // rc.46 (R121): a 70 who can reach 98 also carries the elite factor (capped at valueMax).
+    expect(D).toBe(quantize(1_500 * 1.1 * 2.34 * eliteFactorFor(70, 28) * CAREER_TRANSFER.valueMultiple));
     expect(D / C).toBeGreaterThan(1.6);
     expect(rc36Value(70, 98, 17) / rc36Value(70, 85, 17)).toBe(1);
     expect(C).toBeGreaterThan(B);
@@ -313,7 +315,8 @@ describe("rc.37 F1 — value by profile (Miguel's checks)", () => {
         for (let age = 16; age <= 30; age++) {
           if (age <= 18 && pot - ovr > 3) continue;
           expect(value(ovr, pot, age)).toBe(rc36Value(ovr, pot, age));
-          if (age >= 19 && pot - ovr <= 10) expect(value(ovr, pot, age, arc(40, 4))).toBe(rc36Value(ovr, pot, age));
+          // rc.46 (R121): under the elite line only (CAREER_TALENT.elite.fromPotential).
+          if (age >= 19 && pot - ovr <= 10 && pot < CAREER_TALENT.elite.fromPotential) expect(value(ovr, pot, age, arc(40, 4))).toBe(rc36Value(ovr, pot, age));
           checked += 1;
         }
       }

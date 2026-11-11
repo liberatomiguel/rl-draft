@@ -48,6 +48,7 @@ import {
   repTierOf,
   salaryAskFactors,
   signableOverallCap,
+  signingLevelOf,
   signingBonusFor,
   type MarketValueInput,
   type SalaryAskInput,
@@ -90,8 +91,13 @@ export function contractedSplitsRemaining(
  * `signingPlanFor` ("repGate"), the Market's locked tiles and its "signable
  * at my reputation" filter all read it. Renewals and the squad are exempt.
  */
-export function signableAtRep(overall: number, rep: number): boolean {
-  return Math.round(overall) <= signableOverallCap(rep);
+export function signableAtRep(
+  who: number | { overall: number; potential?: number; age?: number; peakAge?: number },
+  rep: number,
+): boolean {
+  // rc.46 (R121): a player object is read at his signing level (an elite talent counts part of his potential).
+  const level = typeof who === "number" ? Math.round(who) : signingLevelOf(who);
+  return level <= signableOverallCap(rep);
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +163,7 @@ export function listingFor(ctx: {
   const listedContracted = contracted.slice(0, LISTING_CAP);
   const cap = ctx.signableCap;
   if (cap !== undefined) {
-    const signable = (v: CareerPlayerView) => Math.round(v.overall) <= cap;
+    const signable = (v: CareerPlayerView) => signingLevelOf(v) <= cap;
     const missing = LISTING_MIN_SIGNABLE - listedFree.filter(signable).length;
     if (missing > 0) listedFree.push(...freeAgents.slice(LISTING_CAP).filter(signable).slice(0, missing));
     // rc.37 (F1): the contracted page mirrors it. The top LISTING_CAP by
