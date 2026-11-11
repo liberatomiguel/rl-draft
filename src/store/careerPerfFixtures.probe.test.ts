@@ -56,6 +56,8 @@ describe.skipIf(!ON)("v2.0 (P1) browser-probe fixtures", () => {
               shots.set(kind.replace("Eve", "Day"), onDay);
             }
           }
+          // The save every career was stuck on before the fix: the eve of the first qualifier of 2022-23.
+          if (save.clock.seasonIndex === 2 && save.clock.day === 26 && !shots.has("stuckS3")) shots.set("stuckS3", structuredClone(save));
           // A late-season matchday morning (the lobby): tomorrow's arrival, computed from the eve.
           if (save.clock.seasonIndex === LATE && !shots.has("matchday") && save.phase === "running" && !save.activeEvent && def && def.day === save.clock.day + 1 && def.tier === "qualifier" && clockHoldOf(save) === null) {
             const morning = advanceDayFlow(save);
@@ -75,7 +77,8 @@ describe.skipIf(!ON)("v2.0 (P1) browser-probe fixtures", () => {
       writeFileSync(join(OUT, "career-late.json"), store([late!, null, null]));
       writeFileSync(join(OUT, "career-late-x3.json"), store([late!, structuredClone(late!), structuredClone(s1!)]));
       if (shots.has("matchday")) writeFileSync(join(OUT, "career-late-matchday.json"), store([shots.get("matchday")!, null, null]));
-      for (const [kind, save] of shots) if (kind !== "s1" && kind !== "late" && kind !== "matchday") writeFileSync(join(OUT, `career-absent-${kind}.json`), store([save, null, null]));
+      if (shots.has("stuckS3")) writeFileSync(join(OUT, "career-stuck-s3.json"), store([shots.get("stuckS3")!, null, null]));
+      for (const [kind, save] of shots) if (kind !== "s1" && kind !== "late" && kind !== "matchday" && kind !== "stuckS3") writeFileSync(join(OUT, `career-absent-${kind}.json`), store([save, null, null]));
       console.log(
         `fixtures: s1 ${Math.round(JSON.stringify(s1).length / 1024)} KB (S${s1!.clock.seasonIndex} d${s1!.clock.day}), late ${Math.round(JSON.stringify(late).length / 1024)} KB (S${late!.clock.seasonIndex} d${late!.clock.day})`,
       );
