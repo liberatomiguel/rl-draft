@@ -29,6 +29,7 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_CANCELLED_WORLDS,
   CAREER_COACH_MARKET,
   CAREER_CHEMISTRY,
   CAREER_DYNASTY,
@@ -503,6 +504,14 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
       });
     }
   }
+}
+
+/** v2.0 (C1): the Worlds cancellation, on the wire once a season (the flag survives the news cap). */
+function announceWorldsCancelled(save: CareerSave): void {
+  const flag = `worldsCancelled:${save.clock.seasonIndex}`;
+  if (save.flags[flag]) return;
+  save.flags[flag] = true;
+  pushNews(save, { type: "milestone", priority: 3, titleKey: "worldsCancelled", headline: true });
 }
 
 function isInfinite(save: CareerSave): boolean {
@@ -1137,6 +1146,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
     //     step between here and the old step 5 reads the turnover; the offers
     //     read the reputation before W31's Worlds-field gain (a career that
     //     crosses the first-offer gate on that very gain hears a split later).
+    // v2.0 (C1): Season X's Worlds is called off early in split 3 — the bombshell, once.
+    if (worldsCancelledIn(seasonIndex) && week === CAREER_CANCELLED_WORLDS.announceWeek) announceWorldsCancelled(save);
     if (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek) {
       runSplitBoundary(save);
       if (save.phase === "ended") return capNews(save);
@@ -1340,8 +1351,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
       save.competition.worldsFieldRefs = worldsFieldFor(save.competition, save.careerSeed);
       if (worldsCancelledIn(seasonIndex)) {
         // v2.0 (C1): Season X — the field is the final table, but there is no
-        // event: no reputation moves on it, and the wire carries the bombshell.
-        pushNews(save, { type: "milestone", priority: 3, titleKey: "worldsCancelled", headline: true });
+        // event: no reputation moves on it. The news came early in split 3
+        // (announceWorldsCancelled); a save loaded past that week hears it here.
+        announceWorldsCancelled(save);
       } else if (save.competition.worldsFieldRefs.includes("user")) {
         gainRep(save, "worldsQualify");
         save.stats.worldsQualified += 1;

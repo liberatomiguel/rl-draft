@@ -2388,7 +2388,7 @@ export const CAREER_EN = {
           ? `${p.org} is leaving ${p.from}. The org has registered in ${p.to} for the new season and takes its squad along: the same players, a new region to prove themselves in.`
           : `${p.org} is leaving ${p.from} for ${p.to}, and starts over there with a new squad. The players it leaves behind are free agents.`,
       worldsCancelled: () =>
-        `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. The season ends with the split standings as they are. No title is awarded, and the race starts again next season.`,
+        `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. Split 3 and its Major go ahead as planned, and the season ends after them. No world title is awarded this year; the race starts again next season.`,
     },
   },
 

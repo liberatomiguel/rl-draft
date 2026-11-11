@@ -938,10 +938,14 @@ export const CAREER_SEASONS = [
 /**
  * v2.0 (C1): the seasons whose World Championship was never played. Season X
  * (2020-21, index 0): cancelled over the pandemic. The season still runs its
- * three splits and Majors; W32 has no event, the news says so on the Worlds
- * window's Monday, and the season review opens on the season's last day.
+ * three splits and Majors; W32 has no event, the news says so early in split
+ * 3 (`announceWeek`), and the season review opens on the season's last day.
  */
-export const CAREER_CANCELLED_WORLDS = { seasonIndexes: [0] as readonly number[] } as const;
+export const CAREER_CANCELLED_WORLDS = {
+  seasonIndexes: [0] as readonly number[],
+  /** The Monday the cancellation is announced: the second week of split 3 (W23 opens it). */
+  announceWeek: 24,
+} as const;
 
 /**
  * Season shape: 32 weeks — W1-2 preseason (window), 3 × [8-week split:

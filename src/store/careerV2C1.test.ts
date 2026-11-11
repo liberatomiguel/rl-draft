@@ -89,8 +89,14 @@ describe("v2.0 (C1) — Season X: Worlds cancelled", () => {
     // The Majors still ran (the results buffer keeps the latest of them).
     expect(x.eventResults.filter((r) => r.seasonIndex === 0 && r.tier === "major").length).toBeGreaterThanOrEqual(2);
     // The bombshell: on the wire, flagged for the pop-up, worded in both languages.
-    const news = x.news.find((n) => n.titleKey === "worldsCancelled");
-    expect(news?.headline).toBe(true);
+    const said = x.news.filter((n) => n.titleKey === "worldsCancelled");
+    expect(said).toHaveLength(1);
+    const news = said[0];
+    expect(news.headline).toBe(true);
+    // Announced early in split 3 (W23 opens it), not at the Worlds window.
+    expect(news.week).toBe(CAREER_CANCELLED_WORLDS.announceWeek);
+    expect(news.week).toBeGreaterThanOrEqual(23);
+    expect(news.week).toBeLessThanOrEqual(25);
     expect(CAREER_EN.news.tpl.worldsCancelled()).toMatch(/pandemic/);
     expect(CAREER_PT.news.tpl.worldsCancelled()).toMatch(/pandemia/);
     expect(CAREER_EN.news.body.worldsCancelled().length).toBeGreaterThan(40);

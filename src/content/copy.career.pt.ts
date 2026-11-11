@@ -2363,7 +2363,7 @@ export const CAREER_PT: CareerCopy = {
           ? `${p.org} está deixando ${p.from}. A org se inscreveu em ${p.to} para a nova temporada e leva o elenco junto: os mesmos jogadores, uma região nova para provar seu valor.`
           : `${p.org} está trocando ${p.from} por ${p.to} e recomeça lá com um elenco novo. Os jogadores que ficam para trás estão livres no mercado.`,
       worldsCancelled: () =>
-        `A liga cancelou o Mundial desta temporada: com as viagens fechadas pela pandemia, não há como reunir as regiões. A temporada termina com a classificação dos splits como está. Nenhum título é entregue, e a corrida recomeça na próxima temporada.`,
+        `A liga cancelou o Mundial desta temporada: com as viagens fechadas pela pandemia, não há como reunir as regiões. O Split 3 e o seu Major seguem como planejado, e a temporada termina depois deles. Nenhum título mundial é entregue neste ano; a corrida recomeça na próxima temporada.`,
     },
   },
 
