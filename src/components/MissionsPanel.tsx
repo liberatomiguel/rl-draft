@@ -61,7 +61,7 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
       <Panel className="relative flex h-full flex-col p-4 transition-colors hover:!border-line-strong sm:p-5">
         {/* rc.6: the whole card opens /missions; the period switch sits above it. */}
         <AppLink href="/missions" aria-label={M.viewAll} className="absolute inset-0 z-[1] rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-orange/70" />
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="display flex items-center gap-2 text-base font-bold uppercase tracking-wide text-ink">
             {M.title}
             <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
