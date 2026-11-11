@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import * as balance from "./balance";
 
-const FINGERPRINT = { balanceVersion: 22, hash: "dd1afdf0" };
+const FINGERPRINT = { balanceVersion: 23, hash: "33f4d4ec" };
 
 /** Stable text of any value: sorted keys, functions by their whitespace-free source. */
 function canon(value: unknown): string {

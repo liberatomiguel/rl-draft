@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { challenges, coachById, playerCardById, subById } from "@/data";
+import { RANKS } from "@/config/balance";
 import { createRng, type Rng } from "@/lib/rng";
+
+/** XP of the top rank: the rank gate is never the blocker at this total. */
+const TOP_XP = RANKS[RANKS.length - 1].minXp;
 import { finalOverall } from "./cards";
 import {
   buildChallengeOpponent,
@@ -96,7 +100,7 @@ describe("challenges — unlock gating", () => {
     const ch = challenges.find((c) => c.rankRequired === "diamond");
     if (ch && !ch.prereq) {
       expect(challengeStatus(ch, 0, {})).toBe("locked"); // unranked
-      expect(challengeStatus(ch, 50_000, {})).toBe("available"); // GC+
+      expect(challengeStatus(ch, TOP_XP, {})).toBe("available"); // top rank
     }
   });
 
@@ -104,7 +108,7 @@ describe("challenges — unlock gating", () => {
     const chained = challenges.find((c) => c.prereq);
     expect(chained).toBeTruthy();
     if (chained) {
-      const xp = 60_000; // SSL — rank is never the blocker here
+      const xp = TOP_XP; // SSL — rank is never the blocker here
       expect(challengeStatus(chained, xp, {})).toBe("locked"); // prereq not done
       expect(challengeStatus(chained, xp, { [chained.prereq!]: "2026-01-01" })).toBe("available");
       expect(challengeStatus(chained, xp, { [chained.id]: "2026-01-01" })).toBe("cleared");
