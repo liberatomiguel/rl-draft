@@ -165,6 +165,7 @@ export const HOME_SEO = {
     simulator: "Rocket League esports simulator",
     fantasy: "RLCS fantasy draft",
     manager: "Road to Worlds, the Rocket League manager game",
+    database: "RLCS rosters, teams and player ratings",
   },
 };
 
@@ -187,6 +188,7 @@ export const NAV_UI = {
   /** v2.0 (WEB-01): the links under every content article, and the breadcrumb root. */
   moreGuides: "More from Rocket Draft",
   home: "Home",
+  database: "RLCS database",
 };
 
 export const RUN_UI = {
@@ -1788,6 +1790,63 @@ export const DAILY_TEXT = {
   },
 };
 
+/**
+ * v2.0 (WEB-01): the public RLCS database pages (/rlcs/**): seasons, teams and
+ * players from the dataset. The pages' own <title> and description are built
+ * from the English entries (one URL per page; the labels follow the toggle).
+ */
+export const DATABASE_UI = {
+  kicker: "RLCS database",
+  hubTitle: "RLCS Rosters, Teams & Player Ratings",
+  hubIntro: (lineups: number, teams: number, players: number, seasons: number) =>
+    `Every roster in Rocket Draft: ${lineups} real RLCS lineups from ${teams} teams and ${players} players across ${seasons} seasons, each with the overall the game gives it. Researched by hand from Liquipedia and reviewed by hand.`,
+  hubDescription: (lineups: number, teams: number, players: number) =>
+    `Browse ${lineups} real RLCS rosters from ${teams} teams and ${players} players, season by season, with every player's Rocket Draft overall. Free, no sign-in.`,
+  seasons: "Seasons",
+  regions: "Regions",
+  teams: "Teams",
+  players: "Players",
+  allTeams: "All teams",
+  allPlayers: "All players",
+  backToDatabase: "RLCS database",
+  rosterCount: (n: number) => `${n} roster${n === 1 ? "" : "s"}`,
+  teamCount: (n: number) => `${n} team${n === 1 ? "" : "s"}`,
+  playerCount: (n: number) => `${n} player${n === 1 ? "" : "s"}`,
+  seasonTitle: (season: string) => `${season} Rosters & Player Ratings`,
+  seasonIntro: (season: string, rosters: number, regions: number) =>
+    `Every ${season} roster in Rocket Draft: ${rosters} teams across ${regions} region${regions === 1 ? "" : "s"}, strongest first, with each player's overall.`,
+  teamTitle: (team: string) => `${team} RLCS Rosters by Season`,
+  teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
+    rosters === 1
+      ? `${team} (${region}) in Rocket Draft: its ${first} roster, with each player's overall.`
+      : `${team} (${region}) in Rocket Draft: ${rosters} rosters from ${first} to ${last}, with each player's overall.`,
+  playerTitle: (player: string) => `${player} — RLCS Rating & Teams`,
+  playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
+    `${player} (${region}) in Rocket Draft: ${seasons} RLCS season${seasons === 1 ? "" : "s"}, with a peak overall of ${peak} for ${peakTeam} in ${peakSeason}.`,
+  teamsIndexTitle: "RLCS Teams — Every Organization by Region",
+  teamsIndexIntro: (teams: number) =>
+    `The ${teams} teams with a roster in Rocket Draft, region by region. Open a team for its lineups season by season.`,
+  playersIndexTitle: "RLCS Players — Ratings for Every Player",
+  playersIndexIntro: (players: number) =>
+    `The ${players} players with a card in Rocket Draft, with their peak overall. Open a player for every season and team.`,
+  colSeason: "Season",
+  colTeam: "Team",
+  colRegion: "Region",
+  colPlayer: "Player",
+  colCountry: "Country",
+  colOverall: "Overall",
+  colPeak: "Peak",
+  colAverage: "Team average",
+  coach: "Coach",
+  sub: "Substitute",
+  regionOnly: "Regional roster",
+  regionOnlyHint: "Plays only in its region's Region-Locked Draft.",
+  regionTeams: (region: string) => `${region} teams and rosters`,
+  ratingsNote: "Overalls are Rocket Draft's own ratings: a calculated base plus a hand review.",
+  ratingsLink: "How the ratings are built",
+  cta: "Draft these rosters",
+};
+
 export const EN = {
   APP,
   NAV,
@@ -1824,6 +1883,7 @@ export const EN = {
   QUIZ_UI,
   NATIONAL_UI,
   DAILY_TEXT,
+  DATABASE_UI,
 };
 
 export type Copy = typeof EN;

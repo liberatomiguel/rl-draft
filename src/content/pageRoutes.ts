@@ -14,6 +14,10 @@ export type PageSlug =
   | "strategy"
   | "special-cards"
   | "sam"
+  | "na"
+  | "eu"
+  | "mena"
+  | "oce"
   | "simulator"
   | "manager"
   | "fantasy";
@@ -25,6 +29,11 @@ export const PAGE_ROUTES: Record<PageSlug, { en: string; pt: string }> = {
   strategy: { en: "/strategy", pt: "/pt/estrategia" },
   "special-cards": { en: "/special-cards", pt: "/pt/cartas-especiais" },
   sam: { en: "/sam", pt: "/pt/sam" },
+  // v2.0: one page per region that has a Region-Locked Draft (same shape as /sam).
+  na: { en: "/na", pt: "/pt/na" },
+  eu: { en: "/eu", pt: "/pt/eu" },
+  mena: { en: "/mena", pt: "/pt/mena" },
+  oce: { en: "/oce", pt: "/pt/oce" },
   // v2.0 (WEB-01): one page per search intent that had impressions and no page
   // of its own (Search Console, Aug–Nov 2026).
   simulator: { en: "/rocket-league-simulator", pt: "/pt/simulador-rocket-league" },
@@ -41,6 +50,15 @@ export const PAGE_ROUTES: Record<PageSlug, { en: string; pt: string }> = {
  * CAREER_LANDING list in sync with this one), and nothing links to them.
  */
 export const CAREER_ONLY_PAGES: readonly PageSlug[] = ["manager"];
+
+/** The regional pages and the dataset region each one describes. */
+export const REGION_PAGES: Partial<Record<PageSlug, string>> = {
+  sam: "SAM",
+  na: "NA",
+  eu: "EU",
+  mena: "MENA",
+  oce: "OCE",
+};
 
 /** Does this build export the page? */
 export function isPageLive(slug: PageSlug): boolean {

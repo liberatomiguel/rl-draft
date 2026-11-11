@@ -397,9 +397,25 @@ async function checkSegmentNames(ctx) {
   const routeDirs = ctx.files
     .filter((f) => f.endsWith("/__next._tree.txt"))
     .map((f) => f.slice(0, -"/__next._tree.txt".length));
+  // A dynamic segment (v2.0: /rlcs/[season], /rlcs/teams/[team],
+  // /rlcs/players/[player]) is named after its PARAMETER, not its value:
+  // rlcs/2026/__next.rlcs.$d$season.__PAGE__.txt. Accept that form when every
+  // other part still matches the route.
+  const hasDynamicForm = (route) => {
+    const parts = route.split("/");
+    const prefix = `${route}/__next.`;
+    const suffix = ".__PAGE__.txt";
+    for (const f of ctx.files) {
+      if (!f.startsWith(prefix) || !f.endsWith(suffix)) continue;
+      const got = f.slice(prefix.length, -suffix.length).split(".");
+      if (got.length === parts.length && got.every((g, i) => g === parts[i] || g.startsWith("$d$"))) return true;
+    }
+    return false;
+  };
   const missing = routeDirs
     .map((route) => `${route}/__next.${route.split("/").join(".")}.__PAGE__.txt`)
-    .filter((expected) => !files.has(expected));
+    .filter((expected) => !files.has(expected))
+    .filter((expected) => !hasDynamicForm(expected.slice(0, expected.lastIndexOf("/"))));
   if (!files.has("__next.__PAGE__.txt")) missing.push("__next.__PAGE__.txt");
   if (missing.length) {
     throw new Error(`missing prefetch segment file(s):\n    ${missing.join("\n    ")}`);

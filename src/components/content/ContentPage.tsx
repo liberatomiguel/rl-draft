@@ -1,7 +1,7 @@
 import { JsonLd } from "@/components/seo/JsonLd";
-import { NAV_UI } from "@/content/copy.en";
+import { DATABASE_UI, NAV_UI } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
-import { LIVE_PAGE_SLUGS, PAGES_EN, PAGES_PT, PAGE_ROUTES, type PageSlug } from "@/content/pages";
+import { LIVE_PAGE_SLUGS, PAGES_EN, PAGES_PT, PAGE_ROUTES, REGION_PAGES, type PageSlug } from "@/content/pages";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import type { ContentPageCopy, RelatedLink } from "./ContentArticle";
 import { LocaleContent } from "./LocaleContent";
@@ -14,10 +14,17 @@ import { LocaleContent } from "./LocaleContent";
  */
 function relatedLinks(slug: PageSlug, locale: "en" | "pt"): RelatedLink[] {
   const pages = locale === "pt" ? PAGES_PT : PAGES_EN;
-  return LIVE_PAGE_SLUGS.filter((s) => s !== slug).map((s) => ({
-    href: PAGE_ROUTES[s][locale],
-    label: pages[s].title,
-  }));
+  const db = locale === "pt" ? PT.DATABASE_UI : DATABASE_UI;
+  const region = REGION_PAGES[slug];
+  return [
+    // A regional page leads with its own teams; every page links the database.
+    ...(region ? [{ href: `/rlcs/teams#${region}`, label: db.regionTeams(region) }] : []),
+    { href: "/rlcs", label: db.hubTitle },
+    ...LIVE_PAGE_SLUGS.filter((s) => s !== slug).map((s) => ({
+      href: PAGE_ROUTES[s][locale],
+      label: pages[s].title,
+    })),
+  ];
 }
 
 /**

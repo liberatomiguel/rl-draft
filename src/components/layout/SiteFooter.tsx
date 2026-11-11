@@ -54,6 +54,10 @@ export function SiteFooter() {
             <AppLink href={localePath("faq", locale)} className={linkCls}>
               {NAV_UI.faq}
             </AppLink>
+            {/* v2.0 (WEB-01): every page links to the public RLCS database. */}
+            <AppLink href="/rlcs" className={linkCls}>
+              {NAV_UI.database}
+            </AppLink>
             <AppLink href="/privacy" className={linkCls}>
               {NAV_UI.privacy}
             </AppLink>

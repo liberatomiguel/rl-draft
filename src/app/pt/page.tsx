@@ -36,6 +36,7 @@ const SEO_LINKS = [
   { label: PT.HOME_SEO.links.sam, href: "/pt/sam" },
   { label: PT.HOME_SEO.links.simulator, href: PAGE_ROUTES.simulator.pt },
   { label: PT.HOME_SEO.links.fantasy, href: PAGE_ROUTES.fantasy.pt },
+  { label: PT.HOME_SEO.links.database, href: "/rlcs" },
   ...(isPageLive("manager") ? [{ label: PT.HOME_SEO.links.manager, href: PAGE_ROUTES.manager.pt }] : []),
   { label: PT.HOME_SEO.links.faq, href: "/pt/faq" },
   { label: PT.HOME_SEO.links.about, href: "/pt/sobre" },

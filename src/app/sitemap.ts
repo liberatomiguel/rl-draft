@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { CONTENT_DATE, LIVE_PAGE_SLUGS, PAGE_ROUTES } from "@/content/pageRoutes";
+import { DB_PLAYERS, DB_SEASONS, DB_TEAMS } from "@/lib/database";
 
 // Required by `output: "export"`: written to out/sitemap.xml at build time.
 export const dynamic = "force-static";
@@ -78,6 +79,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
       alternates: { languages },
+    });
+  }
+
+  // The public RLCS database (one URL per page): the hub, the two indexes and
+  // every season, team and player page.
+  const database: { path: string; priority: number }[] = [
+    { path: "/rlcs", priority: 0.8 },
+    { path: "/rlcs/teams", priority: 0.6 },
+    { path: "/rlcs/players", priority: 0.6 },
+    ...DB_SEASONS.map((s) => ({ path: `/rlcs/${s.slug}`, priority: 0.6 })),
+    ...DB_TEAMS.map((t) => ({ path: `/rlcs/teams/${t.id}`, priority: 0.5 })),
+    ...DB_PLAYERS.map((p) => ({ path: `/rlcs/players/${p.id}`, priority: 0.5 })),
+  ];
+  for (const r of database) {
+    entries.push({
+      url: abs(r.path),
+      lastModified: CONTENT_DATE,
+      changeFrequency: "monthly",
+      priority: r.priority,
     });
   }
 

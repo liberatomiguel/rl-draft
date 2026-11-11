@@ -150,6 +150,7 @@ export const PT: Copy = {
       simulator: "Simulador de Rocket League esports",
       fantasy: "Draft fantasy da RLCS",
       manager: "Road to Worlds, o manager de Rocket League",
+      database: "Rosters, times e overalls da RLCS",
     },
   },
 
@@ -170,6 +171,7 @@ export const PT: Copy = {
     newHere: "Novidade aqui",
     moreGuides: "Mais do Rocket Draft",
     home: "Início",
+    database: "Base da RLCS",
   },
 
   RUN_UI: {
@@ -1714,6 +1716,59 @@ export const PT: Copy = {
       reach_playoffs: () => "Chegue aos playoffs",
       team_overall_under: (n: number) => `Vença o título com um time de no máximo ${n} OVR`,
     },
+  },
+
+  // v2.0 (WEB-01): the public RLCS database pages (/rlcs/**).
+  DATABASE_UI: {
+    kicker: "Base da RLCS",
+    hubTitle: "Rosters, Times e Overalls de Jogadores da RLCS",
+    hubIntro: (lineups: number, teams: number, players: number, seasons: number) =>
+      `Todos os rosters do Rocket Draft: ${lineups} lineups reais da RLCS de ${teams} times e ${players} jogadores em ${seasons} temporadas, cada um com o overall que o jogo dá. Pesquisados à mão na Liquipedia e revisados à mão.`,
+    hubDescription: (lineups: number, teams: number, players: number) =>
+      `Veja ${lineups} rosters reais da RLCS de ${teams} times e ${players} jogadores, temporada por temporada, com o overall de cada jogador no Rocket Draft. Grátis, sem login.`,
+    seasons: "Temporadas",
+    regions: "Regiões",
+    teams: "Times",
+    players: "Jogadores",
+    allTeams: "Todos os times",
+    allPlayers: "Todos os jogadores",
+    backToDatabase: "Base da RLCS",
+    rosterCount: (n: number) => `${n} roster${n === 1 ? "" : "s"}`,
+    teamCount: (n: number) => `${n} time${n === 1 ? "" : "s"}`,
+    playerCount: (n: number) => `${n} jogador${n === 1 ? "" : "es"}`,
+    seasonTitle: (season: string) => `Rosters e Overalls da ${season}`,
+    seasonIntro: (season: string, rosters: number, regions: number) =>
+      `Todos os rosters da ${season} no Rocket Draft: ${rosters} times em ${regions} ${regions === 1 ? "região" : "regiões"}, do mais forte ao mais fraco, com o overall de cada jogador.`,
+    teamTitle: (team: string) => `Rosters da ${team} na RLCS por Temporada`,
+    teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
+      rosters === 1
+        ? `${team} (${region}) no Rocket Draft: o roster da ${first}, com o overall de cada jogador.`
+        : `${team} (${region}) no Rocket Draft: ${rosters} rosters, da ${first} à ${last}, com o overall de cada jogador.`,
+    playerTitle: (player: string) => `${player} — Overall e Times na RLCS`,
+    playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
+      `${player} (${region}) no Rocket Draft: ${seasons} ${seasons === 1 ? "temporada" : "temporadas"} de RLCS, com overall máximo de ${peak} pela ${peakTeam} na ${peakSeason}.`,
+    teamsIndexTitle: "Times da RLCS — Todas as Organizações por Região",
+    teamsIndexIntro: (teams: number) =>
+      `Os ${teams} times com roster no Rocket Draft, região por região. Abra um time para ver os lineups temporada por temporada.`,
+    playersIndexTitle: "Jogadores da RLCS — Overall de Cada Jogador",
+    playersIndexIntro: (players: number) =>
+      `Os ${players} jogadores com carta no Rocket Draft, com o overall máximo de cada um. Abra um jogador para ver cada temporada e time.`,
+    colSeason: "Temporada",
+    colTeam: "Time",
+    colRegion: "Região",
+    colPlayer: "Jogador",
+    colCountry: "País",
+    colOverall: "Overall",
+    colPeak: "Máximo",
+    colAverage: "Média do time",
+    coach: "Coach",
+    sub: "Substitute",
+    regionOnly: "Roster regional",
+    regionOnlyHint: "Joga apenas no Region-Locked Draft da sua região.",
+    regionTeams: (region: string) => `Times e rosters da ${region}`,
+    ratingsNote: "Os overalls são as notas do próprio Rocket Draft: uma base calculada mais uma revisão à mão.",
+    ratingsLink: "Como os ratings são feitos",
+    cta: "Draftar estes rosters",
   },
 };
 

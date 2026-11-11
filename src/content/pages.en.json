@@ -228,6 +228,10 @@
         "body": "SAM stands for South America. It is one of the regions of the Rocket League Championship Series, next to North America (NA), Europe (EU), Oceania (OCE), the Middle East and North Africa (MENA), Asia-Pacific (APAC) and Sub-Saharan Africa (SSA). Each region runs its own qualifiers and regional events, and its best teams earn the region's places at the international Majors and the World Championship. The SAM scene is led by Brazil, with players and teams from Argentina, Chile and the rest of the continent alongside. Organizations such as FURIA, Team Secret, KRÜ Esports, MIBR, w7m esports, INTZ and Ninjas in Pyjamas have all fielded SAM rosters, and every one of them is in the game."
       },
       {
+        "heading": "SAM in the Rocket Draft database",
+        "body": "The SAM database holds {SAM.lineups} lineups from {SAM.orgs} organizations and {SAM.players} players, across {SAM.seasons} seasons from {SAM.firstSeason} to {SAM.lastSeason}. The team and player pages list each of them season by season."
+      },
+      {
         "heading": "What the SAM region-locked draft is",
         "body": "SAM is a Region-Locked Draft: instead of pulling from the global pool, every round deals from South America's full depth. You still draft the same way — take one card per lineup until you have 3 players, 1 coach, 1 sub and 1 org — but every card comes from the SAM scene. South America was the first region live, hand-researched from Liquipedia, covering Brazilian and South American teams from RLCS history."
       },
@@ -395,5 +399,125 @@
       }
     ],
     "ctaLabel": "Start a fantasy draft"
+  },
+  "na": {
+    "metaTitle": "NA Rocket League — North America's RLCS Region",
+    "metaDescription": "What NA means in Rocket League esports: the North American region of the RLCS, its teams and players, and a free draft locked to {NA.lineups} hand-researched NA lineups.",
+    "kicker": "North America",
+    "title": "NA Rocket League — North America's Region",
+    "intro": "NA is the North American region of Rocket League esports. Rocket Draft covers it in depth: {NA.lineups} real RLCS lineups from {NA.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "sections": [
+      {
+        "heading": "What NA means in Rocket League",
+        "body": "NA stands for North America. It is one of the regions of the Rocket League Championship Series, next to EU, SAM, MENA, OCE, APAC and SSA. Each region runs its own qualifiers and regional events, and its best teams earn the region's places at the international Majors and the World Championship. The scene draws its players from the United States and Canada. Organizations such as {NA.topOrgs} have all fielded NA rosters, and every one of them is in the game."
+      },
+      {
+        "heading": "NA in the Rocket Draft database",
+        "body": "The NA database holds {NA.lineups} lineups from {NA.orgs} organizations and {NA.players} players, across {NA.seasons} seasons from {NA.firstSeason} to {NA.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The NA region-locked draft",
+        "body": "Region-Locked Draft narrows the game to one scene. Pick NA in the setup and every round deals a NA lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is NA too, so the bracket you survive is the region's own history."
+      },
+      {
+        "heading": "Deeper than the Worlds rosters",
+        "body": "The pool combines two layers: the NA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a NA fan watched every weekend and a worldwide draft never shows."
+      },
+      {
+        "heading": "What region-lock changes, and what it does not",
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent NA roster can beat a scattered mix of bigger names."
+      }
+    ],
+    "ctaLabel": "Play the NA Rocket League draft"
+  },
+  "eu": {
+    "metaTitle": "EU Rocket League — Europe's RLCS Region",
+    "metaDescription": "What EU means in Rocket League esports: the European region of the RLCS, its teams and players, and a free draft locked to {EU.lineups} hand-researched EU lineups.",
+    "kicker": "Europe",
+    "title": "EU Rocket League — Europe's Region",
+    "intro": "EU is the European region of Rocket League esports. Rocket Draft covers it in depth: {EU.lineups} real RLCS lineups from {EU.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "sections": [
+      {
+        "heading": "What EU means in Rocket League",
+        "body": "EU stands for Europe. It is one of the regions of the Rocket League Championship Series, next to NA, SAM, MENA, OCE, APAC and SSA. Each region runs its own qualifiers and regional events, and its best teams earn the region's places at the international Majors and the World Championship. The scene draws its players from France, the United Kingdom, Germany, the Netherlands, Spain and the rest of the continent. Organizations such as {EU.topOrgs} have all fielded EU rosters, and every one of them is in the game."
+      },
+      {
+        "heading": "EU in the Rocket Draft database",
+        "body": "The EU database holds {EU.lineups} lineups from {EU.orgs} organizations and {EU.players} players, across {EU.seasons} seasons from {EU.firstSeason} to {EU.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The EU region-locked draft",
+        "body": "Region-Locked Draft narrows the game to one scene. Pick EU in the setup and every round deals a EU lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is EU too, so the bracket you survive is the region's own history."
+      },
+      {
+        "heading": "Deeper than the Worlds rosters",
+        "body": "The pool combines two layers: the EU teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a EU fan watched every weekend and a worldwide draft never shows."
+      },
+      {
+        "heading": "What region-lock changes, and what it does not",
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent EU roster can beat a scattered mix of bigger names."
+      }
+    ],
+    "ctaLabel": "Play the EU Rocket League draft"
+  },
+  "mena": {
+    "metaTitle": "MENA Rocket League — Middle East & North Africa",
+    "metaDescription": "What MENA means in Rocket League esports: the Middle East and North Africa region, its teams and players, and a free draft locked to {MENA.lineups} MENA lineups.",
+    "kicker": "Middle East & North Africa",
+    "title": "MENA Rocket League — Middle East & North Africa",
+    "intro": "MENA is the Middle East and North Africa region of Rocket League esports. Rocket Draft covers it in depth: {MENA.lineups} real RLCS lineups from {MENA.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "sections": [
+      {
+        "heading": "What MENA means in Rocket League",
+        "body": "MENA stands for the Middle East and North Africa. It is one of the regions of the Rocket League Championship Series, next to NA, EU, SAM, OCE, APAC and SSA. Each region runs its own qualifiers and regional events, and its best teams earn the region's places at the international Majors and the World Championship. The scene draws its players from Saudi Arabia first, with Morocco, the Gulf states and the rest of North Africa alongside. Organizations such as {MENA.topOrgs} have all fielded MENA rosters, and every one of them is in the game."
+      },
+      {
+        "heading": "MENA in the Rocket Draft database",
+        "body": "The MENA database holds {MENA.lineups} lineups from {MENA.orgs} organizations and {MENA.players} players, across {MENA.seasons} seasons from {MENA.firstSeason} to {MENA.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The MENA region-locked draft",
+        "body": "Region-Locked Draft narrows the game to one scene. Pick MENA in the setup and every round deals a MENA lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is MENA too, so the bracket you survive is the region's own history."
+      },
+      {
+        "heading": "Deeper than the Worlds rosters",
+        "body": "The pool combines two layers: the MENA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a MENA fan watched every weekend and a worldwide draft never shows."
+      },
+      {
+        "heading": "What region-lock changes, and what it does not",
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent MENA roster can beat a scattered mix of bigger names."
+      }
+    ],
+    "ctaLabel": "Play the MENA Rocket League draft"
+  },
+  "oce": {
+    "metaTitle": "OCE Rocket League — Oceania's RLCS Region",
+    "metaDescription": "What OCE means in Rocket League esports: the Oceanic region of the RLCS, its teams and players, and a free draft locked to {OCE.lineups} hand-researched OCE lineups.",
+    "kicker": "Oceania",
+    "title": "OCE Rocket League — Oceania's Region",
+    "intro": "OCE is the Oceanic region of Rocket League esports. Rocket Draft covers it in depth: {OCE.lineups} real RLCS lineups from {OCE.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "sections": [
+      {
+        "heading": "What OCE means in Rocket League",
+        "body": "OCE stands for Oceania. It is one of the regions of the Rocket League Championship Series, next to NA, EU, SAM, MENA, APAC and SSA. Each region runs its own qualifiers and regional events, and its best teams earn the region's places at the international Majors and the World Championship. The scene draws its players from Australia and New Zealand. Organizations such as {OCE.topOrgs} have all fielded OCE rosters, and every one of them is in the game."
+      },
+      {
+        "heading": "OCE in the Rocket Draft database",
+        "body": "The OCE database holds {OCE.lineups} lineups from {OCE.orgs} organizations and {OCE.players} players, across {OCE.seasons} seasons from {OCE.firstSeason} to {OCE.lastSeason}. Every roster is a real one, researched by hand from Liquipedia, and every player carries an overall reviewed by hand. The team and player pages list each of them season by season."
+      },
+      {
+        "heading": "The OCE region-locked draft",
+        "body": "Region-Locked Draft narrows the game to one scene. Pick OCE in the setup and every round deals a OCE lineup; you still take one card per lineup until you hold three players, a coach, a substitute and an organization. The tournament field is OCE too, so the bracket you survive is the region's own history."
+      },
+      {
+        "heading": "Deeper than the Worlds rosters",
+        "body": "The pool combines two layers: the OCE teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a OCE fan watched every weekend and a worldwide draft never shows."
+      },
+      {
+        "heading": "What region-lock changes, and what it does not",
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent OCE roster can beat a scattered mix of bigger names."
+      }
+    ],
+    "ctaLabel": "Play the OCE Rocket League draft"
   }
 }
