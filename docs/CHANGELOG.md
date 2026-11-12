@@ -50,6 +50,15 @@ Then `v2.0.0-rc.53-polish.2` (Miguel's visual review of 12/11, same branch, inte
 **Validation (polish.2)**
 - Typecheck and targeted ESLint passed; browser checks cover desktop and 390px mobile. HQ positive cash feedback confirmed with +$12k beside Balance. All 60 targeted tests, the 736-page static export and postexport image/noindex checks passed.
 
+Then `v2.0.0-rc.53-polish.3 — announcement visual refinement (2026-11-12)`, as written there:
+
+**Changed (polish.3)**
+- Progression dialog uses a compact inset progression card, a larger milestone glyph with a completion marker, a restrained warm background and clearer title hierarchy. Explore stays left; Close stays right.
+- Headline org crests grow from 72 to 88 CSS pixels. Breaking News and its indicator are orange; the blue rule now runs beside the headline/body only, without framing the whole dialog. Brand, date and dismiss remain on one row.
+
+**Validation (polish.3)**
+- Typecheck, targeted ESLint, 736-page static export and postexport checks passed; desktop and 390px mobile dialog captures use isolated test saves.
+
 #### Changed
 - **`sp-gian-community` is gone with the final card package. 31 real accounts held it** and lose it from their Collection on the next load. The cutover guard now lists what was retired on purpose (`preseason-held-ids.json`, `retired`) and fails for any other held id that disappears.
 - The pre-season recap's reward grid gives a title the full row (several board titles overflowed their cards).
