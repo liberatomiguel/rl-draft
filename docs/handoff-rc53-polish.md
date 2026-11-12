@@ -1,6 +1,13 @@
 # rc.53 polish — isolated candidate
 
-Base: staging 0cb44a4 (v2.0.0-rc.53). Branch: codex/rc53-final-polish. Candidate: v2.0.0-rc.53-polish.2. This branch does not include the finalizer’s later work and does not deploy main/staging.
+Base: staging 0cb44a4 (v2.0.0-rc.53). Branch: codex/rc53-final-polish. Candidate: v2.0.0-rc.53-polish.3. This branch does not include the finalizer’s later work and does not deploy main/staging.
+
+## Miguel review, polish.3
+
+- Progression dialog gains an inset progression card, orange milestone art and a restrained warm background; Explore left / Close right retained.
+- News crests render at 88px, Breaking News is orange, and the blue rule is scoped to the headline/body.
+- This follow-up changes presentation only; no career engine/store/save changes.
+- polish.3 validation: typecheck, targeted ESLint, static export (736 pages) and postexport checks passed. All 1,351 manifest image URLs exist; final captures cover desktop and 390px mobile.
 
 ## Miguel review, polish.2
 

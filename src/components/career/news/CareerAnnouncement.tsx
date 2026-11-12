@@ -84,8 +84,8 @@ export function CareerAnnouncement() {
       <AnnouncementShell label={C.launch.breaking} onClose={close} tone="news" masthead={<BrandMark brand={partner} name={brandName} />} date={formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week)))}>
         <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="display flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-blue-bright">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-blue-bright shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+            <p className="display flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-orange-bright">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-orange-bright shadow-[0_0_10px_rgba(249,115,22,0.35)]" />
               {C.launch.breaking}
             </p>
             <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">{C.news.feed.subject[news.type]}</span>
@@ -93,12 +93,14 @@ export function CareerAnnouncement() {
           {crests.length ? (
             <div className="mt-4 flex items-center justify-center gap-6 py-2">
               {crests.map((ref) => (
-                <OrgMark key={ref} save={save} orgRef={ref} size="lg" loading="eager" />
+                <OrgMark key={ref} save={save} orgRef={ref} size="lg" loading="eager" className="!h-[5.5rem] !w-[5.5rem]" />
               ))}
             </div>
           ) : null}
-          <h2 className="mt-4 display text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">{content.title}</h2>
-          {content.body ? <p className="mt-4 border-t border-line pt-4 text-sm leading-relaxed text-sub">{content.body}</p> : null}
+          <div className="mt-4 border-l-[3px] border-blue pl-4">
+            <h2 className="display text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">{content.title}</h2>
+            {content.body ? <p className="mt-3 text-sm leading-relaxed text-sub">{content.body}</p> : null}
+          </div>
           <div className="mt-5 flex justify-end">
             <Button onClick={close}>{C.common.close}</Button>
           </div>
@@ -110,15 +112,20 @@ export function CareerAnnouncement() {
   const rung = notice.rung;
   return (
     <AnnouncementShell label={C.launch.unlocked} onClose={close} tone="unlock" masthead={<p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-bright">{C.launch.unlocked}</p>}>
-      <div className="px-5 pb-5 pt-3 sm:px-6 sm:pb-6">
-        <div className="flex items-center gap-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-orange/40 bg-gradient-to-br from-orange/20 to-orange/5 text-orange-bright"><RungIcon id={rung.id} className="h-8 w-8" /></span>
-          <div className="min-w-0">
-            <h2 className="display text-2xl font-bold leading-tight text-ink sm:text-3xl">{C.ladder.rung[rung.id]}</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-sub">{C.ladder.hint[rung.id]}</p>
+      <div className="relative overflow-hidden px-5 pb-5 pt-3 sm:px-6 sm:pb-6">
+        <div className="relative flex items-center gap-5 rounded-xl border border-orange/20 bg-gradient-to-br from-orange/[0.08] to-transparent p-4 sm:p-5">
+          <div className="min-w-0 flex-1">
+            <h2 className="display text-3xl font-bold leading-none tracking-tight text-ink">{C.ladder.rung[rung.id]}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-sub">{C.ladder.hint[rung.id]}</p>
           </div>
+          <span className="relative flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl border border-orange/30 bg-orange/10 text-orange-bright shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <RungIcon id={rung.id} className="h-9 w-9" />
+            <span aria-hidden className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-panel-strong bg-orange text-[#1a0d02]">
+              <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m3.5 8 3 3 6-6" /></svg>
+            </span>
+          </span>
         </div>
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-orange/15 pt-4">
+        <div className="relative mt-4 flex items-center justify-between gap-3">
           <Button variant="primary" className="!shadow-none" onClick={() => { close(); router.push(notice.href); }}>{C.launch.open} →</Button>
           <Button variant="ghost" onClick={close}>{C.common.close}</Button>
         </div>
@@ -149,7 +156,7 @@ function AnnouncementShell({ label, onClose, tone, masthead, date, children }: {
         style={{ outline: "none" }}
         className={cx(
           "pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border bg-panel-strong shadow-2xl",
-          tone === "news" ? "max-w-lg border-blue/35 border-l-4 border-l-blue" : "max-w-md border-orange/35 bg-[radial-gradient(ellipse_at_top_right,rgba(249,115,22,0.09),transparent_65%)]",
+          tone === "news" ? "max-w-lg border-blue/25" : "max-w-md border-orange/30 bg-[linear-gradient(135deg,rgba(249,115,22,0.07),transparent_55%)]",
         )}
       >
         <div className={cx("flex shrink-0 items-center gap-3 pl-5 pr-2 sm:pl-6", tone === "news" ? "border-b border-blue/15 bg-blue/5 py-2" : "pt-2")}>

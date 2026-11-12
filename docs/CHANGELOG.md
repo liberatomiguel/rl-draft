@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.0-rc.53-polish.3 — announcement visual refinement (2026-11-12)
+
+### Changed
+- Progression dialog uses a compact inset progression card, a larger milestone glyph with a completion marker, a restrained warm background and clearer title hierarchy. Explore stays left; Close stays right.
+- Headline org crests grow from 72 to 88 CSS pixels. Breaking News and its indicator are orange; the blue rule now runs beside the headline/body only, without framing the whole dialog. Brand, date and dismiss remain on one row.
+
+### Validation
+- Typecheck, targeted ESLint, 736-page static export and postexport checks passed; desktop and 390px mobile dialog captures use isolated test saves.
+
 ## v2.0.0-rc.53-polish.2 — Miguel visual review (2026-11-12)
 
 ### Changed
