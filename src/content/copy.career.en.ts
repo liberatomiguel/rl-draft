@@ -3197,6 +3197,13 @@ export const CAREER_EN = {
     done: "Got it",
     progress: (n: number, total: number) => `${n} of ${total}`,
     help: "Guide to this screen",
+    beta: {
+      title: "Road to Worlds is in beta",
+      body: "The career mode is playable from the first qualifier to the World Championship, but balance, pacing and prices are still being tuned.",
+      feedback: "Tell us what feels off, what is missing and what you enjoyed. Feedback on Discord decides what we fix first.",
+      discord: "Join the Discord",
+      close: "Start my career",
+    },
     hub: {
       welcome: {
         title: "Welcome to Road to Worlds",

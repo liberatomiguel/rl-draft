@@ -4039,21 +4039,18 @@ export const FEATURES = {
    */
   showEliminatorTeam: true,
   /**
-   * Road to Worlds career mode (v1.5, alpha). ON in dev and tests (NODE_ENV
-   * !== "production"), OFF in production builds unless the build sets
-   * NEXT_PUBLIC_CAREER_MODE=1 — for local preview builds only, set inline
-   * (`NEXT_PUBLIC_CAREER_MODE=1 npm run build`). Never put it in .env* files or
-   * in the production Worker's build variables: it would ship the alpha on
-   * rocketdraft.app (docs/DEPLOY-CLOUDFLARE.md §5). NODE_ENV is
-   * always inlined; NEXT_PUBLIC_CAREER_MODE is inlined when set at build time
-   * and otherwise reads as undefined on the client — either way the value is
-   * fixed per build.
+   * Road to Worlds career mode. Shipped with v2.0.0 (12/11/2026, BETA tag), so
+   * it is ON in every build unless the build sets NEXT_PUBLIC_CAREER_MODE=0
+   * (the kill switch: a production deploy without the mode). Before 2.0 it was
+   * the other way round (off unless =1); the default flipped at launch so the
+   * production deploy does not depend on a dashboard variable being present.
+   * NEXT_PUBLIC_CAREER_MODE is inlined when set at build time and otherwise
+   * reads as undefined on the client — either way the value is fixed per build.
    * Off → no home card, no nav entry, `/career` layout calls notFound(), and
    * `scripts/postexport.mjs` deletes `out/career*` so the host serves the 404
    * page. `scripts/postexport.mjs` mirrors this expression — keep them in sync.
    */
-  careerMode:
-    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_CAREER_MODE === "1",
+  careerMode: process.env.NEXT_PUBLIC_CAREER_MODE !== "0",
   /**
    * Miguel's original hard roster rule (2+ starter swaps in one window zero
    * the Season Points) instead of the shipped tiered Roster Stability. Kept

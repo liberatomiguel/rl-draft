@@ -145,7 +145,7 @@ describe("deriveOwnedIds — pre-season, grants, the rank track", () => {
 
   it("every frozen board pays its own band (rc.54): #10 on one board and #3 on another pays both", () => {
     const ids = deriveOwnedIds(
-      facts({ preseason: snap({ position: 10, positions: { mmr: 10, championships: 3, best_sam: 77 } }) }),
+      facts({ preseason: snap({ position: 10, positions: { mmr: 10, championships: 3, titles_legacy: 77 } }) }),
     );
     expect(ids).toEqual(
       expect.arrayContaining(["season-elite-ps", "legacy-title-ps-board-elite", "season-third-place-ps", "legacy-title-ps-board-3"]),
@@ -153,7 +153,7 @@ describe("deriveOwnedIds — pre-season, grants, the rank track", () => {
     expect(ids).not.toContain("season-champion-ps");
     expect(ids).not.toContain("season-finalist-ps"); // #77 is outside every band
     // The same band on two boards is one reward, and the rank reward is independent.
-    const twice = deriveOwnedIds(facts({ preseason: snap({ rankId: "gold", position: null, positions: { best_legacy: 2, titles_legacy: 2 } }) }));
+    const twice = deriveOwnedIds(facts({ preseason: snap({ rankId: "gold", position: null, positions: { championships: 2, titles_legacy: 2 } }) }));
     expect(twice.filter((id) => id === "season-runner-up-ps")).toHaveLength(1);
     expect(twice).toContain("pre-season-gold");
   });

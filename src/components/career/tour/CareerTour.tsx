@@ -49,7 +49,14 @@ import {
   HeartPulseIcon,
 } from "@/components/ui/icons";
 import { type CareerCopy, useCareerCopy } from "@/content/careerCopy";
+import { Button } from "@/components/ui/Button";
+import { DiscordIcon } from "@/components/ui/icons";
+import { Modal } from "@/components/ui/Modal";
+import { SITE } from "@/config/site";
 import { careerTourId, tourSeen } from "@/lib/tours";
+
+/** Marker of the one-time beta notice in `profile.tours` (not a tour chapter). */
+const CAREER_BETA_NOTICE = "career.beta";
 import { useCareerStore } from "@/store/careerStore";
 import { useProfileStore } from "@/store/profileStore";
 
@@ -161,6 +168,10 @@ export function CareerTour() {
   // The open chapter is tied to the route it was opened on: leaving the screen
   // closes it (the element it pointed at is gone) without an effect.
   const [opened, setOpened] = useState<{ chapter: Chapter; route: string } | null>(null);
+  // 2.0.0: once, right after the HQ chapter closes for the first time: the mode
+  // is in beta and feedback goes to Discord (`profile.tours["career.beta"]`).
+  const betaSeen = useProfileStore((s) => tourSeen(s.tours, CAREER_BETA_NOTICE));
+  const [betaOpen, setBetaOpen] = useState(false);
 
   const route = careerTourRoute(pathname);
   // null on Calendar, Market, Standings, Inbox and Club: no tour, no help button.
@@ -196,7 +207,12 @@ export function CareerTour() {
       // The explainer this chapter replaced: keeps its analytics event and its flag.
       if (open === "hub" && !save.flags["seenHub"]) markFlag("seenHub");
     }
+    if (open === "hub" && !betaSeen) setBetaOpen(true);
     setOpened(null);
+  };
+  const closeBeta = () => {
+    markTourSeen(CAREER_BETA_NOTICE);
+    setBetaOpen(false);
   };
 
   if (!save || !chapter) return null;
@@ -224,6 +240,32 @@ export function CareerTour() {
           onClose={close}
         />
       ) : null}
+
+      <Modal
+        open={betaOpen}
+        title={C.tour.beta.title}
+        onClose={closeBeta}
+        actions={
+          <>
+            {SITE.discordUrl ? (
+              <a
+                href={SITE.discordUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
+              >
+                <DiscordIcon className="h-4 w-4" /> {C.tour.beta.discord}
+              </a>
+            ) : null}
+            <Button variant="primary" onClick={closeBeta}>
+              {C.tour.beta.close}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-sub">{C.tour.beta.body}</p>
+        <p className="mt-3 text-sm leading-relaxed text-sub">{C.tour.beta.feedback}</p>
+      </Modal>
     </>
   );
 }

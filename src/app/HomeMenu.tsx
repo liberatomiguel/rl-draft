@@ -37,6 +37,7 @@ import { useAccountStore } from "@/store/accountStore";
 import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/lazyRunStore";
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useNewDots } from "@/store/useNewItems";
+import { useSignInDialog } from "@/store/signInDialog";
 import { Badge } from "@/components/ui/Badge";
 import { DiscordIcon } from "@/components/ui/icons";
 import { NewDot } from "@/components/ui/NewDot";
@@ -46,6 +47,8 @@ import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
+import { LaunchNotice } from "@/components/screens/LaunchNotice";
+import { SEASON } from "@/config/season";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { MissionsPanel } from "@/components/MissionsPanel";
 
@@ -139,9 +142,18 @@ export default function HomeMenu() {
   return (
     <>
       <FirstRunTutorial />
+      {playtest ? null : <LaunchNotice />}
       {playtest ? null : <SeasonRecap />}
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
       <section className="px-2 pb-4 pt-3 text-center sm:pb-6 sm:pt-10 md:pt-14">
+        {/* 2.0.0: the season's name, quiet, above the tagline (not in the playtest build). */}
+        {playtest ? null : (
+          <p className="mb-2 flex items-center justify-center gap-3 sm:mb-3" aria-label={SEASON.name}>
+            <span aria-hidden="true" className="h-px w-8 bg-gradient-to-r from-transparent to-orange/50" />
+            <span className="display text-[11px] font-bold uppercase tracking-[0.42em] text-orange-bright/90 sm:text-xs">{SEASON.name}</span>
+            <span aria-hidden="true" className="h-px w-8 bg-gradient-to-l from-transparent to-orange/50" />
+          </p>
+        )}
         <p className="kicker mb-2 sm:mb-4">{APP.tagline}</p>
         <h1 className="display mx-auto max-w-3xl text-4xl font-bold uppercase leading-[0.95] tracking-[0.08em] sm:text-5xl md:text-7xl">
           <span className="text-ink">Rocket</span>
@@ -526,7 +538,7 @@ function Tile({
 }
 
 /** Discreet, low-key sign-in nudge (v1.4) — renders only when accounts are
- *  configured AND the player is signed out. */
+ *  configured AND the player is signed out. Opens login without leaving home. */
 function HomeSignInNudge() {
   const { HOME: H } = useCopy();
   const mounted = useMounted();
@@ -535,9 +547,13 @@ function HomeSignInNudge() {
   if (!mounted || !enabled || status !== "signedOut") return null;
   return (
     <p className="mt-3 text-center">
-      <AppLink href="/profile" className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline">
+      <button
+        type="button"
+        onClick={() => useSignInDialog.getState().show()}
+        className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
+      >
         {H.signInNudge} →
-      </AppLink>
+      </button>
     </p>
   );
 }

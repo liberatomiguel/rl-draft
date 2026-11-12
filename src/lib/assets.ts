@@ -23,6 +23,15 @@
 import bannerAnimList from "@/generated/banner-anim.json";
 import manifestJson from "@/generated/asset-manifest.json";
 
+/** Optimized captures of the live game, used only by the 2.0 launch announcement. */
+export const LAUNCH_NOTICE_IMAGES = {
+  career: "/announcements/2.0-career.webp",
+  season: "/announcements/2.0-season.webp",
+  challenges: "/announcements/2.0-challenges.webp",
+  collection: "/announcements/2.0-collection.webp",
+} as const;
+export type LaunchNoticeTab = keyof typeof LAUNCH_NOTICE_IMAGES;
+
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };

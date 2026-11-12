@@ -26,6 +26,16 @@ return 100 rows, a signed-in sync still updates its own row).
   `postgres`, it let anyone holding the public key change or delete profile rows.
   Both views are now SELECT-only.
 
+## DONE: the freeze ran on 12/11/2026 at 13:05 UTC
+
+439 accounts placed, 462 rows in `archive.profiles_preseason_final`, `xp` / `mmr`
+locked (a client write was tried in a rolled-back transaction and changed
+nothing). **Three boards only: `mmr`, `championships`, `titles_legacy`.** Miguel
+dropped the two "highest overall" boards from the rewards the same day (too many
+ties), so `best_legacy` / `best_sam` are NOT in `preseason_positions`, and the
+SQL below, which shows five, is the earlier draft kept for reference. 77 accounts
+hold a board reward: 2 champions, 2 runners-up, 3 thirds, 16 elite, 73 finalists.
+
 ## T-15 min: freeze the pre-season (run once, one transaction)
 
 From this moment v1.4.8 clients can no longer move `xp` / `mmr` in the cloud

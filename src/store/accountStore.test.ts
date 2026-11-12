@@ -675,7 +675,7 @@ describe("Season 1 cutover: a pre-season account signs in (rc.54)", () => {
   it("clean device: reset to Season 1, peak rank archived, every frozen board pays its band", async () => {
     const s = signedIn(session());
     sb.fetchCloudRow.mockResolvedValue(
-      preseasonRow({ preseasonPosition: 10, preseasonPositions: { mmr: 10, championships: 3, best_sam: 140 } }),
+      preseasonRow({ preseasonPosition: 10, preseasonPositions: { mmr: 10, championships: 3, titles_legacy: 140 } }),
     );
     await useAccountStore.getState().syncNow(s);
 
@@ -689,7 +689,7 @@ describe("Season 1 cutover: a pre-season account signs in (rc.54)", () => {
       rankId: "supersonic-legend",
       titles: 125,
       position: 10,
-      positions: { mmr: 10, championships: 3, best_sam: 140 },
+      positions: { mmr: 10, championships: 3, titles_legacy: 140 },
     });
     const owned = Object.keys(profile.cosmetics.owned);
     // Rank: the peak only. Boards: Elite (#10 rating) and Third (#3 titles); #140 pays nothing.
@@ -709,7 +709,7 @@ describe("Season 1 cutover: a pre-season account signs in (rc.54)", () => {
     // What goes back to the cloud is a Season 1 profile that still carries the archive.
     const pushed = pushedDurable(0);
     expect(pushed.xp).toBe(0);
-    expect(pushed.legacy?.preseason?.positions).toEqual({ mmr: 10, championships: 3, best_sam: 140 });
+    expect(pushed.legacy?.preseason?.positions).toEqual({ mmr: 10, championships: 3, titles_legacy: 140 });
   });
 
   it("the cloud's frozen places replace an earlier copy (a board frozen again before launch)", async () => {

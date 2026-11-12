@@ -54,9 +54,11 @@ export interface SeasonState {
   regionTitles?: Partial<Record<Region, number>>;
 }
 
-/** The five boards the pre-season ended with (v1.4.8), by their cloud column. A
- *  player's final place on each one is frozen at the Season 1 cutover. */
-export const PRESEASON_BOARDS = ["mmr", "championships", "titles_legacy", "best_legacy", "best_sam"] as const;
+/** The pre-season boards whose final place was frozen at the Season 1 cutover
+ *  (12/11/2026, 13:05 UTC), by their cloud column: rating, titles, Legacy titles.
+ *  The two "highest overall" boards of v1.4.8 are not here: dozens of accounts
+ *  shared their top value, so a place there said nothing (Miguel, 12/11). */
+export const PRESEASON_BOARDS = ["mmr", "championships", "titles_legacy"] as const;
 export type PreseasonBoard = (typeof PRESEASON_BOARDS)[number];
 
 /** What the player achieved in the pre-season, frozen at the Season 1 reset. */

@@ -26,6 +26,7 @@ import { useMounted } from "@/store/useMounted";
 import { useOverlayHold } from "@/store/overlayHoldStore";
 import { selectTutorialDue, useProfileStore } from "@/store/profileStore";
 import { useAccountStore } from "@/store/accountStore";
+import { useSignInDialog } from "@/store/signInDialog";
 import { Button } from "@/components/ui/Button";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { BadgeEmblem, CosmeticPreview } from "@/components/cosmetics/CosmeticViews";
@@ -44,7 +45,14 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
 
   // Automatic showing: once, never on top of the tutorial, only for pre-season profiles.
   // rc.29: "after the tutorial" = once it is no longer due (a veteran skips it).
-  const auto = !seen && !!preseason && !tutorialDue;
+  // 2.0.0: the launch announcement goes first, and a login started from it
+  // finishes before the recap opens (so the recap already has the board places).
+  const launchSeen = useProfileStore((s) => Boolean(s.flags.seenLaunchNotice));
+  const signInOpen = useSignInDialog((s) => s.open);
+  // Only for a player who has something to be shown: every legacy reward needs a
+  // finished pre-season run (XP without one, 4 real accounts, earns nothing).
+  const hasLegacy = !!preseason && preseason.runsCompleted > 0;
+  const auto = !seen && hasLegacy && !tutorialDue && launchSeen && !signInOpen;
   const show = mounted && (force || auto);
   // The login calendar and the unlock pop-ups wait behind it (DRAFT-13).
   useOverlayHold("intro", show);
@@ -135,7 +143,10 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
                         key={id}
                         className={cx("panel min-w-0 overflow-hidden p-2.5", cosmeticById.get(id)?.kind === "title" && "sm:col-span-2")}
                       >
-                        <CosmeticPreview id={id} />
+                        <CosmeticPreview
+                          id={id}
+                          className={cosmeticById.get(id)?.kind === "title" ? "!flex !w-full !flex-col !items-start !gap-1.5" : undefined}
+                        />
                       </div>
                     ))}
                   </div>

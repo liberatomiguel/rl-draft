@@ -3172,6 +3172,13 @@ export const CAREER_PT: CareerCopy = {
     done: "Entendi",
     progress: (n: number, total: number) => `${n} de ${total}`,
     help: "Guia desta tela",
+    beta: {
+      title: "O Road to Worlds está em beta",
+      body: "O modo carreira já dá para jogar do primeiro qualificatório ao Mundial, mas balanceamento, ritmo e preços ainda estão sendo ajustados.",
+      feedback: "Conte o que pareceu estranho, o que falta e o que você curtiu. O feedback no Discord define o que corrigimos primeiro.",
+      discord: "Entrar no Discord",
+      close: "Começar minha carreira",
+    },
     hub: {
       welcome: {
         title: "Bem-vindo ao Road to Worlds",

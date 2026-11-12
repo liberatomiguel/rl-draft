@@ -1,6 +1,7 @@
 "use client";
 
 import { AppLink } from "@/components/ui/AppLink";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { FEATURES } from "@/config/balance";
@@ -10,6 +11,7 @@ import { sfx } from "@/lib/sfx";
 import { clearRunInProgress } from "@/store/lazyRunStore";
 import { useSettings } from "@/store/settingsStore";
 import { useAccountStore } from "@/store/accountStore";
+import { useSignInDialog } from "@/store/signInDialog";
 import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
 import { useNewDots, useProfileNew, useNewTab } from "@/store/useNewItems";
@@ -28,6 +30,7 @@ import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
 
 type NavKey = "home" | "play" | "career" | "challenges" | "collection" | "profile";
+const SignInDialog = dynamic(() => import("@/components/SignInDialog"), { ssr: false });
 const BASE_NAV_ITEMS: { href: string; key: NavKey; icon: (p: { className?: string }) => React.ReactNode }[] = [
   { href: "/", key: "home", icon: HomeIcon },
   { href: "/play", key: "play", icon: PlayIcon },
@@ -67,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useNewTab("nav:profile", Object.keys(cosmeticArrivals.owned), pathname.startsWith("/profile"));
   const hasDot = (key: NavKey): boolean =>
     (key === "collection" || key === "challenges" || key === "profile") && dots[key];
+  const signInOpen = useSignInDialog((s) => s.open);
 
   // Leaving the run (any page that isn't /play) RESETS it automatically
   // (v0.7.0 — the leave-confirmation modal was removed by direction). The run
@@ -163,6 +167,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <CosmeticUnlockModal />
         </>
       )}
+      {signInOpen ? <SignInDialog /> : null}
 
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
@@ -306,7 +311,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 /** Header account chip (v1.4): "Log in" when signed out, username + rank emblem
- *  when signed in. Both route to /profile (the account hub). Hidden entirely when
+ *  when signed in. Guests open the inline login; account holders open /profile. Hidden when
  *  accounts aren't configured, so the guest header is unchanged. */
 function AccountChip() {
   const t = useCopy();
@@ -333,13 +338,13 @@ function AccountChip() {
     );
   }
   return (
-    <AppLink
-      href="/profile"
-      onClick={() => sfx.click()}
+    <button
+      type="button"
+      onClick={() => { sfx.click(); useSignInDialog.getState().show(); }}
       className="display rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:bg-white/5 hover:text-ink"
     >
       {t.NAV_UI.logIn}
-    </AppLink>
+    </button>
   );
 }
 

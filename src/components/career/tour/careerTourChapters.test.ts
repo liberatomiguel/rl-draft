@@ -16,7 +16,8 @@ const REMOVED = ["calendar", "market", "standings", "news", "inbox", "club"] as 
 /** Keys of `tour` that are a chapter (an object of steps), not a label or a formatter. */
 const chapterKeys = (tour: Record<string, unknown>): string[] =>
   Object.keys(tour)
-    .filter((key) => typeof tour[key] === "object" && tour[key] !== null)
+    // `beta` (2.0.0) is the one-time beta notice shown after the HQ chapter, not a chapter.
+    .filter((key) => key !== "beta" && typeof tour[key] === "object" && tour[key] !== null)
     .sort();
 
 describe("career tour chapters", () => {

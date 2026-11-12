@@ -91,10 +91,9 @@ narrative to CHANGELOG.md and trim STATUS. Keep both under ~600 words.
   persist keys/versions are frozen by `src/store/persistContract.test.ts`.
   Change its `CONTRACT` only on purpose, with a DESIGN-DECISIONS entry and an
   additive `migrate`. Never serve the game from another host.
-- **`FEATURES.careerMode`** (balance.ts) is on in dev/test. Production builds
-  turn it on only with `NEXT_PUBLIC_CAREER_MODE=1` (never for the production
-  deploy until career ships). `scripts/postexport.mjs` mirrors the expression,
-  so keep them in sync.
+- **`FEATURES.careerMode`** (balance.ts) is ON in every build since v2.0.0
+  (career shipped, BETA tag). `NEXT_PUBLIC_CAREER_MODE=0` is the kill switch.
+  `scripts/postexport.mjs` mirrors the expression, so keep them in sync.
 - **The data JSONs are GENERATED** (since v0.4). Source of truth is
   `data-sources/teams.md`. To change data: edit it, run `npm run build:data`,
   then `npm run validate:data`. Do NOT hand-edit `src/data/*.json` **except**

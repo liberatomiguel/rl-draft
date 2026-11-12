@@ -283,6 +283,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
       seenTutorial: local.flags.seenTutorial || cloud.flags.seenTutorial,
       seenSeasonRecap: Boolean(local.flags.seenSeasonRecap) || Boolean(cloud.flags.seenSeasonRecap),
       seenDraftTour: Boolean(local.flags.seenDraftTour) || Boolean(cloud.flags.seenDraftTour),
+      seenLaunchNotice: Boolean(local.flags.seenLaunchNotice) || Boolean(cloud.flags.seenLaunchNotice),
     },
     settings: local.settings,
   };

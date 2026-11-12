@@ -23,9 +23,7 @@ import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import {
   accountsEnabled,
-  fetchHallOfFame,
   fetchLeaderboard,
-  type HallOfFameRow,
   type LeaderboardCategory,
   type LeaderboardRow,
 } from "@/lib/supabase";
@@ -53,12 +51,12 @@ type BoardKey =
   | "euTitles"
   | "oceTitles"
   | "menaTitles"
-  | "worlds"
-  | "hallOfFame";
+  | "worlds";
 
 /** rc.54 (Miguel, 12/11): the Season 1 boards. Every one counts this season only,
- *  so a new season is a new race; the frozen pre-season board closes the list. */
-const BOARDS: { key: BoardKey; category?: LeaderboardCategory }[] = [
+ *  so a new season is a new race. 2.0.0: the frozen pre-season board is not a tab
+ *  (its places live on as each player's rewards and in the recap). */
+const BOARDS: { key: BoardKey; category: LeaderboardCategory }[] = [
   { key: "season", category: "season_mmr" },
   { key: "titles", category: "season_titles" },
   { key: "legacyTitles", category: "season_legacy_titles" },
@@ -68,7 +66,6 @@ const BOARDS: { key: BoardKey; category?: LeaderboardCategory }[] = [
   { key: "oceTitles", category: "season_titles_oce" },
   { key: "menaTitles", category: "season_titles_mena" },
   { key: "worlds", category: "season_worlds" },
-  { key: "hallOfFame" },
 ];
 
 type Row = {
@@ -97,48 +94,11 @@ function fromBoard(r: LeaderboardRow): Row {
   };
 }
 
-function fromHall(r: HallOfFameRow): Row {
-  return {
-    username: r.username,
-    value: r.mmr,
-    rankXp: r.xp,
-    seasonMmr: r.mmr,
-    seasonTitles: 0,
-    championships: r.championships,
-    cosmetics: rowCosmetics({ ...r, equipped_badges: [] }),
-    preseasonPosition: r.position,
-    grants: r.grants,
-  };
-}
-
 /** rc.2: dev/staging builds without Supabase show a fictional full board. */
 const previewMode = !accountsEnabled && FEATURES.previewTools;
 
 function previewRows(board: BoardKey): Row[] {
   const all = previewLeaderboardRows();
-  if (board === "hallOfFame") {
-    return all
-      .filter((r) => r.preseason_position !== null)
-      .sort((a, b) => (a.preseason_position ?? 0) - (b.preseason_position ?? 0))
-      .map((r) =>
-        fromHall({
-          username: r.username,
-          position: r.preseason_position ?? 0,
-          mmr: r.preseason_mmr,
-          xp: r.preseason_xp,
-          championships: r.championships,
-          season_xp: r.season_xp,
-          season_mmr: r.season_mmr,
-          season_titles: r.season_titles,
-          equipped_title: r.equipped_title,
-          equipped_frame: r.equipped_frame,
-          equipped_banner: r.equipped_banner,
-          grants: r.grants,
-          equipped_badges: [],
-          preseason_position: r.preseason_position,
-        }),
-      );
-  }
   const key = BOARDS.find((b) => b.key === board)?.category ?? "season_mmr";
   return all
     .map((r) => fromBoard({ ...r, value: (r as unknown as Record<string, number>)[key] ?? 0 }))
@@ -162,10 +122,7 @@ export function LeaderboardsView() {
     let alive = true;
     if (previewMode) return;
     const def = BOARDS.find((b) => b.key === board)!;
-    const p = def.category
-      ? fetchLeaderboard(def.category, 100).then((rows) => rows.map(fromBoard))
-      : fetchHallOfFame(100).then((rows) => rows.map(fromHall));
-    p.then((rows) => {
+    fetchLeaderboard(def.category, 100).then((rows) => rows.map(fromBoard)).then((rows) => {
       if (alive) setLoaded({ board, rows });
     });
     return () => {
@@ -175,7 +132,6 @@ export function LeaderboardsView() {
 
   const loading = !preview && loaded?.board !== board;
   const rows = preview ?? (loaded?.board === board ? loaded.rows : []);
-  const isHall = board === "hallOfFame";
 
   return (
     <div className="rise-in mx-auto max-w-3xl">
@@ -211,17 +167,17 @@ export function LeaderboardsView() {
               </button>
             ))}
           </div>
-          <p className="mb-4 text-xs text-faint">{isHall ? L.hallHint : board === "season" ? L.seasonBoardHint : (L.boardHints[board] ?? null)}</p>
+          <p className="mb-4 text-xs text-faint">{board === "season" ? L.seasonBoardHint : (L.boardHints[board] ?? null)}</p>
 
           <Panel className="divide-y divide-line/60 overflow-hidden">
             {loading ? (
               <p className="p-4 text-sm text-faint">{L.syncing}</p>
             ) : rows.length === 0 ? (
-              <p className="p-4 text-sm text-faint">{isHall ? L.hallEmpty : L.empty}</p>
+              <p className="p-4 text-sm text-faint">{L.empty}</p>
             ) : (
               rows.map((r, i) => {
                 const isYou = !!username && r.username === username;
-                const place = isHall ? r.preseasonPosition ?? i + 1 : i + 1;
+                const place = i + 1;
                 const rank = rankForXp(r.rankXp);
                 return (
                   <BannerSurface

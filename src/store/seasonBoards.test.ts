@@ -125,11 +125,13 @@ describe("titles per region lock", () => {
 
 describe("frozen pre-season places", () => {
   it("the best place per board wins a merge; unknown boards and junk are ignored", () => {
-    expect(mergePlaces({ mmr: 10, championships: 3 }, { mmr: 12, best_sam: 7 })).toEqual({
+    expect(mergePlaces({ mmr: 10, championships: 3 }, { mmr: 12, titles_legacy: 7 })).toEqual({
       mmr: 10,
       championships: 3,
-      best_sam: 7,
+      titles_legacy: 7,
     });
+    // The two "highest overall" boards are not rewarded: a place there is dropped.
+    expect(mergePlaces({ mmr: 4, best_sam: 1 } as never, { best_legacy: 1 } as never)).toEqual({ mmr: 4 });
     expect(mergePlaces(undefined, undefined)).toBeUndefined();
     expect(mergePlaces({ mmr: 0 }, {})).toBeUndefined();
   });

@@ -321,12 +321,11 @@ async function stripPlaytestCuts(ctx) {
 }
 
 /**
- * CAREER GATE. Road to Worlds (alpha) is OFF in production builds unless the
- * build sets NEXT_PUBLIC_CAREER_MODE=1 — `FEATURES.careerMode` in
+ * CAREER GATE. Road to Worlds shipped with v2.0.0: it is ON unless the build
+ * sets NEXT_PUBLIC_CAREER_MODE=0 — `FEATURES.careerMode` in
  * src/config/balance.ts is
- *     NODE_ENV !== "production" || NEXT_PUBLIC_CAREER_MODE === "1"
- * and `next build` always runs with NODE_ENV=production, so only the second
- * half matters here (KEEP THE TWO IN SYNC). With the flag off the career
+ *     NEXT_PUBLIC_CAREER_MODE !== "0"
+ * (KEEP THE TWO IN SYNC). With the flag off the career
  * layout calls notFound(), but a static export still writes out/career.html,
  * out/career.txt and out/career/** — 404 boundaries the host would serve with
  * HTTP 200. Delete them so the host serves the real 404 page instead.
@@ -338,7 +337,7 @@ async function stripPlaytestCuts(ctx) {
  * flag-off build must not link to /career, and the sitemap must never list it.
  */
 async function stripCareerWhenDisabled(ctx) {
-  const careerOn = process.env.NEXT_PUBLIC_CAREER_MODE === "1";
+  const careerOn = process.env.NEXT_PUBLIC_CAREER_MODE !== "0";
   ctx.summary.push(`career ${careerOn ? "ON" : "OFF"}`);
   const home = await readFile(join(ctx.out, "index.html"), "utf8");
   const homeLinksCareer = home.includes('href="/career');
@@ -349,9 +348,9 @@ async function stripCareerWhenDisabled(ctx) {
 
   if (careerOn) {
     if (!homeLinksCareer) {
-      console.warn("  WARNING: NEXT_PUBLIC_CAREER_MODE=1 but the home page has no /career link — was the build made with the flag off?");
+      console.warn("  WARNING: career mode is ON but the home page has no /career link — was the build made with NEXT_PUBLIC_CAREER_MODE=0?");
     }
-    console.log("  career mode ON (NEXT_PUBLIC_CAREER_MODE=1) — /career kept (pages carry noindex)");
+    console.log("  career mode ON (default since v2.0.0) — /career kept (pages carry noindex)");
     return;
   }
   if (homeLinksCareer) {

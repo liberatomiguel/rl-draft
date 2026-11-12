@@ -10,7 +10,74 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.55**)
+## [2.0.0] — 2026-11-12 · "Season 1"
+
+**Released to production on 12/11/2026.** The pre-season was frozen at 13:05 UTC
+(439 accounts placed; `docs/handoff-2.0/CUTOVER.md`). What players get, in short
+(the public notes are `CHANGELOG_PAGE` in `src/content/copy.en.ts` / `copy.pt.ts`):
+
+- **Road to Worlds (beta):** a full career mode, from open qualifiers to Worlds.
+- **Season 1:** XP and rank restart on a longer ladder, Season Rating from 400,
+  collection / history / stats kept, pre-season rewards for the peak rank and for
+  the top 50 of the frozen Rating, Titles and Legacy Titles boards.
+- **Draft:** five Regional Drafts, Challenges 2.0 (45 challenges, 135 stars),
+  Daily Quiz, missions, login streak, a guided tour.
+- **Profile:** titles, badges, animated banners; 114 achievements; nine season
+  leaderboards.
+- **Data:** a bigger database, new special cards with photos, national-team cards.
+- **Web:** a page per team and player, faster pages, reworked mobile layout,
+  inline sign-in.
+
+The entries below are the release candidates, newest first, as they were built.
+
+### 2.0.0 (2026-11-12), the release
+
+#### Added
+- **Launch announcement** (`LaunchNotice`, home, once per player via the synced
+  `flags.seenLaunchNotice`): four captures of the live game (Road to Worlds,
+  Season 1, Challenges, Collection), six highlights, primary action opens the
+  inline sign-in for a guest, secondary goes to the changelog. It opens before the
+  pre-season recap, and the recap waits for a sign-in started from it, so a
+  veteran who logs in there sees the recap with the board places already synced.
+- Public changelog page: the v2.0.0 entry in English and Portuguese.
+- **Beta notice in Road to Worlds:** a short dialog right after the HQ tour closes
+  for the first time (once per player, `profile.tours["career.beta"]`): the mode
+  is in beta, feedback goes to Discord, with the home page's Discord button.
+- **"Season 1" above the tagline on the home page**, between two hairlines.
+- **Manual grants inserted in production** (`profile_grants`, 35 rows for 14
+  accounts: creator, pro, contributor, supporter, early supporter, 50/50 staff).
+
+#### Changed
+- **Pre-season board rewards come from three boards: Rating, Titles and Legacy
+  Titles** (Miguel, 12/11). The two "highest overall" boards are out: dozens of
+  accounts shared their top value. `PRESEASON_BOARDS` and the freeze store these
+  three only. Result of the freeze: 77 accounts hold a board reward (2 champions,
+  2 runners-up, 3 thirds, 16 elite, 73 finalists; one account can hold several).
+- **The Pre-season Hall of Fame tab is gone** from the leaderboards (nine season
+  boards remain). The frozen places live on as rewards and in the recap.
+- **Road to Worlds is ON by default** (`FEATURES.careerMode`:
+  `NEXT_PUBLIC_CAREER_MODE !== "0"`, mirrored in `postexport.mjs`). It used to
+  need `NEXT_PUBLIC_CAREER_MODE=1` in the build; the production deploy no longer
+  depends on a dashboard variable. `=0` is the kill switch.
+- Merged production `main` (v1.4.7 announcement, v1.4.8 inline sign-in): the
+  sign-in dialog now exists in the 2.0 line; the 1.4.7 teaser became the launch
+  announcement.
+- Recap reward grid: a title stacks its chip above its name (long board titles
+  were cut).
+- **The Supporter grant is named "Special Supporter"** (title, badge and unlock
+  line, EN and PT).
+- **The pre-season recap opens only for a player with something to show** (a
+  finished pre-season run). XP without a finished run, 4 real accounts, earned
+  nothing and used to get the recap with an empty reward page.
+
+#### Not done / not verified
+- The staging-only tools (Unlock every cosmetic, the fictional leaderboard) are
+  gated by `FEATURES.previewTools`, which is false in a production build without
+  `NEXT_PUBLIC_NOINDEX`; checked by reading the flag, not by a production-format
+  build on this machine.
+- Request budget (`scripts/request-budget.mjs`) not measured: Playwright is not
+  installed here.
+
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -3006,6 +3073,27 @@ reviewed independently and re-checked in the browser.
   pairings were drawn at once (scores hidden) — and the user's absence from them gave the
   animating result away. Root cause: pairings were shown for every simulated round. Now a
   round's pairings only show once every earlier round is fully revealed.
+
+---
+
+## [1.4.8] — 2026-11-05 · Inline email login
+
+### Changed
+- Announcement, header and home sign-in actions open a lazy-loaded email/code dialog in place. Successful authentication closes it and keeps the current route and run. Reopening an unfinished login resumes the code step; Profile reuses the same form.
+- Email/code forms support native validation, keyboard submission, automatic dialog focus, keyboard containment and readable request errors. In-flight requests cannot be duplicated by repeated submissions.
+- Initial English and saved language preferences are unchanged.
+
+### Fixed
+- Login calls to action previously navigated to Profile, interrupting the player's current screen and clearing an active run through the existing leave-run behavior.
+
+---
+
+## [1.4.7] — 2026-11-04 · Rocket Draft 2.0 announcement
+
+### Changed
+- Replace the Season 1 notice with a responsive 2.0 announcement: real rc.36.10 staging captures, Road to Worlds overview, expanded player/team database, five Regional Draft scenes, three-star challenges, missions/quiz/login cosmetics, season reset and pre-season titles/badges, and the existing profile sign-in action. English and Portuguese copy; signed-in confirmation remains conditional on the real account state.
+- Show once per document load after the tutorial, including on refresh/reopening; navigating back home after dismissal keeps it closed. The old permanent seen marker is ignored; player save keys are unchanged.
+- The announcement owns its portal, focus trap, Escape/backdrop dismissal and scrollable body with persistent close/account controls. Shared modals and game modes are unchanged. No staging code is merged.
 
 ---
 

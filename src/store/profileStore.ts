@@ -199,6 +199,8 @@ export interface ProfileState {
     seenSeasonRecap: boolean;
     /** rc.50: the draft's guided tour, shown once to everyone in Season 1 (its own flag: a veteran who saw the old "How to play" modal sees it too). Additive; absent = not seen. */
     seenDraftTour?: boolean;
+    /** 2.0.0: the launch announcement ("Rocket Draft 2.0 is here"), shown once. Additive; absent = not seen. */
+    seenLaunchNotice?: boolean;
   };
   /** rc.54: guided tours seen, tour id → the `SEASON.id` it was seen in
    *  (`src/lib/tours.ts`). Each tour shows once after the Season 1 reset, to
@@ -346,6 +348,7 @@ const initialData = {
     seenTutorial: false,
     seenSeasonRecap: false,
     seenDraftTour: false,
+    seenLaunchNotice: false,
   },
   tours: {} as Record<string, number>,
 };
