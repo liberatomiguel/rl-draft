@@ -616,6 +616,8 @@ export interface RunResults {
   goalsConceded: number;
   unlockedSpecialIds: string[];
   newAchievementIds: string[];
+  /** rc.51: permanent cosmetic facts this run earned (`engine/runMarks`). */
+  runMarks?: string[];
   /** This run's user totals for the lifetime counters (v1.4). */
   userGoals: number;
   userGameWins: number;

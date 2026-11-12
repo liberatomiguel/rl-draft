@@ -45,7 +45,11 @@ export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy
     case "challenge-perfect":
       return C.sources["challenge-perfect"](challengeById.get(source.challengeId)?.title ?? source.challengeId);
     case "career-mark":
-      return C.sources["career-mark"];
+      return C.sources.marks[source.markId] ?? C.sources["career-mark"];
+    case "run-mark":
+      return C.sources.marks[source.markId] ?? source.markId;
+    case "run-marks-all":
+      return C.sources.marks["run-lock-all"];
     case "career-worlds":
       return C.sources["career-worlds"](source.count);
     case "season-feat":

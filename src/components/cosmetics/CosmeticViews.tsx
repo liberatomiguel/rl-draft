@@ -18,7 +18,19 @@ import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@
 import { BADGE_GLOW_PAD, hasBadgeArt, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
-import bannerMotionParts from "@/generated/banner-motion.json";
+import bannerMotionJson from "@/generated/banner-motion.json";
+
+/** How a banner moves (written by `npm run build:banners`). `parts`: the rc.23
+ *  plane split (a still base + moving planes). `frames`: rc.51, moments of the
+ *  design file's own animation cross-faded over the base, plus `layers`, the
+ *  travelling shapes with the vector (art units) and seconds they travel. */
+interface BannerMotion {
+  parts?: string[];
+  frames?: number;
+  cycle?: number;
+  layers?: { role: string; from: number[]; to: number[]; dur: number; sway: boolean }[];
+}
+const BANNER_MOTION = bannerMotionJson as Record<string, BannerMotion | undefined>;
 
 /** Name + description from the copy dictionary (falls back to the id). */
 export function useCosmeticCopy() {
@@ -398,6 +410,8 @@ export function BannerSurface({
       const y = origin[1] * scale - (200 * scale - h) * (position[1] / 100);
       el.style.setProperty("--cos-pivot-x", `${x}px`);
       el.style.setProperty("--cos-pivot-y", `${y}px`);
+      // rc.51: one art unit in CSS px (the travelling planes move in art units).
+      el.style.setProperty("--cos-u", `${scale.toFixed(4)}px`);
     };
     align();
     const resize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(align);
@@ -406,6 +420,9 @@ export function BannerSurface({
   }, [motion, banner]);
   if (!banner || banner.kind !== "banner") return <div className={cx(className, plainClassName)}>{children}</div>;
   const legend = banner.tier === "legend";
+  const art = banner.style.art;
+  const meta = BANNER_MOTION[art];
+  const framed = meta?.frames !== undefined;
   // Legendary (rc.22): the holo band follows the pointer; on the hero (glow)
   // the whole surface tilts a little, like the legendary titles. DOM-only CSS
   // vars, no re-render; transform only.
@@ -435,21 +452,40 @@ export function BannerSurface({
     <div
       ref={ref}
       data-motion={motion ? "full" : "still"}
-      data-art={banner.style.art}
+      data-art={art}
+      data-frames={framed ? "" : undefined}
       className={cx(bannerClasses(banner), glow && "cos-banner-glow", className)}
-      style={bannerVars(banner, displayPx) as React.CSSProperties}
+      style={{ ...bannerVars(banner, displayPx), ...(framed ? { "--cos-cycle": `${meta?.cycle ?? 8}s` } : null) } as React.CSSProperties}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
-      {motion && bannerMotionLayerSrc(banner.style.art, displayPx) ? <>
+      {motion && framed ? <>
+        {/* rc.51: pre-rendered moments of the design animation; opacity only. */}
+        {Array.from({ length: meta?.frames ?? 0 }, (_, i) =>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} className={`cos-anim cos-frame-${i + 1}`} src={bannerArtSrc(`${art}.f${i + 1}`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />)}
+        {(meta?.layers ?? []).map((l, i) =>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={l.role}
+            className={cx("cos-anim", l.sway ? "cos-sway" : "cos-travel")}
+            style={{ "--fx": l.from[0], "--fy": l.from[1], "--tx": l.to[0], "--ty": l.to[1], "--dur": `${l.dur}s`, "--lag": `${(-l.dur * i) / 2}s` } as React.CSSProperties}
+            src={bannerArtSrc(`${art}.${l.role}`, displayPx)}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />)}
+      </> : motion && bannerMotionLayerSrc(banner.style.art, displayPx) ? <>
         {/* Static pre-rendered texture; only CSS transform/opacity animate. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="cos-anim cos-motion" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
-        {(bannerMotionParts[banner.style.art as keyof typeof bannerMotionParts] ?? []).map(role =>
+        {(meta?.parts ?? []).map(role =>
           // eslint-disable-next-line @next/next/no-img-element
           <img key={role} className={`cos-anim cos-${role}`} src={bannerArtSrc(`${banner.style.art}.${role}`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />)}
       </> : null}
-      {motion && (legend || banner.tier === "epic") && !(bannerMotionParts[banner.style.art as keyof typeof bannerMotionParts] ?? []).length ? <span className="cos-prestige" aria-hidden /> : null}
+      {motion && !framed && (legend || banner.tier === "epic") && !(meta?.parts ?? []).length ? <span className="cos-prestige" aria-hidden /> : null}
       <span className="cos-frame" aria-hidden />
       {children}
     </div>

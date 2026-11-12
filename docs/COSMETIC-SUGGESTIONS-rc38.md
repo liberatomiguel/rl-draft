@@ -1,5 +1,10 @@
 # Sugestões de cosméticos — NÃO implementadas
 
+> **Substituído na rc.51 (12/11/2026).** Miguel revisou esta lista em 11/11 e 16
+> itens foram implementados, com nomes e tipos alterados (ver
+> `docs/PENDING-COSMETICS.md` e `docs/COSMETICS-CATALOG.md`). O texto abaixo é
+> o registro histórico da proposta original.
+
 Seleção recomendada: quatro recompensas para challenges, uma de composição
 no Classic e seis marcos RTW. As restantes são alternativas para escolher,
 não um pedido para cadastrar tudo. Nenhum ID ou recompensa foi criado para

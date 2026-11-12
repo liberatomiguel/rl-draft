@@ -1799,8 +1799,6 @@ html.reduce-fx .card-float {
   animation: cos-motion-shockwave 4.2s linear infinite paused;
 }
 .cos-banner[data-art="overdrive"] > .cos-anim-second { animation-delay: -2.1s; }
-.cos-banner[data-art="wildfire"] > .cos-anim,
-.cos-banner[data-art="heatwave"] > .cos-anim { animation-name: cos-motion-flame; animation-duration: 5s; }
 @keyframes cos-motion-float {
   0%, 100% { transform: translate(0, 1%) scale(0.99); opacity: 0.65; }
   50% { transform: translate(0.6%, -1%) scale(1.035); opacity: 1; }
@@ -1814,10 +1812,6 @@ html.reduce-fx .card-float {
   15% { opacity: 0.65; }
   65% { opacity: 0.85; }
   100% { transform: scale(1.4); opacity: 0; }
-}
-@keyframes cos-motion-flame {
-  0%, 100% { transform: translateY(1%) scaleY(0.98); opacity: 0.6; }
-  50% { transform: translateY(-2%) scaleY(1.04); opacity: 1; }
 }
 .cos-banner[data-live][data-motion="full"] > .cos-anim { display: block; animation-play-state: running; }
 :is(html.lite-fx, html.reduce-fx) .cos-banner[data-motion] > .cos-anim {
@@ -1904,24 +1898,37 @@ html.reduce-fx .card-float {
 /* Original streaks, flames, particles and orbital geometry move separately. */
 .cos-banner[data-art="slipstream"] > :is(.cos-drift, .cos-drift2) { animation: cos-speed-streaks 3.4s linear infinite paused; }
 .cos-banner[data-art="slipstream"] > .cos-drift2 { animation-duration: 4.6s; animation-delay: -2.3s; }
-.cos-banner[data-art="wildfire"] > .cos-anim { animation: cos-fire-flicker 3.2s ease-in-out infinite paused; }
-.cos-banner[data-art="wildfire"] > :is(.cos-drift, .cos-drift2) { animation: cos-rising-embers 3.8s linear infinite paused; }
-.cos-banner[data-art="wildfire"] > .cos-drift2 { animation-duration: 5.4s; animation-delay: -2.7s; }
 .cos-banner[data-art="singularity"] > .cos-anim { animation: cos-gravity-pulse 7s ease-in-out infinite paused; }
 .cos-banner[data-art="singularity"] > .cos-orbit { animation: cos-gravity-tilt 12s ease-in-out infinite paused; }
 .cos-banner[data-art="singularity"] > .cos-drift { animation: cos-gravity-dust 9s ease-in-out -4s infinite paused; }
-.cos-banner[data-art="heatwave"] > .cos-anim { animation: cos-heat-flow 6s ease-in-out infinite paused; }
-.cos-banner[data-art="heatwave"] > .cos-drift { animation-duration: 9s; animation-delay: -4s; }
-.cos-banner[data-art="cosmic-ascension"] > .cos-counter { animation: cos-original-orbit 80s linear reverse infinite paused; }
-.cos-banner[data-art="cosmic-ascension"] > .cos-motion { animation: cos-cosmic-radiance 6s ease-in-out infinite paused; }
 @keyframes cos-speed-streaks { 0% { transform: translateX(-2.5%); opacity: 0; } 20%,75% { opacity: 1; } 100% { transform: translateX(2.5%); opacity: 0; } }
-@keyframes cos-fire-flicker { 0%,100% { transform: skewX(-0.7deg) scaleY(.98); opacity: .75; } 35% { transform: skewX(1deg) scaleY(1.025); opacity: 1; } 70% { transform: skewX(-1deg) scaleY(1.04); opacity: .9; } }
-@keyframes cos-rising-embers { 0% { transform: translate(-.5%,8%); opacity: 0; } 20%,65% { opacity: 1; } 100% { transform: translate(1.6%,-22%); opacity: 0; } }
 @keyframes cos-gravity-pulse { 0%,100% { transform: scale(1); opacity: .7; } 50% { transform: scale(1.05); opacity: 1; } }
 @keyframes cos-gravity-tilt { 0%,100% { transform: rotate(-2.5deg); opacity: .8; } 50% { transform: rotate(2.5deg); opacity: 1; } }
 @keyframes cos-gravity-dust { 0%,100% { transform: translate(-.6%,2%); opacity: .35; } 50% { transform: translate(.6%,-2%); opacity: 1; } }
-@keyframes cos-heat-flow { 0%,100% { transform: translateX(0); opacity: .65; } 50% { transform: translateX(-4.5%); opacity: 1; } }
-@keyframes cos-cosmic-radiance { 0%,100% { opacity: .45; transform: scale(1); } 50% { opacity: 1; transform: scale(1.015); } }
+
+/* rc.51, the FRAME pipeline (DESIGN-DECISIONS, rc.51 section): Wildfire, Heatwave, Cosmic
+   Ascension and every later banner. The base and two more moments of the design
+   file's own animation, each a complete pre-rendered image (filters, masks and
+   blend modes baked in), cross-fade A -> B -> C -> A: frame 2 sits over frame 1,
+   so two opacity tracks are enough. The travelling shapes (embers, dust, rain)
+   are transparent planes moved along the design vector, in art units
+   (--cos-u = one art unit in px). Opacity and transform only: no repaint. */
+.cos-banner[data-frames] > .cos-anim { transform-origin: 50% 50%; }
+.cos-banner[data-frames] > .cos-frame-1 { animation: cos-frame-1 var(--cos-cycle, 8s) linear var(--cos-delay, 0s) infinite paused; }
+.cos-banner[data-frames] > .cos-frame-2 { animation: cos-frame-2 var(--cos-cycle, 8s) linear var(--cos-delay, 0s) infinite paused; }
+@keyframes cos-frame-1 { 0% { opacity: 0; } 33.33%, 66.66% { opacity: 1; } 66.67%, 100% { opacity: 0; } }
+@keyframes cos-frame-2 { 0%, 33.33% { opacity: 0; } 66.66% { opacity: 1; } 100% { opacity: 0; } }
+.cos-banner[data-frames] > .cos-travel { animation: cos-travel var(--dur, 4s) linear var(--lag, 0s) infinite paused; }
+.cos-banner[data-frames] > .cos-sway { animation: cos-sway var(--dur, 6s) ease-in-out var(--lag, 0s) infinite paused; }
+@keyframes cos-travel {
+  0% { transform: translate(calc(var(--fx, 0) * var(--cos-u, 1px)), calc(var(--fy, 0) * var(--cos-u, 1px))); opacity: 0; }
+  18%, 72% { opacity: 1; }
+  100% { transform: translate(calc(var(--tx, 0) * var(--cos-u, 1px)), calc(var(--ty, 0) * var(--cos-u, 1px))); opacity: 0; }
+}
+@keyframes cos-sway {
+  0%, 100% { transform: translate(calc(var(--fx, 0) * var(--cos-u, 1px)), calc(var(--fy, 0) * var(--cos-u, 1px))); }
+  50% { transform: translate(calc(var(--tx, 0) * var(--cos-u, 1px)), calc(var(--ty, 0) * var(--cos-u, 1px))); }
+}
 
 /* Quiet rarity accents: static paint composited through opacity only. */
 .cos-banner > .cos-prestige {

@@ -1,6 +1,6 @@
 # Pendências de cosméticos — acompanhamento
 
-Atualizado em 09/11/2026, rc.38.1. Este é o ponto de entrada para retomar as
+Atualizado em 12/11/2026, rc.51. Este é o ponto de entrada para retomar as
 pendências; não marcar como concluído apenas porque o código foi publicado.
 
 - [ ] **Permitir a concessão online de 50/50 Staff no Supabase de staging.**
@@ -12,13 +12,26 @@ pendências; não marcar como concluído apenas porque o código foi publicado.
   isolado atual tem contas desligadas. Não executar em produção por extensão
   dessa tarefa. Registrar projeto, data e resultado quando for aplicada.
 
-- [ ] **Receber e integrar a arte da badge 50/50 Staff.**
-  Miguel enviará o asset. Enquanto isso, manter o fallback de texto branco,
-  sem inventar imagem. Integrar ao design-fonte
-  `data-sources/badges/badges-gema-moldura.html`; `npm run build:badges` deve
-  gerar `public/badges/50-50-staff.svg`. Executar `npm run build:images`,
-  versionar o manifesto e validar o build. A arte construída substitui o
-  fallback automaticamente. O title 50/50 Staff é branco por decisão de Miguel.
+- [x] **Arte da badge 50/50 Staff integrada (rc.51).** Veio no arquivo de
+  badges revisadas com a chave `5050`; o build exporta como `50-50-staff`. O
+  title 50/50 Staff foi REMOVIDO na revisão de 11/11 (fica só a badge).
+
+- [ ] **Permitir a concessão online de Creator (rc.51).** Badge + title novos,
+  concessão manual `creator`. Migração pronta e NÃO executada:
+  `docs/sql/rc51-creator-grant.sql` (também cobre `50-50-staff`, caso a rc38
+  não tenha sido aplicada). Mesmo cuidado: staging primeiro, registrar projeto,
+  data e resultado.
+
+- [ ] **Confirmar Supernova: 75 ou 90 estrelas.** A lista revisada de 11/11 e a
+  decisão da rc.38 dizem 75 (é o que está no jogo); a legenda do arquivo de
+  badges revisadas diz 90. Hypernova (Lendária) entrou com 120, vindo desse
+  arquivo. São 135 estrelas no total (45 challenges).
+
+- [ ] **Jogar e validar as recompensas novas da rc.51.** Technician, Clean
+  Sweep, Trade Minister (Classic) e Day One, Regional Dynasty, Passport Stamped
+  (RTW) têm testes automáticos, mas nenhuma foi conquistada em jogo real.
+  Carreiras já iniciadas só registram os titulares do Day One no split 1 da
+  temporada seguinte.
 
 - [ ] **Adicionar as 21 fotos de special cards que faltam.**
   Nomes, IDs e arquivos exatos em `docs/SPECIAL-CARDS-MISSING-rc38.md`.
@@ -30,16 +43,18 @@ pendências; não marcar como concluído apenas porque o código foi publicado.
   Os textos foram preservados; só a prévia antecipada do cosmético no rank-up
   foi retirada. Aguardar seleção explícita antes de remover outros textos.
 
-- [ ] **Selecionar futuras recompensas.**
-  `docs/COSMETIC-SUGGESTIONS-rc38.md` contém 14 sugestões, NÃO implementadas,
-  incluindo challenges de três estrelas e marcos Classic/RTW. Aguardar decisão
-  de Miguel antes de cadastrar IDs, contadores, condições ou artes.
+- [x] **Futuras recompensas selecionadas (rc.51).** A lista revisada de 11/11
+  substituiu `docs/COSMETIC-SUGGESTIONS-rc38.md`: 16 itens implementados
+  (Perfect Circuit ficou de fora; One Flag virou Technician, On the Grid virou
+  Roster Architect, From Day One virou Day One, Home and Away virou Trade
+  Minister). Catálogo atual: `docs/COSMETICS-CATALOG.md`.
 
 ## Decisões visuais vigentes
 
 Exclusive é uma raridade acima de Epic e abaixo de Legendary. Sua identificação
 usa ciano, separada do violeta de Epic. Isso NÃO muda a arte dos titles manuais:
 eles preservam as cores individuais, stroke, glow, gradiente e efeitos que
-tinham antes de rc.38. 50/50 Staff usa branco com esse mesmo tratamento.
+tinham antes de rc.38. Creator usa fúcsia/magenta com esse mesmo tratamento
+(o title 50/50 Staff, que era branco, saiu na rc.51).
 No rank-up, o emblema e os nomes dos ranks ficam diretamente no fundo escuro;
 o card contém apenas a área inferior de desbloqueios e o botão de continuar.

@@ -95,6 +95,7 @@ import {
   regionalForQualifier,
   seasonIdFor,
   seasonLabelFor,
+  seasonSchedule,
   splitEndDayFor,
   splitOfWeek,
   unofficialOfferFor,
@@ -249,7 +250,7 @@ import {
 } from "@/engine/career/contract";
 import { signableAtRep } from "@/engine/career/market";
 import { presetPrefs } from "@/engine/career/difficulty";
-import { ACH_FLAGS } from "@/engine/career/achievements";
+import { ACH_FLAGS, sameStarters } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName, localPlayerNames } from "@/engine/career/localScene";
 import { recordHonor } from "@/engine/career/honors";
 import { deepRunKeyFor, newcomerRepKindOf } from "@/engine/career/reputation";
@@ -1121,6 +1122,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
       }
       save.competition.majorFieldRefs = null;
       save.competition.squadAtSplitStart = save.squad.map((p) => p.id);
+      // rc.51 (Day One): the starters registered as split 1 opens.
+      if (week === 3) save.dayOne = { seasonIndex: save.clock.seasonIndex, starterIds: [...save.starterIds], broken: false };
       save.competition.newFacesThisSplit = [];
       save.competition.stabilityTierApplied = 0;
       save.t3EntriesThisSplit = 0;
@@ -1337,6 +1340,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
       save.competition.majorFieldRefs = majorFieldFor(save.competition, save.careerSeed);
       if (save.competition.majorFieldRefs.includes("user")) {
         gainRep(save, "majorQualify");
+        // rc.51 (Passport Stamped): the berth itself counts, played or not.
+        save.flags[ACH_FLAGS.majorBerth] = true;
         if (save.sponsor?.objectiveKind === "majorQualify" && !save.sponsor.terms) save.sponsor.hitThisSplit = true;
         // rc.34: a Major goal is reached the day the field is announced.
         checkSponsorGoals(save);
@@ -3766,6 +3771,11 @@ export function finishEvent(input: CareerSave): CareerSave {
   // actually played — the team froze at startEvent (a two-day event pauses
   // overnight; the lineup is locked meanwhile, older saves read it now).
   const fielded = ev.fieldedIds ?? fieldedIdsFor(save);
+  // rc.51 (Day One): an official three-player event fielded someone outside the
+  // season's registered starters (a stand-in counts): the run is over for the season.
+  if (!def.teamSize && save.dayOne && save.dayOne.seasonIndex === save.clock.seasonIndex && !sameStarters(fielded, save.dayOne.starterIds)) {
+    save.dayOne.broken = true;
+  }
   const stab = stabilityAssess({
     fieldedIds: fielded,
     squadAtSplitStart: save.competition.squadAtSplitStart,
@@ -3906,6 +3916,14 @@ export function finishEvent(input: CareerSave): CareerSave {
       if (founding && save.squad.every((p) => founding.includes(p.id)) && fielded.every((id) => founding.includes(id))) {
         save.flags[ACH_FLAGS.worldsHomegrown] = true;
       }
+      // rc.51 (cosmetics): Day One and Regional Dynasty are decided at the Worlds win.
+      const season = save.clock.seasonIndex;
+      if (save.dayOne && save.dayOne.seasonIndex === season && !save.dayOne.broken) save.flags[ACH_FLAGS.dayOne] = true;
+      const regionals = seasonSchedule().filter((w) => w.kind === "regional").length;
+      const regionalsWon = save.eventResults.filter(
+        (r) => r.tier === "regional" && r.seasonIndex === season && r.championRef === "user",
+      ).length;
+      if (regionals > 0 && regionalsWon >= regionals) save.flags[ACH_FLAGS.regionalDynasty] = true;
       save.end = {
         ...save.end,
         ended: true,

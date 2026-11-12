@@ -40,6 +40,10 @@ export const UNLOCK_BATCH_FROM = 4;
 /** Most `achievement_unlocked` events one write may send (a write never earns more in play). */
 export const ACHIEVEMENTS_PER_WRITE = 8;
 
+/** rc.51: the marks also hold Classic run marks (`run-` prefix); only the Road to
+ *  Worlds ones (`car-`) say that a career exists. */
+const careerOnly = (marks: readonly string[] | undefined): string[] => (marks ?? []).filter((id) => id.startsWith("car-"));
+
 function newKeys(before: Record<string, unknown> | undefined, after: Record<string, unknown> | undefined): string[] {
   if (!after || after === before) return [];
   const known = before ?? {};
@@ -88,7 +92,7 @@ export function profileSessionProps(p: ProfileAnalyticsView): SessionProps {
     achievements: Object.keys(p.achievements).length,
     challengesCleared: Object.keys(p.challengesCompleted).length,
     quizPlayed: p.quiz?.played ?? 0,
-    careerMarks: p.careerMarks?.length ?? 0,
+    careerMarks: careerOnly(p.careerMarks).length,
     equippedTitle: equipped?.title ?? "",
     equippedBanner: equipped?.banner ?? "",
     equippedBadge: equipped?.badges?.[0] ?? "",
@@ -103,7 +107,7 @@ export function profileHistory(p: ProfileAnalyticsView): PlayerHistory {
     doneSteps.push("challenge_played");
   }
   if ((p.quiz?.played ?? 0) > 0) doneSteps.push("quiz_played");
-  if ((p.careerMarks?.length ?? 0) > 0) doneSteps.push("career_created", "career_first_event");
+  if (careerOnly(p.careerMarks).length > 0) doneSteps.push("career_created", "career_first_event");
   const existing =
     p.runsCompleted > 0 ||
     p.xp > 0 ||

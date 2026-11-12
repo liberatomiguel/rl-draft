@@ -31,6 +31,12 @@ export const ACH_FLAGS = {
   underdogGap: "achUnderdogGap",
   /** Worlds won with the founding roster only. */
   worldsHomegrown: "achWorldsHomegrown",
+  /** rc.51 (cosmetics only): a Major berth was confirmed (the field announcement). */
+  majorBerth: "cosMajorBerth",
+  /** rc.51: Worlds won by the three starters of the season's first split, unchanged. */
+  dayOne: "cosDayOne",
+  /** rc.51: every main regional of the season AND Worlds won. */
+  regionalDynasty: "cosRegionalDynasty",
 } as const;
 
 const ALL_DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
@@ -104,5 +110,18 @@ export function worldsWonOnAfter(
 
 /** Cosmetic-only facts: do not replay old achievements, their XP or toasts. */
 export function careerCosmeticMarks(save: CareerSave): string[] {
-  return save.clock.seasonIndex >= 3 ? ["car-four-seasons"] : [];
+  const flags = save.flags as Record<string, unknown>;
+  const marks: string[] = [];
+  if (save.clock.seasonIndex >= 3) marks.push("car-four-seasons");
+  // rc.51 (Passport Stamped): the berth counts the day the field is announced; a
+  // save from before rc.51 that already played a Major has it too.
+  if (flags[ACH_FLAGS.majorBerth] || (save.stats.majorsQualified ?? 0) >= 1) marks.push("car-major-berth");
+  if (flags[ACH_FLAGS.dayOne]) marks.push("car-day-one");
+  if (flags[ACH_FLAGS.regionalDynasty]) marks.push("car-regional-dynasty");
+  return marks;
+}
+
+/** rc.51 (Day One): are the fielded players exactly the registered starters? */
+export function sameStarters(fielded: readonly string[], registered: readonly string[]): boolean {
+  return fielded.length === registered.length && fielded.every((id) => registered.includes(id));
 }

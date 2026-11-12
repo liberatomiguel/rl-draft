@@ -1,32 +1,384 @@
 {
-  "after-hours": [],
-  "solar-flare": [],
-  "wildfire": [
-    "drift",
-    "drift2"
-  ],
-  "neon-grid": [],
-  "slipstream": [
-    "drift",
-    "drift2"
-  ],
-  "singularity": [
-    "orbit",
-    "drift"
-  ],
-  "overdrive": [],
-  "cosmic-ascension": [
-    "orbit",
-    "counter"
-  ],
-  "blueprint": [],
-  "victory-lane": [],
-  "heatwave": [
-    "drift"
-  ],
-  "the-vault": [],
-  "target-practice": [],
-  "playbook": [],
-  "golden-era": [],
-  "back-to-basics": []
+  "after-hours": {
+    "parts": []
+  },
+  "solar-flare": {
+    "parts": []
+  },
+  "wildfire": {
+    "frames": 2,
+    "cycle": 2.4,
+    "times": [
+      0,
+      1.1,
+      21.4
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          -4,
+          14
+        ],
+        "to": [
+          16,
+          -24
+        ],
+        "dur": 2.69,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          -4,
+          14
+        ],
+        "to": [
+          16,
+          -24
+        ],
+        "dur": 3.92,
+        "sway": false
+      }
+    ]
+  },
+  "neon-grid": {
+    "parts": []
+  },
+  "slipstream": {
+    "parts": [
+      "drift",
+      "drift2"
+    ]
+  },
+  "singularity": {
+    "parts": [
+      "orbit",
+      "drift"
+    ]
+  },
+  "overdrive": {
+    "parts": []
+  },
+  "cosmic-ascension": {
+    "frames": 2,
+    "cycle": 7.5,
+    "times": [
+      0,
+      14.2,
+      22.5
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          12.4
+        ],
+        "to": [
+          0,
+          -26.8
+        ],
+        "dur": 14.26,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          0,
+          14
+        ],
+        "to": [
+          0,
+          -48
+        ],
+        "dur": 12.76,
+        "sway": false
+      }
+    ]
+  },
+  "blueprint": {
+    "parts": []
+  },
+  "victory-lane": {
+    "parts": []
+  },
+  "heatwave": {
+    "frames": 2,
+    "cycle": 4.2,
+    "times": [
+      0,
+      2,
+      1
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          0
+        ],
+        "to": [
+          -56,
+          0
+        ],
+        "dur": 6.5,
+        "sway": true
+      },
+      {
+        "role": "drift2",
+        "from": [
+          0,
+          0
+        ],
+        "to": [
+          -56,
+          0
+        ],
+        "dur": 8.5,
+        "sway": true
+      }
+    ]
+  },
+  "the-vault": {
+    "parts": []
+  },
+  "target-practice": {
+    "parts": []
+  },
+  "playbook": {
+    "parts": []
+  },
+  "golden-era": {
+    "parts": []
+  },
+  "back-to-basics": {
+    "parts": []
+  },
+  "world-class": {
+    "frames": 2,
+    "cycle": 7.5,
+    "times": [
+      0,
+      2,
+      14.1
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          12
+        ],
+        "to": [
+          0,
+          -32.5
+        ],
+        "dur": 17.02,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          0,
+          12
+        ],
+        "to": [
+          0,
+          -45
+        ],
+        "dur": 12.2,
+        "sway": false
+      }
+    ]
+  },
+  "against-all-odds": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      11.7,
+      22.7
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          3.79,
+          6.46
+        ],
+        "to": [
+          -8.12,
+          -13.81
+        ],
+        "dur": 3.14,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          -8.41,
+          -1.12
+        ],
+        "to": [
+          18.01,
+          2.38
+        ],
+        "dur": 2.9,
+        "sway": false
+      }
+    ]
+  },
+  "eye-of-the-storm": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      22,
+      23.9
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          -34,
+          -12
+        ],
+        "to": [
+          34,
+          12
+        ],
+        "dur": 2.1,
+        "sway": false
+      }
+    ]
+  },
+  "masterclass": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      16.4,
+      17.5
+    ],
+    "layers": []
+  },
+  "regional-dynasty": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      8.6,
+      7
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          -16
+        ],
+        "to": [
+          0,
+          34
+        ],
+        "dur": 8,
+        "sway": false
+      }
+    ]
+  },
+  "regional-laurels": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      1.7,
+      14.2
+    ],
+    "layers": []
+  },
+  "passport-stamped": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      6.3,
+      8
+    ],
+    "layers": []
+  },
+  "major-statement": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      1.8,
+      5.2
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          -26
+        ],
+        "to": [
+          -6,
+          44
+        ],
+        "dur": 6.6,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          0,
+          -26
+        ],
+        "to": [
+          8,
+          44
+        ],
+        "dur": 8.2,
+        "sway": false
+      }
+    ]
+  },
+  "clean-sweep": {
+    "frames": 2,
+    "cycle": 8,
+    "times": [
+      0,
+      1.5,
+      8
+    ],
+    "layers": [
+      {
+        "role": "drift",
+        "from": [
+          0,
+          0
+        ],
+        "to": [
+          14.78,
+          -5.86
+        ],
+        "dur": 2.52,
+        "sway": false
+      },
+      {
+        "role": "drift2",
+        "from": [
+          -3.33,
+          0
+        ],
+        "to": [
+          18.72,
+          -5.11
+        ],
+        "dur": 3.23,
+        "sway": false
+      }
+    ]
+  }
 }
