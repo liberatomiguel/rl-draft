@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.6] — 2026-11-12 · Legacy bracket exit, card and star XP (BALANCE_VERSION 29)
+
+#### Balance
+- **Legacy: a top 8 / top 6 exit pays 0 Season Rating again** (2.0.5 had made it +5; Miguel: only the top 4 pays). Title 80, final 40, semi-finals 18 and the Swiss exit of -6 stay. On the first day's results the average Legacy run nets about +2.3, still above Normal's +2.1.
+- **Histories are re-priced once more** (`flags.ratingRetune2`): the +6 a 2.0.5 profile got for each Legacy bracket exit in its last 40 runs comes off. The pass is the same idempotent `retuneRatingHistory`.
+- **Unlocking a special card pays real XP.** `XP.specialUnlock` was 10 / 20 / 40 / 75 / 100 (rare / epic / mythic / legendary / creator) against about 500 XP a run, and community, wings and national cards had no entry (0 XP). Now rare 100, community 100, national 50, epic 250, wings 250, mythic 400, legendary 750, creator 1000.
+- **Challenge stars 2 and 3** pay 150 / 250 / 400 / 600 each by tier (were 40 / 70 / 110 / 160). The clear (star 1) is unchanged.
+
 ## [2.0.5] — 2026-11-12 · Legacy rating, Lostt, base export
 
 #### Added
@@ -38,7 +46,7 @@ with the root cause — that section doubles as the project's bugfix log.
 - Regional boards are named "SAM Wins", "NA Wins", "EU Wins", "OCE Wins", "MENA Wins".
 - Share image (Open Graph) replaced with the Season 1 art.
 
-All of 2.0.1 to 2.0.5 were deployed from Miguel's machine with his go-ahead (the Workers Builds queue ran about 30 minutes behind on launch day); the same commits are on `main`.
+All of 2.0.1 to 2.0.6 were deployed from Miguel's machine with his go-ahead (the Workers Builds queue ran about 30 minutes behind on launch day); the same commits are on `main`.
 
 ## [2.0.0] — 2026-11-12 · "Season 1"
 

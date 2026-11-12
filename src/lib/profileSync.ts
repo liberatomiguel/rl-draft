@@ -288,6 +288,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
       unlocksCaughtUp: Boolean(local.flags.unlocksCaughtUp),
       // Per device too: each copy re-prices its own history once; the rating merge takes the result.
       ratingRetune1: Boolean(local.flags.ratingRetune1),
+      ratingRetune2: Boolean(local.flags.ratingRetune2),
     },
     settings: local.settings,
   };

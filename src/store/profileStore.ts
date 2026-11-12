@@ -209,6 +209,8 @@ export interface ProfileState {
     unlocksCaughtUp?: boolean;
     /** 2.0.5: the Hard / Legacy runs in the rating history were re-priced once. Additive. */
     ratingRetune1?: boolean;
+    /** 2.0.6: the same pass after the Legacy bracket exit went back to 0. Additive. */
+    ratingRetune2?: boolean;
   };
   /** rc.54: guided tours seen, tour id → the `SEASON.id` it was seen in
    *  (`src/lib/tours.ts`). Each tour shows once after the Season 1 reset, to
@@ -1271,8 +1273,11 @@ if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) ann
 // current table. A profile with no such run only gets the marker.
 export function retuneRatingOnce(): void {
   const s = useProfileStore.getState();
-  if (s.flags.ratingRetune1) return;
-  const flags = { ...s.flags, ratingRetune1: true };
+  // v2.0.6 priced the Legacy bracket exit back to 0: the pass runs once more
+  // (`ratingRetune2`); re-pricing is idempotent, so a profile that never got the
+  // first pass lands on the same numbers.
+  if (s.flags.ratingRetune2) return;
+  const flags = { ...s.flags, ratingRetune1: true, ratingRetune2: true };
   const out = retuneRatingHistory(s.mmr, s.season?.ratingHistory ?? []);
   if (!out.change) {
     useProfileStore.setState({ flags });

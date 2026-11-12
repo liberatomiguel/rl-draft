@@ -148,7 +148,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
   it("titles pay by difficulty; playoffs buckets collapse; Swiss exits cost", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(80);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "top8" })).toBe(5); // v2.0.5: the bracket pays in Legacy
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "top8" })).toBe(0); // v2.0.6: only the top 4 pays
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "easy", placement: "top4" })).toBe(0);
@@ -177,7 +177,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
       );
     const legacy = ev("legacy", { champion: 0.02, runner_up: 0.023, third: 0.054, fourth: 0.063, top6: 0.142, top8: 0.174, swiss_exit: 0.524 }, true);
     const normal = ev("normal", { champion: 0.374, runner_up: 0.227, third: 0.135, fourth: 0.098, top6: 0.106, top8: 0.032, swiss_exit: 0.029 }, false);
-    expect(legacy).toBeGreaterThan(normal * 1.5);
+    expect(legacy).toBeGreaterThan(normal);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit" })).toBeLessThan(0); // it still punishes
   });
 
@@ -187,8 +187,10 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     // Newest first: 400 start, protected Legacy loss (0), Normal title (+4), Legacy Swiss exit (-7), Legacy top 8 (0), Legacy title (+41).
     const history = [e("legacy", "champion", 41, 438), e("legacy", "top8", 0, 397), e("legacy", "swiss_exit", -7, 397), e("normal", "champion", 4, 404), e("legacy", "swiss_exit", 0, 400)];
     const out = retuneRatingHistory(438, history);
-    expect(out.history.map((h) => h.delta)).toEqual([92, 6, -6, 4, 0]);
-    expect(out.change).toBe(92 - 41 + 6 + 1);
+    expect(out.history.map((h) => h.delta)).toEqual([92, 0, -6, 4, 0]);
+    expect(out.change).toBe(92 - 41 + 1);
+    // A history already priced by v2.0.5 (bracket exit +6) goes back to 0.
+    expect(retuneRatingHistory(406, [e("legacy", "top8", 6, 406)]).mmr).toBe(400);
     expect(out.mmr).toBe(438 + out.change);
     expect(out.history[0].mmr).toBe(out.mmr);
     expect(out.history[4].mmr).toBe(400);

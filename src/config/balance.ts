@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 28;
+export const BALANCE_VERSION = 29;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -621,10 +621,19 @@ export const XP = {
    * added AFTER the difficulty multiplier (like achievement XP) and never
    * scaled. Reference: a run completion is 50 XP.
    */
-  specialUnlock: { rare: 10, epic: 20, mythic: 40, legendary: 75, creator: 100 } as Record<
-    string,
-    number
-  >,
+  // v2.0.6: ten times the v0.7 figures (a Season 1 run pays about 500 XP, so 10 XP
+  // for a new card read as nothing), and every rarity pays: community, wings and
+  // national cards used to pay 0.
+  specialUnlock: {
+    rare: 100,
+    community: 100,
+    national: 50,
+    epic: 250,
+    wings: 250,
+    mythic: 400,
+    legendary: 750,
+    creator: 1000,
+  } as Record<string, number>,
 } as const;
 
 /**
@@ -749,7 +758,9 @@ export const SEASON_RATING = {
     // costs 6 (was 7). On the same results the average Legacy run nets about +4,
     // twice Normal's. Hard moves above Normal: 10 / 5 / 2 / 2, Swiss exit -4.
     hard: { champion: 10, runner_up: 5, third: 2, fourth: 2, playoffs: 0, swiss_exit: -4 },
-    legacy: { champion: 80, runner_up: 40, third: 18, fourth: 18, playoffs: 5, swiss_exit: -6 },
+    // v2.0.6 (Miguel, same day): a top 8 / top 6 exit pays nothing in Legacy either;
+    // only the top 4 does. The average Legacy run nets about +2.3 on the day's results.
+    legacy: { champion: 80, runner_up: 40, third: 18, fourth: 18, playoffs: 0, swiss_exit: -6 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
@@ -892,7 +903,9 @@ export const CHALLENGE = {
    * `starXp[tier]` the first time they are earned. Repeating a challenge never
    * re-pays — it is for the missing stars (DESIGN-DECISIONS #116).
    */
-  starXp: { common: 40, rare: 70, epic: 110, legend: 160 } as Record<string, number>,
+  // v2.0.6: 40 / 70 / 110 / 160 read as nothing next to a run (about 500 XP); an extra
+  // star is harder than the clear and now pays more than it.
+  starXp: { common: 150, rare: 250, epic: 400, legend: 600 } as Record<string, number>,
   /** Star-track milestones (cosmetics in src/data/cosmetics.ts read the same counts). */
   starMilestones: [10, 25, 45],
   /**
