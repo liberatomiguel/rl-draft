@@ -195,6 +195,9 @@ export const NAV_UI = {
   moreGuides: "More from Rocket Draft",
   home: "Home",
   database: "RLCS database",
+  // T1 (v2.0): the shell's landmark names (they were fixed English).
+  ariaMain: "Main",
+  ariaLanguage: "Language",
 };
 
 export const RUN_UI = {
@@ -321,6 +324,36 @@ export const ONBOARDING = {
     "Everything else is the same: difficulty, chemistry, the full tournament. Win it to fly your region's flag.",
   ],
   regionalCta: "Let's run it",
+  // T1 (v2.0): the first draft's guided tour (it replaces the "How to play"
+  // modal and keeps its flag). Each step spotlights a real part of the screen.
+  tour: {
+    kicker: "First draft",
+    next: "Next",
+    back: "Back",
+    skip: "Skip",
+    done: "Start drafting",
+    progress: (n: number, total: number) => `${n} of ${total}`,
+    offer: {
+      title: "One lineup per round",
+      body: "Every round deals a real lineup from RLCS history. Tap one card to draft it into your team.",
+    },
+    roster: {
+      title: "Your team",
+      body: "Fill every slot. Cards that share a country, an org or a lineup build chemistry.",
+      points: [
+        { label: "Overall", text: "What weighs most in a series" },
+        { label: "Chemistry", text: "Extra rating for a team that fits" },
+      ],
+    },
+    reroll: {
+      title: "Not what you need?",
+      body: "A reroll deals another lineup. They are limited, so keep them for when nothing fits.",
+    },
+    finish: {
+      title: "Then the tournament",
+      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose.",
+    },
+  },
 };
 
 export const REVIEW = {
@@ -554,6 +587,11 @@ export const RESULTS_UI = {
   eliminatedBy: (name: string) => `Eliminated by ${name}`,
   eliminatorScore: (a: number, b: number) => `${a}–${b}`,
   eliminatorBuffed: "Overall boosted by the difficulty (Legacy / region-locked)",
+  // T1 (v2.0): the share card's words (they were fixed English on the canvas).
+  shareModeQuick: "Quick Draft",
+  shareModeClassic: "Classic Draft",
+  shareHiddenOvr: "Hidden OVR",
+  shareRoles: { coach: "Coach", sub: "Sub", org: "Org" } as Record<string, string>,
 };
 
 export const COLLECTION_UI = {
@@ -737,6 +775,11 @@ export const ACH_UI = {
   } as Record<string, { name: string; desc: string }>,
   careerTier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
   careerEarned: "Earned",
+  /** T1 (v2.0): per-id words for the draft achievements. EN stays in
+   *  `achievements.json` (the hand-maintained source), so this map is empty
+   *  here and the screens fall back to the catalogue; PT fills every id
+   *  (`achievementsCopy.test.ts` fails when one is missing). */
+  items: {} as Record<string, { name: string; desc: string }>,
 };
 
 export const HOWTO = {
@@ -897,7 +940,7 @@ export const PRIVACY = {
     {
       title: "Analytics",
       body: [
-        "We use privacy-friendly, aggregate analytics to understand how many people visit, which pages are popular, how the game performs, and how runs play out — for example which difficulties people choose and how often runs are finished. This is measured with Vercel Web Analytics and PostHog, configured to be cookieless and anonymous: it uses no advertising cookies, does not identify you personally, and honours your browser's Do Not Track setting.",
+        "We use privacy-friendly, aggregate analytics to understand how many people visit, which pages are popular, how the game performs, and how runs play out — for example which difficulties people choose and how often runs are finished. This is measured with PostHog, configured to be cookieless and anonymous: it uses no advertising cookies, does not identify you personally, and honours your browser's Do Not Track setting.",
         "Search-engine statistics (how often the site appears in results) come from Google Search Console, which only reports aggregate, anonymous data.",
       ],
     },
@@ -1186,7 +1229,7 @@ export const CHALLENGES_UI = {
   theBoss: "The line",
   // v2.0 stars + gauntlets
   starsKicker: "Three stars",
-  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition to the clear. Earn them on separate attempts or together. Paid rerolls count; free dead-offer rerolls do not.",
+  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition; earn them together or on separate attempts. Free rerolls do not count.",
   starsCount: (n: number, total: number) => `${n}/${total} stars`,
   starsTotal: (n: number) => `${n} stars`,
   star1: "Win the series",
@@ -1288,7 +1331,7 @@ export const LEADERBOARDS_UI = {
   signedInAs: (name: string) => `Signed in as ${name}`,
   syncing: "Syncing…",
   guestNote:
-    "Playing as a guest — your progress is saved on this device. Sign in with your email to back it up to the cloud and compete globally. Your local progress is merged in, never lost.",
+    "Playing as a guest: your progress is saved on this device. Sign in with your email to back it up and compete globally. Your local progress comes with you.",
   comingSoon: "Global leaderboards unlock once accounts go live. Your records are tracked locally in the meantime.",
   previewData: "Preview — fictional profiles (staging)",
   globalTab: "Global",
@@ -1882,6 +1925,11 @@ export const DATABASE_UI = {
   cta: "Draft these rosters",
 };
 
+/** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
+ *  EN is empty: the static `metadata` of each route already is the English
+ *  title, and the shell only overrides the tab title when an entry exists. */
+export const PAGE_TITLES = {} as Record<string, string>;
+
 export const EN = {
   APP,
   NAV,
@@ -1919,6 +1967,7 @@ export const EN = {
   NATIONAL_UI,
   DAILY_TEXT,
   DATABASE_UI,
+  PAGE_TITLES,
 };
 
 export type Copy = typeof EN;

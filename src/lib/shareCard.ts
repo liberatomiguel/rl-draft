@@ -25,6 +25,8 @@ export interface ShareCardData {
   placement: Placement;
   modeLabel: string;
   difficultyLabel: string;
+  /** The "Hidden OVR" tag in the player's language (T1, v2.0); English when absent. */
+  hiddenOverallLabel?: string;
   hiddenOverall: boolean;
   swissRecord: string | null;
   teamOverall: number;
@@ -162,7 +164,7 @@ export function renderShareCard(
   // Meta line
   ctx.font = display(19, 600);
   ctx.fillStyle = "#8d9ab3";
-  const meta = [data.modeLabel, data.difficultyLabel, data.hiddenOverall ? "Hidden OVR" : null, data.date]
+  const meta = [data.modeLabel, data.difficultyLabel, data.hiddenOverall ? (data.hiddenOverallLabel ?? "Hidden OVR") : null, data.date]
     .filter(Boolean)
     .join("  ·  ");
   ctx.fillText(meta.toUpperCase(), 64, 110);

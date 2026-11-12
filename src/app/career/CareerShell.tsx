@@ -26,6 +26,7 @@ import { SponsorAutoBootcamp } from "@/components/career/sponsors/SponsorAutoBoo
 import { CareerAnnouncement } from "@/components/career/news/CareerAnnouncement";
 import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
+import { CareerTour } from "@/components/career/tour/CareerTour";
 import { ScrimBroadcast } from "@/components/career/ScrimBroadcast";
 import { MoneyNoticeModal } from "@/components/career/MoneyNoticeModal";
 import { TrainingReportModal } from "@/components/career/training/TrainingReportModal";
@@ -35,6 +36,45 @@ import { TrainingReportModal } from "@/components/career/training/TrainingReport
 const BARE_ROUTES = ["/career/new", "/career/saves"];
 const isBareRoute = (pathname: string | null): boolean =>
   BARE_ROUTES.some((r) => pathname === r || pathname?.startsWith(`${r}/`));
+
+/**
+ * v2.0 (P1): the shell's placeholder — the top bar's footprint and a few panels, in the
+ * pulse the screens' own skeletons use (HubScreen). Shapes only: no text, no data, nothing
+ * to translate. `bar` is off on the wizard and the slot picker, which have no top bar.
+ */
+function CareerSkeleton({ bar }: { bar: boolean }) {
+  const block = "animate-pulse rounded-2xl bg-white/5";
+  return (
+    <div className="min-h-[60vh] pb-20 md:pb-8" aria-busy>
+      {bar ? (
+        <div className="border-b border-line">
+          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-3 sm:px-4">
+            <div className="h-9 w-9 animate-pulse rounded-lg bg-white/5" />
+            <div className="h-8 w-32 animate-pulse rounded-lg bg-white/5" />
+            <div className="h-9 w-24 animate-pulse rounded-lg bg-white/5" />
+          </div>
+          <div className="mx-auto max-w-6xl px-3 pb-1.5 sm:px-4">
+            <div className="h-7 animate-pulse rounded-md bg-white/5" />
+          </div>
+        </div>
+      ) : null}
+      <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <div className={`h-60 ${block}`} />
+            <div className={`h-24 ${block}`} />
+            <div className={`h-28 ${block}`} />
+          </div>
+          <div className="hidden space-y-4 lg:block">
+            <div className={`h-20 ${block}`} />
+            <div className={`h-48 ${block}`} />
+            <div className={`h-36 ${block}`} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function CareerShell({ children }: { children: React.ReactNode }) {
   const C = useCareerCopy();
@@ -85,12 +125,14 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
     setAutoAdvance(false);
   }, [pathname, setAutoAdvance]);
 
-  // SSR-safe skeleton until the persisted store hydrates.
+  // SSR-safe skeleton until the persisted store hydrates. v2.0 (P1): a drawn one. The shell was
+  // an empty block for as long as the career's JavaScript took to start (one to two seconds on a
+  // phone) and again while the next career screen loaded; the page looked stuck.
   if (!mounted) {
-    return <div className="min-h-[60vh]" />;
+    return <CareerSkeleton bar={!bare} />;
   }
-  if (destination && destination !== pathname) return <div className="min-h-[60vh]" aria-busy />;
-  if (!bare && !hasActive) return <div className="min-h-[60vh]" />;
+  if (destination && destination !== pathname) return <CareerSkeleton bar />;
+  if (!bare && !hasActive) return <CareerSkeleton bar={false} />;
 
   return (
     <div className="pb-20 md:pb-8">
@@ -100,6 +142,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <ScrimBroadcast />
           <CareerAutopilot />
           <CareerToaster />
+          {/* T1 (v2.0): the guided tour and its help button. */}
+          <CareerTour />
           <CareerAnnouncement />
           <SponsorAutoBootcamp />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}

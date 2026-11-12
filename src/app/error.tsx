@@ -2,8 +2,10 @@
 
 /** Global error boundary — also catches dataset validation errors in dev. */
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
+import { reportScreenError } from "@/lib/analytics";
 
 export default function GlobalError({
   error,
@@ -12,6 +14,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Health analytics (`quality_error`): what this boundary caught never reaches window.onerror.
+  useEffect(() => {
+    reportScreenError("boundary", error);
+  }, [error]);
   const isDataError = error.message.includes("[data]");
   return (
     <div className="mx-auto mt-16 max-w-xl">

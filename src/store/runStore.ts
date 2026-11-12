@@ -22,11 +22,10 @@ import {
   playerById,
   playerCardById,
   seasonById,
-  specialCardById,
   specialCards,
 } from "@/data";
 import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
-import { rankRewardsForXp } from "@/engine/progression";
+import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import { ALL_STARS, challengeStatus } from "@/engine/challengeStars";
 import {
   applyFreeReroll,
@@ -59,6 +58,7 @@ import type {
   DraftOfferCard,
   DraftState,
   Region,
+  Roster,
   RosterSlotId,
   RunHistoryEntry,
   RunMode,
@@ -68,7 +68,7 @@ import { generateDailyConfig } from "@/lib/daily";
 import { dailySeedForDate, todayKey } from "@/lib/dailyPlan";
 import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
-import { trackEvent } from "@/lib/analytics";
+import { noteRunReset, registerSessionProps, takeRunResets, trackEvent, trackOnboardingStep } from "@/lib/analytics";
 import { registerRunStore } from "./lazyRunStore";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
 import { selectChallengesUnlocked, useProfileStore } from "./profileStore";
@@ -117,6 +117,35 @@ function regionLabelOf(run: RunState): string {
     return (run.challengeId ? challengeById.get(run.challengeId)?.constraint?.region : undefined) ?? "worldwide";
   }
   return run.regionLock ?? "worldwide";
+}
+
+/** Analytics: the drafted cards in slot order, `slot:refId` joined by "|" (short slot codes). */
+const PICK_SLOTS: readonly (readonly [RosterSlotId, string])[] = [
+  ["player1", "p1"],
+  ["player2", "p2"],
+  ["player3", "p3"],
+  ["sub", "sub"],
+  ["coach", "coach"],
+  ["org", "org"],
+];
+function picksOf(roster: Roster): string {
+  return PICK_SLOTS.flatMap(([slot, code]) => (roster[slot] ? [`${code}:${roster[slot]!.refId}`] : [])).join("|");
+}
+
+/** Analytics: wall clock since the run was created (a resumed run counts its pause too). */
+function durationSecOf(run: RunState): number | null {
+  const startedMs = Date.parse(run.startedAt);
+  return Number.isFinite(startedMs) ? Math.max(0, Math.round((Date.now() - startedMs) / 1000)) : null;
+}
+
+/** Analytics: an album completed by this run or challenge (`before` = the complete albums before it). */
+function trackAlbumsCompleted(before: readonly string[]): void {
+  const after = completeNationalLineups(useProfileStore.getState().unlockedSpecials);
+  const known = new Set(before);
+  for (const lineupId of after) {
+    if (known.has(lineupId)) continue;
+    trackEvent("collection_milestone", { kind: "album_completed", id: lineupId, albumsCompleted: after.length });
+  }
 }
 
 /** OBS-01: a special the profile did not own when this run started. */
@@ -231,13 +260,8 @@ export const useRunStore = create<RunStore>()(
           results: null,
         };
         set({ run });
-        trackEvent("run_started", {
-          runId: run.runId,
-          mode,
-          difficulty,
-          hiddenOverall: !run.showOverall,
-          region: regionLabelOf(run),
-        });
+        // 2.0: no event per run start (a run is ONE event, at its end) - only the funnel's first.
+        trackOnboardingStep("draft_started");
       },
 
       startDailyRun: () => {
@@ -286,14 +310,7 @@ export const useRunStore = create<RunStore>()(
           results: null,
         };
         set({ run });
-        trackEvent("run_started", {
-          runId: run.runId,
-          mode: "daily",
-          difficulty: config.difficulty,
-          hiddenOverall: !run.showOverall,
-          // Explicit (rc.25): without it the dashboards bucket dailies as region "None".
-          region: regionLabelOf(run),
-        });
+        trackOnboardingStep("draft_started");
       },
 
       startChallenge: (challengeId) => {
@@ -326,13 +343,7 @@ export const useRunStore = create<RunStore>()(
           results: null,
         };
         set({ run });
-        trackEvent("run_started", {
-          runId: run.runId,
-          mode: "challenge",
-          difficulty: challenge.sim.difficulty,
-          hiddenOverall: false,
-          region: regionLabelOf(run),
-        });
+        trackOnboardingStep("draft_started");
       },
 
       clearRun: () => {
@@ -340,7 +351,10 @@ export const useRunStore = create<RunStore>()(
         // funnel drop-off signal. (Clearing FROM results = a completed run,
         // so it's excluded.) Fires via the page.tsx + AppShell route guards.
         const { run } = get();
-        if (run && run.phase !== "results") {
+        // A challenge that was already played is reported by `challenge_played`:
+        // leaving its result screen is not an abandonment (it has no "results" phase).
+        const played = !!run?.challenge && (run.challenge.evaluated || !!run.challenge.series);
+        if (run && run.phase !== "results" && !played) {
           trackEvent("run_abandoned", {
             runId: run.runId,
             mode: run.mode,
@@ -349,7 +363,12 @@ export const useRunStore = create<RunStore>()(
             reason: "quit",
             hiddenOverall: !run.showOverall,
             region: regionLabelOf(run),
+            resets: takeRunResets(),
+            picksMade: Object.keys(run.draft?.roster ?? {}).length, // defensive: a malformed stored run still clears
+            durationSec: durationSecOf(run),
           });
+        } else if (run) {
+          takeRunResets(); // a finished run closes its chain of resets
         }
         set({ run: null });
       },
@@ -357,20 +376,13 @@ export const useRunStore = create<RunStore>()(
       restartRun: () => {
         const { run } = get();
         if (!run) return;
-        // Restarting mid-run abandons the current one (a fresh run_started
-        // fires from startRun/startDailyRun below). A restart from results is
-        // just "play again", so it isn't counted as an abandonment.
-        if (run.phase !== "results") {
-          trackEvent("run_abandoned", {
-            runId: run.runId,
-            mode: run.mode,
-            difficulty: run.difficulty,
-            phase: run.phase,
-            reason: "restart",
-            hiddenOverall: !run.showOverall,
-            region: regionLabelOf(run),
-          });
-        }
+        // 2.0: a restart mid-run is a RESET - a counter carried by the run's one
+        // event (`resets`), not an event of its own (resets were almost half of
+        // all run starts). A restart from results is just "play again"; so is a
+        // replay of a challenge that was already played.
+        const played = !!run.challenge && (run.challenge.evaluated || !!run.challenge.series);
+        if (run.phase !== "results" && !played) noteRunReset();
+        else takeRunResets();
         // Daily restarts re-roll today's seeded run; everything else re-runs
         // startRun with the same settings (a brand-new seed → fresh draft).
         if (run.mode === "daily") {
@@ -472,25 +484,7 @@ export const useRunStore = create<RunStore>()(
               phase: "challenge",
             },
           });
-          trackEvent("tournament_started", {
-            runId: run.runId,
-            mode: "challenge",
-            difficulty: run.difficulty,
-            region: regionLabelOf(run),
-          });
-          for (const id of userTeam.specialIds) {
-            const sp = specialCardById.get(id);
-            if (sp) {
-              trackEvent("special_used", {
-                specialId: id,
-                title: sp.title,
-                rarity: sp.rarity,
-                mode: "challenge",
-                difficulty: run.difficulty,
-                isNew: isNewThisRun(run, id),
-              });
-            }
-          }
+          trackOnboardingStep("draft_confirmed");
           if (challenge.kind === "draft") get().playChallenge();
           return;
         }
@@ -516,27 +510,8 @@ export const useRunStore = create<RunStore>()(
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },
         });
-        trackEvent("tournament_started", {
-          runId: run.runId,
-          mode: run.mode,
-          difficulty: run.difficulty,
-          region: regionLabelOf(run),
-        });
-        // Special-card usage: one event per special on the locked roster, so
-        // PostHog can rank which specials players actually take into a tournament.
-        for (const id of userTeam.specialIds) {
-          const sp = specialCardById.get(id);
-          if (sp) {
-            trackEvent("special_used", {
-              specialId: id,
-              title: sp.title,
-              rarity: sp.rarity,
-              mode: run.mode,
-              difficulty: run.difficulty,
-              isNew: isNewThisRun(run, id),
-            });
-          }
-        }
+        // 2.0: the fielded specials ride on `run_completed.specials` (no event per card).
+        trackOnboardingStep("draft_confirmed");
       },
 
       playRound: () => {
@@ -641,25 +616,7 @@ export const useRunStore = create<RunStore>()(
           },
         };
 
-        const startedMs = Date.parse(run.startedAt);
-        trackEvent("run_completed", {
-          runId: run.runId,
-          mode: run.mode,
-          difficulty: run.difficulty,
-          region: regionLabelOf(run),
-          placement: results.placement,
-          won: results.placement === "champion",
-          hiddenOverall: !run.showOverall,
-          teamOverall: entry.teamOverall,
-          swissWins: entry.swissRecord.wins,
-          swissLosses: entry.swissRecord.losses,
-          xpGained: entry.xpGained,
-          chemistryTier: entry.recap?.chemistryTier ?? "Poor",
-          chemistryPercent: entry.recap?.chemistryPercent ?? 0,
-          durationSec: Number.isFinite(startedMs) ? Math.max(0, Math.round((Date.now() - startedMs) / 1000)) : null,
-          dailyTemplate: run.daily?.templateId ?? null,
-        });
-
+        const albumsBefore = completeNationalLineups(profile.unlockedSpecials);
         profile.applyRunResults(
           results,
           entry,
@@ -700,6 +657,49 @@ export const useRunStore = create<RunStore>()(
         set({
           run: { ...run, results, rngState: rng.state, phase: "results" },
         });
+
+        // 2.0: ONE event for the whole run, read after every grant landed (the
+        // run's XP, rating, achievements, missions) - the key outcome event.
+        {
+          const after = useProfileStore.getState();
+          const rankAfter = rankForXp(after.xp);
+          const specialIds = userTeam?.specialIds ?? [];
+          trackEvent("run_completed", {
+            runId: run.runId,
+            mode: run.mode,
+            difficulty: run.difficulty,
+            region: regionLabelOf(run),
+            placement: results.placement,
+            won: results.placement === "champion",
+            hiddenOverall: !run.showOverall,
+            teamOverall: entry.teamOverall,
+            swissWins: entry.swissRecord.wins,
+            swissLosses: entry.swissRecord.losses,
+            playoffWins: results.playoffWins,
+            gameWins: results.userGameWins,
+            goalsFor: results.userGoals,
+            goalsAgainst: results.goalsConceded,
+            eliminatedStage: results.eliminatedBy?.stage ?? null,
+            xpGained: entry.xpGained,
+            chemistryTier: entry.recap?.chemistryTier ?? "Poor",
+            chemistryPercent: entry.recap?.chemistryPercent ?? 0,
+            durationSec: durationSecOf(run),
+            dailyTemplate: run.daily?.templateId ?? null,
+            resets: takeRunResets(),
+            rerollsLeft: run.draft.rerollsLeft,
+            picks: picksOf(run.draft.roster),
+            specials: specialIds.join("|"),
+            specialsCount: specialIds.length,
+            specialsNew: specialIds.filter((id) => isNewThisRun(run, id)).length,
+            achievementsNew: Math.max(0, Object.keys(after.achievements).length - Object.keys(profile.achievements).length),
+            ratingDelta: after.mmr - profile.mmr,
+            ratingAfter: after.mmr,
+            rankId: rankAfter.id,
+            rankUp: rankAfter.index > rankForXp(profile.xp).index,
+          });
+          trackAlbumsCompleted(albumsBefore);
+          trackOnboardingStep("run_completed");
+        }
       },
 
       playChallenge: () => {
@@ -725,6 +725,7 @@ export const useRunStore = create<RunStore>()(
 
         // Specials drafted onto the challenge team unlock into the collection just
         // like a normal run, win or lose (v1.4.3, #100).
+        const albumsBefore = completeNationalLineups(profile.unlockedSpecials);
         profile.collectSpecials(user.specialIds, "challenge");
         // Capture XP BEFORE the reward so the cleared screen can fire the rank-up
         // celebration if the reward crossed a rank threshold (v1.4).
@@ -763,12 +764,27 @@ export const useRunStore = create<RunStore>()(
             rngState: rng.state,
           },
         });
-        trackEvent("challenge_played", {
-          challengeId: challenge.id,
-          difficulty: challenge.sim.difficulty,
-          cleared,
-          stars: countStars(starsEarned),
-        });
+        {
+          const xpAfter = useProfileStore.getState().xp;
+          trackEvent("challenge_played", {
+            challengeId: challenge.id,
+            difficulty: challenge.sim.difficulty,
+            kind: challenge.kind ?? "boss",
+            cleared,
+            stars: countStars(starsEarned),
+            starsNew: countStars(starsNew),
+            firstClear: cleared && !profile.challengesCompleted[challenge.id],
+            resets: takeRunResets(),
+            rerollsUsed,
+            teamOverall: displayTeamOverall(user.rating),
+            chemistryPercent: user.chemistry.percent,
+            picks: picksOf(run.draft.roster),
+            specials: user.specialIds.join("|"),
+            xpGained: Math.max(0, xpAfter - xpBefore),
+          });
+          trackAlbumsCompleted(albumsBefore);
+          trackOnboardingStep("challenge_played");
+        }
       },
     }),
     {
@@ -787,3 +803,6 @@ export const useRunStore = create<RunStore>()(
 
 // AppShell and the home menu reach the store through ./lazyRunStore (#60).
 registerRunStore(useRunStore);
+
+// Analytics: an unfinished run waiting to be resumed, for `session_started`.
+registerSessionProps(() => ({ openRunPhase: useRunStore.getState().run?.phase ?? null }));

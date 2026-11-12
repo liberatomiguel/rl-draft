@@ -146,7 +146,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
                 strokeWidth="1"
                 strokeDasharray={t.v === 0 ? "3 3" : undefined}
               />
-              <text x={plot.left - 6} y={t.y} textAnchor="end" dominantBaseline="middle" fontSize="10" className="fill-faint">
+              <text x={plot.left - 6} y={t.y} textAnchor="end" dominantBaseline="middle" fontSize="11" className="fill-faint">
                 {money(t.v)}
               </text>
             </g>
@@ -159,7 +159,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
           {model.seasonBands
             .filter((band, k) => model.seasonBands.length === 1 || band.x1 - band.x0 >= SEASON_LABEL_MIN || (k === model.seasonBands.length - 1 && plot.right - band.x0 >= SEASON_LABEL_MIN))
             .map((band) => (
-              <text key={`l${band.s}`} x={band.x0 + 4} y={12} fontSize="10" className="fill-faint">
+              <text key={`l${band.s}`} x={band.x0 + 4} y={12} fontSize="11" className="fill-faint">
                 {seasonLabelFor(band.s)}
               </text>
             ))}
@@ -186,7 +186,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
                 x={Math.max(plot.left + 2, Math.min(plot.right - 2, p.x))}
                 y={Math.max(plot.top + 8, Math.min(plot.bottom - 2, p.y + dy))}
                 textAnchor={p.x < plot.left + 60 ? "start" : p.x > plot.right - 60 ? "end" : "middle"}
-                fontSize="10"
+                fontSize="11"
                 className="fill-sub"
               >
                 {text}

@@ -226,6 +226,7 @@ export function MarketScreen() {
   const markMailRead = useCareerStore(s => s.markMailRead);
   useEffect(() => { if (tab === "coaches") for (const m of save?.mail ?? []) if (!m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) markMailRead(m.id); }, [tab, save?.mail, markMailRead]);
   const [search, setSearch] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState<SortKey>("ovr");
   /** v0.3: flips the current sort key's natural direction. */
   const [sortFlip, setSortFlip] = useState(false);
@@ -478,7 +479,7 @@ export function MarketScreen() {
       ) : null}
 
       {/* Tabs */}
-      <div className="rise-in flex flex-wrap gap-2" style={{ animationDelay: "40ms" }}>
+      <div data-tour="market-tabs" className="rise-in grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" style={{ animationDelay: "40ms" }}>
         {tabs.map(([k, label]) => (
           <Chip
             key={k}
@@ -501,7 +502,7 @@ export function MarketScreen() {
       {tab === "free" || tab === "contracted" ? (
         <>
           {/* Toolbar: search · sort · region */}
-          <Panel className="rise-in space-y-2.5 p-3" style={{ animationDelay: "60ms" }}>
+          <Panel data-tour="market-search" className="rise-in space-y-2.5 p-3" style={{ animationDelay: "60ms" }}>
             <input
               type="search"
               value={search}
@@ -509,7 +510,17 @@ export function MarketScreen() {
               placeholder={C.market.searchPlaceholder}
               className="w-full rounded-lg border border-line-strong bg-white/5 px-3 py-2 text-sm text-ink placeholder:text-faint focus:border-blue/60 focus:outline-none"
             />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              aria-controls="market-filters"
+              onClick={() => setFiltersOpen(open => !open)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-line px-3 text-xs font-semibold text-sub sm:hidden"
+            >
+              <span>{C.market.filterRegion} · {C.market.sortBy}</span>
+              <span aria-hidden>{filtersOpen ? "−" : "+"}</span>
+            </button>
+            <div id="market-filters" className={cx("flex-wrap items-center gap-x-4 gap-y-2", filtersOpen ? "flex" : "hidden sm:flex")}>
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="kicker mr-1 text-[9px]">{C.market.sortBy}</span>
                 {(
@@ -617,7 +628,7 @@ export function MarketScreen() {
                     <div key={r.view.id} className="relative">
                       <div className="opacity-60 saturate-50">{tile}</div>
                       <span
-                        className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-md border border-line-strong bg-[color:var(--bg)]/90 px-2 py-0.5 text-[10px] font-bold text-sub"
+                        className="pointer-events-none mt-1 inline-flex max-w-full items-center gap-1 rounded-md border border-line-strong bg-[color:var(--bg)]/90 px-2 py-1 text-[10px] font-bold text-sub"
                         title={justSigned ? C.market.errors.justSigned : C.market.lockedHint}
                       >
                         <LockIcon className="h-3 w-3" />
@@ -696,8 +707,11 @@ export function MarketScreen() {
 
           <div className="space-y-3">
             <h2 className="display text-lg font-bold text-ink">{C.launch.coachShortlist}</h2>
-            <p className="text-xs leading-relaxed text-sub">{C.launch.coachCompare}</p>
-            <div className="flex flex-wrap gap-2" role="group" aria-label={C.launch.coachShortlist}>{(["all", "generated", "dataset", "real"] as const).map(type => <button key={type} type="button" aria-pressed={coachType === type} onClick={() => setCoachType(type)} className={cx("min-h-11 rounded-lg border px-3 text-xs", coachType === type ? "border-blue bg-blue/15 text-ink" : "border-line text-sub")}>{type === "all" ? C.news.filter.all : C.launch.coachTypes[type]} <span className="font-mono text-faint">{coaches.filter(c => type === "all" || c.source === type).length}</span></button>)}</div>
+            <p className="sr-only text-xs leading-relaxed text-sub sm:not-sr-only">{C.launch.coachCompare}</p>
+            <select aria-label={C.launch.coachShortlist} value={coachType} onChange={event => setCoachType(event.target.value as typeof coachType)} className="w-full rounded-lg border border-line bg-raised px-3 text-ink sm:hidden">
+              {(["all", "generated", "dataset", "real"] as const).map(type => <option key={type} value={type}>{type === "all" ? C.news.filter.all : C.launch.coachTypes[type]} ({coaches.filter(c => type === "all" || c.source === type).length})</option>)}
+            </select>
+            <div className="hidden flex-wrap gap-2 sm:flex" role="group" aria-label={C.launch.coachShortlist}>{(["all", "generated", "dataset", "real"] as const).map(type => <button key={type} type="button" aria-pressed={coachType === type} onClick={() => setCoachType(type)} className={cx("min-h-11 rounded-lg border px-3 text-xs", coachType === type ? "border-blue bg-blue/15 text-ink" : "border-line text-sub")}>{type === "all" ? C.news.filter.all : C.launch.coachTypes[type]} <span className="font-mono text-faint">{coaches.filter(c => type === "all" || c.source === type).length}</span></button>)}</div>
           </div>
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {coaches.filter(c => coachType === "all" || c.source === coachType).map((c) => (

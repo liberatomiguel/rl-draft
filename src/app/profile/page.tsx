@@ -30,6 +30,7 @@ import type { Placement, RunHistoryEntry } from "@/engine/types";
 import { cx, formatDate } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
+import { useAfterFirstPaint } from "@/lib/useAfterFirstPaint";
 import { selectBestClear, selectChampionships, useProfileStore } from "@/store/profileStore";
 import { useAccountStore } from "@/store/accountStore";
 import { Badge } from "@/components/ui/Badge";
@@ -68,6 +69,8 @@ export default function ProfilePage() {
   const [replayRecap, setReplayRecap] = useState(false);
   const [locker, setLocker] = useState<CosmeticKind | null>(null);
   const cosmeticCopy = useCosmeticCopy();
+  // v2.0 (P1): the achievements grid (half of this page's nodes, below the fold) mounts after the first paint.
+  const gridReady = useAfterFirstPaint();
 
   if (!mounted) {
     return <div className="h-96 animate-pulse rounded-2xl bg-white/5" aria-busy />;
@@ -326,7 +329,11 @@ export default function ProfilePage() {
         className="mb-4"
       />
       <div className="mb-8">
-        <AchievementsGrid earned={earned} careerMarks={profile.careerMarks} />
+        {gridReady ? (
+          <AchievementsGrid earned={earned} careerMarks={profile.careerMarks} />
+        ) : (
+          <div className="h-96 animate-pulse rounded-2xl bg-white/5" aria-busy />
+        )}
       </div>
 
       {/* ---- Run history ------------------------------------------------------ */}

@@ -108,7 +108,7 @@ export function SeasonScreen() {
     ) : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-3 py-8 sm:px-4">
+    <div className="mobile-action-space mx-auto max-w-3xl space-y-4 px-3 py-4 sm:px-4 sm:py-8">
       {/* 1 — Champion / ending splash (five-way) */}
       <Panel
         strong
@@ -375,7 +375,7 @@ export function SeasonScreen() {
 
       {/* 6 — Actions / fork (rc.34: the rollover waits for the contract review) */}
       <div
-        className="rise-in flex flex-wrap justify-center gap-3 pt-2"
+        className="mobile-action-bar rise-in flex flex-wrap justify-center gap-3 pt-2"
         style={{ animationDelay: "240ms" }}
       >
         {ended ? (

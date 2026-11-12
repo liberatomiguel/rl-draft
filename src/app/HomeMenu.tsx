@@ -138,16 +138,16 @@ export default function HomeMenu() {
       <FirstRunTutorial />
       {playtest ? null : <SeasonRecap />}
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
-      <section className="px-2 pb-6 pt-10 text-center md:pt-14">
-        <p className="kicker mb-4">{APP.tagline}</p>
-        <h1 className="display mx-auto max-w-3xl text-5xl font-bold uppercase leading-[0.95] tracking-[0.08em] md:text-7xl">
+      <section className="px-2 pb-4 pt-3 text-center sm:pb-6 sm:pt-10 md:pt-14">
+        <p className="kicker mb-2 sm:mb-4">{APP.tagline}</p>
+        <h1 className="display mx-auto max-w-3xl text-4xl font-bold uppercase leading-[0.95] tracking-[0.08em] sm:text-5xl md:text-7xl">
           <span className="text-ink">Rocket</span>
           <span className="bg-gradient-to-r from-orange to-orange-bright bg-clip-text text-transparent">Draft</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
+        <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-sub sm:mt-5 sm:text-sm md:text-base">{APP.description}</p>
 
         {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-7 flex min-h-[132px] max-w-2xl flex-col items-center gap-3">
+        <div className="mx-auto mt-3 flex min-h-16 max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-7 sm:min-h-[132px] sm:flex-col sm:gap-3">
           {mounted ? (
             <>
               <RankBadge rank={rank} variant="menu" size="md" />
@@ -165,7 +165,7 @@ export default function HomeMenu() {
 
         {/* Community pills (v2.0): right under the rank tags, where they are seen. */}
         {SITE.discordUrl || SITE.supportUrl ? (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5 sm:mt-4">
             {SITE.discordUrl ? (
               <a
                 href={SITE.discordUrl}
@@ -198,9 +198,9 @@ export default function HomeMenu() {
             <Panel
               strong
               glow="orange"
-              className="group relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 transition-all hover:-translate-y-0.5 hover:!border-orange/70 md:p-8"
+              className="group relative flex h-full min-h-[13rem] flex-col justify-between overflow-hidden !border-orange/40 p-4 transition-transform hover:-translate-y-0.5 hover:!border-orange/70 sm:min-h-[15rem] sm:p-6 md:p-8"
             >
-              <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange/15 blur-3xl" aria-hidden />
+              <div className="pointer-events-none absolute -right-20 -top-20 hidden h-72 w-72 rounded-full bg-orange/15 blur-3xl sm:block" aria-hidden />
               <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} {...warmRunStore} />
               <div className="pointer-events-none relative">
                 <div className="mb-2 flex items-center gap-2.5">

@@ -144,9 +144,9 @@ export function AchievementsGrid({
                           <AchievementIcon group={def.group} className="h-4.5 w-4.5" />
                         )
                       }
-                      title={hidden ? ACH_UI.secretTitle : def.title}
-                      tier={style.label}
-                      body={hidden ? ACH_UI.secretHint : def.description}
+                      title={hidden ? ACH_UI.secretTitle : (ACH_UI.items[def.id]?.name ?? def.title)}
+                      tier={ACH_UI.careerTier[def.category] ?? style.label}
+                      body={hidden ? ACH_UI.secretHint : (ACH_UI.items[def.id]?.desc ?? def.description)}
                       foot={date ? formatDate(date) : `+${def.xp} XP`}
                     />
                   );

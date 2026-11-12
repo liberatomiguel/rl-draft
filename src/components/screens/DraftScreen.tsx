@@ -123,7 +123,7 @@ export function DraftScreen({ run }: { run: RunState }) {
         />
 
         {/* ------------------------------------------------ Your team (field) */}
-        <aside aria-label={DRAFT_UI.yourRoster}>
+        <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster}>
           <Panel className="p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
@@ -307,10 +307,10 @@ function OfferReveal({
               </div>
             </div>
           ) : (
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
               <h2
                 className={cx(
-                  "display pop-in min-w-0 truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
+                  "display pop-in min-w-0 break-words text-2xl font-bold uppercase tracking-wide sm:truncate md:text-3xl",
                   national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
                 )}
               >
@@ -334,6 +334,7 @@ function OfferReveal({
             the paid one is never spent on a dead offer (rc.29). */}
         {offer.hasPickableCard ? (
           <Button
+            data-tour="draft-reroll"
             variant="secondary"
             size="sm"
             onClick={onReroll}
@@ -361,7 +362,7 @@ function OfferReveal({
       </div>
 
       {/* The offer fades in once the reel lands */}
-      <div className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
+      <div data-tour="draft-offer" className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
         {/* National team (v2.0): the rare draw announces itself. rc.33: seeing it
             opens its album page; a drafted card is collected when the run ends. */}
         {national && nationalProgress ? (

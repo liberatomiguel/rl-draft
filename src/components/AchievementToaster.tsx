@@ -32,7 +32,7 @@ export function AchievementToaster() {
   return createPortal(
     <div
       className={cx(
-        "pointer-events-none fixed right-3 top-16 z-[80] flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2",
+        "pointer-events-none fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3 z-[80] flex max-h-[28dvh] w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto sm:bottom-auto sm:top-16 sm:max-h-none [&>button:not(:first-child)]:hidden sm:[&>button:not(:first-child)]:flex",
         held && "invisible",
       )}
       aria-live="polite"
@@ -84,7 +84,7 @@ function Toast({ id, held }: { id: string; held: boolean }) {
           {ACH_UI.unlocked}
         </span>
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
-          {def.title}
+          {ACH_UI.items[def.id]?.name ?? def.title}
         </span>
         <span className="block text-[11px] text-faint">+{def.xp} XP</span>
       </span>

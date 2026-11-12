@@ -54,6 +54,21 @@ export function localSceneRefs(region: Region, seasonIndex: number): string[] {
   return out;
 }
 
+/**
+ * v2.0 (P1): local sides PAST the pool (slot k ≥ localScenePool), `count` of
+ * them. They exist only where a region is short of teams: an org that moves
+ * to another region (C1-2b) leaves its old region under 16 orgs, and the
+ * Saturday qualifier — the region's non-direct orgs plus the pool — then had
+ * fewer than 16 teams (`fieldForEvent` threw, and every career stopped at the
+ * first qualifier of 2022-23). The pool itself never changes, so no existing
+ * side is renamed or re-rated.
+ */
+export function localOverflowRefs(region: Region, seasonIndex: number, count: number): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) out.push(localRef(region, seasonIndex, CAREER_UNOFFICIAL.localScenePool + i));
+  return out;
+}
+
 /** Team name — regional bank pick by hash; two teams in one pool never share a name. */
 export function localTeamName(ref: string, careerSeed: number): string {
   const parsed = parseLocalRef(ref);
@@ -74,7 +89,21 @@ export function localTeamName(ref: string, careerSeed: number): string {
   ) {
     stride += 1;
   }
-  return bank[(base + parsed.k * stride) % bank.length];
+  const at = (k: number) => bank[(base + k * stride) % bank.length];
+  if (parsed.k < CAREER_UNOFFICIAL.localScenePool) return at(parsed.k);
+  // v2.0 (P1): a side past the pool takes the next name of the walk no earlier side holds
+  // (the pool's eight are untouched); a bank that runs out numbers the side instead.
+  const taken = new Set<string>();
+  let name = "";
+  for (let k = 0, step = 0; k <= parsed.k; k++) {
+    name = "";
+    for (; step < bank.length + CAREER_UNOFFICIAL.localScenePool && !name; step++) {
+      if (!taken.has(at(step))) name = at(step);
+    }
+    name ||= `${at(k)} ${k + 1}`;
+    taken.add(name);
+  }
+  return name;
 }
 
 function gcd(a: number, b: number): number {
@@ -103,5 +132,10 @@ export function localPlayerNames(ref: string, careerSeed: number): [string, stri
     deriveSeed(careerSeed, streams.gen("localPlayers", `${region}:${parsed?.seasonIndex ?? 0}`)),
   ).shuffle(bank);
   const at = (parsed?.k ?? 0) * 3;
-  return [0, 1, 2].map((i) => order[(at + i) % order.length]) as [string, string, string];
+  if (at + 2 < order.length) return [0, 1, 2].map((i) => order[at + i]) as [string, string, string];
+  // v2.0 (P1): a side past the pool (the bank holds the pool's names exactly) reads the
+  // region's general bank from its end, so it never repeats a pool side's gamertags.
+  const general = playerNamePoolFor(region, careerSeed, "player");
+  const from = at - order.length;
+  return [0, 1, 2].map((i) => general[(general.length * 4 - 1 - from - i) % general.length]) as [string, string, string];
 }

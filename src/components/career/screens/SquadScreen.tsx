@@ -222,7 +222,7 @@ export function SquadScreen() {
       <ErrorBanner />
 
       {/* ==================== starters — the pitch ==================== */}
-      <Panel strong className="relative overflow-hidden p-4">
+      <Panel data-tour="squad-starters" strong className="relative overflow-hidden p-4">
         <div
           className="pointer-events-none absolute inset-0 opacity-40"
           style={{
@@ -336,7 +336,7 @@ export function SquadScreen() {
       </Panel>
 
       {/* ==================== bench + coach ==================== */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div data-tour="squad-bench" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Panel className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <p className="kicker text-[11px]">{C.squad.bench}</p>
@@ -449,7 +449,7 @@ export function SquadScreen() {
       </Panel>
 
       {/* ==================== contracts ==================== */}
-      <Panel className="p-4">
+      <Panel data-tour="squad-contracts" className="p-4">
         <p className="kicker mb-3 text-[11px]">{C.squad.contracts}</p>
         <div className="space-y-2">
           {save.squad.map((p) => {

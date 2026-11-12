@@ -20,7 +20,7 @@ export function RewardToaster() {
   if (!mounted || queue.length === 0) return null;
   return createPortal(
     <div
-      className="pointer-events-none fixed right-3 top-[4.5rem] z-[79] flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2"
+      className="pointer-events-none fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3 z-[79] flex max-h-[28dvh] w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto sm:bottom-auto sm:top-[4.5rem] sm:max-h-none [&>button:not(:first-child)]:hidden sm:[&>button:not(:first-child)]:flex"
       aria-live="polite"
     >
       {queue.slice(0, 3).map((t) => (

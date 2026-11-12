@@ -441,7 +441,7 @@ export function PlanPicker({
   const showSame = lastPlan !== null;
 
   return (
-    <div className="space-y-4">
+    <div className="mobile-training-plan space-y-4">
       {initial ? (
         <div className={cx("rounded-xl border px-3 py-2.5", OBJECTIVE_TONE[initial.objective].ring, OBJECTIVE_TONE[initial.objective].bg)}>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sub">{Y.running}</p>
@@ -537,7 +537,7 @@ export function PlanPicker({
       </div>
 
       {/* The CTA: what this cycle promises, what it risks, then Start. */}
-      <div className={cx("rounded-2xl border p-3", proj ? "border-line-strong bg-white/[0.03]" : "border-line bg-white/[0.02]")}>
+      <div className={cx("mobile-action-bar rounded-2xl border p-3", proj ? "border-line-strong bg-white/[0.03]" : "border-line bg-white/[0.02]")}>
         {proj ? (
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <p className="display text-lg font-bold text-ink">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>

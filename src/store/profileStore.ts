@@ -47,6 +47,7 @@ import {
   applyGuess,
   EMPTY_QUIZ,
   quizDayFinished,
+  quizLimit,
   foldQuizDay,
   type QuizPuzzle,
   type QuizState,
@@ -69,10 +70,11 @@ import { profileAvailableKeys } from "@/engine/profileNew";
 import { FEATURES, MISSIONS } from "@/config/balance";
 import { todayKey } from "@/lib/dailyPlan";
 import type { DurableProfile } from "@/lib/profileSync";
-import { trackEvent } from "@/lib/analytics";
+import { registerSessionProps, setAnalyticsHistorySource, trackEvent, trackEvents, trackOnboardingStep } from "@/lib/analytics";
 import { useAchievementToasts } from "./achievementToastStore";
 import { useCosmeticUnlocks } from "./cosmeticUnlockStore";
 import { useRewardToasts } from "./rewardToastStore";
+import { profileHistory, profileProgressEvents, profileSessionProps } from "./profileAnalytics";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
 import type {
   Difficulty,
@@ -188,6 +190,8 @@ export interface ProfileState {
     seenTutorial: boolean;
     /** The pre-season → Season 1 recap ("Your Legacy Lives On"), v2.0. */
     seenSeasonRecap: boolean;
+    /** rc.50: the draft's guided tour, shown once to everyone in Season 1 (its own flag: a veteran who saw the old "How to play" modal sees it too). Additive; absent = not seen. */
+    seenDraftTour?: boolean;
   };
 
   applyRunResults: (
@@ -324,6 +328,7 @@ const initialData = {
     seenRegionalIntro: false,
     seenTutorial: false,
     seenSeasonRecap: false,
+    seenDraftTour: false,
   },
 };
 
@@ -462,14 +467,6 @@ function withCosmetics(
 
 /** rc.20: > 0 while a hydrate / merge is writing (no unlock pop-ups for those). */
 let quietUnlocks = 0;
-
-/** OBS-01: the onboarding flags that close a tutorial or an explainer (`ux_tutorial`). */
-const TUTORIAL_FLAGS: ReadonlySet<string> = new Set([
-  "seenTutorial",
-  "seenHowToPlay",
-  "seenRegionalIntro",
-  "seenLegacyIntro",
-]);
 
 /** OBS-01: one `special_discovered` per card that just entered the collection
  *  (fired by the actions that unlock — never by a hydrate or a cloud merge). */
@@ -655,18 +652,10 @@ export const useProfileStore = create<ProfileState>()(
       setLastSetup: (lastDifficulty, lastShowOverall, lastMode, lastRegionLock) =>
         set({ settings: { lastDifficulty, lastShowOverall, lastMode, lastRegionLock } }),
 
-      markFlag: (flag, tutorial) => {
-        const was = get().flags[flag];
+      // 2.0: tutorials send no analytics event (Miguel, 11/11); the second
+      // argument (where the tour closed) is still accepted and unused.
+      markFlag: (flag) => {
         set((state) => ({ flags: { ...state.flags, [flag]: true } }));
-        if (!was && TUTORIAL_FLAGS.has(flag)) {
-          trackEvent("ux_tutorial", {
-            gameMode: "draft",
-            actionId: `tutorial:${flag}`,
-            id: flag,
-            step: tutorial?.step ?? 1,
-            outcome: tutorial?.outcome ?? "completed",
-          });
-        }
       },
 
       completeChallenge: (challengeId, reward) => {
@@ -774,6 +763,8 @@ export const useProfileStore = create<ProfileState>()(
           fresh = true;
           return { nationalDiscovered: { ...known, [lineupId]: new Date().toISOString() } };
         });
+        // 2.0: an album page was revealed (the cards are collected by drafting them).
+        if (fresh) trackEvent("collection_milestone", { kind: "national_team_found", id: lineupId });
         return fresh;
       },
 
@@ -881,16 +872,10 @@ export const useProfileStore = create<ProfileState>()(
         })),
 
       markCosmeticsSeen: (ids) => {
-        const before = new Set(get().cosmetics?.seen ?? []);
         set((state) => {
           const next = markSeen(state.cosmetics, ids);
           return next === state.cosmetics ? {} : { cosmetics: next };
         });
-        // OBS-01: each cosmetic the locker shows for the first time.
-        for (const id of get().cosmetics?.seen ?? []) {
-          if (before.has(id)) continue;
-          trackEvent("ux_unlock_seen", { gameMode: "draft", actionId: `unlock_seen:cosmetic:${id}`, kind: "cosmetic", id });
-        }
       },
 
       previewUnlockAll: false,
@@ -929,6 +914,16 @@ export const useProfileStore = create<ProfileState>()(
             cosmetics: withCosmetics({ ...state, season, missions }),
           };
         });
+        // 2.0: one event per mission completed, and one per "all missions" bonus.
+        for (const missionId of result.completed) {
+          const def = missionById.get(missionId);
+          const period = def?.period ?? "daily";
+          const tier = def?.tier ?? "easy";
+          trackEvent("mission_completed", { id: missionId, period, tier, xp: MISSIONS[period].xp[tier], bonus: false });
+        }
+        for (const period of result.bonuses) {
+          trackEvent("mission_completed", { id: `all:${period}`, period, tier: null, xp: MISSIONS[period].allBonus, bonus: true });
+        }
         if (result.completed.length || result.bonuses.length) {
           useRewardToasts.getState().push([
             ...result.completed.map((missionId) => {
@@ -1011,6 +1006,17 @@ export const useProfileStore = create<ProfileState>()(
         });
         if (out.correct) useRewardToasts.getState().push([{ kind: "quiz", attempt: out.attempts, xp: out.xp }]);
         if (accepted && out.finished) {
+          // 2.0: the day's quiz in one event (the clues shown are attempts - 1).
+          const day = get().quiz.results[puzzle.date];
+          trackEvent("quiz_played", {
+            solved: out.correct,
+            attempts: out.attempts,
+            maxAttempts: quizLimit(day),
+            score: day?.score ?? 0,
+            xp: out.xp,
+            streak: get().quiz.streak,
+          });
+          trackOnboardingStep("quiz_played");
           get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
           // v2.0 (C2): "Called It", solved on the first guess.
           if (out.correct && out.attempts === 1) get().awardAchievements(["ach-quiz-first-try"]);
@@ -1228,3 +1234,14 @@ export function selectBestClear(state: ProfileState): Difficulty | null {
   if (state.wins.easy > 0) return "easy";
   return null;
 }
+
+// 2.0 analytics: progression read off the write (a rank, an achievement, an
+// unlock), whoever granted the XP. Silent for a hydrate or a cloud merge
+// (`quietUnlocks`), for the staff preview, and for the persist hydrate, which
+// runs before this subscription exists.
+useProfileStore.subscribe((state, prev) => {
+  if (quietUnlocks > 0 || state.previewUnlockAll || prev.previewUnlockAll) return;
+  trackEvents(profileProgressEvents(prev, state));
+});
+registerSessionProps(() => profileSessionProps(useProfileStore.getState()));
+setAnalyticsHistorySource(() => profileHistory(useProfileStore.getState()));

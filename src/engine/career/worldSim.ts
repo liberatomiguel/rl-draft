@@ -69,6 +69,7 @@ import {
   isLocalRef,
   localPlayerNames,
   localRegionOf,
+  localOverflowRefs,
   localSceneRefs,
   localTeamName,
   localTeamOffset,
@@ -1287,6 +1288,16 @@ export function qualifierFieldRefsFor(input: {
     if (refs.length >= input.seats) break;
     if (!seeded.has(ref)) refs.push(ref);
   }
+  // v2.0 (P1): a region that lost orgs to another region (C1-2b: FURIA and Elevate leave SAM in
+  // 2022-23) has fewer than 16 teams even with the whole pool — the field came out 14 and
+  // fieldForEvent threw on every career's first qualifier of that season. Local sides past the
+  // pool take the empty seats; a region with 16 orgs never reaches this.
+  if (refs.length < input.seats) {
+    for (const ref of localOverflowRefs(input.region, input.seasonIndex, input.seats)) {
+      if (refs.length >= input.seats) break;
+      if (!seeded.has(ref) && !refs.includes(ref)) refs.push(ref);
+    }
+  }
   return refs;
 }
 
@@ -1395,6 +1406,13 @@ export function regionalEventRefsFor(input: SeededFieldInput & { qualified: stri
     if (refs.length >= seats) break;
     if (listed.includes(ref)) continue;
     if (resolves(ref)) refs.push(ref);
+  }
+  // v2.0 (P1): a region short of orgs (C1-2b) — local sides take the seats nobody else can.
+  if (refs.length < seats) {
+    for (const ref of [...localSceneRefs(input.region, input.seasonIndex), ...localOverflowRefs(input.region, input.seasonIndex, seats)]) {
+      if (refs.length >= seats) break;
+      if (!refs.includes(ref)) refs.push(ref);
+    }
   }
   return input.fieldsUser ? withUserSeat(refs, seats) : refs;
 }
@@ -1506,6 +1524,13 @@ export function fieldForEvent(
       const includeUser = Boolean(ctx.userTeam) && region === ctx.userRegion;
       const take = includeUser ? TOURNAMENT.swiss.teams - 1 : TOURNAMENT.swiss.teams;
       field = ranked.slice(0, take).map((ref) => teamFor(ref));
+      // v2.0 (P1): a region short of orgs (C1-2b) — local sides take the empty seats, as in its qualifier.
+      if (field.length < take) {
+        for (const ref of [...localSceneRefs(region, def.seasonIndex), ...localOverflowRefs(region, def.seasonIndex, take)]) {
+          if (field.length >= take) break;
+          field.push(localTeam(ref));
+        }
+      }
       if (includeUser) field.push(ctx.userTeam!);
     }
   } else if (def.tier === "major" || def.tier === "worlds") {

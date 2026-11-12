@@ -72,6 +72,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname !== "/play") clearRunInProgress();
   }, [pathname]);
 
+  // T1 (v2.0): the single-URL pages (no /pt mirror) carry an English <title>
+  // in the static HTML, so a PT player gets the tab title from the copy. The
+  // observer re-applies it when Next commits the route's metadata after this
+  // effect; both guards keep it off the next page during a navigation.
+  const pageTitle = t.PAGE_TITLES[pathname] ?? t.PAGE_TITLES[`/${pathname.split("/")[1] ?? ""}`];
+  useEffect(() => {
+    if (!pageTitle) return;
+    const original = document.title;
+    const apply = () => {
+      if (window.location.pathname.replace(/\/$/, "") === pathname && document.title !== pageTitle) {
+        document.title = pageTitle;
+      }
+    };
+    apply();
+    const el = document.querySelector("title");
+    const observer = el ? new MutationObserver(apply) : null;
+    if (el && observer) observer.observe(el, { childList: true, characterData: true, subtree: true });
+    return () => {
+      observer?.disconnect();
+      if (document.title === pageTitle) document.title = original;
+    };
+  }, [pathname, pageTitle]);
+
   // Wire the account session once (no-op when accounts are disabled) — v1.4.
   useEffect(() => useAccountStore.getState().init(), []);
 
@@ -149,7 +172,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {/* Wordmark hidden where the bar is tight (phones, and tablets with the full nav). */}
               <Logo className="hidden text-sm sm:inline-block md:hidden lg:inline-block" />
             </GuardedHomeLink>
-            <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label="Main">
+            <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label={t.NAV_UI.ariaMain}>
               {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
                 const active = pathname.startsWith(item.href);
                 return (
@@ -230,7 +253,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             profile, challenges, play) change height when they hydrate, and a
             footer in view moved with them: a layout shift of 0.14–0.35 on a
             phone. Out of view, it cannot shift anything the player sees. */}
-        <main className="mx-auto min-h-svh w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
+        <main className={cx(
+          "mx-auto min-h-svh min-w-0 w-full max-w-6xl flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12",
+          pathname.startsWith("/career") ? "px-0 pt-0 md:px-4 md:pt-6" : "px-3 pt-4 sm:px-4 sm:pt-6",
+        )}>
           {children}
         </main>
 
@@ -240,8 +266,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Bottom nav (mobile) */}
         <nav
-          aria-label="Main"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
+          aria-label={t.NAV_UI.ariaMain}
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         >
           <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
             {NAV_ITEMS.map((item) => {
@@ -253,7 +279,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   item={item}
                   className={cx(
-                    "flex items-center justify-center py-3.5 transition-colors",
+                    "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 transition-colors",
                     active ? "text-orange-bright" : "text-sub",
                   )}
                 >
@@ -263,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <NewDot className="absolute -right-1 -top-0.5" label={t.NAV_UI.newHere} />
                     ) : null}
                   </span>
-                  <span className="sr-only">{t.NAV[item.key]}</span>
+                  <span className="display max-w-full text-[11px] font-semibold leading-tight">{t.NAV[item.key]}</span>
                 </NavLink>
               );
             })}
@@ -317,8 +343,9 @@ function LangToggle() {
   const set = useSettings((s) => s.set);
   // The URL's language in the static HTML (PT on /pt pages), then the player's.
   const active = useUiLocale();
+  const { NAV_UI } = useCopy();
   return (
-    <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
+    <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label={NAV_UI.ariaLanguage}>
       {(["en", "pt"] as const).map((l) => (
         <button
           key={l}

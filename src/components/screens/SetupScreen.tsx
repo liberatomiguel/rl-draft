@@ -69,7 +69,7 @@ export function SetupScreen() {
   const locked = profile.overallLockedHidden;
 
   return (
-    <div className="rise-in mx-auto max-w-3xl">
+    <div className="mobile-action-space rise-in mx-auto max-w-3xl">
       <SectionTitle
         kicker={mode === "quick" ? SETUP.modeQuickHint : SETUP.modeClassicHint}
         title={mode === "quick" ? SETUP.modeQuick : SETUP.modeClassic}
@@ -163,7 +163,7 @@ export function SetupScreen() {
         {/* Region-specific picks: a 4-then-3 grid that fills the container, all
             chips the same size. Tags reuse the difficulty-mode Badges — orange
             "Selected" and the neutral grey "Coming soon". */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {REGIONS.map(({ id, available }) => {
             const active = regionLock === id;
             return (
@@ -221,12 +221,12 @@ export function SetupScreen() {
         />
       </Panel>
 
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+      <div className="mobile-action-bar flex items-center gap-3 sm:flex-row">
         <Button
           variant="primary"
           size="lg"
           onClick={() => startRun({ mode, difficulty, showOverall, regionLock })}
-          className="sm:min-w-56"
+          className="flex-1 sm:min-w-56 sm:flex-none"
         >
           {SETUP.start}
         </Button>

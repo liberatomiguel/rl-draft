@@ -126,9 +126,17 @@ import {
   setTrainingRepeatFlow,
 } from "./careerTraining";
 import type { ContractOffer } from "@/engine/career/contract";
-import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
+import {
+  analyticsAllowed,
+  anonymousId,
+  noteCareerAdvance,
+  takeCareerActivity,
+  trackEvents,
+  trackOnboardingStep,
+  type TrackedEvent,
+} from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
-import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persistStorage";
+import { reportingJSONStorage, reportingMigrate, reportMigration, reportSaveError } from "./persistStorage";
 
 /** A popup toast mirrored from a new mail/news item (session-only). */
 export interface CareerToast {
@@ -327,11 +335,29 @@ function emptySlots(): (CareerSave | null)[] {
  * Production only, and never throws into gameplay.
  */
 function trackCareerWrite(prev: CareerSave, next: CareerSave, action?: CareerAction): void {
+  let events: TrackedEvent[];
   try {
-    if (analyticsAllowed()) trackEvents(careerEventsFor(prev, next, action));
+    if (!analyticsAllowed()) return;
+    events = careerEventsFor(prev, next, action);
   } catch {
-    // analytics must never break a save
+    return; // analytics must never break a save
   }
+  // 2.0: the first tournament of the batch carries the tab visits and the day
+  // advances since the previous one (counters, never events of their own).
+  const first = events.find((e) => e.name === "career_event_completed");
+  if (first?.name === "career_event_completed") {
+    Object.assign(first.props, takeCareerActivity());
+    trackOnboardingStep("career_first_event");
+  }
+  trackEvents(events);
+}
+
+/** 2.0 analytics: how long an advance took on this device (`quality_slow_advance`, the advance counters). */
+function timed(kind: "day" | "stop", run: () => void): void {
+  const clock = typeof performance !== "undefined" ? performance : Date;
+  const started = clock.now();
+  run();
+  noteCareerAdvance(kind, clock.now() - started);
 }
 
 /** v2.0 (C1): the profile XP one career write earned (careerXp.careerXpBetween) — granted once, never throws into gameplay. */
@@ -400,6 +426,28 @@ export const useCareerStore = create<CareerStoreState>()(
         return true;
       };
 
+      /**
+       * v2.0 (P1): a flow that throws must never be a dead button. Flows work on
+       * a copy, so the save is untouched: the error is surfaced (`lastError`
+       * "actionFailed", the autoplay stops) and reported once per session.
+       * The launch-wave soft lock was exactly this — `fieldForEvent` threw
+       * inside the day's arrival and "Advance" silently did nothing.
+       */
+      const guarded = <T,>(run: () => T): { ok: true; value: T } | { ok: false } => {
+        try {
+          return { ok: true, value: run() };
+        } catch (error) {
+          console.error("[career] action failed; the save was left untouched", error);
+          try {
+            reportSaveError("career", "action");
+          } catch {
+            /* reporting must never throw into gameplay */
+          }
+          set({ lastError: "actionFailed", autoAdvance: false });
+          return { ok: false };
+        }
+      };
+
       const withSave = (
         fn: (save: CareerSave) => CareerSave,
         opts?: { allowEnded?: boolean; track?: CareerAction },
@@ -410,7 +458,16 @@ export const useCareerStore = create<CareerStoreState>()(
         const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
-        const next = fn(slots[activeSlot]!);
+        const ran = guarded(() => fn(slots[activeSlot]!));
+        if (!ran.ok) return;
+        const next = ran.value;
+        // v2.0 (P1): a flow that refuses hands the SAME save back (a held clock, a paused event,
+        // a lobby that cannot start). Nothing changed: no new slots array, so no re-render of
+        // every career screen, no achievement pass and no rewrite of every slot to localStorage.
+        if (next === prevSave) {
+          if (get().lastError !== null) set({ lastError: null });
+          return;
+        }
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = next !== prevSave ? seedCareerNew(prevSave, next) : undefined;
         if (seeded) next.newItems = seeded;
@@ -452,10 +509,13 @@ export const useCareerStore = create<CareerStoreState>()(
         if (refuseEnded()) return;
         const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
-        const result = fn(slots[activeSlot]!);
-        const error = result.error;
         // rc.37 F2 (package 4): a one-off spend that brings the floor within reach raises its notice at once.
-        const save = spendAlertFlow(prevSave, result.save);
+        const ran = guarded(() => {
+          const out = fn(slots[activeSlot]!);
+          return { error: out.error, save: spendAlertFlow(prevSave, out.save) };
+        });
+        if (!ran.ok) return;
+        const { error, save } = ran.value;
         const changed = save !== slots[activeSlot];
         // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
         if (changed) grantCareerXp(prevSave, save);
@@ -498,8 +558,8 @@ export const useCareerStore = create<CareerStoreState>()(
           const slots = [...get().slots];
           slots[slot] = save;
           set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, scrimPlayback: null, toasts: [] });
-          const created = careerCreatedEvent(save, input.rosterKey);
-          trackEvent(created.name, created.props);
+          trackEvents([careerCreatedEvent(save, input.rosterKey, slot)]);
+          trackOnboardingStep("career_created");
         },
 
         selectSlot: (slot) => {
@@ -513,8 +573,8 @@ export const useCareerStore = create<CareerStoreState>()(
           set({ slots, activeSlot: active });
         },
 
-        advanceDay: () => { if (!get().scrimPlayback) withSave(advanceDayFlow); },
-        advanceToNextStop: () => { set({ scrimPlayback: null }); withSave(advanceToNextStopFlow); set({ scrimPlayback: null }); },
+        advanceDay: () => { if (!get().scrimPlayback) timed("day", () => withSave(advanceDayFlow)); },
+        advanceToNextStop: () => { set({ scrimPlayback: null }); timed("stop", () => withSave(advanceToNextStopFlow)); set({ scrimPlayback: null }); },
         continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
         startSunday: (choice, mode) => withResult((s) => startSundayFlow(s, choice, mode)),
         followSunday: (choice) => withResult((s) => followSundayFlow(s, choice)),
@@ -568,11 +628,11 @@ export const useCareerStore = create<CareerStoreState>()(
           if (!get().lastError) get().markCareerSeen([toolboxNewKey(itemId)]);
         },
         setPsychologist: (on) => {
-          withResult((s) => setPsychologistFlow(s, on));
+          withResult((s) => setPsychologistFlow(s, on), { kind: "staff", staffId: "psychologist" });
           if (on && !get().lastError) get().markCareerSeen([toolboxNewKey("psych")]);
         },
         setStaff: (id, on) => {
-          withResult((s) => setStaffFlow(s, id, on));
+          withResult((s) => setStaffFlow(s, id, on), { kind: "staff", staffId: id });
         },
         runBootcamp: () => {
           const before = selectActiveSave(get());
@@ -581,10 +641,10 @@ export const useCareerStore = create<CareerStoreState>()(
           if (tier > 0 && !get().lastError) get().markCareerSeen([toolboxNewKey(tier === 2 ? "bootcamp2" : "bootcamp1")]);
         },
         buyScoutReport: (playerId) =>
-          withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
+          withResult((s) => buyScoutReportFlow(s, playerId)),
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
         fireCoach: () => withResult(fireCoachFlow, { kind: "fireCoach" }),
-        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons)),
+        renewCoach: (lengthSeasons) => withResult((s) => renewCoachFlow(s, lengthSeasons), { kind: "renewCoach" }),
         chooseSponsor: (sponsorId) =>
           withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
@@ -659,7 +719,7 @@ export const useCareerStore = create<CareerStoreState>()(
               if (item) item.read = true;
               return next;
             },
-            { allowEnded: true, track: { kind: "readMail", mailId } },
+            { allowEnded: true },
           ),
         markAllMailRead: () =>
           withSave(

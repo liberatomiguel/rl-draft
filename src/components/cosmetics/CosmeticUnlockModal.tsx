@@ -104,6 +104,7 @@ export function CosmeticUnlockModal() {
       aria-modal="true"
       aria-label={C.unlockKicker}
     >
+      <button type="button" onClick={next} aria-label={C.unlockContinue} className="fixed right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-raised text-xl text-sub hover:text-ink">×</button>
       <div key={def.id} className="rise-in flex w-full max-w-sm flex-col items-center gap-5 text-center">
         <div>
           <p className="kicker text-orange-bright">{C.unlockKicker}</p>

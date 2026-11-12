@@ -1961,3 +1961,12 @@ rc.38 art-masking notes and captures are historical, superseded by this decision
 - **Entrance animation starts at opacity 0.01**, so server-rendered text counts as the LCP at first paint.
 - **No inline CSS** (`experimental.inlineCss` rejected: it duplicates the stylesheet in every HTML).
 - **Security headers without a script policy** in `public/_headers` (HSTS, `X-Frame-Options: SAMEORIGIN`, COOP, partial CSP). The game no longer loads inside a third-party iframe.
+
+## 2026-11-12 — rc.50, wave 2 (analytics, tour, mobile, performance)
+
+- **Analytics catalogue 2.0 (A1).** Replaces the rc.32 catalogue (#145), which never reached production. PostHog bills per event and the plan holds 1 million a month; the measured pace (127 per player-day) would break it at 260 players a day. Rules: few events with many properties; one event per run, per tournament and per season; resets as a counter; `$pageview` once per route per session; nothing per pick or per day advanced. Guard without a server: `playersPerDay` in a static JSON switches a per-device cap and sampling on above 700 players a day; a fixed breaker at 400 per device per day. The device's analytics state lives in `localStorage` (`rd-analytics:v1`), outside the save contract. Series breaks: `run_started`, `tournament_started` and `special_used` stop; `run_abandoned` falls about 85 %.
+- **Guided tour instead of text modals (T1).** `data-tour` tokens on real elements; a hidden twin is skipped, so a mobile and a desktop variant can carry the same token. The draft tour has its own flag, `seenDraftTour` (Miguel: Season 1 is a reset, veterans see it once too); Skip marks the current chapter only.
+- **Achievement names: PT in copy, EN in `achievements.json`.** `EN.ACH_UI.items` is empty and the screens fall back to the catalogue (one source for the English text); a test fails if a PT entry is missing.
+- **Mobile navigation of the career is a native selector (M1)**; phones stay in portrait.
+- **Progress fills animate by transform (P1).** Extends #128–#130 to progress bars and the HQ day marker: `scaleX` / `translateX`, never `width` / `left`.
+- **AudioContext outside the click (P1).** Created in idle time after the first gesture; a cue before that is skipped.

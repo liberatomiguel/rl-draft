@@ -32,9 +32,12 @@ export function ProgressBar({
         ? { role: "progressbar", "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": label }
         : { "aria-hidden": true })}
     >
+      {/* v2.0 (P1): the fill grows by transform, not width. A width transition runs layout on
+          every frame (HQ moved three bars a day: about 40 layouts and half a day's main-thread
+          time on a phone); scaleX stays on the compositor and squeezes the gradient the same way. */}
       <div
-        className={cx("h-full rounded-full bg-gradient-to-r transition-[width] duration-700", toneClass)}
-        style={{ width: `${pct}%` }}
+        className={cx("h-full w-full origin-left rounded-full bg-gradient-to-r transition-transform duration-700", toneClass)}
+        style={{ transform: `scaleX(${pct / 100})` }}
       />
     </div>
   );

@@ -488,7 +488,7 @@ export function CalendarScreen() {
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
-      <section className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
+      <section data-tour="calendar-month" className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
@@ -568,7 +568,7 @@ export function CalendarScreen() {
                       </span>
                     ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="-mx-3 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-1">
                   {D.weekdays.map((w) => (
                     <div
                       key={w}
@@ -660,7 +660,7 @@ export function CalendarScreen() {
       </section>
 
 </div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
-      <section className="rise-in">
+      <section data-tour="calendar-next" className="rise-in">
         <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
         <div className="grid grid-cols-1 gap-2">
           {stops.map((stop, i) => {
@@ -788,7 +788,7 @@ export function CalendarScreen() {
       {/* 6 — footer actions ----------------------------------------------------- */}
       {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
           half of this bar — it now sits above it. */}
-      <div ref={footerRef} className="sticky bottom-[4.25rem] z-10 md:bottom-3">
+      <div ref={footerRef} className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 md:bottom-3">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
           {continueState === "decision" ? (
             <Button variant="primary" onClick={() => router.push("/career")}>

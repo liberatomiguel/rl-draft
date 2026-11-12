@@ -7,6 +7,15 @@
  * caller's danger color ("-$4,200"), never cents.
  */
 
+/**
+ * v2.0 (P1): ONE number formatter for the whole session. `toLocaleString("en-US")`
+ * builds an Intl.NumberFormat on every call, and the inbox, the ledger and the
+ * finance screens format hundreds of amounts per render (25 ms of a career
+ * load on a desktop CPU). Same output, digit for digit.
+ */
+let usdGrouping: Intl.NumberFormat | null = null;
+const grouped = (n: number): string => (usdGrouping ??= new Intl.NumberFormat("en-US")).format(n);
+
 export function formatMoney(amount: number, opts: { compact?: boolean } = {}): string {
   const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(Math.round(amount));
@@ -21,7 +30,7 @@ export function formatMoney(amount: number, opts: { compact?: boolean } = {}): s
     }
     return `${sign}$${abs}`;
   }
-  return `${sign}$${abs.toLocaleString("en-US")}`;
+  return `${sign}$${grouped(abs)}`;
 }
 
 /** Signed variant for deltas: "+$2.5k" / "-$400". */

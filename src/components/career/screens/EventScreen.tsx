@@ -38,7 +38,7 @@ import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_QUALIFIER, CAREER_SUNDAY, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import { isTwoDayEvent, regionalForQualifier } from "@/engine/career/calendar";
+import { isTwoDayEvent, isWindowWeek, regionalForQualifier, weekOfDay } from "@/engine/career/calendar";
 import { nextPlayoffPairings } from "@/engine/playoffs";
 import { prizeFor, pointsFor } from "@/engine/career/economy";
 import { eventPlayerShareFor } from "@/store/careerFlow";
@@ -52,7 +52,7 @@ import type {
 import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
-import { canSkipShortSquadEvent, eventFieldFor, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
+import { canSkipShortSquadEvent, eventFieldFor, eventStartBlockOf, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
 import { CommunityLineup } from "../CommunityLineup";
 import { beginCareerNavigation } from "../careerNavigation";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
@@ -242,7 +242,12 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const daysAway = def.day - save.clock.day;
   const isToday = daysAway === 0;
   const isUnofficial = def.tier === "t3" || def.tier === "t2";
-  const short = save.squad.length < (def.teamSize ?? 3);
+  // v2.0 (P1): the flow's own rule (careerFlow.eventStartBlockOf) — a starter ruled out with no
+  // reserve blocks the start exactly as a short roster does, so the lobby shows the way out
+  // (sit the event out, sign a reserve) and never a button the flow refuses.
+  const startBlock = eventStartBlockOf(save, def);
+  const absent = startBlock === "absentNoReserve" ? uncoveredAbsenceOf(save) : null;
+  const short = save.squad.length < (def.teamSize ?? 3) || absent !== null;
   const smallField = useMemo(() => def.teamSize ? eventFieldFor(save, def).field : null, [save, def]);
 
   const field = useMemo(
@@ -303,6 +308,17 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         title={def.name}
         right={eventBrandIdOf(def.name) ? <EventBrand name={def.name} /> : <TierChip tier={def.tier} />}
       />
+
+      {isToday && !short ? (
+        <div className="rise-in space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
+            <Button variant="secondary" size="lg" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+            {isUnofficial ? <Button variant="ghost" onClick={() => { passUnofficial(); router.push("/career"); }}>{C.calendar.skip}</Button> : null}
+          </div>
+          {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
+        </div>
+      ) : null}
 
       <div className="rise-in flex flex-wrap items-center gap-2">
         <Badge tone="orange" className={cx(isToday && "animate-pulse")}>
@@ -439,11 +455,18 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       {/* RTW-05 (rc.33): a short squad never starts an event — sign a third player first. */}
       {isToday && short ? (
         <div className="rise-in space-y-3 rounded-lg border border-bad/40 bg-bad/10 p-3" style={{ animationDelay: "120ms" }}>
-          <p className="text-sm text-ink">{C.hub.squadShortBody(save.squad.length, def.name)}</p>
+          <p className="text-sm text-ink">
+            {absent
+              ? C.hub.squadShortAbsentBody(absent.name, def.name, C.hub.absenceReasons[save.pendingUnavailability?.reason ?? "fitness"])
+              : C.hub.squadShortBody(save.squad.length, def.name)}
+          </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" className="min-h-11" onClick={() => router.push("/career/market")}>
-              {C.hub.squadShortMarket}
-            </Button>
+            {/* rc.39 F6 (R103): a reserve only signs in a window — the Market answers an absence only while one is open (as HQ's card). */}
+            {!absent || isWindowWeek(weekOfDay(save.clock.day)) ? (
+              <Button variant="primary" className="min-h-11" onClick={() => router.push("/career/market")}>
+                {C.hub.squadShortMarket}
+              </Button>
+            ) : null}
             <Button variant="secondary" className="min-h-11" onClick={() => router.push("/career/squad")}>
               {C.hub.squadShortSquad}
             </Button>
@@ -473,39 +496,6 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
               </Button>
             ) : null}
           </div>
-        </div>
-      ) : null}
-
-      {/* CTAs — matchday only; earlier days are a read-only preview */}
-      {isToday && !short ? (
-        <div className="rise-in space-y-2" style={{ animationDelay: "120ms" }}>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>
-              {C.event.watch}
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => {
-                enterEvent(false);
-                simEvent();
-              }}
-            >
-              {C.event.instant}
-            </Button>
-            {isUnofficial ? (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  passUnofficial();
-                  router.push("/career");
-                }}
-              >
-                {C.calendar.skip}
-              </Button>
-            ) : null}
-          </div>
-          {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
         </div>
       ) : null}
 

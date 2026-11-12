@@ -2337,3 +2337,15 @@ Two-season deals, renewed on the players' rule (raise cap and market floor on th
 ## R129 — 11 November 2026: elite talent signs at his overall again (rc.48)
 
 Revises R121. Miguel judged the potential-based reputation gate too strict. `CAREER_TALENT.elite.gateShare` 0.4 to 0: `economy.signingLevelOf` returns the overall, so the gate is rc.45's. The elite price factor (up to x2.2) stays as the only brake on signing a nass early. The rule stays in code behind the knob. Not measured; the rc.46 numbers (titles by season 10 14 to 9) mixed both effects.
+
+## R130 — 12 November 2026: a short region keeps 16-team events (rc.50)
+
+A region with fewer than 16 organizations (an org moved away, R123) keeps 16-team qualifiers and regionals: local sides past the pool of 8 (`localOverflowRefs`) take the empty seats. The pool never changes; no org is created in its place. Found by P1: rc.47 to rc.49 stopped every career at season 3, day 26.
+
+## R131 — 12 November 2026: one rule to start an event (rc.50)
+
+`eventStartBlockOf` (not today, roster short, absent with no reserve) is read by `startEvent` and by the lobby; a refusal hands the same save back and the lobby shows "Sit this event out".
+
+## R132 — 12 November 2026: no silent failure (rc.50)
+
+A career flow that throws leaves the save untouched, sets `lastError` "actionFailed", stops the autoplay and reports `quality_save_error` (kind `action`). After any change to the career engine or store, run the soft-lock probe (`P1_SOFT=1 npx vitest run src/store/careerSoftlock.probe.test.ts`) before a staging publish.

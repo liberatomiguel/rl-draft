@@ -467,7 +467,7 @@ function TeamSide({
       <div className="min-w-0">
         <p
           className={cx(
-            "display truncate text-sm font-bold uppercase tracking-wide sm:text-base md:text-lg",
+            "display break-words text-center text-xs font-bold uppercase tracking-wide sm:truncate sm:text-sm md:text-lg",
             isUser ? "text-orange-bright" : "text-ink",
           )}
         >

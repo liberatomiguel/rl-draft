@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.49**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.50**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,32 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.50 (2026-11-12), wave 2 integrated: mobile, copy and tutorial, analytics, performance (R130–R132)
+
+Per-front notes, numbers and validation lists: `docs/handoff-2.0/` (M1 mobile, T1 copy and tutorial, A1 analytics, P1 performance). M1's before/after captures stay on the `v2/M1` branch.
+
+#### Added
+- Guided tour (T1): the first visit to the career walks the real HQ (tabs, clock, day card, cash, progression, inbox) with Next, Back and Skip; each other tab shows its own short chapter on the first visit; a floating help button reopens the current chapter. The first draft opens the same tour and replaces the "How to play" modal, on its own additive flag (`seenDraftTour`): Season 1 shows it once to veterans too. Works at 360 px and with reduced motion.
+- Achievements in Portuguese: all 77, read by the achievements page, the unlock toast and the results screen. Tab titles in Portuguese on the single-URL pages.
+- Analytics catalogue 2.0 as code (A1, `src/lib/analyticsCatalog.ts`): 28 typed events. One event per draft run (resets as a counter, picked cards, specials, result, XP, rating), one per career tournament, split and season summaries, progression, collection, quiz, missions, accounts and health events. A test fails on an event or property outside the catalogue.
+- Event budget guard (`src/lib/analyticsBudget.ts`, `public/analytics-budget.json`): a per-device daily cap and sampling that switch on only above 700 players a day; a fixed breaker at 400 events per device per day.
+
+#### Changed
+- Mobile (M1): the career navigates by a selector under the header; HQ starters as horizontal cards; Market filters collapse and its tabs sit in two columns; Standings and the Club's season history become cards; brackets stack their rounds; the event lobby's actions sit by its header; modals keep their close button on short screens; toasts stay above the bottom navigation, one per layer; the home hero and Draft card are compact (the main card ends at 666 px at 360 px wide, was 889). Controls are at least 44 px, interface text 11 px, inputs 16 px.
+- Career copy (T1): 66 strings in EN and PT rewritten to say what the player decides or gets, not how the engine computes it. The share card follows the player's language. The privacy page names PostHog only.
+- `$pageview` is sent by our layer once per route per session; SDK autocapture is off. `run_started`, `tournament_started` and `special_used` stop (their data rides `run_completed`); `run_abandoned` is sent for a real exit only.
+- The HQ explainer modal is gone (the tour replaces it).
+
+#### Fixed
+- **Every career stopped at the first qualifier of 2022-23 (season 3, day 26), on rc.47 to rc.49.** Root cause: an organization that moves region (R123: FURIA and Elevate leave SAM that season) is not replaced, SAM had 14 organizations, its Saturday qualifier built 14 teams and `fieldForEvent` threw; the AI qualifier of every region resolves on the day's arrival, so Advance, Skip and autoplay did nothing in every region. A short region now fills its qualifier and regional with local sides past the pool of 8 (R130). A save already stuck moves again on load.
+- A starter ruled out with no reserve left two dead buttons in the event lobby. Root cause: the lobby read the roster count, the start also refuses an uncovered absence; both read `eventStartBlockOf` now (R131).
+- A career action that threw failed silently. Root cause: the store ran the flow in the click handler with nothing around it; the save is left untouched, the screen says so and `quality_save_error` (kind `action`) is reported (R132).
+- Advancing a day ran about 40 layouts. Root cause: three progress bars and the HQ day marker animated `width` and `left`; they animate `transform`.
+- HQ deep-copied the whole save four to six times per render. Root cause: the purchase-refusal check ran the purchase flow on a copy; the refusal rules are read directly.
+- A refused action rewrote every save slot. Root cause: a new slots array was built even when the flow returned the same save.
+- The first sound of a visit blocked its own click. Root cause: the AudioContext was created inside the click handler; it is created in idle time after the first gesture.
+- Mobile: the career navigation could sit under the header (two sticky bars at `top: 0`); the Market lock badge covered the overall; small controls and 8–10 px labels reused from desktop.
 
 ### rc.49 (2026-11-11), Miguel's review of the launch wave
 

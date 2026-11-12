@@ -37,10 +37,10 @@ import { committedSeedingFor } from "@/engine/career/worldSim";
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import {
   backerLineOf,
-  buyGearFlow,
-  runBootcampFlow,
+  bootcampRefusalOf,
+  gearRefusalOf,
+  psychologistRefusalOf,
   runwayWeeksOf,
-  setPsychologistFlow,
   userIsDirect,
   weeklyStatementOf,
 } from "./careerFlow";
@@ -256,20 +256,20 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
 }
 
 /**
- * Why the purchase would be refused right now — the flow's own answer (a dry
- * run of buyGearFlow / runBootcampFlow / setPsychologistFlow on a copy):
+ * Why the purchase would be refused right now — the flow's own answer:
  * "locked" (reputation or ladder order), "loanActive" / "loanRunway" (the
  * Backer), "funds", "used", "maxed". Null = it goes through.
+ * v2.0 (P1): the flows' own refusal rules (careerFlow.gearRefusalOf and its
+ * siblings), read without running the flow: a dry run deep-copied the save on
+ * every call, several times per HQ render.
  */
 export function toolboxRefusalOf(save: CareerSave, id: ToolboxItemId): string | null {
   if (save.phase === "ended") return "blocked";
-  const res =
-    id === "bootcamp1" || id === "bootcamp2"
-      ? runBootcampFlow(save)
-      : id === "psych"
-        ? setPsychologistFlow(save, true)
-        : buyGearFlow(save, id);
-  return res.error ?? null;
+  return id === "bootcamp1" || id === "bootcamp2"
+    ? bootcampRefusalOf(save)
+    : id === "psych"
+      ? psychologistRefusalOf(save, true)
+      : gearRefusalOf(save, id);
 }
 
 /** The confirm sheet's "after" line: the balance after the purchase and the runway at the new weekly net. */

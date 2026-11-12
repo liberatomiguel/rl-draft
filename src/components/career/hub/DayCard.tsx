@@ -242,9 +242,10 @@ export function DayCard({
         </div>
       </div>
       <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden>
+        {/* v2.0 (P1): by transform (no layout per frame); see ui/ProgressBar. */}
         <div
-          className="h-full rounded-full bg-orange/70 transition-[width] duration-500"
-          style={{ width: `${Math.min(100, (today / DAYS_PER_SEASON) * 100)}%` }}
+          className="h-full w-full origin-left rounded-full bg-orange/70 transition-transform duration-500"
+          style={{ transform: `scaleX(${Math.min(1, today / DAYS_PER_SEASON)})` }}
         />
       </div>
 
@@ -255,7 +256,8 @@ export function DayCard({
           <div key={monday} className="week-slide relative mt-4">
             <div
               className="day-marker pointer-events-none absolute inset-y-0 z-0 rounded-lg ring-2 ring-orange"
-              style={{ left: `calc(${todayIdx} * (100% + 0.375rem) / 7)`, width: "calc((100% - 6 * 0.375rem) / 7)" }}
+              // v2.0 (P1): the marker glides by transform (its own width + one gap per day), not `left`: no layout per frame.
+              style={{ left: 0, transform: `translateX(calc(${todayIdx} * (100% + 0.375rem)))`, width: "calc((100% - 6 * 0.375rem) / 7)" }}
               aria-hidden
             />
             <div className="grid grid-cols-7 gap-1.5">

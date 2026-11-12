@@ -60,7 +60,7 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -149,7 +149,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
 
   const handleShare = () => {
     const roleOf: Record<string, string> = {
-      player1: "P1", player2: "P2", player3: "P3", coach: "Coach", sub: "Sub", org: "Org",
+      player1: "P1", player2: "P2", player3: "P3", ...R.shareRoles,
     };
     const cards = rosterSlots(run.draft.roster)
       .filter((s) => s.card)
@@ -181,8 +181,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
     setShareData({
       placementLabel: placement.title,
       placement: results.placement,
-      modeLabel: run.daily ? `Daily · ${run.daily.label}` : run.mode === "quick" ? "Quick Draft" : "Classic Draft",
-      difficultyLabel: DIFFICULTY[run.difficulty].label,
+      modeLabel: run.daily ? dailyRunTag(run.daily, DAILY_TEXT) : run.mode === "quick" ? R.shareModeQuick : R.shareModeClassic,
+      difficultyLabel: DIFFICULTY_LABELS[run.difficulty]?.label ?? DIFFICULTY[run.difficulty].label,
+      hiddenOverallLabel: R.shareHiddenOvr,
       hiddenOverall: !run.showOverall,
       swissRecord:
         run.mode === "quick" ? null : `${results.swissRecord.wins}-${results.swissRecord.losses}`,
@@ -195,7 +196,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   };
 
   return (
-    <div className="rise-in pb-8">
+    <div className="mobile-results-space rise-in pb-8">
       <RunStepper run={run} />
       {ceremonyOpen ? (
         <UnlockCeremony
@@ -474,9 +475,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
                       </span>
                       <span>
                         <span className="display block text-sm font-bold uppercase tracking-wide text-ink">
-                          {def.title}
+                          {ACH_UI.items[def.id]?.name ?? def.title}
                         </span>
-                        <span className="text-xs text-sub">{def.description} · +{def.xp} XP</span>
+                        <span className="text-xs text-sub">{ACH_UI.items[def.id]?.desc ?? def.description} · +{def.xp} XP</span>
                       </span>
                     </li>
                   );
@@ -519,7 +520,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
 
       {/* CTAs */}
-      <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
+      <div className="mobile-action-bar mt-10 grid grid-cols-2 items-stretch justify-center gap-2 sm:flex sm:flex-row sm:gap-3">
         <Button variant="primary" size="lg" onClick={handlePlayAgain}>
           {R.playAgain}
         </Button>
@@ -529,6 +530,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         <Button
           variant="ghost"
           size="lg"
+          className="col-span-2"
           // Navigate only — the home page clears the run on mount (clearing
           // first flashes the setup screen during the route transition).
           onClick={() => router.push("/")}
@@ -705,6 +707,7 @@ function CeremonyPortal({
 }) {
   const mounted = useMounted();
   const rootRef = useRef<HTMLDivElement>(null);
+  const R = useCopy().RESULTS_UI;
   useOverlayHold("ceremony", true);
   usePageScrollLock(mounted);
   useDialogFocus(rootRef, mounted, { onEscape: onClick, onEnter: onClick });
@@ -727,6 +730,7 @@ function CeremonyPortal({
       aria-label={ariaLabel}
       onClick={onClick}
     >
+      <button type="button" onClick={event => { event.stopPropagation(); onClick(); }} aria-label={R.ceremonyContinue} className="fixed right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-raised text-xl text-ink">→</button>
       <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6">
         {children}
       </div>

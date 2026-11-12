@@ -437,7 +437,7 @@ export const CAREER_EN = {
     squadShortKicker: "Squad short",
     squadShortTitle: "Sign a player",
     squadShortBody: (n: number, event: string) =>
-      `Only ${n} of 3 seats are filled, and no event is played short-handed. The clock waits before ${event} until a third player signs — a free agent can take the empty seat today, window or not.`,
+      `Only ${n} of 3 seats are filled. Sign a third player before ${event}: a free agent can join today, window or not.`,
     // rc.39 F6 (R103): a starter ruled out and no reserve — the same hold, worded for it.
     squadShortAbsentTitle: "No substitute",
     absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues" },
@@ -445,7 +445,7 @@ export const CAREER_EN = {
       `${player} cannot play ${event} due to ${reason ?? "fitness issues"}. There is no substitute to take his place. Sign a substitute during a transfer window or sit this tournament out.`,
     squadShortAbsentSkip: "Sit this event out",
     squadShortAbsentSkipHint: (event: string) =>
-      `${event}: no entry, no points, no prize. Sign a reserve in the next transfer window so it does not happen again.`,
+      `${event}: no entry, no points, no prize. Sign a reserve in the next transfer window.`,
     squadShortMarket: "Go to the Market",
     squadShortSquad: "Squad",
     contractsExpiring: (n: number) => (n === 1 ? "1 contract ends this season — renew or let it run out." : `${n} contracts end this season — renew or let them run out.`),
@@ -682,9 +682,9 @@ export const CAREER_EN = {
         `${p.org} tabled a formal offer of ${p.fee} for ${p.player}. It expires when the window closes — accept or decline it in the Market's deals tab.`,
       // rc.32 (Miguel, 30/10): what a Blockbuster bid is, why it came, its price and the cost of refusing.
       blockbusterBid: (p: Record<string, string | number>) =>
-        `${p.org} came in heavy: ${p.fee} for ${p.player}. A Blockbuster bid is one of the season's scripted moments — a big-money org chasing the player it built around in real history — so it pays ${p.mult === undefined ? "well above" : `×${p.mult}`} his market value. Refuse it, or let it expire, and he stays${p.pct === undefined ? " — but his next renewal ask can rise." : `, but his next renewal ask rises ${p.pct}%.`}`,
+        `${p.org} came in heavy: ${p.fee} for ${p.player}, ${p.mult === undefined ? "well above" : `×${p.mult}`} his market value. Refuse it, or let it expire, and he stays${p.pct === undefined ? ", but his next renewal ask can rise." : `, but his next renewal ask rises ${p.pct}%.`}`,
       foundingPartner: (p: Record<string, string | number>) =>
-        `A local partner backs the org's first steps: ${p.base} a split (${p.pct}% of the founding wage bill), paid with every Monday's payroll. Its only ask is entering events, and there is no signing bonus. It runs until your first sponsorship deal — and at least to the end of ${p.through}, alongside a deal signed earlier. Finances lists it as its own line.`,
+        `A local partner backs the org's first steps: ${p.base} a split, paid every Monday. All it asks is that you enter events. It stays until your first sponsorship deal, and at least to the end of ${p.through}.`,
       foundingPartnerEnds: () =>
         `The founding partner's term is over: the org has its own sponsorship deal and its first seasons behind it. From here the books stand on sponsors and prizes.`,
       cashNotice: (p: Record<string, string | number>) =>
@@ -699,7 +699,7 @@ export const CAREER_EN = {
       objectiveHit: (p: Record<string, string | number>) =>
         `The split objective was delivered. The bonus of ${p.bonus} lands with the payday. Good business.`,
       objectiveMissed: (p: Record<string, string | number>) =>
-        `The split objective slipped. No money is clawed back — but repeated misses lower next season's renewal tier. (Misses so far: ${p.misses}.)`,
+        `The split objective slipped. Repeated misses lower next season's renewal tier. (Misses so far: ${p.misses}.)`,
       // rc.34 (ECO-04): the deals' mails.
       // rc.36 (front S2): two or three brands (the ladder's access), priced by risk (rc.35), and the deadline rule.
       sponsorDecision: (p: Record<string, string | number>) =>
@@ -713,7 +713,7 @@ export const CAREER_EN = {
       sponsorGoalMissed: (p: Record<string, string | number>) =>
         `${goalOfParamsEn(p)}: ${p.done} of ${p.target}. ${
           positive(p.fine)
-            ? `The fine is ${p.fine}, paid as ${p.perMonday} on each of the next ${p.mondays} Mondays — never below the bank's floor.`
+            ? `The fine is ${p.fine}, paid as ${p.perMonday} on each of the next ${p.mondays} Mondays.`
             : Number(p.steady)
               ? `No fine on a Steady deal — but the brand's patience drops: ${p.misses} of ${p.patience} misses; at ${p.patience}, the next offer comes a tier lower.`
               : "No fine."
@@ -732,10 +732,10 @@ export const CAREER_EN = {
         `The bank wired ${p.amount}. Instalments of ${p.weekly} book every Monday until ${p.total} is repaid. Spend it on something that pays back.`,
       // rc.37 F2 (package 2): the bank's ordinary loan, offered on the Monday the runway reaches the warning level.
       creditOffer: (p: Record<string, string | number>) =>
-        `${Number(p.weeks) > 0 ? `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays` : `The books are in the red (${p.balance}) at ${p.burn} a week of burn`}, and they would close below the floor (${p.floor}) on ${breachWhenEn(p)}. Before that, the bank offers its ordinary loan: ${p.loanNet} on the balance now, ${p.loanTotal} repaid in all (${p.loanPct}% interest) — ${p.loanWeekly} every Monday for ${p.loanTerm} weeks. That is cheaper than the emergency loan (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, repaid within ${p.emergencyTerm} weeks` : ""}). Finances takes it at any amount up to the bank's limit.`,
+        `${Number(p.weeks) > 0 ? `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays` : `The books are in the red (${p.balance}) at ${p.burn} a week of burn`}, and they would close below the floor (${p.floor}) on ${breachWhenEn(p)}. The bank offers its ordinary loan: ${p.loanNet} now, ${p.loanWeekly} every Monday for ${p.loanTerm} weeks (${p.loanTotal} in all, ${p.loanPct}% interest). That is cheaper than the emergency loan (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, repaid within ${p.emergencyTerm} weeks` : ""}). Finances lets you pick another amount.`,
       // rc.37 F2 (package 3): an emergency-sale offer — below market value, while the books are in the red.
       emergencyBid: (p: Record<string, string | number>) =>
-        `The books are in the red (${p.balance}), and ${p.org} smell a bargain: ${p.fee} for ${p.player}, ${p.pct}% of his market value. It is an emergency offer: it stands ${p.days} days (until the window closes at the latest), and accepting sells him at once. The Market's deals tab shows what lands after the bank's share, the wages it frees and the seat it leaves.`,
+        `The books are in the red (${p.balance}), and ${p.org} smell a bargain: ${p.fee} for ${p.player}, ${p.pct}% of his market value. The offer stands ${p.days} days or until the window closes, and accepting sells him at once. The details are in the Market's deals tab.`,
       bankCleared: () =>
         `The last instalment cleared. The line of credit is open again if the org ever needs it.`,
       // rc.32 (M4, provisional): every Monday at ≤ 4 weeks — the projected breach and the way out.
@@ -755,7 +755,7 @@ export const CAREER_EN = {
       // rc.34 (Miguel, 31/10): the bank's emergency loan — why, how much, how it is repaid, by when,
       // the investor if it came with it, and what ends the career.
       emergencyLoan: (p: Record<string, string | number>) =>
-        `The books closed a Monday below the floor (${p.floor}), so the bank stepped in with an emergency loan of ${p.lent}: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed}, interest included. ${p.garnishPct}% of every prize and ${p.salePct}% of any sale repay it automatically; pay the rest from Finances whenever you like.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""}${loansLeftEn(p) ? ` ${loansLeftEn(p)}` : ""}${positive(p.partnerWeekly) ? ` An investor, ${p.partnerName}, comes in with this first loan: ${p.partnerWeekly} a week from next Monday for ${p.partnerWeeks} weeks — the last payment on ${partnerUntilEn(p)}. It is income, never garnished.` : ""} ${Number(p.lock) ? "While it is owed, transfer fees, gear and new commitments that shorten the runway are on hold." : "Nothing is locked while you owe: signings, fees and gear stay open."} ${nextBreachEn(p)}`,
+        `The books closed a Monday below the floor (${p.floor}), so the bank made an emergency loan of ${p.lent}: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed}, interest included. ${p.garnishPct}% of every prize and ${p.salePct}% of every sale repay it; pay the rest from Finances.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""}${loansLeftEn(p) ? ` ${loansLeftEn(p)}` : ""}${positive(p.partnerWeekly) ? ` An investor, ${p.partnerName}, comes in with it: ${p.partnerWeekly} a week for ${p.partnerWeeks} weeks, until ${partnerUntilEn(p)}.` : ""}${Number(p.lock) ? " While it is owed, transfer fees, gear and new commitments are on hold." : ""} ${nextBreachEn(p)}`,
       emergencyTopUp: (p: Record<string, string | number>) =>
         `The books closed below the floor again, so the bank lent ${p.lent} more: the balance is back at ${p.rescueTo}, and you now owe ${p.owed} in all.${p.dlWeek !== undefined ? ` The deadline does not move: ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""} ${nextBreachEn(p)}`,
       // rc.34 review: the books projected to the deadline (an older mail without the projection reads today's balance).
@@ -776,7 +776,7 @@ export const CAREER_EN = {
       unavailableNoReserve: (p: Record<string, string | number>) =>
         `${p.player} can't play ${p.event}, and the squad has no reserve to take his seat. A reserve only signs in a transfer window: unless one is open before the event, the team does not enter.`,
       noReserve: () =>
-        `From this season a starter can be ruled out of an official event: visas, health, life. With a reserve, he steps in. Without one, the team does not enter that event. Reserves only sign in a transfer window, and a modest free agent on the bench is enough.`,
+        `From this season a starter can be ruled out of an official event. With a reserve, he steps in. Without one, the team misses the event. Reserves only sign in a transfer window.`,
       // rc.34 review: with what the next breach does (the career's last loan repaid: the end) — an older mail reads as sent.
       debtCleared: (p: Record<string, string | number> = {}) =>
         `The emergency loan is repaid in full, and its deadline is lifted — the org owns its future again. ${p.next === undefined ? "The bank's door stays open." : nextBreachEn(p)}`,
@@ -908,7 +908,7 @@ export const CAREER_EN = {
     coachSlot: "Coach",
     staffRow: "Staff & boosts",
     hire: "Hire",
-    emptySub: "No reserve. A starter can be ruled out of an official event (never in your first season), and without a reserve the team does not enter it. Reserves only sign in a transfer window.",
+    emptySub: "No reserve. If a starter is ruled out, the team misses the event. Reserves only sign in a transfer window.",
     emptyCoach: "A coach boosts development and match prep.",
     contracts: "Contracts",
     wage: "Wage",
@@ -958,7 +958,7 @@ export const CAREER_EN = {
     renewalBlockbuster: (pct: number) => `+${pct}%: you turned down a Blockbuster bid for him.`,
     // rc.37 (F1): the tenure ladder and the premium cap.
     renewalTenure: (seasons: number) =>
-      `${seasons} seasons with you: the longer he stays, the closer his renewal comes to his market ask.`,
+      `${seasons} seasons with you: his renewal gets pricier every year.`,
     renewalPremiumCapped: (pct: number) =>
       `Premiums capped: ambition, a refused Blockbuster and titles add +${pct}% at most.`,
     renewalsTitle: "Contracts up for renewal",
@@ -1052,7 +1052,7 @@ export const CAREER_EN = {
     matchPrepWeek: "Match week — sessions run at half load; the event pays match XP on top",
     // v2.0 training rework (R27–R29)
     drillTitle: "This week's drill",
-    drillHint: "One team drill per week: everyone sharpens the drill's attribute on top of their own focus, and sessions run a little hotter.",
+    drillHint: "One team drill per week: the whole squad improves the chosen attribute.",
     drillNone: "No drill set — sessions run the base plan.",
     drillByCoach: (name: string) => `Picked by coach ${name}`,
     drillEffect: (offset: string, stats: string, pct: number) => `+${offset} ${stats} / week for the whole squad · +${pct}% overall`,
@@ -1084,7 +1084,7 @@ export const CAREER_EN = {
     declineLine: (perWeek: string) => `Past his prime: about −${perWeek} OVR a week`,
     effectsTitle: "What your attributes do",
     effectsHint: "Your current squad, and where each attribute makes a difference.",
-    effectBaseline: (n: number) => `Rating modifiers compare your squad with an attribute level of ${n}: below it, the modifier can be negative. Overall remains the main source of team strength.`,
+    effectBaseline: (n: number) => `With the attribute below ${n}, the effect turns negative. Overall still matters most.`,
     effectDescription: {
       offense: "Creates pressure and scoring opportunities throughout every game.",
       defense: "Keeps the team competitive by containing the opposition in every game.",
@@ -1252,7 +1252,7 @@ export const CAREER_EN = {
       daysLeft: (n: number) => (n === 1 ? "1 day left" : `${n} days left`),
       runsTo: (date: string, days: number) => `Runs to ${date} · ${days === 1 ? "1 day" : `${days} days`}`,
       base: "Base growth",
-      baseHint: "No package: every player grows at the base — his training days plus the series he plays. Never a penalty.",
+      baseHint: "No package: players grow from training days and the series they play.",
       by: { coach: "Set by the coach", user: "Set by you", base: "No package" } as Record<string, string>,
       objective: "Objective",
       objectives: { development: "Development", preparation: "Competitive prep", recovery: "Recovery" } as Record<string, string>,
@@ -1273,7 +1273,7 @@ export const CAREER_EN = {
       } as Record<string, string>,
       scrims: "Scrims",
       scrimsPerWeek: (n: number) => (n === 0 ? "None" : n === 1 ? "1 a week" : `${n} a week`),
-      scrimDaysHint: "Tuesday, Thursday, Wednesday for a third — never on a matchday. Practice only: no points, prizes or reputation.",
+      scrimDaysHint: "Tuesday and Thursday (Wednesday for a third), away from matchdays. Practice only: no points, prizes or reputation.",
       levels: { easy: "Easy", even: "Even", hard: "Hard", auto: "Coach picks" } as Record<string, string>,
       levelHint: {
         easy: "Confidence (+consistency) and less wear; little growth.",
@@ -1361,7 +1361,7 @@ export const CAREER_EN = {
     emptySeatOpen: "Your squad is short of three: a free agent can take the empty seat today, window or not.",
     // RTW-05 (rc.33 review): the free agent the empty seat always takes, whatever the balance (careerFlow.emptySeatPriceFor).
     emptySeatCheapest: (name: string, wage: string) =>
-      `Short of money? ${name} (${wage} / week), the cheapest free agent you can sign, always takes the empty seat.`,
+      `Short of money? ${name} (${wage} / week) is the cheapest free agent for the seat.`,
     fee: "Transfer fee",
     signingBonus: "Signing bonus",
     freeAgentTag: "Free agent",
@@ -1397,7 +1397,7 @@ export const CAREER_EN = {
     // rc.33 (UX-07): the Blockbuster explained in one sentence, on a Blockbuster bid only
     // (its refusal cost included — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `A Blockbuster is one of the season's scripted moments: ${org} pay ×${mult} his market value, and if you refuse it or let it expire he stays, but his next renewal asks ${pct}% more.`,
+      `Blockbuster offer: ${org} pay ×${mult} his market value; refuse and he stays, but his next renewal asks ${pct}% more.`,
     consequences: "After this deal",
     balanceAfter: (s: string) => `Balance after: ${s}`,
     // rc.32 (M4, provisional): the runway a signing leaves.
@@ -1410,7 +1410,7 @@ export const CAREER_EN = {
     // rc.37 F2 (package 3): the emergency sale — the offer's badge, what it is, and what the sale leaves.
     emergencyBadge: "Emergency offer",
     emergencyWhat: (days: number) =>
-      `The books are in the red, so this buyer offers below market value. It stands ${days} days, until the window closes at the latest.`,
+      `With the books in the red, this buyer offers below market value. It stands ${days} days or until the window closes.`,
     // rc.37 F2 (Miguel, 05/11): the market-value tag on emergency offers and Blockbuster bids.
     belowValue: (pct: number | null) => (pct === null ? "Below market value" : `Below market value · ${pct}%`),
     aboveValue: (pct: number | null) => (pct === null ? "Above market value" : `Above market value · ${pct}%`),
@@ -1423,7 +1423,7 @@ export const CAREER_EN = {
     slotLabel: "Squad slot",
     slotStarter: "Takes an open seat in the starting three.",
     slotReserve: "Joins as the sub. Promote him on the Squad screen at any time — the contract stays the same.",
-    samePrice: "Same price as a starter: the slot never changes the contract.",
+    samePrice: "Same price as a starter.",
     // rc.33 (UX-07): a full squad only warns and points to Squad; the signing waits for a free seat.
     squadFullWarn: (cap: number) =>
       `Your squad is full (${cap} of ${cap}). Release or sell a player on the Squad screen, then sign him.`,
@@ -1436,7 +1436,7 @@ export const CAREER_EN = {
     coachTraining: (pct: number) => `+${pct}% on a Development package`,
     coachRating: (n: number) => `+${n} team rating in every series`,
     coachNoneEffects: (pct: number) =>
-      `No coach: growth runs at the base as always, and a training package lands at half strength (+${pct}% on Development).`,
+      `Without a coach, a training package works at half strength (+${pct}% on Development).`,
     // rc.34 (DEV-03 T4): the hire card — three attributes, each with the effect it has.
     coachQuality: (q: number) => `Quality ${q}`,
     coachQualityEffect: (pct: number) => `Focus efficiency ${pct}%: the share of a package's effect that lands`,
@@ -1554,7 +1554,7 @@ export const CAREER_EN = {
       loanActive: "No fee transfers while the emergency loan is owed.",
       bankActive: "One bank loan at a time — clear the current one first.",
       bankBacker: "The bank writes no other loan while its emergency loan is open — repay that one first.",
-      bankNegative: "The balance is too deep in the red for an ordinary loan. The bank's only money now is the emergency loan, at the floor — and those are counted.",
+      bankNegative: "The balance is too deep in the red for an ordinary loan. Only the emergency loan is left.",
       bankAmount: "Enter a valid amount.",
       bankLimit: "That is above what the bank offers at your reputation.",
       unknown: "That deal is no longer available.",
@@ -1581,7 +1581,7 @@ export const CAREER_EN = {
       /** DEV-02 (R48): the minimum competitive age. */
       tooYoung: "Too young to compete — players sign from age 13.",
       /** rc.32 (M4): the lock on commitments that shorten the runway (off since rc.34 — CAREER_LOAN.lockCommitments). */
-      loanRunway: "While the emergency loan is owed, nothing that shortens the runway — repay it or free some wages first.",
+      loanRunway: "Locked while the emergency loan is owed. Repay it or free some wages first.",
     },
   },
 
@@ -1629,15 +1629,15 @@ export const CAREER_EN = {
     },
     loans: "Loans & debt",
     // rc.34: one bank, two loans — the voluntary one and the emergency one.
-    loansHint: "One bank, two loans: a voluntary loan on your terms, and an emergency loan when the books break the floor.",
+    loansHint: "Two loans: a voluntary one whenever you want, and an emergency one if the books break the floor.",
     // The next breach of the floor ends the career — no emergency loan to fall back on.
-    loansHintEnd: "One way to borrow: the bank's voluntary loan. No emergency loan is left — the next breach of the floor ends the career.",
+    loansHintEnd: "Only the voluntary loan is left. Breaking the floor again ends the career.",
     bankTitle: "Bank loan",
     bankNone: "No bank loan open",
     bankHint: (weeks: number, pct: number) =>
-      `A line of credit sized by reputation, repaid in ${weeks} weekly instalments with ${pct}% interest. Plan it — the emergency loan is the bank's last resort, and it comes with a deadline.`,
+      `Credit sized by your reputation: ${weeks} weekly instalments, ${pct}% interest.`,
     bankHintEnd: (weeks: number, pct: number) =>
-      `A line of credit sized by reputation, repaid in ${weeks} weekly instalments with ${pct}% interest. Plan it — no emergency loan stands behind it: the next breach of the floor ends the career.`,
+      `Credit sized by your reputation: ${weeks} weekly instalments, ${pct}% interest. No emergency loan is left: breaking the floor ends the career.`,
     bankAvailable: (s: string) => `Available now: up to ${s}`,
     bankTerms: (weekly: string, weeks: number, total: string) =>
       `${weekly} / week for ${weeks} weeks · ${total} total`,
@@ -1653,9 +1653,9 @@ export const CAREER_EN = {
     bankLeft: (n: number) => (n === 1 ? "last instalment" : `${n} instalments left`),
     // ECO-02 (R46): a pay-down that leaves the balance below zero warns first. rc.34: the bank's loan.
     payRiskBacker: (floor: string) =>
-      `This leaves the books in the red. Below ${floor} on a Monday, the bank's emergency loan steps in — with a deadline.`,
+      `This leaves the books in the red. Below ${floor} on a Monday, the emergency loan steps in, with a deadline.`,
     payRiskEnd: (floor: string) =>
-      `This leaves the books in the red. Below ${floor} on a Monday, the career ends — there is no second rescue.`,
+      `This leaves the books in the red. Below ${floor} on a Monday, the career ends.`,
     // What the next breach does on these books (the flow's nextBreachParamsOf).
     payRiskNext: (floor: string, p: Record<string, string | number>) =>
       `This leaves the books in the red. Below ${floor} on a Monday is a breach. ${nextBreachEn(p)}`,
@@ -1721,7 +1721,7 @@ export const CAREER_EN = {
       profileHint: {
         steady: "Most of the money is sure. A small bonus per goal, no fines.",
         balanced: "A solid weekly base, a real bonus per goal, a small fine for a miss.",
-        bold: "Less sure money, a big bonus per goal and a payment the day you reach the first. A miss is fined.",
+        bold: "Less guaranteed money, a big bonus per goal and an extra on the first one you hit. A miss is fined.",
       } as Record<string, string>,
       word: SPONSOR_WORD_EN,
       rowStability: "Stability",
@@ -1751,7 +1751,7 @@ export const CAREER_EN = {
       noNextPay: "Last one paid",
       finesNone: "No fines owed",
       finesShort: (mondays: number) => `over ${mondays} Mondays`,
-      seasonFineCap: (s: string) => `Fines never pass ${s} a season`,
+      seasonFineCap: (s: string) => `Fines: ${s} a season at most`,
       dealRun: (paid: number, total: number) => `${paid} of ${total} Mondays paid`,
       weeklySure: (s: string) => `${s} a week, sure`,
       plusSigning: (s: string) => `+ ${s} on signing`,
@@ -1770,14 +1770,14 @@ export const CAREER_EN = {
       decideBy: (date: string) => `Pick one by ${date} — that day the clock waits for your pick.`,
       decideBySafest: (date: string) => `Pick one by ${date} — after that the safest deal is signed for you.`,
       compareHint:
-        "All three are worth about the same on average. They differ in how sure the money is, how long they run and what they ask.",
+        "All three are worth about the same on average. They differ in guaranteed money, length and goals.",
       // rc.34: a Tier 3 / 4 brand pays a side below its level less (sponsorDeals.levelValueShareOf).
       levelScaled: (tier: number, pct: number) =>
         tier >= 4
-          ? `Tier 4 brands pay world contenders in full — at the team's level today, they offer ${pct}% of that.`
+          ? `Tier 4 brands pay world contenders in full. Today the team gets ${pct}%.`
           : tier === 3
-            ? `Tier 3 brands pay a side that holds its own at a Major in full — at the team's level today, they offer ${pct}% of that.`
-            : `Tier 2 brands pay a regional top-8 side in full — at the team's level today, they offer ${pct}% of that.`,
+            ? `Tier 3 brands pay Major-level sides in full. Today the team gets ${pct}%.`
+            : `Tier 2 brands pay regional top-8 sides in full. Today the team gets ${pct}%.`,
       stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
       handover: (first: number, second: number) =>
         `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
@@ -1800,12 +1800,12 @@ export const CAREER_EN = {
       fineIfMissed: (s: string) => `up to ${s} if missed`,
       record: (hits: number, misses: number) => `Goals so far: ${hits} reached, ${misses} missed`,
       finesOwed: (s: string, mondays: number) => `Fines still to pay: ${s} over the next ${mondays} Mondays`,
-      fineFloorNote: "An instalment never takes the books below the bank's floor.",
+      fineFloorNote: "paid in weekly instalments",
       otherIncome: "Other income",
       otherIncomeLine: (taken: string, cap: string, n: number, max: number) =>
         `${taken} of ${cap} this season · ${n} of ${max} this split`,
       otherIncomeHint: (pct: number, max: number) =>
-        `Showmatches and partner days pay outside the guaranteed income — at most ${pct}% of the season's earnings, ${max} a split.`,
+        `Showmatches and partner days pay on top: up to ${pct}% of the season's earnings, ${max} a split.`,
     },
     // rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the Emergency Backer).
     backer: "Emergency loan",
@@ -1823,7 +1823,7 @@ export const CAREER_EN = {
     endsCareerWarning: "This deal likely ends the career: the next breach of the floor is the last.",
     // rc.37 F2: the bank's ordinary loan as Finances suggests it while the books burn (careerFlow.creditOfferOf).
     creditSuggest: (net: string, total: string, weekly: string, weeks: number, covers: number) =>
-      `The bank's suggestion on these books: ${net} now, ${total} repaid in all — ${weekly} every Monday for ${weeks} weeks. It keeps the balance above $0 for about ${covers} Mondays at this pace.`,
+      `The bank suggests ${net} now, ${weekly} every Monday for ${weeks} weeks (${total} in all). It covers about ${covers} Mondays at this pace.`,
     // rc.37 F2 (package 4): the season review's consolidated view of next season's books (careerFlow.seasonOutlookOf).
     outlook: {
       title: "Next season's books",
@@ -1838,7 +1838,7 @@ export const CAREER_EN = {
       cash: "To the first regional",
       cashLine: (balance: string, week: number, mondays: number, net: string) =>
         `${balance} on the balance by week ${week} — ${mondays} Mondays at ${net} a week, no prize counted.`,
-      sponsorEnds: "The sponsor deal ends with this season: until a new one is signed, the line counts no sponsor base.",
+      sponsorEnds: "The sponsor deal ends this season: the projection drops its base until you sign a new one.",
       retirements: "Retirements",
       retireNone: "No one is near the end of his career.",
       retireNow: (name: string) => `${name} retires at the rollover (his final season was announced).`,
@@ -1847,7 +1847,7 @@ export const CAREER_EN = {
     },
     // rc.34: the rule when nothing is owed — the floor, the loan back to the rescue target, the term (null = none).
     backerIdle: (floor: string, rescueTo: string, term: number | null) =>
-      `Not in use. If a Monday closes below ${floor}, the bank lends the balance back to ${rescueTo}${term !== null ? `, to be repaid within ${term} weeks` : ""} — prizes and sales repay part of it automatically.`,
+      `Not in use. If a Monday closes below ${floor}, the bank lends the balance back to ${rescueTo}${term !== null ? `, to be repaid within ${term} weeks` : ""}.`,
     // CAREER_LOAN.breachesToEnd ends this difficulty's careers at the first breach — no emergency loan.
     backerIdleNone: (floor: string) =>
       `No emergency loan on this difficulty: a Monday that closes below ${floor} ends the career.`,
@@ -1855,20 +1855,20 @@ export const CAREER_EN = {
     insolvencyWarning: "The books are failing — the next breach of the floor ends the career.",
     // rc.32 (M4): the line in weeks of wages.
     backerWeeksLine: (floorWeeks: number, rescueWeeks: number) =>
-      `The line moves with the wage bill: the floor is ${floorWeeks} weeks of wages below zero; the emergency loan tops the balance up to ${rescueWeeks} weeks above.`,
+      `The floor sits ${floorWeeks} weeks of wages below zero. The emergency loan lifts the balance back to ${rescueWeeks} weeks above.`,
     // rc.34: the whole rule on this difficulty — the term, the investor, the top-ups, the deadline,
     // and CAREER_LOAN.breachesToEnd if it ends careers outright (null = it does not).
     loanRule: (p: { term: number | null; partnerPct: number; partnerWeeks: number; maxTopUps: number | null; endAt: number | null; maxLoans?: number | null }) => {
       if (p.endAt !== null && p.endAt <= 1) return "On this difficulty the first breach of the floor ends the career.";
       const partner = p.partnerPct > 0 ? ` (the first time, an investor adds ${p.partnerPct}% of the wage bill${partnerRunEn(p.partnerWeeks)})` : "";
-      const term = p.term !== null ? ` Repay it within ${p.term} weeks: prizes and sales repay part of it automatically, Finances the rest.` : "";
-      const topUps = `Below the floor again while it is owed, the bank adds to it${p.maxTopUps !== null ? ` (up to ${p.maxTopUps} times)` : ""} — the deadline stays.`;
-      const end = p.term !== null ? ` On the deadline the bank takes what is owed as long as the books stay at or above the floor after it; if not, the career ends.` : "";
+      const term = p.term !== null ? ` Repay it within ${p.term} weeks: prizes and sales cover part, you pay the rest in Finances.` : "";
+      const topUps = `If the floor breaks again before it is repaid, the bank adds to the loan${p.maxTopUps !== null ? ` (up to ${p.maxTopUps} times)` : ""} and the deadline stays.`;
+      const end = p.term !== null ? ` On the deadline the bank collects; if the books cannot take it, the career ends.` : "";
       const count = p.endAt !== null ? ` The ${ordinalEn(p.endAt)} breach ends the career.` : "";
       // rc.34 review: the career-wide cap on new loans (CAREER_LOAN.emergency.maxLoans).
       const loans =
         p.maxLoans !== undefined && p.maxLoans !== null
-          ? ` The bank opens ${p.maxLoans === 1 ? "one emergency loan" : `${p.maxLoans} emergency loans`} at most in a career: a breach after the last one is repaid ends it.`
+          ? ` ${p.maxLoans === 1 ? "One emergency loan" : `${p.maxLoans} emergency loans`} at most in a career: after the last one, breaking the floor ends it.`
           : "";
       return `A breach opens the bank's emergency loan${partner}.${term} ${topUps}${end}${loans}${count}`;
     },
@@ -1894,7 +1894,7 @@ export const CAREER_EN = {
       max === null ? `Top-ups so far: ${n}` : n >= max ? `Top-ups: ${n} of ${max} — the next breach ends the career` : `Top-ups: ${n} of ${max}`,
     // rc.33 (ECO-07): the rescue partner card — rc.34: the investor that joins the first emergency loan.
     rescueTitle: "Investor",
-    rescueTerms: (weeks: number) => `Came in with the first emergency loan, for ${weeks} weeks · income, never garnished`,
+    rescueTerms: (weeks: number) => `Came in with the first emergency loan · ${weeks} weeks of extra income`,
     rescueUntil: (date: string, left: number) =>
       left === 1 ? `Last payment ${date}.` : `${left} payments left — the last on ${date}.`,
     // rc.32 (M3, provisional): the founding partner card.
@@ -1908,14 +1908,14 @@ export const CAREER_EN = {
     // rc.32 (M6, provisional): the players' share of podium prizes.
     // rc.33 (ECO-10): each contract carries its own share (Squad and the offer show it).
     playerShareRule:
-      "Podium prizes are shared with the players who played: each contract keeps its own share of a top-four prize at a regional, Major or Worlds (Squad shows it) — booked as its own line.",
+      "Players keep a share of top-four prizes at regionals, Majors and Worlds. Each player's share is in Squad.",
     boosts: "Boosts & staff",
     psychologist: "Sports Psychologist",
     staff: {
-      assistant: { title: "Assistant coach", desc: "Reserves bank 80% of the team's series experience instead of 60% while retained." },
-      analyst: { title: "Opponent analyst", desc: "+0.75 team rating in every playoff round while retained." },
-      physio: { title: "Physical trainer", desc: "Cuts the chance of a player missing an event from training wear by 25% while retained." },
-      brand: { title: "Brand manager", desc: "Sponsor offers made while retained are worth 15% more. Pays off from global sponsors up." },
+      assistant: { title: "Assistant coach", desc: "Reserves earn 80% of the team's series experience instead of 60%." },
+      analyst: { title: "Opponent analyst", desc: "+0.75 team rating in every playoff round." },
+      physio: { title: "Physical trainer", desc: "Cuts the risk of a player missing an event from training wear by 25%." },
+      brand: { title: "Brand manager", desc: "New sponsor offers are worth 15% more. Pays off from global sponsors up." },
     },
     psychologistDesc: (clutch: number, consistency: number) => `+${clutch} Clutch, +${consistency} Consistency while retained. Support for deciding games.`,
     bootcamp: "Bootcamp",
@@ -2394,7 +2394,7 @@ export const CAREER_EN = {
 
   achievements: {
     title: "Career achievements",
-    hint: "Permanent and yours across every save — a season reset never touches them. Each pays Season XP once; the big ones unlock cosmetics.",
+    hint: "Permanent: they count across every save and survive a season reset. Each pays Season XP once; the big ones unlock cosmetics.",
     unlocked: "Achievement unlocked",
     lockedLabel: "Locked",
     unlockedOn: (date: string) => `Unlocked ${date}`,
@@ -2508,7 +2508,7 @@ export const CAREER_EN = {
     placementLabel: "Placement",
     rewardsTable: "Rewards by placement",
     communityLineup: (n: number) => `Your ${n}v${n} lineup`,
-    communityLineupHint: "Choose who represents the org in this community event. Each selected player brings their own rating and attributes.",
+    communityLineupHint: "Choose who plays this community event.",
     communitySeat: (n: number) => `Player ${n}`,
     lobbyTitle: "Event lobby",
     format: "Format",
@@ -2648,9 +2648,9 @@ export const CAREER_EN = {
     openerLabel: "Your opener",
     fieldLabel: "Sunday's field",
     briefingTitle: "Coach's briefing",
-    briefingHint: "Choose between the entire Swiss and playoffs. Bootcamp and briefing share a +2 rating cap. Default: continuity.",
+    briefingHint: "Focus on the whole Swiss or on the playoffs. Bootcamp and briefing add up to +2 rating at most.",
     championshipBriefing: { keep: "Balanced preparation", recover: "Peak for the grand final", prepare: "Win the early rounds" },
-    championshipHint: "Target quarterfinals/semifinals (including lower-bracket rounds), or the grand final. Other rounds have their own listed effect. Bootcamp + briefing cap: +2.",
+    championshipHint: "Target quarters and semis (lower bracket included) or the grand final. Bootcamp and briefing add up to +2 at most.",
     effectChampionship: (q: number, s: number, o: number, f: number) => `Quarterfinals ${q > 0 ? "+" : ""}${q}; semifinals ${s > 0 ? "+" : ""}${s}; other rounds ${o > 0 ? "+" : ""}${o}; grand final ${f > 0 ? "+" : ""}${f}.`,
     effectLaterOnly: (n: number) => `${n > 0 ? "+" : ""}${n} in later playoff series.`,
     effectLater: (opening: number, later: number) => `${opening > 0 ? "+" : ""}${opening} in the playoff opener; ${later > 0 ? "+" : ""}${later} in later playoff series.`,
@@ -2845,7 +2845,7 @@ export const CAREER_EN = {
     splitLeft: (n: number) => (n === 1 ? "1 split left" : `${n} splits left`),
     missCost: (n: number) => `Miss it: −${n} rep`,
     noCost: "No reputation at stake",
-    fixedNote: "Set by the board at the season's start — results fill it, they never move it.",
+    fixedNote: "Set by the board at the season's start.",
     why: {
       rank: (rank: number, teams: number) => `#${rank} of ${teams} in your region`,
       stage: { founding: "Founding season", rising: "Rising org", established: "Established org" } as Record<string, string>,
@@ -2859,11 +2859,11 @@ export const CAREER_EN = {
     gotIt: "Got it",
     hub: {
       title: "This is HQ",
-      body: "The day card runs your career: advance one day at a time, or skip to the next stop. Cards marked Needs you want a decision; everything else is optional depth.",
+      body: "Advance one day at a time, or skip to the next stop. Cards marked Needs you want a decision; the rest is optional.",
     },
     calendar: {
       title: "The season at a glance",
-      body: "Three splits, three regional weekends each — qualifier Saturday, regional Sunday — and a Major to close every split: Swiss stage Saturday, playoffs on Championship Sunday. Season Points decide who makes the Major — and Worlds.",
+      body: "Three splits. Each has three regionals (qualifier Saturday, regional Sunday) and closes with a Major. Season Points take you to the Major and to Worlds.",
     },
     squad: {
       title: "Your squad",
@@ -2879,12 +2879,12 @@ export const CAREER_EN = {
     },
     window: {
       title: "Transfer window",
-      body: "Windows sit between splits (plus one final call before Worlds). Deals resolve when you advance the week.",
+      body: "Windows open between splits and before Worlds. Deals move as the days pass.",
     },
     finances: {
       title: "The books",
       // rc.34 (ECO-13/15): the bank's emergency loan and its deadline.
-      body: "Prizes and sponsors in, wages and upkeep out, every Monday. Below the floor, the bank lends you an emergency loan — repay it by its deadline (longer on easier difficulties) or the career ends.",
+      body: "Every Monday prizes and sponsors come in, wages and upkeep go out. Below the floor, the bank makes an emergency loan: repay it by the deadline or the career ends.",
     },
     standings: {
       title: "The cut-line",
@@ -2892,11 +2892,11 @@ export const CAREER_EN = {
     },
     sponsor: {
       title: "Sponsors",
-      body: "Guaranteed money each split, a bonus if you hit the objective. Missing never costs cash — repeated misses cost the renewal tier.",
+      body: "Guaranteed money each split and a bonus per goal you hit. Repeated misses lower the tier of the next offer.",
     },
     randomEvent: {
       title: "Next man up",
-      body: "Sometimes a starter can't play — visas, health, life. A reserve steps in with his chemistry. Without one the team does not enter that event, and a reserve only signs in a transfer window. Your first season is exempt. No event is ever played with fewer than three.",
+      body: "Sometimes a starter cannot play. A reserve steps in; without one, the team misses the event. Reserves only sign in a transfer window.",
     },
     worldsRace: {
       title: "The Worlds race",
@@ -2941,7 +2941,7 @@ export const CAREER_EN = {
       rows: noticeRows(
         ["Owed", `${p.owed}, ${p.repayPct}% interest included`],
         p.dlDate !== undefined && ["Repay by", `${p.dlDate} — ${p.dlWeeks} weeks`],
-        ["How it is repaid", `${p.garnishPct}% of every prize and ${p.salePct}% of every sale go to it automatically; pay the rest from Finances whenever you like.`],
+        ["How it is repaid", `${p.garnishPct}% of every prize and ${p.salePct}% of every sale repay it; pay the rest from Finances.`],
         positive(p.partnerWeekly) && [
           "Investor",
           `${p.partnerName} comes in with this first loan: ${p.partnerWeekly} a week for ${p.partnerWeeks} weeks (${p.partnerPct}% of the wage bill) — income, never garnished.`,
@@ -3006,7 +3006,7 @@ export const CAREER_EN = {
       lead: `Rescues work differently now: the Emergency Backer is gone, and the ${p.owed} you owed it sits with the bank as an emergency loan.`,
       rows: noticeRows(
         p.dlDate !== undefined && ["Repay by", `${p.dlDate} — ${p.dlWeeks} weeks from now`],
-        ["How it is repaid", `${p.garnishPct}% of every prize and ${p.salePct}% of every sale go to it automatically; pay the rest from Finances whenever you like.`],
+        ["How it is repaid", `${p.garnishPct}% of every prize and ${p.salePct}% of every sale repay it; pay the rest from Finances.`],
         ["Below the floor again", nextBreachEn(p)],
         p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
@@ -3033,7 +3033,7 @@ export const CAREER_EN = {
         ],
         ["Without it", `On this pace the books close below the floor on ${breachWhenEn(p)}. ${nextBreachEn(p)}`],
       ),
-      foot: `The emergency loan costs ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` and must be repaid within ${p.emergencyTerm} weeks` : ""}. Missing this one's instalments only drains the balance. Finances lends any amount up to the limit, any day.`,
+      foot: `The emergency loan costs ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` and must be repaid within ${p.emergencyTerm} weeks` : ""}. Finances lends any amount up to the limit, any day.`,
     }),
     // rc.37 F2 (package 4): a one-off spend brought the floor within reach (careerFlow.spendAlertFlow).
     spendRisk: (p: Record<string, string | number>): MoneyNoticeText => ({
@@ -3094,6 +3094,8 @@ export const CAREER_EN = {
       major: "Major",
       worlds: "Worlds",
     },
+    // v2.0 (P1): an action that failed inside the game (the save is untouched).
+    actionFailed: "That did not go through, and nothing in your save changed. Try again; if it keeps happening, tell us on Discord.",
   },
   launch: {
     seasonDetailUnavailable: "Detailed results from this season were not kept in this save.",
@@ -3109,11 +3111,187 @@ export const CAREER_EN = {
     coachRenewAsk: "Asks to renew", coachRenewFor: (n: number) => `Renew ${n} ${n === 1 ? "season" : "seasons"}`,
     coachEvolution: "Quality and experience develop at each season review, up to the coach’s ceiling.",
     coachShortlist: "Available coaches", coachCompare: "Compare type, quality, specialty and weekly wage. Open details for training effects.",
-    sponsorSchedule: "Goals across this contract", automaticCamp: "Sponsor-funded bootcamp · activates automatically when eligible; no purchase needed.",
+    sponsorSchedule: "Goals across this contract", automaticCamp: "Sponsor-funded bootcamp · activates on its own.",
     seasonTitles: "Titles this season", totalTitles: "Career titles", events: "Events played", wins: "Series won", losses: "Series lost", games: "Games W–L", goals: "Goals scored / conceded", winRate: "Series win rate", podiums: "Podiums",
     calendarPlan: "Plan your season", calendarHint: "Choose a month, then select a day for its schedule and actions.", calendarOverview: "Season progress", calendarLegend: "Calendar key",
     sundayQualified: "Championship Sunday secured", majorChampion: "Major champions", worldsChampion: "World champions",
     rocketStreet: "Rocket Street",
+  },
+
+  // T1 (v2.0): the guided tour. One chapter per screen, shown on the first
+  // visit and reopened by the help button. Each step spotlights a real element
+  // (`data-tour`), so a body says what the player does there, in one or two lines.
+  tour: {
+    kicker: "Road to Worlds",
+    next: "Next",
+    back: "Back",
+    skip: "Skip",
+    done: "Got it",
+    progress: (n: number, total: number) => `${n} of ${total}`,
+    help: "Guide to this screen",
+    hub: {
+      welcome: {
+        title: "Welcome to Road to Worlds",
+        body: "You run an org from its first roster to the World Championship. One minute on the essentials.",
+        points: [
+          { label: "Squad", text: "Sign, train and renew" },
+          { label: "Cash", text: "Wages go out every Monday" },
+          { label: "Season Points", text: "They take you to Majors and Worlds" },
+        ],
+      },
+      tabs: {
+        title: "One tab per area of the club",
+        body: "Everything is one tap away on this bar.",
+        items: {
+          hub: "Today and decisions",
+          calendar: "Events and cups",
+          squad: "Lineup and contracts",
+          training: "How the team grows",
+          market: "Players and coaches",
+          finances: "Cash and sponsors",
+          standings: "The race to Worlds",
+          news: "Offers and notices",
+          club: "Trophies and progress",
+        } as Record<string, string>,
+      },
+      advance: {
+        title: "You move the clock",
+        body: "Time only passes when you say so, and the game stops by itself when something needs you.",
+        points: [
+          { label: "Play", text: "Day by day, up to the next stop" },
+          { label: "Skip ahead", text: "Straight to the next stop" },
+        ],
+      },
+      day: {
+        title: "Today's card",
+        body: "Whatever needs a decision today shows up here: an offer, a sponsor, an event. Settle it and move on.",
+      },
+      inbox: {
+        title: "Inbox",
+        body: "Bids, bank notices and invitations arrive by mail. Open the ones that ask for an answer.",
+      },
+      finances: {
+        title: "Keep an eye on the cash",
+        body: "Prizes and sponsors bring money in, wages take it out every Monday. Let the balance sink too far and the bank steps in, with a deadline.",
+      },
+      progress: {
+        title: "Progression",
+        body: "Results raise your reputation. Reputation unlocks the coach, better sponsors and new facilities.",
+      },
+      help: {
+        title: "Help is always here",
+        body: "Each tab shows its own short guide on your first visit. This button brings it back any time.",
+      },
+    },
+    training: {
+      cycle: {
+        title: "Pick the cycle",
+        body: "Every 14 days you choose what the squad works on.",
+        points: [
+          { label: "Evolve", text: "Attributes grow faster" },
+          { label: "Gel", text: "Chemistry builds faster" },
+          { label: "Recover", text: "Less wear, veterans hold their level" },
+        ],
+      },
+      coach: {
+        title: "The coach",
+        body: "With a coach the plan comes ready and training pays more. Without one, you set each cycle yourself.",
+      },
+      growth: {
+        title: "Watch them grow",
+        body: "See who is still improving, who is at his peak and who is past it, before you renew or sell.",
+      },
+    },
+    market: {
+      tabs: {
+        title: "Four counters",
+        body: "Switch between them here.",
+        points: [
+          { label: "Free agents", text: "No transfer fee" },
+          { label: "Under contract", text: "A fee to their org, from reputation 20" },
+          { label: "Coaches", text: "Who trains the squad" },
+          { label: "My deals", text: "Bids made and received" },
+        ],
+      },
+      search: {
+        title: "Find your signing",
+        body: "Search, sort and filter by region, then open a player to scout him and make an offer.",
+        points: [
+          { label: "Window open", text: "Deals move as the days pass" },
+          { label: "Window closed", text: "Scout now, bid when it opens" },
+        ],
+      },
+    },
+    finances: {
+      overview: {
+        title: "Three reads of your money",
+        body: "The balance over time, what comes in and goes out each Monday, and where the season is heading.",
+      },
+      sponsor: {
+        title: "Sponsors",
+        body: "A deal pays a guaranteed base plus a bonus for each goal you reach. Safer deals pay less; bold ones fine a miss.",
+      },
+      loans: {
+        title: "Loans and the floor",
+        body: "Borrow whenever you choose. If a Monday closes below the floor, the bank lends by itself, and missing that deadline ends the career.",
+      },
+      progress: {
+        title: "Invest in the org",
+        body: "Gear, staff and bootcamps make the squad grow and play better. Each step unlocks with reputation.",
+      },
+    },
+    calendar: {
+      month: {
+        title: "The season at a glance",
+        body: "Pick a day to see what happens and what you can do. The icons mark regionals, Majors and the transfer window.",
+      },
+      next: {
+        title: "Events and cups",
+        body: "Your next stops, in order.",
+        points: [
+          { label: "Official events", text: "They pay Season Points" },
+          { label: "Community cups", text: "Optional: prize money and reputation" },
+        ],
+      },
+    },
+    squad: {
+      starters: {
+        title: "Your three starters",
+        body: "They play every series. Open a player to see his attributes, contract and options.",
+      },
+      bench: {
+        title: "Reserve and coach",
+        body: "The reserve steps in when a starter cannot play. Without one, the team misses that event.",
+      },
+      contracts: {
+        title: "Contracts",
+        body: "Renew before the season ends, or the player leaves for free.",
+      },
+    },
+    standings: {
+      tabs: {
+        title: "Two races",
+        body: "Regionals and Majors pay Season Points.",
+        points: [
+          { label: "Major table", text: "This split: who plays the Major" },
+          { label: "Worlds table", text: "The whole season: who goes to Worlds" },
+        ],
+      },
+      table: {
+        title: "Stay above the line",
+        body: "The line marks the last qualifying spot in your region. Finish above it and the next stage opens.",
+      },
+    },
+    club: {
+      progress: {
+        title: "Reputation and progression",
+        body: "Every milestone and what it unlocks is listed here. Plan your next step.",
+      },
+      trophies: {
+        title: "Trophy room",
+        body: "Titles and records stay here for the whole career.",
+      },
+    },
   },
 
 };

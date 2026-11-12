@@ -868,7 +868,7 @@ function PlayoffBracketView({
     return (
       // rc.29: 132 px columns keep the five lower-bracket columns (third place
       // included) inside the 1280 px layout instead of clipping the last one.
-      <div key={name} className="flex min-w-[132px] flex-1 flex-col justify-around gap-2">
+      <div key={name} className="flex min-w-0 flex-1 flex-col justify-around gap-2 sm:min-w-[132px]">
         <p className="kicker text-center !text-[9px]">{T.roundNames[name]}</p>
         {Array.from({ length: SLOTS[name] }).map((_, si) => {
           const s = series?.[si] ?? null;
@@ -906,18 +906,18 @@ function PlayoffBracketView({
         {T.bracket} ·{" "}
         {T.bestOf(isSingle ? TOURNAMENT.quick.bestOf : TOURNAMENT.playoffs.bestOf)}
       </h3>
-      <div className="space-y-5 overflow-x-auto pb-1">
+      <div className="space-y-5 pb-1 sm:overflow-x-auto">
         {isSingle ? (
-          <div className="flex min-w-[520px] gap-3">{SINGLE_COLUMNS.map(renderColumn)}</div>
+          <div className="mobile-bracket flex gap-3 sm:min-w-[520px]">{SINGLE_COLUMNS.map(renderColumn)}</div>
         ) : (
           <>
             <div>
               <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">{T.upperBracket}</p>
-              <div className="flex min-w-[640px] gap-3">{UPPER_COLUMNS.map(renderColumn)}</div>
+              <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(renderColumn)}</div>
             </div>
             <div>
               <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">{T.lowerBracket}</p>
-              <div className="flex min-w-[640px] gap-3">{LOWER_COLUMNS.map(renderColumn)}</div>
+              <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(renderColumn)}</div>
             </div>
           </>
         )}
