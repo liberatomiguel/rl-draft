@@ -1,6 +1,9 @@
 /**
- * Road to Worlds analytics (OBS-01, DESIGN-DECISIONS #145) — the career events
- * of `docs/ANALYTICS-EVENTS-2.0.md`, DERIVED from one store write: the save as
+ * Road to Worlds analytics (OBS-01, DESIGN-DECISIONS #145; the 2.0 launch
+ * catalogue) — the career events of `docs/ANALYTICS-EVENTS-2.0.md`: one per
+ * tournament, three split summaries and one review per season, the rare
+ * decisions (transfers, staff, sponsor, debt) and the career's end. Nothing per
+ * day advanced. DERIVED from one store write: the save as
  * it was before the action and the save the career store just wrote. Pure: no
  * clock, no storage, no sending — `careerStore.ts` sends the list it returns,
  * right after `set()`.
@@ -16,10 +19,10 @@
  * value; no names (org, manager, players) are ever sent — refs and ids only.
  */
 
-import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_SAVE } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
-import { ageOf, exactAgeOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
+import { ageOf, exactAgeOf, growthModelOf, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { loanBreachesOf } from "@/engine/career/economy";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
@@ -33,13 +36,11 @@ export type CareerAction =
   | { kind: "sell"; offerId: string }
   | { kind: "hireCoach" }
   | { kind: "fireCoach" }
+  | { kind: "renewCoach" }
   | { kind: "chooseSponsor" }
-  | { kind: "scout"; playerId: string }
-  | { kind: "readMail"; mailId: string }
+  /** A support-staff retainer switched (assistant / analyst / physio / brand / psychologist). */
+  | { kind: "staff"; staffId: string }
   | { kind: "other" };
-
-/** Career onboarding explainers that report `ux_tutorial` when first closed. */
-const CAREER_TUTORIAL_FLAGS = ["seenHub"] as const;
 
 /**
  * The Mondays that close a split: the week after each split's last week
@@ -85,13 +86,28 @@ function bandMidOf(save: CareerSave, p: SquadPlayer): number {
   return (band.min + band.max) / 2;
 }
 
-/** Bucketed headroom (band midpoint − overall). Bucket edges are reporting only. */
-export function headroomBucket(headroom: number): string {
-  if (headroom <= 0) return "0";
-  if (headroom <= 2) return "1-2";
-  if (headroom <= 5) return "3-5";
-  if (headroom <= 9) return "6-9";
-  return "10+";
+/** Mean overall of the starters (the whole squad when none is marked), one decimal. */
+function squadOverallOf(save: CareerSave): number {
+  const starters = save.squad.filter((p) => p.role === "starter");
+  const pool = starters.length > 0 ? starters : save.squad;
+  if (pool.length === 0) return 0;
+  return Math.round((pool.reduce((total, p) => total + p.overall, 0) / pool.length) * 10) / 10;
+}
+
+function payrollOf(save: CareerSave): number {
+  return save.squad.reduce((total, p) => total + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0);
+}
+
+/** Support-staff retainers in force (the four roles and the psychologist). */
+function staffCountOf(save: CareerSave): number {
+  const gear = save.finances.gear;
+  return Object.values(gear.staff ?? {}).filter(Boolean).length + (gear.psychologist ? 1 : 0);
+}
+
+function staffOn(save: CareerSave, staffId: string): boolean {
+  const gear = save.finances.gear;
+  if (staffId === "psychologist") return !!gear.psychologist;
+  return !!(gear.staff as Record<string, boolean | undefined> | undefined)?.[staffId];
 }
 
 function ledgerDayOf(e: LedgerEntry): number {
@@ -107,6 +123,12 @@ function newById<T extends { id: string }>(before: readonly T[], after: readonly
 // Detectors (each returns the events one write produced)
 // ---------------------------------------------------------------------------
 
+/**
+ * One event per TOURNAMENT. A regional weekend is one tournament: a Saturday
+ * qualifier the team got through is not reported on its own — it rides on
+ * Sunday's regional as `qualifierPlacement`. A qualifier the team fell in is the
+ * weekend's event (tier "qualifier", `qualified: false`).
+ */
 function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
   const banked = new Set(prev.eventResults.map((r) => r.eventId));
   const out: TrackedEvent[] = [];
@@ -115,23 +137,41 @@ function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
     const row = r.rows.find((x) => x.ref === "user");
     const placement = r.userPlacement ?? row?.placement;
     if (!placement) continue; // an AI event the user did not play
+    const qualified = r.tier === "qualifier" ? placement !== "swiss_exit" : null;
+    if (qualified) continue; // reported with Sunday's regional
     const regionalWeek = r.tier === "qualifier" || r.tier === "regional";
     const seeding = [next.competition.weekSeeding, prev.competition.weekSeeding].find(
       (ws) => ws && ws.seasonIndex === r.seasonIndex && ws.week === r.week,
     );
     const active = prev.activeEvent?.def.id === r.eventId ? prev.activeEvent : null;
+    // The user's own qualifier of that weekend (every region banks one the same week).
+    const userPlacementIn = (q: (typeof next.eventResults)[number]) =>
+      q.userPlacement ?? q.rows.find((x) => x.ref === "user")?.placement;
+    const qualifier =
+      r.tier === "regional"
+        ? next.eventResults.find(
+            (q) => q.tier === "qualifier" && q.seasonIndex === r.seasonIndex && q.week === r.week && userPlacementIn(q) !== undefined,
+          )
+        : undefined;
+    const qualifierPlacement = qualifier ? (userPlacementIn(qualifier) ?? null) : null;
+    const weekend = [prev.weekend, next.weekend].find((w) => w?.eventId === r.eventId);
     out.push({
       name: "career_event_completed",
       props: {
         careerId: careerIdOf(next),
         actionId: actionIdOf(next, "event", r.eventId),
         seasonIndex: r.seasonIndex,
+        week: r.week,
         tier: r.tier,
         eventRegion: r.region ?? "international",
         placement,
-        qualified: r.tier === "qualifier" ? placement !== "swiss_exit" : null,
+        qualified: r.tier === "regional" && qualifierPlacement ? true : qualified,
+        qualifierPlacement,
         watched: active?.watched ?? false,
         seedingDirect: regionalWeek && seeding ? seeding.direct.includes("user") : null,
+        briefing: weekend?.briefing ?? null,
+        squadOverall: squadOverallOf(next),
+        balance: next.finances.balance,
       },
     });
   }
@@ -139,8 +179,8 @@ function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
 }
 
 function milestones(prev: CareerSave, next: CareerSave): TrackedEvent[] {
-  const hits: { kind: CareerMilestoneKind; ref: string }[] = [];
-  const hit = (kind: CareerMilestoneKind) => hits.push({ kind, ref: kind });
+  const hits: { kind: CareerMilestoneKind; ref: string; amount?: number }[] = [];
+  const hit = (kind: CareerMilestoneKind, amount?: number) => hits.push({ kind, ref: kind, amount });
   if (titlesOf(prev) === 0 && titlesOf(next) > 0) hit("first_title");
   if ((prev.stats.majorsQualified ?? 0) === 0 && (next.stats.majorsQualified ?? 0) > 0) hit("first_major");
   if ((prev.stats.worldsQualified ?? 0) === 0 && (next.stats.worldsQualified ?? 0) > 0) hit("first_worlds");
@@ -153,20 +193,47 @@ function milestones(prev: CareerSave, next: CareerSave): TrackedEvent[] {
     prev.end.reason !== "insolvency" && next.end.reason === "insolvency" && next.end.moneyCause === "breach";
   const lastRescue = loanBreachesOf(next.finances) - (endedByBreach ? 1 : 0);
   for (let b = loanBreachesOf(prev.finances) + 1; b <= lastRescue; b++) {
-    hits.push({ kind: "backer", ref: `backer:${b}` });
+    hits.push({ kind: "backer", ref: `backer:${b}`, amount: next.finances.loan?.remaining ?? 0 });
   }
-  if (!prev.finances.bankLoan && next.finances.bankLoan) hit("bank_loan");
-  if (prev.end.reason !== "insolvency" && next.end.reason === "insolvency") hit("insolvency");
-  return hits.map(({ kind, ref }) => ({
+  if (!prev.finances.bankLoan && next.finances.bankLoan) hit("bank_loan", next.finances.bankLoan.remaining);
+  // An insolvency is the career's end: `career_ended` (reason "insolvency") reports it.
+  return hits.map(({ kind, ref, amount }) => ({
     name: "career_milestone",
     props: {
       careerId: careerIdOf(next),
       actionId: actionIdOf(next, "milestone", ref),
       seasonIndex: next.clock.seasonIndex,
       kind,
+      amount: amount ?? null,
     },
   }));
 }
+
+/** The career closed in this write (a Worlds title, the timeline's end, insolvency, retirement). */
+function careerEnds(prev: CareerSave, next: CareerSave): TrackedEvent[] {
+  if (prev.end.ended || !next.end.ended) return [];
+  return [
+    {
+      name: "career_ended",
+      props: {
+        careerId: careerIdOf(next),
+        actionId: `${careerIdOf(next)}:ended`,
+        seasonIndex: next.end.endedSeasonIndex ?? next.clock.seasonIndex,
+        reason: next.end.reason ?? "unknown",
+        legacyGrade: next.end.legacyGrade ?? null,
+        titles: titlesOf(next),
+        titlesWorlds: next.stats.titlesWorlds ?? 0,
+        balance: next.finances.balance,
+        rep: next.reputation,
+      },
+    },
+  ];
+}
+
+const WAGE_KINDS: readonly LedgerKind[] = ["salary", "coachSalary", "payroll"];
+const MARKET_KINDS: readonly LedgerKind[] = ["transferOut", "signingBonus", "releaseFee", "severance", "standInFee"];
+/** Debt service is not spending on the club: it is reported as the debt going down. */
+const DEBT_KINDS: readonly LedgerKind[] = ["loanGarnish", "loanPayment", "bankPayment"];
 
 function sumKinds(entries: readonly LedgerEntry[], kinds: readonly LedgerKind[]): number {
   return entries.filter((e) => kinds.includes(e.kind)).reduce((total, e) => total + e.amount, 0);
@@ -202,17 +269,29 @@ function splitSummaries(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         seasonIndex,
         split,
         balance: next.finances.balance,
-        payrollPerSplit:
-          next.squad.reduce((total, p) => total + p.salaryPerSplit, 0) + (next.coach?.salaryPerSplit ?? 0),
+        payrollPerSplit: payrollOf(next),
         incomePrize: sumKinds(lines, ["prize"]),
         // rc.34 (ECO-04): a Bold deal's milestone is sponsor income too (fines are spending).
         incomeSponsor: sumKinds(lines, ["sponsorBase", "sponsorBonus", "sponsorSigning", "sponsorMilestone"]),
         incomeFanbase: sumKinds(lines, ["fanbase"]),
         incomeTransfers: sumKinds(lines, ["transferIn"]),
+        // Spending is reported positive: wages (squad, coach), the market, and every other outflow.
+        spendWages: -sumKinds(lines, WAGE_KINDS),
+        spendTransfers: -sumKinds(lines, MARKET_KINDS),
+        spendOther: -lines
+          .filter((e) => e.amount < 0 && !WAGE_KINDS.includes(e.kind) && !MARKET_KINDS.includes(e.kind) && !DEBT_KINDS.includes(e.kind))
+          .reduce((total, e) => total + e.amount, 0),
         debtBacker: next.finances.loan?.remaining ?? 0,
         debtBank: next.finances.bankLoan?.remaining ?? 0,
         splitRank: rank >= 0 ? rank + 1 : null,
         ledgerComplete,
+        squadOverall: squadOverallOf(next),
+        squadSize: next.squad.length,
+        coachOverall: next.coach?.overall ?? null,
+        sponsorTier: next.sponsor?.tier ?? null,
+        trainingMode: next.training?.mode ?? null,
+        staffCount: staffCountOf(next),
+        rep: next.reputation,
       },
     });
   });
@@ -229,13 +308,33 @@ function seasonReviews(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         careerId: careerIdOf(next),
         actionId: `${careerIdOf(next)}:${h.seasonIndex}:${next.clock.day}:season:${h.seasonIndex}`,
         seasonIndex: h.seasonIndex,
+        region: next.identity.region,
+        difficulty: next.difficulty,
         regionRank: h.userRegionRank,
         seasonPoints: h.userSeasonPoints,
         majorsQualified: h.majorsQualified,
         worldsPlacement: h.userWorldsPlacement ?? null,
         grade: h.grade,
+        earnings: h.earnings,
         balance: h.balanceEnd,
         rep: h.repEnd,
+        titlesSeason: h.titles,
+        titlesTotal: titlesOf(next),
+        titlesWorlds: next.stats.titlesWorlds ?? 0,
+        squadOverall: squadOverallOf(next),
+        squadSize: next.squad.length,
+        squadAvgAge:
+          next.squad.length > 0
+            ? Math.round((next.squad.reduce((total, p) => total + ageOf(p.birthYear, h.seasonIndex), 0) / next.squad.length) * 10) / 10
+            : 0,
+        payrollPerSplit: payrollOf(next),
+        coachOverall: next.coach?.overall ?? null,
+        sponsorTier: next.sponsor?.tier ?? null,
+        sponsorProfile: next.sponsor?.terms?.profile ?? null,
+        trainingMode: next.training?.mode ?? null,
+        staffCount: staffCountOf(next),
+        debtBacker: next.finances.loan?.remaining ?? 0,
+        debtBank: next.finances.bankLoan?.remaining ?? 0,
       },
     }));
 }
@@ -252,6 +351,7 @@ function transferProps(
   p: SquadPlayer,
   kind: "sign" | "sell" | "release" | "renew",
   fee: number,
+  warned = false,
 ): TrackedEvent {
   return {
     name: "career_transfer",
@@ -266,18 +366,7 @@ function transferProps(
       fee,
       salaryPerSplit: p.salaryPerSplit,
       role: p.role,
-    },
-  };
-}
-
-function contractOutcome(save: CareerSave, outcome: "renewed" | "released" | "let_go", ref: string): TrackedEvent {
-  return {
-    name: "ux_contract_warning",
-    props: {
-      gameMode: "career",
-      careerId: careerIdOf(save),
-      actionId: actionIdOf(save, `contract_${outcome}`, ref),
-      outcome,
+      warned,
     },
   };
 }
@@ -300,13 +389,12 @@ function transfers(prev: CareerSave, next: CareerSave, action: CareerAction): Tr
         newLog.find((t) => t.kind === "userOut" && t.playerId === p.id)?.fee ??
         prev.pendingOffers.find((o) => o.id === action.offerId)?.fee ??
         0;
-      out.push(transferProps(next, p, "sell", fee));
+      out.push(transferProps(next, p, "sell", fee, wasWarned(prev, p)));
     } else {
       const severance = newLedger
         .filter((e) => e.kind === "severance" && e.refName === p.name)
         .reduce((total, e) => total - e.amount, 0);
-      out.push(transferProps(next, p, "release", severance));
-      if (wasWarned(prev, p)) out.push(contractOutcome(next, "released", p.id));
+      out.push(transferProps(next, p, "release", severance, wasWarned(prev, p)));
     }
   }
   for (const p of next.squad) {
@@ -315,8 +403,7 @@ function transfers(prev: CareerSave, next: CareerSave, action: CareerAction): Tr
       const renewed =
         p.contractEndSeason !== before.contractEndSeason || p.salaryPerSplit !== before.salaryPerSplit;
       if (action.kind === "renew" && p.id === action.playerId && renewed) {
-        out.push(transferProps(next, p, "renew", 0));
-        if (wasWarned(prev, before)) out.push(contractOutcome(next, "renewed", p.id));
+        out.push(transferProps(next, p, "renew", 0, wasWarned(prev, before)));
       }
       continue;
     }
@@ -356,6 +443,29 @@ function staff(prev: CareerSave, next: CareerSave, action: CareerAction): Tracke
       },
     ];
   }
+  if (action.kind === "renewCoach" && prev.coach && next.coach && next.coach.id === prev.coach.id && next.coach !== prev.coach) {
+    return [
+      {
+        name: "career_staff",
+        props: {
+          ...base,
+          actionId: actionIdOf(next, "coach_renewed", next.coach.id),
+          kind: "coach_renewed",
+          overall: next.coach.overall,
+          salaryPerSplit: next.coach.salaryPerSplit,
+        },
+      },
+    ];
+  }
+  if (action.kind === "staff" && staffOn(prev, action.staffId) !== staffOn(next, action.staffId)) {
+    const kind = staffOn(next, action.staffId) ? "staff_on" : "staff_off";
+    return [
+      {
+        name: "career_staff",
+        props: { ...base, actionId: actionIdOf(next, kind, action.staffId), kind, staffId: action.staffId },
+      },
+    ];
+  }
   if (action.kind === "chooseSponsor" && next.sponsor && next.sponsor.sponsorId !== prev.sponsor?.sponsorId) {
     return [
       {
@@ -376,121 +486,6 @@ function staff(prev: CareerSave, next: CareerSave, action: CareerAction): Tracke
   return [];
 }
 
-function scoutReports(prev: CareerSave, next: CareerSave, action: CareerAction): TrackedEvent[] {
-  if (action.kind !== "scout") return [];
-  const id = action.playerId;
-  const level = Number(next.scouted[id] ?? 0);
-  if (!(level > Number(prev.scouted[id] ?? 0))) return [];
-  const seasonIndex = next.clock.seasonIndex;
-  const own = next.squad.find((p) => p.id === id);
-  const view = own
-    ? { overall: own.overall, potential: own.potential, age: ageOf(own.birthYear, seasonIndex), peakAge: own.peakAge }
-    : playerViewById(id, { careerSeed: next.careerSeed, seasonIndex, world: next.world });
-  if (!view) return [];
-  const band = scoutedBand(
-    view.potential,
-    view.overall,
-    clampLevel(Math.min(level, CAREER_SCOUT.reportMaxLevel)),
-    next.careerSeed,
-    id,
-    growthModelOf(next.world),
-    // rc.33 (DEV-04): the band the sheet shows — the age clock's cap, an older career's reports.
-    {
-      arc: { peakAge: view.peakAge, exactAge: exactAgeOf(view.age, next.clock.day) },
-      rc32Reports: next.bandModel === undefined,
-      uniform: readsUniformBand(next.bandModel),
-    },
-  );
-  return [
-    {
-      name: "career_scout_report",
-      props: {
-        careerId: careerIdOf(next),
-        actionId: actionIdOf(next, "scout", id),
-        seasonIndex,
-        level,
-        age: view.age,
-        headroomBand: headroomBucket((band.min + band.max) / 2 - view.overall),
-      },
-    },
-  ];
-}
-
-function mailReads(prev: CareerSave, next: CareerSave, action: CareerAction): TrackedEvent[] {
-  if (action.kind !== "readMail") return [];
-  const before = prev.mail.find((m) => m.id === action.mailId);
-  const after = next.mail.find((m) => m.id === action.mailId);
-  if (!before || before.read || !after?.read) return [];
-  if (after.kind === "contract") {
-    return [
-      {
-        name: "ux_contract_warning",
-        props: {
-          gameMode: "career",
-          careerId: careerIdOf(next),
-          actionId: actionIdOf(next, "contract_seen", after.id),
-          outcome: "seen",
-        },
-      },
-    ];
-  }
-  if (after.kind === "unlock") {
-    const unlock = String(after.params?.name ?? after.titleKey);
-    return [
-      {
-        name: "ux_unlock_seen",
-        props: {
-          gameMode: "career",
-          actionId: `${careerIdOf(next)}:unlock_seen:toolbox:${unlock}`,
-          kind: "toolbox",
-          id: unlock,
-        },
-      },
-    ];
-  }
-  return [];
-}
-
-/** Players whose contract ran out at the rollover and left (retirements excluded). */
-function lettingGo(prev: CareerSave, next: CareerSave): TrackedEvent[] {
-  if (next.clock.seasonIndex <= prev.clock.seasonIndex) return [];
-  const kept = new Set(next.squad.map((p) => p.id));
-  const retired = new Set(next.world.retiredIds);
-  return prev.squad
-    .filter((p) => p.contractEndSeason < next.clock.seasonIndex && !kept.has(p.id) && !retired.has(p.id))
-    .map((p) => contractOutcome(next, "let_go", p.id));
-}
-
-function tutorials(prev: CareerSave, next: CareerSave): TrackedEvent[] {
-  return CAREER_TUTORIAL_FLAGS.filter((f) => !prev.flags[f] && next.flags[f]).map((f) => ({
-    name: "ux_tutorial" as const,
-    props: {
-      gameMode: "career" as const,
-      actionId: `${careerIdOf(next)}:tutorial:${f}`,
-      id: f,
-      step: 1,
-      outcome: "completed" as const,
-    },
-  }));
-}
-
-/** rc.36 (SUN-01): Sunday started from HQ — the briefing it was started with (keep = none picked). */
-function sundayBriefings(prev: CareerSave, next: CareerSave): TrackedEvent[] {
-  const w = next.weekend;
-  if (!w?.briefing || (prev.weekend?.eventId === w.eventId && prev.weekend.briefing)) return [];
-  return [
-    {
-      name: "ux_sunday_briefing",
-      props: {
-        gameMode: "career",
-        careerId: careerIdOf(next),
-        actionId: `${careerIdOf(next)}:sunday_briefing:${w.eventId}`,
-        choice: w.briefing,
-      },
-    },
-  ];
-}
-
 /**
  * Every career event one store write produced, in a stable order. `prev` is
  * the save before the action; `next` the save the store wrote.
@@ -500,20 +495,16 @@ export function careerEventsFor(prev: CareerSave, next: CareerSave, action: Care
   return [
     ...transfers(prev, next, action),
     ...staff(prev, next, action),
-    ...scoutReports(prev, next, action),
-    ...mailReads(prev, next, action),
     ...eventCompletions(prev, next),
     ...milestones(prev, next),
     ...splitSummaries(prev, next),
     ...seasonReviews(prev, next),
-    ...lettingGo(prev, next),
-    ...tutorials(prev, next),
-    ...sundayBriefings(prev, next),
+    ...careerEnds(prev, next),
   ];
 }
 
 /** `career_created`, from the save the wizard just founded. */
-export function careerCreatedEvent(save: CareerSave, rosterKey: string): TrackedEvent {
+export function careerCreatedEvent(save: CareerSave, rosterKey: string, slot?: number): TrackedEvent {
   return {
     name: "career_created",
     props: {
@@ -522,6 +513,9 @@ export function careerCreatedEvent(save: CareerSave, rosterKey: string): Tracked
       region: save.identity.region,
       difficulty: save.difficulty,
       rosterKey,
+      startOverall: squadOverallOf(save),
+      startBalance: save.finances.balance,
+      slot: slot ?? null,
     },
   };
 }

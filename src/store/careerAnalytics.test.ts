@@ -2,10 +2,10 @@
  * OBS-01 — the career events (#145), read off one store write.
  *
  * 1. The pure detectors over a whole season played through the REAL flows:
- *    one `career_event_completed` per banked user result, the three split
- *    summaries, one season review, each milestone once, every payload scalar,
- *    id-shaped and anonymous.
- * 2. The action events (transfers, staff, scouting, mail, the rollover).
+ *    one `career_event_completed` per TOURNAMENT (a regional weekend is one),
+ *    the three split summaries, one season review, each milestone once, every
+ *    payload scalar, id-shaped, anonymous and in the catalogue.
+ * 2. The action events (transfers, staff, debt, the career's end).
  * 3. The store wiring against a fake sink: `career_created`, once per action,
  *    nothing on a reload, nothing on staging, `quality_migration` on a
  *    saveVersion upgrade.
@@ -13,25 +13,26 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { DAYS_PER_SEASON, firstDayOfWeek } from "@/engine/career/calendar";
 import { ageOf, exactAgeOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
+import { catalogProblems, EVENT_CATALOG, isCatalogEvent } from "@/lib/analyticsCatalog";
 import { signableOverallCap } from "@/engine/career/economy";
 import type { CareerPlayerView, CareerSave, MailItem, SponsorState, TransferOffer } from "@/engine/career/types";
 import {
   analyticsPayload,
   connectAnalytics,
+  notePageview,
   resetAnalyticsForTests,
   type TrackedEvent,
 } from "@/lib/analytics";
 import {
+  careerCreatedEvent,
   careerEventsFor,
   careerIdOf,
-  headroomBucket,
   SPLIT_BOUNDARY_WEEKS,
   type CareerAction,
 } from "./careerAnalytics";
 import {
   acceptBidFlow,
   advanceDayFlow,
-  buyScoutReportFlow,
   chooseSponsorFlow,
   coachCandidatesFor,
   createCareerSave,
@@ -76,10 +77,11 @@ function makeSave(seed = 47_047): CareerSave {
   return save;
 }
 
-/** The scalar / id-shape / anonymity contract every career payload meets. */
+/** The scalar / id-shape / anonymity / catalogue contract every career payload meets. */
 function expectAnonymous(events: readonly TrackedEvent[]): void {
   const banned = [INPUT.identity.orgName, INPUT.identity.abbrev, INPUT.identity.managerName];
   for (const e of events) {
+    expect(catalogProblems(e.name, e.props as Record<string, unknown>), e.name).toEqual([]);
     const payload = analyticsPayload(e.name, e.props as never);
     for (const [key, value] of Object.entries(payload)) {
       expect(value === null || ["string", "number", "boolean"].includes(typeof value), `${e.name}.${key}`).toBe(true);
@@ -94,9 +96,19 @@ function named<K extends TrackedEvent["name"]>(events: readonly TrackedEvent[], 
   return events.filter((e): e is Extract<TrackedEvent, { name: K }> => e.name === name);
 }
 
-/** Results the user played this season (what `career_event_completed` reports). */
+const placementOf = (r: CareerSave["eventResults"][number]) => r.userPlacement ?? r.rows.find((x) => x.ref === "user")?.placement;
+
+/** Results the user played this season. */
 function userResults(save: CareerSave) {
-  return save.eventResults.filter((r) => (r.userPlacement ?? r.rows.find((x) => x.ref === "user")?.placement) !== undefined);
+  return save.eventResults.filter((r) => placementOf(r) !== undefined);
+}
+
+/**
+ * The TOURNAMENTS the user played (what `career_event_completed` reports): a
+ * qualifier the team got through belongs to that weekend's regional.
+ */
+function tournaments(save: CareerSave) {
+  return userResults(save).filter((r) => !(r.tier === "qualifier" && placementOf(r) !== "swiss_exit"));
 }
 
 /** One season through the flows, recording every write's events. */
@@ -173,22 +185,31 @@ describe("career events over a real season (pure detectors)", () => {
     expect(end.history).toHaveLength(1);
   });
 
-  it("one career_event_completed per banked user result, with its tier's fields", () => {
+  it("one career_event_completed per TOURNAMENT: a qualifier the team got through rides on its regional", () => {
     const done = named(events, "career_event_completed");
-    const results = userResults(end);
-    expect(results.length).toBeGreaterThan(5);
+    const played = tournaments(end);
+    expect(played.length).toBeGreaterThan(5);
+    expect(played.length).toBeLessThan(userResults(end).length); // some weekends had both stages
     expect(done.map((e) => e.props.actionId.split(":").slice(3).join(":")).sort()).toEqual(
-      results.map((r) => `event:${r.eventId}`).sort(),
+      played.map((r) => `event:${r.eventId}`).sort(),
     );
     for (const e of done) {
-      const r = results.find((x) => e.props.actionId.endsWith(`:event:${x.eventId}`))!;
+      const r = played.find((x) => e.props.actionId.endsWith(`:event:${x.eventId}`))!;
       expect(e.props.tier).toBe(r.tier);
+      expect(e.props.week).toBe(r.week);
       expect(e.props.watched).toBe(false); // the bot sims every event
-      expect(e.props.qualified === null).toBe(r.tier !== "qualifier");
+      expect(e.props.squadOverall).toBeGreaterThan(0);
+      if (r.tier === "qualifier") expect(e.props.qualified).toBe(false);
       if (r.tier === "qualifier" || r.tier === "regional") expect(typeof e.props.seedingDirect).toBe("boolean");
       else expect(e.props.seedingDirect).toBeNull();
       if (r.tier === "major" || r.tier === "worlds") expect(e.props.eventRegion).toBe("international");
+      if (r.tier === "regional") {
+        const qualifier = userResults(end).find((q) => q.tier === "qualifier" && q.week === r.week);
+        expect(e.props.qualifierPlacement ?? null).toBe(qualifier ? placementOf(qualifier) : null);
+        expect(e.props.qualified ?? null).toBe(qualifier ? true : null);
+      }
     }
+    expect(done.some((e) => e.props.tier === "regional" && e.props.qualified === true)).toBe(true);
   });
 
   it("three split summaries, in order, with the split's money and the Major-table rank", () => {
@@ -199,7 +220,12 @@ describe("career events over a real season (pure detectors)", () => {
       expect(e.props.payrollPerSplit).toBeGreaterThan(0);
       expect(e.props.incomePrize).toBeGreaterThanOrEqual(0);
       expect(e.props.ledgerComplete).toBe(true);
-      expect(e.props.splitRank === null || e.props.splitRank >= 1).toBe(true);
+      expect(e.props.splitRank == null || e.props.splitRank >= 1).toBe(true);
+      expect(e.props.spendWages).toBeGreaterThan(0);
+      expect(e.props.spendTransfers).toBeGreaterThanOrEqual(0);
+      expect(e.props.spendOther).toBeGreaterThanOrEqual(0);
+      expect(e.props.squadSize).toBeGreaterThanOrEqual(3);
+      expect(e.props.squadOverall).toBeGreaterThan(0);
     }
   });
 
@@ -216,7 +242,14 @@ describe("career events over a real season (pure detectors)", () => {
       grade: h.grade,
       balance: h.balanceEnd,
       rep: h.repEnd,
+      region: "SAM",
+      difficulty: "normal",
+      earnings: h.earnings,
+      titlesSeason: h.titles,
+      squadSize: end.squad.length,
     });
+    expect(reviews[0].props.squadAvgAge).toBeGreaterThan(15);
+    expect(reviews[0].props.payrollPerSplit).toBeGreaterThan(0);
   });
 
   it("each milestone at most once; every actionId unique; every payload anonymous and scalar", () => {
@@ -228,15 +261,17 @@ describe("career events over a real season (pure detectors)", () => {
     expectAnonymous(events);
   });
 
-  it("the rollover reports no result, split or review again; an expiring contract that runs out is let go", () => {
-    const review = structuredClone(end);
-    const leaver = [...review.squad].sort((a, b) => b.birthYear - a.birthYear)[0]; // the youngest: no retirement
-    leaver.contractEndSeason = review.clock.seasonIndex;
-    const next = rolloverToNextSeason(review);
-    expect(next.squad.some((p) => p.id === leaver.id)).toBe(false);
-    const after = careerEventsFor(review, next);
-    expect(after.filter((e) => e.name !== "ux_contract_warning")).toEqual([]);
-    expect(named(after, "ux_contract_warning").map((e) => e.props.outcome)).toEqual(["let_go"]);
+  it("the rollover reports no result, split or review again", () => {
+    const next = rolloverToNextSeason(structuredClone(end));
+    expect(careerEventsFor(end, next)).toEqual([]);
+  });
+
+  it("career_created reports the founding squad and money, and no name", () => {
+    const save = makeSave();
+    const created = careerCreatedEvent(save, "balanced", 2);
+    expect(created.props).toMatchObject({ region: "SAM", difficulty: "normal", rosterKey: "balanced", startBalance: 400_000, slot: 2 });
+    expect((created.props as { startOverall: number }).startOverall).toBeGreaterThan(0);
+    expectAnonymous([created]);
   });
 });
 
@@ -324,28 +359,49 @@ describe("career action events", () => {
     expect(careerEventsFor(save, refused.save, { kind: "sign", playerId: "nobody" })).toEqual([]);
   });
 
-  it("an expiring, warned contract: reading the warning, renewing and releasing report ux_contract_warning", () => {
+  it("a warned, expiring contract: the renewal or the release carries warned: true; reading mail sends nothing", () => {
     const save = makeSave();
     const p = save.squad[0];
     p.contractEndSeason = save.clock.seasonIndex;
+    const quiet = renewPlayerFlow(save, p.id, 2).save;
+    expect(named(careerEventsFor(save, quiet, { kind: "renew", playerId: p.id }), "career_transfer").map((e) => e.props.warned)).toEqual([false]);
     const warning = mail(save, "contract", { player: p.name });
     save.mail = [warning];
     const read = structuredClone(save);
     read.mail[0].read = true;
-    expect(named(careerEventsFor(save, read, { kind: "readMail", mailId: warning.id }), "ux_contract_warning").map((e) => e.props.outcome)).toEqual(["seen"]);
+    expect(careerEventsFor(save, read)).toEqual([]);
     const renewed = renewPlayerFlow(save, p.id, 2).save;
-    expect(named(careerEventsFor(save, renewed, { kind: "renew", playerId: p.id }), "ux_contract_warning").map((e) => e.props.outcome)).toEqual(["renewed"]);
+    expect(named(careerEventsFor(save, renewed, { kind: "renew", playerId: p.id }), "career_transfer").map((e) => [e.props.kind, e.props.warned])).toEqual([["renew", true]]);
     const released = releasePlayerFlow(save, p.id).save;
-    expect(named(careerEventsFor(save, released, { kind: "release", playerId: p.id }), "ux_contract_warning").map((e) => e.props.outcome)).toEqual(["released"]);
+    expect(named(careerEventsFor(save, released, { kind: "release", playerId: p.id }), "career_transfer").map((e) => [e.props.kind, e.props.warned])).toEqual([["release", true]]);
   });
 
-  it("a toolbox unlock mail read reports ux_unlock_seen with the unlock key", () => {
+  it("support staff: a retainer switched on or off is one career_staff; the same state again is nothing", () => {
     const save = makeSave();
-    save.mail = [mail(save, "unlock", { name: "coach" })];
-    const read = structuredClone(save);
-    read.mail[0].read = true;
-    const out = named(careerEventsFor(save, read, { kind: "readMail", mailId: save.mail[0].id }), "ux_unlock_seen");
-    expect(out.map((e) => [e.props.kind, e.props.id, e.props.gameMode])).toEqual([["toolbox", "coach", "career"]]);
+    const on = structuredClone(save);
+    on.finances.gear.staff = { ...(on.finances.gear.staff ?? {}), analyst: true };
+    const hired = named(careerEventsFor(save, on, { kind: "staff", staffId: "analyst" }), "career_staff");
+    expect(hired.map((e) => [e.props.kind, e.props.staffId])).toEqual([["staff_on", "analyst"]]);
+    expect(named(careerEventsFor(on, save, { kind: "staff", staffId: "analyst" }), "career_staff").map((e) => e.props.kind)).toEqual(["staff_off"]);
+    expect(careerEventsFor(on, structuredClone(on), { kind: "staff", staffId: "analyst" })).toEqual([]);
+    const psych = structuredClone(save);
+    psych.finances.gear.psychologist = true;
+    expect(named(careerEventsFor(save, psych, { kind: "staff", staffId: "psychologist" }), "career_staff").map((e) => [e.props.kind, e.props.staffId])).toEqual([
+      ["staff_on", "psychologist"],
+    ]);
+    expectAnonymous(hired);
+  });
+
+  it("a coach's renewal is career_staff coach_renewed", () => {
+    const save = makeSave();
+    save.reputation = 100;
+    const hired = hireCoachFlow(save, coachCandidatesFor(save)[0]).save;
+    const renewed = structuredClone(hired);
+    renewed.coach = { ...renewed.coach!, salaryPerSplit: renewed.coach!.salaryPerSplit + 500 };
+    const out = named(careerEventsFor(hired, renewed, { kind: "renewCoach" }), "career_staff");
+    expect(out.map((e) => [e.props.kind, e.props.overall, e.props.salaryPerSplit])).toEqual([
+      ["coach_renewed", renewed.coach!.overall, renewed.coach!.salaryPerSplit],
+    ]);
   });
 
   it("staff: a coach hired and fired, a sponsor signed", () => {
@@ -382,40 +438,25 @@ describe("career action events", () => {
     ]);
   });
 
-  it("a scout report reports the paid level, the age and the bucketed headroom of the band it shows", () => {
-    const save = makeSave();
-    const fa = freeAgents(save)[0];
-    const res = buyScoutReportFlow(save, fa.id);
-    expect(res.error).toBeUndefined();
-    const [r] = named(careerEventsFor(save, res.save, { kind: "scout", playerId: fa.id }), "career_scout_report");
-    const level = Number(res.save.scouted[fa.id]);
-    const band = scoutedBand(fa.potential, fa.overall, level as 0 | 1 | 2 | 3, save.careerSeed, fa.id, growthModelOf(save.world), {
-      arc: { peakAge: fa.peakAge, exactAge: exactAgeOf(fa.age, res.save.clock.day) },
-      rc32Reports: res.save.bandModel === undefined,
-      uniform: readsUniformBand(res.save.bandModel),
-    });
-    expect(r.props).toMatchObject({
-      level,
-      age: fa.age,
-      headroomBand: headroomBucket((band.min + band.max) / 2 - fa.overall),
-    });
-    expect(["0", "1-2", "3-5", "6-9", "10+"]).toContain(r.props.headroomBand);
-  });
-
-  it("milestones from the write that first sets them: the bank loan, the Backer, insolvency", () => {
+  it("milestones from the write that first sets them: the bank loan, the Backer; an insolvency is the career's end", () => {
     const save = makeSave();
     save.reputation = 60;
     const loan = takeBankLoanFlow(save, 20_000);
     expect(loan.error).toBeUndefined();
-    expect(named(careerEventsFor(save, loan.save), "career_milestone").map((e) => e.props.kind)).toEqual(["bank_loan"]);
+    expect(named(careerEventsFor(save, loan.save), "career_milestone").map((e) => [e.props.kind, e.props.amount])).toEqual([
+      ["bank_loan", loan.save.finances.bankLoan!.remaining],
+    ]);
     const rescued = structuredClone(save);
     rescued.finances.loanUsed = true;
     rescued.finances.loan = { remaining: 50_000 };
     const broke = structuredClone(rescued);
     broke.end = { ...broke.end, ended: true, reason: "insolvency" };
     broke.phase = "ended";
-    expect(named(careerEventsFor(save, rescued), "career_milestone").map((e) => e.props.kind)).toEqual(["backer"]);
-    expect(named(careerEventsFor(rescued, broke), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
+    expect(named(careerEventsFor(save, rescued), "career_milestone").map((e) => [e.props.kind, e.props.amount])).toEqual([["backer", 50_000]]);
+    const ended = careerEventsFor(rescued, broke);
+    expect(ended.map((e) => e.name)).toEqual(["career_ended"]);
+    expect(named(ended, "career_ended")[0].props).toMatchObject({ reason: "insolvency", seasonIndex: 0, titles: 0, balance: broke.finances.balance, rep: broke.reputation });
+    expectAnonymous(ended);
     // Already set before the write: never again.
     expect(careerEventsFor(broke, structuredClone(broke))).toEqual([]);
   });
@@ -445,17 +486,28 @@ describe("career action events", () => {
     expect(two).toHaveLength(1);
     expect(one[0].props.actionId).toMatch(/:backer:1$/);
     expect(two[0].props.actionId).toMatch(/:backer:2$/);
-    expect(named(careerEventsFor(second, third), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
+    const closing = careerEventsFor(second, third);
+    expect(named(closing, "career_milestone")).toEqual([]);
+    expect(named(closing, "career_ended").map((e) => e.props.reason)).toEqual(["insolvency"]);
     // Two rescues in one write (a long batched advance): one event each.
     expect(backer(save, second).map((e) => e.props.actionId.split(":").at(-1))).toEqual(["1", "2"]);
     // rc.34: a later breach on Normal is a top-up, a rescue like any other.
     const normal = { ...structuredClone(first), difficulty: "normal" as const };
     expect(backer(normal, { ...breach(normal, 2, 64), difficulty: "normal" })).toHaveLength(1);
-    // The deadline ends a career without a breach: the insolvency milestone, no rescue.
+    // The deadline ends a career without a breach: the career's end, no rescue.
     const due = structuredClone(second);
     due.end = { ...due.end, ended: true, reason: "insolvency", moneyCause: "deadline" };
     due.phase = "ended";
-    expect(named(careerEventsFor(second, due), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
+    expect(careerEventsFor(second, due).map((e) => e.name)).toEqual(["career_ended"]);
+  });
+
+  it("a retirement ends the career once, with its reason", () => {
+    const save = makeSave();
+    const retired = structuredClone(save);
+    retired.end = { ...retired.end, ended: true, reason: "retired", endedSeasonIndex: 0 };
+    retired.phase = "ended";
+    expect(named(careerEventsFor(save, retired), "career_ended").map((e) => e.props.reason)).toEqual(["retired"]);
+    expect(careerEventsFor(retired, structuredClone(retired))).toEqual([]);
   });
 
   it("a Major result (no region of its own) reports eventRegion international; an AI-only result reports nothing", () => {
@@ -529,6 +581,8 @@ describe("the career store sends each event once, in production only", () => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
     resetAnalyticsForTests();
+    const problems = violations.splice(0);
+    expect(problems, "every event sent matches the analytics catalogue").toEqual([]);
   });
 
   /** A production build on a host; returns the fake sink. */
@@ -539,9 +593,24 @@ describe("the career store sends each event once, in production only", () => {
     vi.stubGlobal("window", { location: { hostname: host, href: `https://${host}/career`, pathname: "/career" } });
     resetAnalyticsForTests();
     const calls: Call[] = [];
-    connectAnalytics({ capture: (name, props) => void calls.push({ name, props: (props ?? {}) as Record<string, unknown> }) });
+    connectAnalytics({
+      capture: (name, props) => {
+        const all = (props ?? {}) as Record<string, unknown>;
+        calls.push({ name, props: all });
+        if (name.startsWith("$")) return;
+        const listed = isCatalogEvent(name) ? Object.keys(EVENT_CATALOG[name].props) : [];
+        const own = Object.fromEntries(Object.entries(all).filter(([key]) => listed.includes(key) || !COMMON.includes(key)));
+        violations.push(...catalogProblems(name, own));
+      },
+    });
     return calls;
   }
+
+  /** Common properties, added by the analytics layer to every event. */
+  const COMMON = ["release", "balanceVersion", "schemaVersion", "season", "environment", "locale", "gameMode", "sampleWeight", "sampleBucket"];
+  /** Catalogue problems of anything the sink received (asserted empty after every test). */
+  const violations: string[] = [];
+  const career = (calls: Call[]) => calls.filter((c) => c.name.startsWith("career_"));
 
   const active = () => selectActiveSave(store.getState())!;
 
@@ -579,30 +648,45 @@ describe("the career store sends each event once, in production only", () => {
     store.getState().createCareer(0, INPUT, 47_047);
     const save = active();
     expect(save.careerId).toMatch(/^c[0-9a-f]{16}$/);
-    expect(calls.map((c) => c.name)).toEqual(["career_created"]);
-    expect(calls[0].props).toMatchObject({
+    expect(calls.map((c) => c.name)).toEqual(["session_started", "career_created", "onboarding_step"]);
+    expect(calls[1].props).toMatchObject({
       careerId: save.careerId,
       region: "SAM",
       difficulty: "normal",
       rosterKey: "balanced",
+      slot: 0,
+      startBalance: save.finances.balance,
       gameMode: "career",
       environment: "production",
     });
+    expect(calls[2].props).toMatchObject({ step: "career_created", gameMode: "app" });
     expect(JSON.stringify(calls)).not.toMatch(/ZZ/);
   });
 
-  it("playing to the first split boundary: each banked result once, one split summary — and a reload sends nothing", async () => {
+  it("playing to the first split boundary: each tournament once, one split summary, the tab and advance counters on the first event — and a reload sends nothing", async () => {
     const calls = deploy();
     store.getState().createCareer(1, INPUT, 47_048);
+    // Two visits to the Club tab and one to HQ before the first tournament.
+    const location = (window as unknown as { location: { pathname: string } }).location;
+    for (const path of ["/career/club", "/career", "/career/club"]) {
+      location.pathname = path;
+      notePageview();
+    }
     playUntil((s) => s.clock.day >= firstDayOfWeek(SPLIT_BOUNDARY_WEEKS[0]));
     const save = active();
     const count = (name: string) => calls.filter((c) => c.name === name).length;
     expect(count("career_split_summary")).toBe(1);
-    expect(count("career_event_completed")).toBe(userResults(save).length);
+    expect(count("career_event_completed")).toBe(tournaments(save).length);
     expect(count("career_event_completed")).toBeGreaterThan(0);
-    const ids = calls.map((c) => c.props.actionId);
+    const ids = career(calls).map((c) => c.props.actionId);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const c of calls) expect(c.props.careerId).toBe(save.careerId);
+    for (const c of career(calls)) expect(c.props.careerId).toBe(save.careerId);
+    const [first, second] = calls.filter((c) => c.name === "career_event_completed");
+    expect(first.props).toMatchObject({ tab_club: 2, tab_hq: 1 });
+    expect(first.props.advanceCount).toBeGreaterThan(0);
+    expect(second.props.tab_club).toBeUndefined();
+    expect(calls.filter((c) => c.name === "onboarding_step").map((c) => c.props.step)).toEqual(["career_created", "career_first_event"]);
+    expect(calls.filter((c) => c.name === "$pageview")).toHaveLength(2); // one per route
 
     const sent = calls.length;
     await store.persist.rehydrate();
@@ -610,7 +694,7 @@ describe("the career store sends each event once, in production only", () => {
     expect(calls).toHaveLength(sent);
   });
 
-  it("the action descriptors reach the detectors: a scout report, a mail read, the HQ explainer", () => {
+  it("scout reports, mail reads and the HQ explainer send nothing (cut from the 2.0 catalogue); retiring ends the career once", () => {
     deploy();
     store.getState().createCareer(2, INPUT, 47_049);
     const calls = deploy(); // fresh sink after the creation
@@ -624,10 +708,11 @@ describe("the career store sends each event once, in production only", () => {
       return { slots };
     });
     store.getState().markMailRead("m:test:unlock");
-    store.getState().markMailRead("m:test:unlock"); // already read: nothing
     store.getState().markFlag("seenHub");
-    store.getState().markFlag("seenHub");
-    expect(calls.map((c) => c.name)).toEqual(["career_scout_report", "ux_unlock_seen", "ux_tutorial"]);
+    expect(career(calls)).toEqual([]);
+    store.getState().retireCareer();
+    store.getState().retireCareer();
+    expect(career(calls).map((c) => [c.name, c.props.reason])).toEqual([["career_ended", "retired"]]);
   });
 
   it.each([
@@ -651,7 +736,8 @@ describe("the career store sends each event once, in production only", () => {
     const calls = deploy();
     await store.persist.rehydrate();
     expect(active().saveVersion).toBe(5);
-    expect(calls.map((c) => [c.name, c.props.store, c.props.fromVersion, c.props.toVersion, c.props.gameMode])).toEqual([
+    const migrations = calls.filter((c) => c.name === "quality_migration");
+    expect(migrations.map((c) => [c.name, c.props.store, c.props.fromVersion, c.props.toVersion, c.props.gameMode])).toEqual([
       ["quality_migration", "career", 4, 5, "career"],
     ]);
   });

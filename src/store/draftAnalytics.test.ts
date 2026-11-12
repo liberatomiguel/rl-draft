@@ -1,13 +1,20 @@
 /**
- * OBS-01 — the Draft and the shared events (#145), through the REAL stores and
- * a fake sink: each fires once per saved action, with the catalogue's
- * properties, never on a reload / rehydrate, never on staging; plus the
- * quality events of the persist wrapper (`persistStorage.ts`).
+ * OBS-01 — the Draft, progression and shared events (#145, the 2.0 catalogue),
+ * through the REAL stores and a fake sink: ONE event per run (resets are a
+ * counter, no start / tournament / per-special events), each fired once per
+ * saved action, never on a reload / rehydrate, never on staging; plus the
+ * quality events of the persist wrapper (`persistStorage.ts`). Every payload
+ * the sink receives is checked against the catalogue.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { challenges, specialCards } from "@/data";
+import { achievements, challenges, specialCards } from "@/data";
 import { neededKinds, slotsForKind } from "@/engine/draft";
-import { connectAnalytics, resetAnalyticsForTests } from "@/lib/analytics";
+import { rankForXp } from "@/engine/progression";
+import { quizForDate } from "@/engine/quiz";
+import { connectAnalytics, notePageview, resetAnalyticsForTests } from "@/lib/analytics";
+import { catalogProblems, EVENT_CATALOG, isCatalogEvent } from "@/lib/analyticsCatalog";
+import { todayKey } from "@/lib/dailyPlan";
+import { profileHistory, profileProgressEvents, UNLOCK_BATCH_FROM, type ProfileAnalyticsView } from "./profileAnalytics";
 import { reportingJSONStorage } from "./persistStorage";
 
 class MemoryStorage implements Storage {
@@ -56,9 +63,25 @@ function deploy(host = "rocketdraft.app", build: { noindex?: string } = {}): Cal
   vi.stubGlobal("window", { location: { hostname: host, href: `https://${host}/play`, pathname: "/play" } });
   resetAnalyticsForTests();
   const calls: Call[] = [];
-  connectAnalytics({ capture: (name, props) => void calls.push({ name, props: (props ?? {}) as Record<string, unknown> }) });
+  connectAnalytics({
+    capture: (name, props) => {
+      const all = (props ?? {}) as Record<string, unknown>;
+      calls.push({ name, props: all });
+      if (!name.startsWith("$")) violations.push(...catalogProblems(name, ownProps(name, all)));
+    },
+  });
   return calls;
 }
+
+/** Common properties, added by the analytics layer to every event. */
+const COMMON = ["release", "balanceVersion", "schemaVersion", "season", "environment", "locale", "gameMode", "sampleWeight", "sampleBucket"];
+/** The event's own properties (a shared event lists `gameMode` itself). */
+function ownProps(name: string, all: Record<string, unknown>): Record<string, unknown> {
+  const listed = isCatalogEvent(name) ? Object.keys(EVENT_CATALOG[name].props) : [];
+  return Object.fromEntries(Object.entries(all).filter(([key]) => listed.includes(key) || !COMMON.includes(key)));
+}
+/** Catalogue problems of anything the sink received (asserted empty after every test). */
+const violations: string[] = [];
 
 beforeEach(() => {
   profileStore.getState().resetAll();
@@ -69,9 +92,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   resetAnalyticsForTests();
+  const problems = violations.splice(0);
+  expect(problems, "every event sent matches the analytics catalogue").toEqual([]);
 });
 
 const names = (calls: Call[]) => calls.map((c) => c.name);
+const steps = (calls: Call[]) => of(calls, "onboarding_step").map((c) => c.props.step);
 const of = (calls: Call[], name: string) => calls.filter((c) => c.name === name);
 const run = () => runStore.getState().run!;
 
@@ -104,64 +130,88 @@ function playToResults(): void {
   expect(run().phase).toBe("results");
 }
 
-describe("Draft runs", () => {
-  it("a Classic run: started → tournament → completed, once each, one runId, the 2.0 properties", () => {
+describe("Draft runs: one event per run", () => {
+  it("a Classic run sends ONE run_completed carrying the run — no start, tournament or per-special events", () => {
     const calls = deploy();
     runStore.getState().startRun({ mode: "classic", difficulty: "easy", showOverall: true });
     draftThrough();
     playToResults();
     runStore.getState().finishRun(); // a second click: nothing
-    const lifecycle = names(calls).filter((n) => n.startsWith("run_") || n === "tournament_started");
-    expect(lifecycle).toEqual(["run_started", "tournament_started", "run_completed"]);
-    const runId = run().runId;
-    for (const c of calls.filter((x) => x.props.runId !== undefined)) expect(c.props.runId).toBe(runId);
-    const [done] = of(calls, "run_completed");
-    expect(done.props).toMatchObject({
+    for (const gone of ["run_started", "tournament_started", "special_used", "run_abandoned"]) expect(of(calls, gone), gone).toHaveLength(0);
+    const done = of(calls, "run_completed");
+    expect(done).toHaveLength(1);
+    const after = profileStore.getState();
+    expect(done[0].props).toMatchObject({
+      runId: run().runId,
       region: "worldwide",
       mode: "classic",
+      difficulty: "easy",
       dailyTemplate: null,
       gameMode: "draft",
       environment: "production",
-      chemistryTier: run().results ? expect.any(String) : undefined,
+      resets: 0,
+      placement: run().results!.placement,
+      xpGained: run().results!.xp.total,
+      ratingAfter: after.mmr,
+      rankId: rankForXp(after.xp).id,
     });
-    expect(typeof done.props.chemistryPercent).toBe("number");
-    expect(done.props.durationSec).toBeGreaterThanOrEqual(0);
-    expect(of(calls, "tournament_started")[0].props.region).toBe("worldwide");
-    for (const c of of(calls, "special_used")) expect(typeof c.props.isNew).toBe("boolean");
+    expect(String(done[0].props.picks)).toMatch(/^p1:[^|]+\|p2:[^|]+\|p3:[^|]+/);
+    expect(done[0].props.specialsCount).toBe(String(done[0].props.specials).split("|").filter(Boolean).length);
+    expect(done[0].props.durationSec).toBeGreaterThanOrEqual(0);
+    // The entry funnel: each first, once.
+    expect(steps(calls)).toEqual(["draft_started", "draft_confirmed", "run_completed"]);
+    expect(names(calls)[0]).toBe("session_started");
   });
 
-  it("restart mid-draft abandons the old runId and starts a new one; clearing from results is no abandonment", () => {
+  it("a restart mid-run is a counter on the run's event, not an event; play-again starts the count over", () => {
     const calls = deploy();
     runStore.getState().startRun({ mode: "quick", difficulty: "normal", showOverall: true, regionLock: "EU" });
     const first = run().runId;
     runStore.getState().restartRun();
-    const second = run().runId;
-    expect(second).not.toBe(first);
-    expect(calls.filter((c) => c.name.startsWith("run_")).map((c) => [c.name, c.props.runId, c.props.region])).toEqual([
-      ["run_started", first, "EU"],
-      ["run_abandoned", first, "EU"],
-      ["run_started", second, "EU"],
-    ]);
-    expect(of(calls, "run_abandoned")[0].props.reason).toBe("restart");
+    runStore.getState().restartRun();
+    expect(run().runId).not.toBe(first);
+    expect(calls.filter((c) => c.name.startsWith("run_"))).toEqual([]);
     draftThrough();
     playToResults();
-    runStore.getState().clearRun();
-    expect(of(calls, "run_abandoned")).toHaveLength(1);
+    expect(of(calls, "run_completed").map((c) => [c.props.runId, c.props.region, c.props.resets])).toEqual([[run().runId, "EU", 2]]);
+
+    runStore.getState().restartRun(); // from results: play again
+    draftThrough();
+    playToResults();
+    expect(of(calls, "run_completed")[1].props.resets).toBe(0);
+    runStore.getState().clearRun(); // leaving the results screen is no abandonment
+    expect(of(calls, "run_abandoned")).toHaveLength(0);
+    expect(steps(calls)).toEqual(["draft_started", "draft_confirmed", "run_completed"]);
   });
 
-  it("a daily run reports region 'daily' on every event and its template on completion", () => {
+  it("leaving a run for good is run_abandoned, with its resets, phase and picks made", () => {
+    const calls = deploy();
+    runStore.getState().startRun({ mode: "classic", difficulty: "easy", showOverall: false });
+    runStore.getState().restartRun();
+    const { draft } = run();
+    const pick = draft.offer!.cards.find((c) => c.availability === "available")!;
+    runStore.getState().pickCard(pick, slotsForKind(pick.kind).find((slot) => !draft.roster[slot])!);
+    const runId = run().runId;
+    runStore.getState().clearRun();
+    expect(of(calls, "run_abandoned").map((c) => c.props)).toEqual([
+      expect.objectContaining({ runId, mode: "classic", phase: "draft", reason: "quit", hiddenOverall: true, region: "worldwide", resets: 1, picksMade: 1 }),
+    ]);
+    // The next run starts with a clean counter.
+    runStore.getState().startRun({ mode: "classic", difficulty: "easy", showOverall: true });
+    runStore.getState().clearRun();
+    expect(of(calls, "run_abandoned")[1].props).toMatchObject({ resets: 0, picksMade: 0 });
+  });
+
+  it("a daily run reports region 'daily' and its template", () => {
     const calls = deploy();
     runStore.getState().startDailyRun();
     const daily = run().daily!;
     draftThrough();
     playToResults();
-    for (const c of calls.filter((x) => x.props.runId !== undefined && x.name !== "special_used")) {
-      expect(c.props.region, c.name).toBe("daily");
-    }
-    expect(of(calls, "run_completed")[0].props.dailyTemplate).toBe(daily.templateId ?? null);
+    expect(of(calls, "run_completed")[0].props).toMatchObject({ mode: "daily", region: "daily", dailyTemplate: daily.templateId ?? null });
   });
 
-  it("a challenge reports its stars (0–3) and the specials it collects as discovered, mode challenge", () => {
+  it("a challenge is ONE challenge_played with its stars and team; leaving its result screen is no abandonment", () => {
     const calls = deploy();
     profileStore.setState({ xp: 60_000 });
     const ch = challenges.find((c) => {
@@ -178,14 +228,19 @@ describe("Draft runs", () => {
     runStore.getState().playChallenge(); // already played: nothing
     const played = of(calls, "challenge_played");
     expect(played).toHaveLength(1);
+    expect(played[0].props).toMatchObject({ challengeId: ch!.id, kind: ch!.kind ?? "boss", specials: specialCards[0].id, cleared: run().challenge!.cleared });
     expect(played[0].props.stars).toBeGreaterThanOrEqual(0);
     expect(played[0].props.stars).toBeLessThanOrEqual(3);
+    expect(String(played[0].props.picks)).toContain("p1:");
     const found = of(calls, "special_discovered").find((c) => c.props.specialId === specialCards[0].id);
     expect(found?.props).toMatchObject({ mode: "challenge", rarity: specialCards[0].rarity, national: false });
+    runStore.getState().clearRun();
+    expect(of(calls, "run_abandoned")).toHaveLength(0);
+    expect(steps(calls)).toContain("challenge_played");
   });
 });
 
-describe("collection, tutorials, unlocks, duplicate grants", () => {
+describe("collection, progression, quiz, duplicate grants", () => {
   it("special_discovered fires once per card, the first time; a cloud merge is silent", () => {
     const calls = deploy();
     const [a, b] = specialCards;
@@ -196,14 +251,17 @@ describe("collection, tutorials, unlocks, duplicate grants", () => {
       [b.id, "quick", b.rarity],
     ]);
     const data = Object.fromEntries(Object.entries(profileStore.getState()).filter(([, v]) => typeof v !== "function"));
-    const durable = structuredClone(data) as { unlockedSpecials: Record<string, string> };
+    const durable = structuredClone(data) as { unlockedSpecials: Record<string, string>; xp: number; achievements: Record<string, string> };
     durable.unlockedSpecials = { ...durable.unlockedSpecials, [specialCards[2].id]: new Date().toISOString() };
+    durable.xp = 900_000;
+    durable.achievements = { ...durable.achievements, [achievements[0].id]: new Date().toISOString() };
+    const before = calls.length;
     profileStore.getState().hydrateDurable(durable as never);
     expect(profileStore.getState().unlockedSpecials[specialCards[2].id]).toBeDefined();
-    expect(of(calls, "special_discovered")).toHaveLength(2);
+    expect(calls.slice(before)).toEqual([]); // no discovery, no rank-up, no achievement from a merge
   });
 
-  it("special_used.isNew: owned before the run → false; never owned → true", () => {
+  it("run_completed.specialsNew: a special owned before the run is not new; one never owned is", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
       const owned = specialCards[0].id;
@@ -214,44 +272,117 @@ describe("collection, tutorials, unlocks, duplicate grants", () => {
       runStore.getState().startRun({ mode: "classic", difficulty: "easy", showOverall: true });
       draftThrough();
       const fresh = specialCards.find((s) => s.id !== owned && !profileStore.getState().unlockedSpecials[s.id])!.id;
-      const withSpecial = (id: string) => {
-        const r = run();
-        const roster = { ...r.draft.roster, player1: { ...r.draft.roster.player1!, specialId: id } };
-        runStore.setState({ run: { ...r, phase: "review", tournament: null, draft: { ...r.draft, roster } } });
+      const r = run();
+      const roster = {
+        ...r.draft.roster,
+        player1: { ...r.draft.roster.player1!, specialId: owned },
+        player2: { ...r.draft.roster.player2!, specialId: fresh },
       };
-      withSpecial(owned);
-      runStore.getState().startTournament();
-      expect(of(calls, "special_used").find((c) => c.props.specialId === owned)?.props.isNew).toBe(false);
-      withSpecial(fresh);
-      runStore.getState().startTournament();
-      expect(of(calls, "special_used").find((c) => c.props.specialId === fresh)?.props.isNew).toBe(true);
+      runStore.setState({ run: { ...r, draft: { ...r.draft, roster } } });
+      playToResults();
+      expect(of(calls, "run_completed")[0].props).toMatchObject({ specials: `${owned}|${fresh}`, specialsCount: 2, specialsNew: 1 });
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("ux_tutorial: the tour reports where it closed, explainers count as completed, each once; the recap is no tutorial", () => {
+  it("rank-ups and achievements are read off the profile write, whoever granted the XP", () => {
+    const calls = deploy();
+    const before = rankForXp(profileStore.getState().xp);
+    profileStore.getState().grantXp(60_000);
+    const after = rankForXp(profileStore.getState().xp);
+    expect(after.index).toBeGreaterThan(before.index);
+    expect(of(calls, "rank_up").map((c) => c.props)).toEqual([
+      expect.objectContaining({ rankId: after.id, rankIndex: after.index, xp: profileStore.getState().xp }),
+    ]);
+    profileStore.getState().grantXp(1); // same rank: nothing
+    expect(of(calls, "rank_up")).toHaveLength(1);
+
+    const [first, second] = achievements;
+    profileStore.getState().awardAchievements([first.id]);
+    profileStore.getState().awardAchievements([first.id, second.id]);
+    expect(of(calls, "achievement_unlocked").map((c) => c.props.id)).toEqual([first.id, second.id]);
+  });
+
+  it("unlocks: each new cosmetic is an event; a catalog-sized batch is one; opening Legacy is one", () => {
+    const view = (owned: string[], extra: Partial<ProfileAnalyticsView> = {}): ProfileAnalyticsView => ({
+      xp: 0,
+      mmr: 1000,
+      runsCompleted: 0,
+      achievements: {},
+      unlockedSpecials: {},
+      challengesCompleted: {},
+      cosmetics: { owned: Object.fromEntries(owned.map((id) => [id, "2026-11-12"])) },
+      ...extra,
+    });
+    expect(profileProgressEvents(view(["a"]), view(["a", "b", "c"])).map((e) => e.props)).toEqual([
+      { kind: "cosmetic", id: "b", count: 1 },
+      { kind: "cosmetic", id: "c", count: 1 },
+    ]);
+    const many = Array.from({ length: UNLOCK_BATCH_FROM + 3 }, (_, i) => `badge-${i}`);
+    expect(profileProgressEvents(view([]), view(many)).map((e) => e.props)).toEqual([
+      { kind: "cosmetic_batch", id: "batch", count: many.length },
+    ]);
+    expect(profileProgressEvents(view([]), view([], { legacyUnlocked: true })).map((e) => e.props)).toEqual([
+      { kind: "mode", id: "legacy", count: 1 },
+    ]);
+    const same = view(["a"]);
+    expect(profileProgressEvents(same, same)).toEqual([]);
+  });
+
+  it("the daily quiz is one quiz_played when it ends, never per guess", () => {
+    const calls = deploy();
+    notePageview(); // the page load: the device is counted before anything is played
+    const puzzle = quizForDate(todayKey());
+    profileStore.getState().guessQuiz(puzzle, null, "miss-1");
+    expect(of(calls, "quiz_played")).toHaveLength(0);
+    const out = profileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer");
+    profileStore.getState().guessQuiz(puzzle, puzzle.playerId, "late");
+    expect(of(calls, "quiz_played").map((c) => c.props)).toEqual([
+      expect.objectContaining({ solved: true, attempts: 2, xp: out.xp, streak: profileStore.getState().quiz.streak }),
+    ]);
+    expect(of(calls, "quiz_played")[0].props.maxAttempts).toBeGreaterThanOrEqual(2);
+    expect(steps(calls)).toEqual(["quiz_played"]);
+  });
+
+  it("albums: a national team seen for the first time is a collection_milestone, once", () => {
+    const calls = deploy();
+    expect(profileStore.getState().discoverNationalTeam("nt-test", ["nt-card-1"])).toBe(true);
+    expect(profileStore.getState().discoverNationalTeam("nt-test", ["nt-card-1"])).toBe(false);
+    expect(of(calls, "collection_milestone").map((c) => [c.props.kind, c.props.id])).toEqual([["national_team_found", "nt-test"]]);
+  });
+
+  it("tutorials and the locker's seen marks send nothing (cut from the 2.0 catalogue)", () => {
     const calls = deploy();
     const p = profileStore.getState();
     p.markFlag("seenTutorial", { step: 2, outcome: "skipped" });
-    p.markFlag("seenTutorial", { step: 4, outcome: "completed" });
     p.markFlag("seenHowToPlay");
-    p.markFlag("seenSeasonRecap");
-    expect(of(calls, "ux_tutorial").map((c) => [c.props.id, c.props.step, c.props.outcome])).toEqual([
-      ["seenTutorial", 2, "skipped"],
-      ["seenHowToPlay", 1, "completed"],
-    ]);
+    p.markCosmeticsSeen(["badge-a", "badge-b"]);
+    expect(calls).toEqual([]);
   });
 
-  it("ux_unlock_seen: each cosmetic the locker shows, once", () => {
+  it("session_started carries the profile's snapshot; a pre-2.0 player is flagged and skips the firsts already done", () => {
+    profileStore.setState({ xp: 4200, runsCompleted: 12, unlockedSpecials: { [specialCards[0].id]: "2026-09-01T00:00:00.000Z" } });
     const calls = deploy();
-    profileStore.getState().markCosmeticsSeen(["badge-a", "badge-b"]);
-    profileStore.getState().markCosmeticsSeen(["badge-b", "badge-c"]);
-    expect(of(calls, "ux_unlock_seen").map((c) => [c.props.kind, c.props.id])).toEqual([
-      ["cosmetic", "badge-a"],
-      ["cosmetic", "badge-b"],
-      ["cosmetic", "badge-c"],
-    ]);
+    runStore.getState().startRun({ mode: "classic", difficulty: "easy", showOverall: true });
+    profileStore.getState().collectSpecials([specialCards[1].id], "classic");
+    const [session] = of(calls, "session_started");
+    expect(session.props).toMatchObject({
+      sessionNumber: 1,
+      dayNumber: 1,
+      existingPlayer: true,
+      xp: 4200,
+      runsCompleted: 12,
+      specialsOwned: 1,
+      rankId: rankForXp(4200).id,
+      entryPath: "/play",
+      gameMode: "app",
+    });
+    expect(steps(calls)).toEqual([]); // draft_started was already true for this profile
+    expect(profileHistory({ xp: 0, mmr: 1000, runsCompleted: 0, achievements: {}, unlockedSpecials: {}, challengesCompleted: {} })).toEqual({
+      existing: false,
+      doneSteps: [],
+    });
   });
 
   it("quality_duplicate_reward: a second clear, or XP offered for stars already held", () => {

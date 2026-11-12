@@ -33,7 +33,8 @@ afterAll(() => {
   vi.unstubAllGlobals();
 });
 
-const run = { phase: "draft", mode: "classic", difficulty: "normal", showOverall: true } as unknown as RunState;
+// A stored run always has its id (the analytics catalogue requires it on `run_abandoned`).
+const run = { runId: "run-test", phase: "draft", mode: "classic", difficulty: "normal", showOverall: true, draft: { roster: {} } } as unknown as RunState;
 
 describe("lazy run store access (#60)", () => {
   it("reads the key the run store persists to", () => {
