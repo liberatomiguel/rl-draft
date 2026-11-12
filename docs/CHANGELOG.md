@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.0.0-rc.53-polish.2 — Miguel visual review (2026-11-12)
+
+### Changed
+- Restore the rc.53 Home career CTA layout and continuous sentence.
+- Collection groups: Legendary, Mythic, Epic, Rare, Community, Special. Community replaces Content Creator; Special combines discovered Wings and Creator cards without changing their stored rarities, visuals or hidden-until-owned rule.
+- Progression announcements are compact, orange-led, with Explore left and Close right.
+- News masthead combines brand, date and dismiss; blue side rule and quieter broadcast label retain the large headline and crests.
+
+### Fixed
+- Blank crest area on first announcement capture: logos used the shared lazy loading default inside an entering dialog. Announcement crests now request eager loading; the new capture waits for decoded images and verifies a visible 72px Vitality logo.
+
+### Validation
+- Typecheck and targeted ESLint passed; browser checks cover desktop and 390px mobile. HQ positive cash feedback confirmed with +$12k beside Balance. All 60 targeted tests, the 736-page static export and postexport image/noindex checks passed.
+
 Format: [Keep a Changelog](https://keepachangelog.com/) ·
 versioning: [SemVer](https://semver.org/) (0.x while the MVP is being
 validated).

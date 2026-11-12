@@ -85,11 +85,13 @@ export function OrgMark({
   orgRef,
   size = "sm",
   className,
+  loading,
 }: {
   save: CareerSave;
   orgRef: string;
   size?: OrgMarkSize;
   className?: string;
+  loading?: "lazy" | "eager";
 }) {
   if (orgRef === "user") {
     return (
@@ -122,6 +124,7 @@ export function OrgMark({
   return (
     <TeamLogo
       orgId={orgRef}
+      loading={loading}
       seasonId={seasonIdFor(Math.min(save.clock.seasonIndex, 5))}
       size={size}
       className={className}

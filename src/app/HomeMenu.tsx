@@ -251,8 +251,8 @@ export default function HomeMenu() {
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
                   <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
                 </div>
-                <span className="display relative mt-6 inline-flex w-fit flex-col items-start justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
-                  {HOME.careerCta.split("\n").map((line) => <span key={line}>{line}</span>)}
+                <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
+                  {HOME.careerCta}
                 </span>
               </Panel>
             </AppLink>

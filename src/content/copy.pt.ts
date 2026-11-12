@@ -98,7 +98,7 @@ export const PT: Copy = {
     careerBadge: "NOVO",
     careerDesc:
       "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
-    careerCta: "Construa uma org do zero.\nVença o Mundial.",
+    careerCta: "Construa uma org do zero. Vença o Mundial.",
     careerBetaNote: "Beta: o balanceamento ainda está em ajuste. Conte no Discord o que achou.",
     discordDesc: "Converse sobre drafts, reporte bugs e acompanhe as novidades.",
   },
@@ -1161,7 +1161,8 @@ export const PT: Copy = {
     legendary: "Lendária",
     creator: "Criador",
     wings: "Wings",
-    community: "Criador de Conteúdo",
+    community: "Comunidade",
+    special: "Especial",
     national: "Seleção",
   },
 
