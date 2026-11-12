@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.8] — 2026-11-12 · Unlock pop-ups on a new browser, provider buttons
+
+#### Fixed
+- **Signing in on a new browser replayed every cosmetic unlock pop-up.** Root cause: a sync announces what arrives and was never opened in the locker (`cosmetics.seen`), and nothing recorded that a pop-up had already been shown; on an empty device everything arrives. The profile's durable form now carries `cosmetics.announced` (what a device owns has had its pop-up queued there); the merge takes the union and a sync only announces what is in no list, such as a grant added in the cloud. Nothing is written at hydration (persist contract). A device that last synced before 2.0.8 has no list in the cloud yet, so the first new-browser sign-in after it can still replay once.
+
+#### Changed
+- The Google and Discord sign-in buttons take a full row each, carry the provider's logo and colours (white Google button, Discord blurple) and are 40 px tall.
+
 ## [2.0.7] — 2026-11-12 · Sign in with Google or Discord
 
 #### Added

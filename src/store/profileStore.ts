@@ -26,6 +26,7 @@ import {
   markSeen,
   newlyOwnedIds,
   unseenOwnedIds,
+  unannouncedIds,
   withoutLegacyRewards,
   refreshOwned,
   sanitizeEquipped,
@@ -499,7 +500,12 @@ function withCosmetics(
   const facts = cosmeticFacts({ ...p, previewUnlockAll: FEATURES.previewTools && p.previewUnlockAll === true });
   const owned = refreshOwned(p.cosmetics?.owned ?? {}, facts, now);
   const equipped = sanitizeEquipped(owned, p.cosmetics?.equipped ?? EMPTY_COSMETICS.equipped);
-  return { owned, equipped, seen: p.cosmetics?.seen ?? [] };
+  return {
+    owned,
+    equipped,
+    seen: p.cosmetics?.seen ?? [],
+    ...(p.cosmetics?.announced ? { announced: p.cosmetics.announced } : {}),
+  };
 }
 
 /** rc.20: > 0 while a hydrate / merge is writing (no unlock pop-ups for those). */
@@ -888,12 +894,16 @@ export const useProfileStore = create<ProfileState>()(
         if (FEATURES.playtest) return;
         const after = get();
         const unseen = new Set(unseenOwnedIds(after.cosmetics));
-        const arrived = newlyOwnedIds(ownedBefore, after.cosmetics.owned).filter((id) => unseen.has(id));
+        // v2.0.8: and whose pop-up no device has shown yet (`announced` is synced).
+        const arrived = unannouncedIds(
+          after.cosmetics,
+          newlyOwnedIds(ownedBefore, after.cosmetics.owned).filter((id) => unseen.has(id)),
+        );
         // While the pre-season recap is still to come, it is the one that presents
         // the pre-season rewards.
         const recapPending = !after.flags.seenSeasonRecap && !!after.legacy?.preseason;
         const ids = recapPending ? withoutLegacyRewards(arrived) : arrived;
-        if (ids.length) useCosmeticUnlocks.getState().push(ids);
+        if (ids.length) queueUnlocks(ids);
       },
 
       awardAchievements: (ids) => {
@@ -1251,8 +1261,16 @@ useProfileStore.subscribe((state, prev) => {
   if (FEATURES.playtest) return;
   if (quietUnlocks > 0 || state.cosmetics?.owned === prev.cosmetics?.owned) return;
   const ids = newlyOwnedIds(prev.cosmetics?.owned ?? {}, state.cosmetics?.owned ?? {});
-  if (ids.length) useCosmeticUnlocks.getState().push(ids);
+  if (ids.length) queueUnlocks(ids);
 });
+
+/** Queue the unlock pop-up. v2.0.8: nothing is stored here (a hydration must
+ *  never write back, persist contract). That a device has announced what it owns
+ *  is recorded in the profile's durable form (`toDurable`, `cosmetics.announced`). */
+function queueUnlocks(ids: string[]): void {
+  useCosmeticUnlocks.getState().push(ids);
+}
+
 
 // 2.0.0: one pass per profile for what was owned before the pop-up could show
 // it — the cosmetics a migrated pre-season save derives from its lifetime totals
@@ -1262,9 +1280,9 @@ useProfileStore.subscribe((state, prev) => {
 function announceOwnedOnce(): void {
   const s = useProfileStore.getState();
   if (FEATURES.playtest || s.flags.unlocksCaughtUp) return;
-  const ids = withoutLegacyRewards(unseenOwnedIds(s.cosmetics));
+  const ids = unannouncedIds(s.cosmetics, withoutLegacyRewards(unseenOwnedIds(s.cosmetics)));
   useProfileStore.setState({ flags: { ...s.flags, unlocksCaughtUp: true } });
-  if (ids.length) useCosmeticUnlocks.getState().push(ids);
+  if (ids.length) queueUnlocks(ids);
 }
 if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) announceOwnedOnce();
 

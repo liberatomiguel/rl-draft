@@ -121,6 +121,15 @@ function mergeTours(
 export function toDurable(p: ProfileState): DurableProfile {
   const out = {} as DurableProfile;
   for (const k of DURABLE_KEYS) (out as Record<string, unknown>)[k] = p[k];
+  // v2.0.8: everything a device owns has had its unlock pop-up queued there
+  // (live, by a sync's arrival pass, or by the 2.0.0 catch-up pass), so the
+  // durable form says so. The list reaches the cloud with the next push, the
+  // merge takes the union, and a new browser does not replay the pop-ups. A
+  // grant added in the cloud is in no list yet, so it is still announced once.
+  const c = out.cosmetics;
+  if (c && p.flags?.unlocksCaughtUp) {
+    out.cosmetics = { ...c, announced: [...new Set([...(c.announced ?? []), ...Object.keys(c.owned ?? {})])].sort() };
+  }
   return out;
 }
 
@@ -224,6 +233,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     ),
     equipped: cosmeticsMerged.equipped,
     seen: cosmeticsMerged.seen,
+    ...(cosmeticsMerged.announced ? { announced: cosmeticsMerged.announced } : {}),
   };
 
   return {

@@ -58,6 +58,10 @@ export interface CosmeticsState {
   equipped: EquippedState;
   /** rc.2: owned ids the player has already seen in the locker. */
   seen?: string[];
+  /** v2.0.8: owned ids whose unlock pop-up was already queued on some device.
+   *  Synced (union), so signing in on a new browser does not replay them.
+   *  Additive; absent = a profile from before 2.0.8. */
+  announced?: string[];
 }
 
 export const EMPTY_COSMETICS: CosmeticsState = {
@@ -314,6 +318,18 @@ export function withoutLegacyRewards(ids: string[]): string[] {
   });
 }
 
+/** v2.0.8: the ids whose unlock pop-up has not been queued yet. */
+export function unannouncedIds(c: CosmeticsState, ids: string[]): string[] {
+  const done = new Set(c.announced ?? []);
+  return ids.filter((id) => !done.has(id));
+}
+
+/** v2.0.8: record that these ids' pop-ups were queued (idempotent). */
+export function markAnnounced(c: CosmeticsState, ids: string[]): CosmeticsState {
+  const fresh = unannouncedIds(c, ids);
+  return fresh.length ? { ...c, announced: [...(c.announced ?? []), ...fresh] } : c;
+}
+
 /** Mark ids as seen (idempotent). */
 export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
   const seen = new Set(c.seen ?? []);
@@ -492,11 +508,19 @@ export function mergeCosmetics(local: CosmeticsState, cloud: CosmeticsState): Co
       badges: local.equipped.badges ?? cloud.equipped.badges ?? null,
     },
     seen: [...new Set([...(local.seen ?? []), ...(cloud.seen ?? [])])],
+    ...(local.announced || cloud.announced
+      ? { announced: [...new Set([...(local.announced ?? []), ...(cloud.announced ?? [])])] }
+      : {}),
   });
 }
 
 function sanitizeEquippedState(c: CosmeticsState): CosmeticsState {
-  return { owned: c.owned, equipped: sanitizeEquipped(c.owned, c.equipped), seen: c.seen ?? [] };
+  return {
+    owned: c.owned,
+    equipped: sanitizeEquipped(c.owned, c.equipped),
+    seen: c.seen ?? [],
+    ...(c.announced ? { announced: c.announced } : {}),
+  };
 }
 
 /** The cosmetics a leaderboard row shows (ids straight from the view). */
