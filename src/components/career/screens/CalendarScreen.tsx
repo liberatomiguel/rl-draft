@@ -568,7 +568,7 @@ export function CalendarScreen() {
                       </span>
                     ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="-mx-3 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-1">
                   {D.weekdays.map((w) => (
                     <div
                       key={w}
@@ -788,7 +788,7 @@ export function CalendarScreen() {
       {/* 6 — footer actions ----------------------------------------------------- */}
       {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
           half of this bar — it now sits above it. */}
-      <div ref={footerRef} className="sticky bottom-[4.25rem] z-10 md:bottom-3">
+      <div ref={footerRef} className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 md:bottom-3">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
           {continueState === "decision" ? (
             <Button variant="primary" onClick={() => router.push("/career")}>

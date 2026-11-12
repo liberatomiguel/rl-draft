@@ -307,10 +307,10 @@ function OfferReveal({
               </div>
             </div>
           ) : (
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
               <h2
                 className={cx(
-                  "display pop-in min-w-0 truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
+                  "display pop-in min-w-0 break-words text-2xl font-bold uppercase tracking-wide sm:truncate md:text-3xl",
                   national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
                 )}
               >

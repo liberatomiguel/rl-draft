@@ -230,7 +230,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             profile, challenges, play) change height when they hydrate, and a
             footer in view moved with them: a layout shift of 0.14–0.35 on a
             phone. Out of view, it cannot shift anything the player sees. */}
-        <main className="mx-auto min-h-svh w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
+        <main className={cx(
+          "mx-auto min-h-svh min-w-0 w-full max-w-6xl flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12",
+          pathname.startsWith("/career") ? "px-0 pt-0 md:px-4 md:pt-6" : "px-3 pt-4 sm:px-4 sm:pt-6",
+        )}>
           {children}
         </main>
 
@@ -241,7 +244,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Bottom nav (mobile) */}
         <nav
           aria-label="Main"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         >
           <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
             {NAV_ITEMS.map((item) => {
@@ -253,7 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   item={item}
                   className={cx(
-                    "flex items-center justify-center py-3.5 transition-colors",
+                    "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 transition-colors",
                     active ? "text-orange-bright" : "text-sub",
                   )}
                 >
@@ -263,7 +266,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <NewDot className="absolute -right-1 -top-0.5" label={t.NAV_UI.newHere} />
                     ) : null}
                   </span>
-                  <span className="sr-only">{t.NAV[item.key]}</span>
+                  <span className="display max-w-full text-[11px] font-semibold leading-tight">{t.NAV[item.key]}</span>
                 </NavLink>
               );
             })}

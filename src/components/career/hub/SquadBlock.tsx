@@ -199,15 +199,16 @@ function SquadCard({
       className={cx(
         "card-frame flex min-h-60 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5",
         `card-${baseRarityOf(ovr)}`,
+        "mobile-squad-card",
       )}
     >
-      <span className="relative flex items-start justify-between gap-1">
+      <span className="relative flex w-16 shrink-0 flex-col items-start justify-between gap-2 sm:w-full sm:flex-row sm:gap-1">
         <span className="display text-4xl font-bold leading-none text-ink" title={C.common.ovr}>
           {ovr}
         </span>
         <UserCrest crestId={save.identity.crestId} colors={save.identity.colors} size="sm" />
       </span>
-      <span className="relative mt-auto block pt-5">
+      <span className="relative block min-w-0 flex-1 sm:mt-auto sm:w-full sm:pt-5">
         <span className="flex min-w-0 items-center gap-1">
           <span className="truncate text-sm font-bold text-ink sm:text-base">{p.name}</span>
           {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
@@ -327,7 +328,7 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
         </span>
       </div>
       <p className="kicker mb-1.5 !text-[9px]">{C.hub.cardStarters}</p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {slots.map((p, i) => (p ? cardOf(p) : <EmptySeat key={`empty:${i}`} C={C} />))}
       </div>
       {/* rc.36: the reserve and the coach thin again (rc.33's rows), stacked on a phone. */}

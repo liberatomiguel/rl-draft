@@ -309,6 +309,17 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         right={eventBrandIdOf(def.name) ? <EventBrand name={def.name} /> : <TierChip tier={def.tier} />}
       />
 
+      {isToday && !short ? (
+        <div className="rise-in space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
+            <Button variant="secondary" size="lg" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+            {isUnofficial ? <Button variant="ghost" onClick={() => { passUnofficial(); router.push("/career"); }}>{C.calendar.skip}</Button> : null}
+          </div>
+          {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
+        </div>
+      ) : null}
+
       <div className="rise-in flex flex-wrap items-center gap-2">
         <Badge tone="orange" className={cx(isToday && "animate-pulse")}>
           {isToday ? C.hub.matchdayIn(0) : formatDaysAway(D, daysAway)}
@@ -485,39 +496,6 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
               </Button>
             ) : null}
           </div>
-        </div>
-      ) : null}
-
-      {/* CTAs — matchday only; earlier days are a read-only preview */}
-      {isToday && !short ? (
-        <div className="rise-in space-y-2" style={{ animationDelay: "120ms" }}>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>
-              {C.event.watch}
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => {
-                enterEvent(false);
-                simEvent();
-              }}
-            >
-              {C.event.instant}
-            </Button>
-            {isUnofficial ? (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  passUnofficial();
-                  router.push("/career");
-                }}
-              >
-                {C.calendar.skip}
-              </Button>
-            ) : null}
-          </div>
-          {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
         </div>
       ) : null}
 

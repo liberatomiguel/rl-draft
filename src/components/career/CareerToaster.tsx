@@ -33,15 +33,20 @@ const TOAST_MS = 5200;
 
 export function CareerToaster() {
   const mounted = useMounted();
+  const C = useCareerCopy();
+  const dismiss = useCareerStore(s => s.dismissToast);
   const toasts = useCareerStore((s) => s.toasts);
   if (!mounted || toasts.length === 0) return null;
   return createPortal(
     <div
-      className="pointer-events-none fixed right-2 top-16 z-[80] flex max-h-[calc(100dvh-9rem)] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto p-1"
+      className="pointer-events-none fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 z-[80] flex max-h-[30dvh] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto p-1 sm:bottom-auto sm:top-16 sm:max-h-[calc(100dvh-9rem)]"
       aria-live="polite"
     >
       {toasts.slice(0, 3).map((toast) => (
-        <Toast key={toast.id} toast={toast} />
+        <div key={toast.id} className="relative hidden shrink-0 first:block sm:block [&>button:first-child]:pr-12">
+          <Toast toast={toast} />
+          <button type="button" onClick={() => dismiss(toast.id)} aria-label={C.common.close} className="pointer-events-auto absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-lg text-xl text-sub hover:text-ink">×</button>
+        </div>
       ))}
     </div>,
     document.body,

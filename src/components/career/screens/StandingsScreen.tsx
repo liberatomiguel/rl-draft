@@ -184,9 +184,9 @@ function StandingsTable({
           </span>
         </td>
         <td className="px-2 py-2">
-          <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-2.5">
             <OrgMark save={save} orgRef={row.ref} />
-            <span className={cx("truncate text-sm", isUser ? "font-semibold text-ink" : "text-sub")}>
+            <span className={cx("min-w-0 basis-[calc(100%-3rem)] break-words text-sm sm:basis-auto sm:truncate", isUser ? "font-semibold text-ink" : "text-sub")}>
               {row.name}
             </span>
             <RowMarks row={row} stars={stars} localTag={copy.race.localTag} />
@@ -261,8 +261,8 @@ function StandingsTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[20rem] border-collapse">
+    <div className="min-w-0">
+      <table className="mobile-list-table w-full border-collapse">
         <thead>
           <tr className="border-b border-line-strong">
             <th className="kicker w-10 px-2 pb-2 text-center !text-[9px]">#</th>

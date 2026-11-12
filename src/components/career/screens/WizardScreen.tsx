@@ -283,7 +283,7 @@ export function WizardScreen() {
   const rivals = rivalsByRegion();
 
   return (
-    <div className="mx-auto max-w-5xl px-3 py-6 sm:px-4">
+    <div className="mobile-action-space mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
       <SectionTitle
         kicker={C.meta.title}
         title={C.wizard.title}
@@ -724,7 +724,7 @@ export function WizardScreen() {
       </div>
 
       {/* Step navigation */}
-      <div className="mt-8 flex items-center justify-between gap-3">
+      <div className="mobile-action-bar mt-8 flex items-center justify-between gap-3">
         {step > 1 ? (
           <Button variant="ghost" onClick={() => setStep(step - 1)}>
             {C.common.back}

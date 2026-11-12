@@ -214,7 +214,7 @@ function MailRow({
           <MailKindIcon kind={item.kind} className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-baseline justify-between gap-2">
+          <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
             <span
               className={cx(
                 "truncate text-xs",
@@ -230,7 +230,7 @@ function MailRow({
               className={cx(
                 "min-w-0 flex-1 text-sm leading-snug",
                 item.read ? "text-sub" : "font-semibold text-ink",
-                !expanded && "truncate",
+                !expanded && "line-clamp-2 sm:line-clamp-1",
               )}
             >
               {resolved.title}

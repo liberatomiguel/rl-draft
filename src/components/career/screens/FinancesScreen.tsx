@@ -103,6 +103,7 @@ import { SponsorDealPanel, SponsorDecision } from "@/components/career/sponsors/
 import { otherIncomeRoomOfSave } from "@/engine/career/inserts";
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { Badge } from "@/components/ui/Badge";
+import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -831,8 +832,13 @@ export function FinancesScreen() {
 
       <FinanceErrorNotice className="rise-in" />
 
+      <nav className="flex flex-wrap gap-2 sm:hidden" aria-label={C.finances.title}>
+        <AppLink href="#career-finance-summary" className="inline-flex items-center rounded-lg border border-line px-3 text-xs font-semibold text-sub">{C.finances.weeklyStatement}</AppLink>
+        <AppLink href="#career-sponsors" className="inline-flex items-center rounded-lg border border-blue/40 bg-blue/10 px-3 text-xs font-semibold text-blue-bright">{C.finances.sponsors}</AppLink>
+      </nav>
+
       {/* Three complementary views: cash history, weekly detail, then forecast. */}
-      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">
+      <div id="career-finance-summary" className="grid scroll-mt-44 grid-cols-1 items-stretch gap-3 md:grid-cols-3">
         <Panel strong className="rise-in flex min-w-0 flex-col p-4">
           <p className="kicker text-[10px]">{C.finances.balance}</p>
           <p className={cx("display mt-1 text-3xl font-bold leading-none", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
@@ -1150,7 +1156,7 @@ export function FinancesScreen() {
         {/* ================= right column: sponsors + ledger ================= */}
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
           {/* Sponsors */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
+          <Panel id="career-sponsors" className="rise-in scroll-mt-44 p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
 
             {/* rc.32 (M3, provisional): the founding partner, its own named line and its end condition. */}

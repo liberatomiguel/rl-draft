@@ -142,6 +142,7 @@ export function CareerAnnouncement() {
  * backdrop keeps Modal's exact classes so the lite-fx fallbacks still match.
  */
 function AnnouncementShell({ label, onClose, tone, children }: { label: string; onClose: () => void; tone: "news" | "unlock"; children: React.ReactNode }) {
+  const C = useCareerCopy();
   const host = useMounted() ? document.body : null;
   const panelRef = useRef<HTMLDivElement>(null);
   usePageScrollLock(host !== null);
@@ -155,11 +156,14 @@ function AnnouncementShell({ label, onClose, tone, children }: { label: string; 
         tabIndex={-1}
         style={{ outline: "none" }}
         className={cx(
-          "pop-in relative z-10 max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border bg-[#111827] shadow-2xl",
+          "pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border bg-[#111827] shadow-2xl",
           tone === "news" ? "max-w-lg border-blue/35" : "max-w-sm border-orange/30",
         )}
       >
-        {children}
+        <div className="flex shrink-0 justify-end px-2 pt-2">
+          <button type="button" aria-label={C.common.close} onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-lg text-xl text-sub hover:bg-white/5 hover:text-ink">×</button>
+        </div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>
       </div>
     </div>,
     host,

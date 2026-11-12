@@ -64,7 +64,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
   }, [team, org, specials, run.showOverall, REVIEW, STAT_LABELS, CHEM_TIERS]);
 
   return (
-    <div className="rise-in">
+    <div className="mobile-action-space rise-in">
       <RunStepper run={run} />
       {run.mode === "challenge" ? <ChallengeGoals challengeId={run.challengeId} /> : null}
       <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-6" />
@@ -161,6 +161,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
             variant="primary"
             size="lg"
             full
+            className="mobile-action-bar"
             onClick={() => {
               sfx.start();
               startTournament();

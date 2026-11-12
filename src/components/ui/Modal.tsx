@@ -34,7 +34,7 @@ export function Modal({ open, title, children, actions, onClose, wide, className
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -55,19 +55,19 @@ export function Modal({ open, title, children, actions, onClose, wide, className
         tabIndex={-1}
         style={{ outline: "none" }}
         className={cx(
-          "panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] w-full flex-col p-6",
+          "panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-1.5rem)] min-w-0 w-full flex-col p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6",
           wide ? "max-w-2xl" : "max-w-md",
           className,
         )}
       >
-        <div className="mb-3 flex shrink-0 items-start justify-between gap-4">
+        <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
           <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
             {title}
           </h3>
           <button
             onClick={onClose}
             aria-label="Close dialog"
-            className="-mr-1 -mt-1 shrink-0 rounded-md p-1.5 text-sub transition-colors hover:bg-white/10 hover:text-ink"
+            className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sub transition-colors hover:bg-white/10 hover:text-ink"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
@@ -75,9 +75,9 @@ export function Modal({ open, title, children, actions, onClose, wide, className
           </button>
         </div>
         {summary ? <div className="shrink-0">{summary}</div> : null}
-        <div className="-mr-2 overflow-y-auto pr-2 text-sm leading-relaxed text-sub">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain text-sm leading-relaxed text-sub">{children}</div>
         {actions ? (
-          <div className="mt-6 flex shrink-0 flex-wrap justify-end gap-3">{actions}</div>
+          <div className="mt-4 flex shrink-0 flex-wrap justify-end gap-2 sm:mt-6 sm:gap-3">{actions}</div>
         ) : null}
       </div>
     </div>,

@@ -450,8 +450,8 @@ export function ClubScreen() {
       {save.history.length > 0 ? (
         <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "180ms" }}>
           <p className="kicker mb-3">{copy.club.seasonHistory}</p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[30rem] border-collapse text-sm">
+          <div className="min-w-0">
+            <table className="mobile-history-table w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-line-strong">
                   <th aria-label={copy.club.seasonHistory} className="px-2 pb-2" />
@@ -481,20 +481,20 @@ export function ClubScreen() {
                         ) : null}
                       </span>
                     </td>
-                    <td className="display px-2 py-2.5 text-center font-bold text-sub">
+                    <td data-label="#" className="display px-2 py-2.5 text-center font-bold text-sub">
                       #{h.userRegionRank}
                     </td>
-                    <td className="display px-2 py-2.5 text-right font-bold text-ink">
+                    <td data-label={copy.common.seasonPoints} className="display px-2 py-2.5 text-right font-bold text-ink">
                       {h.userSeasonPoints}
                     </td>
-                    <td className="px-2 py-2.5 text-right text-xs text-sub">
+                    <td data-label={copy.common.tier.worlds} className="px-2 py-2.5 text-right text-xs text-sub">
                       {h.userWorldsPlacement
                         ? (copy.common.placement as Record<string, string>)[
                             h.userWorldsPlacement
                           ] ?? h.userWorldsPlacement
                         : "—"}
                     </td>
-                    <td className="px-2 py-2.5 text-right text-xs font-semibold text-good">
+                    <td data-label={copy.common.prize} className="px-2 py-2.5 text-right text-xs font-semibold text-good">
                       {formatMoney(h.earnings, { compact: true })}
                     </td>
                   </tr>

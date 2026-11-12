@@ -190,7 +190,7 @@ export function HubScreen() {
                         <li key={m.id} className="flex items-start gap-2 border-b border-line py-1.5 last:border-0">
                           <span className={cx("relative mt-0.5 shrink-0", ICON_TONE[m.kind])}><MailKindIcon kind={m.kind} className="h-4 w-4" />{!m.read ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-orange" /> : null}</span>
                           <div className="min-w-0 flex-1">
-                            <p className={cx("truncate text-xs", m.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
+                            <p className={cx("line-clamp-2 text-xs", m.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
                             <p className="text-[10px] text-faint">
                               {r.from} · {formatDateTiny(D, dateOfDay(m.seasonIndex, m.day))}
                             </p>

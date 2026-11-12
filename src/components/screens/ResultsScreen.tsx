@@ -195,7 +195,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   };
 
   return (
-    <div className="rise-in pb-8">
+    <div className="mobile-results-space rise-in pb-8">
       <RunStepper run={run} />
       {ceremonyOpen ? (
         <UnlockCeremony
@@ -519,7 +519,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
 
       {/* CTAs */}
-      <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
+      <div className="mobile-action-bar mt-10 grid grid-cols-2 items-stretch justify-center gap-2 sm:flex sm:flex-row sm:gap-3">
         <Button variant="primary" size="lg" onClick={handlePlayAgain}>
           {R.playAgain}
         </Button>
@@ -529,6 +529,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         <Button
           variant="ghost"
           size="lg"
+          className="col-span-2"
           // Navigate only — the home page clears the run on mount (clearing
           // first flashes the setup screen during the route transition).
           onClick={() => router.push("/")}
@@ -705,6 +706,7 @@ function CeremonyPortal({
 }) {
   const mounted = useMounted();
   const rootRef = useRef<HTMLDivElement>(null);
+  const R = useCopy().RESULTS_UI;
   useOverlayHold("ceremony", true);
   usePageScrollLock(mounted);
   useDialogFocus(rootRef, mounted, { onEscape: onClick, onEnter: onClick });
@@ -727,6 +729,7 @@ function CeremonyPortal({
       aria-label={ariaLabel}
       onClick={onClick}
     >
+      <button type="button" onClick={event => { event.stopPropagation(); onClick(); }} aria-label={R.ceremonyContinue} className="fixed right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-raised text-xl text-ink">→</button>
       <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6">
         {children}
       </div>

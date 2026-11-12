@@ -22,16 +22,16 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-5 text-sm",
-  lg: "h-12 px-7 text-base",
+  sm: "min-h-11 px-3 py-2 text-xs sm:min-h-8",
+  md: "min-h-11 px-5 py-2 text-sm sm:min-h-10",
+  lg: "min-h-12 px-5 py-2.5 text-base sm:px-7",
 };
 
 /** rc.4: the button look for a link (e.g. an AppLink CTA), so a link and a
  *  button side by side read as the same control. */
 export function buttonClass(variant: Variant = "secondary", size: Size = "md", full?: boolean): string {
   return cx(
-    "display inline-flex items-center justify-center gap-2 rounded-lg font-bold uppercase tracking-[0.12em] transition-all",
+    "display inline-flex max-w-full items-center justify-center gap-2 rounded-lg text-center font-bold uppercase tracking-[0.08em] transition-[transform,opacity] sm:tracking-[0.12em]",
     "disabled:cursor-not-allowed disabled:opacity-40",
     VARIANTS[variant],
     SIZES[size],

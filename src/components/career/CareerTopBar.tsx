@@ -144,10 +144,15 @@ export function CareerTopBar() {
   // v0.3: plain-advance state exposes the autoplay pair (▶/⏸ + skip);
   // any blocked state falls back to the routed CONTINUE.
   const canAutoplay = kind === "advance" && save.phase === "running";
+  const tabHasNew = (key: string) =>
+    (key === "squad" && dots?.squad) ||
+    (key === "finances" && (dots?.finances || save.mail.some(m => !m.read && (m.kind === "sponsor" || (m.kind === "unlock" && String(m.params?.name).startsWith("sponsors")))))) ||
+    (key === "market" && save.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name)))) ||
+    (key === "hub" && dots?.finances);
 
   return (
-    <div className="sticky top-0 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:px-4">
+    <div className="sticky top-14 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
+      <div className="mx-auto flex min-h-14 max-w-6xl items-center gap-2 px-3 py-1 sm:gap-3 sm:px-4">
         <AppLink href="/career/club" className="flex shrink-0 items-center gap-2">
           <UserCrest
             crestId={save.identity.crestId}
@@ -233,7 +238,21 @@ export function CareerTopBar() {
         )}
       </div>
 
-      <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-3 pb-1.5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="px-3 pb-2 sm:hidden">
+        <select
+          aria-label={copy.meta.title}
+          value={TABS.find(tab => tab.href === "/career" ? pathname === tab.href : pathname.startsWith(tab.href))?.href ?? "/career"}
+          onChange={event => router.push(event.target.value)}
+          className="min-h-11 w-full rounded-lg border border-line-strong bg-raised px-3 text-sm font-semibold text-ink"
+        >
+          {TABS.map(tab => (
+            <option key={tab.key} value={tab.href}>
+              {copy.nav[tab.key as keyof typeof copy.nav]}{tabHasNew(tab.key) ? ` · ${copy.toolbox.newTag}` : ""}{tab.key === "news" && unreadMail > 0 ? ` (${unreadMail})` : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      <nav className="mx-auto hidden max-w-6xl flex-wrap items-center gap-1 px-3 pb-1.5 sm:flex sm:px-4">
         {TABS.map((tab) => {
           const active =
             tab.href === "/career" ? pathname === "/career" : pathname.startsWith(tab.href);
@@ -250,7 +269,7 @@ export function CareerTopBar() {
               )}
             >
               {copy.nav[tab.key as keyof typeof copy.nav]}
-              {(tab.key === "squad" && dots?.squad) || (tab.key === "finances" && (dots?.finances || save?.mail.some(m => !m.read && (m.kind === "sponsor" || (m.kind === "unlock" && String(m.params?.name).startsWith("sponsors")))))) || (tab.key === "market" && save?.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name)))) || (tab.key === "hub" && dots?.finances) ? (
+              {tabHasNew(tab.key) ? (
                 <NewDot className="ml-1 inline-block align-middle" label={copy.toolbox.newTag} />
               ) : null}
               {tab.key === "news" && unreadMail > 0 ? (

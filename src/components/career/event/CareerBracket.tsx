@@ -135,7 +135,7 @@ export function CareerBracket({
   };
 
   const wideColumn = (name: PlayoffRoundName) => (
-    <div key={name} className="flex min-w-[150px] flex-1 flex-col justify-around gap-2">
+    <div key={name} className="flex min-w-0 flex-1 flex-col justify-around gap-2 sm:min-w-[150px]">
       <p className="kicker text-center !text-[9px]">{T.roundNames[name] ?? name}</p>
       {renderCells(name)}
     </div>
@@ -161,22 +161,22 @@ export function CareerBracket({
           {(isSingle ? SINGLE_COLUMNS : [...UPPER_COLUMNS, ...LOWER_COLUMNS]).map(stackedSection)}
         </div>
       ) : isSingle ? (
-        <div className="overflow-x-auto pb-1">
-          <div className="flex min-w-[500px] gap-3">{SINGLE_COLUMNS.map(wideColumn)}</div>
+        <div className="pb-1 sm:overflow-x-auto">
+          <div className="mobile-bracket flex gap-3 sm:min-w-[500px]">{SINGLE_COLUMNS.map(wideColumn)}</div>
         </div>
       ) : (
-        <div className="space-y-5 overflow-x-auto pb-1">
+        <div className="space-y-5 pb-1 sm:overflow-x-auto">
           <div>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">
               {C.event.upperBracket}
             </p>
-            <div className="flex min-w-[640px] gap-3">{UPPER_COLUMNS.map(wideColumn)}</div>
+            <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(wideColumn)}</div>
           </div>
           <div>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">
               {C.event.lowerBracket}
             </p>
-            <div className="flex min-w-[640px] gap-3">{LOWER_COLUMNS.map(wideColumn)}</div>
+            <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(wideColumn)}</div>
           </div>
         </div>
       )}

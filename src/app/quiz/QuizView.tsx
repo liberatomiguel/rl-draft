@@ -30,7 +30,7 @@ import { TeamLogo } from "@/components/ui/TeamLogo";
 export function QuizView() {
   const { QUIZ_UI: Q } = useCopy();
   return (
-    <div className="rise-in mx-auto max-w-2xl">
+    <div className="mobile-action-space rise-in mx-auto max-w-2xl">
       <BackToMenu />
       <SectionTitle kicker={Q.kicker} title={Q.title} className="mb-2" />
       <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{Q.subtitle}</p>
@@ -91,7 +91,7 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                 {compact ? null : (
                   <h2 className="display mb-2 text-base font-bold uppercase tracking-wide text-ink sm:text-lg">{Q.question}</h2>
                 )}
-                <div className="flex items-baseline justify-between gap-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                   <p className="kicker !text-[10px]">{Q.attemptOf(finished ? attemptsUsed : attemptsUsed + 1, limit)}</p>
                   <p className="shrink-0 whitespace-nowrap text-[11px] text-faint">
                     {!finished ? (
@@ -163,7 +163,7 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
               </div>
             ) : (
               <form
-                className="mt-5"
+                className={cx("mt-5", !compact && "mobile-action-bar")}
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (text.trim()) submit(text);
