@@ -3,6 +3,7 @@
 ## v2.0.0-rc.53-polish.3 — announcement visual refinement (2026-11-12)
 
 ### Changed
+- Sharing image rebuilt at 1200 × 630 with the actual bundled Rajdhani font, official icon and a Season 1 tag. Editable source: data-sources/share/season-1.html. Alt text updated; no hosting or share URL changes.
 - Progression dialog uses a compact inset progression card, a larger milestone glyph with a completion marker, a restrained warm background and clearer title hierarchy. Explore stays left; Close stays right.
 - Headline org crests grow from 72 to 88 CSS pixels. Breaking News and its indicator are orange; the blue rule now runs beside the headline/body only, without framing the whole dialog. Brand, date and dismiss remain on one row.
 
