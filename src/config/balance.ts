@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 26;
+export const BALANCE_VERSION = 27;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3916,13 +3916,24 @@ export const CAREER_SIM = {
  *  - seasonCompleted: the season review filed.
  *  - maxPerWrite: a safety cap on one save write (a Worlds title + its event
  *    + the season is 7,300; nothing legitimate reaches it).
+ *
+ * v2.0.2 (launch day, live data): one account reached Champion (150k XP) in an
+ * hour, almost only through the career: Skip simulates a season in about seven
+ * minutes and a dominant squad takes every title, about 27k XP a season. Two
+ * changes: titles pay about a third (Worlds 5,000 -> 1,500, Major 2,000 -> 600,
+ * regional 800 -> 250, t2 400 -> 130, t3 200 -> 70) and the season review 1,500
+ * -> 500; and `simulatedShare`: a write with no event being WATCHED (Skip ahead,
+ * instant results) pays that share of its series / event / title XP. A season
+ * played on Skip is now about 2-3k XP; watched play keeps its value.
  */
 export const CAREER_XP = {
   seriesPlayed: 25,
   seriesWinBonus: 15,
   eventFinished: { t3: 100, t2: 150, qualifier: 100, regional: 250, major: 500, worlds: 800 } as Record<string, number>,
-  title: { t3: 200, t2: 400, regional: 800, major: 2_000, worlds: 5_000 },
-  seasonCompleted: 1_500,
+  title: { t3: 70, t2: 130, regional: 250, major: 600, worlds: 1_500 },
+  seasonCompleted: 500,
+  /** Share of series / event / title XP paid when the result was simulated, not watched. */
+  simulatedShare: 0.1,
   maxPerWrite: 10_000,
 } as const;
 

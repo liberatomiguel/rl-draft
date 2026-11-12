@@ -58,6 +58,13 @@ export function careerXpBetween(prev: CareerSave | null | undefined, next: Caree
   const last = (s: CareerSave): number => (s.history?.length ? s.history[s.history.length - 1].seasonIndex : -1);
   const seasons = last(next) > last(prev) ? CAREER_XP.seasonCompleted : 0;
 
-  const total = Math.min(CAREER_XP.maxPerWrite, Math.round(series + events + titles + seasons));
-  return total > 0 ? { total, series, events, titles, seasons } : NONE;
+  // v2.0.2: only watched play pays in full. A write made while an event is
+  // being watched (before or after it) is live; Skip ahead and instant results
+  // are simulated and pay `simulatedShare` of their series / event / title XP.
+  const live = Boolean(prev.activeEvent?.watched || next.activeEvent?.watched);
+  const share = live ? 1 : CAREER_XP.simulatedShare;
+  const paid = { series: Math.round(series * share), events: Math.round(events * share), titles: Math.round(titles * share) };
+
+  const total = Math.min(CAREER_XP.maxPerWrite, paid.series + paid.events + paid.titles + seasons);
+  return total > 0 ? { total, ...paid, seasons } : NONE;
 }

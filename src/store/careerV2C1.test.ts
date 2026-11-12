@@ -328,7 +328,10 @@ describe("v2.0 (C1) — the career pays profile XP, never rating", () => {
     const prev = base();
     expect(careerXpBetween(prev, prev).total).toBe(0);
     expect(careerXpBetween(prev, structuredClone(prev)).total).toBe(0);
+    // A watched event is in progress in `prev`: this write is live play.
+    (prev as unknown as { activeEvent: { watched: boolean } }).activeEvent = { watched: true };
     const next = structuredClone(prev);
+    (next as unknown as { activeEvent: null }).activeEvent = null;
     next.stats.seriesWins += 2;
     next.stats.seriesLosses += 1;
     next.stats.titlesRegional += 1;
@@ -344,6 +347,19 @@ describe("v2.0 (C1) — the career pays profile XP, never rating", () => {
     expect(careerXpBetween(next, structuredClone(next)).total).toBe(0);
     // Another career's save is never compared.
     expect(careerXpBetween(createCareerSave(INPUT, 99), next).total).toBe(0);
+
+    // v2.0.2: the same results simulated (Skip, instant) pay a tenth, the season in full.
+    const idle = base();
+    const skipped = structuredClone(idle);
+    skipped.stats.seriesWins += 2;
+    skipped.stats.seriesLosses += 1;
+    skipped.stats.titlesWorlds += 1;
+    skipped.eventResults = [...skipped.eventResults, res("w1", "worlds", "champion")];
+    const sim = careerXpBetween(idle, skipped);
+    expect(sim.series).toBe(Math.round((2 * (CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus) + CAREER_XP.seriesPlayed) * CAREER_XP.simulatedShare));
+    expect(sim.events).toBe(Math.round(CAREER_XP.eventFinished.worlds * CAREER_XP.simulatedShare));
+    expect(sim.titles).toBe(Math.round(CAREER_XP.title.worlds * CAREER_XP.simulatedShare));
+    expect(sim.total).toBeLessThan(400);
   });
 
   it("the store reads every career write: one with no activity grants nothing, and MMR never moves", () => {
@@ -358,7 +374,7 @@ describe("v2.0 (C1) — the career pays profile XP, never rating", () => {
     const slot = useCareerStore.getState().slots[0]!;
     const played = structuredClone(slot);
     played.stats.seriesWins += 1;
-    expect(careerXpBetween(slot, played).total).toBe(CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus);
+    expect(careerXpBetween(slot, played).total).toBe(Math.round((CAREER_XP.seriesPlayed + CAREER_XP.seriesWinBonus) * CAREER_XP.simulatedShare));
     expect(useProfileStore.getState().mmr).toBe(mmr0);
   });
 });
