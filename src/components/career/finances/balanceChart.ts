@@ -7,7 +7,7 @@
  * Monday breaks the line, the floor is drawn only where a Monday recorded it.
  */
 
-import { CAREER_PAYROLL } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_PAYROLL } from "@/config/balance";
 import type { MondayBalance } from "@/engine/career/types";
 
 export interface ChartPoint {
@@ -15,6 +15,7 @@ export interface ChartPoint {
   i: number;
   s: number;
   w: number;
+  d?: number;
   balance: number;
   floor?: number;
   x: number;
@@ -48,7 +49,7 @@ export interface BalanceChartModel {
 /** Margins: room for the y labels on the left and the season labels on top. */
 export const CHART_MARGIN = { left: 46, right: 10, top: 20, bottom: 10 } as const;
 
-const absWeek = (m: Pick<MondayBalance, "s" | "w">): number => m.s * CAREER_PAYROLL.weeksPerSeason + (m.w - 1);
+const absWeek = (m: Pick<MondayBalance, "s" | "w" | "d">): number => m.s * CAREER_PAYROLL.weeksPerSeason + (m.d === undefined ? m.w - 1 : (m.d - 1) / CAREER_CALENDAR.daysPerWeek);
 
 /** The geometry of `ring` (oldest first) drawn `width` × `height` px; null when it holds no Monday. */
 export function balanceChartModel(ring: readonly MondayBalance[], width: number, height: number): BalanceChartModel | null {
@@ -76,6 +77,7 @@ export function balanceChartModel(ring: readonly MondayBalance[], width: number,
     i,
     s: m.s,
     w: m.w,
+    d: m.d,
     balance: m.b,
     floor: m.f,
     x: x(weeks[i]),

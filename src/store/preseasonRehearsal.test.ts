@@ -21,8 +21,8 @@
  * `__fixtures__/preseason-held-ids.json` lists every achievement / special /
  * challenge id held by a real account. An id that leaves the build is pruned
  * from those accounts on migrate, so the guard below fails first. Retiring one
- * on purpose = remove it from the fixture in the same change, with a
- * DESIGN-DECISIONS line saying players lose it.
+ * on purpose = move it to the fixture's `retired` list in the same change, with
+ * a DESIGN-DECISIONS line saying players lose it.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -291,6 +291,10 @@ function rehearse(durable: Blob, version = 11): string[] {
 // ---------------------------------------------------------------------------
 
 describe("pre-season ids real accounts hold are still in the build", () => {
+  it("an id retired on purpose is really gone (the list is not stale)", () => {
+    expect(held.retired.achievements.filter((id) => achievementById.has(id))).toEqual([]);
+    expect(held.retired.specials.filter((id) => specialCardIds.has(id))).toEqual([]);
+  });
   it("every held achievement id exists", () => {
     expect(held.achievements.filter((id) => !achievementById.has(id))).toEqual([]);
   });
@@ -439,6 +443,8 @@ describe.skipIf(!REAL_FILE)("real pre-season saves (PRESEASON_SAVES)", () => {
       ].join("\n"),
     );
     expect(failures).toEqual([]);
-    expect([...pruned.achievements, ...pruned.specials]).toEqual([]);
+    // Only what was retired on purpose may be missing from a real save.
+    expect([...pruned.achievements].filter((id) => !held.retired.achievements.includes(id))).toEqual([]);
+    expect([...pruned.specials].filter((id) => !held.retired.specials.includes(id))).toEqual([]);
   });
 });

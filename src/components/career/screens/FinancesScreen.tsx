@@ -67,7 +67,7 @@ import {
   creditOfferOf,
   emergencyLoanViewOf,
   foundingPartnerPerSplitOf,
-  mondayBalancesOf,
+  balanceHistoryOf,
   nextBreachParamsOf,
   runwayWeeksOf,
   weeklyStatementOf,
@@ -94,6 +94,7 @@ import {
   useCareerSave,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
+import { MoneyChange } from "@/components/career/finances/MoneyChange";
 import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
 import { hqFinanceOf } from "@/store/careerHq";
 import { careerNewSummary, toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
@@ -842,6 +843,7 @@ export function FinancesScreen() {
         <Panel strong className="rise-in flex min-w-0 flex-col p-4">
           <p className="kicker text-[10px]">{C.finances.balance}</p>
           <p className={cx("display mt-1 text-3xl font-bold leading-none", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
+          <MoneyChange save={save} />
           <button type="button" onClick={() => setChartOpen(true)} aria-label={C.finances.chartOpen} title={C.finances.chartOpen} className="group my-4 flex min-h-24 w-full items-center gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan/60">
             <span className="min-w-0 flex-1">{sparkTail.length >= 2 ? <BalanceSparkline data={sparkTail} /> : <span className="flex h-24 items-center justify-center border-b border-dashed border-line text-[11px] text-faint">{C.finances.chartTitle}</span>}</span>
             <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1453,7 +1455,7 @@ export function FinancesScreen() {
           </Button>
         }
       >
-        <BalanceHistory ring={mondayBalancesOf(save)} />
+        <BalanceHistory ring={balanceHistoryOf(save)} />
       </Modal>
     </div>
   );

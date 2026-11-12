@@ -10,7 +10,7 @@
 player 1: Kronovi 97
 player 2: Lachinio 88
 player 3: 0ver Zer0 87
-sub: -
+sub: Gibbs 75
 coach: -
 org: iBUYPOWER ++
 ```
@@ -1733,6 +1733,7 @@ player 2: CaioTG1 87
 player 3: Yanxnz 93
 sub: STL 71
 coach: Kairos 80
+assistant coach: STL 80
 org: FURIA ++
 ```
 
@@ -2967,7 +2968,7 @@ flag: sam-only
 player 1: yanxnz 91
 player 2: Lostt 89
 player 3: drufinho 87
-sub: -
+sub: DudsMelow 76
 coach: STL 85
 org: FURIA ++
 ```
@@ -4842,4 +4843,20 @@ player 3: TehQoz 79
 sub: -
 coach: Noxes 73
 org: Pioneers ~
+```
+
+
+## Special-card historical bases
+
+Ratings below are editorial base ratings. Lille is the September 2021 roster, before Mawkzy left; Gibbs was iBUYPOWER’s sub/manager in S1. Sources: https://rocketbaguette.com/2021/12/07/la-france-terre-promise-en-rlcs/ and https://liquipedia.net/rocketleague/IBUYPOWER.
+
+### EU
+
+```team: Lille Esport · 2021-22
+player 1: Mawkzy 80
+player 2: SleWeyy 79
+player 3: Yukiss 79
+sub: -
+coach: Pasha 75
+org: Lille Esport ~
 ```

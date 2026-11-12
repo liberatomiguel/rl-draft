@@ -906,6 +906,30 @@ export function mondayBalancesOf(save: CareerSave): MondayBalance[] {
   return save.finances.balanceRing ?? [];
 }
 
+/** Keep recorded Mondays intact; append today's actual cash for immediate UI feedback. */
+export function balanceHistoryOf(save: CareerSave): MondayBalance[] {
+  const ring = mondayBalancesOf(save);
+  return [...ring, { s: save.clock.seasonIndex, w: weekOfDay(save.clock.day), d: save.clock.day, b: save.finances.balance, f: backerLineOf(save).floor }];
+}
+
+/** Last money operation. A prize and its mandatory deductions are one settlement. */
+export function latestMoneyChangeOf(save: CareerSave): { amount: number; label?: string } | null {
+  const ledger = save.finances.ledger;
+  const last = ledger.at(-1);
+  if (!last) return null;
+  let amount = last.amount;
+  if (last.kind === "playerShare" || last.kind === "loanGarnish") {
+    for (let i = ledger.length - 2; i >= 0; i--) {
+      const e = ledger[i];
+      if (e.seasonIndex !== last.seasonIndex || e.week !== last.week || e.day !== last.day || e.refName !== last.refName) break;
+      if (!["prize", "playerShare", "loanGarnish"].includes(e.kind)) break;
+      amount += e.amount;
+      if (e.kind === "prize") break;
+    }
+  }
+  return amount === 0 ? null : { amount, label: last.refName };
+}
+
 /** The Backer's floor and rescue target on this save's wage bill (economy.backerLineFor). */
 export function backerLineOf(save: CareerSave): BackerLine {
   return backerLineFor(

@@ -21,7 +21,7 @@ import { dateOfDay, firstDayOfWeek } from "@/engine/career/calendar";
 import { formatDateTiny } from "../dateText";
 import { OrgMark } from "../OrgMark";
 import { Button } from "@/components/ui/Button";
-import { RungBadge } from "../ladder/LadderParts";
+import { RungIcon } from "../ladder/LadderParts";
 import { resolveNews } from "./newsText";
 import { BrandMark } from "./NewsFeed";
 import { rocketStreetNews, newsActionOf, newsCrestsOf } from "./newsView";
@@ -99,14 +99,14 @@ export function CareerAnnouncement() {
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-bright">{C.news.feed.subject[news.type]}</span>
           </div>
           {crests.length ? (
-            <div className="relative mt-5 flex items-center justify-center gap-4">
+            <div className="relative mt-5 flex items-center justify-center gap-6 rounded-xl bg-black/15 py-5">
               {crests.map((ref) => (
                 <OrgMark key={ref} save={save} orgRef={ref} size="lg" />
               ))}
             </div>
           ) : null}
-          <h2 className="relative mt-5 border-l-2 border-blue/70 pl-3 display text-2xl font-bold leading-tight text-ink sm:text-[1.7rem]">{content.title}</h2>
-          {content.body ? <p className="relative mt-3 text-sm leading-relaxed text-sub">{content.body}</p> : null}
+          <h2 className="relative mt-6 display text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">{content.title}</h2>
+          {content.body ? <p className="relative mt-4 border-t border-line pt-4 text-sm leading-relaxed text-sub">{content.body}</p> : null}
           <div className="relative mt-6 flex justify-end">
             <Button onClick={close}>{C.common.close}</Button>
           </div>
@@ -118,17 +118,16 @@ export function CareerAnnouncement() {
   const rung = notice.rung;
   return (
     <AnnouncementShell label={C.launch.unlocked} onClose={close} tone="unlock">
-      <div className="relative px-6 pb-6 pt-9 text-center sm:px-8">
-        <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.16),transparent_70%)]" />
-        <div className="relative flex justify-center">
-          <RungBadge rung={{ id: rung.id, status: rung.status }} size="lg" highlight />
+      <div className="relative px-6 pb-6 pt-2 sm:px-8 sm:pb-8">
+        <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-blue/30 bg-blue/10 text-blue-bright"><RungIcon id={rung.id} className="h-6 w-6" /></span>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-bright">{C.launch.unlocked}</p>
         </div>
-        <p className="relative mt-5 text-[10px] font-semibold uppercase tracking-[0.22em] text-orange-bright">{C.launch.unlocked}</p>
-        <h2 className="relative mt-1.5 display text-2xl font-bold leading-tight text-ink">{C.ladder.rung[rung.id]}</h2>
-        <p className="relative mx-auto mt-2 max-w-xs text-sm leading-relaxed text-sub">{C.ladder.hint[rung.id]}</p>
-        <div className="relative mt-7 flex flex-wrap items-center justify-center gap-2">
+        <h2 className="display text-2xl font-bold leading-tight text-ink sm:text-3xl">{C.ladder.rung[rung.id]}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-sub">{C.ladder.hint[rung.id]}</p>
+        <div className="mt-7 flex items-center justify-end gap-2">
           <Button variant="ghost" onClick={close}>{C.common.close}</Button>
-          <Button onClick={() => { close(); router.push(notice.href); }}>{C.launch.open} →</Button>
+          <Button variant="secondary" onClick={() => { close(); router.push(notice.href); }}>{C.launch.open} →</Button>
         </div>
       </div>
     </AnnouncementShell>
@@ -150,14 +149,14 @@ function AnnouncementShell({ label, onClose, tone, children }: { label: string; 
   if (!host) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={label}>
-      <button aria-label="Close" tabIndex={-1} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <button aria-label={C.common.close} tabIndex={-1} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={panelRef}
         tabIndex={-1}
         style={{ outline: "none" }}
         className={cx(
-          "pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border bg-[#111827] shadow-2xl",
-          tone === "news" ? "max-w-lg border-blue/35" : "max-w-sm border-orange/30",
+          "pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border bg-panel-strong shadow-2xl",
+          tone === "news" ? "max-w-lg border-blue/35" : "max-w-md border-line-strong",
         )}
       >
         <div className="flex shrink-0 justify-end px-2 pt-2">

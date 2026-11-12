@@ -62,7 +62,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
   }
 
   const money = (n: number) => formatMoney(n, { compact: true });
-  const when = (s: number, w: number) => `${formatDateTiny(D, dateOfDay(s, firstDayOfWeek(w)))} · ${C.hub.week(w)}`;
+  const when = (s: number, w: number, d?: number) => `${formatDateTiny(D, dateOfDay(s, d ?? firstDayOfWeek(w)))} · ${C.hub.week(w)}`;
   const { points, plot } = model;
   const first = points[0];
   const last = points[points.length - 1];
@@ -72,7 +72,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
   const act = active === null ? null : (points[active] ?? null);
   const describe = (i: number) => {
     const p = points[i];
-    return `${seasonLabelFor(p.s)} · ${when(p.s, p.w)}: ${money(p.balance)}${p.floor !== undefined ? ` · ${C.finances.chartFloor(money(p.floor))}` : ""}`;
+    return `${seasonLabelFor(p.s)} · ${when(p.s, p.w, p.d)}: ${money(p.balance)}${p.floor !== undefined ? ` · ${C.finances.chartFloor(money(p.floor))}` : ""}`;
   };
 
   const pointAt = (clientX: number) => {
@@ -91,7 +91,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-sub">{C.finances.chartRange(points.length, when(first.s, first.w), when(last.s, last.w))}</p>
+      <p className="text-xs text-sub">{C.finances.chartRange(points.length, when(first.s, first.w, first.d), when(last.s, last.w, last.d))}</p>
 
       {/* Legend: the balance, the floor and the season starts — never colour alone. */}
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-sub">
@@ -211,7 +211,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
             style={{ left: tipLeft, width: TOOLTIP_WIDTH }}
           >
             <p className="text-faint">{seasonLabelFor(act.s)}</p>
-            <p className="text-sub">{when(act.s, act.w)}</p>
+            <p className="text-sub">{when(act.s, act.w, act.d)}</p>
             <p className={cx("display text-sm font-bold", act.balance < 0 ? "text-bad" : "text-ink")}>{money(act.balance)}</p>
             {act.floor !== undefined ? <p className="text-faint">{C.finances.chartFloor(money(act.floor))}</p> : null}
           </div>

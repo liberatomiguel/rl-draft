@@ -149,6 +149,8 @@ export interface ProfileState {
    *  an unseeded profile has seen everything it owns (never "everything is new").
    *  Device-local (not in the cloud slice). */
   newItems?: SeenState;
+  /** Device-local tab acknowledgements; item NEW tags keep their own seen state. */
+  newDotSeen?: Record<string, string[]>;
   /** achievementId → ISO date earned. */
   achievements: Record<string, string>;
   runHistory: RunHistoryEntry[];
@@ -248,6 +250,7 @@ export interface ProfileState {
   discoverNationalTeam: (lineupId: string, cardIds: readonly string[]) => boolean;
   /** rc.33 (COL-02c): the player opened these items (engine/newItems keys). */
   markItemsSeen: (keys: readonly string[]) => void;
+  markNewDotsSeen: (scope: string, keys: readonly string[]) => void;
   /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
   hydrateDurable: (durable: DurableProfile) => void;
   /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
@@ -293,6 +296,7 @@ export interface ProfileState {
 }
 
 const initialData = {
+  newDotSeen: {} as Record<string, string[]>,
   xp: 0,
   mmr: SEASON_RATING.start,
   lastMmrGain: 0,
@@ -824,6 +828,12 @@ export const useProfileStore = create<ProfileState>()(
         return fresh;
       },
 
+      markNewDotsSeen: (scope, keys) => set(state => {
+        const previous = state.newDotSeen?.[scope] ?? [];
+        const next = [...new Set([...previous, ...keys])];
+        return next.length === previous.length ? {} : { newDotSeen: { ...state.newDotSeen, [scope]: next } };
+      }),
+
       markItemsSeen: (keys) =>
         set((state) => {
           if (!keys.length) return {};
@@ -1086,7 +1096,7 @@ export const useProfileStore = create<ProfileState>()(
         return out;
       },
 
-      resetAll: () => set({ ...initialData, season: freshSeason(), newItems: undefined }),
+      resetAll: () => set({ ...initialData, season: freshSeason(), newItems: undefined, newDotSeen: {} }),
     }),
     {
       name: "rocket-draft:profile:v1",

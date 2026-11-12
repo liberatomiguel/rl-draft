@@ -754,6 +754,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "lille-esport",
+    "name": "Lille Esport",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
     "id": "limitless",
     "name": "Limitless",
     "region": "SSA",

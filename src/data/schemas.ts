@@ -299,6 +299,12 @@ export const challengeSchema = z
   .refine((c) => c.kind !== "draft" || [c.objective, ...(c.stars ?? [])].every(s => s &&
     ["noSpecials", "maxOverall", "minOverall", "chemistry", "maxRerolls", "sameRegion", "sameSeason", "sameOrg", "differentCountries"].includes(s.kind)), {
     message: "Draft Lab conditions must be observable roster objectives, not match outcomes",
+  })
+  .refine(c => !(c.constraint?.noSpecials && c.stars?.some(s => s.kind === "noSpecials")), {
+    message: "A no-specials rule already guarantees noSpecials; choose a bonus objective",
+  })
+  .refine(c => !c.draftScript || !c.stars?.some(s => s.kind === "maxRerolls"), {
+    message: "Scripted drafts have no rerolls; choose a bonus objective",
   });
 
 export const playersFileSchema = z.array(playerSchema);

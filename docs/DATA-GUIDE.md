@@ -1,5 +1,14 @@
 # Data Guide
 
+## Assistant coach bases (card review, November 2026)
+
+A team source block can include `assistant coach: Name overall` alongside
+`coach:`. The generator emits the assistant's historical coach card with the
+usual `<person>-coach-<lineup>` ID, while the lineup's draft coach remains the
+person on `coach:`. This supports STL's 2021–22 special without replacing
+head coach Kairos. Substitute-based curated specials can reference a real
+sub card; validation checks its `personId` against the special's `playerId`.
+
 ## ⚙️ The dataset pipeline (v0.4+)
 
 The JSONs in `src/data/` are **GENERATED** — the source of truth is

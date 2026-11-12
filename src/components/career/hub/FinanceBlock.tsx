@@ -18,10 +18,11 @@ import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { backerLineOf, mondayBalancesOf, nextBreachOutcomeOf } from "@/store/careerFlow";
+import { backerLineOf, balanceHistoryOf, nextBreachOutcomeOf } from "@/store/careerFlow";
 import { hqFinanceOf } from "@/store/careerHq";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
+import { MoneyChange } from "@/components/career/finances/MoneyChange";
 import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
@@ -76,7 +77,7 @@ function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
 export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const [chartOpen, setChartOpen] = useState(false);
   const f = useMemo(() => hqFinanceOf(save), [save]);
-  const ring = mondayBalancesOf(save);
+  const ring = balanceHistoryOf(save);
   const line = ring.slice(-CAREER_HQ.tileChartWeeks).map((m) => m.b);
   const D = C.dates;
   const money = (n: number) => formatMoney(n, { compact: true });
@@ -95,6 +96,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className={cx("display text-3xl font-bold leading-none", f.balance < 0 ? "text-bad" : "text-ink")}>{money(f.balance)}</p>
+          <MoneyChange save={save} />
           {!ended ? (
             <p className={cx("mt-1.5 inline-flex items-center gap-1 text-xs font-semibold", f.net >= 0 ? "text-good" : "text-bad")}>
               <TrendIcon className="h-3.5 w-3.5" down={f.net < 0} />

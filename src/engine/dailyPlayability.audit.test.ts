@@ -1,5 +1,5 @@
 /** Opt-in content audit; decision RNG never enters the game's RNG stream. */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { coachById, playerById, playerCardById, specialCardById, specialCards, subById } from "@/data";
 import { generateDailyConfig } from "@/lib/daily";
@@ -94,3 +94,39 @@ it.skipIf(!process.env.DAILY_AUTHOR)("authors a reviewed year of fixed daily see
   writeFileSync("src/generated/daily-seeds-v2.json",JSON.stringify(seeds,null,2)+"\n");
   writeFileSync("src/engine/__fixtures__/daily-solutions-v2.json",JSON.stringify(solutions,null,2)+"\n");
 },120_000);
+
+// Catalogue edits may consume an extra special roll and invalidate recorded
+// picks. Try existing seeds first; only explicitly authorized FUTURE dates may
+// receive a new seed. A failing audit writes neither the seeds nor the replays.
+it.skipIf(!process.env.DAILY_REFRESH)("refreshes win+bonus replay paths, retaining past daily seeds",()=>{
+  const solutions:Record<string,{seed:number;actions:ChallengeAction[]}>={}, failures:string[]=[];
+  const seeds=JSON.parse(readFileSync("src/generated/daily-seeds-v2.json","utf8")) as Record<string,number>;
+  const changed: {date:string;before:number;after:number}[]=[];
+  const futureAfter=process.env.DAILY_REFRESH_AFTER;
+  for(let day=0;day<365;day++) {
+    const date=new Date(Date.parse(`${DAILY_ROTATION_START}T00:00:00Z`)+day*86400000).toISOString().slice(0,10);
+    const seed=dailySeedForDate(date);
+    let found=false;
+    for(let policy=1;policy<=200;policy++) {
+      const a=attempt(date,policy,seed);
+      if(!a?.win||!a.bonus)continue;
+      solutions[date]={seed,actions:a.actions};found=true;break;
+    }
+    if(!found && futureAfter && date>futureAfter) {
+      for(let candidate=1;candidate<=100&&!found;candidate++) {
+        const nextSeed=seedFromDate(`daily:card-review:${date}:${candidate}`);
+        for(let policy=1;policy<=40;policy++) {
+          const a=attempt(date,policy,nextSeed);
+          if(!a?.win||!a.bonus)continue;
+          seeds[date]=nextSeed;solutions[date]={seed:nextSeed,actions:a.actions};
+          changed.push({date,before:seed,after:nextSeed});found=true;break;
+        }
+      }
+    }
+    if(!found)failures.push(date);
+  }
+  if(process.env.DAILY_REPORT)writeFileSync(process.env.DAILY_REPORT,JSON.stringify({futureAfter,changed,failures},null,2));
+  expect(failures).toEqual([]);
+  writeFileSync("src/generated/daily-seeds-v2.json",JSON.stringify(seeds,null,2)+"\n");
+  writeFileSync("src/engine/__fixtures__/daily-solutions-v2.json",JSON.stringify(solutions,null,2)+"\n");
+},360_000);

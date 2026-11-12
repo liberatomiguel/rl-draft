@@ -103,7 +103,7 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
             aria-controls={`${ids}-panel`}
             onClick={() => setPicked(k)}
             className={cx(
-              "display min-h-9 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
+              "display min-h-8 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
               kind === k
                 ? "border-blue/50 bg-blue/15 text-blue-bright"
                 : "border-transparent text-sub hover:text-ink",

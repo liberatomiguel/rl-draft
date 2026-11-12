@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/Button";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
 import { NewDot } from "@/components/ui/NewDot";
-import { careerNewDotsOf, careerNewSummary } from "@/engine/career/careerNew";
+import { useNewTab } from "@/store/useNewItems";
+import { careerNewSummary } from "@/engine/career/careerNew";
 import { formatDateShort } from "@/components/career/dateText";
 import {
   clockLabel,
@@ -77,7 +78,15 @@ export function CareerTopBar() {
   // it recomputes per store write, not on every navigation re-render.
   const stars = useMemo(() => (save ? userStars(save) : 0), [save]);
   // rc.34 (UX-06): the tabs' "New" dots — contracts (urgent) on Squad, the toolbox on Finances.
-  const dots = useMemo(() => (save ? careerNewDotsOf(careerNewSummary(save)) : null), [save]);
+  const arrivals = useMemo(() => save ? [...careerNewSummary(save).keys] : [], [save]);
+  const scope = `career:${save?.careerId ?? save?.careerSeed ?? "none"}`;
+  const toolKeys = arrivals.filter(k => k.startsWith("tb:"));
+  const financeKeys = [...toolKeys, ...(save?.mail.filter(m => !m.read && (m.kind === "sponsor" || (m.kind === "unlock" && String(m.params?.name).startsWith("sponsors")))).map(m => `mail:${m.id}`) ?? [])];
+  const marketKeys = save?.mail.filter(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))).map(m => `mail:${m.id}`) ?? [];
+  const squadDot = useNewTab(`${scope}:squad`, arrivals.filter(k => k.startsWith("ct:")), pathname === "/career/squad");
+  const financesDot = useNewTab(`${scope}:finances`, financeKeys, pathname === "/career/finances");
+  const marketDot = useNewTab(`${scope}:market`, marketKeys, pathname === "/career/market");
+  const hubDot = useNewTab(`${scope}:hub`, toolKeys, pathname === "/career");
 
   if (!save) return null;
 
@@ -145,10 +154,8 @@ export function CareerTopBar() {
   // any blocked state falls back to the routed CONTINUE.
   const canAutoplay = kind === "advance" && save.phase === "running";
   const tabHasNew = (key: string) =>
-    (key === "squad" && dots?.squad) ||
-    (key === "finances" && (dots?.finances || save.mail.some(m => !m.read && (m.kind === "sponsor" || (m.kind === "unlock" && String(m.params?.name).startsWith("sponsors")))))) ||
-    (key === "market" && save.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name)))) ||
-    (key === "hub" && dots?.finances);
+    (key === "squad" && squadDot) || (key === "finances" && financesDot) ||
+    (key === "market" && marketDot) || (key === "hub" && hubDot);
 
   return (
     <div className="sticky top-14 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">

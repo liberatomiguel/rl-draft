@@ -206,6 +206,9 @@ export function assertReferentialIntegrity(data: ParsedDataset): void {
       assertRef(coachById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown coach baseCardId "${sp.baseCardId}"`);
       const base = coachById.get(sp.baseCardId)!;
       assertRef(base.personId === sp.playerId, `specialCards: "${sp.id}" → coach card belongs to "${base.personId}", not "${sp.playerId}"`);
+    } else if (subById.has(sp.baseCardId)) {
+      const base = subById.get(sp.baseCardId)!;
+      assertRef(base.personId === sp.playerId, `specialCards: "${sp.id}" → sub card belongs to "${base.personId}", not "${sp.playerId}"`);
     } else {
       assertRef(playerById.has(sp.playerId), `specialCards: "${sp.id}" → unknown playerId "${sp.playerId}"`);
       assertRef(playerCardById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown baseCardId "${sp.baseCardId}"`);

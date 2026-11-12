@@ -78,7 +78,6 @@
     "sp-freedom-og-brazil-goat",
     "sp-garrettg-na-captain",
     "sp-garrettg-wasteland-shot",
-    "sp-gian-community",
     "sp-gimmick-cloud9-mechanics",
     "sp-gregan-vitality-blueprint",
     "sp-itachi-gentle-mates-structure",
@@ -158,5 +157,28 @@
     "ch-the-goat-hunt",
     "ch-topple-the-titans",
     "ch-vive-la-france"
-  ]
+  ],
+  "retired": {
+    "_note": "Held by real accounts and removed ON PURPOSE: these players lose them on their next load. Achievements: the E1 review of 12/11/2026 (participation trophies). sp-gian-community: removed by Miguel's final card package of 12/11/2026 (31 accounts held it).",
+    "achievements": [
+      "ach-all-eu",
+      "ach-all-mena",
+      "ach-all-na",
+      "ach-all-oce",
+      "ach-all-sam",
+      "ach-blowout",
+      "ach-four-goals",
+      "ach-games-50",
+      "ach-giant-slayer",
+      "ach-goals-100",
+      "ach-goals-250",
+      "ach-hattrick",
+      "ach-open-era-title",
+      "ach-solo-show",
+      "ach-swiss-flawless"
+    ],
+    "specials": [
+      "sp-gian-community"
+    ]
+  }
 }

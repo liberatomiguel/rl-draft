@@ -6,8 +6,7 @@
  * Top → bottom: date header + window banner · "Next for you" stops strip ·
  * one navigable month in a 7-col grid (Mon-Sun) with day markers and a tap-to-open
  * day-detail panel · unofficial invite · season overview pips · advance
- * footer. MY schedule only by default; a toggle reveals other regions'
- * regional Sundays as neutral dots + a list in the day detail.
+ * actions directly beneath the month. The legend stays below the grid.
  * v2.0 (R40): the weekend reads per day — Saturday Qualifier / Swiss stage,
  * Sunday Regional / Championship Sunday; a spectated Major is a muted cell;
  * qualifier results read Qualified / Eliminated (never a champion).
@@ -17,7 +16,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
-import { officialEventDefsForWeek, playoffsDayFor } from "@/engine/career/calendar";
+import { playoffsDayFor } from "@/engine/career/calendar";
 import { hasChampion } from "@/engine/career/careerResults";
 import type {
   CareerEventDef,
@@ -43,7 +42,6 @@ import {
   useCareerSave,
   useRevealHeldEventId,
   visibleContinueKind,
-  weekOfDay,
   type AgendaDay,
   type DayKind,
 } from "@/components/career/careerUi";
@@ -79,18 +77,10 @@ interface MonthGroup {
   days: AgendaDay[];
 }
 
-/**
- * rc.29 (CAR-09): scroll the opened day detail into view ABOVE the sticky
- * advance bar. The bar's height plus its bottom offset (the mobile nav's
- * clearance included) becomes the detail's bottom scroll-margin; "nearest"
- * moves the page only as far as needed (the top margin clears the headers).
- */
-function revealAboveBar(detail: HTMLElement | null, bar: HTMLElement | null, reduced: boolean): void {
+/** The detail is in normal flow below its month; only clear the fixed mobile nav. */
+function revealDay(detail: HTMLElement | null, reduced: boolean): void {
   if (!detail) return;
-  const clearance = bar
-    ? bar.getBoundingClientRect().height + (Number.parseFloat(getComputedStyle(bar).bottom) || 0) + 8
-    : 96;
-  detail.style.scrollMarginBottom = `${Math.round(clearance)}px`;
+  detail.style.scrollMarginBottom = "96px";
   detail.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
 }
 
@@ -112,10 +102,8 @@ export function CalendarScreen() {
   const revealHeld = useRevealHeldEventId(save);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [showWorld, setShowWorld] = useState(false);
   const [viewedMonth, setViewedMonth] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement | null>(null);
-  const footerRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useOsReducedMotion();
 
   // --- derived season data (all guarded for the pre-mount pass) ------------
@@ -136,19 +124,6 @@ export function CalendarScreen() {
     }
     return out;
   }, [days]);
-
-  /** Other regions' regionals per matchday (R40: their Sunday, `def.day`) — the "world" layer. */
-  const worldByDay = useMemo(() => {
-    const map = new Map<number, CareerEventDef[]>();
-    if (!save) return map;
-    for (const d of days) {
-      const others = officialEventDefsForWeek(save.clock.seasonIndex, weekOfDay(d.day)).filter(
-        (def) => def.tier === "regional" && def.region !== save.identity.region && def.day === d.day,
-      );
-      if (others.length > 0) map.set(d.day, others);
-    }
-    return map;
-  }, [days, save]);
 
   const resultByEvent = useMemo(() => {
     if (!save) return new Map<string, CompactEventResult>();
@@ -176,7 +151,7 @@ export function CalendarScreen() {
   // rc.29 (CAR-09): an opened day detail scrolls into view above the sticky
   // advance bar (it used to open under it, out of sight).
   useEffect(() => {
-    if (selectedDay !== null) revealAboveBar(detailRef.current, footerRef.current, reducedMotion);
+    if (selectedDay !== null) revealDay(detailRef.current, reducedMotion);
   }, [selectedDay, reducedMotion]);
 
   if (!mounted || !save) {
@@ -235,7 +210,9 @@ export function CalendarScreen() {
   // rc.29 (CAR-09): the opened detail scrolls itself into view (revealAboveBar);
   // re-selecting the open day scrolls back to it.
   const selectDay = (day: number) => {
-    if (day === selectedDay) revealAboveBar(detailRef.current, footerRef.current, reducedMotion);
+    const target = days[day - 1];
+    if (target) setViewedMonth(`${target.date.y}-${target.date.m}`);
+    if (day === selectedDay) revealDay(detailRef.current, reducedMotion);
     else setSelectedDay(day);
   };
 
@@ -264,7 +241,6 @@ export function CalendarScreen() {
     // R40: which day of the weekend this is (Swiss stage / Championship Sunday).
     const role = event ? weekendRoleOf(event, day.day) : null;
     const twoDayRole = role === "swissDay" || role === "championshipSunday" ? role : null;
-    const worldDefs = showWorld ? (worldByDay.get(day.day) ?? []) : [];
     const kindBadges = day.kinds.filter((k) => k !== "matchday" && k !== "idle");
 
     return (
@@ -425,35 +401,7 @@ export function CalendarScreen() {
             );
           })()}
 
-          {worldDefs.length > 0 ? (
-            <div className="mt-3 border-t border-line pt-2.5">
-              <p className="kicker mb-1.5 text-[10px]">{C.calendar.worldEvents}</p>
-              <ul className="space-y-1">
-                {worldDefs.map((def) => {
-                  const res = resultByEvent.get(def.id);
-                  return (
-                    <li
-                      key={def.id}
-                      className="flex flex-wrap items-center gap-2 text-xs text-sub"
-                    >
-                      {def.region ? (
-                        <Badge className={cx("!px-1.5 !text-[9px]", REGION_BADGE[def.region])}>
-                          {def.region}
-                        </Badge>
-                      ) : null}
-                      <span>{def.name}</span>
-                      {res && hasChampion(res) ? (
-                        <span className="text-faint">
-                          · {C.common.placement.champion}: {nameOfRef(save, res.championRef)}
-                        </span>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-        </Panel>
+    </Panel>
       </div>
     );
   };
@@ -461,7 +409,7 @@ export function CalendarScreen() {
   const splits = [1, 2, 3] as const;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-4">
       {/* 1 — header: date chip + season/split badges ------------------------ */}
       <div className="rise-in">
         <SectionTitle
@@ -486,60 +434,10 @@ export function CalendarScreen() {
         </Panel>
       ) : null}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
       <section data-tour="calendar-month" className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setShowWorld((v) => !v)}
-            aria-pressed={showWorld}
-            className={cx(
-              "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
-              showWorld
-                ? "border-blue/50 bg-blue/10 text-blue-bright"
-                : "border-line text-faint hover:text-sub",
-            )}
-          >
-            {showWorld ? C.calendar.hideWorld : C.calendar.showWorld}
-          </button>
-        </div>
-
-        {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
-            (payroll stays in Finances) */}
-        <details className="mt-3 rounded-lg border border-line p-2.5"><summary className="cursor-pointer text-xs font-semibold text-sub">{C.launch.calendarLegend}</summary>
-        <div
-          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
-          aria-label={C.calendar.legend}
-        >
-          <span className="inline-flex items-center gap-1">
-            <span className="flex h-3.5 w-3.5 items-center justify-center rounded border border-orange/70 bg-orange/25">
-              <EventTierIcon tier="regional" className="h-2.5 w-2.5 text-orange-bright" />
-            </span>
-            {C.calendar.matchday}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-3.5 w-5 rounded border border-blue/45 bg-blue/25" />
-            {C.calendar.window}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-1 w-1 rounded-full bg-white/30" />
-            {C.calendar.trainingDay}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full ring-2 ring-orange" />
-            {C.calendar.today}
-          </span>
-          {showWorld ? (
-            <span className="inline-flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-white/45" />
-              {C.calendar.worldEvents}
-            </span>
-          ) : null}
-        </div>
-
-        </details>
-        <div className="mt-3 space-y-5">
+        <div>
           {months.filter((g) => g.key === visibleMonth?.key).map((g) => {
             return (
               <div
@@ -591,7 +489,6 @@ export function CalendarScreen() {
                         : ev.name
                       : undefined;
                     const isSelected = selectedDay === d.day;
-                    const worldCount = showWorld ? (worldByDay.get(d.day)?.length ?? 0) : 0;
                     return (
                       <button
                         key={d.day}
@@ -641,12 +538,7 @@ export function CalendarScreen() {
                             <span className="h-1 w-1 rounded-full bg-white/25" />
                           ) : null}
 
-                          {worldCount > 0 && !ev ? (
-                            <span
-                              className="h-1 w-1 rounded-full bg-white/45"
-                              title={C.calendar.worldEvents}
-                            />
-                          ) : null}
+
                         </span>
                       </button>
                     );
@@ -657,8 +549,95 @@ export function CalendarScreen() {
             );
           })}
         </div>
+        {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
+            (payroll stays in Finances) */}
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.launch.calendarLegend}</p>
+        <div
+          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
+          aria-label={C.calendar.legend}
+        >
+          <span className="inline-flex items-center gap-1">
+            <span className="flex h-3.5 w-3.5 items-center justify-center rounded border border-orange/70 bg-orange/25">
+              <EventTierIcon tier="regional" className="h-2.5 w-2.5 text-orange-bright" />
+            </span>
+            {C.calendar.matchday}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-3.5 w-5 rounded border border-blue/45 bg-blue/25" />
+            {C.calendar.window}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-white/30" />
+            {C.calendar.trainingDay}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full ring-2 ring-orange" />
+            {C.calendar.today}
+          </span>
+        </div>
+
+        </div>
       </section>
 
+      {/* 6 — footer actions ----------------------------------------------------- */}
+      {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
+          half of this bar — it now sits above it. */}
+      <div className="mt-3">
+        <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3 [&_button]:min-h-11 [&_button]:max-w-full [&_button]:whitespace-normal">
+          {continueState === "decision" ? (
+            <Button variant="primary" onClick={() => router.push("/career")}>
+              {C.hub.nowDecision}
+            </Button>
+          ) : continueState === "seasonReview" || continueState === "ended" ? (
+            <Button variant="primary" onClick={() => router.push("/career/season")}>
+              {continueState === "ended" ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
+            </Button>
+          ) : sundayStop ? (
+            <Button variant="primary" onClick={() => router.push("/career")}>
+              {C.calendar.sundayAhead}
+            </Button>
+          ) : paused ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                continueEventToNextDay();
+                router.push("/career/event");
+              }}
+            >
+              {C.calendar.advanceToStop(C.event.championshipSunday)}
+            </Button>
+          ) : eventDue ? (
+            <AppLink
+              href="/career/event"
+              className={cx(
+                "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
+                "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]",
+                "shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all hover:brightness-110",
+              )}
+            >
+              {C.calendar.advanceToStop(eventDue.name)}
+            </AppLink>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => advanceDay()}
+                disabled={save.phase !== "running" || scrimPlaying}
+              >
+                {C.calendar.advanceDay}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => advanceToNextStop()}
+                disabled={save.phase !== "running" || scrimPlaying}
+              >
+                {C.calendar.advanceToStop(nextStopLabel)}
+              </Button>
+            </>
+          )}
+        </Panel>
+      </div>
 </div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
       <section data-tour="calendar-next" className="rise-in">
         <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
@@ -785,64 +764,8 @@ export function CalendarScreen() {
 
 </aside></div>
 
-      {/* 6 — footer actions ----------------------------------------------------- */}
-      {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
-          half of this bar — it now sits above it. */}
-      <div ref={footerRef} className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 md:bottom-3">
-        <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
-          {continueState === "decision" ? (
-            <Button variant="primary" onClick={() => router.push("/career")}>
-              {C.hub.nowDecision}
-            </Button>
-          ) : continueState === "seasonReview" || continueState === "ended" ? (
-            <Button variant="primary" onClick={() => router.push("/career/season")}>
-              {continueState === "ended" ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
-            </Button>
-          ) : sundayStop ? (
-            <Button variant="primary" onClick={() => router.push("/career")}>
-              {C.calendar.sundayAhead}
-            </Button>
-          ) : paused ? (
-            <Button
-              variant="primary"
-              onClick={() => {
-                continueEventToNextDay();
-                router.push("/career/event");
-              }}
-            >
-              {C.calendar.advanceToStop(C.event.championshipSunday)}
-            </Button>
-          ) : eventDue ? (
-            <AppLink
-              href="/career/event"
-              className={cx(
-                "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
-                "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]",
-                "shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all hover:brightness-110",
-              )}
-            >
-              {C.calendar.advanceToStop(eventDue.name)}
-            </AppLink>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => advanceDay()}
-                disabled={save.phase !== "running" || scrimPlaying}
-              >
-                {C.calendar.advanceDay}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => advanceToNextStop()}
-                disabled={save.phase !== "running" || scrimPlaying}
-              >
-                {C.calendar.advanceToStop(nextStopLabel)}
-              </Button>
-            </>
-          )}
-        </Panel>
-      </div>
+
+
     </div>
   );
 }

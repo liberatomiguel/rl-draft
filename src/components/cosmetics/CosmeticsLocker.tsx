@@ -6,23 +6,24 @@
  * banner); a green DOT on a tab means it holds something new.
  *  · Owned items equip on tap. Badges (rc.5): up to three SLOTS, the first
  *    one FEATURED. A new badge drops into the first free slot; with all three
- *    full the player picks the slot it replaces. Tapping a shown badge selects
- *    its slot: tap another slot to swap them, or the small bin to remove it.
+ *    full the player picks the slot it replaces. Grid tiles toggle equip/remove;
+ *    tapping a shown slot selects it for a swap. Each slot has a remove control.
  *    The slot strip is sticky so it stays in view over a long grid.
  *  · Items still to earn by playing show as anonymous LOCKED slots, like the
  *    collection's silhouettes: rarity only, never their art or name.
  *  · Exclusive items, the season track and leaderboard rewards the player does
  *    not own are not listed at all (they have their own screens or cannot be
  *    chased) — `lockerItems` decides.
- * Opening a tab marks its owned items as seen (clears the dots).
+ * Opening a tab clears its dot; NEW stays until the individual item is selected.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticKind } from "@/data/cosmetics";
 import { addBadge, lockerItems, MAX_BADGES, placeBadgeAt, removeBadgeAt, resolveEquipped, swapBadges, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
+import { useNewTab } from "@/store/useNewItems";
 import { useProfileStore } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
@@ -39,7 +40,8 @@ export { sourceLabel };
 /** Count of owned items the player has not looked at yet (profile badge). */
 export function useUnseenCosmetics(): number {
   const cosmetics = useProfileStore((s) => s.cosmetics);
-  return unseenOwnedIds(cosmetics).length;
+  const acknowledged = useProfileStore(s => s.newDotSeen?.locker);
+  return unseenOwnedIds(cosmetics).filter(id => !acknowledged?.includes(id)).length;
 }
 
 /** rc.4: the small green "something new here" dot (tabs, hero slots). rc.33:
@@ -73,23 +75,18 @@ export function CosmeticsLockerModal({
     setSelected(null);
     setPending(null);
   }
-  // Captured once per mount (render must stay pure); "NEW" = owned under a week.
-  const [now] = useState(() => Date.now());
+
   const resolved = resolveEquipped(cosmetics);
   const { owned, locked } = lockerItems(cosmetics.owned, kind);
   const shownIds = new Set(kind === "badge" ? resolved.badges.map((b) => b.id) : [resolved[kind]?.id].filter(Boolean));
   const unseen = new Set(unseenOwnedIds(cosmetics));
-  const isNew = (id: string) => unseen.has(id) || now - Date.parse(cosmetics.owned[id] ?? "") < 7 * 86_400_000;
+  const isNew = (id: string) => unseen.has(id);
 
-  // Looking at a tab = seeing its items (the dots on the tab and the hero go).
-  useEffect(() => {
-    if (!open) return;
-    const ids = owned.map((c) => c.id).filter((id) => unseen.has(id));
-    if (ids.length) markSeen(ids);
-    // `owned`/`unseen` are derived from the store on every render; the effect
-    // only needs to re-run when the tab or the store changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, kind, cosmetics.owned, markSeen]);
+  useNewTab("locker", Object.keys(cosmetics.owned), open);
+  const titleDot = useNewTab("locker:title", unseenOfKind(cosmetics, "title"), open && kind === "title");
+  const badgeDot = useNewTab("locker:badge", unseenOfKind(cosmetics, "badge"), open && kind === "badge");
+  const bannerDot = useNewTab("locker:banner", unseenOfKind(cosmetics, "banner"), open && kind === "banner");
+  const tabDots = { title: titleDot, badge: badgeDot, banner: bannerDot };
 
   const slots = resolved.badges.map((b) => b.id);
   const putBadges = (next: string[]) => {
@@ -108,6 +105,7 @@ export function CosmeticsLockerModal({
   /** Title / banner: tap to wear, tap again to take off. */
   const chooseSingle = (def: CosmeticDef) => {
     sfx.click();
+    markSeen([def.id]);
     if (shownIds.has(def.id)) setEquipped({ [def.kind]: null });
     else setEquipped({ [def.kind]: def.id });
   };
@@ -116,16 +114,17 @@ export function CosmeticsLockerModal({
    *  else the first free slot, else wait for the player to pick a slot. */
   const tapBadge = (id: string) => {
     sfx.click();
+    markSeen([id]);
     const slot = slots.indexOf(id);
     if (slot >= 0) {
-      setPending(null);
-      setSelected(selected === slot ? null : slot);
+      putBadges(removeBadgeAt(slots, slot));
+    } else if (slots.length >= MAX_BADGES) {
+      setSelected(null);
+      setPending(pending === id ? null : id);
     } else if (selected !== null) {
       putBadges(placeBadgeAt(slots, selected, id));
-    } else if (slots.length < MAX_BADGES) {
-      putBadges(addBadge(slots, id));
     } else {
-      setPending(pending === id ? null : id);
+      putBadges(addBadge(slots, id));
     }
   };
 
@@ -160,7 +159,7 @@ export function CosmeticsLockerModal({
           const items = lockerItems(cosmetics.owned, k);
           const have = items.owned.length;
           const total = have + items.locked.length;
-          const fresh = unseenOfKind(cosmetics, k).length > 0;
+          const fresh = tabDots[k];
           return (
             <button
               key={k}
@@ -248,13 +247,13 @@ export function CosmeticsLockerModal({
                         </Badge>
                       </span>
                     ) : null}
-                    {isSelected && b ? (
+                    {b ? (
                       <button
                         type="button"
                         onClick={() => removeSlot(i)}
                         aria-label={C.removeBadge}
                         title={C.removeBadge}
-                        className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full border border-line-strong bg-raised text-faint shadow-md transition-colors hover:border-bad/60 hover:text-bad"
+                        className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border border-line-strong bg-raised text-faint shadow-md transition-colors hover:border-bad/60 hover:text-bad"
                       >
                         <TrashGlyph />
                       </button>
@@ -373,5 +372,6 @@ function LockGlyph() {
 /** Ids the hero / profile can show a dot for: unseen owned items of one kind. */
 export function useUnseenOfKind(kind: CosmeticKind): boolean {
   const cosmetics = useProfileStore((s) => s.cosmetics);
-  return unseenOfKind(cosmetics, kind).some((id) => cosmeticById.has(id));
+  const acknowledged = useProfileStore(s => s.newDotSeen?.[`locker:${kind}`]);
+  return unseenOfKind(cosmetics, kind).some(id => cosmeticById.has(id) && !acknowledged?.includes(id));
 }

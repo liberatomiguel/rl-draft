@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.54**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.55**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,28 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.55 (2026-11-12), rc.54 merged with the special-cards and polish branch
+
+The merge of `codex/rc53-final-polish` (commit `v2.0.0-rc.53-polish.1`, written in parallel by another session; its notes: `docs/handoff-rc53-polish.md`) into rc.54. Its entry, as written there:
+
+- Added: 16 curated specials and 36 supplied photos; historical bases for Mawkzy (Lille 2021) and Gibbs (iBUYPOWER S1 substitute). Package fixes for Royales, STL, Duds and removal of Gian’s community card.
+- Changed: collection rarity accordions/counts, home CTA/stickers, fixed season-reward preview, direct badge equip/remove/replacement, compact honors filters, calendar hierarchy, headline and unlock dialogs.
+- Fixed: tab dots previously read item-open state, so they stayed after visiting; separate tab acknowledgements now leave item NEW tags intact. Weekly-only chart data hid settled prize changes; a display-only current-cash point updates both charts immediately.
+- Fixed: Pure Talent’s advertised no-specials rule was not enforced; it now is, and a reroll-budget bonus replaces the redundant star. All 135 stars replay with the final catalogue; four seeds refreshed, earned progress preserved.
+- Validation content: refreshed the staged 365-day replay calendar after the catalogue change; 98 authored seeds changed (including expired staging 2026-11-09), with no rewrite of saved player results.
+- Scope: codex/rc53-final-polish only; no staging/main deployment. Validation, integration notes and catalogue limitations: handoff-rc53-polish.md.
+
+#### Changed
+- **`sp-gian-community` is gone with the final card package. 31 real accounts held it** and lose it from their Collection on the next load. The cutover guard now lists what was retired on purpose (`preseason-held-ids.json`, `retired`) and fails for any other held id that disappears.
+- The pre-season recap's reward grid gives a title the full row (several board titles overflowed their cards).
+
+#### Balance
+- **Difficulty matrix repeated on the final catalogue, no retune** (`docs/rc55-difficulty-matrix.json`; same harness, sessions and reset weights as the C3 calibration, which the analysis reproduces to the decimal). 20 of 24 cells within 3 pp of both the target and C3 final at 240 sessions; OCE, whose pool did not change, came out identical. The four cells above 3 pp were re-measured with 480 sessions and sit within about 2 pp of C3 final: WW Easy 72.5 % (C3 70.2, target 68.5), NA Normal 38.6 % (36.3 / 35.9), MENA Easy 71.0 % (69.0 / 68.5), MENA Hard 21.6 % (20.4 / 20.3). Below the C3 tuning threshold, and a retune would invalidate the challenge and daily seeds re-authored for this catalogue. WW Easy is the one to watch on live data.
+
+#### Verified on the merged tree
+- Full suite 2,445 passed (run with 30 s per test: under CPU load the 5 s default times out career sims, no assertion fails), lint, typecheck, the staging-format build, and the soft-lock probe (14 careers, 7 seasons, 0 findings).
+- In a browser, on the rc.54 export (before the merge; the reward-grid fix above and the polish branch's screens were not seen by the coordinator), with Miguel's real pre-season save: the migrate keeps 78 specials and 25 runs of history, rating 400, Supersonic Legend archived; the recap lists every board place and pays one band per board; the achievements page shows 114 with the secrets hidden.
 
 ### rc.54 (2026-11-12), the Season 1 cutover: rewards, boards, tour, saves
 
