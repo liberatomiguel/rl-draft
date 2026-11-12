@@ -22,10 +22,8 @@ pendências; não marcar como concluído apenas porque o código foi publicado.
   não tenha sido aplicada). Mesmo cuidado: staging primeiro, registrar projeto,
   data e resultado.
 
-- [ ] **Confirmar Supernova: 75 ou 90 estrelas.** A lista revisada de 11/11 e a
-  decisão da rc.38 dizem 75 (é o que está no jogo); a legenda do arquivo de
-  badges revisadas diz 90. Hypernova (Lendária) entrou com 120, vindo desse
-  arquivo. São 135 estrelas no total (45 challenges).
+- [x] **Supernova: 90 estrelas (rc.53).** Decisão de Miguel em 12/11. Escada
+  de estrelas: 25 / 50 / 90 / 120, de 135 no total (45 challenges).
 
 - [ ] **Jogar e validar as recompensas novas da rc.51.** Technician, Clean
   Sweep, Trade Minister (Classic) e Day One, Regional Dynasty, Passport Stamped

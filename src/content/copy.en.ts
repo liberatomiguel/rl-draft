@@ -1481,7 +1481,7 @@ export const COSMETICS = {
     wildfire: { name: "Wildfire", desc: "Thirty days in a row." },
     "rising-star": { name: "Rising Star", desc: "Twenty-five challenge stars." },
     constellation: { name: "Constellation", desc: "Fifty challenge stars." },
-    supernova: { name: "Supernova", desc: "Earn 75 challenge stars." },
+    supernova: { name: "Supernova", desc: "Earn 90 challenge stars." },
     hypernova: { name: "Hypernova", desc: "Earn 120 challenge stars." },
     "veteran-drafter-1": { name: "Veteran Drafter I", desc: "Fifty runs won." },
     "veteran-drafter-2": { name: "Veteran Drafter II", desc: "250 runs won." },
