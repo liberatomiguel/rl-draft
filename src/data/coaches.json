@@ -250,7 +250,7 @@
     "id": "kairos-coach-lowkey-esports-s8",
     "personId": "kairos",
     "name": "Kairos",
-    "country": "BR",
+    "country": "US",
     "region": "SAM",
     "orgId": "lowkey-esports",
     "lineupId": "lowkey-esports-s8",
@@ -1147,13 +1147,26 @@
     "id": "kairos-coach-furia-2122",
     "personId": "kairos",
     "name": "Kairos",
-    "country": "BR",
+    "country": "US",
     "region": "SAM",
     "orgId": "furia",
     "lineupId": "furia-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 80,
     "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "stl-coach-furia-2122",
+    "personId": "stl",
+    "name": "STL",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "furia",
+    "lineupId": "furia-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "bonusType": "offense",
     "bonusLevel": "+"
   },
   {
@@ -4116,5 +4129,18 @@
     "overall": 73,
     "bonusType": "mechanics",
     "bonusLevel": "~"
+  },
+  {
+    "id": "pasha-coach-lille-esport-2122",
+    "personId": "pasha",
+    "name": "Pasha",
+    "country": "FR",
+    "region": "EU",
+    "orgId": "lille-esport",
+    "lineupId": "lille-esport-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 75,
+    "bonusType": "experience",
+    "bonusLevel": "+"
   }
 ]

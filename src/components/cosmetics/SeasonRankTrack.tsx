@@ -12,7 +12,7 @@ import { BannerSurface, TitleTag, useCosmeticCopy } from "./CosmeticViews";
 
 /** Preview reads the actual rank-reward catalog. Selecting a rank grants nothing. */
 export function SeasonRankTrack({ xp, peakRankId }: { xp: number; peakRankId: string }) {
-  const { PROFILE_UI: P } = useCopy();
+  const { PROFILE_UI: P, COSMETICS: C } = useCopy();
   const copy = useCosmeticCopy();
   const ranks = RANKS.filter(r => r.id !== "unranked");
   const peakIdx = ranks.findIndex(r => r.id === peakRankId);
@@ -48,12 +48,22 @@ export function SeasonRankTrack({ xp, peakRankId }: { xp: number; peakRankId: st
         </div>
       </div>
     </div>
-    <section className="mt-2 rounded-xl border border-line-strong bg-bg p-2.5" aria-live="polite" aria-label={P.rankRewardPreview(selected.label)}>
-      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="display text-base font-bold text-ink">{selected.label}</p>
+    <section className="mt-3 rounded-xl border border-line-strong bg-bg p-4" aria-live="polite" aria-label={P.rankRewardPreview(selected.label)}>
+      <div className="mb-4 flex items-center justify-between gap-3 border-b border-line pb-3">
+        <p className="kicker text-[10px]">{P.rewardPreviewTitle}</p>
         <p className={cx("text-xs font-semibold", reached ? "text-good" : "text-sub")}>{reached ? `✓ ${P.rankRewardReached}` : P.rankRewardRequired(selected.label, selected.minXp)}</p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">{rewards.map(c => c.kind === "banner" ? <BannerSurface key={c.id} banner={c} displayPx={480} className="h-14 min-w-32 flex-1 rounded-lg"><span className="sr-only">{copy.name(c.id)}</span></BannerSurface> : c.kind === "title" ? <TitleTag key={c.id} title={c} size="sm" /> : null)}</div>
+      <div className={cx("grid items-start gap-4", rewards.some(c => c.kind === "banner") && "sm:grid-cols-[minmax(0,1fr)_minmax(10rem,0.65fr)]")}>
+        {rewards.some(c => c.kind === "banner") ? <div className="min-w-0">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.kindsPlural.banner}</p>
+          <div className="w-full max-w-[480px]">
+            {rewards.filter(c => c.kind === "banner").map(c => <BannerSurface key={c.id} banner={c} displayPx={480} className="h-20 w-full rounded-lg"><span className="sr-only">{copy.name(c.id)}</span></BannerSurface>)}
+          </div>
+        </div> : null}
+        <div className="min-h-14 min-w-0">
+          {rewards.some(c => c.kind === "title") ? <><p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.kindsPlural.title}</p>{rewards.filter(c => c.kind === "title").map(c => <TitleTag key={c.id} title={c} size="sm" />)}</> : null}
+        </div>
+      </div>
     </section>
   </div>;
 }

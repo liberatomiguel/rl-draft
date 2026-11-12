@@ -144,10 +144,10 @@ export default function HomeMenu() {
           <span className="text-ink">Rocket</span>
           <span className="bg-gradient-to-r from-orange to-orange-bright bg-clip-text text-transparent">Draft</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-sub sm:mt-5 sm:text-sm md:text-base">{APP.description}</p>
+        <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-sub sm:mt-3 sm:text-sm md:text-base">{APP.description}</p>
 
         {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-3 flex min-h-16 max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-7 sm:min-h-[132px] sm:flex-col sm:gap-3">
+        <div className="mx-auto mt-3 flex min-h-16 max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-4 sm:min-h-[132px] sm:flex-col sm:gap-3">
           {mounted ? (
             <>
               <RankBadge rank={rank} variant="menu" size="md" />
@@ -240,7 +240,7 @@ export default function HomeMenu() {
                 <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/15 blur-3xl" aria-hidden />
                 {/* NEW: a small sticker on the corner, inside the panel so its
                     overflow-hidden does not clip it. BETA sits beside the title. */}
-                <span className="display pointer-events-none absolute right-2.5 top-2.5 z-10 rotate-6 rounded-md border border-orange/40 bg-orange/15 px-2 py-1 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-orange-bright shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                <span className="display pointer-events-none absolute right-2.5 top-2.5 z-10 rounded-md border border-orange/40 bg-orange/15 px-3 py-1.5 text-xs font-bold uppercase leading-none tracking-[0.14em] text-orange-bright shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
                   {HOME.careerBadge}
                 </span>
                 <div className="relative">
@@ -251,8 +251,8 @@ export default function HomeMenu() {
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
                   <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
                 </div>
-                <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
-                  {HOME.careerCta}
+                <span className="display relative mt-6 inline-flex w-fit flex-col items-start justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
+                  {HOME.careerCta.split("\n").map((line) => <span key={line}>{line}</span>)}
                 </span>
               </Panel>
             </AppLink>

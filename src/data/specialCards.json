@@ -2039,8 +2039,8 @@
   {
     "id": "sp-stl-gamers8-furia",
     "playerId": "stl",
-    "baseCardId": "stl-coach-furia-2223",
-    "title": "Gamers8 FURIA",
+    "baseCardId": "stl-coach-furia-2122",
+    "title": "Worlds 2022: Moist Breaker",
     "cardType": "coach",
     "rarity": "epic",
     "overall": 93,
@@ -2054,7 +2054,7 @@
       "value": 4,
       "description": "+4 team offense and clutch."
     },
-    "flavor": "FURIA's Gamers8 2022 title, a landmark for Brazilian Rocket League, with STL on the staff as assistant coach to head coach Kairos."
+    "flavor": "FURIA's top-four run at Worlds 2022 included a dramatic 4-3 quarterfinal win over Moist. STL contributed as assistant coach alongside head coach Kairos."
   },
   {
     "id": "sp-satthew-na-superteam",
@@ -2270,7 +2270,10 @@
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
-      "attributes": ["defense", "consistency"],
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
       "value": 3,
       "description": "+3 team defense and consistency."
     },
@@ -2286,7 +2289,14 @@
     "overall": 73,
     "effect": {
       "type": "team_attribute_boost",
-      "attributes": ["offense", "defense", "mechanics", "consistency", "experience", "clutch"],
+      "attributes": [
+        "offense",
+        "defense",
+        "mechanics",
+        "consistency",
+        "experience",
+        "clutch"
+      ],
       "value": 4,
       "overallBonus": 4,
       "description": "+4 to the team's overall AND +4 to every team attribute — the Wings spirit."
@@ -2304,30 +2314,20 @@
     "overall": 74,
     "effect": {
       "type": "team_attribute_boost",
-      "attributes": ["offense", "defense", "mechanics", "consistency", "experience", "clutch"],
+      "attributes": [
+        "offense",
+        "defense",
+        "mechanics",
+        "consistency",
+        "experience",
+        "clutch"
+      ],
       "value": 4,
       "overallBonus": 4,
       "description": "+4 to the team's overall AND +4 to every team attribute — the Wings spirit."
     },
     "secret": true,
     "flavor": "A hidden Wings E-Sports tribute: ninja23509, from the early days of South American Rocket League. Appears only when the Wings line is drawn."
-  },
-  {
-    "id": "sp-gian-community",
-    "playerId": "gian",
-    "baseCardId": "gian-coach-erased-x",
-    "title": "Mechanical Mind",
-    "cardType": "coach",
-    "rarity": "community",
-    "overall": 80,
-    "kind": "coach",
-    "effect": {
-      "type": "team_attribute_boost",
-      "attributes": ["mechanics", "clutch"],
-      "value": 3,
-      "description": "+3 team mechanics and clutch."
-    },
-    "flavor": "A nod to Gian — a content creator helping spread Rocket League across the South American scene."
   },
   {
     "id": "sp-jato-community",
@@ -2340,7 +2340,10 @@
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
-      "attributes": ["consistency", "experience"],
+      "attributes": [
+        "consistency",
+        "experience"
+      ],
       "value": 3,
       "description": "+3 team consistency and experience."
     },
@@ -2350,7 +2353,7 @@
     "id": "sp-royales-nrg-beater",
     "playerId": "royales",
     "baseCardId": "royales-plot-twist-2026",
-    "title": "NRG beater",
+    "title": "NA Breakthrough",
     "cardType": "moment",
     "rarity": "rare",
     "overall": 87,
@@ -2364,11 +2367,14 @@
     },
     "effect": {
       "type": "attribute_boost",
-      "attributes": ["offense", "clutch"],
+      "attributes": [
+        "offense",
+        "clutch"
+      ],
       "value": 3,
       "description": "+3 offense and clutch."
     },
-    "flavor": "A SAM card for the game that took down NRG — proof the region can punch up against the very best."
+    "flavor": "A tribute to Royales and his strong spell in North America, carrying South American talent into a new competitive chapter."
   },
   {
     "id": "sp-freedom-og-brazil-goat",
@@ -2388,7 +2394,10 @@
     },
     "effect": {
       "type": "attribute_boost",
-      "attributes": ["experience", "consistency"],
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
       "value": 3,
       "description": "+3 experience and consistency."
     },
@@ -2872,5 +2881,328 @@
       "description": "+3 experience and consistency."
     },
     "flavor": "Tokyo Verdy at the RLCS 2021-22 Fall Major: APAC on the international stage for the first time. Base card from the same season (Senbei Strikers)."
+  },
+  {
+    "id": "sp-dudsmelow-community",
+    "playerId": "dudsmelow",
+    "baseCardId": "dudsmelow-sub-furia-2025",
+    "title": "Duds Melow",
+    "cardType": "moment",
+    "rarity": "community",
+    "overall": 80,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "consistency",
+        "experience"
+      ],
+      "value": 2,
+      "description": "+2 team consistency and experience."
+    },
+    "flavor": "A community tribute to Duds Melow, featured on the FURIA 2025 bench in Rocket Draft."
+  },
+  {
+    "id": "sp-retals-peeps",
+    "playerId": "retals",
+    "baseCardId": "retals-pittsburgh-knights-s8",
+    "title": "The Peeps Miracle",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch",
+        "offense"
+      ],
+      "value": 3,
+      "description": "+3 clutch and offense."
+    },
+    "flavor": "The Peeps’ DreamHack Montreal run, remembered for an underdog title that changed their story."
+  },
+  {
+    "id": "sp-speed-wsoe",
+    "playerId": "speed",
+    "baseCardId": "speed-the-bricks-s7",
+    "title": "WSOE Stand-In",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 92,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 consistency and clutch."
+    },
+    "flavor": "A tribute to Speed’s WSOE stand-in victory alongside kuxir97 and miztik."
+  },
+  {
+    "id": "sp-senzo-stockholm",
+    "playerId": "senzo",
+    "baseCardId": "senzo-sandrock-gaming-2122",
+    "title": "Stockholm Stand-In",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 89,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 3,
+      "description": "+3 experience and consistency."
+    },
+    "flavor": "A tribute to Senzo stepping in for Sandrock Gaming at the Stockholm Major."
+  },
+  {
+    "id": "sp-remkoe-world-champion",
+    "playerId": "remkoe",
+    "baseCardId": "remkoe-northern-gaming-s3",
+    "title": "Northern World Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 experience and clutch."
+    },
+    "flavor": "Northern Gaming’s Season 3 World Championship, with remkoe at the heart of the run."
+  },
+  {
+    "id": "sp-chicago-offensive-mvp",
+    "playerId": "chicago",
+    "baseCardId": "chicago-g2-esports-2122",
+    "title": "Worlds 2022 Offensive MVP",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "mechanics"
+      ],
+      "value": 3,
+      "description": "+3 offense and mechanics."
+    },
+    "flavor": "A tribute to Chicago’s offensive MVP performance at the 2022 World Championship."
+  },
+  {
+    "id": "sp-lachinio-world-champion",
+    "playerId": "lachinio",
+    "baseCardId": "lachinio-ibuypower-s1",
+    "title": "Original World Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 experience and clutch."
+    },
+    "flavor": "A tribute to Lachinio and the original RLCS World Champions, iBUYPOWER Cosmic."
+  },
+  {
+    "id": "sp-greazy-world-champion",
+    "playerId": "greazy",
+    "baseCardId": "greazy-flipsid3-tactics-s2",
+    "title": "FlipSid3 World Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 consistency and clutch."
+    },
+    "flavor": "FlipSid3’s Season 2 world title: a tribute to gReazymeister’s championship run."
+  },
+  {
+    "id": "sp-shad-sam-na",
+    "playerId": "shad",
+    "baseCardId": "shad-complexity-gaming-2122",
+    "title": "SAM to NA",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "experience"
+      ],
+      "value": 3,
+      "description": "+3 consistency and experience."
+    },
+    "flavor": "A tribute to Shad carrying South American talent into a new chapter in North America."
+  },
+  {
+    "id": "sp-atow-2v2",
+    "playerId": "atow",
+    "baseCardId": "atow-karmine-corp-2026",
+    "title": "2v2 World Champion 2026",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "A tribute to Atow’s 2026 2v2 World Championship."
+  },
+  {
+    "id": "sp-nxghtt-rotterdam",
+    "playerId": "nxghtt",
+    "baseCardId": "nxghtt-team-secret-2223",
+    "title": "Rotterdam Underdogs",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 91,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 3,
+      "description": "+3 defense and consistency."
+    },
+    "flavor": "Team Secret’s Rotterdam Major run: a South American underdog story led by calm under pressure."
+  },
+  {
+    "id": "sp-math-london",
+    "playerId": "math",
+    "baseCardId": "math-the-three-sins-s8",
+    "title": "London Shock",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 89,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch",
+        "experience"
+      ],
+      "value": 3,
+      "description": "+3 clutch and experience."
+    },
+    "flavor": "A tribute to math and South America’s breakthrough on the London stage."
+  },
+  {
+    "id": "sp-mawkzy-1v1-final-boss",
+    "playerId": "mawkzy",
+    "baseCardId": "mawkzy-lille-esport-2122",
+    "title": "1v1 World Finalist 2025",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 95,
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 mechanics and clutch."
+    },
+    "flavor": "A tribute to Mawkzy’s 2025 1v1 World Championship final. Historical base: Lille Esport, 2021."
+  },
+  {
+    "id": "sp-community-firewall",
+    "playerId": "firewall154",
+    "baseCardId": "firewall154-sub-lowkey-esports-s8",
+    "title": "Brazilian Community",
+    "cardType": "moment",
+    "rarity": "community",
+    "overall": 82,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "consistency",
+        "experience"
+      ],
+      "value": 2,
+      "description": "+2 team consistency and experience."
+    },
+    "flavor": "A community tribute to Firewall154, on the Lowkey Esports historical bench."
+  },
+  {
+    "id": "sp-community-lethamyr",
+    "playerId": "lethamyr",
+    "baseCardId": "lethamyr-ghost-gaming-s4",
+    "title": "The Mapmaker",
+    "cardType": "moment",
+    "rarity": "community",
+    "overall": 88,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "mechanics",
+        "experience"
+      ],
+      "value": 2,
+      "description": "+2 team mechanics and experience."
+    },
+    "flavor": "A community tribute to Lethamyr: player, creator and maker of new Rocket League experiences."
+  },
+  {
+    "id": "sp-community-gibbs",
+    "playerId": "gibbs",
+    "baseCardId": "gibbs-sub-ibuypower-s1",
+    "title": "Community Analyst",
+    "cardType": "moment",
+    "rarity": "community",
+    "overall": 82,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 2,
+      "description": "+2 team experience and consistency."
+    },
+    "flavor": "A community tribute to Gibbs: Cosmic veteran, substitute, manager and analyst."
+  },
+  {
+    "id": "sp-community-jzr",
+    "playerId": "jzr",
+    "baseCardId": "jzr-sub-dignitas-s8",
+    "title": "Freestyle Pioneer",
+    "cardType": "moment",
+    "rarity": "community",
+    "overall": 82,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "mechanics",
+        "experience"
+      ],
+      "value": 2,
+      "description": "+2 team mechanics and experience."
+    },
+    "flavor": "A community tribute to JZR and a freestyle legacy that inspired a generation."
   }
 ]

@@ -1599,9 +1599,9 @@ export const CAREER_EN = {
     chartOpen: "Open the balance chart",
     chartTitle: "Balance history",
     chartRange: (n: number, from: string, to: string) =>
-      n === 1 ? `One Monday on record: ${from}.` : `${n} Mondays on record, ${from} to ${to}.`,
+      n === 1 ? `One balance recorded: ${from}.` : `${n} balances recorded, ${from} to ${to}.`,
     chartEmpty: "The chart fills in from Monday to Monday — come back after the next payday.",
-    chartLegendBalance: "Balance after Monday's payroll",
+    chartLegendBalance: "Balance, including current cash",
     chartLegendFloor: "The floor (a Monday below it is a breach)",
     chartLegendSeason: "Season start",
     chartHigh: (s: string) => `High ${s}`,
@@ -1610,9 +1610,9 @@ export const CAREER_EN = {
     chartColSeason: "Season",
     chartColLow: "Low",
     chartColHigh: "High",
-    chartColLast: "Last Monday",
+    chartColLast: "Latest",
     chartSummary: (n: number, first: string, last: string, low: string, high: string) =>
-      `Balance over ${n} Mondays: from ${first} to ${last}, low ${low}, high ${high}.`,
+      `Balance across ${n} records: from ${first} to ${last}, low ${low}, high ${high}.`,
     chartClose: "Close",
     line: {
       sponsorBase: "Sponsor base",

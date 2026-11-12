@@ -104,7 +104,7 @@ export const HOME = {
   careerBadge: "NEW",
   careerDesc:
     "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
-  careerCta: "Build an org from nothing. Win the World Championship.",
+  careerCta: "Build an org from nothing.\nWin the World Championship.",
   // v2.0 (G2): beta note on the career card + the community band.
   careerBetaNote: "Beta: balance is still being tuned. Tell us what you think on Discord.",
   discordDesc: "Talk drafts, report bugs and follow what ships next.",
@@ -680,6 +680,7 @@ export const PROFILE_UI = {
   seasonTrack: "Season track",
   seasonTrackHint: "A new rank, a new reward.",
   rankRewardSelect: "Select a rank to preview its rewards.",
+  rewardPreviewTitle: "Reward preview",
   rankRewardPreview: (rank: string) => `${rank} rewards`,
   rankRewardReached: "Rank reached",
   rankRewardRequired: (rank: string, xp: number) => `${rank} · ${xp.toLocaleString("en")} XP`,
@@ -1411,7 +1412,7 @@ export const COSMETICS = {
   featured: "Featured",
   showcase: "On your banner",
   // rc.5: badge slots
-  slotHintIdle: "Tap a badge to add it. Tap a shown one to move or remove it.",
+  slotHintIdle: "Tap a badge to add or remove it. Select a slot above to move it.",
   slotHintSelected: "Tap another slot to swap places, or the bin to remove it.",
   slotHintPending: "All three slots are full. Tap the one to replace.",
   pickSlot: "Pick a slot",

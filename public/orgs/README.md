@@ -118,6 +118,7 @@ kru-esports.png
 latino-heat.png
 leviatan.png
 lg-dire-wolves.png
+lille-esport.png
 limitless.png
 lotus.png
 lowkey-esports.png

@@ -1574,9 +1574,9 @@ export const CAREER_PT: CareerCopy = {
     chartOpen: "Abrir o gráfico do saldo",
     chartTitle: "Histórico do saldo",
     chartRange: (n: number, from: string, to: string) =>
-      n === 1 ? `Uma segunda registrada: ${from}.` : `${n} segundas registradas, de ${from} a ${to}.`,
+      n === 1 ? `Um saldo registrado: ${from}.` : `${n} saldos registrados, de ${from} a ${to}.`,
     chartEmpty: "O gráfico se preenche de segunda em segunda — volte depois do próximo pagamento.",
-    chartLegendBalance: "Saldo depois da folha de segunda",
+    chartLegendBalance: "Saldo, incluindo o caixa atual",
     chartLegendFloor: "O piso (uma segunda abaixo dele é uma quebra)",
     chartLegendSeason: "Início de temporada",
     chartHigh: (s: string) => `Máximo ${s}`,
@@ -1585,9 +1585,9 @@ export const CAREER_PT: CareerCopy = {
     chartColSeason: "Temporada",
     chartColLow: "Mínimo",
     chartColHigh: "Máximo",
-    chartColLast: "Última segunda",
+    chartColLast: "Atual",
     chartSummary: (n: number, first: string, last: string, low: string, high: string) =>
-      `Saldo em ${n} segundas: de ${first} a ${last}, mínimo ${low}, máximo ${high}.`,
+      `Saldo em ${n} registros: de ${first} a ${last}, mínimo ${low}, máximo ${high}.`,
     chartClose: "Fechar",
     line: {
       sponsorBase: "Base do patrocínio",

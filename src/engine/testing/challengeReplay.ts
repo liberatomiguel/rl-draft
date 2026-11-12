@@ -49,6 +49,10 @@ export function exploreChallenge(ch: Challenge, policySeed: number) {
   const actions: ChallengeAction[] = [];
   const focus = policySeed % 8;
   const rerollChance = decisions.range(0, 0.32);
+  const objectives = [ch.objective, ...(ch.stars ?? [])];
+  const avoidSpecials = objectives.some(s => s?.kind === "noSpecials");
+  const rerollLimit = objectives.find(s => s?.kind === "maxRerolls");
+  const maxRerolls = rerollLimit?.kind === "maxRerolls" ? rerollLimit.max : challengeRerolls(ch);
   const playerPriority = decisions.range(0, 18);
   for (let guard = 0; !draft.complete && guard < 60; guard++) {
     const offer = draft.offer;
@@ -58,7 +62,7 @@ export function exploreChallenge(ch: Challenge, policySeed: number) {
       draft = applyFreeReroll(draft, rng);
       continue;
     }
-    if (draft.rerollsLeft > 0 && decisions.chance(rerollChance)) {
+    if (draft.rerollsLeft > 0 && actions.filter(a => a.kind === "reroll").length < maxRerolls && decisions.chance(rerollChance)) {
       actions.push({ kind: "reroll" });
       draft = applyReroll(draft, rng);
       continue;
@@ -83,6 +87,7 @@ export function exploreChallenge(ch: Challenge, policySeed: number) {
         }
       } else if (c.kind === "coach") value = coachById.get(c.refId)?.overall ?? 50;
       else if (c.kind === "sub") value = subById.get(c.refId)?.overall ?? 50;
+      if (avoidSpecials && c.specialId) value -= 150;
       return value + decisions.range(0, focus === 7 ? 65 : 25);
     }
     const cards = offer.cards.filter(c => c.availability === "available" && slotsForKind(c.kind).some(s => !draft.roster[s]));

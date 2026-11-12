@@ -895,6 +895,8 @@ export interface MoneyNotice {
  * Short keys: the ring holds up to CAREER_PAYROLL.balanceRingWeeks of them.
  */
 export interface MondayBalance {
+  /** Display-only live point, never written into the Monday ring. */
+  d?: number;
   /** Season index of the Monday. */
   s: number;
   /** Week of the Monday (1–32). */

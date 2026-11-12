@@ -5,13 +5,33 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { resolveOfferCard, resolvePick, resolveSub } from "./cards";
+import { resolveOfferCard, resolvePick, resolveSpecial, resolveSub } from "./cards";
+import { coachById, lineupById, specialCardById } from "@/data";
 import type { DraftOfferCard, RosterPick } from "./types";
 
 const SUB_ID = "turbopolsa-sub-northern-gaming-s2"; // base overall 92
 const SPECIAL_ID = "sp-turbopolsa-four-times-world-champion"; // overall 99
 
 describe("resolveSub with a special", () => {
+  it("resolves the curated Duds community card as FURIA's 2025 substitute", () => {
+    const sp = specialCardById.get("sp-dudsmelow-community")!;
+    const card = resolveSpecial(sp);
+    expect(card.kind).toBe("sub");
+    expect(card.personId).toBe("dudsmelow");
+    expect(card.lineupId).toBe("furia-2025");
+    expect(card.special?.rarity).toBe("community");
+    expect(lineupById.get("furia-2025")!.subId).toBe(sp.baseCardId);
+  });
+
+  it("anchors STL's Worlds special in 2022 without replacing head coach Kairos", () => {
+    const sp = specialCardById.get("sp-stl-gamers8-furia")!;
+    const card = resolveSpecial(sp);
+    expect(card.lineupId).toBe("furia-2122");
+    expect(card.personId).toBe("stl");
+    const headCoach = coachById.get(lineupById.get("furia-2122")!.coachId!)!;
+    expect(headCoach.personId).toBe("kairos");
+    expect(headCoach.country).toBe("US");
+  });
   it("returns the base card when no special is active", () => {
     const r = resolveSub(SUB_ID);
     expect(r.special).toBeUndefined();

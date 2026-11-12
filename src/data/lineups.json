@@ -10,6 +10,7 @@
       "lachinio-ibuypower-s1",
       "0verzer0-ibuypower-s1"
     ],
+    "subId": "gibbs-sub-ibuypower-s1",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -4592,6 +4593,7 @@
       "drufinho-furia-2025"
     ],
     "coachId": "stl-coach-furia-2025",
+    "subId": "dudsmelow-sub-furia-2025",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -7416,6 +7418,21 @@
       "tehqoz-pioneers-ssa-2027"
     ],
     "coachId": "noxes-coach-pioneers-ssa-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "lille-esport-2122",
+    "name": "Lille Esport",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "lille-esport",
+    "region": "EU",
+    "playerCardIds": [
+      "mawkzy-lille-esport-2122",
+      "sleweyy-lille-esport-2122",
+      "yukiss-lille-esport-2122"
+    ],
+    "coachId": "pasha-coach-lille-esport-2122",
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
   }

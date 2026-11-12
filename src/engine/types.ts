@@ -242,9 +242,9 @@ export interface SpecialCard {
   id: string;
   /** "player" (default) or "coach". */
   kind?: "player" | "coach";
-  /** Person identity (player id, or coach person id for coach specials). */
+  /** Person identity: player id, or person id for coach/sub bases. */
   playerId: string;
-  /** Base card replaced in draft offers: a player card or a coach card. */
+  /** Historical base: a player, coach, or substitute card. */
   baseCardId: string;
   title: string;
   cardType: SpecialCardType;

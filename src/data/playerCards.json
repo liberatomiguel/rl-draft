@@ -13066,5 +13066,32 @@
     "seasonId": "rlcs-2027",
     "overall": 79,
     "manualAdjustment": 0
+  },
+  {
+    "id": "mawkzy-lille-esport-2122",
+    "playerId": "mawkzy",
+    "orgId": "lille-esport",
+    "lineupId": "lille-esport-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sleweyy-lille-esport-2122",
+    "playerId": "sleweyy",
+    "orgId": "lille-esport",
+    "lineupId": "lille-esport-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "yukiss-lille-esport-2122",
+    "playerId": "yukiss",
+    "orgId": "lille-esport",
+    "lineupId": "lille-esport-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
+    "manualAdjustment": 0
   }
 ]

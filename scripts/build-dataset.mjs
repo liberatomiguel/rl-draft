@@ -76,6 +76,7 @@ const SEASONS = {
 // ---------------------------------------------------------------------------
 
 const COUNTRY = {
+  mawkzy: "FR", sleweyy: "FR", pasha: "FR", gibbs: "US",
   // NA
   kronovi: "US", garrettg: "US", jstn: "US", fireburner: "US", sadjunior: "US",
   jacob: "US", moses: "US", turtle: "US", sizz: "US", rizzo: "US", gimmick: "US",
@@ -103,7 +104,7 @@ const COUNTRY = {
   drufinho: "BR", stl: "BR", swiftt: "BR", sadness: "BR", kv1: "BR", motta: "BR",
   brad: "BR", suco: "BR", math: "BR", matix: "BR", valt: "BR", repi: "BR",
   pj: "BR", fasi: "BR", nxghtt: "BR", aztromick: "BR", firewall154: "BR",
-  kairos: "BR", jato: "BR", brunovisquii: "BR", pekitas: "BR",
+  kairos: "US", jato: "BR", brunovisquii: "BR", pekitas: "BR",
   reysbull: "AR", ajg: "AR",
   // MENA
   ahmad: "SA", okhalid: "SA", trk511: "SA", rw9: "SA", kiileerrz: "SA",
@@ -748,6 +749,7 @@ const teams = rawTeams.map((raw) => {
 
   const sub = parsePersonEntry(get("sub"));
   const coach = parsePersonEntry(get("coach"));
+  const assistantCoach = parsePersonEntry(get("assistant coach"));
 
   const orgRaw = get("org");
   const buffMatch = orgRaw.match(/\s(~|\+{1,3})\s*$/);
@@ -770,7 +772,7 @@ const teams = rawTeams.map((raw) => {
   const rareSpawn = /\brare\b/i.test(flagRaw);
   const legacy = /\blegacy\b/i.test(flagRaw);
 
-  return { orgName, orgDisplay: orgDisplay || orgName, season, cut, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn, legacy };
+  return { orgName, orgDisplay: orgDisplay || orgName, season, cut, region: raw.region, players, sub, coach, assistantCoach, orgBuffLevel, samOnly, rareSpawn, legacy };
 });
 
 // ---------------------------------------------------------------------------
@@ -861,22 +863,26 @@ for (const team of teams) {
   });
 
   let coachId;
-  if (team.coach) {
-    const personId = registerPerson(team.coach.nick, team.region, team.season.order, orgId);
-    coachId = `${personId}-coach-${lineupId}`;
+  // Preserve the head coach in lineup offers; assistants provide historical
+  // bases for curated specials without replacing that head coach.
+  for (const [role, staff] of [["head", team.coach], ["assistant", team.assistantCoach]]) {
+    if (!staff) continue;
+    const personId = registerPerson(staff.nick, team.region, team.season.order, orgId);
+    const staffCardId = `${personId}-coach-${lineupId}`;
+    if (role === "head") coachId = staffCardId;
     const person = persons.get(personId);
     coachCards.push({
-      id: coachId,
+      id: staffCardId,
       personId,
-      name: team.coach.nick,
+      name: staff.nick,
       country: person.country,
       region: team.region,
       orgId,
       lineupId,
       seasonId: team.season.id,
-      overall: team.coach.overall,
+      overall: staff.overall,
       bonusType: STATS[hash(personId) % STATS.length],
-      bonusLevel: team.coach.overall >= 85 ? "++" : team.coach.overall >= 75 ? "+" : "~",
+      bonusLevel: staff.overall >= 85 ? "++" : staff.overall >= 75 ? "+" : "~",
     });
   }
 
@@ -1201,6 +1207,7 @@ const SPECIALS = [
 
 const cardById = new Map(playerCards.map((c) => [c.id, c]));
 const coachByIdMap = new Map(coachCards.map((c) => [c.id, c]));
+const subByIdMap = new Map(subCards.map((c) => [c.id, c]));
 
 // specialCards.json is HAND-MAINTAINED (since v1.1.0). It is NOT regenerated
 // from the SPECIALS catalogue above, so `npm run build:data` never clobbers the
@@ -1214,7 +1221,10 @@ const existingSpecials = JSON.parse(
 );
 for (const sp of existingSpecials) {
   const kind = sp.kind ?? "player";
-  const baseOk = kind === "coach" ? coachByIdMap.has(sp.baseCardId) : cardById.has(sp.baseCardId);
+  const base = kind === "coach"
+    ? coachByIdMap.get(sp.baseCardId)
+    : cardById.get(sp.baseCardId) ?? subByIdMap.get(sp.baseCardId);
+  const baseOk = base && (base.playerId ?? base.personId) === sp.playerId;
   if (!baseOk) {
     throw new Error(
       `specialCards.json: "${sp.id}" -> base ${kind} card "${sp.baseCardId}" not found. ` +

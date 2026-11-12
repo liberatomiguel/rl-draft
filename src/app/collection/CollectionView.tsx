@@ -18,7 +18,7 @@ import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
-import { useOpenContent, useProfileNew } from "@/store/useNewItems";
+import { useOpenContent, useProfileNew, useNewTab } from "@/store/useNewItems";
 import { rankRewardsForXp, rankThatUnlocksRarity } from "@/engine/progression";
 import { Badge } from "@/components/ui/Badge";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
@@ -33,7 +33,7 @@ import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbu
 // Official catalogue rarities only — the per-rarity tiles + filter chips. The
 // special-person rarities (community/wings/creator) are intentionally absent:
 // those cards are hidden until owned (see `collectibleCards`), so they get no
-// "chase" tile and no rarity filter; an owned one still shows under "all".
+// chase tile. A discovered special-person family gains its own section/filter.
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
 type StatusFilter = "all" | "unlocked" | "locked";
 /** v2.0: the special-card album and the national-team album (its own set). */
@@ -61,7 +61,7 @@ const isSecretRarity = (r: SpecialRarity) => SECRET_RARITIES.includes(r);
 
 /**
  * Progressive reveal batch (UI/perf, not gameplay — stays out of balance.ts).
- * The album renders this many cards up front and appends another batch as a
+ * Each rarity renders this many cards up front and appends another batch as a
  * sentinel scrolls into view, so the initial paint mounts a few dozen cards
  * instead of the whole (ever-growing) catalogue — the lever that actually moves
  * the /collection LCP/INP. Cards still render in full (no clipping), preserving
@@ -80,6 +80,7 @@ export function CollectionView() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
   const [album, setAlbum] = useState<Album>("specials");
+  const [collapsed, setCollapsed] = useState<Set<SpecialRarity>>(() => new Set());
   const [detail, setDetail] = useState<SpecialCard | null>(null);
 
   // Hidden dev preview: visiting /collection?dev=1 renders EVERY special as
@@ -111,10 +112,9 @@ export function CollectionView() {
     },
     [openContent],
   );
-  const albumDot: Record<Album, boolean> = {
-    specials: fresh.specials.length > 0,
-    national: fresh.nationalCards.length + fresh.nationalTeams.length > 0,
-  };
+  const specialsDot = useNewTab("album:specials", fresh.specials, album === "specials");
+  const nationalDot = useNewTab("album:national", [...fresh.nationalCards, ...fresh.nationalTeams], album === "national");
+  const albumDot: Record<Album, boolean> = { specials: specialsDot, national: nationalDot };
 
   // The album shows the OFFICIAL catalogue by default; the special-person cards
   // (creator / wings / community) only appear — and only count toward the total —
@@ -129,6 +129,7 @@ export function CollectionView() {
       ),
     [isUnlocked],
   );
+  const albumRarities = [...RARITIES, ...(["community", "wings", "creator"] as SpecialRarity[]).filter(r => collectibleCards.some(sp => sp.rarity === r))];
   const nationalGot = mounted ? NATIONAL_CARD_IDS.filter((id) => isUnlocked(id)).length : 0;
   const nationalFound = NATIONAL_TEAMS.filter((t) => isDiscovered(t.id)).length;
   const unlockedCount = devPreview
@@ -164,7 +165,9 @@ export function CollectionView() {
     });
   }, [collectibleCards, isUnlocked, status, rarity]);
 
-  // Progressive reveal: only the first `limit` cards mount; a sentinel below the
+  const firstVisibleRarity = albumRarities.find(r => !collapsed.has(r) && visible.some(sp => sp.rarity === r));
+
+  // Progressive reveal: only the first `limit` cards per rarity mount; a sentinel below the
   // grid bumps it by a batch as it nears the viewport. Reset to one batch when
   // the filtered set changes (new filter / first unlock load) so a fresh view
   // never carries a stale large count — done as a render-phase reset (React's
@@ -177,7 +180,7 @@ export function CollectionView() {
     setPrevFilterKey(filterKey);
     setLimit(PAGE_BATCH);
   }
-  const shown = visible.slice(0, limit);
+  const shown = visible;
   const hasMore = limit < visible.length;
 
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -280,37 +283,6 @@ export function CollectionView() {
         <NationalAlbum isUnlocked={isUnlocked} isDiscovered={isDiscovered} foundOn={foundOn} onOpenCard={openDetail} />
       ) : (
         <>
-        {/* Rarity progress */}
-        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {RARITIES.map((r) => {
-            const total = specialCards.filter((sp) => sp.rarity === r).length;
-            const got = devPreview
-              ? total
-              : mounted
-                ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
-                : 0;
-            const lockRank = rarityLockedAt(r);
-            return (
-              <Panel key={r} className={cx("p-3 text-center", lockRank && "opacity-70")}>
-                <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
-                {lockRank ? (
-                  <div className="mt-1 flex flex-col items-center gap-1">
-                    <RankBadge rank={lockRank} variant="menu" size="sm" />
-                    <p className="display flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
-                      {C.unlocksAt(lockRank.label)}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="display mt-1 text-xl font-bold text-ink">
-                    {got}
-                    <span className="text-sm text-faint">/{total}</span>
-                  </p>
-                )}
-              </Panel>
-            );
-          })}
-        </div>
-
         {/* Filters */}
         <div className="mb-6 flex flex-wrap items-center gap-2">
           {(["all", "unlocked", "locked"] as StatusFilter[]).map((f) => (
@@ -322,7 +294,7 @@ export function CollectionView() {
           <FilterChip active={rarity === "all"} onClick={() => setRarity("all")}>
             {C.filters.all}
           </FilterChip>
-          {RARITIES.map((r) => (
+          {albumRarities.map((r) => (
             <FilterChip key={r} active={rarity === r} onClick={() => setRarity(r)}>
               {RARITY_LABELS[r]}
             </FilterChip>
@@ -333,14 +305,23 @@ export function CollectionView() {
         {visible.length === 0 ? (
           <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
         ) : (
-          // Mobile (<640px): exactly 2 columns so cards aren't one-per-row huge
-          // (v1.1.0). From sm: up, the original auto-fill grid is restored
-          // unchanged — columns stretch (1fr) to fill the row with no empty
-          // column on the right. Cards are fluid (w-full) to fill their cell, so
-          // shrinking the cell is the intended resize path — no card internals
-          // are touched, and only the collection uses this grid.
-          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
-            {shown.map((sp, i) => (
+          <div className="space-y-5">
+            {albumRarities.filter(r => visible.some(sp => sp.rarity === r)).map(r => {
+              const cards = collectibleCards.filter(sp => sp.rarity === r);
+              const got = cards.filter(sp => isUnlocked(sp.id)).length;
+              const lockRank = rarityLockedAt(r);
+              const closed = collapsed.has(r);
+              return <section key={r} className="rounded-xl border border-line bg-white/[0.015]">
+                <button type="button" aria-expanded={!closed} aria-controls={`rarity-${r}`} onClick={() => setCollapsed(prev => {
+                  const next = new Set(prev); if (next.has(r)) next.delete(r); else next.add(r); return next;
+                })} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-3 text-left hover:bg-white/[0.03]">
+                  <span className="display text-sm font-bold uppercase tracking-wider text-ink">{RARITY_LABELS[r]}</span>
+                  <span className="font-mono text-xs text-sub">{got}/{cards.length}</span>
+                  {lockRank ? <span className="ml-auto flex items-center gap-1 text-[10px] text-faint"><RankBadge rank={lockRank} variant="menu" size="sm" />{C.unlocksAt(lockRank.label)}</span> : null}
+                  <span aria-hidden className="ml-auto text-sub">{closed ? "+" : "−"}</span>
+                </button>
+                {!closed ? <div id={`rarity-${r}`} className="grid grid-cols-2 gap-3 px-3 pb-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:gap-4">
+            {shown.filter(sp => sp.rarity === r).slice(0, limit).map((sp, i) => (
               <FxCard key={sp.id}>
                 {isUnlocked(sp.id) ? (
                   <GameCard
@@ -354,7 +335,7 @@ export function CollectionView() {
                     // eagerly instead of lazily so the largest paint isn't gated
                     // on scroll/intersection. Unlocked cards sort first, so the
                     // leading indices are exactly the above-the-fold photos.
-                    priority={i < 6}
+                    priority={r === firstVisibleRarity && i < 6}
                     newTag={fresh.keys.has(specialKey(sp.id))}
                     newTagText={C.newTag}
                     onClick={() => openDetail(sp)}
@@ -364,6 +345,9 @@ export function CollectionView() {
                 )}
               </FxCard>
             ))}
+                </div> : null}
+              </section>;
+            })}
           </div>
         )}
 

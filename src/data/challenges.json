@@ -384,7 +384,7 @@
     "rankRequired": "diamond",
     "opponentLineupId": "cloud9-s6",
     "tier": "epic",
-    "seed": 25118,
+    "seed": 25119,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
@@ -506,7 +506,7 @@
     "prereq": "ch-break-the-wall",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 37398,
+    "seed": 37399,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
@@ -602,7 +602,7 @@
     "prereq": "ch-topple-the-titans",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 29812,
+    "seed": 29814,
     "sim": {
       "difficulty": "legacy",
       "bestOf": 7,
@@ -804,7 +804,8 @@
     },
     "stars": [
       {
-        "kind": "noSpecials"
+        "kind": "maxRerolls",
+        "max": 2
       },
       {
         "kind": "chemistry",
@@ -812,7 +813,8 @@
       }
     ],
     "constraint": {
-      "maxSeasonId": "rlcs-2026"
+      "maxSeasonId": "rlcs-2026",
+      "noSpecials": true
     }
   },
   {
@@ -1222,7 +1224,7 @@
     "rankRequired": "diamond",
     "opponentLineupId": "moist-esports-2122",
     "tier": "epic",
-    "seed": 89023,
+    "seed": 89024,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,

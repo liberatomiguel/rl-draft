@@ -1,5 +1,16 @@
 [
   {
+    "id": "gibbs-sub-ibuypower-s1",
+    "personId": "gibbs",
+    "name": "Gibbs",
+    "country": "US",
+    "region": "NA",
+    "orgId": "ibuypower",
+    "lineupId": "ibuypower-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 75
+  },
+  {
     "id": "fl0w-sub-kings-of-urban-s1",
     "personId": "fl0w",
     "name": "Fl0w",
@@ -1164,6 +1175,17 @@
     "lineupId": "gen-g-mobil1-racing-2025",
     "seasonId": "rlcs-2025",
     "overall": 72
+  },
+  {
+    "id": "dudsmelow-sub-furia-2025",
+    "personId": "dudsmelow",
+    "name": "DudsMelow",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "furia",
+    "lineupId": "furia-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 76
   },
   {
     "id": "hisoka-sub-twisted-minds-2025",

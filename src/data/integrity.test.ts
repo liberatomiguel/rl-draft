@@ -180,6 +180,16 @@ describe("dataset validation (build-time gate)", () => {
     expect(() => validateDataset(raw)).toThrow(/^\[data\] lineups: ".+" → unknown orgId "no-such-org"$/);
   });
 
+  it("accepts a curated substitute special and rejects another person's sub base", () => {
+    const special = parsed().specialCards.find((sp) => sp.id === "sp-dudsmelow-community")!;
+    const sub = parsed().subs.find((s) => s.id === special.baseCardId)!;
+    expect(sub.personId).toBe(special.playerId);
+    const raw = withFile("specialCards", (rs) => {
+      rs.find((sp) => sp.id === special.id)!.playerId = "turbopolsa";
+    });
+    expect(() => validateDataset(raw)).toThrow(/sub card belongs to "dudsmelow", not "turbopolsa"/);
+  });
+
   it("rejects a challenge gated on an unknown rank", () => {
     const raw = withFile("challenges", (rs) => {
       rs[0].rankRequired = "no-such-rank";
@@ -255,8 +265,11 @@ describe("dataset", () => {
       // A national team's sub is its own base card (v2.0).
       const sub = subs.find((s) => s.id === sp.baseCardId);
       if (sub) {
-        expect(sp.rarity, sp.id).toBe("national");
-        expect(lineupById.get(sub.lineupId)?.national, sp.id).toBe(true);
+        expect(sub.personId, sp.id).toBe(sp.playerId);
+        expect(lineupById.has(sub.lineupId), sp.id).toBe(true);
+        if (sp.rarity === "national") {
+          expect(lineupById.get(sub.lineupId)?.national, sp.id).toBe(true);
+        }
         continue;
       }
       if (sp.kind === "coach") {

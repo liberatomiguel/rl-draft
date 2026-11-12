@@ -10,6 +10,15 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## v2.0.0-rc.53-polish.1 — isolated review branch
+
+- Added: 16 curated specials and 36 supplied photos; historical bases for Mawkzy (Lille 2021) and Gibbs (iBUYPOWER S1 substitute). Package fixes for Royales, STL, Duds and removal of Gian’s community card.
+- Changed: collection rarity accordions/counts, home CTA/stickers, fixed season-reward preview, direct badge equip/remove/replacement, compact honors filters, calendar hierarchy, headline and unlock dialogs.
+- Fixed: tab dots previously read item-open state, so they stayed after visiting; separate tab acknowledgements now leave item NEW tags intact. Weekly-only chart data hid settled prize changes; a display-only current-cash point updates both charts immediately.
+- Fixed: Pure Talent’s advertised no-specials rule was not enforced; it now is, and a reroll-budget bonus replaces the redundant star. All 135 stars replay with the final catalogue; four seeds refreshed, earned progress preserved.
+- Validation content: refreshed the staged 365-day replay calendar after the catalogue change; 98 authored seeds changed (including expired staging 2026-11-09), with no rewrite of saved player results.
+- Scope: codex/rc53-final-polish only; no staging/main deployment. Validation, integration notes and catalogue limitations: handoff-rc53-polish.md.
+
 ## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.53**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)

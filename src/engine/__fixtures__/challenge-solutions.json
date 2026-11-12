@@ -7,17 +7,17 @@
       },
       {
         "kind": "pick",
-        "refId": "vatira-karmine-corp-2026",
+        "refId": "caleb-canterbury-bankstown-bulldogs-2026",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "kash-rix-gg-x",
+        "refId": "torsos-pwr-2024",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "abdullah-r8-esports-2026",
+        "refId": "kash-rix-gg-x",
         "slot": "player3"
       },
       {
@@ -25,20 +25,20 @@
       },
       {
         "kind": "pick",
-        "refId": "armonik-coach-mate-y-tapa-2026",
-        "slot": "coach"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "ground-zero-gaming",
+        "refId": "geekay-esports",
         "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "dreaz-sub-g2-stride-2024",
+        "refId": "mew-coach-team-bds-2122",
+        "slot": "coach"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "enigma-sub-alpha-sydney-s3",
         "slot": "sub"
       }
     ]
@@ -47,43 +47,34 @@
     "seed": 31111,
     "actions": [
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "garrettg-nrg-esports-s3",
+        "refId": "fever-wildcard-2026",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "abdullah-roc-esports-2025",
+        "refId": "gil2-coach-heet-2122",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "superlachie-pioneers-oce-2024",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "radosin-team-vitality-2223",
+        "refId": "garrettg-nrg-esports-s3",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "genesis",
+        "refId": "roc-esports",
         "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "dudewiththenose-sub-nrg-esports-s4",
+        "refId": "stl-sub-furia-x",
         "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "pekitas-coach-mibr-2026",
-        "slot": "coach"
       }
     ]
   },
@@ -92,33 +83,36 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "arju-misfits-gaming-2122",
+        "refId": "archie-smpr-esports-2122-archie",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "scrubkilla-team-vitality-s7",
+        "refId": "torsos-renegades-s7",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "continuum-sub-the-leftovers-s3",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "aguesome-coach-complexity-gaming-2122",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "daniel-version1-2223-daniel",
+        "refId": "nwpo-twisted-minds-2025",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "fc-barcelona",
+        "refId": "byjesuxesp-coach-team-mobula-2024",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "the-leftovers",
         "slot": "org"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "wolf-sub-vodafone-giants-x",
+        "slot": "sub"
       }
     ]
   },
@@ -174,37 +168,31 @@
       },
       {
         "kind": "pick",
-        "refId": "adambaguette-coach-fut-esports-na-2026",
-        "slot": "coach"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "caard-furia-2223",
+        "refId": "evoh-dignitas-2026",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "smw-twisted-minds-2024",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "dignitas",
+        "refId": "twisted-minds",
         "slot": "org"
       },
       {
-        "kind": "reroll"
+        "kind": "pick",
+        "refId": "ronaky-triple-trouble-s7",
+        "slot": "player3"
       },
       {
-        "kind": "reroll"
+        "kind": "freeReroll"
       },
       {
         "kind": "pick",
-        "refId": "deboer-sub-northern-gaming-s1",
+        "refId": "mijo-sub-g2-esports-s6",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "nunki-coach-detonator-2122",
+        "slot": "coach"
       }
     ]
   },
@@ -213,36 +201,48 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "repi-poison-bullets-s9",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "bemmz-godfidence-2025",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "luk-most-wanted-s9",
-        "slot": "player3"
+        "refId": "majowww-coach-poison-bullets-s9",
+        "slot": "coach"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "impulse-coach-dream-conspiracy-2122",
-        "slot": "coach"
+        "refId": "ianpinheiro-sub-most-wanted-s9",
+        "slot": "sub"
       },
       {
         "kind": "pick",
-        "refId": "bodybuilders",
+        "refId": "erased",
         "slot": "org"
       },
       {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "manteca-sub-true-neutral-s9",
-        "slot": "sub"
+        "refId": "sadness-team-secret-2223",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "davitrox-out-of-skill-x",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "wisty-bs-competition-2026",
+        "slot": "player3"
       }
     ]
   },
@@ -256,12 +256,12 @@
       },
       {
         "kind": "pick",
-        "refId": "kaydop-dignitas-s5",
+        "refId": "violentpanda-dignitas-s5",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "gimmick-cloud9-s5",
+        "refId": "squishymuffinz-cloud9-s5",
         "slot": "player3"
       },
       {
@@ -278,24 +278,6 @@
         "kind": "freeReroll"
       },
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
         "kind": "pick",
         "refId": "fireworks-coach-evil-geniuses-s5",
         "slot": "coach"
@@ -306,40 +288,40 @@
     "seed": 22171,
     "actions": [
       {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "yujin-gentle-mates-alpine-2025",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "chausette45-psg-esports-s4",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "juicy-moist-esports-2223",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "base-coach-triple-trouble-s7",
-        "slot": "coach"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "smpr-esports",
+        "refId": "ninjas-in-pyjamas",
         "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "jessie-sub-team-vitality-s8",
+        "refId": "eversax-coach-gentle-mates-alpine-2025",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "yukeo-sub-psg-esports-s4",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "radosin-team-vitality-2223-saizen",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "kaydop-mock-it-esports-s3",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "m0nkeym00n-team-bds-2122-marcby8",
+        "slot": "player3"
       }
     ]
   },
@@ -387,36 +369,42 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "lostt-furia-2026",
-        "slot": "player1"
+        "refId": "stl-coach-team-secret-2026",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "rule-one",
+        "slot": "org"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "xpere-coach-bs-competition-x",
-        "slot": "coach"
+        "refId": "bango-jam-gaming-s3",
+        "slot": "player1"
+      },
+      {
+        "kind": "freeReroll"
       },
       {
         "kind": "pick",
-        "refId": "scrub-pioneers-oce-2223",
+        "refId": "aztromick-mibr-2026",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "express-jam-gaming-s3",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "dignitas",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "bluey-sub-psg-esports-s6",
+        "refId": "napp-sub-cloud9-s4",
         "slot": "sub"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "bananahead-pwr-2024",
+        "slot": "player3"
       }
     ]
   },
@@ -425,33 +413,33 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "tox-psg-tundra-2223",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "saizen-team-vitality-2223-saizen",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "violentpanda-coach-shopify-rebellion-2026",
+        "refId": "virge-coach-psg-tundra-2223",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "m0nkeym00n-team-bds-2223",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "cloud9",
+        "refId": "ground-zero-gaming",
         "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "huskih-sub-exodus-s1",
+        "refId": "relatingwave-endpoint-cex-2122",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "greazy-sub-team-envy-s5",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "flame-top-blokes-x",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "kash-moist-esports-2223",
+        "slot": "player3"
       }
     ]
   },
@@ -465,12 +453,17 @@
       },
       {
         "kind": "pick",
-        "refId": "atomic-g2-esports-2122",
+        "refId": "chicago-g2-esports-2122",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "tsm",
+        "refId": "adambaguette-coach-fut-esports-na-2026",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "elevate",
         "slot": "org"
       },
       {
@@ -480,61 +473,47 @@
         "kind": "freeReroll"
       },
       {
-        "kind": "reroll"
+        "kind": "freeReroll"
       },
       {
         "kind": "pick",
-        "refId": "chrome-coach-spacestation-gaming-s8",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "fire-sub-eunited-s8",
+        "refId": "jhzer-sub-dignitas-s6",
         "slot": "sub"
       }
     ]
   },
   "ch-emerald-wall": {
-    "seed": 25118,
+    "seed": 25119,
     "actions": [
       {
         "kind": "pick",
-        "refId": "turtle-sub-g2-esports-s4",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "ground-zero-gaming",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "stl-coach-furia-2025",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "retals-spacestation-gaming-x",
+        "refId": "kamii-renegades-x",
         "slot": "player1"
       },
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "kaydop-team-vitality-x",
+        "refId": "violentpanda-dignitas-s7",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "fireburner-nrg-esports-s2",
+        "refId": "garrettg-nrg-esports-s5",
         "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "gregan-coach-team-vitality-s9",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "team-secret",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "bymateos-sub-fc-barcelona-s7",
+        "slot": "sub"
       }
     ]
   },
@@ -543,7 +522,7 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "fairypeak-mock-it-esports-s3",
+        "refId": "kaydop-mock-it-esports-s3",
         "slot": "player1"
       },
       {
@@ -553,26 +532,26 @@
       },
       {
         "kind": "pick",
-        "refId": "beyond-coach-novo-esports-2026",
+        "refId": "sadjunior-coach-twisted-minds-2026",
         "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "twisted-minds",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "m0nkeym00n-team-bds-2024",
-        "slot": "player3"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "jessie-sub-team-vitality-s8",
+        "refId": "reepex-sub-dignitas-s5",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "m0nkeym00n-team-bds-2122-marcby8",
+        "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "team-bds",
+        "slot": "org"
       }
     ]
   },
@@ -580,43 +559,43 @@
     "seed": 34239,
     "actions": [
       {
-        "kind": "pick",
-        "refId": "retals-spacestation-gaming-x",
-        "slot": "player1"
+        "kind": "reroll"
       },
       {
-        "kind": "pick",
-        "refId": "superlachie-pioneers-oce-2122",
-        "slot": "player2"
+        "kind": "reroll"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "drippay-alpha-sydney-s3",
+        "refId": "rehzzy-hogan-mode-2223",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "firstkiller-faze-clan-2122-allushin",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "abdullah-r8-esports-2026",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "kael-coach-g1-2223-marcby8",
+        "refId": "andythemandy-coach-galaxy-racer-x",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "faze-clan",
-        "slot": "org"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
+        "refId": "stl-sub-furia-2122",
+        "slot": "sub"
       },
       {
         "kind": "pick",
-        "refId": "jessie-sub-team-vitality-s8",
-        "slot": "sub"
+        "refId": "team-vitality",
+        "slot": "org"
       }
     ]
   },
@@ -627,79 +606,84 @@
         "kind": "reroll"
       },
       {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "garrettg-nrg-esports-s5",
+        "refId": "rezears-heet-2122",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "torsos-pwr-2122",
+        "refId": "deevo-northern-gaming-s3-maestro",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "crr-guild-esports-2122",
+        "refId": "fairypeak-team-vitality-s5",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "bo0odi44-coach-twisted-minds-2024",
+        "refId": "team-queso",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "michi-coach-the-club-2122",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "furia",
+        "refId": "sizz-sub-orbit-esport-s2",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-topple-the-titans": {
+    "seed": 37399,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "jknaps-g2-esports-x",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "atomic-nrg-esports-2025",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "turbopolsa-sub-northern-gaming-s2",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "metsanauris-endpoint-cex-2122-seikoo",
+        "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "gaimin-gladiators",
         "slot": "org"
       },
       {
         "kind": "freeReroll"
       },
       {
-        "kind": "pick",
-        "refId": "jessie-sub-team-vitality-s8",
-        "slot": "sub"
-      }
-    ]
-  },
-  "ch-topple-the-titans": {
-    "seed": 37398,
-    "actions": [
-      {
-        "kind": "pick",
-        "refId": "exotiik-team-vitality-2025",
-        "slot": "player1",
-        "specialId": "sp-exotiiik-2024-world-mvp"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
+        "kind": "freeReroll"
       },
       {
         "kind": "pick",
-        "refId": "oski-team-liquid-2122",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "radosin-kaydop-corp-2026",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "yeatzy-sub-renegades-s8",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "stl-coach-furia-2024",
+        "refId": "satthew-coach-g2-esports-2223",
         "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "spacestation-gaming",
-        "slot": "org"
       }
     ]
   },
@@ -713,28 +697,32 @@
       },
       {
         "kind": "pick",
-        "refId": "juan-sub-nox-gaming-s1",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "shad-true-neutral-x",
+        "refId": "leodkn-pdhm-gaming-x",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "klaus-moonrise-2025",
-        "slot": "player3"
+        "refId": "yanxnz-furia-2026",
+        "slot": "player3",
+        "specialId": "sp-yanxnz-gamers8-champion"
       },
       {
         "kind": "pick",
-        "refId": "wings-e-sports",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "stl-coach-team-secret-2026",
+        "refId": "aguesome-coach-hawks-s8",
         "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "zanetti-sub-poison-bullets-s9",
+        "slot": "sub"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "true-neutral",
+        "slot": "org"
       }
     ]
   },
@@ -743,68 +731,71 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "atow-karmine-corp-2025",
+        "refId": "vatira-karmine-corp-2025",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "ferra-team-reciprocity-s8",
+        "refId": "swiftt-furia-2026",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "oski-oxygen-esports-2024",
+        "refId": "chausette45-team-reciprocity-s8",
         "slot": "player3"
       },
       {
-        "kind": "pick",
-        "refId": "yeatzy-sub-renegades-s8",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "snaski-coach-quadrant-2223",
-        "slot": "coach"
+        "kind": "reroll"
       },
       {
         "kind": "pick",
         "refId": "guild-esports",
         "slot": "org"
-      }
-    ]
-  },
-  "ch-perfect-storm": {
-    "seed": 29812,
-    "actions": [
-      {
-        "kind": "pick",
-        "refId": "evil-geniuses",
-        "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "remkoe-we-dem-girlz-s6",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "satthew-coach-nrg-esports-2026",
+        "refId": "eversax-coach-team-vitality-2026",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "garrettg-nrg-esports-x",
+        "refId": "extra-sub-team-bds-2223",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-perfect-storm": {
+    "seed": 29814,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "mist-faze-clan-2223",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "turbopolsa-sub-northern-gaming-s3-maestro",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "fiberr-ground-zero-gaming-2223",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "amphis-tsm-2025",
+        "refId": "wahvey-shopify-rebellion-2025",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "maestro-sub-northern-gaming-s3",
-        "slot": "sub"
+        "refId": "rawgreg-coach-luminosity-gaming-2024",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "the-bricks",
+        "slot": "org"
       }
     ]
   },
@@ -813,167 +804,12 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "nass-gentle-mates-alpine-2026",
+        "refId": "exotiik-team-vitality-2026",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "ahmad-team-falcons-2223",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "kaka-chiefs-esports-club-2024-ewc",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "bravado-gaming",
-        "slot": "org"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "stl-coach-furia-x",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "jessie-sub-dignitas-x",
-        "slot": "sub"
-      }
-    ]
-  },
-  "ch-gauntlet-na-dynasty": {
-    "seed": 52311,
-    "actions": [
-      {
-        "kind": "pick",
-        "refId": "eekso-quadrant-2223",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "m0nkeym00n-team-bds-x",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "ivn-evil-geniuses-2122",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "satthew-coach-g2-esports-2122-dreaz",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "endpoint-cex",
-        "slot": "org"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "mijo-sub-g2-esports-s6",
-        "slot": "sub"
-      }
-    ]
-  },
-  "ch-gauntlet-eu-crown": {
-    "seed": 63499,
-    "actions": [
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "drufinho-furia-2025",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "aztral-dignitas-s9",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "kash-quadrant-2223",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "friisisch-sub-precision-z-s2",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "didi-coach-cloud9-2024",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "ninjas-in-pyjamas",
-        "slot": "org"
-      }
-    ]
-  },
-  "ch-gauntlet-world-tour": {
-    "seed": 74651,
-    "actions": [
-      {
-        "kind": "pick",
-        "refId": "fever-wildcard-2026",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "xpere-coach-spacestation-gaming-2025",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "kuxir97-flipsid3-tactics-s1",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "atomik-g1-2223-marcby8",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "mout-sub-psg-esports-s7",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "pwr",
-        "slot": "org"
-      }
-    ]
-  },
-  "ch-pure-talent": {
-    "seed": 41077,
-    "actions": [
-      {
-        "kind": "pick",
-        "refId": "archie-gentle-mates-alpine-2026",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "okhalid-team-falcons-2223",
+        "refId": "kaydop-precision-z-s2",
         "slot": "player2"
       },
       {
@@ -983,17 +819,208 @@
       },
       {
         "kind": "pick",
-        "refId": "bravado-gaming",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "jahzo-coach-g2-esports-x",
+        "refId": "fireburner-coach-version1-2223",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "fasi-sub-lowkey-esports-s7",
+        "refId": "canberra-havoc",
+        "slot": "org"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "sizz-sub-rogue-s7",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-gauntlet-na-dynasty": {
+    "seed": 52311,
+    "actions": [
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "taroco-rogue-2122",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "crr-guild-esports-2122",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "archie-endpoint-cex-2122",
+        "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "eversax-coach-gentle-mates-alpine-2024",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "gentle-mates-alpine",
+        "slot": "org"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "fire-sub-eunited-s8",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-gauntlet-eu-crown": {
+    "seed": 63499,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "jimmah-coach-fury-s9",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "spacestation-gaming",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "wahvey-shopify-rebellion-2025",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "senzo-sandrock-gaming-2122",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "kiileerrz-team-falcons-2024",
+        "slot": "player3"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "julz-sub-pale-horse-esports-s4",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-gauntlet-world-tour": {
+    "seed": 74651,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "pekitas-coach-mibr-2026",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "thundah-sub-gen-g-mobil1-racing-2025",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "cloud9",
+        "slot": "org"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "chicago-g2-esports-2223",
+        "slot": "player1"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "daniel-g2-stride-2024",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "lachinio-ibuypower-s1",
+        "slot": "player3"
+      }
+    ]
+  },
+  "ch-pure-talent": {
+    "seed": 41077,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "exotiik-team-vitality-2026",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "skyline-precision-z-s2",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "joreuz-chiefs-esports-club-2024-ewc",
+        "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "fireburner-coach-version1-2223",
+        "slot": "coach"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "faze-clan",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "saizen-sub-team-vitality-2223",
         "slot": "sub"
       }
     ]
@@ -1007,18 +1034,27 @@
         "slot": "player1"
       },
       {
-        "kind": "pick",
-        "refId": "m0nkeym00n-team-bds-x",
-        "slot": "player2"
+        "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "catalysm-evil-geniuses-2122",
+        "refId": "rizex45-evil-geniuses-2122",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "archie-endpoint-cex-2122",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "satthew-coach-g2-esports-2122-dreaz",
+        "refId": "eversax-coach-gentle-mates-alpine-2024",
         "slot": "coach"
       },
       {
@@ -1026,12 +1062,15 @@
       },
       {
         "kind": "pick",
-        "refId": "team-bds",
+        "refId": "team-envy",
         "slot": "org"
       },
       {
+        "kind": "freeReroll"
+      },
+      {
         "kind": "pick",
-        "refId": "darkfire-sub-evil-geniuses-s5",
+        "refId": "neqzo-sub-team-reciprocity-s8",
         "slot": "sub"
       }
     ]
@@ -1040,31 +1079,40 @@
     "seed": 65308,
     "actions": [
       {
-        "kind": "pick",
-        "refId": "torsos-pwr-2223",
-        "slot": "player1"
+        "kind": "reroll"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "jimmah-coach-canberra-havoc-s8",
-        "slot": "coach"
+        "refId": "atomic-g2-esports-2223",
+        "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "chicago-g2-esports-2223",
+        "refId": "crr-complexity-gaming-2223",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "rise-moist-esports-2223-fall",
+        "refId": "osm-gaimin-gladiators-2223",
         "slot": "player3"
       },
       {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "ninjas-in-pyjamas",
+        "refId": "billy-coach-oxygen-esports-2223-winter",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "tokyo-verdy",
         "slot": "org"
       },
       {
@@ -1074,8 +1122,20 @@
         "kind": "freeReroll"
       },
       {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "freeReroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "mile-sub-g2-esports-s9",
+        "refId": "turbopolsa-sub-northern-gaming-s3-maestro",
         "slot": "sub"
       }
     ]
@@ -1085,38 +1145,38 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "nwpo-twisted-minds-2026",
+        "refId": "m0nkeym00n-twisted-minds-2026",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "d7oom24-coach-team-falcons-2223",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "t7lm-team-vision-2025",
+        "refId": "ahmad-team-falcons-2223",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "trk511-team-falcons-2024",
+        "refId": "m7sn-team-vision-2025",
         "slot": "player3"
       },
       {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "team-falcons",
+        "refId": "twisted-minds",
         "slot": "org"
       },
       {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
+        "kind": "pick",
+        "refId": "d7oom24-coach-team-falcons-2026",
+        "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "s1kies-sub-f16-esports-2122",
+        "refId": "zez0nix-sub-sandrock-gaming-x",
         "slot": "sub"
       }
     ]
@@ -1300,42 +1360,33 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "corruptedg-coach-rogue-2122",
-        "slot": "coach"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "twisted-minds",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "jzr-sub-dignitas-s9",
-        "slot": "sub"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "scrubkilla-team-vitality-s7",
+        "refId": "kaydop-team-vitality-2122",
         "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "comm-og-2024",
+        "refId": "ajg-mate-y-tapa-2026",
         "slot": "player2"
       },
       {
-        "kind": "reroll"
+        "kind": "pick",
+        "refId": "ivn-gridserve-resolve-2024",
+        "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "turbopolsa-team-envy-2122",
-        "slot": "player3"
+        "refId": "virge-coach-dignitas-s9",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "bymateos-sub-fc-barcelona-s7",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "dignitas",
+        "slot": "org"
       }
     ]
   },
@@ -1382,35 +1433,35 @@
         "kind": "reroll"
       },
       {
-        "kind": "pick",
-        "refId": "complexity-gaming",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "lbp-coach-renegades-x",
-        "slot": "coach"
-      },
-      {
         "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "m0nkeym00n-team-bds-2223",
+        "slot": "player2"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "jato-sub-the-three-sins-s8",
+        "refId": "oski-team-liquid-2122",
+        "slot": "player3"
+      },
+      {
+        "kind": "pick",
+        "refId": "kylemasc-sub-genesis-s2",
         "slot": "sub"
       },
       {
         "kind": "pick",
-        "refId": "alpha54-team-vitality-2223",
-        "slot": "player2"
+        "refId": "armonik-coach-mate-y-tapa-2026",
+        "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "seikoo-team-bds-2223",
-        "slot": "player3"
+        "refId": "rogue",
+        "slot": "org"
       }
     ]
   },
@@ -1434,62 +1485,59 @@
       },
       {
         "kind": "pick",
-        "refId": "vatira-moist-esports-2122",
-        "slot": "player2",
-        "specialId": "sp-vatira-san-diego-winter-major-mvp"
-      },
-      {
-        "kind": "pick",
-        "refId": "seikoo-endpoint-cex-2122-seikoo",
-        "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "moopy-coach-pittsburgh-knights-s8",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "petrick-sub-mock-it-esports-s4",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "nrg-esports",
-        "slot": "org"
-      }
-    ]
-  },
-  "ch-squishys-supporting-cast": {
-    "seed": 89023,
-    "actions": [
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "pick",
-        "refId": "nush-al-qadsiah-2025",
+        "refId": "kaydop-team-vitality-s7",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "yanxnz-furia-2025",
-        "slot": "player3"
+        "refId": "alpha54-fc-barcelona-s7",
+        "slot": "player3",
+        "specialId": "sp-alpha54-vitality-finisher"
       },
       {
         "kind": "pick",
-        "refId": "mew-coach-team-bds-2122",
+        "refId": "hugo-coach-team-vitality-2025",
         "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "cloud9",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "zez0nix-sub-sandrock-gaming-x",
+        "slot": "sub"
+      }
+    ]
+  },
+  "ch-squishys-supporting-cast": {
+    "seed": 89024,
+    "actions": [
+      {
+        "kind": "pick",
+        "refId": "eclipse-coach-endpoint-cex-2122",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "g2-esports",
+        "slot": "org"
+      },
+      {
+        "kind": "pick",
+        "refId": "flakes-fc-barcelona-s9",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "garrettg-nrg-esports-x",
+        "slot": "player3"
       },
       {
         "kind": "pick",
         "refId": "extra-sub-team-bds-2223",
         "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "nrg-esports",
-        "slot": "org"
       }
     ]
   },
@@ -1508,25 +1556,22 @@
       },
       {
         "kind": "pick",
-        "refId": "jstn-nrg-esports-2223",
+        "refId": "lj-spacestation-gaming-2223-daniel-lj",
         "slot": "player3"
       },
       {
         "kind": "pick",
-        "refId": "rolldizz-coach-faze-clan-2122",
+        "refId": "snaski-coach-oxygen-esports-2024",
         "slot": "coach"
       },
       {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "moist-esports",
+        "refId": "faze-clan",
         "slot": "org"
       },
       {
         "kind": "pick",
-        "refId": "nugget-sub-hogan-mode-2223",
+        "refId": "reepex-sub-dignitas-s5",
         "slot": "sub"
       }
     ]
@@ -1535,36 +1580,42 @@
     "seed": 91033,
     "actions": [
       {
-        "kind": "pick",
-        "refId": "rehzzy-jobless-2024",
-        "slot": "player1"
+        "kind": "reroll"
       },
       {
         "kind": "pick",
         "refId": "alpha54-team-vitality-s9",
+        "slot": "player1"
+      },
+      {
+        "kind": "pick",
+        "refId": "daniel-version1-2223-daniel",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "lj-spacestation-gaming-2223-daniel-lj",
+        "refId": "kv1-team-secret-2025",
         "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "rawgreg-coach-gen-g-mobil1-racing-2024",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "fasi-sub-the-club-2122",
-        "slot": "sub"
       },
       {
         "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "version1",
+        "refId": "chrome-coach-spacestation-gaming-s8",
+        "slot": "coach"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "zez0nix-sub-sandrock-gaming-x",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "gale-force-esports",
         "slot": "org"
       }
     ]
@@ -1773,8 +1824,11 @@
         "slot": "org"
       },
       {
+        "kind": "freeReroll"
+      },
+      {
         "kind": "pick",
-        "refId": "zez0nix-sub-sandrock-gaming-x",
+        "refId": "reepex-sub-dignitas-s5",
         "slot": "sub"
       }
     ]
@@ -1783,49 +1837,37 @@
     "seed": 98261,
     "actions": [
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "chronic-the-ultimates-2025",
+        "refId": "retals-luminosity-gaming-2024",
         "slot": "player1"
       },
       {
+        "kind": "reroll"
+      },
+      {
         "kind": "pick",
-        "refId": "torment-cloud9-s7",
+        "refId": "stl-coach-furia-2024",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "lj-the-ultimates-2025",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "firstkiller-gen-g-mobil1-racing-2024",
+        "refId": "torment-cloud9-s7",
         "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "rule-one",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "ferra-coach-team-vitality-2223",
-        "slot": "coach"
-      },
-      {
-        "kind": "freeReroll"
-      },
-      {
-        "kind": "freeReroll"
       },
       {
         "kind": "pick",
         "refId": "dreaz-sub-g2-stride-2024",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "cringe-society",
+        "slot": "org"
       }
     ]
   }

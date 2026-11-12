@@ -12,7 +12,7 @@ import { useSettings } from "@/store/settingsStore";
 import { useAccountStore } from "@/store/accountStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
-import { useNewDots } from "@/store/useNewItems";
+import { useNewDots, useProfileNew, useNewTab } from "@/store/useNewItems";
 import { rankForXp } from "@/engine/progression";
 import { SITE } from "@/config/site";
 import { DiscordIcon } from "@/components/ui/icons";
@@ -60,6 +60,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // rc.33 (COL-02c): a dot on the destinations holding something not opened yet
   // (the same items as the NEW tags inside them).
   const dots = useNewDots();
+  const arrivals = useProfileNew();
+  const cosmeticArrivals = useProfileStore(s => s.cosmetics);
+  useNewTab("nav:collection", [...arrivals.specials, ...arrivals.nationalCards, ...arrivals.nationalTeams], pathname.startsWith("/collection"));
+  useNewTab("nav:challenges", arrivals.challenges, pathname.startsWith("/challenges"));
+  useNewTab("nav:profile", Object.keys(cosmeticArrivals.owned), pathname.startsWith("/profile"));
   const hasDot = (key: NavKey): boolean =>
     (key === "collection" || key === "challenges" || key === "profile") && dots[key];
 
@@ -188,7 +193,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   >
                     {t.NAV[item.key]}
                     {item.key === "career" ? (
-                      <span className="pointer-events-none -ml-0.5 rounded border border-orange/40 bg-orange/15 px-1 py-0.5 text-[9px] font-bold leading-none tracking-[0.08em] text-orange-bright">
+                      <span className="pointer-events-none -ml-0.5 inline-flex h-4 items-center self-center rounded border border-orange/40 bg-orange/15 px-1 text-[9px] font-bold leading-none tracking-[0.08em] text-orange-bright">
                         {t.HOME.careerBadge}
                       </span>
                     ) : null}
