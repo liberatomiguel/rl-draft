@@ -195,6 +195,9 @@ export const NAV_UI = {
   moreGuides: "More from Rocket Draft",
   home: "Home",
   database: "RLCS database",
+  // T1 (v2.0): the shell's landmark names (they were fixed English).
+  ariaMain: "Main",
+  ariaLanguage: "Language",
 };
 
 export const RUN_UI = {
@@ -554,6 +557,11 @@ export const RESULTS_UI = {
   eliminatedBy: (name: string) => `Eliminated by ${name}`,
   eliminatorScore: (a: number, b: number) => `${a}–${b}`,
   eliminatorBuffed: "Overall boosted by the difficulty (Legacy / region-locked)",
+  // T1 (v2.0): the share card's words (they were fixed English on the canvas).
+  shareModeQuick: "Quick Draft",
+  shareModeClassic: "Classic Draft",
+  shareHiddenOvr: "Hidden OVR",
+  shareRoles: { coach: "Coach", sub: "Sub", org: "Org" } as Record<string, string>,
 };
 
 export const COLLECTION_UI = {
@@ -737,6 +745,11 @@ export const ACH_UI = {
   } as Record<string, { name: string; desc: string }>,
   careerTier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
   careerEarned: "Earned",
+  /** T1 (v2.0): per-id words for the draft achievements. EN stays in
+   *  `achievements.json` (the hand-maintained source), so this map is empty
+   *  here and the screens fall back to the catalogue; PT fills every id
+   *  (`achievementsCopy.test.ts` fails when one is missing). */
+  items: {} as Record<string, { name: string; desc: string }>,
 };
 
 export const HOWTO = {
@@ -897,7 +910,7 @@ export const PRIVACY = {
     {
       title: "Analytics",
       body: [
-        "We use privacy-friendly, aggregate analytics to understand how many people visit, which pages are popular, how the game performs, and how runs play out — for example which difficulties people choose and how often runs are finished. This is measured with Vercel Web Analytics and PostHog, configured to be cookieless and anonymous: it uses no advertising cookies, does not identify you personally, and honours your browser's Do Not Track setting.",
+        "We use privacy-friendly, aggregate analytics to understand how many people visit, which pages are popular, how the game performs, and how runs play out — for example which difficulties people choose and how often runs are finished. This is measured with PostHog, configured to be cookieless and anonymous: it uses no advertising cookies, does not identify you personally, and honours your browser's Do Not Track setting.",
         "Search-engine statistics (how often the site appears in results) come from Google Search Console, which only reports aggregate, anonymous data.",
       ],
     },
@@ -1882,6 +1895,11 @@ export const DATABASE_UI = {
   cta: "Draft these rosters",
 };
 
+/** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
+ *  EN is empty: the static `metadata` of each route already is the English
+ *  title, and the shell only overrides the tab title when an entry exists. */
+export const PAGE_TITLES = {} as Record<string, string>;
+
 export const EN = {
   APP,
   NAV,
@@ -1919,6 +1937,7 @@ export const EN = {
   NATIONAL_UI,
   DAILY_TEXT,
   DATABASE_UI,
+  PAGE_TITLES,
 };
 
 export type Copy = typeof EN;

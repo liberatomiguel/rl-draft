@@ -72,6 +72,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname !== "/play") clearRunInProgress();
   }, [pathname]);
 
+  // T1 (v2.0): the single-URL pages (no /pt mirror) carry an English <title>
+  // in the static HTML, so a PT player gets the tab title from the copy. The
+  // observer re-applies it when Next commits the route's metadata after this
+  // effect; both guards keep it off the next page during a navigation.
+  const pageTitle = t.PAGE_TITLES[pathname] ?? t.PAGE_TITLES[`/${pathname.split("/")[1] ?? ""}`];
+  useEffect(() => {
+    if (!pageTitle) return;
+    const original = document.title;
+    const apply = () => {
+      if (window.location.pathname.replace(/\/$/, "") === pathname && document.title !== pageTitle) {
+        document.title = pageTitle;
+      }
+    };
+    apply();
+    const el = document.querySelector("title");
+    const observer = el ? new MutationObserver(apply) : null;
+    if (el && observer) observer.observe(el, { childList: true, characterData: true, subtree: true });
+    return () => {
+      observer?.disconnect();
+      if (document.title === pageTitle) document.title = original;
+    };
+  }, [pathname, pageTitle]);
+
   // Wire the account session once (no-op when accounts are disabled) — v1.4.
   useEffect(() => useAccountStore.getState().init(), []);
 
@@ -149,7 +172,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {/* Wordmark hidden where the bar is tight (phones, and tablets with the full nav). */}
               <Logo className="hidden text-sm sm:inline-block md:hidden lg:inline-block" />
             </GuardedHomeLink>
-            <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label="Main">
+            <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label={t.NAV_UI.ariaMain}>
               {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
                 const active = pathname.startsWith(item.href);
                 return (
@@ -240,7 +263,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Bottom nav (mobile) */}
         <nav
-          aria-label="Main"
+          aria-label={t.NAV_UI.ariaMain}
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
         >
           <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
@@ -317,8 +340,9 @@ function LangToggle() {
   const set = useSettings((s) => s.set);
   // The URL's language in the static HTML (PT on /pt pages), then the player's.
   const active = useUiLocale();
+  const { NAV_UI } = useCopy();
   return (
-    <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
+    <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label={NAV_UI.ariaLanguage}>
       {(["en", "pt"] as const).map((l) => (
         <button
           key={l}
