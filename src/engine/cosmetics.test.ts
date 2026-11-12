@@ -209,7 +209,8 @@ describe("deriveOwnedIds — play milestones", () => {
 
   it("stars / quiz / missions thresholds (rc.51: On Target is 50, Hypernova is 120 stars)", () => {
     expect(earned(facts({ challengeStars: 25 }))).toEqual(["rising-star"]);
-    expect(earned(facts({ challengeStars: 75 })).sort()).toEqual(["constellation", "rising-star", "supernova"]);
+    expect(earned(facts({ challengeStars: 75 })).sort()).toEqual(["constellation", "rising-star"]);
+    expect(earned(facts({ challengeStars: 90 })).sort()).toEqual(["constellation", "rising-star", "supernova"]);
     expect(earned(facts({ quizSolved: 10 })).sort()).toEqual(["quiz-title-rl-nerd", "scholar-1"]);
     expect(earned(facts({ quizSolved: 50 })).sort()).toEqual(["quiz-banner-playbook", "quiz-title-rl-nerd", "scholar-1", "scholar-2", "scholar-3"]);
     expect(earned(facts({ missionsCompleted: 24 }))).toEqual([]);
@@ -483,11 +484,11 @@ describe("badge art", () => {
 });
 
 describe("rc.38 corrections and old saves", () => {
-  it("Supernova begins at 75, including an old 70-star ownership record", () => {
-    const below = facts({ challengeStars: 74 });
+  it("Supernova begins at 90 (rc.53, Miguel), including an old 70- or 75-star ownership record", () => {
+    const below = facts({ challengeStars: 89 });
     expect(earned(below)).not.toContain("supernova");
     expect(refreshOwned({ supernova: "2026-11-01" }, below)).not.toHaveProperty("supernova");
-    expect(earned(facts({ challengeStars: 75 }))).toContain("supernova");
+    expect(earned(facts({ challengeStars: 90 }))).toContain("supernova");
   });
   it("retired Underdog cannot survive refresh, equipment or cloud rendering", () => {
     const old = { underdog: "2026-11-01" };

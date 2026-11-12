@@ -1502,7 +1502,7 @@ export const PT: Copy = {
       wildfire: { name: "Wildfire", desc: "Trinta dias seguidos." },
       "rising-star": { name: "Rising Star", desc: "Vinte e cinco estrelas de challenge." },
       constellation: { name: "Constellation", desc: "Cinquenta estrelas de challenge." },
-      supernova: { name: "Supernova", desc: "Conquiste 75 estrelas de challenge." },
+      supernova: { name: "Supernova", desc: "Conquiste 90 estrelas de challenge." },
       hypernova: { name: "Hypernova", desc: "Conquiste 120 estrelas de challenge." },
       "veteran-drafter-1": { name: "Veteran Drafter I", desc: "Cinquenta runs vencidas." },
       "veteran-drafter-2": { name: "Veteran Drafter II", desc: "250 runs vencidas." },

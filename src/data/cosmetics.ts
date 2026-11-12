@@ -274,7 +274,7 @@ const BADGES: CosmeticDef[] = [
   // --- Challenge stars ----------------------------------------------------------
   badge("rising-star", "uncommon", 23, { type: "challenge-stars", stars: 25 }),
   badge("constellation", "rare", 43, { type: "challenge-stars", stars: 50 }),
-  badge("supernova", "epic", 63, { type: "challenge-stars", stars: 75 }),
+  badge("supernova", "epic", 63, { type: "challenge-stars", stars: 90 }),
   badge("hypernova", "legend", 83, { type: "challenge-stars", stars: 120 }),
   // --- Runs won (lifetime) ------------------------------------------------------
   badge("veteran-drafter-1", "uncommon", 24, { type: "runs-won", count: 50 }),
