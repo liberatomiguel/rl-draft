@@ -4,7 +4,7 @@
  * The draft's first-run tour (T1, v2.0): four steps on the real draft screen
  * (the lineup on offer, your team, the reroll, what comes next), in the same
  * `GuidedTour` as Road to Worlds. It replaces the "How to play" text modal and
- * keeps its one-shot flag (`seenHowToPlay`), so nothing new is persisted.
+ * has its own one-shot flag (`seenDraftTour`, rc.50), so Season 1 shows it to everyone once.
  *
  * It waits for the lineup reel to land before it opens: the first step points
  * at the cards, which are invisible while the reel spins.

@@ -190,6 +190,8 @@ export interface ProfileState {
     seenTutorial: boolean;
     /** The pre-season → Season 1 recap ("Your Legacy Lives On"), v2.0. */
     seenSeasonRecap: boolean;
+    /** rc.50: the draft's guided tour, shown once to everyone in Season 1 (its own flag: a veteran who saw the old "How to play" modal sees it too). Additive; absent = not seen. */
+    seenDraftTour?: boolean;
   };
 
   applyRunResults: (
@@ -326,6 +328,7 @@ const initialData = {
     seenRegionalIntro: false,
     seenTutorial: false,
     seenSeasonRecap: false,
+    seenDraftTour: false,
   },
 };
 

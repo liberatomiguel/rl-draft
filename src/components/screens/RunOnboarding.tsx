@@ -97,16 +97,18 @@ export function RunOnboarding({
   regionLock?: Region | null;
 }) {
   const { ONBOARDING } = useCopy();
-  const seenHowTo = useProfileStore((s) => s.flags.seenHowToPlay);
+  const seenTour = useProfileStore((s) => Boolean(s.flags.seenDraftTour));
   const seenRegional = useProfileStore((s) => s.flags.seenRegionalIntro);
   const seenLegacy = useProfileStore((s) => s.flags.seenLegacyIntro);
   const markFlag = useProfileStore((s) => s.markFlag);
   const daily = useRunStore((s) => Boolean(s.run?.daily));
 
   // T1 (v2.0): the first draft is a guided tour of the real screen now (the
-  // text modal it replaces said the same in four paragraphs). Same flag.
-  if (!seenHowTo) {
-    return <DraftTour onClose={() => markFlag("seenHowToPlay")} />;
+  // text modal it replaces said the same in four paragraphs). rc.50 (Miguel):
+  // its own flag, so Season 1 shows it to veterans of the old modal too; the
+  // old flag is still set for anything that reads it.
+  if (!seenTour) {
+    return <DraftTour onClose={() => { markFlag("seenDraftTour"); markFlag("seenHowToPlay"); }} />;
   }
 
   if (regionLock && !seenRegional) {

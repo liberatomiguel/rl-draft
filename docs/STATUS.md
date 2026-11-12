@@ -1,13 +1,14 @@
 # Project Status — current state only
 
-> Updated: **2026-11-11**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-12**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md.
 
 ## Current builds
 
 - Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
   Season 1 has no production approval.
-- Staging candidate **v2.0.0-rc.49** (rc.48 R129 elite signing; rc.49 Miguel's review fixes of the wave): the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu); notes and validation lists in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: mobile pass, copy clean-up and tutorial, final special cards (then repeat the draft matrix and challenge replays). On branch `claude/rc42-balance`, waiting for Miguel: **rc.48** (R129, elite talent signs at his overall again; the rc.46 price stays). BALANCE_VERSION 25.
+- Staging candidate **v2.0.0-rc.50**: wave 2 integrated (mobile pass, copy clean-up, guided tour, analytics catalogue 2.0 with an event budget guard, performance) and the fix of the season-3 soft lock that stopped every career on rc.47–rc.49 (R130–R132). Not played by Miguel; mobile checked in emulation only (no physical device, no Safari); analytics runs in production only and is unverified against PostHog; draft matrix and challenge replays must be repeated once the special-card pool is final. Notes: docs/handoff-2.0/.
+- Before it, **rc.49** (rc.48 R129 elite signing; rc.49 Miguel's review fixes of the wave): the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu); notes and validation lists in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: mobile pass, copy clean-up and tutorial, final special cards (then repeat the draft matrix and challenge replays). On branch `claude/rc42-balance`, waiting for Miguel: **rc.48** (R129, elite talent signs at his overall again; the rc.46 price stays). BALANCE_VERSION 25.
 - Before it, **rc.46** (R121: elite talent costs more and signs later; Normal measured only). It also holds: rc.43 mid-career balance (R113–R117), rc.44 real coaches, better ex-pros, bench growth and slower squad decline (R118–R119), rc.45 four support-staff retainers (R120). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy. rc.42 revised rc.41: Miguel's
   Road to Worlds feedback. Manual crest builder, HQ/Club/Training/Finances layouts,
   inbox-only routine loans, mandatory accept/decline, direct-seed coach
