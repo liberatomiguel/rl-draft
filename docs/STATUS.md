@@ -5,8 +5,13 @@
 
 ## Current builds
 
-- Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
-  Season 1 has no production approval.
+- **Production is v2.0.0 "Season 1"**, https://rocketdraft.app, live since
+  12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
+  his go-ahead because the Workers Builds queue was behind; the queued builds
+  publish the same commits). Pre-season frozen at 13:05 UTC, three rewarded
+  boards, 35 manual grants inserted. Three real accounts were on Season 1 with
+  their board places within a minute of the deploy. Not verified: PostHog events,
+  request budget, physical devices. Runbook and SQL: docs/handoff-2.0/CUTOVER.md.
 - Staging candidate **v2.0.0-rc.55** = rc.54 merged with the special-cards and polish branch (`codex/rc53-final-polish`: 16 new specials, 36 photos, Gian's community card removed, challenges and the 365 dailies re-authored for the final catalogue, collection / locker / career polish; notes in docs/handoff-rc53-polish.md). rc.54 is the Season 1 cutover build: pre-season rank reward for the peak rank only, one frozen place and reward per pre-season board, nine Season 1 boards, tour reworked (once per season, static draft example, no animation), achievements review (92 draft, 22 career), Rocket Street desk and championship in every SAM season, Season 1 start 12/11. Production Supabase already has the additive schema and SELECT-only public views; the freeze runs minutes before the deploy (docs/handoff-2.0/CUTOVER.md). Not verified: a real sign-in on v2.0 against the production database, the full export of real saves, most new screens in a browser. Details: CHANGELOG rc.54.
 - Before it, **rc.53** (Supernova at 90 stars; rc.52 was rc.51 plus Miguel's first look: legendary badges 8 % larger instead of 16 %, a soft glow, five epic titles quieter, Creator in orchid magenta). rc.51: Miguel's cosmetics review of 11/11. Every badge re-exported (Hypernova, Creator and the Staff art added), 9 new banners, 16 new rewards (three-star challenges, Classic feats, Road to Worlds milestones), On Target 50, Rocketeer at Grand Champion, Staff title removed; Wildfire, Heatwave, Cosmic Ascension and the new banners animate from pre-rendered frames. Not played by Miguel; animations checked on a desktop browser only; Supernova 75 vs 90 is open; the Creator / Staff grant SQL is not applied. Details: CHANGELOG rc.51.
 - Before it, **rc.50**: wave 2 integrated (mobile pass, copy clean-up, guided tour, analytics catalogue 2.0 with an event budget guard, performance) and the fix of the season-3 soft lock that stopped every career on rc.47–rc.49 (R130–R132). Not played by Miguel; mobile checked in emulation only (no physical device, no Safari); analytics runs in production only and is unverified against PostHog; draft matrix and challenge replays must be repeated once the special-card pool is final. Notes: docs/handoff-2.0/.
