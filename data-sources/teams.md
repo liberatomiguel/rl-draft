@@ -2968,7 +2968,7 @@ flag: sam-only
 player 1: yanxnz 91
 player 2: Lostt 89
 player 3: drufinho 87
-sub: DudsMelow 76
+sub: Duds Melow 76
 coach: STL 85
 org: FURIA ++
 ```
@@ -3301,8 +3301,8 @@ flag: sam-only
 ```team: Brasil · FIFAe 2025
 player 1: yanxnz 92
 player 2: swiftt 92
-player 3: Lostt 88
-sub: DudsMelow 76
+player 3: Lostt 91
+sub: Duds Melow 76
 coach: BRUNOVISQUII 86
 org: Brasil ~
 ```
@@ -4526,7 +4526,7 @@ player 1: justuszzz 81
 player 2: matter 81
 player 3: Royales 85
 sub: -
-coach: -
+coach: pxress 77
 org: 1 ~
 flag: region-only
 ```
@@ -4666,9 +4666,9 @@ org: FURIA +++
 ```
 
 ```team: FaZe Clan · 2027
-player 1: Lostt 87
+player 1: Lostt 89
 player 2: Bemmz 84
-player 3: crn 85
+player 3: crn 86
 sub: -
 coach: michi 80
 org: FaZe Clan ++

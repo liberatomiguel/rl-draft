@@ -201,16 +201,18 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "majowww-coach-poison-bullets-s9",
-        "slot": "coach"
-      },
-      {
-        "kind": "reroll"
+        "refId": "droppz-poison-bullets-s9",
+        "slot": "player1"
       },
       {
         "kind": "pick",
-        "refId": "ianpinheiro-sub-most-wanted-s9",
-        "slot": "sub"
+        "refId": "suco-godfidence-2025",
+        "slot": "player2"
+      },
+      {
+        "kind": "pick",
+        "refId": "math-most-wanted-s9",
+        "slot": "player3"
       },
       {
         "kind": "pick",
@@ -218,31 +220,14 @@
         "slot": "org"
       },
       {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
-      },
-      {
-        "kind": "reroll"
+        "kind": "pick",
+        "refId": "gatox-sub-kru-esports-2122",
+        "slot": "sub"
       },
       {
         "kind": "pick",
-        "refId": "sadness-team-secret-2223",
-        "slot": "player1"
-      },
-      {
-        "kind": "pick",
-        "refId": "davitrox-out-of-skill-x",
-        "slot": "player2"
-      },
-      {
-        "kind": "pick",
-        "refId": "wisty-bs-competition-2026",
-        "slot": "player3"
+        "refId": "groval-coach-hero-base-2024",
+        "slot": "coach"
       }
     ]
   },
@@ -345,7 +330,7 @@
       },
       {
         "kind": "pick",
-        "refId": "droppz-kru-esports-2223",
+        "refId": "drufinho-kru-esports-2223",
         "slot": "player1"
       },
       {
@@ -353,13 +338,15 @@
       },
       {
         "kind": "pick",
-        "refId": "aztromick-the-club-2122",
-        "slot": "player2",
-        "specialId": "sp-aztromick-the-club-worlds-run"
+        "refId": "kv1-the-club-2122",
+        "slot": "player2"
+      },
+      {
+        "kind": "reroll"
       },
       {
         "kind": "pick",
-        "refId": "drufinho-furia-2025",
+        "refId": "yanxnz-furia-2026",
         "slot": "player3"
       }
     ]
@@ -638,7 +625,7 @@
       },
       {
         "kind": "pick",
-        "refId": "sizz-sub-orbit-esport-s2",
+        "refId": "mala-sub-pittsburgh-knights-s8",
         "slot": "sub"
       }
     ]
@@ -704,7 +691,7 @@
         "kind": "pick",
         "refId": "yanxnz-furia-2026",
         "slot": "player3",
-        "specialId": "sp-yanxnz-gamers8-champion"
+        "specialId": "sp-yanxnz-moisty-hat-trick"
       },
       {
         "kind": "pick",
@@ -741,26 +728,23 @@
       },
       {
         "kind": "pick",
-        "refId": "chausette45-team-reciprocity-s8",
+        "refId": "joyo-moist-esports-2223-fall",
         "slot": "player3"
       },
       {
-        "kind": "reroll"
-      },
-      {
         "kind": "pick",
-        "refId": "guild-esports",
-        "slot": "org"
-      },
-      {
-        "kind": "pick",
-        "refId": "eversax-coach-team-vitality-2026",
+        "refId": "snaski-coach-gentle-mates-alpine-2026",
         "slot": "coach"
       },
       {
         "kind": "pick",
-        "refId": "extra-sub-team-bds-2223",
+        "refId": "yeatzy-sub-renegades-s8",
         "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "karmine-corp",
+        "slot": "org"
       }
     ]
   },
@@ -1838,7 +1822,28 @@
     "actions": [
       {
         "kind": "pick",
-        "refId": "retals-luminosity-gaming-2024",
+        "refId": "rawgreg-coach-luminosity-gaming-2024",
+        "slot": "coach"
+      },
+      {
+        "kind": "pick",
+        "refId": "novo-esports",
+        "slot": "org"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "reroll"
+      },
+      {
+        "kind": "pick",
+        "refId": "bymateos-sub-fc-barcelona-s7",
+        "slot": "sub"
+      },
+      {
+        "kind": "pick",
+        "refId": "atomic-g2-stride-2024",
         "slot": "player1"
       },
       {
@@ -1846,28 +1851,13 @@
       },
       {
         "kind": "pick",
-        "refId": "stl-coach-furia-2024",
-        "slot": "coach"
-      },
-      {
-        "kind": "pick",
-        "refId": "lj-the-ultimates-2025",
+        "refId": "jknaps-g2-esports-2122",
         "slot": "player2"
       },
       {
         "kind": "pick",
-        "refId": "torment-cloud9-s7",
+        "refId": "beastmode-version1-2223-daniel",
         "slot": "player3"
-      },
-      {
-        "kind": "pick",
-        "refId": "dreaz-sub-g2-stride-2024",
-        "slot": "sub"
-      },
-      {
-        "kind": "pick",
-        "refId": "cringe-society",
-        "slot": "org"
       }
     ]
   }

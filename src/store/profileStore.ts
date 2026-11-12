@@ -61,6 +61,7 @@ import {
   pushRatingHistory,
   type LegacyState,
   type SeasonState,
+  retuneRatingHistory,
 } from "@/engine/season";
 import {
   markSeen as markItemsSeenIn,
@@ -206,6 +207,8 @@ export interface ProfileState {
     /** 2.0.0: the one-time pass that announces cosmetics owned before the unlock
      *  pop-up could show them (a migrated save, an early sync). Additive. */
     unlocksCaughtUp?: boolean;
+    /** 2.0.5: the Hard / Legacy runs in the rating history were re-priced once. Additive. */
+    ratingRetune1?: boolean;
   };
   /** rc.54: guided tours seen, tour id → the `SEASON.id` it was seen in
    *  (`src/lib/tours.ts`). Each tour shows once after the Season 1 reset, to
@@ -1262,6 +1265,26 @@ function announceOwnedOnce(): void {
   if (ids.length) useCosmeticUnlocks.getState().push(ids);
 }
 if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) announceOwnedOnce();
+
+// 2.0.5: one pass per profile. The first live day's rating table sank Legacy-only
+// players; the Hard and Legacy runs still in the history are re-priced with the
+// current table. A profile with no such run only gets the marker.
+export function retuneRatingOnce(): void {
+  const s = useProfileStore.getState();
+  if (s.flags.ratingRetune1) return;
+  const flags = { ...s.flags, ratingRetune1: true };
+  const out = retuneRatingHistory(s.mmr, s.season?.ratingHistory ?? []);
+  if (!out.change) {
+    useProfileStore.setState({ flags });
+    return;
+  }
+  useProfileStore.setState({
+    flags,
+    mmr: out.mmr,
+    season: { ...s.season, ratingHistory: out.history, peakMmr: Math.max(s.season.peakMmr, out.mmr, ...out.history.map((e) => e.mmr)) },
+  });
+}
+if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) retuneRatingOnce();
 
 // rc.33 (COL-02c): seed the "New" state on the first change after the update.
 // Until then the profile is unseeded — it has seen everything it owns, so an

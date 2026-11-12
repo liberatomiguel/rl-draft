@@ -11,6 +11,7 @@ import {
   pushRatingHistory,
   snapshotPreseason,
   type SeasonFields,
+  retuneRatingHistory,
 } from "./season";
 
 const NOW = "2026-10-20T12:00:00.000Z";
@@ -146,7 +147,8 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
 
   it("titles pay by difficulty; playoffs buckets collapse; Swiss exits cost", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(36);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(80);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "top8" })).toBe(5); // v2.0.5: the bracket pays in Legacy
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "easy", placement: "top4" })).toBe(0);
@@ -156,14 +158,41 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
   it("the first placement runs never lose rating", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: 0 })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns - 1 })).toBe(0);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-7);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-6);
   });
 
   it("mode multipliers and the hidden-overall bonus (gains only)", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "quick" })).toBe(2);
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion", mode: "daily" })).toBe(5);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "champion", hiddenOverall: true })).toBe(8);
-    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "swiss_exit", hiddenOverall: true })).toBe(-5);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "champion", hiddenOverall: true })).toBe(12);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "swiss_exit", hiddenOverall: true })).toBe(-4);
+  });
+
+  it("v2.0.5: the average Legacy run out-earns the average Normal run on the first live day's results", () => {
+    // Measured shares of Classic runs on 12/11/2026 (Legacy 351 runs, Normal 348).
+    const ev = (difficulty: "legacy" | "normal", shares: Record<string, number>, hiddenOverall: boolean) =>
+      Object.entries(shares).reduce(
+        (sum, [placement, share]) => sum + share * seasonRatingDelta({ ...base, difficulty, placement: placement as never, hiddenOverall }),
+        0,
+      );
+    const legacy = ev("legacy", { champion: 0.02, runner_up: 0.023, third: 0.054, fourth: 0.063, top6: 0.142, top8: 0.174, swiss_exit: 0.524 }, true);
+    const normal = ev("normal", { champion: 0.374, runner_up: 0.227, third: 0.135, fourth: 0.098, top6: 0.106, top8: 0.032, swiss_exit: 0.029 }, false);
+    expect(legacy).toBeGreaterThan(normal * 1.5);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit" })).toBeLessThan(0); // it still punishes
+  });
+
+  it("v2.0.5: Hard and Legacy runs in the history are re-priced once; protected losses and other modes stay", () => {
+    const e = (difficulty: "legacy" | "normal" | "hard", placement: string, delta: number, mmr: number) =>
+      ({ t: `t${mmr}-${placement}`, delta, mmr, difficulty, placement, mode: "classic" }) as never;
+    // Newest first: 400 start, protected Legacy loss (0), Normal title (+4), Legacy Swiss exit (-7), Legacy top 8 (0), Legacy title (+41).
+    const history = [e("legacy", "champion", 41, 438), e("legacy", "top8", 0, 397), e("legacy", "swiss_exit", -7, 397), e("normal", "champion", 4, 404), e("legacy", "swiss_exit", 0, 400)];
+    const out = retuneRatingHistory(438, history);
+    expect(out.history.map((h) => h.delta)).toEqual([92, 6, -6, 4, 0]);
+    expect(out.change).toBe(92 - 41 + 6 + 1);
+    expect(out.mmr).toBe(438 + out.change);
+    expect(out.history[0].mmr).toBe(out.mmr);
+    expect(out.history[4].mmr).toBe(400);
+    expect(retuneRatingHistory(500, [e("normal", "champion", 4, 500)]).change).toBe(0);
   });
 
   it("seasonRatingAfter floors at SEASON_RATING.floor", () => {

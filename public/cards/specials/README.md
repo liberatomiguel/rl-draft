@@ -132,4 +132,5 @@ sp-community-firewall.png
 sp-community-lethamyr.png
 sp-community-gibbs.png
 sp-community-jzr.png
+sp-lostt-the-club-breakout.png
 ```

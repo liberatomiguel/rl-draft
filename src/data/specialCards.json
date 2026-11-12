@@ -1726,7 +1726,7 @@
     "title": "Vitality Slayer",
     "cardType": "moment",
     "rarity": "epic",
-    "overall": 93,
+    "overall": 94,
     "stats": {
       "offense": 99,
       "defense": 92,
@@ -3204,5 +3204,32 @@
       "description": "+2 team mechanics and experience."
     },
     "flavor": "A community tribute to JZR and a freestyle legacy that inspired a generation."
+  },
+  {
+    "id": "sp-lostt-the-club-breakout",
+    "playerId": "lostt",
+    "baseCardId": "lostt-the-club-2122",
+    "title": "The Club Breakout",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 93,
+      "defense": 86,
+      "mechanics": 94,
+      "consistency": 88,
+      "experience": 84,
+      "clutch": 92
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 mechanics and clutch."
+    },
+    "flavor": "Lostt's international breakout with The Club at Worlds 2022: a fearless attacking talent announcing himself on the biggest stage."
   }
 ]

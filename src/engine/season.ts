@@ -13,7 +13,7 @@
  * No React, no storage, no randomness.
  */
 
-import { MMR, mmrBackfillFloor, PRESEASON_RANKS, RANKS, SEASON_RATING } from "@/config/balance";
+import { MMR, mmrBackfillFloor, PRESEASON_RANKS, RANKS, SEASON_RATING, seasonRatingDelta } from "@/config/balance";
 import { PRESEASON_ID, SEASON } from "@/config/season";
 import type { Difficulty, Placement, Region, RunMode } from "./types";
 import { rankForXp } from "./progression";
@@ -290,6 +290,40 @@ export function pushRatingHistory(
   entry: RatingHistoryEntry,
 ): RatingHistoryEntry[] {
   return [entry, ...history].slice(0, SEASON_RATING.historyLimit);
+}
+
+/**
+ * v2.0.5: re-price the Hard and Legacy runs still in the rating history with the
+ * current table (the first live day's table sank Legacy-only players). Pure.
+ * A loss that the placement runs had protected (delta 0 on a Swiss exit) stays 0;
+ * Hard and Legacy always hide overalls, so gains carry that bonus. The history
+ * (newest first) keeps its order: each entry gets its new delta and every rating
+ * from that run on shifts by what changed. Runs older than the history (40) are
+ * out of reach and stay as they were.
+ */
+export function retuneRatingHistory(
+  mmr: number,
+  history: RatingHistoryEntry[],
+): { mmr: number; history: RatingHistoryEntry[]; change: number } {
+  let shift = 0;
+  const oldestFirst = [...history].reverse().map((e) => {
+    if (SEASON_RATING.retune1.includes(e.difficulty)) {
+      const protectedLoss = e.delta === 0 && e.placement === "swiss_exit";
+      const next = protectedLoss
+        ? 0
+        : seasonRatingDelta({
+            difficulty: e.difficulty,
+            placement: e.placement,
+            mode: e.mode,
+            hiddenOverall: true,
+            seasonRunsBefore: Number.MAX_SAFE_INTEGER,
+          });
+      shift += next - e.delta;
+      return { ...e, delta: next, mmr: Math.max(SEASON_RATING.floor, e.mmr + shift) };
+    }
+    return shift ? { ...e, mmr: Math.max(SEASON_RATING.floor, e.mmr + shift) } : e;
+  });
+  return { mmr: Math.max(SEASON_RATING.floor, mmr + shift), history: oldestFirst.reverse(), change: shift };
 }
 
 function rankIndex(id: string): number {

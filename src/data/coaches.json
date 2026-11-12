@@ -3873,6 +3873,18 @@
     "bonusLevel": "~"
   },
   {
+    "id": "pxress-coach-1-2027",
+    "personId": "pxress",
+    "name": "pxress",
+    "region": "NA",
+    "orgId": "1",
+    "lineupId": "1-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 77,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
     "id": "eversax-coach-team-vitality-2027",
     "personId": "eversax",
     "name": "Eversax",

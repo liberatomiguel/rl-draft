@@ -286,6 +286,8 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
       seenLaunchNotice: Boolean(local.flags.seenLaunchNotice) || Boolean(cloud.flags.seenLaunchNotice),
       // Per device on purpose: the local value only (a second device has its own pass).
       unlocksCaughtUp: Boolean(local.flags.unlocksCaughtUp),
+      // Per device too: each copy re-prices its own history once; the rating merge takes the result.
+      ratingRetune1: Boolean(local.flags.ratingRetune1),
     },
     settings: local.settings,
   };

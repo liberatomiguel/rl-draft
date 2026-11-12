@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 27;
+export const BALANCE_VERSION = 28;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -741,8 +741,15 @@ export const SEASON_RATING = {
   delta: {
     easy: { champion: 2, runner_up: 1, third: 0, fourth: 0, playoffs: 0, swiss_exit: -2 },
     normal: { champion: 4, runner_up: 2, third: 1, fourth: 1, playoffs: 0, swiss_exit: -4 },
-    hard: { champion: 7, runner_up: 3, third: 1, fourth: 1, playoffs: 0, swiss_exit: -5 },
-    legacy: { champion: 36, runner_up: 18, third: 8, fourth: 8, playoffs: 0, swiss_exit: -7 },
+    // v2.0.5 (first live day): Classic netted Easy +1.7, Normal +2.1, Hard +1.0 and
+    // Legacy -1.0 a run (Legacy: 52% Swiss exits, 2% titles, measured on 351 runs),
+    // so the top of the board went to Normal volume and Legacy-only players sank.
+    // Legacy must punish and still be the most rewarding: titles 36 -> 80, final
+    // 18 -> 40, semis 8 -> 18, MAKING THE BRACKET now pays 5 (was 0), a Swiss exit
+    // costs 6 (was 7). On the same results the average Legacy run nets about +4,
+    // twice Normal's. Hard moves above Normal: 10 / 5 / 2 / 2, Swiss exit -4.
+    hard: { champion: 10, runner_up: 5, third: 2, fourth: 2, playoffs: 0, swiss_exit: -4 },
+    legacy: { champion: 80, runner_up: 40, third: 18, fourth: 18, playoffs: 5, swiss_exit: -6 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
@@ -753,6 +760,9 @@ export const SEASON_RATING = {
   hiddenOverallBonus: 0.15,
   /** Entries kept in `season.ratingHistory` (profile rating graph). */
   historyLimit: 40,
+  /** v2.0.5: the difficulties whose table changed on the first live day. Runs still
+   *  in a profile's rating history are re-priced once (`retuneRatingHistory`). */
+  retune1: ["hard", "legacy"] as Difficulty[],
 } as const;
 
 /** Season Rating delta for one finished run (signed). Pure; see `SEASON_RATING`. */

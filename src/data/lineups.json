@@ -5122,7 +5122,7 @@
     "subId": "dudsmelow-sub-national-br-fifae-2025",
     "national": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "strong"
+    "historicalStrength": "elite"
   },
   {
     "id": "national-cl-fifae-2025",
@@ -6935,6 +6935,7 @@
       "matter-1-2027",
       "royales-1-2027"
     ],
+    "coachId": "pxress-coach-1-2027",
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "solid"

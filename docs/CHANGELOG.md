@@ -10,6 +10,36 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.5] — 2026-11-12 · Legacy rating, Lostt, base export
+
+#### Added
+- **Special card `sp-lostt-the-club-breakout`** (The Club Breakout, 90 Rare, +3 mechanics and clutch) with its photo.
+- **Coach pxress on team 1 (2027)**, overall 77 (the roster's average of 82.3 minus 5; no country on file, so chemistry skips him).
+
+#### Changed
+- Base export of 12/11 (1,386 decisions): Lostt 88 -> 91 on Brasil FIFAe 2025 and 87 -> 89 on FaZe Clan 2027, crn 85 -> 86 on FaZe Clan 2027, `sp-lostt-vitality-slayer` 93 -> 94, 16 birthdays, and the nickname DudsMelow shown as "Duds Melow" (the id stays `dudsmelow`, through `PERSON_ALIAS`). No id was lost.
+- Fixed-seed content re-authored for the catalogue (see the entry's replay note below).
+
+#### Balance (BALANCE_VERSION 28)
+- **Season Rating, Hard and Legacy.** Live data of the first day, Classic, net rating per run: Easy +1.7, Normal +2.1, Hard +1.0, Legacy -1.0 (Legacy: 351 runs, 52 % Swiss exits, 2 % titles). The top of the board went to Normal volume and Legacy-only players sank. Legacy: title 36 -> 80, final 18 -> 40, semi-finals 8 -> 18, making the bracket 0 -> 5, Swiss exit -7 -> -6. Hard: 7 / 3 / 1 / 1 -> 10 / 5 / 2 / 2, Swiss exit -5 -> -4. On the same results the average Legacy run now nets about +4, about twice Normal's; it still loses rating on a Swiss exit. Easy and Normal are unchanged.
+- **Runs already played are re-priced once** (`retuneRatingHistory`, `flags.ratingRetune1`): the Hard and Legacy runs still in a profile's rating history (the last 40 runs) take the new values. A loss the placement runs had protected stays 0.
+
+## [2.0.4] — 2026-11-12 · Sign-in: name only for a new account
+- The sign-in dialog is email, then code. When the sign-in created the account, one more step asks for the display name (prefilled with the automatic one; closing keeps it). 2.0.3 had put a name field in front of the email.
+
+## [2.0.3] — 2026-11-12 · Display name at sign-in
+- **Fixed:** a new account whose automatic name was already taken was left without a cloud row. Root cause: names are unique in the database and the first push used the email prefix with no fallback. It now falls back to the prefix plus four digits.
+
+## [2.0.2] — 2026-11-12 · Career XP (BALANCE_VERSION 27)
+- Live data: one account reached Champion (150k XP) in an hour, almost only through Road to Worlds. Skip simulates a season in about seven minutes and a dominant squad takes every title, about 27k XP a season. Simulated results now pay a tenth of their series / event / title XP (`CAREER_XP.simulatedShare`); titles pay about a third (Worlds 5,000 -> 1,500, Major 2,000 -> 600, regional 800 -> 250); the season review 1,500 -> 500.
+
+## [2.0.1] — 2026-11-12 · Unlock pop-ups for grants, shorter board names
+- **Fixed:** manual grants and cosmetics a migrated save already owned never raised the unlock pop-up. Root cause: hydration and the cloud merge were silent by design (rc.20). What a sync brings that the device did not own and the player never saw is announced; one pass per profile covers what was owned before (`flags.unlocksCaughtUp`). Nothing is equipped automatically.
+- Regional boards are named "SAM Wins", "NA Wins", "EU Wins", "OCE Wins", "MENA Wins".
+- Share image (Open Graph) replaced with the Season 1 art.
+
+All of 2.0.1 to 2.0.5 were deployed from Miguel's machine with his go-ahead (the Workers Builds queue ran about 30 minutes behind on launch day); the same commits are on `main`.
+
 ## [2.0.0] — 2026-11-12 · "Season 1"
 
 **Released to production on 12/11/2026.** The pre-season was frozen at 13:05 UTC

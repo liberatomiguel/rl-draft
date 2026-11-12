@@ -330,6 +330,7 @@
     "id": "batou",
     "nickname": "BatOu",
     "country": "FR",
+    "birthday": "2001-10-28",
     "region": "EU"
   },
   {
@@ -349,6 +350,7 @@
     "id": "beasty",
     "nickname": "beasty",
     "country": "GB",
+    "birthday": "2005-10-13",
     "region": "NA"
   },
   {
@@ -655,6 +657,7 @@
     "id": "crispy",
     "nickname": "Crispy",
     "country": "GB",
+    "birthday": "2006-06-03",
     "region": "NA"
   },
   {
@@ -799,6 +802,7 @@
     "id": "deliivery",
     "nickname": "Deliivery",
     "country": "BR",
+    "birthday": "2003-02-05",
     "region": "SAM"
   },
   {
@@ -897,7 +901,7 @@
   },
   {
     "id": "dudsmelow",
-    "nickname": "DudsMelow",
+    "nickname": "Duds Melow",
     "country": "BR",
     "birthday": "2003-06-09",
     "region": "SAM"
@@ -1249,6 +1253,7 @@
     "id": "frosty",
     "nickname": "frosty",
     "country": "US",
+    "birthday": "2008-04-19",
     "region": "NA"
   },
   {
@@ -1289,6 +1294,7 @@
     "id": "gear",
     "nickname": "gear",
     "country": "US",
+    "birthday": "2002-05-09",
     "region": "NA"
   },
   {
@@ -1701,6 +1707,7 @@
     "id": "justuszzz",
     "nickname": "justuszzz",
     "country": "NL",
+    "birthday": "2003-10-09",
     "region": "NA"
   },
   {
@@ -2273,6 +2280,7 @@
     "id": "matter",
     "nickname": "matter",
     "country": "US",
+    "birthday": "2005-05-19",
     "region": "NA"
   },
   {
@@ -2703,6 +2711,7 @@
     "id": "osaft",
     "nickname": "osaft",
     "country": "DE",
+    "birthday": "2008-09-10",
     "region": "EU"
   },
   {
@@ -2831,6 +2840,7 @@
     "id": "plexi",
     "nickname": "plexi",
     "country": "US",
+    "birthday": "2009-09-30",
     "region": "NA"
   },
   {
@@ -2849,6 +2859,7 @@
     "id": "pndh",
     "nickname": "PNDH",
     "country": "CA",
+    "birthday": "2005-06-03",
     "region": "NA"
   },
   {
@@ -2890,9 +2901,15 @@
     "region": "EU"
   },
   {
+    "id": "pxress",
+    "nickname": "pxress",
+    "region": "NA"
+  },
+  {
     "id": "pzy",
     "nickname": "pzy",
     "country": "AT",
+    "birthday": "2003-05-12",
     "region": "NA"
   },
   {
@@ -3143,6 +3160,7 @@
     "id": "rustez95",
     "nickname": "rust ez95",
     "country": "FR",
+    "birthday": "2007-05-27",
     "region": "EU"
   },
   {
@@ -3156,6 +3174,7 @@
     "id": "rxii",
     "nickname": "Rxii",
     "country": "ES",
+    "birthday": "2004-05-30",
     "region": "EU"
   },
   {
@@ -3376,6 +3395,7 @@
     "id": "sleweyy",
     "nickname": "SleWeyy",
     "country": "FR",
+    "birthday": "2003-01-02",
     "region": "EU"
   },
   {
@@ -3681,6 +3701,7 @@
     "id": "tempoh",
     "nickname": "TempoH",
     "country": "DK",
+    "birthday": "2007-06-03",
     "region": "EU"
   },
   {

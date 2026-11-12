@@ -295,6 +295,11 @@ const COUNTRY = {
  * and only rolls a debut age for players without one.
  */
 const BIRTHDAY = {
+  // Base export of 2026-11-12 (PandaScore).
+  batou: "2001-10-28", beasty: "2005-10-13", crispy: "2006-06-03", deliivery: "2003-02-05",
+  frosty: "2008-04-19", gear: "2002-05-09", justuszzz: "2003-10-09", matter: "2005-05-19",
+  osaft: "2008-09-10", plexi: "2009-09-30", pndh: "2005-06-03", pzy: "2003-05-12",
+  rustez95: "2007-05-27", rxii: "2004-05-30", sleweyy: "2003-01-02", tempoh: "2007-06-03",
   "2die4": "2005-06-03", "2piece": "2006-05-17", abdullah: "2008-06-30", "abdullah-om": "2007-11-21",
   accro: "2005-02-22", acronik: "2005-07-07", aguz: "2004-12-10", ahmad: "2002-11-18",
   ajg: "2004-06-19", al0t: "1997-03-31", allushin: "1999-09-03", alpe: "2003-01-11",
@@ -496,6 +501,9 @@ const PERSON_ID = {
 
 /** Branding aliases only: the canonical ids and all existing card ids stay stable. */
 const PERSON_ALIAS = {
+  // 2026-11-12: shown as "Duds Melow"; the person id stays `dudsmelow`.
+  "duds-melow": "dudsmelow",
+  "duds melow": "dudsmelow",
   justin: "jstn",
   ghaazi: "ghaazi0",
   sucoo: "suco",
