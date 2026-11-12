@@ -104,7 +104,7 @@ export const HOME = {
   careerBadge: "NEW",
   careerDesc:
     "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
-  careerCta: "Build an org from nothing.\nWin the World Championship.",
+  careerCta: "Build an org from nothing. Win the World Championship.",
   // v2.0 (G2): beta note on the career card + the community band.
   careerBetaNote: "Beta: balance is still being tuned. Tell us what you think on Discord.",
   discordDesc: "Talk drafts, report bugs and follow what ships next.",
@@ -904,7 +904,8 @@ export const RARITY_LABELS: Record<string, string> = {
   legendary: "Legendary",
   creator: "Creator",
   wings: "Wings",
-  community: "Content Creator",
+  community: "Community",
+  special: "Special",
   national: "National team",
 };
 

@@ -36,6 +36,20 @@ The merge of `codex/rc53-final-polish` (commit `v2.0.0-rc.53-polish.1`, written 
 - Validation content: refreshed the staged 365-day replay calendar after the catalogue change; 98 authored seeds changed (including expired staging 2026-11-09), with no rewrite of saved player results.
 - Scope: codex/rc53-final-polish only; no staging/main deployment. Validation, integration notes and catalogue limitations: handoff-rc53-polish.md.
 
+Then `v2.0.0-rc.53-polish.2` (Miguel's visual review of 12/11, same branch, interface only), as written there:
+
+**Changed (polish.2)**
+- Restore the rc.53 Home career CTA layout and continuous sentence.
+- Collection groups: Legendary, Mythic, Epic, Rare, Community, Special. Community replaces Content Creator; Special combines discovered Wings and Creator cards without changing their stored rarities, visuals or hidden-until-owned rule.
+- Progression announcements are compact, orange-led, with Explore left and Close right.
+- News masthead combines brand, date and dismiss; blue side rule and quieter broadcast label retain the large headline and crests.
+
+**Fixed (polish.2)**
+- Blank crest area on first announcement capture: logos used the shared lazy loading default inside an entering dialog. Announcement crests now request eager loading; the new capture waits for decoded images and verifies a visible 72px Vitality logo.
+
+**Validation (polish.2)**
+- Typecheck and targeted ESLint passed; browser checks cover desktop and 390px mobile. HQ positive cash feedback confirmed with +$12k beside Balance. All 60 targeted tests, the 736-page static export and postexport image/noindex checks passed.
+
 #### Changed
 - **`sp-gian-community` is gone with the final card package. 31 real accounts held it** and lose it from their Collection on the next load. The cutover guard now lists what was retired on purpose (`preseason-held-ids.json`, `retired`) and fails for any other held id that disappears.
 - The pre-season recap's reward grid gives a title the full row (several board titles overflowed their cards).

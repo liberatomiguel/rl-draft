@@ -30,11 +30,13 @@ import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbum";
 
-// Official catalogue rarities only — the per-rarity tiles + filter chips. The
+// Official catalogue groups, followed by discovered special-person families. The
 // special-person rarities (community/wings/creator) are intentionally absent:
 // those cards are hidden until owned (see `collectibleCards`), so they get no
-// chase tile. A discovered special-person family gains its own section/filter.
-const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
+// chase tile. Community gains its own group; Wings and Creator share Special.
+type AlbumRarity = Exclude<SpecialRarity, "national" | "wings" | "creator"> | "special";
+const RARITIES: AlbumRarity[] = ["legendary", "mythic", "epic", "rare"];
+const albumRarityOf = (r: SpecialRarity): AlbumRarity | "national" => r === "wings" || r === "creator" ? "special" : r;
 type StatusFilter = "all" | "unlocked" | "locked";
 /** v2.0: the special-card album and the national-team album (its own set). */
 type Album = "specials" | "national";
@@ -78,9 +80,9 @@ export function CollectionView() {
   const fresh = useProfileNew();
   const openContent = useOpenContent();
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
+  const [rarity, setRarity] = useState<AlbumRarity | "all">("all");
   const [album, setAlbum] = useState<Album>("specials");
-  const [collapsed, setCollapsed] = useState<Set<SpecialRarity>>(() => new Set());
+  const [collapsed, setCollapsed] = useState<Set<AlbumRarity>>(() => new Set());
   const [detail, setDetail] = useState<SpecialCard | null>(null);
 
   // Hidden dev preview: visiting /collection?dev=1 renders EVERY special as
@@ -129,7 +131,7 @@ export function CollectionView() {
       ),
     [isUnlocked],
   );
-  const albumRarities = [...RARITIES, ...(["community", "wings", "creator"] as SpecialRarity[]).filter(r => collectibleCards.some(sp => sp.rarity === r))];
+  const albumRarities = [...RARITIES, ...(["community", "special"] as AlbumRarity[]).filter(r => collectibleCards.some(sp => albumRarityOf(sp.rarity) === r))];
   const nationalGot = mounted ? NATIONAL_CARD_IDS.filter((id) => isUnlocked(id)).length : 0;
   const nationalFound = NATIONAL_TEAMS.filter((t) => isDiscovered(t.id)).length;
   const unlockedCount = devPreview
@@ -145,8 +147,8 @@ export function CollectionView() {
   // locked rarity (null = available to this player).
   const collectionLocked = mounted && !devPreview && !rankRewardsForXp(xp).collection;
   const unlockedRarities = mounted && !devPreview ? rankRewardsForXp(xp).rarities : null;
-  const rarityLockedAt = (r: SpecialRarity): { id: string; label: string } | null =>
-    unlockedRarities && !unlockedRarities.includes(r) ? rankThatUnlocksRarity(r) : null;
+  const rarityLockedAt = (r: AlbumRarity): { id: string; label: string } | null =>
+    r !== "special" && unlockedRarities && !unlockedRarities.includes(r) ? rankThatUnlocksRarity(r) : null;
 
   // Single grid (v0.6.1, by direction): UNLOCKED cards lead — ordered rarity
   // (legendary→rare) then overall — followed by the still-locked cards in the
@@ -155,7 +157,7 @@ export function CollectionView() {
     const filtered = collectibleCards.filter((sp) => {
       if (status === "unlocked" && !isUnlocked(sp.id)) return false;
       if (status === "locked" && isUnlocked(sp.id)) return false;
-      if (rarity !== "all" && sp.rarity !== rarity) return false;
+      if (rarity !== "all" && albumRarityOf(sp.rarity) !== rarity) return false;
       return true;
     });
     return [...filtered].sort((a, b) => {
@@ -165,7 +167,7 @@ export function CollectionView() {
     });
   }, [collectibleCards, isUnlocked, status, rarity]);
 
-  const firstVisibleRarity = albumRarities.find(r => !collapsed.has(r) && visible.some(sp => sp.rarity === r));
+  const firstVisibleRarity = albumRarities.find(r => !collapsed.has(r) && visible.some(sp => albumRarityOf(sp.rarity) === r));
 
   // Progressive reveal: only the first `limit` cards per rarity mount; a sentinel below the
   // grid bumps it by a batch as it nears the viewport. Reset to one batch when
@@ -306,8 +308,8 @@ export function CollectionView() {
           <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
         ) : (
           <div className="space-y-5">
-            {albumRarities.filter(r => visible.some(sp => sp.rarity === r)).map(r => {
-              const cards = collectibleCards.filter(sp => sp.rarity === r);
+            {albumRarities.filter(r => visible.some(sp => albumRarityOf(sp.rarity) === r)).map(r => {
+              const cards = collectibleCards.filter(sp => albumRarityOf(sp.rarity) === r);
               const got = cards.filter(sp => isUnlocked(sp.id)).length;
               const lockRank = rarityLockedAt(r);
               const closed = collapsed.has(r);
@@ -321,7 +323,7 @@ export function CollectionView() {
                   <span aria-hidden className="ml-auto text-sub">{closed ? "+" : "−"}</span>
                 </button>
                 {!closed ? <div id={`rarity-${r}`} className="grid grid-cols-2 gap-3 px-3 pb-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:gap-4">
-            {shown.filter(sp => sp.rarity === r).slice(0, limit).map((sp, i) => (
+            {shown.filter(sp => albumRarityOf(sp.rarity) === r).slice(0, limit).map((sp, i) => (
               <FxCard key={sp.id}>
                 {isUnlocked(sp.id) ? (
                   <GameCard

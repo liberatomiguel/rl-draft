@@ -45,12 +45,14 @@ export function TeamLogo({
   seasonId,
   size = "md",
   className,
+  loading = "lazy",
 }: {
   orgId: string;
   /** Season the card/lineup belongs to — selects the era logo variant. */
   seasonId?: string;
   size?: keyof typeof SIZES;
   className?: string;
+  loading?: "lazy" | "eager";
 }) {
   const org = orgById.get(orgId);
   const name = org?.name ?? orgId;
@@ -101,7 +103,7 @@ export function TeamLogo({
       title={name}
       width={px}
       height={px}
-      loading="lazy"
+      loading={loading}
       decoding="async"
       // rc.32 (WEB-02): a loaded wide variant serves later, smaller logos of this org.
       onLoad={() => noteOrgLogoLoaded(src)}

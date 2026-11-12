@@ -1,6 +1,14 @@
 # rc.53 polish — isolated candidate
 
-Base: staging 0cb44a4 (v2.0.0-rc.53). Branch: codex/rc53-final-polish. Candidate: v2.0.0-rc.53-polish.1. This branch does not include the finalizer’s later work and does not deploy main/staging.
+Base: staging 0cb44a4 (v2.0.0-rc.53). Branch: codex/rc53-final-polish. Candidate: v2.0.0-rc.53-polish.2. This branch does not include the finalizer’s later work and does not deploy main/staging.
+
+## Miguel review, polish.2
+
+- Home CTA restored to the original rc.53 sentence/layout.
+- Collection display order is Legendary, Mythic, Epic, Rare, Community, Special; Wings and Creator share the Special group/filter/counter. Stored rarities, card designs and discovery rules are unchanged. Community labels are localized.
+- Progression dialog is compact, orange-led, Explore left / Close right. News uses a single brand/date/dismiss masthead, blue side rule and eager crest loading. Desktop capture verifies the 72px Vitality logo, and 390px captures show both dialog layouts without horizontal overflow.
+- HQ positive cash feedback confirmed at +$12k beside Balance.
+- Typecheck, targeted ESLint and 60 targeted asset/news/HQ/persist tests passed. UI-only follow-up: no career engine/store changes. Static export (736 pages) and postexport checks passed; all 1,351 manifest image URLs exist.
 
 ## Changes
 
