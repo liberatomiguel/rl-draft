@@ -732,3 +732,45 @@ describe("Season 1 cutover: a pre-season account signs in (rc.54)", () => {
     expect(Object.keys(useProfileStore.getState().cosmetics.owned).filter((id) => id.includes("ps"))).toEqual([]);
   });
 });
+
+describe("2.0.0: what a sync brings is announced by the normal unlock pop-up", () => {
+  it("a manual grant read from the cloud is queued once, and nothing is equipped", async () => {
+    const { useCosmeticUnlocks } = await import("./cosmeticUnlockStore");
+    useCosmeticUnlocks.getState().clear();
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(cloud({}, { grants: ["creator", "supporter"] }));
+    await useAccountStore.getState().syncNow(s);
+    const queue = useCosmeticUnlocks.getState().queue;
+    expect(queue).toEqual(expect.arrayContaining(["creator", "grant-title-creator", "supporter", "grant-title-supporter"]));
+    const equipped = useProfileStore.getState().cosmetics.equipped;
+    expect(equipped.title ?? null).toBeNull();
+    expect(equipped.banner ?? null).toBeNull();
+
+    // The same sync again brings nothing new: no second pop-up.
+    useCosmeticUnlocks.getState().clear();
+    await useAccountStore.getState().syncNow(s);
+    expect(useCosmeticUnlocks.getState().queue).toEqual([]);
+  });
+
+  it("pre-season rewards wait for the recap; once it was seen, a late sign-in announces them", async () => {
+    const { useCosmeticUnlocks } = await import("./cosmeticUnlockStore");
+    useCosmeticUnlocks.getState().clear();
+    const preseason = { xp: 70_000, mmr: 2100, rankId: "supersonic-legend", runsCompleted: 300, titles: 125, challengesCleared: 0, snapshotAt: "2026-11-12T13:00:00.000Z", position: null };
+    useProfileStore.setState({ legacy: { preseason } });
+    useProfileStore.getState().refreshCosmetics();
+    useCosmeticUnlocks.getState().clear();
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(cloud({}, { preseasonPosition: 3, preseasonPositions: { mmr: 3 } }));
+    await useAccountStore.getState().syncNow(s);
+    expect(useCosmeticUnlocks.getState().queue).toEqual([]); // the recap will show it
+
+    useProfileStore.getState().resetAll();
+    useProfileStore.setState({ legacy: { preseason }, flags: { ...useProfileStore.getState().flags, seenSeasonRecap: true } });
+    useProfileStore.getState().refreshCosmetics();
+    useCosmeticUnlocks.getState().clear();
+    const s2 = signedIn(session());
+    await useAccountStore.getState().syncNow(s2);
+    expect(useCosmeticUnlocks.getState().queue).toEqual(expect.arrayContaining(["season-third-place-ps", "legacy-title-ps-board-3"]));
+  });
+});
+

@@ -25,6 +25,8 @@ import {
   EMPTY_COSMETICS,
   markSeen,
   newlyOwnedIds,
+  unseenOwnedIds,
+  withoutLegacyRewards,
   refreshOwned,
   sanitizeEquipped,
   type CosmeticsState,
@@ -201,6 +203,9 @@ export interface ProfileState {
     seenDraftTour?: boolean;
     /** 2.0.0: the launch announcement ("Rocket Draft 2.0 is here"), shown once. Additive; absent = not seen. */
     seenLaunchNotice?: boolean;
+    /** 2.0.0: the one-time pass that announces cosmetics owned before the unlock
+     *  pop-up could show them (a migrated save, an early sync). Additive. */
+    unlocksCaughtUp?: boolean;
   };
   /** rc.54: guided tours seen, tour id → the `SEASON.id` it was seen in
    *  (`src/lib/tours.ts`). Each tour shows once after the Season 1 reset, to
@@ -845,8 +850,11 @@ export const useProfileStore = create<ProfileState>()(
         }),
 
       hydrateDurable: (durable) => {
-        // A cloud / storage merge is never "a new unlock": whatever it brings in
-        // stays silent (the pop-up is for rewards earned in THIS session).
+        // The merge itself is quiet (it must not replay every reward on a second
+        // device), but what it brings that this device did not own and the player
+        // has never seen in the locker is announced right after it (2.0.0: a manual
+        // grant, a board reward claimed by signing in after the recap).
+        const ownedBefore = get().cosmetics?.owned ?? {};
         quietUnlocks += 1;
         try {
           set((state) => {
@@ -872,6 +880,15 @@ export const useProfileStore = create<ProfileState>()(
         } finally {
           quietUnlocks -= 1;
         }
+        if (FEATURES.playtest) return;
+        const after = get();
+        const unseen = new Set(unseenOwnedIds(after.cosmetics));
+        const arrived = newlyOwnedIds(ownedBefore, after.cosmetics.owned).filter((id) => unseen.has(id));
+        // While the pre-season recap is still to come, it is the one that presents
+        // the pre-season rewards.
+        const recapPending = !after.flags.seenSeasonRecap && !!after.legacy?.preseason;
+        const ids = recapPending ? withoutLegacyRewards(arrived) : arrived;
+        if (ids.length) useCosmeticUnlocks.getState().push(ids);
       },
 
       awardAchievements: (ids) => {
@@ -1231,6 +1248,20 @@ useProfileStore.subscribe((state, prev) => {
   const ids = newlyOwnedIds(prev.cosmetics?.owned ?? {}, state.cosmetics?.owned ?? {});
   if (ids.length) useCosmeticUnlocks.getState().push(ids);
 });
+
+// 2.0.0: one pass per profile for what was owned before the pop-up could show
+// it — the cosmetics a migrated pre-season save derives from its lifetime totals
+// (the persist hydrate runs before the subscription above exists) and whatever an
+// early sync brought in silently. Pre-season rewards stay with the recap. Nothing
+// is equipped: the pop-up offers it, the player decides.
+function announceOwnedOnce(): void {
+  const s = useProfileStore.getState();
+  if (FEATURES.playtest || s.flags.unlocksCaughtUp) return;
+  const ids = withoutLegacyRewards(unseenOwnedIds(s.cosmetics));
+  useProfileStore.setState({ flags: { ...s.flags, unlocksCaughtUp: true } });
+  if (ids.length) useCosmeticUnlocks.getState().push(ids);
+}
+if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) announceOwnedOnce();
 
 // rc.33 (COL-02c): seed the "New" state on the first change after the update.
 // Until then the profile is unseeded — it has seen everything it owns, so an

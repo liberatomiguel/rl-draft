@@ -306,6 +306,14 @@ export function unseenOwnedIds(c: CosmeticsState): string[] {
   return Object.keys(c.owned).filter((id) => cosmeticById.has(id) && !seen.has(id));
 }
 
+/** The ids that are not pre-season rewards (those are presented by the recap). */
+export function withoutLegacyRewards(ids: string[]): string[] {
+  return ids.filter((id) => {
+    const def = cosmeticById.get(id);
+    return !!def && !isLegacyReward(def);
+  });
+}
+
 /** Mark ids as seen (idempotent). */
 export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
   const seen = new Set(c.seen ?? []);

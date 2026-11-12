@@ -284,6 +284,8 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
       seenSeasonRecap: Boolean(local.flags.seenSeasonRecap) || Boolean(cloud.flags.seenSeasonRecap),
       seenDraftTour: Boolean(local.flags.seenDraftTour) || Boolean(cloud.flags.seenDraftTour),
       seenLaunchNotice: Boolean(local.flags.seenLaunchNotice) || Boolean(cloud.flags.seenLaunchNotice),
+      // Per device on purpose: the local value only (a second device has its own pass).
+      unlocksCaughtUp: Boolean(local.flags.unlocksCaughtUp),
     },
     settings: local.settings,
   };
