@@ -10,10 +10,18 @@
  *     dataset, so it lives in `./counterAchievements` (rc.26, #60).
  * Every function filters out already-earned ids and returns only the new ones.
  * Pure + deterministic (no React, no storage).
+ *
+ * E1 (Season 1 review; see DESIGN-DECISIONS): the participation trophies are
+ * gone (hat-trick, four goals, 7-goal win, one-man show, any upset, a 3-0
+ * Swiss, an open-era title, and the single-region rosters of the five regions
+ * a Region-only draft hands out for free). Their rarer successors live here;
+ * `achievements.rates.probe.test.ts` measures how often each one happens.
  */
 
 import { lineupById, playerById, playerCardById, seasonById } from "@/data";
+import { CREATOR_SPECIAL_ID } from "./counterAchievements";
 import { userPlayoffSeries } from "./playoffs";
+import { displayTeamOverall } from "./rating";
 import { userSwissRecord } from "./swiss";
 import type {
   ChemistryResult,
@@ -124,16 +132,15 @@ export function teamAchievements(
   if (allThreePlayers(roster)) {
     const players = rosterPlayers(roster);
     const regions = players.map(regionOf);
-    const byRegion: Record<Region, string> = {
-      SAM: "ach-all-sam",
-      EU: "ach-all-eu",
-      NA: "ach-all-na",
+    // E1: only the two regions WITHOUT a Region-only draft keep a single-region
+    // roster achievement. A locked draft offers nothing else, so the other five
+    // were free at the review screen.
+    const byRegion: Partial<Record<Region, string>> = {
       SSA: "ach-all-ssa",
-      MENA: "ach-all-mena",
-      OCE: "ach-all-oce",
       APAC: "ach-all-apac",
     };
-    if (regions[0] && regions.every((r) => r === regions[0])) ids.push(byRegion[regions[0]]);
+    const oneRegion = regions[0] && regions.every((r) => r === regions[0]) ? byRegion[regions[0]] : undefined;
+    if (oneRegion) ids.push(oneRegion);
     if (players.every(isEliteCard)) ids.push("ach-all-champions");
     // Three players from the SAME ORG (v1.4.1). The old "same lineup" check was
     // unreachable: the draft offers each lineup at most once (shownLineupIds), so you
@@ -168,15 +175,11 @@ export function liveAchievements(
   const consideredSeries = considered.map((m) => m.series);
   const ids: string[] = [];
   for (const g of gamesOf(consideredSeries)) {
-    if (g.won && g.team - g.opp >= 7) ids.push("ach-blowout");
-    const top = Math.max(0, ...g.goals);
-    if (top >= 3) ids.push("ach-hattrick");
-    if (top >= 4) ids.push("ach-four-goals");
-    if (g.team >= 3 && g.goals.some((x) => x === g.team)) ids.push("ach-solo-show");
+    // E1: six by one player (a hat-trick happens in ~95% of runs, six in ~3%).
+    if (Math.max(0, ...g.goals) >= DOUBLE_HAT_TRICK) ids.push("ach-double-hat-trick");
   }
   for (const s of consideredSeries) {
     if (!userWon(s)) continue;
-    if (userRatingDiff(s) < 0) ids.push("ach-giant-slayer");
     // Reverse sweep: fell behind by two games, then won.
     let u = 0;
     let o = 0;
@@ -190,14 +193,45 @@ export function liveAchievements(
     }
   }
   for (const { series } of considered.filter((m) => m.isFinal)) {
-    if (!userWon(series)) continue;
     const total = series.score[0] + series.score[1];
-    if (total === 7) ids.push("ach-game7");
     const decider = series.games[series.games.length - 1];
+    if (!userWon(series)) {
+      // E1 (secret): the final slipped away in game 7 overtime.
+      if (total === 7 && decider?.overtime) ids.push("ach-heartbreak");
+      continue;
+    }
+    if (total === 7) ids.push("ach-game7");
     if (total === 7 && decider?.overtime) ids.push("ach-ot-game7");
     if (Math.abs(decider?.score[0] - decider?.score[1]) === 1) ids.push("ach-one-goal-final");
+    // E1: how the final was won. A comeback from two games down, the full
+    // reverse sweep (0-3 down in a best-of-seven; secret), and an upset of a
+    // clearly higher-rated finalist (`ratingDiff`, difficulty handicap included).
+    const deficit = worstDeficit(series);
+    if (deficit >= 2) ids.push("ach-final-comeback");
+    if (deficit >= 3) ids.push("ach-final-reverse-sweep");
+    if (userRatingDiff(series) <= -GIANT_KILLER_GAP) ids.push("ach-giant-killer");
   }
   return only(ids, earned);
+}
+
+/** E1 thresholds (achievement definitions, not gameplay tunables). */
+const DOUBLE_HAT_TRICK = 6;
+/** Rating points the beaten finalist stood above the user ("Giant Killer"). */
+const GIANT_KILLER_GAP = 2;
+/** Highest team overall that still counts as a "Moneyball" title. */
+const MONEYBALL_MAX_OVERALL = 90;
+
+/** Largest number of games the user trailed by at any point of a series. */
+function worstDeficit(s: SeriesResult): number {
+  let u = 0;
+  let o = 0;
+  let worst = 0;
+  for (const g of s.games) {
+    if (g.winnerTeamId === "user") u += 1;
+    else o += 1;
+    worst = Math.max(worst, o - u);
+  }
+  return worst;
 }
 
 // --- win-conditions (run-end) --------------------------------------------
@@ -213,8 +247,20 @@ function conditionAchievements(
   const players = rosterPlayers(run.draft.roster);
 
   if (run.mode === "quick" && userSeries(t).some(userWon)) ids.push("ach-quick-win");
+  // E1 (secret): 0-2 in the Swiss, then three straight wins into the playoffs.
+  const swissSeries = t.swiss.rounds.flatMap((r) =>
+    r.series.filter((s) => s.teamAId === "user" || s.teamBId === "user"),
+  );
   const swiss = userSwissRecord(t.swiss);
-  if (swiss.wins === 3 && swiss.losses === 0) ids.push("ach-swiss-flawless");
+  if (
+    swissSeries.length >= 5 &&
+    !userWon(swissSeries[0]) &&
+    !userWon(swissSeries[1]) &&
+    swiss.wins === 3 &&
+    userPlayoffSeries(t.playoffs).length > 0
+  ) {
+    ids.push("ach-swiss-escape");
+  }
 
   if (champion) {
     ids.push("ach-first-title");
@@ -234,13 +280,36 @@ function conditionAchievements(
     if (allThreePlayers(run.draft.roster)) {
       const years = players.map(yearOf);
       if (years.every((y) => Number.isFinite(y) && y <= 2019)) ids.push("ach-early-era-title");
-      if (years.every((y) => Number.isFinite(y) && y >= 2020)) ids.push("ach-open-era-title");
     }
     // Ever-present: a player scored in EVERY user game of the (finished) run.
     const games = userGames(t);
     if (games.length > 0 && [0, 1, 2].some((i) => games.every((g) => (g.goals[i] ?? 0) >= 1))) {
       ids.push("ach-scored-every-game");
     }
+
+    // --- E1 (Season 1 review): title feats the bracket already records. ---
+    const classic = run.mode === "classic"; // the full 16-team event, an open draft
+    const tough = run.difficulty === "hard" || run.difficulty === "legacy";
+    const playoffs = userPlayoffSeries(t.playoffs);
+    // Secret: not a single GAME lost, Swiss to grand final, on Hard or Legacy
+    // (on Easy a strong draft does it in one run out of seven).
+    if (classic && tough && games.length > 0 && games.every((g) => g.won)) ids.push("ach-flawless-run");
+    // Dropped to the lower bracket in the very first playoff round: the longest road.
+    if (playoffs.some((e) => e.round === "ub_quarterfinal" && !userWon(e.series))) {
+      ids.push("ach-lower-bracket-full");
+    }
+    // "Moneyball": a worldwide Hard / Legacy title with a modest team. Region-only
+    // pools live on a lower overall scale, so they do not count.
+    const user = t.teams["user"];
+    if (classic && tough && !run.regionLock && user && displayTeamOverall(user.rating) <= MONEYBALL_MAX_OVERALL) {
+      ids.push("ach-low-ovr-title");
+    }
+    // Overalls hidden by choice (Hard and Legacy lock them, so it only counts on Normal).
+    if (run.difficulty === "normal" && run.showOverall === false && run.mode !== "daily") {
+      ids.push("ach-blind-title");
+    }
+    // Secret: the Creator card (the Wings easter egg) on the title-winning team.
+    if (user?.specialIds.includes(CREATOR_SPECIAL_ID)) ids.push("ach-creator-title");
   }
   return only(ids, earned);
 }

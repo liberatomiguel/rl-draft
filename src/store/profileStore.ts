@@ -18,7 +18,7 @@ import {
 } from "@/config/balance";
 import { achievementById, specialCardIds, specialRarityOf } from "@/data/catalog";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
-import { evaluateCounterAchievements } from "@/engine/counterAchievements";
+import { evaluateCounterAchievements, evaluateSeasonSystemAchievements, profileCounters } from "@/engine/counterAchievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import {
   cosmeticFacts,
@@ -70,6 +70,7 @@ import { profileAvailableKeys } from "@/engine/profileNew";
 import { FEATURES, MISSIONS } from "@/config/balance";
 import { todayKey } from "@/lib/dailyPlan";
 import type { DurableProfile } from "@/lib/profileSync";
+import { tourSeen, withTourSeen } from "@/lib/tours";
 import { registerSessionProps, setAnalyticsHistorySource, trackEvent, trackEvents, trackOnboardingStep } from "@/lib/analytics";
 import { useAchievementToasts } from "./achievementToastStore";
 import { useCosmeticUnlocks } from "./cosmeticUnlockStore";
@@ -162,6 +163,10 @@ export interface ProfileState {
   /** rc.4: Road to Worlds World Championships won, across every career save
    *  (World Champion badges). This season's share lives in `season.careerWorlds`. */
   careerWorldsWon: number;
+  /** rc.54: titles won with a region lock, by region, across every season (the
+   *  season's share lives in `season.regionTitles`). Additive and optional in
+   *  old saves: read it as `regionTitles ?? {}`. */
+  regionTitles: Partial<Record<Region, number>>;
   /** rc.20: consecutive Legacy-difficulty titles — the live run and the best
    *  ever (the "On a Roll" / "Heatwave" cosmetics read `best`). A lost Legacy
    *  run resets `current`; other difficulties leave it alone. */
@@ -193,6 +198,13 @@ export interface ProfileState {
     /** rc.50: the draft's guided tour, shown once to everyone in Season 1 (its own flag: a veteran who saw the old "How to play" modal sees it too). Additive; absent = not seen. */
     seenDraftTour?: boolean;
   };
+  /** rc.54: guided tours seen, tour id → the `SEASON.id` it was seen in
+   *  (`src/lib/tours.ts`). Each tour shows once after the Season 1 reset, to
+   *  veterans too: the older `flags` above never suppress it. Additive and
+   *  optional (absent = none seen); kept on this device (not in the cloud merge). */
+  tours?: Record<string, number>;
+  /** Stamp a guided tour as seen in the current season (finished or skipped). */
+  markTourSeen: (tour: string) => void;
 
   applyRunResults: (
     results: RunResults,
@@ -310,6 +322,7 @@ const initialData = {
   challengeStars: {} as Record<string, number>,
   careerMarks: [] as string[],
   careerWorldsWon: 0,
+  regionTitles: {} as Partial<Record<Region, number>>,
   legacyStreak: { current: 0, best: 0 },
   records: {
     bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
@@ -330,6 +343,7 @@ const initialData = {
     seenSeasonRecap: false,
     seenDraftTour: false,
   },
+  tours: {} as Record<string, number>,
 };
 
 type Records = ProfileState["records"];
@@ -399,7 +413,8 @@ export function pruneUnlockedSpecials(
  * (v1.4)
  */
 function backfillSatisfiedCounters(
-  p: Pick<ProfileState, "xp" | "runsCompleted" | "wins" | "gamesWon" | "goalsScored" | "unlockedSpecials">,
+  p: Pick<ProfileState, "xp" | "runsCompleted" | "wins" | "gamesWon" | "goalsScored" | "unlockedSpecials"> &
+    Partial<Pick<ProfileState, "podiums" | "dailyResults">>,
   alreadyEarned: ReadonlySet<string>,
   now: string,
   /** v2.0 (C2): the rank the rank achievements are judged by. A veteran is
@@ -420,6 +435,11 @@ function backfillSatisfiedCounters(
       specialIds,
       dailyStreak: 0,
       rankId,
+      // E1: the lifetime counters of the Season 1 review (Hard titles, every
+      // difficulty, podiums, Daily wins, the Legendary cards) are pre-marked the
+      // same way. The Season systems (quiz, login, missions, Legacy streak,
+      // Region-only titles) are NOT: a veteran has none yet and earns them live.
+      ...profileCounters({ wins: p.wins, podiums: p.podiums, dailyResults: p.dailyResults, unlockedSpecials: p.unlockedSpecials }),
     },
     alreadyEarned,
   );
@@ -515,6 +535,10 @@ export const useProfileStore = create<ProfileState>()(
           if (results.placement === "champion") {
             wins[entry.difficulty] += 1;
           }
+          // rc.54: a title won with a region lock counts for that region's board.
+          const wonRegion = results.placement === "champion" && entry.region ? entry.region : null;
+          const regionTitles = { ...(state.regionTitles ?? {}) };
+          if (wonRegion) regionTitles[wonRegion] = (regionTitles[wonRegion] ?? 0) + 1;
           // rc.20: consecutive Legacy titles (On a Roll / Heatwave). Only Legacy
           // runs touch the streak: a title extends it, any other result ends it.
           const prevStreak = state.legacyStreak ?? initialData.legacyStreak;
@@ -590,6 +614,18 @@ export const useProfileStore = create<ProfileState>()(
               rankId: rankForXp(xpAfterRun).id,
               seasonRating: mmr,
               legacyStreakBest: legacyStreak.best,
+              // E1: the review's counters, read after this run (Region-only
+              // titles, Hard titles, podiums, Daily wins, quiz / login / missions).
+              ...profileCounters({
+                wins,
+                podiums: state.podiums + (podium ? 1 : 0),
+                dailyResults,
+                regionTitles,
+                unlockedSpecials,
+                quiz: state.quiz,
+                login: state.login,
+                missions: state.missions,
+              }),
             },
             new Set(Object.keys(achievements)),
           );
@@ -615,6 +651,14 @@ export const useProfileStore = create<ProfileState>()(
             legacyTitles:
               (state.season.legacyTitles ?? 0) +
               (results.placement === "champion" && entry.difficulty === "legacy" ? 1 : 0),
+            ...(wonRegion
+              ? {
+                  regionTitles: {
+                    ...(state.season.regionTitles ?? {}),
+                    [wonRegion]: (state.season.regionTitles?.[wonRegion] ?? 0) + 1,
+                  },
+                }
+              : {}),
             peakMmr: Math.max(state.season.peakMmr, mmr),
             peakRankId,
             ratingHistory: pushRatingHistory(state.season.ratingHistory, {
@@ -638,6 +682,7 @@ export const useProfileStore = create<ProfileState>()(
             legacyUnlocked,
             runsCompleted,
             wins,
+            regionTitles,
             legacyStreak,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
             podiums: state.podiums + (podium ? 1 : 0),
@@ -662,6 +707,11 @@ export const useProfileStore = create<ProfileState>()(
       // argument (where the tour closed) is still accepted and unused.
       markFlag: (flag) => {
         set((state) => ({ flags: { ...state.flags, [flag]: true } }));
+      },
+
+      markTourSeen: (tour) => {
+        if (tourSeen(get().tours, tour)) return; // already stamped: no write
+        set((state) => ({ tours: withTourSeen(state.tours, tour) }));
       },
 
       completeChallenge: (challengeId, reward) => {
@@ -793,6 +843,7 @@ export const useProfileStore = create<ProfileState>()(
             return {
               ...next,
               legacyStreak: durable.legacyStreak ?? initialData.legacyStreak,
+              regionTitles: durable.regionTitles ?? state.regionTitles ?? {},
               achievements: pruneEarnedAchievements(durable.achievements),
               unlockedSpecials,
               nationalDiscovered,
@@ -941,6 +992,7 @@ export const useProfileStore = create<ProfileState>()(
             ...result.bonuses.map((period) => ({ kind: "missionBonus" as const, period, xp: MISSIONS[period].allBonus })),
           ]);
         }
+        if (result.completed.length) awardSeasonSystemAchievements(); // E1: the mission counters
         return result;
       },
 
@@ -966,6 +1018,7 @@ export const useProfileStore = create<ProfileState>()(
         });
         if (out.counted) {
           useRewardToasts.getState().showLogin({ streak: out.streak, xp: out.xp, milestone: out.milestone });
+          awardSeasonSystemAchievements(); // E1: the login-streak achievements
         }
         return out;
       },
@@ -1026,6 +1079,9 @@ export const useProfileStore = create<ProfileState>()(
           get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
           // v2.0 (C2): "Called It", solved on the first guess.
           if (out.correct && out.attempts === 1) get().awardAchievements(["ach-quiz-first-try"]);
+          // E1 (secret): solved on the very last guess the day allows.
+          if (out.correct && out.attempts > 1 && out.attempts >= quizLimit(day)) get().awardAchievements(["ach-quiz-last-guess"]);
+          awardSeasonSystemAchievements(); // the quiz streaks
         }
         return out;
       },
@@ -1133,6 +1189,21 @@ export const useProfileStore = create<ProfileState>()(
     },
   ),
 );
+
+/**
+ * E1 (Season 1 achievements review): the quiz-streak, login-streak and mission
+ * achievements, judged right after those writes (they never pass through a
+ * run). Only that subset: a lifetime counter is the run's job, so a login can
+ * never toast a volume milestone.
+ */
+function awardSeasonSystemAchievements(): void {
+  const s = useProfileStore.getState();
+  const ids = evaluateSeasonSystemAchievements(
+    profileCounters({ wins: s.wins, quiz: s.quiz, login: s.login, missions: s.missions }),
+    new Set(Object.keys(s.achievements)),
+  );
+  if (ids.length) s.awardAchievements(ids);
+}
 
 // rc.20: the unlock pop-up. Every write that derives a new owned cosmetic
 // (a run, a challenge, a login, a quiz, a mission, a career milestone) is

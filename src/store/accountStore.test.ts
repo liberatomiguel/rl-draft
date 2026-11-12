@@ -63,13 +63,17 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-function cloud(over: Partial<DurableProfile>, extras: { grants?: string[]; preseasonPosition?: number | null } = {}): CloudRowResult {
+function cloud(
+  over: Partial<DurableProfile>,
+  extras: { grants?: string[]; preseasonPosition?: number | null; preseasonPositions?: Record<string, number> } = {},
+): CloudRowResult {
   return {
     status: "ok",
     durable: { ...toDurable(useProfileStore.getState()), ...over },
     username: "CloudName",
     grants: extras.grants ?? [],
     preseasonPosition: extras.preseasonPosition ?? null,
+    preseasonPositions: extras.preseasonPositions ?? {},
   };
 }
 
@@ -649,5 +653,82 @@ describe("init — lazy Supabase", () => {
     useAccountStore.getState().init();
     useAccountStore.getState().init();
     expect(sb.onAuthChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Season 1 cutover: a pre-season account signs in (rc.54)", () => {
+  /** The cloud row a v1.4.8 client left behind: no season block, pre-season totals. */
+  const preseasonRow = (extras: Parameters<typeof cloud>[1]) => {
+    const row = cloud(
+      { xp: 70_000, mmr: 2100, runsCompleted: 300, wins: { easy: 5, normal: 20, hard: 40, legacy: 60 } },
+      extras,
+    );
+    if (row.status !== "ok" || !row.durable) throw new Error("fixture");
+    const durable = { ...row.durable } as Partial<DurableProfile>;
+    delete durable.season;
+    delete durable.lifetime;
+    delete durable.legacy;
+    delete durable.cosmetics;
+    return { ...row, durable: durable as DurableProfile };
+  };
+
+  it("clean device: reset to Season 1, peak rank archived, every frozen board pays its band", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(
+      preseasonRow({ preseasonPosition: 10, preseasonPositions: { mmr: 10, championships: 3, best_sam: 140 } }),
+    );
+    await useAccountStore.getState().syncNow(s);
+
+    const profile = useProfileStore.getState();
+    expect(profile.xp).toBe(0);
+    expect(profile.mmr).toBe(400);
+    expect(profile.lifetime.xp).toBe(70_000);
+    expect(profile.legacy.preseason).toMatchObject({
+      xp: 70_000,
+      mmr: 2100,
+      rankId: "supersonic-legend",
+      titles: 125,
+      position: 10,
+      positions: { mmr: 10, championships: 3, best_sam: 140 },
+    });
+    const owned = Object.keys(profile.cosmetics.owned);
+    // Rank: the peak only. Boards: Elite (#10 rating) and Third (#3 titles); #140 pays nothing.
+    expect(owned).toEqual(
+      expect.arrayContaining([
+        "first-chapter",
+        "pre-season-supersonic",
+        "legacy-title-ps-supersonic-legend",
+        "season-elite-ps",
+        "season-third-place-ps",
+      ]),
+    );
+    expect(owned).not.toContain("pre-season-grand-champion");
+    expect(owned).not.toContain("season-finalist-ps");
+    expect(owned).not.toContain("season-champion-ps");
+
+    // What goes back to the cloud is a Season 1 profile that still carries the archive.
+    const pushed = pushedDurable(0);
+    expect(pushed.xp).toBe(0);
+    expect(pushed.legacy?.preseason?.positions).toEqual({ mmr: 10, championships: 3, best_sam: 140 });
+  });
+
+  it("the cloud's frozen places replace an earlier copy (a board frozen again before launch)", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(preseasonRow({ preseasonPosition: 4, preseasonPositions: { mmr: 4 } }));
+    await useAccountStore.getState().syncNow(s);
+    expect(Object.keys(useProfileStore.getState().cosmetics.owned)).toContain("season-elite-ps");
+
+    sb.fetchCloudRow.mockResolvedValue(cloud({}, { preseasonPosition: 2, preseasonPositions: { mmr: 2, titles_legacy: 30 } }));
+    await useAccountStore.getState().syncNow(s);
+    expect(useProfileStore.getState().legacy.preseason?.positions).toEqual({ mmr: 2, titles_legacy: 30 });
+    expect(useProfileStore.getState().legacy.preseason?.position).toBe(2);
+  });
+
+  it("a row frozen before the player ever finished a run earns nothing", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(cloud({}, { preseasonPosition: null, preseasonPositions: {} }));
+    await useAccountStore.getState().syncNow(s);
+    expect(useProfileStore.getState().legacy.preseason).toBeNull();
+    expect(Object.keys(useProfileStore.getState().cosmetics.owned).filter((id) => id.includes("ps"))).toEqual([]);
   });
 });

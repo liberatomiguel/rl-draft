@@ -14,6 +14,10 @@
  * draft round) so it computes its spinning names in a lazy useState init —
  * the drawn team is therefore never painted for a frame before the reel
  * (the old effect-based approach leaked that frame). React-Compiler safe.
+ * rc.54: the first-run tour runs BEFORE the draw, over a fixed static board
+ * (`draftTourDemo`: a view, never saved, no RNG). While it is up the screen
+ * renders that view and nothing can be picked; when it is done or skipped the
+ * real offer mounts and its reel plays. The run in the store is untouched.
  */
 
 import { useMemo, useState } from "react";
@@ -24,6 +28,7 @@ import { draftLineupPool, filledCount, neededKinds, slotsForKind } from "@/engin
 import { lineupById, seasonById, specialCardById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { dailyLabel } from "@/lib/runLabels";
+import { DRAFT_TOUR, tourSeen } from "@/lib/tours";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useProfileStore } from "@/store/profileStore";
@@ -39,6 +44,8 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
 import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
 import { RunOnboarding } from "./RunOnboarding";
+import { DraftTour } from "@/components/tour/DraftTour";
+import { draftTourDemo } from "@/components/tour/draftTourDemo";
 
 const REEL_LENGTH = 10; // 9 decoys + the drawn lineup
 
@@ -65,18 +72,30 @@ export function DraftScreen({ run }: { run: RunState }) {
   // action and never resets, so every offer from then on rolls.
   const [acted, setActed] = useState(false);
 
-  const offer = run.draft.offer;
+  // rc.54: the first-run tour (once per player since the Season 1 reset, never
+  // in a challenge) is shown over a fixed demo board, before the real draw.
+  // `view` is what the board renders: the demo while the tour is up, the run
+  // otherwise. The demo is derived here and goes nowhere else.
+  const markTourSeen = useProfileStore((s) => s.markTourSeen);
+  const markFlag = useProfileStore((s) => s.markFlag);
+  const tourDone = useProfileStore((s) => tourSeen(s.tours, DRAFT_TOUR));
+  const touring = run.mode !== "challenge" && !tourDone;
+  const view = useMemo(() => (touring ? draftTourDemo(run) : run), [touring, run]);
+
+  const offer = view.draft.offer;
   const header = useMemo(() => (offer ? lineupHeader(offer.lineupId) : null), [offer]);
   const lineup = offer ? lineupById.get(offer.lineupId) : null;
 
   if (!offer || !header || !lineup) return null;
 
-  const filled = filledCount(run.draft.roster);
-  const slotTotal = run.mode === "quick" ? 3 : 6;
-  const needed = neededKinds(run.draft.roster, run.mode);
-  const playReel = run.draft.round === 1 || acted;
+  const filled = filledCount(view.draft.roster);
+  const slotTotal = view.mode === "quick" ? 3 : 6;
+  const needed = neededKinds(view.draft.roster, view.mode);
+  // Never under the tour: the draw starts when it closes (`finishTour`).
+  const playReel = !touring && (run.draft.round === 1 || acted);
 
   const handlePick = (offerCard: DraftOfferCard) => {
+    if (touring) return; // the demo board is shown, not played
     const openSlot = slotsForKind(offerCard.kind).find((s) => !run.draft.roster[s]);
     if (openSlot) {
       setActed(true);
@@ -85,19 +104,36 @@ export function DraftScreen({ run }: { run: RunState }) {
     }
   };
   const handleReroll = () => {
+    if (touring) return;
     setActed(true);
     sfx.reroll();
     reroll();
   };
   const handleFreeReroll = () => {
+    if (touring) return;
     setActed(true);
     sfx.reroll();
     freeReroll();
   };
+  /** Done or Skip: remember it, then the real offer mounts and rolls in. */
+  const finishTour = () => {
+    markTourSeen(DRAFT_TOUR);
+    // The older one-shot flags stay set for anything that still reads them.
+    markFlag("seenDraftTour");
+    markFlag("seenHowToPlay");
+    // The draw starts now, at whatever round the run is on (a resumed draft too).
+    setActed(true);
+  };
 
   return (
-    <div className="rise-in">
-      {run.mode !== "challenge" ? <RunOnboarding difficulty={run.difficulty} regionLock={run.regionLock} /> : null}
+    // Static under the tour (no entrance animation for the spotlight to chase);
+    // the real board rises in when the tour closes.
+    <div className={cx(!touring && "rise-in")}>
+      {touring ? (
+        <DraftTour onClose={finishTour} />
+      ) : run.mode !== "challenge" ? (
+        <RunOnboarding difficulty={run.difficulty} regionLock={run.regionLock} />
+      ) : null}
       <RunStepper run={run} />
       {run.mode === "challenge" ? <ChallengeGoals challengeId={run.challengeId} /> : null}
 
@@ -106,10 +142,11 @@ export function DraftScreen({ run }: { run: RunState }) {
             Keyed by runId + draft round → a new offer (or a fresh run after
             "Reset run", which mints a new runId at round 1) REMOUNTS it, so the
             reel state is rebuilt fresh in its lazy initializer (no flash of the
-            name, and the slot machine replays on reset — v1.4 fix). */}
+            name, and the slot machine replays on reset — v1.4 fix). The tour's
+            demo has its own runId, so the real offer remounts when it closes. */}
         <OfferReveal
-          key={`${run.runId}-${run.draft.round}`}
-          run={run}
+          key={`${view.runId}-${view.draft.round}`}
+          run={view}
           offer={offer}
           header={header}
           lineup={lineup}
@@ -136,9 +173,9 @@ export function DraftScreen({ run }: { run: RunState }) {
             <ProgressBar value={filled / slotTotal} tone="orange" className="mb-4" label={DRAFT_UI.yourRoster} />
 
             <FieldView
-              roster={run.draft.roster}
-              showOverall={run.showOverall}
-              showBench={run.mode !== "quick"}
+              roster={view.draft.roster}
+              showOverall={view.showOverall}
+              showBench={view.mode !== "quick"}
               className="mx-auto w-full max-w-md lg:max-w-none"
             />
 

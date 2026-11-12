@@ -26,7 +26,8 @@ import {
 } from "@/data";
 import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
-import { ALL_STARS, challengeStatus } from "@/engine/challengeStars";
+import { challengeStatus } from "@/engine/challengeStars";
+import { evaluateChallengeAchievements } from "@/engine/counterAchievements";
 import {
   applyFreeReroll,
   applyPick,
@@ -738,10 +739,12 @@ export const useRunStore = create<RunStore>()(
           starsNew = profile.recordChallengeResult(challenge.id, starsEarned, xpForNew, challenge.reward);
           // v2.0 (C2): challenge achievements, read from the profile after the result.
           {
+            // E1: the rule lives in the engine (three stars, every clear, 45 / 90 / every star).
             const after = useProfileStore.getState();
-            const ids: string[] = [];
-            if (Object.values(after.challengeStars).some((m) => (m & ALL_STARS) === ALL_STARS)) ids.push("ach-challenge-perfect");
-            if (challenges.every((c) => after.challengesCompleted[c.id])) ids.push("ach-challenge-all");
+            const ids = evaluateChallengeAchievements(
+              { stars: after.challengeStars, completed: after.challengesCompleted, challengeIds: challenges.map((c) => c.id) },
+              new Set(Object.keys(after.achievements)),
+            );
             if (ids.length) after.awardAchievements(ids);
           }
           if (starsNew) {

@@ -211,6 +211,8 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // grant Miguel added in the dashboard shows up on the next visit.
     const cloudGrants = row.status === "ok" ? row.grants : [];
     const cloudPosition = row.status === "ok" ? row.preseasonPosition : null;
+    const cloudPlaces = row.status === "ok" ? row.preseasonPositions : {};
+    const hasCloudPlaces = Object.keys(cloudPlaces).length > 0;
     const preseason = mergedRaw.legacy?.preseason ?? null;
     const merged: DurableProfile = {
       ...mergedRaw,
@@ -218,13 +220,19 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       unlockedSpecials: pruneUnlockedSpecials(mergedRaw.unlockedSpecials),
       grants: [...new Set([...(mergedRaw.grants ?? []), ...cloudGrants])].sort(),
       legacy: {
+        // The cloud is the only source of the frozen places: it replaces whatever
+        // an earlier sync stored (a board frozen again before launch must not stick).
         preseason:
-          preseason && cloudPosition && preseason.position !== cloudPosition
-            ? { ...preseason, position: cloudPosition }
+          preseason && (cloudPosition || hasCloudPlaces)
+            ? {
+                ...preseason,
+                position: cloudPosition ?? preseason.position,
+                ...(hasCloudPlaces ? { positions: cloudPlaces } : {}),
+              }
             : preseason,
       },
     };
-    if (cloudDurable || folded || cloudGrants.length || cloudPosition) {
+    if (cloudDurable || folded || cloudGrants.length || cloudPosition || hasCloudPlaces) {
       applyingSync = true;
       try {
         useProfileStore.getState().hydrateDurable(merged); // never lose local

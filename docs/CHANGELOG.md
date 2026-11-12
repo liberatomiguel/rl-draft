@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.53**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.54**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,40 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.54 (2026-11-12), the Season 1 cutover: rewards, boards, tour, saves
+
+Source: Miguel's launch-day brief of 12/11. Runbook for the cutover itself: `docs/handoff-2.0/CUTOVER.md`. SEO audit and the PostHog build list: `docs/handoff-2.0/S1-seo-analytics.md`.
+
+#### Added
+- **Season 1 leaderboards:** Season Rating, Titles, Legacy Titles, SAM / NA / EU / OCE / MENA Titles and RTW · World Titles, plus the frozen pre-season Hall of Fame. Every board counts the current season only. A regional title is a title won with that region lock. New profile fields `regionTitles` (lifetime) and `season.regionTitles`; new cloud columns `season_legacy_titles`, `season_titles_sam|na|eu|oce|mena`, `season_worlds`.
+- **One frozen place per pre-season board** (`legacy.preseason.positions`, cloud column `preseason_positions`): rating, titles, Legacy titles, Legacy overall and regional overall. The recap lists every place.
+- **Cutover rehearsal tests:** `preseasonRehearsal.test.ts` (saves in the exact shape of the 455 production accounts through the persist migrate, a clean-device sign-in and a re-merge; a real export can be passed with `PRESEASON_SAVES`), `careerRealSave.probe.test.ts` (`CAREER_SAVE`: a real career save loads through the store and plays on), and a guard that fails when an achievement or special card id held by a real account leaves the build (`__fixtures__/preseason-held-ids.json`).
+
+- **30 new achievements** (E1 review, `docs/handoff-2.0/E1-achievements.md`): run feats (double hat-trick, a comeback in the final, a title from the lower bracket all the way, a low-overall title, a blind title), lifetime counters, region play (a title on every region lock, 25 in one region), Legacy streaks, and the Season 1 systems (challenge stars 45 / 90 / all, quiz and login streaks, missions). Seven are secret (nine secrets in total). **Road to Worlds: 7 new** (seven seasons, a second Worlds, five regionals, three Majors, Worlds with an unchanged roster, a perfect season). The lifetime counters are pre-marked silently for veterans; nothing else is.
+- **Rocket Street news desk for South American careers (R133):** cup preview and recap, regional recaps, Major and Worlds berths, a wrap of each transfer window, the SAM rookie class. Departing SAM organisations are signed by Rocket Street. Probe (`RS_PROBE=1`, 24 seasons): 14 to 20 Rocket Street stories a season, 21 to 25 % of the feed. Knobs in `CAREER_ROCKET_STREET` (BALANCE_VERSION 26).
+
+#### Changed
+- **Achievements review:** 15 retired as participation trophies (held by 49 to 435 of the 455 accounts: hat-trick, blowout, four goals, 100 and 250 goals, 50 games, solo show, giant slayer, flawless Swiss, open-era title and the five regional rosters that a region lock now completes by itself). Players who held them lose them on their next load. Ten others moved down a tier; nobody loses those. Catalogue 77 to 92.
+- **Rocket Street LATAM Championship is on a SAM career's calendar twice every season from season 1** (weeks 7 and 27; Community Cup below the reputation gate, Invitational above it).
+- **Pre-season rank reward = the peak rank only** (Miguel, 12/11; was cumulative since rc.20). A Supersonic Legend gets the Supersonic Legend badge and title, not the eight below.
+- **Pre-season board reward = one per board.** A place in a band on any of the five boards pays that band, so #10 on one board and #3 on another pays Elite and Third. The same band on two boards is one reward.
+- **Guided tour** (Miguel's playtest): no tour on the career's Calendar, Market, Standings, Inbox and Club tabs; no entry animation; Done and Skip return to the top of the page; the draft tour runs over a fixed example lineup before the first draw; every tour shows once after the season reset, to veterans too (`profile.tours`, synced across devices). A tour in front now holds the reward pop-ups until it closes.
+- **Season 1 starts on 12/11/2026.** Its length is not decided; the end date is a placeholder that no screen shows.
+- `/quiz` is linked from the home page (it was reachable only through a modal); its description says five attempts; `CONTENT_DATE` 2026-11-12.
+
+#### Fixed
+- **A returning player's first v2.0 session carried no profile in analytics.** Root cause: the persist migrate reported `quality_migration` while the profile store was still being created, before the store had registered what a session carries, and the first event of a visit opens the session. The report now follows the store's load (a microtask). Covered by `migrationSession.test.ts`.
+- **A South American career never saw the Rocket Street championship and almost none of its news.** Root cause: the championship was only a renamed invitational, and invitationals need reputation 30, which a new SAM org reaches during season 3 (probe before: on the calendar in 0 of 8 first and second seasons); the news desk signed one fixed story and the rookie class of the first region in the list, never SAM.
+- **Partner logo missing while a partner cup is being played.** Root cause: the live bracket header (`EventPlayback`) rendered no partner art for any partner; the lobby and the result screen did. Not reproduced for the 50/50 lobby from code, where the mark resolves (it is a wide wordmark shown at about 56 by 28 px).
+- **Tour entry looked broken.** Root cause: the spotlight and the card were first rendered at an unmeasured placeholder (a zero-size box at the screen centre, the card at the top-left corner) and a 300 ms transition animated them to the target one frame later.
+- **Supabase (production, fixed on 12/11):** the public `leaderboard` view carried the schema's default INSERT / UPDATE / DELETE grants for the anonymous role. As a plain view owned by `postgres` it let anyone holding the public key change or delete profile rows. Both public views are SELECT-only now.
+
+#### Not done / not verified
+- Sign-in on a v2.0 build against the production database was not exercised end to end (no staging Supabase project exists); the queries were checked through the public API and the row logic as the `authenticated` role in rolled-back transactions.
+- The full export of the 455 production saves was not run through the rehearsal: Miguel's own pre-season save and the surveyed shape were.
+- Not seen in a browser: the achievements grid with the new and secret entries, the Rocket Street stories and the partner logo in the live bracket header. 30 draft and 7 career achievements have no art (tier fallback).
+- Browser checks done on a desktop pane only: the ten board tabs (also at 375 px), the draft tour end to end, the career tour on HQ, Squad and Calendar. The recap with several board places and the tour holding a reward pop-up were not seen in a browser.
 
 ### rc.53 (2026-11-12), Supernova at 90 stars
 

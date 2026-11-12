@@ -2,7 +2,9 @@
 
 /**
  * First-run onboarding. One-time modals, gated by persisted flags:
- *  - How to play: the very first time the player enters a draft.
+ *  - (The first draft's guided tour is not here any more: rc.54 moved it to
+ *    `DraftScreen`, which shows it over a static board before the draw and
+ *    mounts this component only once the tour is out of the way.)
  *  - Regional draft: the first time they start a region-locked run.
  *  - Legacy intro: the first time they draft on Legacy difficulty. On a Daily
  *    "Legacy Day" it says so instead of "you unlocked" (rc.29, DRAFT-14): the
@@ -20,7 +22,6 @@ import { useRunStore } from "@/store/runStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
-import { DraftTour } from "@/components/tour/DraftTour";
 
 type Accent = "orange" | "emerald" | "cyan";
 
@@ -97,19 +98,10 @@ export function RunOnboarding({
   regionLock?: Region | null;
 }) {
   const { ONBOARDING } = useCopy();
-  const seenTour = useProfileStore((s) => Boolean(s.flags.seenDraftTour));
   const seenRegional = useProfileStore((s) => s.flags.seenRegionalIntro);
   const seenLegacy = useProfileStore((s) => s.flags.seenLegacyIntro);
   const markFlag = useProfileStore((s) => s.markFlag);
   const daily = useRunStore((s) => Boolean(s.run?.daily));
-
-  // T1 (v2.0): the first draft is a guided tour of the real screen now (the
-  // text modal it replaces said the same in four paragraphs). rc.50 (Miguel):
-  // its own flag, so Season 1 shows it to veterans of the old modal too; the
-  // old flag is still set for anything that reads it.
-  if (!seenTour) {
-    return <DraftTour onClose={() => { markFlag("seenDraftTour"); markFlag("seenHowToPlay"); }} />;
-  }
 
   if (regionLock && !seenRegional) {
     return (

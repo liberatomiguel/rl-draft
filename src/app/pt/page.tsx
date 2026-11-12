@@ -30,6 +30,8 @@ export const metadata: Metadata = pageMetadata({
 const SEO_LINKS = [
   { label: PT.HOME_SEO.links.play, href: "/play" },
   { label: PT.HOME_SEO.links.howToPlay, href: "/how-to-play" },
+  // The quiz page's only crawlable links (see HomeMenu). Cut with the route.
+  ...(FEATURES.playtest ? [] : [{ label: PT.QUIZ_UI.kicker, href: "/quiz" }]),
   { label: PT.HOME_SEO.links.ratings, href: "/pt/overalls" },
   { label: PT.HOME_SEO.links.specialCards, href: "/pt/cartas-especiais" },
   { label: PT.HOME_SEO.links.strategy, href: "/pt/estrategia" },

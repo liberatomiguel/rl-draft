@@ -116,6 +116,9 @@ export default function HomeMenu() {
   const seoLinks = [
     { label: HOME_SEO.links.play, href: "/play" },
     { label: HOME_SEO.links.howToPlay, href: "/how-to-play" },
+    // /quiz is indexable and in the sitemap, but its only other link sits in a
+    // modal: without this one no exported HTML links to it. Cut with the route.
+    ...(FEATURES.playtest ? [] : [{ label: QUIZ_UI.kicker, href: "/quiz" }]),
     { label: HOME_SEO.links.ratings, href: localePath("ratings", active) },
     { label: HOME_SEO.links.specialCards, href: localePath("special-cards", active) },
     { label: HOME_SEO.links.strategy, href: localePath("strategy", active) },

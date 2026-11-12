@@ -423,12 +423,16 @@ describe("reloads, staging and the persist wrapper", () => {
     expect(calls).toEqual([]);
   });
 
-  it("quality_migration: each store's migrate reports its own persist version as toVersion", () => {
+  it("quality_migration: each store's migrate reports its own persist version as toVersion", async () => {
     const calls = deploy();
     const profileOpts = profileStore.persist.getOptions();
     profileOpts.migrate!({ xp: 10, runsCompleted: 0, wins: { easy: 0, normal: 0, hard: 0, legacy: 0 }, unlockedSpecials: {}, achievements: {}, runHistory: [] }, 11);
     const runOpts = runStore.persist.getOptions();
     runOpts.migrate!({ run: null }, 2);
+    // rc.54: nothing is sent from inside the migrate (the store is still loading,
+    // so a session opened here would carry no profile); the report follows it.
+    expect(of(calls, "quality_migration")).toEqual([]);
+    await Promise.resolve();
     expect(of(calls, "quality_migration").map((c) => [c.props.store, c.props.fromVersion, c.props.toVersion])).toEqual([
       ["profile", 11, profileOpts.version],
       ["run", 2, runOpts.version],

@@ -3,16 +3,21 @@
 /**
  * Road to Worlds — the guided tour (T1, v2.0).
  *
- * One chapter per career screen. A chapter opens by itself the first time the
- * screen is visited (the HQ chapter is the mode's introduction: what each tab
- * is for, the clock, the day card, the inbox, the cash, progression) and the
- * floating help button reopens the chapter of the screen you are on.
+ * A chapter opens by itself the first time its screen is visited (the HQ
+ * chapter is the mode's introduction: what each tab is for, the clock, the day
+ * card, the inbox, the cash, progression) and the floating help button reopens
+ * the chapter of the screen you are on.
  *
- * "Seen" is a one-shot flag on the save (`flags["tour.<chapter>"]`, the same
- * additive record the old HQ explainer used; no persist key or version moves).
- * A chapter counts as seen when ANY save slot has it, so a second career does
- * not replay the tour. The HQ chapter also sets the legacy `seenHub` flag, so
- * the `ux_tutorial` analytics event of the explainer it replaces still fires.
+ * rc.54 (Miguel): only the HQ, Squad, Training and Finances have a chapter.
+ * Calendar, Market, Standings, Inbox and Club have none: nothing opens there
+ * and the help button is not shown (`careerTourChapters.ts`).
+ *
+ * "Seen" is once per PLAYER since the Season 1 reset: `profile.tours`
+ * (`career.<chapter>` → the season it was seen in, `src/lib/tours.ts`). A
+ * second career, or a new one after deleting every save, does not replay it,
+ * and a save that carries the older `flags["tour.<chapter>"]` still gets each
+ * chapter once. Closing a chapter also keeps writing the save's own flags
+ * (`tour.<chapter>`, and `seenHub` for the HQ) for anything that reads them.
  *
  * It never opens over another dialog (a headline, a money notice, the sponsor
  * choice): it waits until the screen is clear.
@@ -22,13 +27,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useCareerSave } from "@/components/career/careerUi";
 import { useCareerNavigation } from "@/components/career/careerNavigation";
+import { careerTourChapter, careerTourRoute, type CareerTourChapter } from "@/components/career/tour/careerTourChapters";
 import { GuidedTour, type TourStep, type TourTone } from "@/components/tour/GuidedTour";
 import {
   BankIcon,
   CalendarIcon,
   ClipboardIcon,
   CoachIcon,
-  CoinsIcon,
   HandshakeIcon,
   HqIcon,
   PeakIcon,
@@ -39,29 +44,18 @@ import {
   TrendUpIcon,
   TrophyIcon,
   WalletIcon,
-  WhistleIcon,
   HourglassIcon,
   BoltIcon,
   HeartPulseIcon,
-  LockIcon,
-  CheckIcon,
 } from "@/components/ui/icons";
 import { type CareerCopy, useCareerCopy } from "@/content/careerCopy";
+import { careerTourId, tourSeen } from "@/lib/tours";
 import { useCareerStore } from "@/store/careerStore";
+import { useProfileStore } from "@/store/profileStore";
 
-type Chapter = "hub" | "training" | "market" | "finances" | "calendar" | "squad" | "standings" | "club";
+type Chapter = CareerTourChapter;
 
-const CHAPTER_OF_ROUTE: Record<string, Chapter> = {
-  "/career": "hub",
-  "/career/training": "training",
-  "/career/market": "market",
-  "/career/finances": "finances",
-  "/career/calendar": "calendar",
-  "/career/squad": "squad",
-  "/career/standings": "standings",
-  "/career/club": "club",
-};
-
+/** The save's own one-shot flag (kept for older readers; it does not gate the tour). */
 const flagOf = (chapter: Chapter): string => `tour.${chapter}`;
 
 const BIG = "h-5 w-5";
@@ -138,19 +132,6 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         step("coach", T.training.coach, "training-coach", "blue", <CoachIcon className={BIG} />),
         step("growth", T.training.growth, "training-growth", "cyan", <PeakIcon className={BIG} />),
       ];
-    case "market":
-      return [
-        step("tabs", T.market.tabs, "market-tabs", "blue", <HandshakeIcon className={BIG} />, [
-          <CheckIcon key="f" className={SMALL} />,
-          <CoinsIcon key="c" className={SMALL} />,
-          <WhistleIcon key="k" className={SMALL} />,
-          <ClipboardIcon key="d" className={SMALL} />,
-        ]),
-        step("search", T.market.search, "market-search", "orange", <TargetIcon className={BIG} />, [
-          <BoltIcon key="o" className={SMALL} />,
-          <LockIcon key="c" className={SMALL} />,
-        ]),
-      ];
     case "finances":
       return [
         step("overview", T.finances.overview, "finances-overview", "good", <WalletIcon className={BIG} />),
@@ -158,32 +139,11 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         step("loans", T.finances.loans, "finances-loans", "blue", <BankIcon className={BIG} />),
         step("sponsor", T.finances.sponsor, "finances-sponsor", "orange", <HandshakeIcon className={BIG} />),
       ];
-    case "calendar":
-      return [
-        step("month", T.calendar.month, "calendar-month", "blue", <CalendarIcon className={BIG} />),
-        step("next", T.calendar.next, "calendar-next", "orange", <TrophyIcon className={BIG} />, [
-          <TargetIcon key="o" className={SMALL} />,
-          <CoinsIcon key="c" className={SMALL} />,
-        ]),
-      ];
     case "squad":
       return [
         step("starters", T.squad.starters, "squad-starters", "blue", <ShieldIcon className={BIG} />),
         step("bench", T.squad.bench, "squad-bench", "cyan", <CoachIcon className={BIG} />),
         step("contracts", T.squad.contracts, "squad-contracts", "orange", <ClipboardIcon className={BIG} />),
-      ];
-    case "standings":
-      return [
-        step("tabs", T.standings.tabs, "standings-tabs", "blue", <TargetIcon className={BIG} />, [
-          <TrophyIcon key="m" className={SMALL} />,
-          <StarIcon key="w" className={SMALL} />,
-        ]),
-        step("table", T.standings.table, "standings-table", "good", <TrendUpIcon className={BIG} />),
-      ];
-    case "club":
-      return [
-        step("progress", T.club.progress, "club-progress", "cyan", <StarIcon className={BIG} />),
-        step("trophies", T.club.trophies, "club-trophies", "orange", <TrophyIcon className={BIG} />),
       ];
   }
 }
@@ -195,17 +155,19 @@ export function CareerTour() {
   const C = useCareerCopy();
   const pathname = usePathname();
   const save = useCareerSave();
-  const slots = useCareerStore((s) => s.slots);
   const markFlag = useCareerStore((s) => s.markFlag);
+  const markTourSeen = useProfileStore((s) => s.markTourSeen);
   const navigating = useCareerNavigation((s) => s.destination !== null);
   // The open chapter is tied to the route it was opened on: leaving the screen
   // closes it (the element it pointed at is gone) without an effect.
   const [opened, setOpened] = useState<{ chapter: Chapter; route: string } | null>(null);
 
-  const route = (pathname ?? "").replace(/\/$/, "") || "/";
-  const chapter: Chapter | null = CHAPTER_OF_ROUTE[route] ?? null;
+  const route = careerTourRoute(pathname);
+  // null on Calendar, Market, Standings, Inbox and Club: no tour, no help button.
+  const chapter: Chapter | null = careerTourChapter(pathname);
   const running = save?.phase === "running";
-  const seen = chapter ? slots.some((slot) => slot?.flags?.[flagOf(chapter)]) : true;
+  // Once per player since the season reset (the save's older flags do not count).
+  const seen = useProfileStore((s) => (chapter ? tourSeen(s.tours, careerTourId(chapter)) : true));
 
   const open = opened && opened.route === route ? opened.chapter : null;
 
@@ -227,6 +189,8 @@ export function CareerTour() {
   const steps = useMemo(() => (open ? stepsOf(open, C) : []), [open, C]);
 
   const close = () => {
+    // Done or Skip, the automatic opening or the help button: seen for good.
+    if (open) markTourSeen(careerTourId(open));
     if (open && save) {
       if (!save.flags[flagOf(open)]) markFlag(flagOf(open));
       // The explainer this chapter replaced: keeps its analytics event and its flag.

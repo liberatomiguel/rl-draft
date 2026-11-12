@@ -127,20 +127,35 @@ describe("deriveOwnedIds — pre-season, grants, the rank track", () => {
     expect(deriveOwnedIds(facts())).toEqual([]);
   });
 
-  it("pre-season participation + the peak-rank rewards up to THAT rank (rc.20: cumulative)", () => {
+  it("pre-season participation + the PEAK rank's own rewards only (rc.54: not cumulative)", () => {
     const ids = deriveOwnedIds(facts({ preseason: snap({ rankId: "gold" }) }));
-    expect(ids).toEqual(
-      expect.arrayContaining(["legacy-title-first-chapter", "first-chapter", "pre-season-bronze", "pre-season-silver", "pre-season-gold", "legacy-title-ps-bronze", "legacy-title-ps-gold"]),
-    );
-    expect(ids).not.toContain("pre-season-platinum");
-    expect(ids).not.toContain("legacy-title-ps-platinum");
-    expect(ids).not.toContain("legacy-title-ps-supersonic-legend");
+    expect(ids.sort()).toEqual(["first-chapter", "legacy-title-first-chapter", "legacy-title-ps-gold", "pre-season-gold"]);
   });
 
-  it("SSL pre-season gets every rank reward; a snapshot with no finished run gets nothing", () => {
+  it("SSL pre-season gets the SSL reward and none below; no finished run gets nothing", () => {
     const ssl = deriveOwnedIds(facts({ preseason: snap({ rankId: "supersonic-legend" }) }));
-    expect(ssl).toEqual(expect.arrayContaining(["legacy-title-ps-supersonic-legend", "pre-season-supersonic", "pre-season-bronze", "pre-season-grand-champion"]));
+    expect(ssl.sort()).toEqual(
+      ["first-chapter", "legacy-title-first-chapter", "legacy-title-ps-supersonic-legend", "pre-season-supersonic"].sort(),
+    );
+    const champion = deriveOwnedIds(facts({ preseason: snap({ rankId: "champion" }) }));
+    expect(champion).toEqual(expect.arrayContaining(["pre-season-champion", "legacy-title-ps-champion"]));
+    expect(champion.some((id) => id === "pre-season-diamond" || id === "pre-season-grand-champion")).toBe(false);
     expect(earned(facts({ preseason: snap({ runsCompleted: 0 }) }))).toEqual([]);
+  });
+
+  it("every frozen board pays its own band (rc.54): #10 on one board and #3 on another pays both", () => {
+    const ids = deriveOwnedIds(
+      facts({ preseason: snap({ position: 10, positions: { mmr: 10, championships: 3, best_sam: 77 } }) }),
+    );
+    expect(ids).toEqual(
+      expect.arrayContaining(["season-elite-ps", "legacy-title-ps-board-elite", "season-third-place-ps", "legacy-title-ps-board-3"]),
+    );
+    expect(ids).not.toContain("season-champion-ps");
+    expect(ids).not.toContain("season-finalist-ps"); // #77 is outside every band
+    // The same band on two boards is one reward, and the rank reward is independent.
+    const twice = deriveOwnedIds(facts({ preseason: snap({ rankId: "gold", position: null, positions: { best_legacy: 2, titles_legacy: 2 } }) }));
+    expect(twice.filter((id) => id === "season-runner-up-ps")).toHaveLength(1);
+    expect(twice).toContain("pre-season-gold");
   });
 
   it("board places map to ONE band each (non-cumulative; rc.20 bands: 1 · 2 · 3 · 4–10 · 11–50)", () => {

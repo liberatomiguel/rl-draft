@@ -18,10 +18,13 @@ export const PRESEASON_ID = 0;
 export const SEASON = {
   id: 1,
   name: "Season 1",
-  /** ISO dates (UTC). `endsAt` is informational (countdown + copy); the switch
-   *  to Season 2 is a deploy that bumps `id`. TODO(Miguel): set the real dates. */
-  startsAt: "2026-10-20",
-  endsAt: "2026-12-22",
+  /** ISO dates (UTC). Season 1 opened on 12/11/2026 (the v2.0 deploy). Its
+   *  length is NOT decided (Miguel, 12/11): `endsAt` / `weeks` are a nine-week
+   *  placeholder that no screen shows (`seasonDaysLeft` / `seasonWeek` have no
+   *  caller). Set them before putting a countdown or a weekly schedule on
+   *  screen. The switch to Season 2 is a deploy that bumps `id`. */
+  startsAt: "2026-11-12",
+  endsAt: "2027-01-13",
   weeks: 9,
 } as const;
 

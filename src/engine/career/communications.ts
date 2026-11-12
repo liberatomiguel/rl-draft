@@ -1,5 +1,6 @@
 import { CAREER_SAVE } from "@/config/balance";
 import { weekOfDay } from "./calendar";
+import { ROCKET_STREET_KEYS } from "./rocketStreet";
 import type { CareerSave, MailItem, NewsItem } from "./types";
 
 type NewsDraft = Omit<NewsItem, "id" | "seasonIndex" | "week" | "day" | "read">;
@@ -11,6 +12,8 @@ const PUBLIC_KEYS = new Set([
   "userSigned", "userSold", "userReleased", "result", "resultUser", "seasonChampion",
   "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
   "worldsCancelled", "orgRelocates",
+  // R133: the regional partner desk's stories are public reporting too.
+  ...ROCKET_STREET_KEYS,
 ]);
 
 /**

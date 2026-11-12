@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 25;
+export const BALANCE_VERSION = 26;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3599,6 +3599,43 @@ export const CAREER_NEWS = {
   leadMaxAgeDays: 7,
   /** A beat that runs as archive (its history did not happen in this save) files at this priority. */
   archivePriority: 1,
+} as const;
+
+/**
+ * Season 1 (R133): the regional partner of South America — Rocket Street's
+ * community championship and its news desk, for careers based in `region`.
+ * Measured on RS_PROBE=1 (`careerRocketStreet.probe.test.ts`, SAM, Normal,
+ * 8 careers × 3 seasons): before, the championship reached 0 of 16 seasons
+ * in the first two years (it sat behind the invitational reputation gate,
+ * which a new org crosses in its third season) and the desk signed 1.0 / 0 /
+ * 0 news items a season.
+ */
+export const CAREER_ROCKET_STREET = {
+  region: "SAM" as const,
+  /**
+   * The championship's editions in a season: each anchor is an open week; an
+   * edition is played at the tier the org's open-week cups are at (a Community
+   * Cup below CAREER_UNOFFICIAL.t2RepGate, an Invitational above it), always
+   * as a standard 3v3. When the name rotation gives the anchor to another
+   * partner's cup (the 50/50 Community Cup, the Duds Cup Invitational), the
+   * edition moves to the next free open week of the same split.
+   */
+  cupAnchorWeeks: [7, 27] as readonly number[],
+  /**
+   * The desk recaps this share of the region's regionals (drawn per event on
+   * its own seeded stream): about three of a season's nine. Measured on the
+   * probe above, after: the championship on the calendar and played twice in
+   * 24 of 24 seasons; 13.9 / 19.5 / 19.6 signed stories a season (the
+   * rollover's departing organisations and rookie class count from the second
+   * season), 21–25 % of the feed. At 0.5 it was 15.6 / 20.3 / 20.4.
+   */
+  regionalRecapChance: 1 / 3,
+  /** The desk wraps a transfer window that registered at least this many moves in the region. */
+  windowWrapMinMoves: 1,
+  /** Lines a templated story is written in (the copy holds this many per key; drawn per story). */
+  variants: 3,
+  /** News priorities (2 raises a toast; 1 is a row in the feed). */
+  priority: { cupPreview: 2, cupRecap: 1, regionalRecap: 1, berths: 1, windowWrap: 1, rookies: 1 },
 } as const;
 
 /**

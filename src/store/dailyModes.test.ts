@@ -31,7 +31,10 @@ describe("CH-03: Daily Quiz", () => {
     expect(useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer")).toMatchObject({ correct: true, xp: QUIZ.xpByAttempt[attempt], attempts: attempt });
     // A first-guess solve also earns "Called It" (v2.0, C2), once.
     const calledIt = attempt === 1 ? achievements.find((a) => a.id === "ach-quiz-first-try")!.xp : 0;
-    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt] + calledIt);
+    // E1: a solve on the final guess earns the secret "Zero Seconds", once.
+    const lastGuess = attempt === QUIZ.attempts ? achievements.find((a) => a.id === "ach-quiz-last-guess")!.xp : 0;
+    expect(useProfileStore.getState().xp - before).toBe(QUIZ.xpByAttempt[attempt] + calledIt + lastGuess);
+    expect(Boolean(useProfileStore.getState().achievements["ach-quiz-last-guess"])).toBe(attempt === QUIZ.attempts);
     const snapshot = JSON.parse(JSON.stringify(useProfileStore.getState().quiz));
     const xp = useProfileStore.getState().xp;
     for (let i = 0; i < 3; i++) useProfileStore.getState().guessQuiz(puzzle, puzzle.playerId, "answer");

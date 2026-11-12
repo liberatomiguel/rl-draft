@@ -35,7 +35,7 @@ import {
   type CosmeticKind,
   type CosmeticSource,
 } from "@/data/cosmetics";
-import type { PreseasonSnapshot } from "./season";
+import { preseasonPlaces, type PreseasonSnapshot } from "./season";
 
 /** Explicit "show nothing" choice for a slot (kept for saved-state compatibility). */
 export const NONE = "none";
@@ -180,13 +180,13 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
       return !!f.preseason && f.preseason.runsCompleted > 0;
     case "legacy-rank": {
       if (!f.preseason || f.preseason.runsCompleted <= 0) return false;
-      const peak = rankIndex(f.preseason.rankId);
-      const want = rankIndex(source.rankId);
-      return source.exact ? peak === want : peak >= want;
+      // rc.54 (Miguel, 12/11): the pre-season pays the PEAK rank only. A Supersonic
+      // Legend gets the Supersonic Legend reward, not the eight below it.
+      return rankIndex(f.preseason.rankId) === rankIndex(source.rankId);
     }
     case "legacy-position": {
-      const pos = f.preseason?.position;
-      return !!pos && pos >= source.minPosition && pos <= source.maxPosition;
+      // rc.54: one frozen place per pre-season board; each place pays its own band.
+      return preseasonPlaces(f.preseason).some((pos) => pos >= source.minPosition && pos <= source.maxPosition);
     }
     case "grant":
       return f.grants.includes(source.grantId);

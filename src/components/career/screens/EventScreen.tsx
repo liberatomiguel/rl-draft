@@ -931,7 +931,11 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               {headerBadge}
             </Badge>
           ) : (
-            <TierChip tier={def.tier} />
+            // Season 1 (R133): a partner event keeps its logo while it is played, as in its lobby and its results.
+            <span className="flex items-center gap-2">
+              <EventBrand name={def.name} size="sm" />
+              <TierChip tier={def.tier} />
+            </span>
           )
         }
         className="mb-4"

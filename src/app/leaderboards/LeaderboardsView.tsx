@@ -44,14 +44,31 @@ const ROW_FEATURED_PX = 36;
 const PEEK_BADGE_PX = 76;
 const PEEK_FEATURED_PX = 108;
 
-type BoardKey = "season" | "hallOfFame" | "titles" | "legacyOverall" | "regional";
+type BoardKey =
+  | "season"
+  | "titles"
+  | "legacyTitles"
+  | "samTitles"
+  | "naTitles"
+  | "euTitles"
+  | "oceTitles"
+  | "menaTitles"
+  | "worlds"
+  | "hallOfFame";
 
+/** rc.54 (Miguel, 12/11): the Season 1 boards. Every one counts this season only,
+ *  so a new season is a new race; the frozen pre-season board closes the list. */
 const BOARDS: { key: BoardKey; category?: LeaderboardCategory }[] = [
   { key: "season", category: "season_mmr" },
+  { key: "titles", category: "season_titles" },
+  { key: "legacyTitles", category: "season_legacy_titles" },
+  { key: "samTitles", category: "season_titles_sam" },
+  { key: "naTitles", category: "season_titles_na" },
+  { key: "euTitles", category: "season_titles_eu" },
+  { key: "oceTitles", category: "season_titles_oce" },
+  { key: "menaTitles", category: "season_titles_mena" },
+  { key: "worlds", category: "season_worlds" },
   { key: "hallOfFame" },
-  { key: "titles", category: "championships" },
-  { key: "legacyOverall", category: "best_legacy" },
-  { key: "regional", category: "best_sam" },
 ];
 
 type Row = {
@@ -194,7 +211,7 @@ export function LeaderboardsView() {
               </button>
             ))}
           </div>
-          <p className="mb-4 text-xs text-faint">{isHall ? L.hallHint : board === "season" ? L.seasonBoardHint : null}</p>
+          <p className="mb-4 text-xs text-faint">{isHall ? L.hallHint : board === "season" ? L.seasonBoardHint : (L.boardHints[board] ?? null)}</p>
 
           <Panel className="divide-y divide-line/60 overflow-hidden">
             {loading ? (

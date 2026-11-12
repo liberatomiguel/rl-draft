@@ -22,6 +22,7 @@ import { EMPTY_LOGIN, EMPTY_MISSIONS, mergeLogin, mergeMissions } from "@/engine
 import { EMPTY_QUIZ, mergeQuiz } from "@/engine/quizState";
 import {
   mergeRating,
+  mergeRegionTitles,
   mergeSeasonState,
   mergeSnapshots,
   normalizeToSeason,
@@ -50,6 +51,8 @@ export type DurableProfile = Pick<
   | "challengeStars"
   | "careerMarks"
   | "careerWorldsWon"
+  | "regionTitles"
+  | "tours"
   | "legacyStreak"
   | "records"
   | "settings"
@@ -85,6 +88,8 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "challengeStars",
   "careerMarks",
   "careerWorldsWon",
+  "regionTitles",
+  "tours",
   "legacyStreak",
   "records",
   "settings",
@@ -99,6 +104,18 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "events",
   "quiz",
 ];
+
+/** Guided-tour markers (tour id -> season seen in): the latest season per tour. */
+function mergeTours(
+  a: Record<string, number> | undefined,
+  b: Record<string, number> | undefined,
+): Record<string, number> {
+  const out: Record<string, number> = { ...(a ?? {}) };
+  for (const [id, season] of Object.entries(b ?? {})) {
+    if (typeof season === "number") out[id] = Math.max(out[id] ?? 0, season);
+  }
+  return out;
+}
 
 /** Extract the durable slice from a full ProfileState (drops the action fns). */
 export function toDurable(p: ProfileState): DurableProfile {
@@ -242,6 +259,9 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),
     challengeStars,
+    regionTitles: mergeRegionTitles(local.regionTitles, cloud.regionTitles),
+    // rc.54: a tour seen on one device is seen on every device (latest season per tour).
+    tours: mergeTours(local.tours, cloud.tours),
     careerMarks,
     careerWorldsWon,
     legacyStreak,

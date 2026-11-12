@@ -18,6 +18,13 @@ export interface PreviewRow {
   season_peak_mmr: number;
   season_titles: number;
   season_runs: number;
+  season_legacy_titles: number;
+  season_titles_sam: number;
+  season_titles_na: number;
+  season_titles_eu: number;
+  season_titles_oce: number;
+  season_titles_mena: number;
+  season_worlds: number;
   lifetime_xp: number;
   championships: number;
   best_legacy: number;
@@ -88,6 +95,15 @@ export function previewLeaderboardRows(): PreviewRow[] {
       season_peak_mmr: mmr + Math.round(r() * 80),
       season_titles: seasonTitles,
       season_runs: runs,
+      // rc.54 boards: derived from the row (no extra draws, so the fixture's
+      // other columns stay exactly as they were).
+      season_legacy_titles: Math.floor(seasonTitles * 0.3),
+      season_titles_sam: i % 3 === 0 ? Math.floor(seasonTitles * 0.25) : 0,
+      season_titles_na: i % 4 === 1 ? Math.floor(seasonTitles * 0.2) : 0,
+      season_titles_eu: i % 3 === 2 ? Math.floor(seasonTitles * 0.2) : 0,
+      season_titles_oce: i % 7 === 3 ? Math.floor(seasonTitles * 0.15) : 0,
+      season_titles_mena: i % 8 === 5 ? Math.floor(seasonTitles * 0.15) : 0,
+      season_worlds: i % 6 === 0 ? 1 + (i % 3) : 0,
       lifetime_xp: xp + Math.round(r() * 20000),
       championships: seasonTitles + Math.round(r() * 25),
       best_legacy: Math.round(70 + r() * 20),

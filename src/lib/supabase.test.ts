@@ -62,6 +62,7 @@ describe("fetchCloudRow — tagged result", () => {
       username: "ace",
       grants: [],
       preseasonPosition: null,
+      preseasonPositions: {},
     });
   });
 
@@ -72,6 +73,8 @@ describe("fetchCloudRow — tagged result", () => {
         durable: { xp: 5 },
         username: "ace",
         preseason_position: 17,
+        // rc.54: one place per frozen board; junk keys and values are dropped.
+        preseason_positions: { mmr: 17, championships: 3, best_sam: "9", hacked: 1, titles_legacy: 0 },
         profile_grants: [{ grant_id: "pro" }, { grant_id: "supporter" }],
       },
       error: null,
@@ -80,6 +83,11 @@ describe("fetchCloudRow — tagged result", () => {
       status: "ok",
       grants: ["pro", "supporter"],
       preseasonPosition: 17,
+      preseasonPositions: { mmr: 17, championships: 3 },
+    });
+    expect((await sb.fetchCloudRow("u1")) as { preseasonPositions: object }).toHaveProperty("preseasonPositions", {
+      mmr: 17,
+      championships: 3,
     });
   });
 

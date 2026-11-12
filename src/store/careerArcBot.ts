@@ -951,6 +951,10 @@ export function playArcCareer(cfg: {
   onSeason?: (moment: "start" | "end", save: CareerSave) => void;
   /** Test-only observation after each real-flow day, including the founding day. */
   onDay?: (save: CareerSave) => void;
+  /** rc.54 (cutover rehearsal): continue a REAL save (already through the store's
+   *  load-time migration) instead of founding a career. `seasons` then counts
+   *  from the save's current season. */
+  startFrom?: CareerSave;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
@@ -960,7 +964,7 @@ export function playArcCareer(cfg: {
     ...(cfg.sponsor ? { sponsor: cfg.sponsor } : {}),
     ...(cfg.others ? { others: cfg.others } : {}),
   };
-  let save = createCareerSave(inputFor(cfg.region, cfg.difficulty, policy), cfg.seed);
+  let save = cfg.startFrom ?? createCareerSave(inputFor(cfg.region, cfg.difficulty, policy), cfg.seed);
   const out: ArcCareer = {
     region: cfg.region,
     difficulty: cfg.difficulty,

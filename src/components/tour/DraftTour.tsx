@@ -1,36 +1,27 @@
 "use client";
 
 /**
- * The draft's first-run tour (T1, v2.0): four steps on the real draft screen
- * (the lineup on offer, your team, the reroll, what comes next), in the same
- * `GuidedTour` as Road to Worlds. It replaces the "How to play" text modal and
- * has its own one-shot flag (`seenDraftTour`, rc.50), so Season 1 shows it to everyone once.
+ * The draft's first-run tour (T1, v2.0): four steps on the draft screen (the
+ * lineup on offer, your team, the reroll, what comes next), in the same
+ * `GuidedTour` as Road to Worlds. It replaces the "How to play" text modal.
  *
- * It waits for the lineup reel to land before it opens: the first step points
- * at the cards, which are invisible while the reel spins.
+ * rc.54 (Miguel): it runs BEFORE the draw, over a fixed static board that
+ * `DraftScreen` renders for it (`draftTourDemo`), so it opens at once: there is
+ * no reel to wait for. The real offer rolls in when it is done or skipped.
+ * Shown once per player since the Season 1 reset (`profile.tours.draft`,
+ * `src/lib/tours.ts`), to veterans of the old modal and the old flags too.
  */
 
-import { useEffect, useState } from "react";
 import { GuidedTour, type TourStep } from "@/components/tour/GuidedTour";
 import { BoltIcon, ShieldIcon, StarIcon, TargetIcon, TrendUpIcon, TrophyIcon } from "@/components/ui/icons";
 import { useCopy } from "@/content/copy";
 
 const BIG = "h-5 w-5";
 const SMALL = "h-3.5 w-3.5";
-/** The lineup reel (name roll + card fade-in) is done by then. */
-const REEL_MS = 1600;
 
 export function DraftTour({ onClose }: { onClose: () => void }) {
   const { ONBOARDING } = useCopy();
   const T = ONBOARDING.tour;
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setReady(true), REEL_MS);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  if (!ready) return null;
 
   const steps: TourStep[] = [
     {

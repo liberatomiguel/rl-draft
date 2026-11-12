@@ -61,7 +61,7 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 | `subs.json` | Substitute cards | 149 |
 | `lineups.json` | Historical rosters (the draft pool) | 484 (32 national) |
 | `specialCards.json` | Collectible special versions (hand-maintained) | 111 (+ 133 national cards derived at load) |
-| `achievements.json` | Achievement definitions (hand-maintained) | 56 |
+| `achievements.json` | Achievement definitions (hand-maintained) | 92 |
 | `challenges.json` | Challenges (hand-maintained) | 27 |
 | `cardIdAliases.json` | Retired card ids → live cards | 6 |
 
@@ -303,10 +303,22 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 - `group` (**required**, v1.4): the section bucket on the achievements screen —
   `milestone | mode | performance | chemistry | roster | collection |
   progression`. Distinct from `category` (which is only the visual rarity tier).
-- `secret` (optional): hidden until unlocked.
+- `xp`: follows the tier (common 100, rare 250, epic 600, legend 1500; a test
+  enforces it).
+- `secret` (optional): until earned, the grid shows "???" and a hint-free line
+  instead of the name and description.
+- `title` / `description` are the ENGLISH text; the Portuguese text is keyed by
+  id in `copy.pt.ts` (`ACH_UI.items`; a test fails if one is missing or stale).
 
-The check logic lives in `src/engine/achievements.ts` — adding a new
-achievement = one JSON entry + one rule function with the same id.
+The check logic lives in `src/engine/achievements.ts` (team, series and run
+feats) and `src/engine/counterAchievements.ts` (profile counters, the Season
+systems, challenges) — adding a new achievement = one JSON entry + its PT
+entry + one rule with the same id + a test that builds the triggering state.
+**Never change the meaning or threshold of an id players already hold** (retire
+it and add a new id), and when an id is retired remove it from
+`src/store/__fixtures__/preseason-held-ids.json` in the same change
+(DESIGN-DECISIONS, E1 section). Road to Worlds achievements are a separate
+catalogue: `src/data/career/achievements.ts`.
 
 ---
 

@@ -72,7 +72,7 @@ export const LIVE_PAGE_SLUGS: readonly PageSlug[] = (Object.keys(PAGE_ROUTES) as
  * Date of the last meaningful change to the pages' content: the sitemap's
  * `lastmod` and the articles' `dateModified`. Bump it when the copy changes.
  */
-export const CONTENT_DATE = "2026-11-11"; // v2.0
+export const CONTENT_DATE = "2026-11-12"; // v2.0 "Season 1" launch day
 
 /** Resolve a content page's URL for the active locale. */
 export function localePath(slug: PageSlug, locale: "en" | "pt"): string {

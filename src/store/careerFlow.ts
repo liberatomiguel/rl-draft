@@ -66,6 +66,13 @@ import { coachRenewalTermsFor } from "@/engine/career/renewal";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
 import { deliverMail, deliverNews, repairCommunicationsOnLoad } from "@/engine/career/communications";
+import {
+  rocketStreetBerths,
+  rocketStreetCupPreview,
+  rocketStreetResultStory,
+  rocketStreetRookieClass,
+  rocketStreetWindowWrap,
+} from "@/engine/career/rocketStreet";
 import { communityParticipantsFor, communityTeamFor } from "@/engine/career/community";
 import { statsFromView as communityStats } from "@/engine/career/development";
 import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
@@ -423,6 +430,26 @@ function pushNews(
   item: Omit<NewsItem, "id" | "seasonIndex" | "week" | "day" | "read">,
 ): void {
   deliverNews(save, item);
+}
+
+/** R133: a story of the regional partner's desk, when it has one (engine/career/rocketStreet). */
+function pushDeskStory(save: CareerSave, story: Omit<NewsItem, "id" | "seasonIndex" | "week" | "day" | "read"> | null): void {
+  if (story) deliverNews(save, story);
+}
+
+/** R133: the region's sides in an announced Major / Worlds field, as the desk reports them. */
+function pushDeskBerths(save: CareerSave, fieldRefs: readonly string[], def: CareerEventDef | undefined): void {
+  if (!def) return;
+  pushDeskStory(
+    save,
+    rocketStreetBerths({
+      careerSeed: save.careerSeed,
+      userRegion: save.identity.region,
+      eventId: def.id,
+      eventName: def.name,
+      names: fieldRefs.filter((ref) => regionOfRef(save, ref) === save.identity.region).map((ref) => nameOfRef(save, ref)),
+    }),
+  );
 }
 
 /** v0.2 Inbox: actionable mail addressed to the manager. */
@@ -1338,6 +1365,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
     // --- 3. field announcements (major week / worlds window Monday) --------
     if (cal.kind === "major" && !save.competition.majorFieldRefs) {
       save.competition.majorFieldRefs = majorFieldFor(save.competition, save.careerSeed);
+      pushDeskBerths(save, save.competition.majorFieldRefs, officialEventDefsForWeek(seasonIndex, week)[0]);
       if (save.competition.majorFieldRefs.includes("user")) {
         gainRep(save, "majorQualify");
         // rc.51 (Passport Stamped): the berth itself counts, played or not.
@@ -1355,6 +1383,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
     if (week === CAREER_CALENDAR.worldsWindowWeek && !save.competition.worldsFieldRefs) {
       save.competition.worldsFieldRefs = worldsFieldFor(save.competition, save.careerSeed);
+      // R133: no story in a season with no Worlds (its week has no event).
+      pushDeskBerths(save, save.competition.worldsFieldRefs, officialEventDefsForWeek(seasonIndex, CAREER_CALENDAR.worldsWeek)[0]);
       if (worldsCancelledIn(seasonIndex)) {
         // v2.0 (C1): Season X — the field is the final table, but there is no
         // event: no reputation moves on it. The news came early in split 3
@@ -1427,6 +1457,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
       });
       if (offer) {
         save.unofficialOffer = offer;
+        // R133: the partner's championship week opens with the desk's build-up.
+        pushDeskStory(
+          save,
+          rocketStreetCupPreview({ careerSeed: save.careerSeed, userRegion: save.identity.region, def: offer, orgName: save.identity.orgName }),
+        );
         if (save.prefs.autoEnterUnofficials) {
           save.pendingEventDef = offer;
         }
@@ -2181,6 +2216,8 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
     regionOfRef(save, ref),
   );
   save.eventResults.push(result);
+  // R133: the regional partner desk reports its championship and its region's regionals.
+  pushDeskStory(save, rocketStreetResultStory({ careerSeed: save.careerSeed, userRegion: save.identity.region, result }));
   if (save.eventResults.length > CAREER_SAVE.eventResultsCap) {
     // R40 review: the oldest rows go first — but never the user's OWN results
     // of the running season: the season review counts its Majors and titles
@@ -2237,6 +2274,18 @@ function emitWindowReport(save: CareerSave, lastWindowWeek: number): void {
     if (k.endsWith(suffix)) delete save.negotiationTries[k];
   }
   if (moves.length === 0) return;
+  // R133: the regional partner desk wraps its own region's window.
+  pushDeskStory(
+    save,
+    rocketStreetWindowWrap({
+      careerSeed: save.careerSeed,
+      userRegion: save.identity.region,
+      seasonIndex: save.clock.seasonIndex,
+      windowIdx,
+      moves,
+      nameOf: (ref) => nameOfRef(save, ref),
+    }),
+  );
   const top = [...moves].sort((a, b) => b.fee - a.fee).slice(0, 3);
   const line = (t: TransferLogEntry | undefined) =>
     t ? `${t.playerName} → ${t.toRef ? nameOfRef(save, t.toRef) : "FA"}` : "";
@@ -4204,6 +4253,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
       titleKey: "rookieClass",
       params: { region: headline.region, name: headline.name },
     });
+    // R133: the regional partner desk files its own region's class when the headline is another's.
+    pushDeskStory(save, rocketStreetRookieClass({ userRegion: save.identity.region, rookies: pass.rookies }));
   }
 
   // 2. User squad: aging, decline, retirement announcements, contract expiry.

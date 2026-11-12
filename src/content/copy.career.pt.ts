@@ -2236,6 +2236,39 @@ export const CAREER_PT: CareerCopy = {
       // v2.0 (C1)
       worldsCancelled: () => `Mundial cancelado pela pandemia`,
       orgRelocates: (p: Record<string, string | number>) => `${p.org} troca ${p.from} por ${p.to}`,
+      // Season 1 (R133): a redação da Rocket Street — América do Sul. `v` escolhe a linha (0–2).
+      rsCupPreview: (p: Record<string, string | number>) =>
+        [
+          `${p.event}: a chave é neste sábado`,
+          `Semana de Rocket Street: o LATAM Championship está de volta`,
+          `O campeonato da comunidade sul-americana volta neste sábado`,
+        ][Number(p.v ?? 0) % 3],
+      rsCupRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} vence o ${p.event}`,
+          `${p.champion} fica com o título do ${p.event}`,
+          `${p.event}: o título é de ${p.champion}`,
+        ][Number(p.v ?? 0) % 3],
+      rsRegionalRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} vence o ${p.event}`,
+          `O ${p.event} fica com ${p.champion}`,
+          `${p.champion} bate ${p.runnerUp} e leva o ${p.event}`,
+        ][Number(p.v ?? 0) % 3],
+      rsBerths: (p: Record<string, string | number>) => {
+        const sides = p.t2 ? `${p.t1} e ${p.t2}` : `${p.t1}`;
+        return [
+          `${sides} ${p.t2 ? "levam" : "leva"} a América do Sul ao ${p.event}`,
+          `América do Sul no ${p.event}: ${sides}`,
+          `${sides} ${p.t2 ? "garantem" : "garante"} vaga no ${p.event}`,
+        ][Number(p.v ?? 0) % 3];
+      },
+      rsWindowWrap: (p: Record<string, string | number>) =>
+        [
+          `Janela fecha na América do Sul: ${p.n} ${Number(p.n) === 1 ? "troca" : "trocas"}`,
+          `Janela fechada na América do Sul: ${p.player} em ${p.to} é o destaque`,
+          `${p.to} contrata ${p.player} no fechamento da janela sul-americana`,
+        ][Number(p.v ?? 0) % 3],
     },
     // v0.2 — corpo de texto por template (mesmos params; o feed do QG renderiza).
     body: {
@@ -2364,6 +2397,39 @@ export const CAREER_PT: CareerCopy = {
           : `${p.org} está trocando ${p.from} por ${p.to} e recomeça lá com um elenco novo. Os jogadores que ficam para trás estão livres no mercado.`,
       worldsCancelled: () =>
         `A liga cancelou o Mundial desta temporada: com as viagens fechadas pela pandemia, não há como reunir as regiões. O Split 3 e o seu Major seguem como planejado, e a temporada termina depois deles. Nenhum título mundial é entregue neste ano; a corrida recomeça na próxima temporada.`,
+      // Season 1 (R133): a redação da Rocket Street — América do Sul. `v` escolhe a linha (0–2).
+      rsCupPreview: (p: Record<string, string | number>) =>
+        [
+          `A Rocket Street abre a chave neste sábado: times da América do Sul, eliminação simples, tudo em um dia. ${p.org} está na lista, e o convite está no calendário.`,
+          `O campeonato da comunidade da região é disputado no sábado, do começo ao fim em um dia. ${p.org} tem um convite esperando no calendário.`,
+          `Uma chave, um dia e a cena inteira de olho: o ${p.event} é neste sábado. ${p.org} recebeu o convite; a inscrição está no calendário.`,
+        ][Number(p.v ?? 0) % 3],
+      rsCupRecap: (p: Record<string, string | number>) =>
+        Number(p.won)
+          ? `${p.champion} venceu ${p.runnerUp} na final e leva o troféu da comunidade para casa. Um título conquistado diante da cena da região.`
+          : `${p.champion} venceu ${p.runnerUp} na final da chave da Rocket Street.${p.org && p.org !== p.runnerUp ? ` ${p.org} terminou: ${p.placement}.` : ""}`,
+      rsRegionalRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} venceu ${p.runnerUp} na grande final do ${p.event}. Os Pontos da Temporada entram na tabela da América do Sul.`,
+          `O Split ${p.split} tem mais um vencedor: ${p.champion} fechou o ${p.event} com vitória sobre ${p.runnerUp} na grande final.`,
+          `${p.runnerUp} chegou à grande final do ${p.event}, e ${p.champion} saiu com o título e a maior fatia dos pontos.`,
+        ][Number(p.v ?? 0) % 3],
+      rsBerths: (p: Record<string, string | number>) => {
+        const sides = p.t2 ? `${p.t1} e ${p.t2}` : `${p.t1}`;
+        return [
+          `Os participantes do ${p.event} estão definidos. ${sides} ${p.t2 ? "representam" : "representa"} a América do Sul.`,
+          `As vagas da América do Sul no ${p.event} estão decididas: ${sides}. A tabela fechou com ${p.t2 ? "os dois times" : "o time"} acima da linha de corte.`,
+          `${sides} ${p.t2 ? "carregam" : "carrega"} a bandeira da região no ${p.event}. O resto da América do Sul recomeça a corrida.`,
+        ][Number(p.v ?? 0) % 3];
+      },
+      rsWindowWrap: (p: Record<string, string | number>) => {
+        const one = Number(p.n) === 1;
+        return [
+          `A América do Sul registrou ${p.n} ${one ? "troca" : "trocas"} antes de a janela fechar. O destaque: ${p.player} em ${p.to}${Number(p.paid) ? ` por ${p.fee}` : ", que estava livre no mercado"}.`,
+          `O mercado fechou de novo na América do Sul. A chegada de ${p.player} a ${p.to}${Number(p.paid) ? ` por ${p.fee}` : " sem custo de transferência"} foi o negócio da janela; no total, a região registrou ${p.n} ${one ? "troca" : "trocas"}.`,
+          `Elencos travados até a próxima janela. ${p.to} fez a maior contratação da região com ${p.player}${Number(p.paid) ? ` (${p.fee})` : ""}; a América do Sul registrou ${p.n} ${one ? "troca" : "trocas"} no total.`,
+        ][Number(p.v ?? 0) % 3];
+      },
     },
   },
 
@@ -3093,9 +3159,11 @@ export const CAREER_PT: CareerCopy = {
     rocketStreet: "Rocket Street",
   },
 
-  // T1 (v2.0): o tutorial guiado. Um capítulo por tela, mostrado na primeira
-  // visita e reaberto pelo botão de ajuda. Cada passo destaca um elemento real
+  // T1 (v2.0): o tutorial guiado. Um capítulo é mostrado na primeira visita e
+  // reaberto pelo botão de ajuda. Cada passo destaca um elemento real
   // (`data-tour`); o texto diz o que o jogador faz ali, em uma ou duas linhas.
+  // rc.54: capítulos só para QG, Elenco, Treinos e Finanças (Calendário,
+  // Mercado, Classificação, Caixa de entrada e Clube não têm tutorial).
   tour: {
     kicker: "Road to Worlds",
     next: "Avançar",
@@ -3155,7 +3223,7 @@ export const CAREER_PT: CareerCopy = {
       },
       help: {
         title: "Ajuda sempre à mão",
-        body: "Cada aba mostra o próprio guia na primeira visita. Este botão traz o guia de volta quando quiser.",
+        body: "Elenco, Treinos e Finanças abrem um guia curto na primeira visita. Nessas telas e aqui, este botão traz o guia de volta.",
       },
     },
     training: {
@@ -3177,26 +3245,6 @@ export const CAREER_PT: CareerCopy = {
         body: "Veja quem ainda evolui, quem está no auge e quem já passou dele, antes de renovar ou vender.",
       },
     },
-    market: {
-      tabs: {
-        title: "Quatro balcões",
-        body: "Troque entre eles aqui.",
-        points: [
-          { label: "Agentes livres", text: "Sem taxa de transferência" },
-          { label: "Sob contrato", text: "Taxa para a org, a partir de 20 de reputação" },
-          { label: "Coaches", text: "Quem treina o elenco" },
-          { label: "Minhas negociações", text: "Propostas feitas e recebidas" },
-        ],
-      },
-      search: {
-        title: "Encontre seu reforço",
-        body: "Busque, ordene e filtre por região. Depois abra um jogador para observá-lo e fazer a proposta.",
-        points: [
-          { label: "Janela aberta", text: "As negociações andam com os dias" },
-          { label: "Janela fechada", text: "Observe agora, proponha quando abrir" },
-        ],
-      },
-    },
     finances: {
       overview: {
         title: "Três leituras do caixa",
@@ -3215,20 +3263,6 @@ export const CAREER_PT: CareerCopy = {
         body: "Equipamentos, staff e bootcamps fazem o elenco evoluir e jogar melhor. Cada degrau é liberado pela reputação.",
       },
     },
-    calendar: {
-      month: {
-        title: "A temporada num olhar",
-        body: "Escolha um dia para ver o que acontece e o que dá para fazer. Os ícones marcam regionais, Majors e a janela de transferências.",
-      },
-      next: {
-        title: "Eventos e copas",
-        body: "Suas próximas paradas, em ordem.",
-        points: [
-          { label: "Eventos oficiais", text: "Valem Pontos da Temporada" },
-          { label: "Copas comunitárias", text: "Opcionais: prêmio e reputação" },
-        ],
-      },
-    },
     squad: {
       starters: {
         title: "Seus três titulares",
@@ -3241,30 +3275,6 @@ export const CAREER_PT: CareerCopy = {
       contracts: {
         title: "Contratos",
         body: "Renove antes do fim da temporada, ou o jogador sai de graça.",
-      },
-    },
-    standings: {
-      tabs: {
-        title: "Duas corridas",
-        body: "Regionais e Majors valem Pontos da Temporada.",
-        points: [
-          { label: "Tabela do Major", text: "Este split: quem joga o Major" },
-          { label: "Tabela do Worlds", text: "A temporada inteira: quem vai ao Worlds" },
-        ],
-      },
-      table: {
-        title: "Fique acima da linha",
-        body: "A linha marca a última vaga da sua região. Termine acima dela e a próxima fase se abre.",
-      },
-    },
-    club: {
-      progress: {
-        title: "Reputação e progressão",
-        body: "Cada marco e o que ele libera está listado aqui. Planeje o próximo passo.",
-      },
-      trophies: {
-        title: "Sala de troféus",
-        body: "Títulos e recordes ficam aqui pela carreira inteira.",
       },
     },
   },

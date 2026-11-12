@@ -325,7 +325,8 @@ export const ONBOARDING = {
   ],
   regionalCta: "Let's run it",
   // T1 (v2.0): the first draft's guided tour (it replaces the "How to play"
-  // modal and keeps its flag). Each step spotlights a real part of the screen.
+  // modal). Each step spotlights a real part of the screen. rc.54: it runs over
+  // an example board, before the player's own first lineup is drawn.
   tour: {
     kicker: "First draft",
     next: "Next",
@@ -335,7 +336,7 @@ export const ONBOARDING = {
     progress: (n: number, total: number) => `${n} of ${total}`,
     offer: {
       title: "One lineup per round",
-      body: "Every round deals a real lineup from RLCS history. Tap one card to draft it into your team.",
+      body: "Every round deals a real lineup from RLCS history, like this example. Tap one card to draft it into your team.",
     },
     roster: {
       title: "Your team",
@@ -351,7 +352,7 @@ export const ONBOARDING = {
     },
     finish: {
       title: "Then the tournament",
-      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose.",
+      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose. Your first lineup is drawn when you close this guide.",
     },
   },
 };
@@ -772,6 +773,13 @@ export const ACH_UI = {
     "car-worlds-homegrown": { name: "Homegrown", desc: "Win Worlds with the roster you founded the org with — no signings, ever." },
     "car-three-worlds": { name: "Dynasty", desc: "Win three World Championships with one org." },
     "car-all-difficulties": { name: "Every Road", desc: "Win Worlds on Easy, Normal and Hard (across saves)." },
+    "car-seven-seasons": { name: "The Long Haul", desc: "Reach your seventh season with one org." },
+    "car-worlds-regular": { name: "Worlds Regular", desc: "Qualify for the World Championship three times with one org." },
+    "car-five-regionals": { name: "Regional Powerhouse", desc: "Win five regionals with one org." },
+    "car-three-majors": { name: "Major Collection", desc: "Win three international Majors with one org." },
+    "car-two-worlds": { name: "Back for More", desc: "Win a second World Championship with one org." },
+    "car-worlds-unchanged": { name: "Same Three", desc: "Win Worlds with the three starters you opened the season with, never changed." },
+    "car-perfect-season": { name: "Perfect Season", desc: "Win every main regional of a season, then the World Championship." },
   } as Record<string, { name: string; desc: string }>,
   careerTier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
   careerEarned: "Earned",
@@ -1338,10 +1346,25 @@ export const LEADERBOARDS_UI = {
   // v2.0 boards
   boards: {
     season: "Season Rating",
-    hallOfFame: "Pre-season Hall of Fame",
     titles: "Titles",
-    legacyOverall: "Legacy overall",
-    regional: "Regional overall",
+    legacyTitles: "Legacy Titles",
+    samTitles: "SAM Titles",
+    naTitles: "NA Titles",
+    euTitles: "EU Titles",
+    oceTitles: "OCE Titles",
+    menaTitles: "MENA Titles",
+    worlds: "RTW · World Titles",
+    hallOfFame: "Pre-season Hall of Fame",
+  } as Record<string, string>,
+  boardHints: {
+    titles: "Titles won this season, on any difficulty and in any mode.",
+    legacyTitles: "Titles won this season on Legacy difficulty.",
+    samTitles: "Titles won this season with the region lock on South America.",
+    naTitles: "Titles won this season with the region lock on North America.",
+    euTitles: "Titles won this season with the region lock on Europe.",
+    oceTitles: "Titles won this season with the region lock on Oceania.",
+    menaTitles: "Titles won this season with the region lock on MENA.",
+    worlds: "World Championships won in Road to Worlds this season, across all your careers.",
   } as Record<string, string>,
   seasonBoardHint: "Every finished run moves your Season Rating. Titles pay the most; early exits cost a little.",
   hallHint: "The frozen final board of the pre-season. These names earned their rewards before Season 1 existed.",
@@ -1719,6 +1742,13 @@ export const SEASON_RECAP = {
   challenges: "Challenges cleared",
   position: "Board position",
   positionValue: (n: number) => `#${n}`,
+  positionBoards: {
+    mmr: "Rating",
+    championships: "Titles",
+    titles_legacy: "Legacy titles",
+    best_legacy: "Legacy overall",
+    best_sam: "Regional overall",
+  } as Record<string, string>,
   positionPendingSignedIn: "Your final board position arrives with your next sync.",
   positionSignedOut: "Sign in with your pre-season account to claim your board position rewards.",
   positionOutside: "Outside the top 100 — the rating board starts fresh now.",

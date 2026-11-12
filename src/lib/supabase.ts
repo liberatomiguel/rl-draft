@@ -24,6 +24,7 @@ import type { AuthChangeEvent, Session, SupabaseClient } from "@supabase/supabas
 import { SEASON } from "@/config/season";
 import { totalStars } from "@/engine/challengeStars";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
+import { PRESEASON_BOARDS, type PreseasonBoard } from "@/engine/season";
 import type { DurableProfile } from "./profileSync";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -226,6 +227,14 @@ export interface LeaderboardStats {
   season_peak_mmr: number;
   season_titles: number;
   season_runs: number;
+  /** rc.54 boards: Legacy titles, titles per region lock, Road to Worlds titles. */
+  season_legacy_titles: number;
+  season_titles_sam: number;
+  season_titles_na: number;
+  season_titles_eu: number;
+  season_titles_oce: number;
+  season_titles_mena: number;
+  season_worlds: number;
   lifetime_xp: number;
   quiz_solved: number;
   login_streak: number;
@@ -259,6 +268,13 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     season_peak_mmr: p.season?.peakMmr ?? p.mmr,
     season_titles: p.season?.titles ?? 0,
     season_runs: p.season?.runs ?? 0,
+    season_legacy_titles: p.season?.legacyTitles ?? 0,
+    season_titles_sam: p.season?.regionTitles?.SAM ?? 0,
+    season_titles_na: p.season?.regionTitles?.NA ?? 0,
+    season_titles_eu: p.season?.regionTitles?.EU ?? 0,
+    season_titles_oce: p.season?.regionTitles?.OCE ?? 0,
+    season_titles_mena: p.season?.regionTitles?.MENA ?? 0,
+    season_worlds: p.season?.careerWorlds ?? 0,
     lifetime_xp: p.lifetime?.xp ?? p.xp,
     quiz_solved: p.quiz?.solved ?? 0,
     login_streak: p.login?.best ?? 0,
@@ -283,11 +299,24 @@ export type CloudRowResult =
       username: string | null;
       /** Manual grants (supporter / pro / contributor) — dashboard-only writes (v2.0). */
       grants: string[];
-      /** Frozen final pre-season place, once Miguel ran the freeze SQL (v2.0). */
+      /** Frozen final pre-season place on the rating board, once the freeze SQL ran (v2.0). */
       preseasonPosition: number | null;
+      /** rc.54: frozen final place per pre-season board (only the boards the player ranked on). */
+      preseasonPositions: Partial<Record<PreseasonBoard, number>>;
     }
   | { status: "no-row" }
   | { status: "error"; error: string };
+
+/** The `preseason_positions` jsonb, trusted only as far as its shape goes. */
+function readPlaces(raw: unknown): Partial<Record<PreseasonBoard, number>> {
+  const out: Partial<Record<PreseasonBoard, number>> = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const board of PRESEASON_BOARDS) {
+    const place = (raw as Record<string, unknown>)[board];
+    if (typeof place === "number" && Number.isInteger(place) && place > 0) out[board] = place;
+  }
+  return out;
+}
 
 /** Fetch the user's stored durable profile + chosen display name (for merge +
  *  to keep their name on subsequent syncs), plus the server-owned extras (v2.0):
@@ -299,7 +328,7 @@ export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
     if (!c) return { status: "error", error: UNAVAILABLE };
     const { data, error } = await c
       .from("profiles")
-      .select("durable, username, preseason_position, profile_grants(grant_id)")
+      .select("durable, username, preseason_position, preseason_positions, profile_grants(grant_id)")
       .eq("id", userId)
       .maybeSingle();
     if (error) return { status: "error", error: error.message || "read failed" };
@@ -314,6 +343,7 @@ export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
         typeof data.preseason_position === "number" && data.preseason_position > 0
           ? data.preseason_position
           : null,
+      preseasonPositions: readPlaces(data.preseason_positions),
     };
   } catch (e) {
     return { status: "error", error: e instanceof Error ? e.message : String(e) };
@@ -400,6 +430,13 @@ const SEASON_SCOPED: ReadonlySet<string> = new Set([
   "season_peak_mmr",
   "season_titles",
   "season_runs",
+  "season_legacy_titles",
+  "season_titles_sam",
+  "season_titles_na",
+  "season_titles_eu",
+  "season_titles_oce",
+  "season_titles_mena",
+  "season_worlds",
 ]);
 
 /** The public cosmetics every board row carries (v2.0): what the player chose to

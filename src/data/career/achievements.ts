@@ -45,6 +45,18 @@ export const CAREER_ACHIEVEMENTS: readonly CareerAchievementDef[] = [
   { id: "car-worlds-homegrown", tier: "legend", xp: 500, condition: { kind: "worldsHomegrown" } },
   { id: "car-three-worlds", tier: "legend", xp: 800, condition: { kind: "stat", stat: "titlesWorlds", min: 3 } },
   { id: "car-all-difficulties", tier: "legend", xp: 400, condition: { kind: "allDifficulties" } },
+  // E1 (Season 1 achievements review): depth past the first titles. Every
+  // condition reuses a stat or a flag the flows ALREADY record (the two flags
+  // are the rc.51 cosmetic facts, set at the Worlds win in careerFlow), so the
+  // career engine and its flows are untouched. Appended: catalog order is the
+  // list's order, and the ids above keep their place.
+  { id: "car-seven-seasons", tier: "rare", xp: 150, condition: { kind: "seasonIndex", min: 6 } },
+  { id: "car-worlds-regular", tier: "epic", xp: 200, condition: { kind: "stat", stat: "worldsQualified", min: 3 } },
+  { id: "car-five-regionals", tier: "epic", xp: 250, condition: { kind: "stat", stat: "titlesRegional", min: 5 } },
+  { id: "car-three-majors", tier: "epic", xp: 300, condition: { kind: "stat", stat: "titlesMajor", min: 3 } },
+  { id: "car-two-worlds", tier: "legend", xp: 500, condition: { kind: "stat", stat: "titlesWorlds", min: 2 } },
+  { id: "car-worlds-unchanged", tier: "legend", xp: 400, condition: { kind: "flag", flag: "cosDayOne" } },
+  { id: "car-perfect-season", tier: "legend", xp: 600, condition: { kind: "flag", flag: "cosRegionalDynasty" } },
 ];
 
 export const careerAchievementById = new Map(CAREER_ACHIEVEMENTS.map((a) => [a.id, a]));

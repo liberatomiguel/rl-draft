@@ -6,6 +6,7 @@
  * either.
  */
 
+import { rocketStreetSigns } from "@/engine/career/rocketStreet";
 import type { CareerSave, NewsItem } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 
@@ -56,6 +57,12 @@ const ACTION_BY_KEY: Record<string, NewsAction> = {
   windowReport: "market",
   incomingBid: "market",
   rookieClass: "market",
+  // R133: the regional partner desk's stories.
+  rsCupPreview: "calendar",
+  rsCupRecap: "calendar",
+  rsRegionalRecap: "standings",
+  rsBerths: "standings",
+  rsWindowWrap: "market",
   retired: "market",
   retiredToCoach: "market",
   resultUser: "standings",
@@ -153,7 +160,11 @@ export function leadStoryOf(save: CareerSave, minPriority: number, maxAgeDays: n
   return lead;
 }
 
-/** Curated regional coverage: never infer sponsorship from a club's SAM region. */
+/**
+ * Curated regional coverage: never infer sponsorship from a club's SAM region.
+ * R133: the rule lives in the engine (the desk's own stories, the curated beat,
+ * the region's rookie class and departing organisations).
+ */
 export function rocketStreetNews(item: NewsItem): boolean {
-  return item.beatId === "sx-sam-hungry" || (item.titleKey === "rookieClass" && newsRegionOf(item) === "SAM");
+  return rocketStreetSigns(item);
 }

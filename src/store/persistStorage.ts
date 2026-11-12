@@ -98,7 +98,12 @@ export function reportingMigrate<T>(
       reportSaveError(store, "migrate");
       throw error;
     }
-    reportMigration(store, version, toVersion);
+    // rc.54: reported after the store module finishes loading. The migrate runs
+    // inside the store's creation, before the profile registers what a session
+    // carries, and the first event of a visit opens the session: sent from here
+    // it gave every returning player a `session_started` with no profile on it,
+    // on exactly the visit that matters (their first on a new version).
+    queueMicrotask(() => reportMigration(store, version, toVersion));
     return out;
   };
 }

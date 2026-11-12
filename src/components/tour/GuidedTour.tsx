@@ -13,18 +13,26 @@
  * - The frame loop re-reads the element's box while the tour is open, so the
  *   spotlight follows scrolling, resizes, late layout and entrance animations.
  * - Rendered in a portal on <body> (animated ancestors re-anchor `fixed`).
- * - Motion is `motion-safe` only: with reduced motion the spotlight and the
- *   card jump instead of gliding, and the ring does not pulse.
+ * - NO motion (rc.54, Miguel): the dim, the spotlight and the card appear in
+ *   place and jump from step to step. Nothing transitions, fades or pulses, and
+ *   the page scrolls to a step's element instantly. The first measure runs in a
+ *   layout effect, so the very first painted frame is already the final one.
+ *   (Before: the spotlight grew out of a zero-size box at the centre of the
+ *   screen and the card slid in from the top-left corner, because both started
+ *   at their unmeasured placeholder position with a CSS transition on
+ *   top / left / width / height.)
+ * - Closing it (Done or Skip) puts the page back at the top.
  * - 360 px: the card is the viewport's width minus a 12 px gutter, and docks
  *   to the bottom edge when the element leaves no room above or below.
  */
 
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 import { useDialogFocus } from "@/components/ui/dialog";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 
 export type TourTone = "blue" | "orange" | "cyan" | "good";
 
@@ -77,8 +85,9 @@ const CARD_MAX = 384;
 /** The least of a tall element the spotlight keeps when it makes room for the card. */
 const MIN_SPOT = 104;
 
-function reducedMotion(): boolean {
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+/** The page back at the top, at once (`instant` also beats a CSS `scroll-behavior: smooth`). */
+function scrollPageToTop(): void {
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 
 /** The first on-screen element carrying the token (a hidden twin is skipped). */
@@ -119,6 +128,9 @@ export function GuidedTour({
   onClose: (reason: "done" | "skip") => void;
 }) {
   const mounted = useMounted();
+  // rc.54: a guide in front holds the quieter pop-ups (a reward unlock, the login
+  // calendar) until it closes, so two dialogs never stack.
+  useOverlayHold("intro", true);
   const [index, setIndex] = useState(0);
   const [spot, setSpot] = useState<Box | null>(null);
   const [card, setCard] = useState<{ top: number; left: number; width: number; caret: number | null; side: "below" | "above" | "dock" | "center" } | null>(null);
@@ -131,11 +143,22 @@ export function GuidedTour({
   const last = index >= steps.length - 1;
   const tone = TONES[step?.tone ?? "blue"];
 
-  const skip = useCallback(() => onClose("skip"), [onClose]);
+  // Done and Skip both leave the page at the top (the tour scrolled it to its
+  // elements). Once now, and once after the caller's own re-render has landed
+  // (the draft swaps its demo for the real board when the tour closes).
+  const close = useCallback(
+    (reason: "done" | "skip") => {
+      onClose(reason);
+      scrollPageToTop();
+      requestAnimationFrame(scrollPageToTop);
+    },
+    [onClose],
+  );
+  const skip = useCallback(() => close("skip"), [close]);
   const next = useCallback(() => {
-    if (last) onClose("done");
+    if (last) close("done");
     else setIndex((i) => i + 1);
-  }, [last, onClose]);
+  }, [last, close]);
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
   useDialogFocus(cardRef, mounted, { onEscape: skip });
@@ -170,8 +193,10 @@ export function GuidedTour({
   }, [mounted, next, back]);
 
   // The frame loop: find the element, bring it into view once per step, then
-  // keep the spotlight and the card on it.
-  useEffect(() => {
+  // keep the spotlight and the card on it. A LAYOUT effect, and it measures
+  // once before the loop starts: the tour (and every new step) is placed before
+  // the browser paints, so nothing is ever seen at a placeholder position.
+  useLayoutEffect(() => {
     if (!mounted || !step) return;
     let frame = 0;
     const measure = () => {
@@ -192,7 +217,7 @@ export function GuidedTour({
             // Sit the element in the upper part of the free area: the card goes below.
             const wantTop = topInset + Math.max(10, Math.min(48, room * 0.18));
             const delta = r.top - wantTop;
-            if (Math.abs(delta) > 4) window.scrollBy({ top: delta, behavior: reducedMotion() ? "auto" : "smooth" });
+            if (Math.abs(delta) > 4) window.scrollBy({ top: delta, behavior: "instant" });
           }
         }
         const r = el.getBoundingClientRect();
@@ -258,6 +283,7 @@ export function GuidedTour({
       frame = requestAnimationFrame(tick);
       measure();
     };
+    measure();
     frame = requestAnimationFrame(tick);
     // A throttled page (an embedded or background view) gets few frames: the
     // timer keeps the spotlight honest there too.
@@ -280,32 +306,31 @@ export function GuidedTour({
       {/* Click shield: the page under the tour is shown, not used. */}
       <div className="absolute inset-0" aria-hidden />
 
-      {/* Spotlight: the hole is this box, the dim its shadow. */}
+      {/* Spotlight: the hole is this box, the dim its shadow. No transition: it is
+          placed, never animated (see the header). */}
       <div
         aria-hidden
-        className="pointer-events-none fixed rounded-xl shadow-[0_0_0_200vmax_rgba(4,7,14,0.76)] motion-safe:transition-[top,left,width,height] motion-safe:duration-300 motion-safe:ease-out"
+        className="pointer-events-none fixed rounded-xl shadow-[0_0_0_200vmax_rgba(4,7,14,0.76)]"
         style={spotStyle}
       />
       {spot ? (
         <div
           aria-hidden
-          className="pointer-events-none fixed rounded-xl motion-safe:transition-[top,left,width,height] motion-safe:duration-300 motion-safe:ease-out"
-          style={{ ...spotStyle, boxShadow: `0 0 0 2px ${tone.ring}, 0 0 26px 2px color-mix(in srgb, ${tone.ring} 45%, transparent)` }}
-        >
-          <span
-            className="absolute inset-0 rounded-xl motion-safe:animate-pulse"
-            style={{ boxShadow: `0 0 0 5px color-mix(in srgb, ${tone.ring} 22%, transparent)` }}
-          />
-        </div>
+          className="pointer-events-none fixed rounded-xl"
+          style={{
+            ...spotStyle,
+            boxShadow: `0 0 0 2px ${tone.ring}, 0 0 0 6px color-mix(in srgb, ${tone.ring} 22%, transparent), 0 0 26px 2px color-mix(in srgb, ${tone.ring} 45%, transparent)`,
+          }}
+        />
       ) : null}
 
-      {/* The card. Invisible for the first frame, until the loop has placed it. */}
+      {/* The card. Measured and placed before the first paint; `opacity-0` (not
+          `invisible`: it must stay focusable) only covers a card with no place yet. */}
       <div
         ref={cardRef}
         tabIndex={-1}
         className={cx(
           "panel-strong fixed flex max-h-[calc(100dvh-1.5rem)] flex-col p-4 shadow-[0_18px_60px_rgba(0,0,0,0.6)] outline-none sm:p-5",
-          "motion-safe:transition-[top,left,opacity] motion-safe:duration-300 motion-safe:ease-out",
           card ? "opacity-100" : "opacity-0",
         )}
         style={{ top: card?.top ?? 0, left: card?.left ?? 0, width: card?.width ?? `min(${CARD_MAX}px, calc(100vw - ${GUTTER * 2}px))` }}
@@ -371,7 +396,7 @@ export function GuidedTour({
               <span
                 key={s.id}
                 className={cx(
-                  "h-1 max-w-7 flex-1 rounded-full motion-safe:transition-colors",
+                  "h-1 max-w-7 flex-1 rounded-full",
                   i === index ? tone.bar : i < index ? "bg-white/35" : "bg-white/12",
                 )}
               />

@@ -30,12 +30,13 @@ import {
   CAREER_CALENDAR,
   CAREER_CANCELLED_WORLDS,
   CAREER_QUALIFIER,
+  CAREER_ROCKET_STREET,
   CAREER_SEASONS,
   CAREER_SLOTS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
 } from "@/config/balance";
-import { ROCKET_STREET_EVENT_NAME, T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
+import { PARTNER_EVENT_NAMES, ROCKET_STREET_EVENT_NAME, T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
 import type { Region } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type { CalendarWeek, CareerEventDef } from "./types";
@@ -437,12 +438,51 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
 // Unofficial offers (t3 Community Cup · t2 Invitational)
 // ---------------------------------------------------------------------------
 
+/** Cosmetic name rotation — deterministic, cycles the fictional banks. */
+function nameRotationOf(seasonIndex: number, week: number): number {
+  return seasonIndex * CAREER_CALENDAR.weeksPerSeason + week;
+}
+
+/**
+ * R133: the open weeks of a season on which the regional partner's
+ * championship is the offer, for a career based in its region. One edition
+ * per anchor (CAREER_ROCKET_STREET.cupAnchorWeeks); an anchor the name
+ * rotation gives to another partner's cup, at either tier, moves to the next
+ * free open week of its split. Reads the season and the calendar only (never
+ * the save, the seed or the reputation), so the Calendar can forecast it.
+ */
+export function rocketStreetCupWeeksFor(seasonIndex: number): number[] {
+  const taken = (week: number) => {
+    const rot = nameRotationOf(seasonIndex, week);
+    return (
+      PARTNER_EVENT_NAMES.includes(T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length]) ||
+      PARTNER_EVENT_NAMES.includes(T3_EVENT_NAMES[rot % T3_EVENT_NAMES.length])
+    );
+  };
+  const weeks: number[] = [];
+  for (const anchor of CAREER_ROCKET_STREET.cupAnchorWeeks) {
+    const at = SCHEDULE[anchor - 1];
+    if (at?.kind !== "open") continue;
+    const open = SCHEDULE.filter((w) => w.kind === "open" && w.split === at.split).map((w) => w.week);
+    const from = open.indexOf(anchor);
+    for (let i = 0; i < open.length; i++) {
+      const week = open[(from + i) % open.length];
+      if (taken(week) || weeks.includes(week)) continue;
+      weeks.push(week);
+      break;
+    }
+  }
+  return weeks;
+}
+
 /**
  * The unofficial-tournament offer for an open week, if any. Deterministic per
  * (careerSeed, seasonIndex, week) — no RNG cursor. Every open week has a t2
  * Invitational above the reputation gate or a t3 Community Cup below it.
- * Unofficials are local to the user org. The regional partner event also
- * carries SAM explicitly; omitted context preserves the legacy rotation.
+ * Unofficials are local to the user org. R133: in the regional partner's
+ * region its championship takes the season's partner weeks at either tier
+ * (`rocketStreetCupWeeksFor`) and carries the region explicitly; omitted
+ * context preserves the worldwide rotation.
  */
 export function unofficialOfferFor(
   seasonIndex: number,
@@ -460,21 +500,24 @@ export function unofficialOfferFor(
     split: wk.split,
     format: "single" as const,
   };
-  // Cosmetic name rotation — deterministic, cycles the fictional banks.
-  const rot = seasonIndex * CAREER_CALENDAR.weeksPerSeason + week;
+  const rot = nameRotationOf(seasonIndex, week);
+  // R133: the partner's edition keeps the week's tier, day and id; it is never a 1v1 / 2v2 side event.
+  const partnerCup =
+    ctx.region === CAREER_ROCKET_STREET.region && rocketStreetCupWeeksFor(seasonIndex).includes(week)
+      ? { name: ROCKET_STREET_EVENT_NAME, region: CAREER_ROCKET_STREET.region }
+      : null;
 
   if (
     ctx.rep >= CAREER_UNOFFICIAL.t2RepGate
   ) {
     // Keep the rotation length: extending it to an even size aliases open-week parity.
-    const regularName = T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length];
-    const name = ctx.region === "SAM" && regularName === T2_EVENT_NAMES[0] ? ROCKET_STREET_EVENT_NAME : regularName;
-    return { ...base, tier: "t2", name, ...(name === ROCKET_STREET_EVENT_NAME ? { region: "SAM" as const } : {}) };
+    return { ...base, tier: "t2", name: T2_EVENT_NAMES[rot % T2_EVENT_NAMES.length], ...partnerCup };
   }
 
   if (
     ctx.rep < CAREER_UNOFFICIAL.t2RepGate
   ) {
+    if (partnerCup) return { ...base, tier: "t3", ...partnerCup };
     const small = derivedFloat(ctx.careerSeed, streams.gen("communityFormat", `${seasonIndex}:${week}`)) < CAREER_UNOFFICIAL.smallTeamChance;
     const sizes = CAREER_UNOFFICIAL.smallTeamSizes;
     const size = sizes[Math.floor(derivedFloat(ctx.careerSeed, streams.gen("communitySize", `${seasonIndex}:${week}`)) * sizes.length)];

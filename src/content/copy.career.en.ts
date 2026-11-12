@@ -2261,6 +2261,39 @@ export const CAREER_EN = {
       // v2.0 (C1)
       worldsCancelled: () => `World Championship cancelled over the pandemic`,
       orgRelocates: (p: Record<string, string | number>) => `${p.org} moves from ${p.from} to ${p.to}`,
+      // Season 1 (R133): Rocket Street's desk — South America. `v` picks the line (0–2).
+      rsCupPreview: (p: Record<string, string | number>) =>
+        [
+          `${p.event}: the bracket plays this Saturday`,
+          `Rocket Street week: the LATAM Championship is back`,
+          `South America's community championship returns on Saturday`,
+        ][Number(p.v ?? 0) % 3],
+      rsCupRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} win the ${p.event}`,
+          `${p.champion} take the ${p.event} title`,
+          `${p.event}: ${p.champion} are the champions`,
+        ][Number(p.v ?? 0) % 3],
+      rsRegionalRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} win ${p.event}`,
+          `${p.event} goes to ${p.champion}`,
+          `${p.champion} beat ${p.runnerUp} to take ${p.event}`,
+        ][Number(p.v ?? 0) % 3],
+      rsBerths: (p: Record<string, string | number>) => {
+        const sides = p.t2 ? `${p.t1} and ${p.t2}` : `${p.t1}`;
+        return [
+          `${sides} carry South America to the ${p.event}`,
+          `South America at the ${p.event}: ${sides}`,
+          `${sides} qualify for the ${p.event}`,
+        ][Number(p.v ?? 0) % 3];
+      },
+      rsWindowWrap: (p: Record<string, string | number>) =>
+        [
+          `South America's window closes: ${p.n} ${Number(p.n) === 1 ? "move" : "moves"}`,
+          `Window shut in South America: ${p.player} to ${p.to} leads the list`,
+          `${p.to} sign ${p.player} as the South American window closes`,
+        ][Number(p.v ?? 0) % 3],
     },
     // v0.2 — body text per template (same params; HQ feed renders these).
     body: {
@@ -2389,6 +2422,39 @@ export const CAREER_EN = {
           : `${p.org} is leaving ${p.from} for ${p.to}, and starts over there with a new squad. The players it leaves behind are free agents.`,
       worldsCancelled: () =>
         `The league has called off this season's World Championship: with travel closed by the pandemic, there is no way to bring the regions together. Split 3 and its Major go ahead as planned, and the season ends after them. No world title is awarded this year; the race starts again next season.`,
+      // Season 1 (R133): Rocket Street's desk — South America. `v` picks the line (0–2).
+      rsCupPreview: (p: Record<string, string | number>) =>
+        [
+          `Rocket Street opens its bracket this Saturday: South American sides, single elimination, one day. ${p.org} is on the list, and the invitation is on the calendar.`,
+          `The region's community championship plays on Saturday, start to finish in one day. ${p.org} has an invitation waiting on the calendar.`,
+          `One bracket, one day, and the whole scene watching: the ${p.event} is this Saturday. ${p.org} is invited; the entry is on the calendar.`,
+        ][Number(p.v ?? 0) % 3],
+      rsCupRecap: (p: Record<string, string | number>) =>
+        Number(p.won)
+          ? `${p.champion} beat ${p.runnerUp} in the final and take the community's trophy home. A title won in front of the home scene.`
+          : `${p.champion} beat ${p.runnerUp} in the final of Rocket Street's bracket.${p.org && p.org !== p.runnerUp ? ` ${p.org} finished: ${p.placement}.` : ""}`,
+      rsRegionalRecap: (p: Record<string, string | number>) =>
+        [
+          `${p.champion} beat ${p.runnerUp} in the grand final of ${p.event}. The Season Points go on the South American table.`,
+          `Split ${p.split} has another winner: ${p.champion} closed ${p.event} with a grand final win over ${p.runnerUp}.`,
+          `${p.runnerUp} reached the grand final of ${p.event}, and ${p.champion} left with the title and the larger share of the points.`,
+        ][Number(p.v ?? 0) % 3],
+      rsBerths: (p: Record<string, string | number>) => {
+        const sides = p.t2 ? `${p.t1} and ${p.t2}` : `${p.t1}`;
+        return [
+          `The field for the ${p.event} is set. ${sides} represent South America.`,
+          `South America's places at the ${p.event} are decided: ${sides}. The table closed with them above the line.`,
+          `${sides} carry the region's flag at the ${p.event}. Everyone else in South America starts the chase again.`,
+        ][Number(p.v ?? 0) % 3];
+      },
+      rsWindowWrap: (p: Record<string, string | number>) => {
+        const moves = `${p.n} ${Number(p.n) === 1 ? "move" : "moves"}`;
+        return [
+          `South America registered ${moves} before the window shut. The headline: ${p.player} to ${p.to}${Number(p.paid) ? ` for ${p.fee}` : ", as a free agent"}.`,
+          `The market is closed again in South America. ${p.player} joining ${p.to}${Number(p.paid) ? ` for ${p.fee}` : " on a free transfer"} was the move of the window; the region registered ${moves} in all.`,
+          `Rosters are locked until the next window. ${p.to} made the region's biggest signing with ${p.player}${Number(p.paid) ? ` (${p.fee})` : ""}; South America registered ${moves} in all.`,
+        ][Number(p.v ?? 0) % 3];
+      },
     },
   },
 
@@ -3118,9 +3184,11 @@ export const CAREER_EN = {
     rocketStreet: "Rocket Street",
   },
 
-  // T1 (v2.0): the guided tour. One chapter per screen, shown on the first
-  // visit and reopened by the help button. Each step spotlights a real element
+  // T1 (v2.0): the guided tour. A chapter is shown on the first visit and
+  // reopened by the help button. Each step spotlights a real element
   // (`data-tour`), so a body says what the player does there, in one or two lines.
+  // rc.54: chapters for the HQ, Squad, Training and Finances only (Calendar,
+  // Market, Standings, Inbox and Club have no tour).
   tour: {
     kicker: "Road to Worlds",
     next: "Next",
@@ -3180,7 +3248,7 @@ export const CAREER_EN = {
       },
       help: {
         title: "Help is always here",
-        body: "Each tab shows its own short guide on your first visit. This button brings it back any time.",
+        body: "Squad, Training and Finances open a short guide on your first visit. On those screens and here, this button brings the guide back.",
       },
     },
     training: {
@@ -3202,26 +3270,6 @@ export const CAREER_EN = {
         body: "See who is still improving, who is at his peak and who is past it, before you renew or sell.",
       },
     },
-    market: {
-      tabs: {
-        title: "Four counters",
-        body: "Switch between them here.",
-        points: [
-          { label: "Free agents", text: "No transfer fee" },
-          { label: "Under contract", text: "A fee to their org, from reputation 20" },
-          { label: "Coaches", text: "Who trains the squad" },
-          { label: "My deals", text: "Bids made and received" },
-        ],
-      },
-      search: {
-        title: "Find your signing",
-        body: "Search, sort and filter by region, then open a player to scout him and make an offer.",
-        points: [
-          { label: "Window open", text: "Deals move as the days pass" },
-          { label: "Window closed", text: "Scout now, bid when it opens" },
-        ],
-      },
-    },
     finances: {
       overview: {
         title: "Three reads of your money",
@@ -3240,20 +3288,6 @@ export const CAREER_EN = {
         body: "Gear, staff and bootcamps make the squad grow and play better. Each step unlocks with reputation.",
       },
     },
-    calendar: {
-      month: {
-        title: "The season at a glance",
-        body: "Pick a day to see what happens and what you can do. The icons mark regionals, Majors and the transfer window.",
-      },
-      next: {
-        title: "Events and cups",
-        body: "Your next stops, in order.",
-        points: [
-          { label: "Official events", text: "They pay Season Points" },
-          { label: "Community cups", text: "Optional: prize money and reputation" },
-        ],
-      },
-    },
     squad: {
       starters: {
         title: "Your three starters",
@@ -3266,30 +3300,6 @@ export const CAREER_EN = {
       contracts: {
         title: "Contracts",
         body: "Renew before the season ends, or the player leaves for free.",
-      },
-    },
-    standings: {
-      tabs: {
-        title: "Two races",
-        body: "Regionals and Majors pay Season Points.",
-        points: [
-          { label: "Major table", text: "This split: who plays the Major" },
-          { label: "Worlds table", text: "The whole season: who goes to Worlds" },
-        ],
-      },
-      table: {
-        title: "Stay above the line",
-        body: "The line marks the last qualifying spot in your region. Finish above it and the next stage opens.",
-      },
-    },
-    club: {
-      progress: {
-        title: "Reputation and progression",
-        body: "Every milestone and what it unlocks is listed here. Plan your next step.",
-      },
-      trophies: {
-        title: "Trophy room",
-        body: "Titles and records stay here for the whole career.",
       },
     },
   },

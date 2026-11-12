@@ -15,7 +15,7 @@
 
 import { MMR, mmrBackfillFloor, PRESEASON_RANKS, RANKS, SEASON_RATING } from "@/config/balance";
 import { PRESEASON_ID, SEASON } from "@/config/season";
-import type { Difficulty, Placement, RunMode } from "./types";
+import type { Difficulty, Placement, Region, RunMode } from "./types";
 import { rankForXp } from "./progression";
 
 /** One rating movement (the profile's rating graph + the results readout). */
@@ -49,7 +49,15 @@ export interface SeasonState {
   legacyTitles?: number;
   /** rc.4 (Dynasty badge): Road to Worlds World Championships won this season. */
   careerWorlds?: number;
+  /** rc.54 (regional boards): titles won this season with a region lock, by
+   *  region. Optional: older saves read every region as 0. */
+  regionTitles?: Partial<Record<Region, number>>;
 }
+
+/** The five boards the pre-season ended with (v1.4.8), by their cloud column. A
+ *  player's final place on each one is frozen at the Season 1 cutover. */
+export const PRESEASON_BOARDS = ["mmr", "championships", "titles_legacy", "best_legacy", "best_sam"] as const;
+export type PreseasonBoard = (typeof PRESEASON_BOARDS)[number];
 
 /** What the player achieved in the pre-season, frozen at the Season 1 reset. */
 export interface PreseasonSnapshot {
@@ -60,8 +68,33 @@ export interface PreseasonSnapshot {
   titles: number;
   challengesCleared: number;
   snapshotAt: string;
-  /** Final place on the frozen pre-season board (from the cloud); null until known. */
+  /** Final place on the frozen pre-season RATING board (from the cloud); null until known. */
   position: number | null;
+  /** rc.54: final place on each frozen pre-season board the player was ranked on
+   *  (from the cloud). A board the player never scored on is absent. Every place
+   *  earns its own reward band, so #10 on one board and #3 on another pays both. */
+  positions?: Partial<Record<PreseasonBoard, number>>;
+}
+
+/** Every frozen place a snapshot knows, the rating board's included. */
+export function preseasonPlaces(p: Pick<PreseasonSnapshot, "position" | "positions"> | null | undefined): number[] {
+  if (!p) return [];
+  const places = Object.values(p.positions ?? {}).filter((n): n is number => typeof n === "number" && n > 0);
+  if (typeof p.position === "number" && p.position > 0) places.push(p.position);
+  return places;
+}
+
+/** Union of two per-board place maps: the best (lowest) place per board. */
+export function mergePlaces(
+  a: PreseasonSnapshot["positions"],
+  b: PreseasonSnapshot["positions"],
+): PreseasonSnapshot["positions"] {
+  const out: Partial<Record<PreseasonBoard, number>> = {};
+  for (const board of PRESEASON_BOARDS) {
+    const places = [a?.[board], b?.[board]].filter((n): n is number => typeof n === "number" && n > 0);
+    if (places.length) out[board] = Math.min(...places);
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 export interface LegacyState {
@@ -155,6 +188,7 @@ export function mergeSnapshots(
     challengesCleared: Math.max(a.challengesCleared, b.challengesCleared),
     snapshotAt: a.snapshotAt < b.snapshotAt ? a.snapshotAt : b.snapshotAt,
     position: positions.length ? Math.min(...positions) : null,
+    ...(mergePlaces(a.positions, b.positions) ? { positions: mergePlaces(a.positions, b.positions) } : {}),
   };
 }
 
@@ -217,7 +251,20 @@ export function mergeSeasonState(a: SeasonState, b: SeasonState): SeasonState {
     ratingHistory,
     legacyTitles: Math.max(a.legacyTitles ?? 0, b.legacyTitles ?? 0),
     careerWorlds: Math.max(a.careerWorlds ?? 0, b.careerWorlds ?? 0),
+    ...(a.regionTitles || b.regionTitles ? { regionTitles: mergeRegionTitles(a.regionTitles, b.regionTitles) } : {}),
   };
+}
+
+/** Per-region title counters only grow: the MAX per region. */
+export function mergeRegionTitles(
+  a: Partial<Record<Region, number>> | undefined,
+  b: Partial<Record<Region, number>> | undefined,
+): Partial<Record<Region, number>> {
+  const out: Partial<Record<Region, number>> = { ...(a ?? {}) };
+  for (const [region, n] of Object.entries(b ?? {}) as [Region, number][]) {
+    out[region] = Math.max(out[region] ?? 0, n ?? 0);
+  }
+  return out;
 }
 
 /**

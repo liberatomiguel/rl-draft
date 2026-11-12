@@ -124,7 +124,8 @@ function displayParams(
     const brand = sponsorBrandById.get(String(p.name ?? ""))?.name ?? String(p.name ?? "");
     return { ...p, name: brand };
   }
-  if (titleKey === "resultUser" && p.placement) {
+  // R133: the partner desk's championship recap names the user's finish the same way.
+  if ((titleKey === "resultUser" || titleKey === "rsCupRecap") && p.placement) {
     const label =
       (career.common.placement as Record<string, string>)[String(p.placement)] ??
       String(p.placement);

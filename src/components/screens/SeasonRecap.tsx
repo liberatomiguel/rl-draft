@@ -19,6 +19,7 @@ import { RANKS, SEASON_RATING } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cosmeticById } from "@/data/cosmetics";
 import { isLegacyReward } from "@/engine/cosmetics";
+import { PRESEASON_BOARDS } from "@/engine/season";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
@@ -64,6 +65,12 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
     .filter((d) => d?.kind === "badge" && d.source.type === "legacy-rank")
     .sort((a, b) => (b?.priority ?? 0) - (a?.priority ?? 0))[0];
 
+  // rc.54: one frozen place per pre-season board, best place first.
+  const boardPlaces = PRESEASON_BOARDS.flatMap((board) => {
+    const place = preseason?.positions?.[board] ?? (board === "mmr" ? preseason?.position : null);
+    return place ? [[board, place] as const] : [];
+  }).sort((a, b) => a[1] - b[1]);
+
   const positionLine = (() => {
     if (preseason?.position) return R.positionValue(preseason.position);
     if (!accountsOn) return R.positionOutside;
@@ -97,7 +104,18 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
                 </div>
                 <div className="panel mt-3 p-3 text-xs text-sub">
                   <span className="kicker !text-[10px]">{R.position}</span>
-                  <p className={cx("mt-1", preseason?.position ? "display text-lg font-bold text-orange-bright" : "")}>{positionLine}</p>
+                  {boardPlaces.length ? (
+                    <ul className="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1">
+                      {boardPlaces.map(([board, place]) => (
+                        <li key={board}>
+                          <span className="display text-lg font-bold text-orange-bright">{R.positionValue(place)}</span>{" "}
+                          <span className="text-faint">{R.positionBoards[board] ?? board}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className={cx("mt-1", preseason?.position ? "display text-lg font-bold text-orange-bright" : "")}>{positionLine}</p>
+                  )}
                 </div>
               </>
             ) : step === 1 ? (
@@ -110,13 +128,19 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
                 ) : (
                   <div className="mt-6 grid grid-cols-1 gap-2 text-left sm:grid-cols-2">
                     {legacyIds.map((id) => (
-                      <div key={id} className="panel p-2.5">
+                      // rc.54: a title's chip is wide, and one board place per board
+                      // means several titles here: a title takes the full row, and no
+                      // card lets its content spill over the next one.
+                      <div
+                        key={id}
+                        className={cx("panel min-w-0 overflow-hidden p-2.5", cosmeticById.get(id)?.kind === "title" && "sm:col-span-2")}
+                      >
                         <CosmeticPreview id={id} />
                       </div>
                     ))}
                   </div>
                 )}
-                {!preseason?.position && accountsOn ? (
+                {!boardPlaces.length && accountsOn ? (
                   <p className="mt-4 text-xs text-faint">{accountStatus === "signedIn" ? R.positionPendingSignedIn : R.positionSignedOut}</p>
                 ) : null}
               </>

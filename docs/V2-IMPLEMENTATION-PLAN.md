@@ -361,6 +361,13 @@ every later surface builds on a stable contract.
 
 ### B. On the PRODUCTION project, BEFORE the v2.0 deploy (idempotent, safe today)
 
+> **Superseded on 12/11/2026 by `docs/handoff-2.0/CUTOVER.md`.** The additive
+> part of this block (with more columns, a write lock on the frozen places and
+> SELECT-only views) is already applied in production. Do NOT run B-3 or C as
+> written below: the production accounts are live on v1.4.8, the freeze now
+> stores one place per board, and it must run minutes before the deploy, not
+> "a day later". The text below is kept as history.
+
 Supabase → SQL Editor → paste → Run.
 
 ```sql

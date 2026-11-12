@@ -23,3 +23,6 @@ export const T2_EVENT_NAMES = [
 
 /** Regional partner event; never part of the worldwide name pool. */
 export const ROCKET_STREET_EVENT_NAME = "Rocket Street LATAM Championship";
+
+/** Names in the pools above that belong to a partner: the regional partner's edition never takes their week. */
+export const PARTNER_EVENT_NAMES: readonly string[] = ["50/50 Community Cup", "Duds Cup Invitational"];

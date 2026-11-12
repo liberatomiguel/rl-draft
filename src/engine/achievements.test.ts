@@ -59,9 +59,24 @@ describe("teamAchievements", () => {
           .map((c) => [c.playerId, c.id]),
       ).values(),
     ].slice(0, 3);
+    // E1: SAM has a Region-only draft, so its single-region roster is no longer a feat.
     if (sam.length === 3) {
       const roster: Roster = { player1: pick(sam[0]), player2: pick(sam[1]), player3: pick(sam[2]) };
-      expect(teamAchievements(roster, chem(), 0, earnedNone)).toContain("ach-all-sam");
+      expect(teamAchievements(roster, chem(), 0, earnedNone).filter((id) => id.startsWith("ach-all-") && id !== "ach-all-champions")).toEqual([]);
+    }
+    // The two regions without a Region-only draft keep theirs.
+    for (const [region, id] of [["SSA", "ach-all-ssa"], ["APAC", "ach-all-apac"]] as const) {
+      const three = [
+        ...new Map(
+          playerCards
+            .filter((c) => playerById.get(c.playerId)?.region === region)
+            .map((c) => [c.playerId, c.id]),
+        ).values(),
+      ].slice(0, 3);
+      if (three.length === 3) {
+        const roster: Roster = { player1: pick(three[0]), player2: pick(three[1]), player3: pick(three[2]) };
+        expect(teamAchievements(roster, chem(), 0, earnedNone)).toContain(id);
+      }
     }
   });
 });
@@ -126,6 +141,9 @@ describe("evaluateCounterAchievements", () => {
   });
 });
 
+// The feat the reveal-scoping tests below use: six goals by one player.
+const FEAT = "ach-double-hat-trick";
+
 describe("liveAchievements — reveal scoping (v1.4 bug-b fix)", () => {
   const game = (a: number[], b: number[]): GameResult => ({
     index: 0,
@@ -145,9 +163,9 @@ describe("liveAchievements — reveal scoping (v1.4 bug-b fix)", () => {
     ratingDiff: 0,
     upset: false,
   });
-  // Round 1: no feat. Round 2: a player scores a hat-trick.
-  const noFeat = userSeries([game([1, 1, 0], [0, 1, 0])]);
-  const hatTrick = userSeries([game([3, 0, 0], [1, 0, 0])]);
+  // Round 1: no feat (a plain hat-trick is no longer one). Round 2: a player scores six.
+  const noFeat = userSeries([game([3, 1, 0], [0, 1, 0])]);
+  const hatTrick = userSeries([game([6, 0, 0], [1, 0, 0])]);
   const t: TournamentState = {
     teams: {},
     swiss: {
@@ -166,12 +184,12 @@ describe("liveAchievements — reveal scoping (v1.4 bug-b fix)", () => {
 
   it("does NOT award a feat from a not-yet-revealed series", () => {
     // Only the first user series is revealed — the hat-trick is in round 2.
-    expect(liveAchievements(t, earnedNone, 1)).not.toContain("ach-hattrick");
+    expect(liveAchievements(t, earnedNone, 1)).not.toContain(FEAT);
   });
   it("awards the feat once its series is revealed", () => {
-    expect(liveAchievements(t, earnedNone, 2)).toContain("ach-hattrick");
+    expect(liveAchievements(t, earnedNone, 2)).toContain(FEAT);
   });
   it("evaluates the whole tournament when the limit is omitted (run-end net)", () => {
-    expect(liveAchievements(t, earnedNone)).toContain("ach-hattrick");
+    expect(liveAchievements(t, earnedNone)).toContain(FEAT);
   });
 });
