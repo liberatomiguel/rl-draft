@@ -10,6 +10,15 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.7] — 2026-11-12 · Sign in with Google or Discord
+
+#### Added
+- **"Continue with Google" and "Continue with Discord"** above the email field (sign-in dialog and the profile's sign-in panel). Reason: every email sign-in sends one message and the mail provider's free quota reached 80 % on launch day; these two send none. An email that already has an account opens that same account (Supabase links identities by verified email; 80 % of the 543 accounts are Gmail). The email code stays.
+- **"Connect Google / Discord"** next to Sign out on the profile, for an account whose Google or Discord email differs. Needs "manual linking" enabled in the Supabase project.
+- A new account made this way goes through the same display-name step as before.
+
+Not changed: signing in to a different account on a device that holds progress still uploads that progress to the new account (same as with a second email).
+
 ## [2.0.6] — 2026-11-12 · Legacy bracket exit, card and star XP (BALANCE_VERSION 29)
 
 #### Balance

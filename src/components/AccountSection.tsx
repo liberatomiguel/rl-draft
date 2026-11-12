@@ -14,7 +14,15 @@
 import { useRef, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { sfx } from "@/lib/sfx";
-import { sendEmailCode, verifyEmailCode } from "@/lib/supabase";
+import {
+  linkedProviders,
+  linkProvider,
+  OAUTH_PROVIDERS,
+  sendEmailCode,
+  signInWithProvider,
+  verifyEmailCode,
+  type OAuthProvider,
+} from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
@@ -163,6 +171,68 @@ export function ChooseNameForm({ L, onDone }: { L: L; onDone: () => void }) {
   );
 }
 
+const PROVIDER_NAME: Record<OAuthProvider, string> = { google: "Google", discord: "Discord" };
+
+/** v2.0.7: Google / Discord sign-in. No email is sent; an email that already has
+ *  an account lands on that account. The click leaves for the provider's page. */
+function ProviderButtons({ L, onError }: { L: L; onError: (message: string | null) => void }) {
+  const [leaving, setLeaving] = useState<OAuthProvider | null>(null);
+  const go = async (provider: OAuthProvider) => {
+    if (leaving) return;
+    sfx.click();
+    onError(null);
+    setLeaving(provider);
+    const { error } = await signInWithProvider(provider).catch(() => ({ error: "failed" }));
+    if (error) {
+      setLeaving(null);
+      onError(L.providerError);
+    }
+    // success: the browser is navigating to the provider.
+  };
+  return (
+    <>
+      <div className="flex flex-col gap-2.5 sm:flex-row">
+        {OAUTH_PROVIDERS.map((p) => (
+          <Button key={p} type="button" variant="secondary" full disabled={leaving !== null} onClick={() => void go(p)}>
+            {leaving === p ? L.providerLeaving : L.continueWith(PROVIDER_NAME[p])}
+          </Button>
+        ))}
+      </div>
+      <p className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-faint">
+        <span className="h-px flex-1 bg-line" />
+        {L.orEmail}
+        <span className="h-px flex-1 bg-line" />
+      </p>
+    </>
+  );
+}
+
+/** v2.0.7: "Connect Google / Discord" for the signed-in account (profile rank
+ *  card, next to Sign out). Only the providers the account does not have yet. */
+export function ConnectProviders({ className }: { className: string }) {
+  const { LEADERBOARDS_UI: L } = useCopy();
+  const session = useAccountStore((s) => s.session);
+  const [failed, setFailed] = useState(false);
+  if (!session) return null;
+  const linked = linkedProviders(session);
+  const missing = OAUTH_PROVIDERS.filter((p) => !linked.includes(p));
+  const connect = async (provider: OAuthProvider) => {
+    setFailed(false);
+    const { error } = await linkProvider(provider).catch(() => ({ error: "failed" }));
+    if (error) setFailed(true);
+  };
+  return (
+    <>
+      {missing.map((p) => (
+        <button key={p} type="button" onClick={() => void connect(p)} className={className}>
+          {L.connectProvider(PROVIDER_NAME[p])}
+        </button>
+      ))}
+      {failed ? <span role="alert" className="text-[11px] font-semibold text-bad">{L.providerError}</span> : null}
+    </>
+  );
+}
+
 export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) {
   // The in-flight email lives in the account store (survives navigation), so the step
   // is DERIVED from it: returning to /profile after a code was sent lands back on the
@@ -235,6 +305,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
     <>
       {!compact ? <><h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
       <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p></> : null}
+      {step === "email" ? <ProviderButtons L={L} onError={setError} /> : null}
       {step === "email" ? (
         <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row">
           <input

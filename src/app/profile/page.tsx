@@ -43,7 +43,7 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { Toggle } from "@/components/ui/Toggle";
 import { FieldView } from "@/components/cards/FieldView";
 import { AchievementsGrid, achievementTotals } from "@/components/AchievementsGrid";
-import { AccountSection, ProfileNickname } from "@/components/AccountSection";
+import { AccountSection, ConnectProviders, ProfileNickname } from "@/components/AccountSection";
 import { BadgeEmblem, BannerSurface, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
             <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
             <div className="mt-2.5 flex items-center justify-between gap-3">
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 {signedIn ? (
                   <button
                     type="button"
@@ -217,6 +217,9 @@ export default function ProfilePage() {
                   >
                     {L.signOut}
                   </button>
+                ) : null}
+                {signedIn ? (
+                  <ConnectProviders className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline" />
                 ) : null}
                 {extras ? (
                 <button

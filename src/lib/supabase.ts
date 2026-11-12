@@ -171,6 +171,48 @@ export async function verifyEmailCode(
   return error ? { error: error.message, code: error.code } : {};
 }
 
+// --- Auth (Google / Discord, v2.0.7) ---------------------------------------
+
+/** The OAuth sign-ins offered next to the email code (they send no email). Each
+ *  must be enabled in the Supabase project (Authentication -> Providers). */
+export const OAUTH_PROVIDERS = ["google", "discord"] as const;
+export type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
+
+/** Come back to the page the player was on (must match the project's redirect
+ *  allow list; Supabase falls back to the Site URL otherwise). */
+function oauthReturnUrl(): string {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+/** Leave for the provider's consent page. On success the browser navigates away;
+ *  the session arrives on the way back (`detectSessionInUrl`). An email that
+ *  already has an account lands on that same account (Supabase links identities
+ *  by verified email). */
+export async function signInWithProvider(provider: OAuthProvider): Promise<{ error?: string }> {
+  const c = await client();
+  if (!c) return { error: UNAVAILABLE };
+  const { error } = await c.auth.signInWithOAuth({ provider, options: { redirectTo: oauthReturnUrl() } });
+  return error ? { error: error.message } : {};
+}
+
+/** Attach a provider to the SIGNED-IN account (its email may differ from the
+ *  account's). Needs "manual linking" enabled in the Supabase project. */
+export async function linkProvider(provider: OAuthProvider): Promise<{ error?: string }> {
+  const c = await client();
+  if (!c) return { error: UNAVAILABLE };
+  const { error } = await c.auth.linkIdentity({ provider, options: { redirectTo: oauthReturnUrl() } });
+  return error ? { error: error.message } : {};
+}
+
+/** Which of the offered providers this session's account already has. */
+export function linkedProviders(session: Session | null): OAuthProvider[] {
+  const ids = new Set<string>([
+    ...((session?.user.app_metadata?.providers as string[] | undefined) ?? []),
+    ...(session?.user.identities?.map((i) => i.provider) ?? []),
+  ]);
+  return OAUTH_PROVIDERS.filter((p) => ids.has(p));
+}
+
 export async function signOut(): Promise<void> {
   await (await client())?.auth.signOut();
 }
