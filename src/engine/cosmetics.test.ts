@@ -67,11 +67,13 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
     for (const id of Object.keys(PT.COSMETICS.items)) expect(cosmeticById.has(id), `stale PT copy ${id}`).toBe(true);
   });
 
-  it("the official list: 35 badges, 37 titles, 18 banners", () => {
+  // rc.51 (the review of 11/11): + Hypernova and Creator badges; the Staff title
+  // is gone and 8 titles join; 9 banners join.
+  it("the official list: 37 badges, 44 titles, 27 banners", () => {
     const count = (kind: string) => COSMETICS.filter((c) => c.kind === kind).length;
-    expect(count("badge")).toBe(35);
-    expect(count("title")).toBe(37);
-    expect(count("banner")).toBe(18);
+    expect(count("badge")).toBe(37);
+    expect(count("title")).toBe(44);
+    expect(count("banner")).toBe(27);
   });
 
   it("every challenge-perfect source points at a real challenge", () => {
@@ -79,10 +81,17 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
       if (c.source.type === "challenge-perfect") expect(challengeById.has(c.source.challengeId), c.id).toBe(true);
     }
     expect(COSMETICS.filter((c) => c.source.type === "challenge-perfect").map((c) => c.id).sort()).toEqual([
+      "challenge-banner-against-all-odds",
       "challenge-banner-back-to-basics",
+      "challenge-banner-eye-of-the-storm",
       "challenge-banner-golden-era",
+      "challenge-banner-masterclass",
+      "challenge-banner-world-class",
+      "challenge-title-crown-taker",
+      "challenge-title-globetrotter",
       "challenge-title-homegrown",
       "challenge-title-pure-talent",
+      "challenge-title-titanbreaker",
     ]);
   });
 
@@ -198,13 +207,59 @@ describe("deriveOwnedIds — play milestones", () => {
     );
   });
 
-  it("stars / quiz / missions thresholds (badges keep their rules; On Target is 25)", () => {
+  it("stars / quiz / missions thresholds (rc.51: On Target is 50, Hypernova is 120 stars)", () => {
     expect(earned(facts({ challengeStars: 25 }))).toEqual(["rising-star"]);
     expect(earned(facts({ challengeStars: 75 })).sort()).toEqual(["constellation", "rising-star", "supernova"]);
     expect(earned(facts({ quizSolved: 10 })).sort()).toEqual(["quiz-title-rl-nerd", "scholar-1"]);
     expect(earned(facts({ quizSolved: 50 })).sort()).toEqual(["quiz-banner-playbook", "quiz-title-rl-nerd", "scholar-1", "scholar-2", "scholar-3"]);
     expect(earned(facts({ missionsCompleted: 24 }))).toEqual([]);
-    expect(earned(facts({ missionsCompleted: 25 })).sort()).toEqual(["missions-banner-target-practice", "on-target"]);
+    expect(earned(facts({ missionsCompleted: 25 }))).toEqual(["missions-banner-target-practice"]);
+    expect(earned(facts({ missionsCompleted: 49 }))).toEqual(["missions-banner-target-practice"]);
+    expect(earned(facts({ missionsCompleted: 50 })).sort()).toEqual(["missions-banner-target-practice", "on-target"]);
+    expect(earned(facts({ challengeStars: 119 }))).not.toContain("hypernova");
+    expect(earned(facts({ challengeStars: 120 })).sort()).toEqual(["constellation", "hypernova", "rising-star", "supernova"]);
+    expect(cosmeticById.get("hypernova")?.tier).toBe("legend");
+  });
+
+  it("rc.51: Rocketeer is the Grand Champion title, no longer Champion", () => {
+    const at = (rankId: string) => earned(facts({ seasonPeakRankId: rankId }));
+    expect(at("champion")).not.toContain("rank-title-rocketeer");
+    expect(at("champion")).toContain("rank-banner-singularity");
+    expect(at("grand-champion")).toEqual(expect.arrayContaining(["rank-title-rocketeer", "rank-banner-overdrive"]));
+  });
+
+  it("rc.51: three-star challenge rewards, one or two items per challenge", () => {
+    const perfect = (id: string) => earned(facts({ challengePerfect: [id] })).sort();
+    expect(perfect("ch-topple-the-titans")).toEqual(["challenge-banner-against-all-odds", "challenge-title-titanbreaker"]);
+    expect(perfect("ch-perfect-storm")).toEqual(["challenge-banner-eye-of-the-storm"]);
+    expect(perfect("ch-gauntlet-eu-crown")).toEqual(["challenge-title-crown-taker"]);
+    expect(perfect("ch-lab-masterclass")).toEqual(["challenge-banner-masterclass"]);
+    expect(perfect("ch-gauntlet-world-tour")).toEqual(["challenge-banner-world-class", "challenge-title-globetrotter"]);
+    expect(cosmeticById.get("challenge-banner-world-class")?.tier).toBe("legend");
+  });
+
+  it("rc.51: Classic run marks (Technician, Clean Sweep, Trade Minister needs all five locks)", () => {
+    expect(earned(facts({ careerMarks: ["run-one-flag"] }))).toEqual(["run-title-technician"]);
+    expect(earned(facts({ careerMarks: ["run-clean-sweep"] }))).toEqual(["run-banner-clean-sweep"]);
+    const four = ["run-lock-na", "run-lock-eu", "run-lock-sam", "run-lock-mena"];
+    expect(earned(facts({ careerMarks: four }))).toEqual([]);
+    expect(earned(facts({ careerMarks: [...four, "run-lock-oce"] }))).toEqual(["run-title-trade-minister"]);
+    // They are earned in the draft, so the locker teases them without career mode too.
+    for (const id of ["run-title-technician", "run-banner-clean-sweep", "run-title-trade-minister"]) {
+      expect(isTeasedWhenLocked(cosmeticById.get(id)!), id).toBe(true);
+    }
+  });
+
+  it("rc.51: Road to Worlds milestones read the permanent marks", () => {
+    const mark = (id: string) => earned(facts({ careerMarks: [id] }));
+    expect(mark("car-first-qualifier")).toEqual(["career-title-roster-architect"]);
+    expect(mark("car-first-regional")).toEqual(["career-banner-regional-laurels"]);
+    expect(mark("car-major-berth")).toEqual(["career-banner-passport-stamped"]);
+    expect(mark("car-first-major")).toEqual(["career-banner-major-statement"]);
+    expect(mark("car-day-one")).toEqual(["career-title-day-one"]);
+    expect(mark("car-regional-dynasty")).toEqual(["career-banner-regional-dynasty"]);
+    // Playing a Major is not the berth mark, and qualifying is not the title.
+    expect(mark("car-major-qualified")).toEqual([]);
   });
 
   it("runs: badges read lifetime wins, titles / banners read the Season 1 counters", () => {
@@ -414,13 +469,15 @@ describe("badge art", () => {
     }
   });
 
-  it("the approved catalog (rev. 2026-10-21): 35 badges, each id = its art key; no retired ids", () => {
+  it("the approved catalog (rev. 2026-11-11): 37 badges, each id = its art key; no retired ids", () => {
     const badges = COSMETICS.filter((c) => c.kind === "badge");
-    expect(badges).toHaveLength(35);
+    expect(badges).toHaveLength(37);
+    // rc.51: the Staff badge has its art (no text fallback left in the catalog).
+    expect(badges.some((c) => c.kind === "badge" && c.style.pendingArt)).toBe(false);
     expect(badges.every((c) => c.kind === "badge" && c.style.art === c.id)).toBe(true);
     for (const retired of ["underdog", "world-champion", "season-fourth-place-ps", "season-fifth-place-ps"]) expect(cosmeticById.has(retired)).toBe(false);
     expect(cosmeticById.get("world-champion-crowned")?.source).toEqual({ type: "career-worlds", count: 1 });
-    expect(cosmeticById.get("on-target")?.source).toEqual({ type: "missions-completed", count: 25 });
+    expect(cosmeticById.get("on-target")?.source).toEqual({ type: "missions-completed", count: 50 });
     expect(cosmeticById.get("pre-season-champion")?.tier).toBe("rare");
   });
 });
@@ -438,9 +495,14 @@ describe("rc.38 corrections and old saves", () => {
     expect(sanitizeEquipped(old, { title: null, banner: null, badges: ["underdog"] }).badges).toEqual([]);
     expect(resolveEquipped({ owned: old, equipped: { title: null, banner: null, badges: ["underdog"] }, seen: [] }).badges).toEqual([]);
   });
-  it("every manual grant has Exclusive rarity; staff grants both items only manually", () => {
+  it("every manual grant has Exclusive rarity; rc.51: Staff is the badge only, Creator is badge + title", () => {
     for (const c of COSMETICS.filter(c => c.source.type === "grant")) expect(c.tier).toBe("exclusive");
-    expect(earned(facts({ grants: ["50-50-staff"] })).sort()).toEqual(["50-50-staff", "grant-title-50-50-staff"]);
+    expect(earned(facts({ grants: ["50-50-staff"] }))).toEqual(["50-50-staff"]);
+    expect(cosmeticById.has("grant-title-50-50-staff")).toBe(false);
+    expect(earned(facts({ grants: ["creator"] })).sort()).toEqual(["creator", "grant-title-creator"]);
+    expect(isTeasedWhenLocked(cosmeticById.get("creator")!)).toBe(false);
+    // A saved Staff title choice resolves to nothing, never to a broken id.
+    expect(resolveEquipped({ owned: { "50-50-staff": "2026-11-09" }, equipped: { title: "grant-title-50-50-staff", banner: null, badges: ["50-50-staff"] }, seen: [] }).title).toBeNull();
     expect(earned(facts())).not.toContain("50-50-staff");
     expect(compareForLocker(cosmeticById.get("50-50-staff")!, cosmeticById.get("supernova")!)).toBeLessThan(0);
   });

@@ -21,7 +21,11 @@
  * six-step ladder (common → exclusive → legend). rc.20 follows the revised design file:
  * Season Elite covers #4–10 (4th / 5th place badges are gone), Crowned World
  * Champion is the FIRST Worlds title (the original World Champion art is
- * retired), Early Supporter joins the manual grants, On Target is 25 missions.
+ * retired), Early Supporter joins the manual grants. rc.51 (Miguel's review of
+ * 11/11): every badge re-exported from the revised file, On Target is 50
+ * missions, Hypernova (120 stars) and Creator join, the Staff badge has its art
+ * and the Staff TITLE is gone; Rocketeer moves to Grand Champion; 16 new titles
+ * and banners (challenges, Classic feats, Road to Worlds).
  *
  * BANNERS (rc.21) are Miguel's art too: `public/banners/<art>.svg` from the
  * design file in `data-sources/banners/` (`npm run build:banners`), served in
@@ -56,7 +60,7 @@ export type CosmeticKind = "title" | "badge" | "banner";
 export type CosmeticTier = "common" | "uncommon" | "rare" | "epic" | "exclusive" | "legend";
 
 /** Manual grant ids (the cloud `profile_grants.grant_id` column). */
-export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff";
+export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff" | "creator";
 
 export type CosmeticSource =
   | { type: "legacy-participation" }
@@ -85,6 +89,11 @@ export type CosmeticSource =
   | { type: "challenge-perfect"; challengeId: string }
   /** v2.0 (career R32): a permanent career achievement id. */
   | { type: "career-mark"; markId: string }
+  /** rc.51: a permanent fact a finished Classic run left on the profile
+   *  (`src/engine/runMarks.ts`; stored with the career marks, `run-` prefix). */
+  | { type: "run-mark"; markId: string }
+  /** rc.51: every one of these run marks (Trade Minister: the five region locks). */
+  | { type: "run-marks-all"; markIds: string[] }
   /** rc.4: World Championships won on the Road to Worlds, across every save. */
   | { type: "career-worlds"; count: number }
   /**
@@ -161,6 +170,7 @@ export const GRANT_COLORS: Record<GrantId, { colors: Stops; glow: string }> = {
   contributor: { colors: ["#19d290", "#7ef0c0"], glow: "#00d1d1" }, // emerald / teal
   "50-50-staff": { colors: ["#ffffff"], glow: "#ffffff" },
   pro: { colors: ["#aef7ff", "#e0fbff"], glow: "#43afff" }, // ice / sky
+  creator: { colors: ["#ff2bd6", "#ff8df0"], glow: "#d400b8" }, // fuchsia / magenta (rc.51)
 };
 
 type BadgeDef = Extract<CosmeticDef, { kind: "badge" }>;
@@ -259,6 +269,7 @@ const BADGES: CosmeticDef[] = [
   badge("rising-star", "uncommon", 23, { type: "challenge-stars", stars: 25 }),
   badge("constellation", "rare", 43, { type: "challenge-stars", stars: 50 }),
   badge("supernova", "epic", 63, { type: "challenge-stars", stars: 75 }),
+  badge("hypernova", "legend", 83, { type: "challenge-stars", stars: 120 }),
   // --- Runs won (lifetime) ------------------------------------------------------
   badge("veteran-drafter-1", "uncommon", 24, { type: "runs-won", count: 50 }),
   badge("veteran-drafter-2", "rare", 44, { type: "runs-won", count: 250 }),
@@ -269,7 +280,7 @@ const BADGES: CosmeticDef[] = [
   badge("scholar-2", "rare", 45, { type: "quiz-solved", count: 25 }),
   badge("scholar-3", "epic", 65, { type: "quiz-solved", count: 50 }),
   // --- Missions -----------------------------------------------------------------
-  badge("on-target", "rare", 46, { type: "missions-completed", count: 25 }),
+  badge("on-target", "rare", 46, { type: "missions-completed", count: 50 }),
   // --- Pre-season participation -------------------------------------------------
   badge("first-chapter", "rare", 47, { type: "legacy-participation" }, true),
   // --- Pre-season board (final place) -------------------------------------------
@@ -283,7 +294,8 @@ const BADGES: CosmeticDef[] = [
   badge("world-champion-crowned", "epic", 69, { type: "career-worlds", count: 1 }),
   badge("dynasty", "legend", 100, { type: "season-feat", rankId: "supersonic-legend", careerWorlds: 3, legacyTitles: 25 }),
   // --- Manual grants ------------------------------------------------------------
-  { ...badge("50-50-staff", "exclusive", 74, { type: "grant", grantId: "50-50-staff" }, true), style: { art: "50-50-staff", pendingArt: true } },
+  badge("creator", "exclusive", 75, { type: "grant", grantId: "creator" }, true),
+  badge("50-50-staff", "exclusive", 74, { type: "grant", grantId: "50-50-staff" }, true),
   badge("early-supporter", "exclusive", 73, { type: "grant", grantId: "early-supporter" }, true),
   badge("supporter", "exclusive", 72, { type: "grant", grantId: "supporter" }, true),
   badge("contributor", "exclusive", 71, { type: "grant", grantId: "contributor" }, true),
@@ -291,6 +303,11 @@ const BADGES: CosmeticDef[] = [
 ];
 
 const GREY: Stops = ["#a3adbd"];
+
+/** rc.51 (Trade Minister): one mark per playable region lock a Classic run was won on. */
+export const TRADE_MINISTER_REGIONS = ["NA", "EU", "SAM", "MENA", "OCE"] as const;
+export const runLockMark = (region: string): string => `run-lock-${region.toLowerCase()}`;
+const TRADE_MINISTER_MARKS = TRADE_MINISTER_REGIONS.map(runLockMark);
 
 /** Login calendar (30 days; the XP-only days live in `LOGIN_STREAK`). */
 const LOGIN: CosmeticDef[] = [
@@ -315,8 +332,8 @@ const RANK_TRACK: CosmeticDef[] = [
   banner("rank-banner-slipstream", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "platinum" }, { art: "slipstream", glow: "#2f7bff", frame: ["#2f7bff", "#36e3ff", "#e6f3ff"] }),
   title("rank-title-unstoppable", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "diamond" }, ["#a3adbd"]),
   banner("rank-banner-singularity", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, { art: "singularity", glow: "#8a5cff", frame: ["#8a5cff", "#ff4fd8", "#9ff4ff"] }),
-  title("rank-title-rocketeer", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, ["#ff5f6d", "#ffc371", "#c9a8ff"]),
   banner("rank-banner-overdrive", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, { art: "overdrive", glow: "#ff2a4a", frame: ["#ff2a4a", "#ff9a2a", "#ffe08a"] }),
+  title("rank-title-rocketeer", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, ["#ff5f6d", "#ffc371", "#c9a8ff"]),
   banner("rank-banner-cosmic-ascension", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, { art: "cosmic-ascension", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
   title("rank-title-rocket-demigod", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, WHITE_GOLD),
 ];
@@ -335,14 +352,36 @@ const PLAY: CosmeticDef[] = [
   title("quiz-title-rl-nerd", "uncommon", 38, { type: "quiz-solved", count: 10 }, ["#a3adbd"]),
   banner("quiz-banner-playbook", "rare", 39, { type: "quiz-solved", count: 50 }, { art: "playbook", glow: "#4fd3ee", frame: ["#4fd3ee", "#2a6fb0", "#e6fbff"] }),
   title("career-title-rtw-champion", "epic", 40, { type: "career-worlds", count: 1 }, GOLD, undefined, GOLD_GLOW),
+  // --- rc.51: Classic feats (run marks, `src/engine/runMarks.ts`) -----------------
+  title("run-title-technician", "uncommon", 41, { type: "run-mark", markId: "run-one-flag" }, GREY),
+  banner("run-banner-clean-sweep", "rare", 42, { type: "run-mark", markId: "run-clean-sweep" }, { art: "clean-sweep", glow: "#bfe9ff", frame: ["#bfe9ff", "#6f8fb8", "#ffffff"] }),
+  title("run-title-trade-minister", "rare", 43, { type: "run-marks-all", markIds: TRADE_MINISTER_MARKS }, GREY),
 ];
 
-/** The three fixed challenges with exclusive cosmetics (three stars each). */
+/** rc.51: Road to Worlds milestones (permanent marks mirrored on the profile). */
+const CAREER: CosmeticDef[] = [
+  title("career-title-roster-architect", "common", 44, { type: "career-mark", markId: "car-first-qualifier" }, GREY),
+  banner("career-banner-regional-laurels", "rare", 45, { type: "career-mark", markId: "car-first-regional" }, { art: "regional-laurels", glow: "#d8c25a", frame: ["#d8c25a", "#5fa86a", "#fbf6d0"] }),
+  banner("career-banner-passport-stamped", "rare", 46, { type: "career-mark", markId: "car-major-berth" }, { art: "passport-stamped", glow: "#ff6f5e", frame: ["#ff6f5e", "#62bcff", "#fff0e0"] }),
+  banner("career-banner-major-statement", "rare", 47, { type: "career-mark", markId: "car-first-major" }, { art: "major-statement", glow: "#ff4f9a", frame: ["#ff4f9a", "#7a5cff", "#ffe6f2"] }),
+  title("career-title-day-one", "epic", 48, { type: "career-mark", markId: "car-day-one" }, ["#8a5cff", "#c58bff", "#e9d5ff"]),
+  banner("career-banner-regional-dynasty", "epic", 49, { type: "career-mark", markId: "car-regional-dynasty" }, { art: "regional-dynasty", glow: "#9a5cff", frame: ["#9a5cff", "#ffc24a", "#fff0c8"] }),
+];
+
+/** The fixed challenges with exclusive cosmetics (three stars each; rc.51 adds
+ *  Topple the Titans, Perfect Storm, European Crown, Draft Masterclass and World Tour). */
 const CHALLENGES: CosmeticDef[] = [
   title("challenge-title-homegrown", "rare", 50, { type: "challenge-perfect", challengeId: "ch-homegrown" }, ["#a3adbd"]),
   banner("challenge-banner-golden-era", "rare", 50, { type: "challenge-perfect", challengeId: "ch-time-capsule" }, { art: "golden-era", glow: "#e8b25a", frame: ["#e8b25a", "#9a5a1e", "#fff0cc"] }),
   banner("challenge-banner-back-to-basics", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, { art: "back-to-basics", glow: "#2f7bff", frame: ["#2f7bff", "#ff8a2a", "#fff1e0"] }),
   title("challenge-title-pure-talent", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, ["#a3adbd"]),
+  title("challenge-title-crown-taker", "rare", 52, { type: "challenge-perfect", challengeId: "ch-gauntlet-eu-crown" }, ["#a3adbd", "#a3adbd", "#6cb8ff"]),
+  title("challenge-title-titanbreaker", "epic", 53, { type: "challenge-perfect", challengeId: "ch-topple-the-titans" }, ["#c8ff3a", "#1fd8c0", "#f6ffd6"]),
+  banner("challenge-banner-against-all-odds", "epic", 53, { type: "challenge-perfect", challengeId: "ch-topple-the-titans" }, { art: "against-all-odds", glow: "#c8ff3a", frame: ["#c8ff3a", "#1fd8c0", "#f6ffd6"] }),
+  banner("challenge-banner-eye-of-the-storm", "epic", 54, { type: "challenge-perfect", challengeId: "ch-perfect-storm" }, { art: "eye-of-the-storm", glow: "#7fa8e0", frame: ["#7fa8e0", "#b48cff", "#ffe2b0"] }),
+  banner("challenge-banner-masterclass", "epic", 55, { type: "challenge-perfect", challengeId: "ch-lab-masterclass" }, { art: "masterclass", glow: "#f0a878", frame: ["#f0a878", "#3fb8c8", "#fff2e4"] }),
+  title("challenge-title-globetrotter", "epic", 56, { type: "challenge-perfect", challengeId: "ch-gauntlet-world-tour" }, ["#5fd6ff", "#8fe9ff", "#ffb3ec"]),
+  banner("challenge-banner-world-class", "legend", 57, { type: "challenge-perfect", challengeId: "ch-gauntlet-world-tour" }, { art: "world-class", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
 ];
 
 /** Pre-season rewards (handed out at the Season 1 turnover; exclusive). */
@@ -358,14 +397,14 @@ const LEGACY: CosmeticDef[] = [
 const grantTitle = (id: string, priority: number, grantId: GrantId): TitleDef =>
   title(id, "exclusive", priority, { type: "grant", grantId }, GRANT_COLORS[grantId].colors, true, GRANT_COLORS[grantId].glow);
 const GRANTS: CosmeticDef[] = [
-  grantTitle("grant-title-50-50-staff", 84, "50-50-staff"),
+  grantTitle("grant-title-creator", 85, "creator"),
   grantTitle("grant-title-early-supporter", 83, "early-supporter"),
   grantTitle("grant-title-supporter", 82, "supporter"),
   grantTitle("grant-title-contributor", 81, "contributor"),
   grantTitle("grant-title-pro", 80, "pro"),
 ];
 
-export const COSMETICS: CosmeticDef[] = [...BADGES, ...LOGIN, ...RANK_TRACK, ...PLAY, ...CHALLENGES, ...LEGACY, ...GRANTS];
+export const COSMETICS: CosmeticDef[] = [...BADGES, ...LOGIN, ...RANK_TRACK, ...PLAY, ...CAREER, ...CHALLENGES, ...LEGACY, ...GRANTS];
 
 export const cosmeticById: ReadonlyMap<string, CosmeticDef> = new Map(COSMETICS.map((c) => [c.id, c]));
 

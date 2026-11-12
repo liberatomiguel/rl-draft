@@ -76,7 +76,8 @@ export interface CosmeticFacts {
   challengeStars?: number;
   quizSolved?: number;
   missionsCompleted?: number;
-  /** v2.0 (career R32): permanent career achievement ids mirrored on the profile. */
+  /** v2.0 (career R32): permanent career achievement ids mirrored on the profile.
+   *  rc.51: the Classic run marks (`run-` prefix, `./runMarks`) live here too. */
   careerMarks?: string[];
   /** rc.4: tournament runs won, lifetime (every difficulty / mode). */
   runsWon?: number;
@@ -212,7 +213,10 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
     case "challenge-perfect":
       return (f.challengePerfect ?? []).includes(source.challengeId);
     case "career-mark":
+    case "run-mark":
       return (f.careerMarks ?? []).includes(source.markId);
+    case "run-marks-all":
+      return source.markIds.every((id) => (f.careerMarks ?? []).includes(id));
     case "career-worlds":
       return (f.careerWorlds ?? 0) >= source.count;
     case "season-feat":
@@ -328,6 +332,8 @@ const GROUP_ORDER: CosmeticSource["type"][] = [
   "career-worlds",
   "career-mark",
   "challenge-perfect",
+  "run-marks-all",
+  "run-mark",
   "legacy-streak",
   "runs-won",
   "runs-won-since-s1",

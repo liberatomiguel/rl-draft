@@ -6,6 +6,8 @@ Static, frameless SVGs (1240 × 200); production serves the WebP that build-imag
 
 Animated banners get `<art>.base.svg` (static background) and `<art>.motion.svg` (transparent moving art), both rasterised to WebP. The UI animates the motion texture with CSS transform/opacity only. `<art>.anim.svg` retains the filter-free reference motion for authoring, never runtime animation. The complete `<art>.svg` is the reduced-effects fallback.
 
+FRAME pipeline (rc.51: Wildfire, Heatwave, Cosmic Ascension and every later banner): `<art>.base.svg`, `<art>.f1.svg` and `<art>.f2.svg` are three moments of the design file's own animation, baked with their filters; the UI cross-fades them (opacity only). `<art>.drift.svg` / `<art>.drift2.svg` hold the travelling shapes (embers, dust), moved by a CSS transform along the design vector (`src/generated/banner-motion.json`).
+
 | File | Name | Rarity |
 |---|---|---|
 | `kickoff.svg` | Kickoff | 1 |
@@ -26,3 +28,12 @@ Animated banners get `<art>.base.svg` (static background) and `<art>.motion.svg`
 | `playbook.svg` | Playbook | 3 |
 | `golden-era.svg` | Golden Era | 3 |
 | `back-to-basics.svg` | Back to Basics | 3 |
+| `world-class.svg` | World Class | 5 |
+| `against-all-odds.svg` | Against All Odds | 4 |
+| `eye-of-the-storm.svg` | Eye of the Storm | 4 |
+| `masterclass.svg` | Masterclass | 4 |
+| `regional-dynasty.svg` | Regional Dynasty | 4 |
+| `regional-laurels.svg` | Regional Laurels | 3 |
+| `passport-stamped.svg` | Passport Stamped | 3 |
+| `major-statement.svg` | Major Statement | 3 |
+| `clean-sweep.svg` | Clean Sweep | 3 |

@@ -7,6 +7,7 @@ import { CHEMISTRY, DIFFICULTY, FEATURES, XP } from "@/config/balance";
 import { achievementById, playerById, playerCardById, specialCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { evaluateRunAchievements, userRunTotals } from "./achievements";
+import { runMarksFor } from "./runMarks";
 import { finalOverall } from "./cards";
 import { displayTeamOverall } from "./rating";
 import { userPlayoffSeries } from "./playoffs";
@@ -331,6 +332,7 @@ export function compileResults(
     goalsConceded,
     unlockedSpecialIds,
     newAchievementIds,
+    runMarks: runMarksFor(run, tournament),
     userGoals: runTotals.goals,
     userGameWins: runTotals.gameWins,
     xp: {

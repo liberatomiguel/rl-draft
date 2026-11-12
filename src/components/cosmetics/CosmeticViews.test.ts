@@ -25,12 +25,14 @@ describe("manual title art is independent of Exclusive rarity", () => {
     }
   });
 
-  it("uses white for Staff with the same stroke/effects", () => {
-    const title = cosmeticById.get("grant-title-50-50-staff")!;
-    expect(title.kind === "title" && title.style.colors).toEqual(["#ffffff"]);
+  // rc.51: the Staff title is gone (the badge stays); Creator takes a reserved fuchsia.
+  it("uses the reserved fuchsia for Creator with the same stroke/effects", () => {
+    expect(cosmeticById.has("grant-title-50-50-staff")).toBe(false);
+    const title = cosmeticById.get("grant-title-creator")!;
+    expect(title.kind === "title" && title.style.colors).toEqual(["#ff2bd6", "#ff8df0"]);
     const html = renderToStaticMarkup(React.createElement(TitleTag, { title }));
     expect(html).toContain("cos-title-epic");
-    expect(html).toContain("--cos-glow:#ffffff");
+    expect(html).toContain("--cos-glow:#d400b8");
   });
 
   it("distinguishes the rarity colour from Epic without recolouring the title", () => {

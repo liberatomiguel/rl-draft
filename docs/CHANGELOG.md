@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.50**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.51**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,36 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.51 (2026-11-12), Miguel's cosmetics review: revised badges, 9 banners, 16 new rewards, banner animation rebuilt
+
+Source: Miguel's review file of 11/11 (the catalogue checked item by item), the revised badge design file and the banner catalogue file, both now in `data-sources/`. Reference: `docs/COSMETICS-CATALOG.md` (regenerated, 108 items: 37 badges, 44 titles, 27 banners).
+
+#### Added
+- **Badges:** Hypernova (Legendary, 120 challenge stars), Creator (manual grant `creator`) and the art of the 50/50 Staff badge (drawn as `5050` in the design file; the id stays `50-50-staff`).
+- **Three-star challenge rewards:** Titanbreaker (title) and Against All Odds (banner) on Topple the Titans; Eye of the Storm (banner) on Perfect Storm; Crown Taker (title) on European Crown; Masterclass (banner) on Draft Masterclass; Globetrotter (title) and World Class (Legendary banner) on World Tour.
+- **Classic feats** (`src/engine/runMarks.ts`, Classic only: Daily, Quick and Challenges never count): Technician (title; a worldwide title with three players, coach and substitute of one country), Clean Sweep (banner; six slots filled, no series lost), Trade Minister (title; a title on each of the NA, EU, SAM, MENA and OCE region locks).
+- **Road to Worlds milestones:** Roster Architect (title; first main regional reached through the qualifier), Regional Laurels (banner; first main regional title), Passport Stamped (banner; first Major berth, the day the field is announced), Major Statement (banner; first Major title), Day One (title; Worlds won by the three starters registered as split 1 opened, never changed since), Regional Dynasty (banner; every main regional and Worlds in one season).
+- **Creator title** (manual grant, fuchsia / magenta, a reserved colour). SQL for the grant id, NOT executed: `docs/sql/rc51-creator-grant.sql`.
+- The "how to get it" line of a Road to Worlds or Classic reward now states the exact milestone (`COSMETICS.sources.marks`, EN + PT) instead of "Road to Worlds achievement".
+
+#### Changed
+- **Every badge re-exported** from the revised design file (20 arts changed, Underdog's unused file is gone).
+- **On Target** is 50 missions (was 25; the Target Practice banner keeps 25). **Rocketeer** is the Grand Champion title (was Champion). The **50/50 Staff title** is removed (the badge stays); a saved choice of it resolves to an empty slot.
+- **Banner animation, frame pipeline** (Wildfire, Heatwave, Cosmic Ascension and the nine new banners): the build evaluates the design file's own animation at three moments and bakes each into a complete image, filters, masks and blend modes included; the UI cross-fades them (opacity only). Shapes that travel (embers, stardust, rain, confetti) are transparent planes moved along the design's own vector. Weight of the live layers at the widest size: Cosmic Ascension 150 KB (was about 180 KB), Wildfire 75 KB, Heatwave 118 KB; the heaviest new banner is Clean Sweep, 280 KB. The other 13 animated banners keep the rc.23 plane split unchanged.
+
+#### Fixed
+- **Wildfire's flames looked bent.** Root cause: the game skewed and stretched one flattened raster of all the flames about the banner's centre, so the stepped (pixel) edges tilted with it; the design sways each flame a degree or two about its own base, inside a mask whose steps stay upright. The frames are rendered from that original animation.
+- **Cosmic Ascension did not look like the design and barely moved.** Root cause: its animated shapes were lifted onto separate planes with their filters stripped, their blend modes lost (a `screen` layer over transparency is not a `screen` layer over the nebula) and drawn above the scrim and the star, so rings and rays turned hard and bright; the motion left was a 140 s rotation and an opacity pulse. The frames keep the original paint order and effects; the aurora, the iridescent ring and the sparkles now change between frames and the stardust rises on two planes.
+- **Heatwave only moved four thin lines.** Root cause: its main animation is a heat-haze filter (an animated turbulence), which cannot run in the browser and was simply dropped. Three frames of that haze now cross-fade over the whole scene.
+- **`npm run build:badges` always failed after writing the files** (since rc.21). Root cause: its catalogue check collected every `art: "..."` literal in `cosmetics.ts`, which since rc.21 are the banner arts, and looked for them among the badges; the README step after it never ran. It now checks the badge ids only.
+- **Analytics would read a Classic feat as a career.** The career funnel steps looked at whether the profile had any mark; run marks share that list, so only `car-` marks count now (found while adding them, never shipped).
+
+#### Not done / not verified
+- Not played by Miguel. The animations were checked in a desktop browser against the static export; no phone, no Safari.
+- Supernova stays at 75 stars (the review file and the rc.38 decision); the revised badge file's caption says 90. Hypernova's 120 comes from that file. Miguel to confirm both.
+- A career already past the start of split 1 when it loads rc.51 can only earn Day One from its next season on (the starters are registered as split 1 opens).
+- The Creator and Staff grants need their SQL applied before anyone can receive them; neither was run.
 
 ### rc.50 (2026-11-12), wave 2 integrated: mobile, copy and tutorial, analytics, performance (R130–R132)
 

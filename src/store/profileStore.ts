@@ -548,6 +548,11 @@ export const useProfileStore = create<ProfileState>()(
             };
           }
 
+          // rc.51: the run's permanent cosmetic facts (Technician, Clean Sweep,
+          // the region locks of Trade Minister) join the marks; never removed.
+          const freshMarks = (results.runMarks ?? []).filter((id) => !(state.careerMarks ?? []).includes(id));
+          const careerMarks = freshMarks.length ? [...(state.careerMarks ?? []), ...freshMarks] : (state.careerMarks ?? []);
+
           const runsCompleted = state.runsCompleted + 1;
           const gamesWon = state.gamesWon + results.userGameWins;
           const goalsScored = state.goalsScored + results.userGoals;
@@ -628,7 +633,8 @@ export const useProfileStore = create<ProfileState>()(
             lastMmrGain,
             season,
             lifetime: { xp: state.lifetime.xp + (xpFinal - state.xp) },
-            cosmetics: withCosmetics({ ...state, season, wins, runsCompleted, unlockedSpecials, legacyStreak }, now),
+            cosmetics: withCosmetics({ ...state, season, wins, runsCompleted, unlockedSpecials, legacyStreak, careerMarks }, now),
+            careerMarks,
             legacyUnlocked,
             runsCompleted,
             wins,

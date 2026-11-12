@@ -7,16 +7,10 @@
 
 - Production remains main, v1.4.8, https://rocketdraft.app; static assets only.
   Season 1 has no production approval.
-- Staging candidate **v2.0.0-rc.50**: wave 2 integrated (mobile pass, copy clean-up, guided tour, analytics catalogue 2.0 with an event budget guard, performance) and the fix of the season-3 soft lock that stopped every career on rc.47–rc.49 (R130–R132). Not played by Miguel; mobile checked in emulation only (no physical device, no Safari); analytics runs in production only and is unverified against PostHog; draft matrix and challenge replays must be repeated once the special-card pool is final. Notes: docs/handoff-2.0/.
-- Before it, **rc.49** (rc.48 R129 elite signing; rc.49 Miguel's review fixes of the wave): the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu); notes and validation lists in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: mobile pass, copy clean-up and tutorial, final special cards (then repeat the draft matrix and challenge replays). On branch `claude/rc42-balance`, waiting for Miguel: **rc.48** (R129, elite talent signs at his overall again; the rc.46 price stays). BALANCE_VERSION 25.
-- Before it, **rc.46** (R121: elite talent costs more and signs later; Normal measured only). It also holds: rc.43 mid-career balance (R113–R117), rc.44 real coaches, better ex-pros, bench growth and slower squad decline (R118–R119), rc.45 four support-staff retainers (R120). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy. rc.42 revised rc.41: Miguel's
-  Road to Worlds feedback. Manual crest builder, HQ/Club/Training/Finances layouts,
-  inbox-only routine loans, mandatory accept/decline, direct-seed coach
-  briefings, title ledger, partner events and reputation-20 contracted market.
-  Optional cups every open week, calendar forecasts and spectator title stops.
-  rc.42 adds a compact HQ title race/full Standings history, independent filters,
-  balanced Club/event/finance cards and left-column debt.
-  Request mapping and validation: CAREER-FEEDBACK-rc42.md.
+- Staging candidate **v2.0.0-rc.51**: Miguel's cosmetics review of 11/11. Every badge re-exported (Hypernova, Creator and the Staff art added), 9 new banners, 16 new rewards (three-star challenges, Classic feats, Road to Worlds milestones), On Target 50, Rocketeer at Grand Champion, Staff title removed; Wildfire, Heatwave, Cosmic Ascension and the new banners animate from pre-rendered frames. Not played by Miguel; animations checked on a desktop browser only; Supernova 75 vs 90 is open; the Creator / Staff grant SQL is not applied. Details: CHANGELOG rc.51.
+- Before it, **rc.50**: wave 2 integrated (mobile pass, copy clean-up, guided tour, analytics catalogue 2.0 with an event budget guard, performance) and the fix of the season-3 soft lock that stopped every career on rc.47–rc.49 (R130–R132). Not played by Miguel; mobile checked in emulation only (no physical device, no Safari); analytics runs in production only and is unverified against PostHog; draft matrix and challenge replays must be repeated once the special-card pool is final. Notes: docs/handoff-2.0/.
+- Before it, **rc.47-rc.49**: the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu), R129 elite signing (rc.48) and Miguel's review fixes (rc.49); notes in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: final special cards (then repeat the draft matrix and challenge replays). BALANCE_VERSION 25.
+- Before it, **rc.42-rc.46**: Miguel's Road to Worlds feedback (rc.42, CAREER-FEEDBACK-rc42.md), mid-career balance (rc.43), real coaches and bench growth (rc.44), support staff (rc.45), elite talent price (rc.46). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy; rc.46 on Normal only.
 - The rc.39 F6 package remains in place (R100–R109); the 2027 roster wave
   still enters season seven, the first infinite season. BALANCE_VERSION **19**
   includes a 20% reduction of training-wear absence risk with a coach (R111).
@@ -51,8 +45,8 @@
    integrated playtests, real saves, account/sync, performance, final EN/PT/art,
    tutorial and launch notes. Etapa 6: season dates, migration/rollback and
    Miguel's cutover tasks in V2-IMPLEMENTATION-PLAN.md §6. No main deployment.
-4. PENDING-COSMETICS.md retains Staff SQL/art, missing photos and reward/copy
-   decisions; UI publication does not complete them. Event cards/Season Rating
+4. PENDING-COSMETICS.md retains the Staff and Creator grant SQL, missing photos
+   and the unlock-copy decision; UI publication does not complete them. Event cards/Season Rating
    deltas from 5 November remain Miguel's decisions.
 
 ## Standing contracts

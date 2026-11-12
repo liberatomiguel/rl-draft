@@ -1514,6 +1514,11 @@ export interface CareerSave {
   starterIds: [string, string, string];
   /** v2.0 (R32): the roster the org was founded with ("homegrown" Worlds). */
   foundingSquadIds?: string[];
+  /** rc.51 (the Day One title): the three starters registered when split 1 of
+   *  `seasonIndex` started; `broken` once an official event fields anyone else
+   *  (it never clears within the season, even if the original three return).
+   *  Additive and optional: a save from before rc.51 gets it at its next split 1. */
+  dayOne?: { seasonIndex: number; starterIds: string[]; broken: boolean };
   coach: CoachState | null;
 
   finances: FinanceState;

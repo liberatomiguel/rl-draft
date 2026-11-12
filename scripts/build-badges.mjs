@@ -22,6 +22,9 @@ import vm from "node:vm";
 
 const SRC = "data-sources/badges/badges-gema-moldura.html";
 const OUT = "public/badges";
+/** Design-file keys whose catalog id (and file name) differs: the Staff badge is
+ *  drawn as "5050" in the file; its id has been `50-50-staff` since rc.38. */
+const KEY_ALIAS = { "5050": "50-50-staff" };
 /** Season rank badges to export: [rank key in the file, season key] (none yet). */
 const SEASON_RANK_BADGES = [];
 
@@ -48,7 +51,7 @@ const write = (key, spec) => {
   writeFileSync(join(OUT, `${key}.svg`), `${svg}\n`);
   written.push([key, spec.name ?? key, svg.length]);
 };
-for (const serie of SERIES) for (const b of serie.badges) write(b.key, b);
+for (const serie of SERIES) for (const b of serie.badges) write(KEY_ALIAS[b.key] ?? b.key, b);
 for (const [rank, season] of SEASON_RANK_BADGES) {
   const b = rankBadge(rank, season);
   write(b.key, b);
@@ -56,10 +59,12 @@ for (const [rank, season] of SEASON_RANK_BADGES) {
 
 // Every art key the catalog references must exist.
 const catalog = readFileSync("src/data/cosmetics.ts", "utf8");
-const arts = new Set([...catalog.matchAll(/art:\s*"([a-z0-9-]+)"/g)].map((m) => m[1]));
+// rc.51: a badge's id IS its art key. (The old check also collected every
+// `art: "..."` literal, which since rc.21 are the BANNER arts, so this script
+// threw after writing the files and never refreshed the README.)
 const ids = new Set([...catalog.matchAll(/badge\("([a-z0-9-]+)"/g)].map((m) => m[1]));
 const files = new Set(readdirSync(OUT).map((f) => f.replace(/\.svg$/, "")));
-const missing = [...arts, ...ids].filter((k) => !files.has(k));
+const missing = [...ids].filter((k) => !files.has(k));
 if (missing.length) throw new Error(`badge art missing for: ${missing.join(", ")}`);
 
 writeFileSync(

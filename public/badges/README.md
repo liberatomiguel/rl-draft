@@ -10,6 +10,7 @@ Replace the design file and re-run the script to update the art.
 | `rising-star.svg` | Rising Star |
 | `constellation.svg` | Constellation |
 | `supernova.svg` | Supernova |
+| `hypernova.svg` | Hypernova |
 | `veteran-drafter-1.svg` | Veteran Drafter I |
 | `veteran-drafter-2.svg` | Veteran Drafter II |
 | `veteran-drafter-3.svg` | Veteran Drafter III |
@@ -33,10 +34,11 @@ Replace the design file and re-run the script to update the art.
 | `pre-season-grand-champion.svg` | Pre-season Grand Champion |
 | `pre-season-supersonic.svg` | Pre-season Supersonic |
 | `road-warrior.svg` | Road Warrior |
-| `underdog.svg` | Underdog |
 | `dynasty.svg` | Dynasty |
-| `world-champion-crowned.svg` | Crowned World Champion |
+| `world-champion-crowned.svg` | World Champion · Coroa |
+| `creator.svg` | Creator |
 | `contributor.svg` | Contributor |
 | `verified-pro.svg` | Verified Pro |
 | `supporter.svg` | Supporter |
 | `early-supporter.svg` | Early Supporter |
+| `50-50-staff.svg` | 5050 |
