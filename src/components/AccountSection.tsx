@@ -113,6 +113,56 @@ export function AccountSection() {
   return <SignInForm L={L} />;
 }
 
+/**
+ * v2.0.4: the step after a sign-in that CREATED the account: choose the display
+ * name. The account already exists with an automatic name (the email prefix), so
+ * closing this keeps that one; a taken name is refused by the database and shown.
+ */
+export function ChooseNameForm({ L, onDone }: { L: L; onDone: () => void }) {
+  const current = useAccountStore((s) => s.username);
+  const setUsername = useAccountStore((s) => s.setUsername);
+  const [draft, setDraft] = useState(current ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    const next = draft.trim();
+    if (!next || busy) return;
+    if (next === current) return onDone();
+    setBusy(true);
+    setError(null);
+    const res = await setUsername(next);
+    setBusy(false);
+    if (res.error === "taken") setError(L.nameTaken);
+    else if (res.error) setError(L.nameSaveError);
+    else onDone();
+  };
+
+  return (
+    <div>
+      <p className="mb-3 text-sm leading-relaxed text-sub">{L.chooseNameNote}</p>
+      <form onSubmit={(e) => { e.preventDefault(); void save(); }} className="flex flex-col gap-2.5 sm:flex-row">
+        <input
+          type="text"
+          aria-label={L.displayNameLabel}
+          autoFocus
+          required
+          maxLength={24}
+          autoComplete="nickname"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-orange/60"
+        />
+        <Button type="submit" variant="primary" disabled={busy || !draft.trim()}>
+          {L.chooseNameSave}
+        </Button>
+      </form>
+      {error ? <p className="mt-2.5 text-xs text-red-400" role="alert">{error}</p> : null}
+      <p className="mt-2.5 text-xs text-faint">{L.chooseNameLater}</p>
+    </div>
+  );
+}
+
 export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) {
   // The in-flight email lives in the account store (survives navigation), so the step
   // is DERIVED from it: returning to /profile after a code was sent lands back on the
@@ -122,7 +172,6 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
   const step = pendingEmail ? "code" : "email";
 
   const [email, setEmail] = useState(pendingEmail ?? "");
-  const [name, setName] = useState(useAccountStore.getState().pendingName ?? "");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,16 +190,6 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
     setNotice(null);
     sfx.click();
     try {
-      // v2.0.3: an optional display name for a new account, checked before the code is sent.
-      const wanted = name.trim().slice(0, 24);
-      if (wanted && !pendingEmail) {
-        const free = await useAccountStore.getState().checkUsername(wanted);
-        if (!free) {
-          setError(L.nameTaken);
-          return;
-        }
-      }
-      useAccountStore.getState().setPendingName(wanted || null);
       const { error, code: errCode } = await sendEmailCode(to);
       const rateLimited = errCode === "over_email_send_rate_limit" || /after \d+ second/i.test(error ?? "");
       if (!error || rateLimited) {
@@ -197,17 +236,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
       {!compact ? <><h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
       <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p></> : null}
       {step === "email" ? (
-        <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
-          <input
-            type="text"
-            aria-label={L.signInNameLabel}
-            maxLength={24}
-            autoComplete="nickname"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={L.signInNamePlaceholder}
-            className="min-w-0 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60 sm:basis-full"
-          />
+        <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row">
           <input
             type="email"
             aria-label={L.emailLabel}

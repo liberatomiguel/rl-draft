@@ -59,6 +59,7 @@ import {
 } from "./profileStore";
 import type { ProfileState } from "./profileStore";
 import { CLOUD_SYNC } from "@/config/balance";
+import { useSignInDialog } from "./signInDialog";
 import { registerSessionProps, trackEvent } from "@/lib/analytics";
 import type { DurableProfile } from "@/lib/profileSync";
 
@@ -77,9 +78,10 @@ interface AccountStore {
    *  local state, so leaving and returning to /profile resumes the code step with the
    *  email remembered — the player can still enter the code they already received. */
   pendingEmail: string | null;
-  /** v2.0.3: the display name typed in the sign-in form, used once if the sign-in creates the account. */
-  pendingName: string | null;
-  setPendingName: (name: string | null) => void;
+  /** v2.0.4: the account was created by this sign-in and still carries the automatic
+   *  name: the sign-in dialog offers the choice once. Never persisted. */
+  needsName: boolean;
+  setNeedsName: (needs: boolean) => void;
   /** Mount-once guard so init() only wires listeners a single time. */
   initialized: boolean;
 
@@ -247,25 +249,29 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // itself never looks like new progress) and BEFORE the await (so progress made
     // while the push is in flight still counts as unsynced).
     const sig = durableSig();
-    // v2.0.3: a NEW account takes the display name chosen in the sign-in form;
-    // without one, the email prefix as before. Names are unique: when the first
-    // choice is taken (a race, or two emails with the same prefix), fall back to
-    // the prefix plus four digits so the account is never left without a row.
-    const chosen = get().pendingName?.trim().slice(0, 24) || null;
-    let username = cloudName || chosen || emailPrefix(session);
+    // A NEW account starts with the email prefix. Names are unique: when it is
+    // taken (two emails with the same prefix), fall back to the prefix plus four
+    // digits so the account is never left without a row. v2.0.4: the player then
+    // picks the name in the sign-in dialog (`needsName`), after the account exists.
+    let username = cloudName || emailPrefix(session);
     const streak = selectDailyStreak(useProfileStore.getState());
     let pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
     if (pushed.error && !cloudName) {
       username = `${emailPrefix(session).slice(0, 19)}${1000 + Math.floor(Math.random() * 9000)}`;
       pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
     }
-    if (get().pendingName) set({ pendingName: null });
     if (pushed.error) {
       keepName(session);
       trackEvent("account_sync_failed", { actionId: "sync_failed:push", stage: "push" });
       return "aborted";
     }
     if (!cloudName) showName(userId, username); // the fallback name is now the stored one
+    // v2.0.4: the row did not exist before this sync = the account was just created.
+    // Ask for the display name now (the sign-in dialog shows that step).
+    if (row.status === "no-row" && get().session?.user.id === userId) {
+      set({ needsName: true });
+      useSignInDialog.getState().show();
+    }
     if (get().session?.user.id === userId) lastPushed = { userId, sig };
     return "synced";
   };
@@ -394,11 +400,11 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     username: null,
     syncing: false,
     pendingEmail: null,
-    pendingName: null,
+    needsName: false,
     initialized: false,
 
     setPendingEmail: (email) => set({ pendingEmail: email }),
-    setPendingName: (name) => set({ pendingName: name }),
+    setNeedsName: (needs) => set({ needsName: needs }),
 
     init: () => {
       if (get().initialized) return;

@@ -194,31 +194,30 @@ describe("display name (a signed-in player always sees one — never a stale one
     expect(useAccountStore.getState().username).toBe(prefix(s));
   });
 
-  it("v2.0.3: a new account takes the name typed in the sign-in form; a taken name falls back to prefix + digits", async () => {
+  it("v2.0.4: a new account starts with the email prefix and is asked for its name; a taken prefix falls back to prefix + digits", async () => {
     const s = signedIn(session());
     sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
-    useAccountStore.getState().setPendingName("  Ace Pilot  ");
     await useAccountStore.getState().syncNow(s);
-    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe("Ace Pilot");
-    expect(useAccountStore.getState().username).toBe("Ace Pilot");
-    expect(useAccountStore.getState().pendingName).toBeNull();
+    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe(prefix(s));
+    expect(useAccountStore.getState().needsName).toBe(true);
 
+    useAccountStore.getState().setNeedsName(false);
     const s2 = signedIn(session());
     sb.pushCloudProfile.mockReset();
     sb.pushCloudProfile.mockResolvedValueOnce({ error: "duplicate key" }).mockResolvedValue({});
-    useAccountStore.getState().setPendingName("Ace Pilot");
     await useAccountStore.getState().syncNow(s2);
     expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
     expect(useAccountStore.getState().username).toMatch(new RegExp(`^${prefix(s2)}[0-9]{4}$`));
+    expect(useAccountStore.getState().needsName).toBe(true);
   });
 
-  it("v2.0.3: an existing account keeps its cloud name whatever was typed", async () => {
+  it("v2.0.4: an existing account is never asked for a name", async () => {
+    useAccountStore.getState().setNeedsName(false);
     const s = signedIn(session());
     sb.fetchCloudRow.mockResolvedValue(cloud({}));
-    useAccountStore.getState().setPendingName("Someone Else");
     await useAccountStore.getState().syncNow(s);
     expect(useAccountStore.getState().username).toBe("CloudName");
-    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe("CloudName");
+    expect(useAccountStore.getState().needsName).toBe(false);
   });
 
   it("a failed READ shows the email prefix, and keeps a name already shown", async () => {
