@@ -122,6 +122,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
   const step = pendingEmail ? "code" : "email";
 
   const [email, setEmail] = useState(pendingEmail ?? "");
+  const [name, setName] = useState(useAccountStore.getState().pendingName ?? "");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +141,16 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
     setNotice(null);
     sfx.click();
     try {
+      // v2.0.3: an optional display name for a new account, checked before the code is sent.
+      const wanted = name.trim().slice(0, 24);
+      if (wanted && !pendingEmail) {
+        const free = await useAccountStore.getState().checkUsername(wanted);
+        if (!free) {
+          setError(L.nameTaken);
+          return;
+        }
+      }
+      useAccountStore.getState().setPendingName(wanted || null);
       const { error, code: errCode } = await sendEmailCode(to);
       const rateLimited = errCode === "over_email_send_rate_limit" || /after \d+ second/i.test(error ?? "");
       if (!error || rateLimited) {
@@ -186,7 +197,17 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
       {!compact ? <><h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
       <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p></> : null}
       {step === "email" ? (
-        <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row">
+        <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+          <input
+            type="text"
+            aria-label={L.signInNameLabel}
+            maxLength={24}
+            autoComplete="nickname"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={L.signInNamePlaceholder}
+            className="min-w-0 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60 sm:basis-full"
+          />
           <input
             type="email"
             aria-label={L.emailLabel}

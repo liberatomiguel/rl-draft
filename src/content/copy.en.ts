@@ -1410,6 +1410,8 @@ export const LEADERBOARDS_UI = {
   codeRateLimited:
     "Please wait a moment before requesting another code. If you already have one, enter it above.",
   displayNameLabel: "Display name (shown on the boards)",
+  signInNameLabel: "Display name for a new account (optional)",
+  signInNamePlaceholder: "Display name (new accounts, optional)",
   save: "Save",
   saved: "Saved",
   nameTaken: "That name is taken — try another.",

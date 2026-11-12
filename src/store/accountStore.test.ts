@@ -189,9 +189,36 @@ describe("display name (a signed-in player always sees one — never a stale one
   it("a failed push with no cloud row falls back to the email prefix", async () => {
     const s = signedIn(session());
     sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
-    sb.pushCloudProfile.mockResolvedValueOnce({ error: "503" });
+    sb.pushCloudProfile.mockResolvedValue({ error: "503" });
     await useAccountStore.getState().syncNow(s);
     expect(useAccountStore.getState().username).toBe(prefix(s));
+  });
+
+  it("v2.0.3: a new account takes the name typed in the sign-in form; a taken name falls back to prefix + digits", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    useAccountStore.getState().setPendingName("  Ace Pilot  ");
+    await useAccountStore.getState().syncNow(s);
+    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe("Ace Pilot");
+    expect(useAccountStore.getState().username).toBe("Ace Pilot");
+    expect(useAccountStore.getState().pendingName).toBeNull();
+
+    const s2 = signedIn(session());
+    sb.pushCloudProfile.mockReset();
+    sb.pushCloudProfile.mockResolvedValueOnce({ error: "duplicate key" }).mockResolvedValue({});
+    useAccountStore.getState().setPendingName("Ace Pilot");
+    await useAccountStore.getState().syncNow(s2);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
+    expect(useAccountStore.getState().username).toMatch(new RegExp(`^${prefix(s2)}[0-9]{4}$`));
+  });
+
+  it("v2.0.3: an existing account keeps its cloud name whatever was typed", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(cloud({}));
+    useAccountStore.getState().setPendingName("Someone Else");
+    await useAccountStore.getState().syncNow(s);
+    expect(useAccountStore.getState().username).toBe("CloudName");
+    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe("CloudName");
   });
 
   it("a failed READ shows the email prefix, and keeps a name already shown", async () => {

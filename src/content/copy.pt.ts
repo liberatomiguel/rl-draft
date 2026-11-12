@@ -418,6 +418,8 @@ export const PT: Copy = {
     codeRateLimited:
       "Aguarde um momento antes de pedir outro código. Se você já tem um, digite-o acima.",
     displayNameLabel: "Nome de exibição (aparece nos rankings)",
+    signInNameLabel: "Nome de exibição para conta nova (opcional)",
+    signInNamePlaceholder: "Nome de exibição (contas novas, opcional)",
     save: "Salvar",
     saved: "Salvo",
     nameTaken: "Esse nome já está em uso — tente outro.",

@@ -77,6 +77,9 @@ interface AccountStore {
    *  local state, so leaving and returning to /profile resumes the code step with the
    *  email remembered — the player can still enter the code they already received. */
   pendingEmail: string | null;
+  /** v2.0.3: the display name typed in the sign-in form, used once if the sign-in creates the account. */
+  pendingName: string | null;
+  setPendingName: (name: string | null) => void;
   /** Mount-once guard so init() only wires listeners a single time. */
   initialized: boolean;
 
@@ -244,9 +247,19 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // itself never looks like new progress) and BEFORE the await (so progress made
     // while the push is in flight still counts as unsynced).
     const sig = durableSig();
-    const username = cloudName || emailPrefix(session);
+    // v2.0.3: a NEW account takes the display name chosen in the sign-in form;
+    // without one, the email prefix as before. Names are unique: when the first
+    // choice is taken (a race, or two emails with the same prefix), fall back to
+    // the prefix plus four digits so the account is never left without a row.
+    const chosen = get().pendingName?.trim().slice(0, 24) || null;
+    let username = cloudName || chosen || emailPrefix(session);
     const streak = selectDailyStreak(useProfileStore.getState());
-    const pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
+    let pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
+    if (pushed.error && !cloudName) {
+      username = `${emailPrefix(session).slice(0, 19)}${1000 + Math.floor(Math.random() * 9000)}`;
+      pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
+    }
+    if (get().pendingName) set({ pendingName: null });
     if (pushed.error) {
       keepName(session);
       trackEvent("account_sync_failed", { actionId: "sync_failed:push", stage: "push" });
@@ -381,9 +394,11 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     username: null,
     syncing: false,
     pendingEmail: null,
+    pendingName: null,
     initialized: false,
 
     setPendingEmail: (email) => set({ pendingEmail: email }),
+    setPendingName: (name) => set({ pendingName: name }),
 
     init: () => {
       if (get().initialized) return;
