@@ -7,6 +7,14 @@
  *
  * AudioContext is created lazily and resumed on first use (it only unlocks
  * after a user gesture, which every cue here follows).
+ *
+ * v2.0 (P1): never created INSIDE a click. Building an AudioContext blocks the
+ * main thread (40 ms on a desktop, far more on a phone), and the first cue of
+ * a session used to build it in its own click handler: the first button of
+ * every visit answered late (opening the locker measured 360 ms to the next
+ * paint with a 4x slower CPU). It is now built once, in idle time shortly
+ * after the session's first touch or key press. A cue that arrives before it
+ * is ready is skipped: at most the first blip of a visit is silent.
  */
 
 import { useSettings } from "@/store/settingsStore";
@@ -14,27 +22,53 @@ import { useSettings } from "@/store/settingsStore";
 type Note = { f: number; d: number; t?: OscillatorType; delay?: number; g?: number };
 
 let ctx: AudioContext | null = null;
+let warming = false;
 
-function context(): AudioContext | null {
-  if (typeof window === "undefined") return null;
-  if (!ctx) {
-    const Ctor =
-      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctor) return null;
-    try {
-      ctx = new Ctor();
-    } catch {
-      return null;
-    }
+/** How long after the first gesture the context is built (its own interaction has painted by then). */
+const WARM_DELAY_MS = 350;
+
+function build(): void {
+  warming = false;
+  if (ctx || typeof window === "undefined") return;
+  const s = useSettings.getState();
+  // Sound off: nothing to build. A later cue (sound switched on) asks again.
+  if (!s.soundEnabled || s.soundVolume <= 0) return;
+  const Ctor =
+    window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctor) return;
+  try {
+    ctx = new Ctor();
+  } catch {
+    ctx = null;
   }
-  return ctx;
+}
+
+/** Build the context away from any input: after a short delay, in an idle slot. */
+function warm(): void {
+  if (ctx || warming || typeof window === "undefined") return;
+  warming = true;
+  const idle: (fn: () => void) => void =
+    typeof window.requestIdleCallback === "function"
+      ? (fn) => window.requestIdleCallback(fn, { timeout: 1500 })
+      : (fn) => window.setTimeout(fn, 1);
+  window.setTimeout(() => idle(build), WARM_DELAY_MS);
+}
+
+if (typeof window !== "undefined") {
+  // The first touch or key press of the visit (a gesture, so the context may start).
+  for (const type of ["pointerdown", "keydown"] as const) {
+    window.addEventListener(type, warm, { once: true, capture: true, passive: true });
+  }
 }
 
 function play(notes: Note[], gain = 1): void {
   const s = useSettings.getState();
   if (!s.soundEnabled || s.soundVolume <= 0) return;
-  const ac = context();
-  if (!ac) return;
+  const ac = ctx;
+  if (!ac) {
+    warm();
+    return;
+  }
   if (ac.state === "suspended") void ac.resume();
 
   const master = ac.createGain();
