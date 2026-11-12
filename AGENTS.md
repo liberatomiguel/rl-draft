@@ -168,8 +168,14 @@ Badge effects must animate only transform / opacity (DESIGN-DECISIONS #128–#12
 by `npm run build:banners` from `data-sources/banners/banners-rocket-draft.html`
 (replace the HTML, re-run, then `npm run build:images`, commit both). The SVGs
 carry heavy filters: production only ever serves the WebP (DESIGN-DECISIONS
-#132); effects on top are CSS, transform / opacity only. The hero's motion is
-`<art>.anim.svg` (the animated elements only, filters stripped by the script).
+#132); effects on top are CSS, transform / opacity only. Motion comes in two
+pipelines (`src/generated/banner-motion.json` says which): the 13 banners listed
+in `PLANE_SPLIT` (`build-banners.mjs`) use a still `<art>.base` plus moving
+planes; every other animated banner (rc.51) uses FRAMES: `<art>.base`, `.f1` and
+`.f2` are three moments of the design file's own animation, baked with their
+filters and cross-faded, plus `.drift` planes for shapes that travel. A new
+banner gets frames automatically. Design keys that differ from catalog ids are
+aliased in the build script (`KEY_ALIAS`: the Staff badge is `5050` in the file).
 
 The source PNGs stay the source of truth, so drop them in the same folders as
 before.

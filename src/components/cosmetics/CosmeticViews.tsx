@@ -78,7 +78,8 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 // ---------------------------------------------------------------------------
 
 /** Legendary badges are drawn this much larger than their slot (rc.16 / rc.23). */
-const LEGEND_SCALE = 1.16;
+// rc.52 (Miguel): 16 % read too big next to the others; 8 % still sets them apart.
+const LEGEND_SCALE = 1.08;
 /** Below this box the effects are invisible noise, so the art renders plain. */
 const BADGE_FX_MIN_PX = 28;
 /** Pointer tilt range (deg) by badge size — a board-row badge tilts far less
@@ -155,7 +156,7 @@ export function BadgeEmblem({
   const isBadge = badge.kind === "badge";
   const basePx = typeof size === "number" ? size : PX[size];
   const tier = badge.tier;
-  // rc.23: legendaries read a size up (16 %) — drawn at that size, not scaled
+  // rc.23: legendaries read a size up (LEGEND_SCALE) — drawn at that size, not scaled
   // by CSS (a scaled composited layer went soft at rest).
   const px = tier === "legend" ? Math.round(basePx * LEGEND_SCALE) : basePx;
   const live = isBadge && fx && px >= BADGE_FX_MIN_PX && (tier === "epic" || tier === "legend");
@@ -350,7 +351,7 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
     : undefined;
   return (
     <span
-      className={cx("cos-title", `cos-title-${treatment}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
+      className={cx("cos-title", `cos-title-${treatment}`, title.style.soft && "cos-title-soft", name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
       data-motion={motion ? "full" : "still"}
       style={stopsVars(title.style.colors, title.style.glow) as React.CSSProperties}
       onPointerMove={onMove}

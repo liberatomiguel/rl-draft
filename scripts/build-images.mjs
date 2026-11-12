@@ -107,7 +107,10 @@ const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: 
  *  BADGE_GLOW.pad px each side (CSS: inset = -pad/size), blurred by sigma. */
 /** rc.18: two layers — a tight, strong core hugging the silhouette (sigma)
  *  over a wide, faint halo (haloSigma at haloAlpha). */
-const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0.3, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
+/** rc.52 (Miguel: the rc.18 glow was hard): no tight core any more. Three blurs
+ *  of the silhouette, each at its own strength, composed into one smooth bloom:
+ *  brightest at the edge of the art, fading evenly and gone by the pad. */
+const BADGE_GLOW = { size: 224, pad: 84, layers: [{ sigma: 4, alpha: 0.3 }, { sigma: 12, alpha: 0.45 }, { sigma: 26, alpha: 0.58 }], rgb: [255, 226, 160] /* warm white gold */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
 /** Banners (rc.21): the 1240 × 200 SVGs from build-banners → WebP. The profile
  *  hero shows them up to ~1120 CSS px wide, the board rows ~800, the locker /
@@ -494,7 +497,7 @@ async function encodeFlagSprite(srcs) {
 
 /** The legendary glow: keep the art's alpha, paint every pixel one gold (so the
  *  blur only spreads alpha — the padding is the same gold at alpha 0, no dark
- *  fringe), pad, blur once. */
+ *  fringe), pad, then blur at each layer's radius and compose. */
 async function encodeGlow(pipeline, glow) {
   const { data, info } = await pipeline.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const [r, g, b] = glow.rgb;
@@ -508,14 +511,13 @@ async function encodeGlow(pipeline, glow) {
     .raw()
     .toBuffer({ resolveWithObject: true });
   const raw = { raw: padded.info };
-  const core = await sharp(padded.data, raw).blur(glow.sigma).raw().toBuffer();
-  const halo = await sharp(padded.data, raw).blur(glow.haloSigma).raw().toBuffer();
-  // Alpha = core over a faint halo (source-over on alpha only; colour is uniform).
-  const out = Buffer.from(core);
+  // Alpha = the layers composed source-over (alpha only; the colour is uniform).
+  const blurs = await Promise.all(glow.layers.map((l) => sharp(padded.data, raw).blur(l.sigma).raw().toBuffer()));
+  const out = Buffer.from(padded.data);
   for (let i = 3; i < out.length; i += 4) {
-    const a = core[i] / 255;
-    const h = (halo[i] / 255) * glow.haloAlpha;
-    out[i] = Math.round((a + h * (1 - a)) * 255);
+    let clear = 1;
+    glow.layers.forEach((l, k) => { clear *= 1 - (blurs[k][i] / 255) * l.alpha; });
+    out[i] = Math.round((1 - clear) * 255);
   }
   return sharp(out, raw).webp(glow.webp).toBuffer();
 }

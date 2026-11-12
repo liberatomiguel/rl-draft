@@ -1376,15 +1376,15 @@ html.reduce-fx .card-float {
   inset: calc(var(--bfx-glow-pad, 0.375) * -100%);
   background: var(--bfx-glow) center / contain no-repeat;
   pointer-events: none;
-  opacity: 0.85;
-  transform: scale(1.1);
+  opacity: 0.9;
+  transform: scale(1.06);
 }
 .bfx-legend[data-live] .bfx-glow {
   animation: bfx-breathe 4.8s ease-in-out var(--bfx-delay, 0s) infinite;
 }
 @keyframes bfx-breathe {
-  0%, 100% { opacity: 0.74; }
-  50% { opacity: 0.92; }
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
 }
 /* LEGENDARY idle sway (rc.14, back): plain values, no var() in the keyframes,
    so the GPU runs it. Both ways from flat, so a restart never jumps. */
@@ -1431,7 +1431,7 @@ html.reduce-fx .card-float {
   transition: transform 0.2s ease-out;
 }
 .bfx-legend[data-hover] .bfx-glow {
-  opacity: 0.95;
+  opacity: 1;
   transition: opacity 0.3s ease;
 }
 
@@ -1549,6 +1549,21 @@ html.reduce-fx .card-float {
     0 0 4px color-mix(in srgb, var(--cos-glow) 80%, transparent),
     0 0 10px color-mix(in srgb, var(--cos-glow) 50%, transparent),
     0 0 20px color-mix(in srgb, var(--cos-glow) 22%, transparent);
+}
+/* rc.52 (Miguel): the epic titles earned by playing (`soft` in the catalog:
+   Daily Driver, Rocketeer, Day One, Globetrotter, Titanbreaker) sit a step
+   below the gold epics, the Grand Champion red and the manual grants: the same
+   treatment with a quieter rim and glow. */
+.cos-title-epic.cos-title-soft {
+  border-color: color-mix(in srgb, var(--cos-glow) 44%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 5%, transparent);
+  box-shadow:
+    0 0 4px color-mix(in srgb, var(--cos-glow) 52%, transparent),
+    0 0 10px color-mix(in srgb, var(--cos-glow) 28%, transparent),
+    0 0 18px color-mix(in srgb, var(--cos-glow) 10%, transparent);
+}
+.cos-title-epic.cos-title-soft .cos-title-text::after {
+  opacity: 0.36;
 }
 /* The text glows too (behind the clipped gradient text, so it stays legible). */
 .cos-title-epic .cos-title-text::after,
