@@ -26,6 +26,7 @@ import { SponsorAutoBootcamp } from "@/components/career/sponsors/SponsorAutoBoo
 import { CareerAnnouncement } from "@/components/career/news/CareerAnnouncement";
 import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
+import { CareerTour } from "@/components/career/tour/CareerTour";
 import { ScrimBroadcast } from "@/components/career/ScrimBroadcast";
 import { MoneyNoticeModal } from "@/components/career/MoneyNoticeModal";
 import { TrainingReportModal } from "@/components/career/training/TrainingReportModal";
@@ -100,6 +101,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <ScrimBroadcast />
           <CareerAutopilot />
           <CareerToaster />
+          {/* T1 (v2.0): the guided tour and its help button. */}
+          <CareerTour />
           <CareerAnnouncement />
           <SponsorAutoBootcamp />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}

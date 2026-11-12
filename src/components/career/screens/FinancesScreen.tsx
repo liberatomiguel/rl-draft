@@ -832,7 +832,7 @@ export function FinancesScreen() {
       <FinanceErrorNotice className="rise-in" />
 
       {/* Three complementary views: cash history, weekly detail, then forecast. */}
-      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">
+      <div data-tour="finances-overview" className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">
         <Panel strong className="rise-in flex min-w-0 flex-col p-4">
           <p className="kicker text-[10px]">{C.finances.balance}</p>
           <p className={cx("display mt-1 text-3xl font-bold leading-none", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
@@ -865,7 +865,7 @@ export function FinancesScreen() {
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-3">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
-        <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "120ms" }}>
+        <Panel data-tour="finances-progress" className="rise-in p-4 sm:p-5" style={{ animationDelay: "120ms" }}>
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="kicker text-[11px]">{C.ladder.title}</h2>
             <span className="shrink-0 text-[10px] font-semibold text-faint">
@@ -986,7 +986,7 @@ export function FinancesScreen() {
         </Panel>
 
       {/* ================= Loans & debt (always visible below progression) ================= */}
-      <section
+      <section data-tour="finances-loans"
         className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
@@ -1150,7 +1150,7 @@ export function FinancesScreen() {
         {/* ================= right column: sponsors + ledger ================= */}
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
           {/* Sponsors */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
+          <Panel data-tour="finances-sponsor" className="rise-in p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
 
             {/* rc.32 (M3, provisional): the founding partner, its own named line and its end condition. */}

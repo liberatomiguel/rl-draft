@@ -1376,7 +1376,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.33 (UX-07): a Bombástica explicada numa frase, só numa proposta Bombástica
     // (com o custo de recusar — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `Proposta Bombástica: ${org} paga ×${mult.replace(".", ",")} o valor de mercado dele. Se você recusar, ele fica, mas pede ${pct}% a mais na próxima renovação.`,
+      `Proposta Bombástica: ${org} paga ×${mult.replace(".", ",")} o valor de mercado dele; se você recusar, ele fica, mas pede ${pct}% a mais na próxima renovação.`,
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
     // rc.32 (M4, provisório): o fôlego que a contratação deixa.
@@ -3089,6 +3089,182 @@ export const CAREER_PT: CareerCopy = {
     calendarPlan: "Planeje sua temporada", calendarHint: "Escolha um mês e selecione um dia para ver a agenda e as ações.", calendarOverview: "Progresso na temporada", calendarLegend: "Legenda do calendário",
     sundayQualified: "Vaga no Championship Sunday garantida", majorChampion: "Campeões de Major", worldsChampion: "Campeões mundiais",
     rocketStreet: "Rocket Street",
+  },
+
+  // T1 (v2.0): o tutorial guiado. Um capítulo por tela, mostrado na primeira
+  // visita e reaberto pelo botão de ajuda. Cada passo destaca um elemento real
+  // (`data-tour`); o texto diz o que o jogador faz ali, em uma ou duas linhas.
+  tour: {
+    kicker: "Road to Worlds",
+    next: "Avançar",
+    back: "Voltar",
+    skip: "Pular",
+    done: "Entendi",
+    progress: (n: number, total: number) => `${n} de ${total}`,
+    help: "Guia desta tela",
+    hub: {
+      welcome: {
+        title: "Bem-vindo ao Road to Worlds",
+        body: "Você comanda uma org do primeiro elenco até o Mundial. Um minuto para o essencial.",
+        points: [
+          { label: "Elenco", text: "Contrate, treine e renove" },
+          { label: "Caixa", text: "Os salários saem toda segunda" },
+          { label: "Pontos da Temporada", text: "Levam aos Majors e ao Worlds" },
+        ],
+      },
+      tabs: {
+        title: "Cada aba, uma área do clube",
+        body: "Tudo fica a um toque nesta barra.",
+        items: {
+          hub: "O dia e as decisões",
+          calendar: "Eventos e copas",
+          squad: "Titulares e contratos",
+          training: "A evolução do time",
+          market: "Jogadores e coaches",
+          finances: "Caixa e patrocínio",
+          standings: "A corrida ao Worlds",
+          news: "Propostas e avisos",
+          club: "Títulos e progressão",
+        } as Record<string, string>,
+      },
+      advance: {
+        title: "O relógio é seu",
+        body: "O tempo só passa quando você manda, e o jogo para sozinho quando algo precisa de você.",
+        points: [
+          { label: "Avançar", text: "Dia a dia, até a próxima parada" },
+          { label: "Pular adiante", text: "Direto para a próxima parada" },
+        ],
+      },
+      day: {
+        title: "O cartão do dia",
+        body: "O que pede decisão hoje aparece aqui: uma proposta, um patrocínio, um evento. Resolva e siga em frente.",
+      },
+      inbox: {
+        title: "Caixa de entrada",
+        body: "Propostas, avisos do banco e convites chegam por e-mail. Abra os que pedem resposta.",
+      },
+      finances: {
+        title: "De olho no caixa",
+        body: "Prêmios e patrocínio entram, salários saem toda segunda. Se o saldo afundar demais, o banco entra em cena, com prazo.",
+      },
+      progress: {
+        title: "Progressão",
+        body: "Resultados aumentam a reputação. A reputação libera o coach, patrocinadores melhores e nova estrutura.",
+      },
+      help: {
+        title: "Ajuda sempre à mão",
+        body: "Cada aba mostra o próprio guia na primeira visita. Este botão traz o guia de volta quando quiser.",
+      },
+    },
+    training: {
+      cycle: {
+        title: "Escolha o ciclo",
+        body: "A cada 14 dias você decide no que o elenco trabalha.",
+        points: [
+          { label: "Evoluir", text: "Os atributos sobem mais rápido" },
+          { label: "Entrosar", text: "A química cresce mais rápido" },
+          { label: "Recuperar", text: "Menos desgaste, veteranos seguram o nível" },
+        ],
+      },
+      coach: {
+        title: "O coach",
+        body: "Com um coach, o plano vem pronto e o treino rende mais. Sem ele, você define cada ciclo.",
+      },
+      growth: {
+        title: "Acompanhe a evolução",
+        body: "Veja quem ainda evolui, quem está no auge e quem já passou dele, antes de renovar ou vender.",
+      },
+    },
+    market: {
+      tabs: {
+        title: "Quatro balcões",
+        body: "Troque entre eles aqui.",
+        points: [
+          { label: "Agentes livres", text: "Sem taxa de transferência" },
+          { label: "Sob contrato", text: "Taxa para a org, a partir de 20 de reputação" },
+          { label: "Coaches", text: "Quem treina o elenco" },
+          { label: "Minhas negociações", text: "Propostas feitas e recebidas" },
+        ],
+      },
+      search: {
+        title: "Encontre seu reforço",
+        body: "Busque, ordene e filtre por região. Depois abra um jogador para observá-lo e fazer a proposta.",
+        points: [
+          { label: "Janela aberta", text: "As negociações andam com os dias" },
+          { label: "Janela fechada", text: "Observe agora, proponha quando abrir" },
+        ],
+      },
+    },
+    finances: {
+      overview: {
+        title: "Três leituras do caixa",
+        body: "O saldo ao longo do tempo, o que entra e sai toda segunda e para onde a temporada caminha.",
+      },
+      sponsor: {
+        title: "Patrocínio",
+        body: "O contrato paga uma base garantida e um bônus por meta batida. Os mais seguros pagam menos; os ousados multam a meta perdida.",
+      },
+      loans: {
+        title: "Empréstimos e o piso",
+        body: "Pegue crédito quando quiser. Se uma segunda fechar abaixo do piso, o banco empresta sozinho, e perder esse prazo encerra a carreira.",
+      },
+      progress: {
+        title: "Invista na org",
+        body: "Equipamentos, staff e bootcamps fazem o elenco evoluir e jogar melhor. Cada degrau é liberado pela reputação.",
+      },
+    },
+    calendar: {
+      month: {
+        title: "A temporada num olhar",
+        body: "Escolha um dia para ver o que acontece e o que dá para fazer. Os ícones marcam regionais, Majors e a janela de transferências.",
+      },
+      next: {
+        title: "Eventos e copas",
+        body: "Suas próximas paradas, em ordem.",
+        points: [
+          { label: "Eventos oficiais", text: "Valem Pontos da Temporada" },
+          { label: "Copas comunitárias", text: "Opcionais: prêmio e reputação" },
+        ],
+      },
+    },
+    squad: {
+      starters: {
+        title: "Seus três titulares",
+        body: "Eles jogam todas as séries. Abra um jogador para ver atributos, contrato e opções.",
+      },
+      bench: {
+        title: "Reserva e coach",
+        body: "O reserva entra quando um titular não pode jogar. Sem reserva, o time perde aquele evento.",
+      },
+      contracts: {
+        title: "Contratos",
+        body: "Renove antes do fim da temporada, ou o jogador sai de graça.",
+      },
+    },
+    standings: {
+      tabs: {
+        title: "Duas corridas",
+        body: "Regionais e Majors valem Pontos da Temporada.",
+        points: [
+          { label: "Tabela do Major", text: "Este split: quem joga o Major" },
+          { label: "Tabela do Worlds", text: "A temporada inteira: quem vai ao Worlds" },
+        ],
+      },
+      table: {
+        title: "Fique acima da linha",
+        body: "A linha marca a última vaga da sua região. Termine acima dela e a próxima fase se abre.",
+      },
+    },
+    club: {
+      progress: {
+        title: "Reputação e progressão",
+        body: "Cada marco e o que ele libera está listado aqui. Planeje o próximo passo.",
+      },
+      trophies: {
+        title: "Sala de troféus",
+        body: "Títulos e recordes ficam aqui pela carreira inteira.",
+      },
+    },
   },
 
 };

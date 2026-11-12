@@ -324,6 +324,36 @@ export const ONBOARDING = {
     "Everything else is the same: difficulty, chemistry, the full tournament. Win it to fly your region's flag.",
   ],
   regionalCta: "Let's run it",
+  // T1 (v2.0): the first draft's guided tour (it replaces the "How to play"
+  // modal and keeps its flag). Each step spotlights a real part of the screen.
+  tour: {
+    kicker: "First draft",
+    next: "Next",
+    back: "Back",
+    skip: "Skip",
+    done: "Start drafting",
+    progress: (n: number, total: number) => `${n} of ${total}`,
+    offer: {
+      title: "One lineup per round",
+      body: "Every round deals a real lineup from RLCS history. Tap one card to draft it into your team.",
+    },
+    roster: {
+      title: "Your team",
+      body: "Fill every slot. Cards that share a country, an org or a lineup build chemistry.",
+      points: [
+        { label: "Overall", text: "What weighs most in a series" },
+        { label: "Chemistry", text: "Extra rating for a team that fits" },
+      ],
+    },
+    reroll: {
+      title: "Not what you need?",
+      body: "A reroll deals another lineup. They are limited, so keep them for when nothing fits.",
+    },
+    finish: {
+      title: "Then the tournament",
+      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose.",
+    },
+  },
 };
 
 export const REVIEW = {
@@ -1199,7 +1229,7 @@ export const CHALLENGES_UI = {
   theBoss: "The line",
   // v2.0 stars + gauntlets
   starsKicker: "Three stars",
-  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition to the clear. Earn them on separate attempts or together. Paid rerolls count; free dead-offer rerolls do not.",
+  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition; earn them together or on separate attempts. Free rerolls do not count.",
   starsCount: (n: number, total: number) => `${n}/${total} stars`,
   starsTotal: (n: number) => `${n} stars`,
   star1: "Win the series",
@@ -1301,7 +1331,7 @@ export const LEADERBOARDS_UI = {
   signedInAs: (name: string) => `Signed in as ${name}`,
   syncing: "Syncing…",
   guestNote:
-    "Playing as a guest — your progress is saved on this device. Sign in with your email to back it up to the cloud and compete globally. Your local progress is merged in, never lost.",
+    "Playing as a guest: your progress is saved on this device. Sign in with your email to back it up and compete globally. Your local progress comes with you.",
   comingSoon: "Global leaderboards unlock once accounts go live. Your records are tracked locally in the meantime.",
   previewData: "Preview — fictional profiles (staging)",
   globalTab: "Global",

@@ -140,7 +140,7 @@ export function TrainingScreen() {
 
       {/* 1 — the cycle: a running plan, or the picker as the main action */}
       {block.running && block.cycle ? (
-        <Panel className="rise-in overflow-hidden p-0">
+        <Panel data-tour="training-cycle" className="rise-in overflow-hidden p-0">
           <div className={cx("flex items-center gap-3 border-b border-line px-4 py-3", tone.bg)}>
             <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border bg-black/15", tone.ring, tone.text)}>
               <ObjectiveIcon objective={objective} className="h-5 w-5" />
@@ -218,7 +218,7 @@ export function TrainingScreen() {
           </div>
         </Panel>
       ) : (
-        <Panel strong className="rise-in overflow-hidden p-0">
+        <Panel data-tour="training-cycle" strong className="rise-in overflow-hidden p-0">
           <div className="flex items-center gap-3 border-b border-line bg-white/[0.02] px-4 py-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-line-strong bg-black/25 text-faint">
               <BaseDotIcon className="h-5 w-5" />
@@ -279,7 +279,7 @@ export function TrainingScreen() {
       </Panel>
 
       {/* 2 — the coach: he plans each cycle, or the hire link */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
+      <Panel data-tour="training-coach" className="rise-in p-4" style={{ animationDelay: "40ms" }}>
         {coachProfile ? (
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-white/[0.02] text-sub">
@@ -311,7 +311,7 @@ export function TrainingScreen() {
       {/* 3 — the squad's growth */}
       <div>
         <p className="kicker mb-2 text-[10px]">{C.training.plan.squadGrowth}</p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div data-tour="training-growth" className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {save.squad.map((p, i) => (
             <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
           ))}

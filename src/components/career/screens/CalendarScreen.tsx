@@ -488,7 +488,7 @@ export function CalendarScreen() {
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
-      <section className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
+      <section data-tour="calendar-month" className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
@@ -660,7 +660,7 @@ export function CalendarScreen() {
       </section>
 
 </div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
-      <section className="rise-in">
+      <section data-tour="calendar-next" className="rise-in">
         <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
         <div className="grid grid-cols-1 gap-2">
           {stops.map((stop, i) => {

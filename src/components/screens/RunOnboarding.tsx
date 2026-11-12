@@ -20,6 +20,7 @@ import { useRunStore } from "@/store/runStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
+import { DraftTour } from "@/components/tour/DraftTour";
 
 type Accent = "orange" | "emerald" | "cyan";
 
@@ -102,21 +103,10 @@ export function RunOnboarding({
   const markFlag = useProfileStore((s) => s.markFlag);
   const daily = useRunStore((s) => Boolean(s.run?.daily));
 
+  // T1 (v2.0): the first draft is a guided tour of the real screen now (the
+  // text modal it replaces said the same in four paragraphs). Same flag.
   if (!seenHowTo) {
-    return (
-      <Modal
-        open
-        title={ONBOARDING.howToTitle}
-        onClose={() => markFlag("seenHowToPlay")}
-        actions={
-          <Button variant="primary" onClick={() => markFlag("seenHowToPlay")}>
-            {ONBOARDING.howToCta}
-          </Button>
-        }
-      >
-        <Steps intro={ONBOARDING.howToIntro} steps={ONBOARDING.howToSteps} accent="orange" />
-      </Modal>
-    );
+    return <DraftTour onClose={() => markFlag("seenHowToPlay")} />;
   }
 
   if (regionLock && !seenRegional) {

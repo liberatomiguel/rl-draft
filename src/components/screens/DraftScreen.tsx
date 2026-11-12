@@ -123,7 +123,7 @@ export function DraftScreen({ run }: { run: RunState }) {
         />
 
         {/* ------------------------------------------------ Your team (field) */}
-        <aside aria-label={DRAFT_UI.yourRoster}>
+        <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster}>
           <Panel className="p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
@@ -334,6 +334,7 @@ function OfferReveal({
             the paid one is never spent on a dead offer (rc.29). */}
         {offer.hasPickableCard ? (
           <Button
+            data-tour="draft-reroll"
             variant="secondary"
             size="sm"
             onClick={onReroll}
@@ -361,7 +362,7 @@ function OfferReveal({
       </div>
 
       {/* The offer fades in once the reel lands */}
-      <div className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
+      <div data-tour="draft-offer" className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
         {/* National team (v2.0): the rare draw announces itself. rc.33: seeing it
             opens its album page; a drafted card is collected when the run ends. */}
         {national && nationalProgress ? (

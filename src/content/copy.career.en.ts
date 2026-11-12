@@ -1397,7 +1397,7 @@ export const CAREER_EN = {
     // rc.33 (UX-07): the Blockbuster explained in one sentence, on a Blockbuster bid only
     // (its refusal cost included — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `Blockbuster offer: ${org} pay ×${mult} his market value. Refuse and he stays, but his next renewal asks ${pct}% more.`,
+      `Blockbuster offer: ${org} pay ×${mult} his market value; refuse and he stays, but his next renewal asks ${pct}% more.`,
     consequences: "After this deal",
     balanceAfter: (s: string) => `Balance after: ${s}`,
     // rc.32 (M4, provisional): the runway a signing leaves.
@@ -3114,6 +3114,182 @@ export const CAREER_EN = {
     calendarPlan: "Plan your season", calendarHint: "Choose a month, then select a day for its schedule and actions.", calendarOverview: "Season progress", calendarLegend: "Calendar key",
     sundayQualified: "Championship Sunday secured", majorChampion: "Major champions", worldsChampion: "World champions",
     rocketStreet: "Rocket Street",
+  },
+
+  // T1 (v2.0): the guided tour. One chapter per screen, shown on the first
+  // visit and reopened by the help button. Each step spotlights a real element
+  // (`data-tour`), so a body says what the player does there, in one or two lines.
+  tour: {
+    kicker: "Road to Worlds",
+    next: "Next",
+    back: "Back",
+    skip: "Skip",
+    done: "Got it",
+    progress: (n: number, total: number) => `${n} of ${total}`,
+    help: "Guide to this screen",
+    hub: {
+      welcome: {
+        title: "Welcome to Road to Worlds",
+        body: "You run an org from its first roster to the World Championship. One minute on the essentials.",
+        points: [
+          { label: "Squad", text: "Sign, train and renew" },
+          { label: "Cash", text: "Wages go out every Monday" },
+          { label: "Season Points", text: "They take you to Majors and Worlds" },
+        ],
+      },
+      tabs: {
+        title: "One tab per area of the club",
+        body: "Everything is one tap away on this bar.",
+        items: {
+          hub: "Today and decisions",
+          calendar: "Events and cups",
+          squad: "Lineup and contracts",
+          training: "How the team grows",
+          market: "Players and coaches",
+          finances: "Cash and sponsors",
+          standings: "The race to Worlds",
+          news: "Offers and notices",
+          club: "Trophies and progress",
+        } as Record<string, string>,
+      },
+      advance: {
+        title: "You move the clock",
+        body: "Time only passes when you say so, and the game stops by itself when something needs you.",
+        points: [
+          { label: "Play", text: "Day by day, up to the next stop" },
+          { label: "Skip ahead", text: "Straight to the next stop" },
+        ],
+      },
+      day: {
+        title: "Today's card",
+        body: "Whatever needs a decision today shows up here: an offer, a sponsor, an event. Settle it and move on.",
+      },
+      inbox: {
+        title: "Inbox",
+        body: "Bids, bank notices and invitations arrive by mail. Open the ones that ask for an answer.",
+      },
+      finances: {
+        title: "Keep an eye on the cash",
+        body: "Prizes and sponsors bring money in, wages take it out every Monday. Let the balance sink too far and the bank steps in, with a deadline.",
+      },
+      progress: {
+        title: "Progression",
+        body: "Results raise your reputation. Reputation unlocks the coach, better sponsors and new facilities.",
+      },
+      help: {
+        title: "Help is always here",
+        body: "Each tab shows its own short guide on your first visit. This button brings it back any time.",
+      },
+    },
+    training: {
+      cycle: {
+        title: "Pick the cycle",
+        body: "Every 14 days you choose what the squad works on.",
+        points: [
+          { label: "Evolve", text: "Attributes grow faster" },
+          { label: "Gel", text: "Chemistry builds faster" },
+          { label: "Recover", text: "Less wear, veterans hold their level" },
+        ],
+      },
+      coach: {
+        title: "The coach",
+        body: "With a coach the plan comes ready and training pays more. Without one, you set each cycle yourself.",
+      },
+      growth: {
+        title: "Watch them grow",
+        body: "See who is still improving, who is at his peak and who is past it, before you renew or sell.",
+      },
+    },
+    market: {
+      tabs: {
+        title: "Four counters",
+        body: "Switch between them here.",
+        points: [
+          { label: "Free agents", text: "No transfer fee" },
+          { label: "Under contract", text: "A fee to their org, from reputation 20" },
+          { label: "Coaches", text: "Who trains the squad" },
+          { label: "My deals", text: "Bids made and received" },
+        ],
+      },
+      search: {
+        title: "Find your signing",
+        body: "Search, sort and filter by region, then open a player to scout him and make an offer.",
+        points: [
+          { label: "Window open", text: "Deals move as the days pass" },
+          { label: "Window closed", text: "Scout now, bid when it opens" },
+        ],
+      },
+    },
+    finances: {
+      overview: {
+        title: "Three reads of your money",
+        body: "The balance over time, what comes in and goes out each Monday, and where the season is heading.",
+      },
+      sponsor: {
+        title: "Sponsors",
+        body: "A deal pays a guaranteed base plus a bonus for each goal you reach. Safer deals pay less; bold ones fine a miss.",
+      },
+      loans: {
+        title: "Loans and the floor",
+        body: "Borrow whenever you choose. If a Monday closes below the floor, the bank lends by itself, and missing that deadline ends the career.",
+      },
+      progress: {
+        title: "Invest in the org",
+        body: "Gear, staff and bootcamps make the squad grow and play better. Each step unlocks with reputation.",
+      },
+    },
+    calendar: {
+      month: {
+        title: "The season at a glance",
+        body: "Pick a day to see what happens and what you can do. The icons mark regionals, Majors and the transfer window.",
+      },
+      next: {
+        title: "Events and cups",
+        body: "Your next stops, in order.",
+        points: [
+          { label: "Official events", text: "They pay Season Points" },
+          { label: "Community cups", text: "Optional: prize money and reputation" },
+        ],
+      },
+    },
+    squad: {
+      starters: {
+        title: "Your three starters",
+        body: "They play every series. Open a player to see his attributes, contract and options.",
+      },
+      bench: {
+        title: "Reserve and coach",
+        body: "The reserve steps in when a starter cannot play. Without one, the team misses that event.",
+      },
+      contracts: {
+        title: "Contracts",
+        body: "Renew before the season ends, or the player leaves for free.",
+      },
+    },
+    standings: {
+      tabs: {
+        title: "Two races",
+        body: "Regionals and Majors pay Season Points.",
+        points: [
+          { label: "Major table", text: "This split: who plays the Major" },
+          { label: "Worlds table", text: "The whole season: who goes to Worlds" },
+        ],
+      },
+      table: {
+        title: "Stay above the line",
+        body: "The line marks the last qualifying spot in your region. Finish above it and the next stage opens.",
+      },
+    },
+    club: {
+      progress: {
+        title: "Reputation and progression",
+        body: "Every milestone and what it unlocks is listed here. Plan your next step.",
+      },
+      trophies: {
+        title: "Trophy room",
+        body: "Titles and records stay here for the whole career.",
+      },
+    },
   },
 
 };

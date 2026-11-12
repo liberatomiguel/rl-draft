@@ -164,7 +164,7 @@ export function CareerTopBar() {
         </AppLink>
 
         {/* Center clock — the date is the game's heartbeat now. */}
-        <div className="min-w-0 flex-1 text-center">
+        <div data-tour="career-clock" className="min-w-0 flex-1 text-center">
           <div className="kicker text-[9px] leading-none text-faint">{clock.season}</div>
           <div className="display truncate text-sm font-bold uppercase leading-tight tracking-wide text-ink">
             {formatDateShort(copy.dates, clock.date)}
@@ -195,7 +195,7 @@ export function CareerTopBar() {
         </div>
 
         {canAutoplay ? (
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div data-tour="career-advance" className="flex shrink-0 items-center gap-1.5">
             <Button
               size="sm"
               onClick={() => setAutoAdvance(!autoAdvance)}
@@ -226,14 +226,14 @@ export function CareerTopBar() {
             </Button>
           </div>
         ) : (
-          <Button size="sm" onClick={onContinue} className="max-w-[48vw] shrink-0 sm:max-w-none">
+          <Button data-tour="career-advance" size="sm" onClick={onContinue} className="max-w-[48vw] shrink-0 sm:max-w-none">
             <span className="truncate sm:hidden">{continueShort}</span>
             <span className="hidden truncate sm:inline">{continueLabel}</span>
           </Button>
         )}
       </div>
 
-      <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-3 pb-1.5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav data-tour="career-nav" className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-3 pb-1.5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tab) => {
           const active =
             tab.href === "/career" ? pathname === "/career" : pathname.startsWith(tab.href);

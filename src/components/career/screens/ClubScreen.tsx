@@ -248,7 +248,7 @@ export function ClubScreen() {
 
 
       {/* 4 — Trophy room */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
+      <Panel data-tour="club-trophies" className="rise-in p-4" style={{ animationDelay: "150ms" }}>
         <p className="kicker mb-3">{copy.club.trophies}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {/* The Worlds pedestal — visible from day one (design §11). */}
@@ -327,7 +327,7 @@ export function ClubScreen() {
         </div>
 
         {/* 3 — Progression Track (the unlock ladder, never hidden) */}
-        <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
+        <div data-tour="club-progress" className="flex min-w-0 flex-col gap-4 md:col-span-2">
           <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
             <p className="kicker mb-1">{copy.club.reputation}</p>
             <p className="display text-4xl font-bold text-ink">

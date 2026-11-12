@@ -273,7 +273,7 @@ export const PT: Copy = {
     theBoss: "A line",
     // v2.0 stars + gauntlets
     starsKicker: "Três estrelas",
-    starsHint: "As estrelas 2 e 3 acrescentam uma condição ao objetivo principal. Conquiste-as juntas ou em tentativas separadas. Rerolls gratuitos de ofertas sem opção válida não contam.",
+    starsHint: "As estrelas 2 e 3 pedem uma condição extra; conquiste-as juntas ou em tentativas separadas. Reroll gratuito não conta.",
     starsCount: (n: number, total: number) => `${n}/${total} estrelas`,
     starsTotal: (n: number) => `${n} estrelas`,
     star1: "Vença a série",
@@ -372,7 +372,7 @@ export const PT: Copy = {
     signedInAs: (name: string) => `Logado como ${name}`,
     syncing: "Sincronizando…",
     guestNote:
-      "Jogando como convidado — seu progresso fica salvo neste dispositivo. Entre com seu email para fazer backup na nuvem e competir globalmente. Seu progresso local é mesclado, nunca perdido.",
+      "Jogando como convidado: seu progresso fica salvo neste dispositivo. Entre com seu email para fazer backup na nuvem e competir globalmente. Seu progresso local vai junto.",
     comingSoon: "Os rankings globais abrem quando as contas entrarem no ar. Até lá, seus recordes ficam salvos localmente.",
     previewData: "Preview — perfis fictícios (staging)",
     globalTab: "Global",
@@ -524,6 +524,36 @@ export const PT: Copy = {
       "O resto é igual: dificuldade, química, o torneio completo. Vença para erguer a bandeira da sua região.",
     ],
     regionalCta: "Bora jogar",
+    // T1 (v2.0): o tutorial guiado do primeiro draft (substitui o modal
+    // "Como jogar" e mantém a flag dele). Cada passo destaca uma parte real da tela.
+    tour: {
+      kicker: "Primeiro draft",
+      next: "Avançar",
+      back: "Voltar",
+      skip: "Pular",
+      done: "Bora draftar",
+      progress: (n: number, total: number) => `${n} de ${total}`,
+      offer: {
+        title: "Uma lineup por rodada",
+        body: "Cada rodada traz uma lineup real da história da RLCS. Toque em uma carta para levá-la ao seu time.",
+      },
+      roster: {
+        title: "Seu time",
+        body: "Preencha todas as vagas. Cartas do mesmo país, org ou lineup criam química.",
+        points: [
+          { label: "Overall", text: "O que mais pesa numa série" },
+          { label: "Química", text: "Rating extra para um time que combina" },
+        ],
+      },
+      reroll: {
+        title: "Não serviu?",
+        body: "O reroll traz outra lineup. Eles são limitados: guarde para quando nada encaixar.",
+      },
+      finish: {
+        title: "Depois, o torneio",
+        body: "Com o time completo, o torneio roda sozinho: Swiss e depois playoffs. Toda run rende XP, vencendo ou perdendo.",
+      },
+    },
   },
 
   REVIEW: {
