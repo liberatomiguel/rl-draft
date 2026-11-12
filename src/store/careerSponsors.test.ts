@@ -412,8 +412,15 @@ describe("rc.34 ECO-04 — the deal: three dated parts (S1)", () => {
     const p = { name: "voltway", fine: 400, perMonday: 100, mondays: 4, done: 0, target: 1, steady: 0, profile: "balanced", misses: 0, patience: 3, goalKind: "regionalFinish", goalCount: 1, goalPlace: 8, goalSplit: 2, word: "even", chance: 0.5 };
     const en = [CAREER_EN.mail.body.sponsorGoalMissed(p), CAREER_EN.finances.deal.fineFloorNote];
     const pt = [CAREER_PT.mail.body.sponsorGoalMissed(p), CAREER_PT.finances.deal.fineFloorNote];
-    for (const s of en) expect(s).toContain("the bank's floor");
-    for (const s of pt) expect(s).toContain("o piso do banco");
+    // T1 (v2.0 copy clean-up): the copy says what the player pays (the fine, in
+    // weekly instalments) and no longer how the engine caps an instalment at the
+    // bank's floor. That rule is still asserted on the numbers, in the next test.
+    expect(en[0]).toContain("400");
+    expect(en[0]).toContain("100");
+    expect(pt[0]).toContain("400");
+    expect(pt[0]).toContain("100");
+    expect(en[1]).toContain("instalments");
+    expect(pt[1]).toContain("parcelas");
     for (const s of [...en, ...pt]) expect(s).not.toContain("Backer");
   });
 

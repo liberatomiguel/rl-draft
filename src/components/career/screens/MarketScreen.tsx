@@ -479,7 +479,7 @@ export function MarketScreen() {
       ) : null}
 
       {/* Tabs */}
-      <div className="rise-in grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" style={{ animationDelay: "40ms" }}>
+      <div data-tour="market-tabs" className="rise-in grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" style={{ animationDelay: "40ms" }}>
         {tabs.map(([k, label]) => (
           <Chip
             key={k}
@@ -502,7 +502,7 @@ export function MarketScreen() {
       {tab === "free" || tab === "contracted" ? (
         <>
           {/* Toolbar: search · sort · region */}
-          <Panel className="rise-in space-y-2.5 p-3" style={{ animationDelay: "60ms" }}>
+          <Panel data-tour="market-search" className="rise-in space-y-2.5 p-3" style={{ animationDelay: "60ms" }}>
             <input
               type="search"
               value={search}

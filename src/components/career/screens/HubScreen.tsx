@@ -34,7 +34,6 @@ import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { useCareerStore } from "@/store/careerStore";
 import { useSettings } from "@/store/settingsStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
@@ -62,7 +61,6 @@ import { OrgSheet } from "@/components/career/OrgSheet";
 import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 
 // rc.36 (UX-03): the wire — its filters, type icons and rows — lives in news/NewsFeed.tsx.
@@ -82,7 +80,6 @@ export function HubScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
 
-  const markFlag = useCareerStore((s) => s.markFlag);
 
   const team = useMemo(() => (save ? userTeamPreview(save) : null), [save]);
 
@@ -127,7 +124,7 @@ export function HubScreen() {
         {/* ============ main column (2fr) ============ */}
         <div className="contents lg:col-span-2 lg:block lg:space-y-4">
           {/* 1 — THE DECISION BLOCK: the next needed decision, or the clock (UX-01a) */}
-          <div className="order-1">
+          <div data-tour="hub-day" className="order-1">
             {save.phase === "seasonReview" && followCardOf(save) ? <Panel className="mb-4 p-4"><NowFollow save={save} C={C} out={null} follow={followCardOf(save)} /></Panel> : null}
             <DecisionBlock save={save} C={C} />
           </div>
@@ -136,7 +133,7 @@ export function HubScreen() {
           <div className="order-2">
             <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
           </div>
-          <div className="order-3">
+          <div data-tour="hub-training" className="order-3">
             <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
           </div>
 
@@ -156,12 +153,12 @@ export function HubScreen() {
           </div>
 
           {/* 5 — finances (UX-01e, decision 4-A) */}
-          <div className="order-5">
+          <div data-tour="hub-finances" className="order-5">
             <FinanceBlock save={save} C={C} />
           </div>
 
           {/* 6 — progression + toolbox in one card (rc.35; UX-01f, 5-A, 7-A; UX-06a's unlock modal) */}
-          <div className="order-6">
+          <div data-tour="hub-progress" className="order-6">
             <ToolboxBlock save={save} C={C} />
           </div>
 
@@ -173,7 +170,7 @@ export function HubScreen() {
           ) : null}
 
           {/* 8 — inbox teaser */}
-          <div className="order-8">
+          <div data-tour="hub-inbox" className="order-8">
             <AppLink href="/career/news" className="block">
               <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "180ms" }}>
                 <div className="mb-2 flex items-center justify-between gap-2">
@@ -213,19 +210,7 @@ export function HubScreen() {
         </div>
       </div>
 
-      {/* First-visit explainer (one-shot). */}
-      <Modal
-        open={!save.flags["seenHub"]}
-        title={C.explainers.hub.title}
-        onClose={() => markFlag("seenHub")}
-        actions={
-          <Button variant="primary" onClick={() => markFlag("seenHub")}>
-            {C.explainers.gotIt}
-          </Button>
-        }
-      >
-        {C.explainers.hub.body}
-      </Modal>
+      {/* T1 (v2.0): the first-visit explainer is the guided tour now (CareerTour, in the shell). */}
     </div>
   );
 }

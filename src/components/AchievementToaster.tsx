@@ -84,7 +84,7 @@ function Toast({ id, held }: { id: string; held: boolean }) {
           {ACH_UI.unlocked}
         </span>
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
-          {def.title}
+          {ACH_UI.items[def.id]?.name ?? def.title}
         </span>
         <span className="block text-[11px] text-faint">+{def.xp} XP</span>
       </span>

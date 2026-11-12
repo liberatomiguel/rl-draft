@@ -447,7 +447,7 @@ export function StandingsScreen() {
       </div>
 
       {/* Tabs — the two race tables (blue = structure) */}
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
+      <div data-tour="standings-tabs" className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
         {(
           [
             ["major", copy.race.majorTab],
@@ -530,7 +530,7 @@ export function StandingsScreen() {
       ) : null}
 
 
-      <Panel className="rise-in p-2 sm:p-4" style={{ animationDelay: "120ms" }}>
+      <Panel data-tour="standings-table" className="rise-in p-2 sm:p-4" style={{ animationDelay: "120ms" }}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
           <Badge className={REGION_BADGE[region]}>{region}</Badge>
           <span className="text-[11px] text-faint">{fixtures}</span>

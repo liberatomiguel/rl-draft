@@ -176,6 +176,9 @@ export const PT: Copy = {
     moreGuides: "Mais do Rocket Draft",
     home: "Início",
     database: "Base da RLCS",
+    // T1 (v2.0): nomes das regiões de navegação do shell.
+    ariaMain: "Principal",
+    ariaLanguage: "Idioma",
   },
 
   RUN_UI: {
@@ -270,7 +273,7 @@ export const PT: Copy = {
     theBoss: "A line",
     // v2.0 stars + gauntlets
     starsKicker: "Três estrelas",
-    starsHint: "As estrelas 2 e 3 acrescentam uma condição ao objetivo principal. Conquiste-as juntas ou em tentativas separadas. Rerolls gratuitos de ofertas sem opção válida não contam.",
+    starsHint: "As estrelas 2 e 3 pedem uma condição extra; conquiste-as juntas ou em tentativas separadas. Reroll gratuito não conta.",
     starsCount: (n: number, total: number) => `${n}/${total} estrelas`,
     starsTotal: (n: number) => `${n} estrelas`,
     star1: "Vença a série",
@@ -369,7 +372,7 @@ export const PT: Copy = {
     signedInAs: (name: string) => `Logado como ${name}`,
     syncing: "Sincronizando…",
     guestNote:
-      "Jogando como convidado — seu progresso fica salvo neste dispositivo. Entre com seu email para fazer backup na nuvem e competir globalmente. Seu progresso local é mesclado, nunca perdido.",
+      "Jogando como convidado: seu progresso fica salvo neste dispositivo. Entre com seu email para fazer backup na nuvem e competir globalmente. Seu progresso local vai junto.",
     comingSoon: "Os rankings globais abrem quando as contas entrarem no ar. Até lá, seus recordes ficam salvos localmente.",
     previewData: "Preview — perfis fictícios (staging)",
     globalTab: "Global",
@@ -521,6 +524,36 @@ export const PT: Copy = {
       "O resto é igual: dificuldade, química, o torneio completo. Vença para erguer a bandeira da sua região.",
     ],
     regionalCta: "Bora jogar",
+    // T1 (v2.0): o tutorial guiado do primeiro draft (substitui o modal
+    // "Como jogar" e mantém a flag dele). Cada passo destaca uma parte real da tela.
+    tour: {
+      kicker: "Primeiro draft",
+      next: "Avançar",
+      back: "Voltar",
+      skip: "Pular",
+      done: "Bora draftar",
+      progress: (n: number, total: number) => `${n} de ${total}`,
+      offer: {
+        title: "Uma lineup por rodada",
+        body: "Cada rodada traz uma lineup real da história da RLCS. Toque em uma carta para levá-la ao seu time.",
+      },
+      roster: {
+        title: "Seu time",
+        body: "Preencha todas as vagas. Cartas do mesmo país, org ou lineup criam química.",
+        points: [
+          { label: "Overall", text: "O que mais pesa numa série" },
+          { label: "Química", text: "Rating extra para um time que combina" },
+        ],
+      },
+      reroll: {
+        title: "Não serviu?",
+        body: "O reroll traz outra lineup. Eles são limitados: guarde para quando nada encaixar.",
+      },
+      finish: {
+        title: "Depois, o torneio",
+        body: "Com o time completo, o torneio roda sozinho: Swiss e depois playoffs. Toda run rende XP, vencendo ou perdendo.",
+      },
+    },
   },
 
   REVIEW: {
@@ -749,6 +782,11 @@ export const PT: Copy = {
     eliminatedBy: (name: string) => `Eliminado por ${name}`,
     eliminatorScore: (a: number, b: number) => `${a}–${b}`,
     eliminatorBuffed: "Overall reforçado pela dificuldade (Legacy / região)",
+    // T1 (v2.0): as palavras do card de compartilhamento.
+    shareModeQuick: "Draft Rápido",
+    shareModeClassic: "Draft Clássico",
+    shareHiddenOvr: "OVR oculto",
+    shareRoles: { coach: "Técnico", sub: "Reserva", org: "Org" } as Record<string, string>,
   },
 
   COLLECTION_UI: {
@@ -926,6 +964,87 @@ export const PT: Copy = {
     } as Record<string, { name: string; desc: string }>,
     careerTier: { common: "Comum", rare: "Rara", epic: "Épica", legend: "Lenda" } as Record<string, string>,
     careerEarned: "Conquistada",
+    /** T1 (v2.0): nome e descrição em PT de cada conquista do draft, por id
+     *  (o EN mora em `achievements.json`). */
+    items: {
+      "ach-first-team": { name: "Primeira Lineup", desc: "Monte seu primeiro time." },
+      "ach-first-run": { name: "Estreia", desc: "Termine sua primeira run." },
+      "ach-first-title": { name: "Decolagem", desc: "Vença seu primeiro torneio." },
+      "ach-runs-10": { name: "Pegando o Jeito", desc: "Jogue 10 runs." },
+      "ach-runs-50": { name: "Figurinha Carimbada", desc: "Jogue 50 runs." },
+      "ach-runs-200": { name: "De Carteirinha", desc: "Jogue 200 runs." },
+      "ach-titles-5": { name: "Candidato", desc: "Vença 5 torneios." },
+      "ach-titles-15": { name: "Dinastia", desc: "Vença 15 torneios." },
+      "ach-titles-50": { name: "Hall da Fama", desc: "Vença 50 torneios." },
+      "ach-games-50": { name: "Veterano de Séries", desc: "Vença 50 jogos individuais." },
+      "ach-games-200": { name: "Mago dos Jogos", desc: "Vença 200 jogos individuais." },
+      "ach-goals-100": { name: "Faro de Gol", desc: "Marque 100 gols somando todas as suas runs." },
+      "ach-goals-250": { name: "Artilheiro", desc: "Marque 250 gols somando todas as suas runs." },
+      "ach-goals-500": { name: "Máquina de Gols", desc: "Marque 500 gols somando todas as suas runs." },
+      "ach-hard-title": { name: "Prova de Fogo", desc: "Vença um torneio no Difícil." },
+      "ach-legacy-title": { name: "Para a História", desc: "Vença um torneio no Legacy." },
+      "ach-legacy-10": { name: "Eterno", desc: "Vença 10 torneios no Legacy." },
+      "ach-legacy-regional": { name: "Lenda Regional", desc: "Vença um Draft Regional no Legacy." },
+      "ach-quick-win": { name: "Speed Run", desc: "Vença uma partida no Draft Rápido." },
+      "ach-swiss-flawless": { name: "Swiss Perfeito", desc: "Faça 3-0 na fase Swiss." },
+      "ach-daily-win": { name: "Rotina Diária", desc: "Vença um Desafio Diário." },
+      "ach-daily-7": { name: "Mestre da Sequência", desc: "Vença o Desafio Diário 7 dias seguidos." },
+      "ach-blowout": { name: "Recado Dado", desc: "Vença uma partida por 7 gols ou mais." },
+      "ach-undefeated": { name: "Intocável", desc: "Vença um torneio sem perder nenhuma série." },
+      "ach-clean-sheet": { name: "Muralha", desc: "Vença um torneio sem sofrer gols." },
+      "ach-three-specials": { name: "Carregado", desc: "Termine uma run com 3 cartas especiais no time." },
+      "ach-hattrick": { name: "Hat-Trick", desc: "Um jogador seu marca 3 gols em uma partida." },
+      "ach-four-goals": { name: "Pôquer", desc: "Um jogador seu marca 4 gols em uma partida." },
+      "ach-solo-show": { name: "Exército de Um", desc: "Um jogador marca todos os gols do seu time em uma partida (3 ou mais)." },
+      "ach-game7": { name: "Gelo no Jogo 7", desc: "Vença uma final no jogo 7." },
+      "ach-reverse-sweep": { name: "Reverse Sweep", desc: "Vença uma série depois de ficar dois jogos atrás." },
+      "ach-lower-bracket": { name: "Pelo Caminho Longo", desc: "Vença um torneio vindo da chave inferior." },
+      "ach-scored-every-game": { name: "Sempre Presente", desc: "Um jogador seu marca em todos os jogos de um torneio." },
+      "ach-ot-game7": { name: "Herói da Prorrogação", desc: "Vença uma final na prorrogação do jogo 7." },
+      "ach-one-goal-final": { name: "No Limite", desc: "Vença uma final decidida por um único gol." },
+      "ach-giant-slayer": { name: "Mata-Gigantes", desc: "Vença um time com overall maior que o seu." },
+      "ach-perfect-chem": { name: "Sintonia Perfeita", desc: "Monte um time com química perfeita." },
+      "ach-perfect-chem-title": { name: "Em Perfeita Sintonia", desc: "Vença um torneio com química perfeita." },
+      "ach-no-chem-title": { name: "Completos Estranhos", desc: "Vença um torneio sem nenhuma química." },
+      "ach-early-era-title": { name: "Velha Guarda", desc: "Vença um torneio só com jogadores das primeiras eras (2019 ou antes)." },
+      "ach-open-era-title": { name: "Nova Geração", desc: "Vença um torneio só com jogadores da era aberta (2020 em diante)." },
+      "ach-all-sam": { name: "Aço Sul-Americano", desc: "Monte um time com três jogadores sul-americanos." },
+      "ach-all-eu": { name: "Força Europeia", desc: "Monte um time com três jogadores europeus." },
+      "ach-all-na": { name: "Núcleo Norte-Americano", desc: "Monte um time com três jogadores norte-americanos." },
+      "ach-all-ssa": { name: "Orgulho Subsaariano", desc: "Monte um time com três jogadores da África Subsaariana." },
+      "ach-all-mena": { name: "Força MENA", desc: "Monte um time com três jogadores da MENA." },
+      "ach-all-oce": { name: "Unidade da Oceania", desc: "Monte um time com três jogadores da Oceania." },
+      "ach-all-apac": { name: "Aliança APAC", desc: "Monte um time com três jogadores da Ásia-Pacífico." },
+      "ach-all-champions": { name: "Só Campeões", desc: "Monte um time com três jogadores do nível de campeão mundial." },
+      "ach-same-team": { name: "Reencontro", desc: "Monte um time com três jogadores da mesma org." },
+      "ach-first-special": { name: "Primeira Especial", desc: "Desbloqueie sua primeira carta especial." },
+      "ach-specials-15": { name: "Colecionador", desc: "Desbloqueie 15 cartas especiais." },
+      "ach-specials-50": { name: "Curador", desc: "Desbloqueie 50 cartas especiais." },
+      "ach-specials-all": { name: "Completista", desc: "Desbloqueie todas as cartas especiais." },
+      "ach-creator": { name: "Por Trás do Jogo", desc: "Desbloqueie a carta do Criador." },
+      "ach-ssl": { name: "Supersonic Legend", desc: "Alcance o rank Supersonic Legend." },
+      "ach-runs-500": { name: "Maratona", desc: "Jogue 500 runs." },
+      "ach-runs-1000": { name: "Vontade de Ferro", desc: "Jogue 1.000 runs." },
+      "ach-titles-100": { name: "Sala de Troféus", desc: "Vença 100 torneios." },
+      "ach-titles-250": { name: "Lenda do Jogo", desc: "Vença 250 torneios." },
+      "ach-games-1000": { name: "Mil Vitórias", desc: "Vença 1.000 jogos individuais." },
+      "ach-goals-2500": { name: "Fura-Redes", desc: "Marque 2.500 gols somando todas as suas runs." },
+      "ach-legacy-25": { name: "Imortal", desc: "Vença 25 torneios no Legacy." },
+      "ach-legacy-undefeated": { name: "Legacy Impecável", desc: "Vença um torneio no Legacy sem perder nenhuma série." },
+      "ach-legacy-streak-2": { name: "Bicampeão", desc: "Vença dois torneios seguidos no Legacy." },
+      "ach-challenge-perfect": { name: "Três Estrelas", desc: "Conquiste as três estrelas de um desafio." },
+      "ach-challenge-all": { name: "Mestre dos Puzzles", desc: "Complete todos os desafios." },
+      "ach-quiz-first-try": { name: "Cantei a Pedra", desc: "Resolva o Quiz diário no primeiro palpite." },
+      "ach-specials-100": { name: "Arquivista", desc: "Desbloqueie 100 cartas especiais." },
+      "ach-national-first": { name: "Orgulho Nacional", desc: "Complete uma seleção." },
+      "ach-national-all": { name: "Volta ao Mundo", desc: "Complete todas as seleções." },
+      "ach-rank-diamond": { name: "Padrão Diamond", desc: "Alcance o rank Diamond." },
+      "ach-rank-champion": { name: "Classe Champion", desc: "Alcance o rank Champion." },
+      "ach-rank-gc": { name: "Grand Champion", desc: "Alcance o rank Grand Champion." },
+      "ach-rating-1000": { name: "Ranqueado", desc: "Alcance 1.000 de Season Rating." },
+      "ach-rating-2500": { name: "Candidato ao Título", desc: "Alcance 2.500 de Season Rating." },
+      "ach-rating-5000": { name: "Topo da Tabela", desc: "Alcance 5.000 de Season Rating." },
+    } as Record<string, { name: string; desc: string }>,
   },
 
   HOWTO: {
@@ -1082,7 +1201,7 @@ export const PT: Copy = {
       {
         title: "Analytics",
         body: [
-          "Usamos analytics agregado e respeitoso à privacidade para entender quantas pessoas visitam o site, quais páginas são populares, como o jogo se comporta e como as runs acontecem — por exemplo, quais dificuldades as pessoas escolhem e com que frequência as runs são concluídas. Medimos isso com o Vercel Web Analytics e o PostHog, configurados para serem sem cookies e anônimos: não usamos cookies de publicidade, não identificamos você pessoalmente e respeitamos a opção Não rastrear (Do Not Track) do seu navegador.",
+          "Usamos analytics agregado e respeitoso à privacidade para entender quantas pessoas visitam o site, quais páginas são populares, como o jogo se comporta e como as runs acontecem — por exemplo, quais dificuldades as pessoas escolhem e com que frequência as runs são concluídas. Medimos isso com o PostHog, configurado para ser sem cookies e anônimo: não usamos cookies de publicidade, não identificamos você pessoalmente e respeitamos a opção Não rastrear (Do Not Track) do seu navegador.",
           "As estatísticas de busca (com que frequência o site aparece nos resultados) vêm do Google Search Console, que só reporta dados agregados e anônimos.",
         ],
       },
@@ -1800,6 +1919,23 @@ export const PT: Copy = {
     ratingsLink: "Como os ratings são feitos",
     cta: "Draftar estes rosters",
   },
+
+  /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */
+  PAGE_TITLES: {
+    "/play": "Jogue o Draft da RLCS Online — Grátis · Rocket Draft",
+    "/profile": "Seu Perfil — Rank, Season Rating e Estatísticas · Rocket Draft",
+    "/collection": "Coleção de Cartas da RLCS — Álbum de Cartas Especiais · Rocket Draft",
+    "/achievements": "Conquistas do Rocket Draft — Lista Completa e Como Desbloquear",
+    "/challenges": "Desafios de Draft da RLCS — Puzzles por Rank · Rocket Draft",
+    "/leaderboards": "Rankings do Draft da RLCS — Classificação Global · Rocket Draft",
+    "/missions": "Missões · Rocket Draft",
+    "/quiz": "Quiz Diário da RLCS — Adivinhe o Jogador · Rocket Draft",
+    "/settings": "Configurações · Rocket Draft",
+    "/changelog": "Changelog — Novidades do Rocket Draft",
+    "/how-to-play": "Como Jogar Rocket Draft — Regras do Draft e Química",
+    "/privacy": "Política de Privacidade · Rocket Draft",
+    "/career": "Road to Worlds — Modo Carreira · Rocket Draft",
+  } as Record<string, string>,
 };
 
 /** National-team names in Portuguese (v2.0), by org id — the data is English. */
