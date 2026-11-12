@@ -117,6 +117,9 @@ export interface TitleStyle {
   colors: Stops;
   /** Glow colour (rare+); defaults to the first stop. */
   glow?: string;
+  /** rc.52: an epic title drawn with a quieter rim and glow (the epics earned
+   *  by playing sit below the gold epics, Grand Champion red and the grants). */
+  soft?: true;
 }
 
 export interface BannerStyle {
@@ -170,7 +173,7 @@ export const GRANT_COLORS: Record<GrantId, { colors: Stops; glow: string }> = {
   contributor: { colors: ["#19d290", "#7ef0c0"], glow: "#00d1d1" }, // emerald / teal
   "50-50-staff": { colors: ["#ffffff"], glow: "#ffffff" },
   pro: { colors: ["#aef7ff", "#e0fbff"], glow: "#43afff" }, // ice / sky
-  creator: { colors: ["#ff2bd6", "#ff8df0"], glow: "#d400b8" }, // fuchsia / magenta (rc.51)
+  creator: { colors: ["#e23cff", "#f6b3ff"], glow: "#b312e6" }, // orchid magenta (rc.52: off the hot pink of rc.51, clear of the two supporter roses)
 };
 
 type BadgeDef = Extract<CosmeticDef, { kind: "badge" }>;
@@ -187,6 +190,9 @@ const badge = (id: string, tier: CosmeticTier, priority: number, source: Cosmeti
   ...(exclusive ? { exclusive } : {}),
   style: { art: id },
 });
+
+/** rc.52: the same title with the quieter epic treatment (`TitleStyle.soft`). */
+const soft = (t: TitleDef): TitleDef => ({ ...t, style: { ...t.style, soft: true } });
 
 const title = (id: string, tier: CosmeticTier, priority: number, source: CosmeticSource, colors: Stops, exclusive?: true, glow?: string): TitleDef => ({
   id,
@@ -319,7 +325,7 @@ const LOGIN: CosmeticDef[] = [
   title("login-title-on-fire", "uncommon", 12, { type: "login-streak", days: 21 }, ["#a3adbd"]),
   title("login-title-cant-stop", "uncommon", 13, { type: "login-streak", days: 25 }, ["#a3adbd"]),
   banner("login-banner-wildfire", "epic", 14, { type: "login-streak", days: 30 }, { art: "wildfire", glow: "#ff3a1a", frame: ["#ff3a1a", "#ffb020", "#fff0c0"] }),
-  title("login-title-daily-driver", "epic", 14, { type: "login-streak", days: 30 }, ["#ff5f6d", "#ffc371", "#fff0a8"]),
+  soft(title("login-title-daily-driver", "epic", 14, { type: "login-streak", days: 30 }, ["#ff5f6d", "#ffc371", "#fff0a8"])),
 ];
 
 /** Season 1 rank track (first time a rank is reached; lower ranks included). */
@@ -333,7 +339,7 @@ const RANK_TRACK: CosmeticDef[] = [
   title("rank-title-unstoppable", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "diamond" }, ["#a3adbd"]),
   banner("rank-banner-singularity", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, { art: "singularity", glow: "#8a5cff", frame: ["#8a5cff", "#ff4fd8", "#9ff4ff"] }),
   banner("rank-banner-overdrive", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, { art: "overdrive", glow: "#ff2a4a", frame: ["#ff2a4a", "#ff9a2a", "#ffe08a"] }),
-  title("rank-title-rocketeer", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, ["#ff5f6d", "#ffc371", "#c9a8ff"]),
+  soft(title("rank-title-rocketeer", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, ["#ff5f6d", "#ffc371", "#c9a8ff"])),
   banner("rank-banner-cosmic-ascension", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, { art: "cosmic-ascension", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
   title("rank-title-rocket-demigod", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, WHITE_GOLD),
 ];
@@ -364,7 +370,7 @@ const CAREER: CosmeticDef[] = [
   banner("career-banner-regional-laurels", "rare", 45, { type: "career-mark", markId: "car-first-regional" }, { art: "regional-laurels", glow: "#d8c25a", frame: ["#d8c25a", "#5fa86a", "#fbf6d0"] }),
   banner("career-banner-passport-stamped", "rare", 46, { type: "career-mark", markId: "car-major-berth" }, { art: "passport-stamped", glow: "#ff6f5e", frame: ["#ff6f5e", "#62bcff", "#fff0e0"] }),
   banner("career-banner-major-statement", "rare", 47, { type: "career-mark", markId: "car-first-major" }, { art: "major-statement", glow: "#ff4f9a", frame: ["#ff4f9a", "#7a5cff", "#ffe6f2"] }),
-  title("career-title-day-one", "epic", 48, { type: "career-mark", markId: "car-day-one" }, ["#8a5cff", "#c58bff", "#e9d5ff"]),
+  soft(title("career-title-day-one", "epic", 48, { type: "career-mark", markId: "car-day-one" }, ["#8a5cff", "#c58bff", "#e9d5ff"])),
   banner("career-banner-regional-dynasty", "epic", 49, { type: "career-mark", markId: "car-regional-dynasty" }, { art: "regional-dynasty", glow: "#9a5cff", frame: ["#9a5cff", "#ffc24a", "#fff0c8"] }),
 ];
 
@@ -376,11 +382,11 @@ const CHALLENGES: CosmeticDef[] = [
   banner("challenge-banner-back-to-basics", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, { art: "back-to-basics", glow: "#2f7bff", frame: ["#2f7bff", "#ff8a2a", "#fff1e0"] }),
   title("challenge-title-pure-talent", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, ["#a3adbd"]),
   title("challenge-title-crown-taker", "rare", 52, { type: "challenge-perfect", challengeId: "ch-gauntlet-eu-crown" }, ["#a3adbd", "#a3adbd", "#6cb8ff"]),
-  title("challenge-title-titanbreaker", "epic", 53, { type: "challenge-perfect", challengeId: "ch-topple-the-titans" }, ["#c8ff3a", "#1fd8c0", "#f6ffd6"]),
+  soft(title("challenge-title-titanbreaker", "epic", 53, { type: "challenge-perfect", challengeId: "ch-topple-the-titans" }, ["#c8ff3a", "#1fd8c0", "#f6ffd6"])),
   banner("challenge-banner-against-all-odds", "epic", 53, { type: "challenge-perfect", challengeId: "ch-topple-the-titans" }, { art: "against-all-odds", glow: "#c8ff3a", frame: ["#c8ff3a", "#1fd8c0", "#f6ffd6"] }),
   banner("challenge-banner-eye-of-the-storm", "epic", 54, { type: "challenge-perfect", challengeId: "ch-perfect-storm" }, { art: "eye-of-the-storm", glow: "#7fa8e0", frame: ["#7fa8e0", "#b48cff", "#ffe2b0"] }),
   banner("challenge-banner-masterclass", "epic", 55, { type: "challenge-perfect", challengeId: "ch-lab-masterclass" }, { art: "masterclass", glow: "#f0a878", frame: ["#f0a878", "#3fb8c8", "#fff2e4"] }),
-  title("challenge-title-globetrotter", "epic", 56, { type: "challenge-perfect", challengeId: "ch-gauntlet-world-tour" }, ["#5fd6ff", "#8fe9ff", "#ffb3ec"]),
+  soft(title("challenge-title-globetrotter", "epic", 56, { type: "challenge-perfect", challengeId: "ch-gauntlet-world-tour" }, ["#5fd6ff", "#8fe9ff", "#ffb3ec"])),
   banner("challenge-banner-world-class", "legend", 57, { type: "challenge-perfect", challengeId: "ch-gauntlet-world-tour" }, { art: "world-class", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
 ];
 

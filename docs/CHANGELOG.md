@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.51**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.52**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,17 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### rc.52 (2026-11-12), Miguel's first look at rc.51: legendary badges, title weights, Creator colour
+
+#### Changed
+- **Legendary badges are 8 % larger than the others** (was 16 %: they read too big).
+- **Legendary glow rebuilt.** It was a tight, near-opaque rim of the silhouette (blur 2.2 px at full strength) over a faint halo, which read as a hard outline. It is now three blurs of the silhouette (4, 12 and 26 px at 0.30, 0.45 and 0.58) composed into one bloom in a warmer white gold: no rim, brightest at the art's edge, fading evenly. Still one static image per badge, opacity only (`BADGE_GLOW` in `build-images.mjs`; every `*.glow.webp` regenerated).
+- **Five epic titles are a step quieter:** Daily Driver, Rocketeer, Day One, Globetrotter and Titanbreaker keep their colours and the holo band, with a weaker rim and glow (`soft` in the catalog, `.cos-title-soft`). The gold epics, the Grand Champion red and the manual grants keep the full treatment, so they now read stronger.
+- **Creator title colour:** orchid magenta (`#e23cff` to `#f6b3ff`, glow `#b312e6`) instead of the hot pink of rc.51.
+
+#### Not done / not verified
+- Not checked by Miguel yet. The soft-lock probe was not required for this change (no career code); it had been started for rc.51's career bookkeeping (Day One, Major berth and Regional Dynasty flags in `careerFlow.ts`) and its result is not part of this entry.
 
 ### rc.51 (2026-11-12), Miguel's cosmetics review: revised badges, 9 banners, 16 new rewards, banner animation rebuilt
 
