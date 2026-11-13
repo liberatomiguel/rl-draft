@@ -80,7 +80,7 @@ import { useAchievementToasts } from "./achievementToastStore";
 import { useCosmeticUnlocks } from "./cosmeticUnlockStore";
 import { useRewardToasts } from "./rewardToastStore";
 import { profileHistory, profileProgressEvents, profileSessionProps } from "./profileAnalytics";
-import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
+import { downgradeGuardedStorage, reportingJSONStorage, reportingMigrate } from "./persistStorage";
 import type {
   Difficulty,
   Placement,
@@ -1137,7 +1137,9 @@ export const useProfileStore = create<ProfileState>()(
     {
       name: "rocket-draft:profile:v1",
       version: 12,
-      storage: reportingJSONStorage("profile"),
+      // v2.0.11: a second copy under a key the pre-2.0 code never touches, read
+      // when an old tab wrote its own format over the save (see persistStorage).
+      storage: downgradeGuardedStorage(reportingJSONStorage("profile"), 12),
       // rc.2: re-derive the owned cosmetics after hydration so a catalog change
       // (new items, the preview switch) shows up without waiting for a run.
       onRehydrateStorage: () => (state) => {

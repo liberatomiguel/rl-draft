@@ -346,6 +346,91 @@ describe("profile migrate (old saves keep their progress)", () => {
   });
 });
 
+// v2.0.11 (13/11/2026): a tab opened before the 2.0 deploy keeps the pre-2.0 code
+// alive and shares the storage. It wrote the profile back as a v11 save; the next
+// 2.0 load ran the Season 1 reset over a Season 1 profile (the season leader lost
+// a rating of 2103). The profile now keeps a second copy the old code never touches.
+describe("profile: an old build writing over the save does not reset the season", () => {
+  const BACKUP = `${CONTRACT.profile.name}:backup`;
+
+  beforeEach(() => {
+    stores.profile.setState(stores.profile.getInitialState(), true);
+    storage.clear();
+  });
+
+  /** A Season 1 save the way 2.0 stores it (both keys), with real season progress. */
+  function seasonSave() {
+    const migrate = persistOf("profile").getOptions().migrate!;
+    const state = JSON.parse(JSON.stringify(migrate(oldProfile(), 1)));
+    state.xp = 493842;
+    state.mmr = 2103;
+    state.season = { ...state.season, runs: 873, titles: 273, peakMmr: 2103 };
+    return state;
+  }
+
+  it("every write lands on both keys", () => {
+    stores.profile.setState({ xp: 77 });
+    expect(storage.getItem(CONTRACT.profile.name)).not.toBeNull();
+    expect(storage.getItem(BACKUP)).toBe(storage.getItem(CONTRACT.profile.name));
+  });
+
+  it("the main key downgraded to v11 by old code: the second copy is hydrated, no reset, no migrate", async () => {
+    const state = seasonSave();
+    const raw = rawSave(state, CONTRACT.profile.version);
+    storage.setItem(BACKUP, raw);
+    // What the old tab leaves behind: its own shape and version, the season's
+    // numbers merged into its lifetime fields.
+    storage.setItem(
+      CONTRACT.profile.name,
+      rawSave({ ...oldProfile(), xp: 493842, mmr: 2103, runsCompleted: 1280 }, 11),
+    );
+    await persistOf("profile").rehydrate();
+    const s = stores.profile.getState();
+    expect(s.xp).toBe(493842);
+    expect(s.mmr).toBe(2103);
+    expect(s.season).toMatchObject({ id: SEASON.id, runs: 873, titles: 273, peakMmr: 2103 });
+    // The pre-season snapshot is the real one, not the season's numbers.
+    expect(s.legacy.preseason?.xp).toBe(4321);
+  });
+
+  it("the main key missing or unreadable: the second copy is hydrated", async () => {
+    const raw = rawSave(seasonSave(), CONTRACT.profile.version);
+    storage.setItem(BACKUP, raw);
+    await persistOf("profile").rehydrate();
+    expect(stores.profile.getState().mmr).toBe(2103);
+    storage.setItem(CONTRACT.profile.name, "{not json");
+    stores.profile.setState(stores.profile.getInitialState(), true);
+    storage.setItem(BACKUP, raw);
+    storage.setItem(CONTRACT.profile.name, "{not json");
+    await persistOf("profile").rehydrate();
+    expect(stores.profile.getState().mmr).toBe(2103);
+  });
+
+  it("a current save on the main key wins over the second copy (two 2.0 tabs, one not updated yet)", async () => {
+    const newer = seasonSave();
+    newer.mmr = 2150;
+    storage.setItem(BACKUP, rawSave(seasonSave(), CONTRACT.profile.version));
+    storage.setItem(CONTRACT.profile.name, rawSave(newer, CONTRACT.profile.version));
+    await persistOf("profile").rehydrate();
+    expect(stores.profile.getState().mmr).toBe(2150);
+  });
+
+  it("a real pre-season save (no second copy) still migrates into the season", async () => {
+    storage.setItem(CONTRACT.profile.name, rawSave(oldProfile(), 11));
+    await persistOf("profile").rehydrate();
+    const s = stores.profile.getState();
+    expect(s.xp).toBe(0);
+    expect(s.legacy.preseason?.xp).toBe(4321);
+  });
+
+  it("a second copy from an older version is not trusted", async () => {
+    storage.setItem(BACKUP, rawSave({ ...oldProfile(), xp: 999999 }, 11));
+    storage.setItem(CONTRACT.profile.name, rawSave(oldProfile(), 11));
+    await persistOf("profile").rehydrate();
+    expect(stores.profile.getState().legacy.preseason?.xp).toBe(4321);
+  });
+});
+
 describe("run / settings / career hydration", () => {
   beforeEach(() => storage.clear());
 

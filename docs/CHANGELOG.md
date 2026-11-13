@@ -10,6 +10,19 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.11] — 2026-11-13 · An old tab can no longer reset a Season 1 profile
+
+#### Fixed
+- **A Season 1 profile was reset to zero on the player's own device (the season leader, twice in one morning).** Root cause: a tab opened before the 2.0 deploy keeps running the pre-2.0 code and shares the browser's storage. When it wakes up it writes the profile back in its own format and persist version (11). The 2.0 migrate treats every pre-v12 save as a pre-season save "by definition", so the next 2.0 load ran the Season 1 reset over a Season 1 profile: rating, XP and season counters back to the start, the lost values folded (MAX) into the pre-season snapshot, the lifetime XP dropped. The same old tab also saved its old-shape blob to the cloud, so no copy was left. Evidence for the account: its phone shows a pre-2.0 page view at 11:52:41 and 12:06:51 UTC, each followed within seconds by a 2.0 load that reported a save migration; the stored season started again at 12:06:52.
+  - **Client:** the profile save is also written to a second key the old code never touches (`rocket-draft:profile:v1:backup`, `downgradeGuardedStorage`). A read takes the main key whenever it holds a save of the current version or newer; when the main key was downgraded, is missing or unreadable, the second copy is hydrated and no migrate runs. A real pre-season save has no second copy and migrates as before. The frozen key and version are unchanged.
+  - **Server:** the 2.0.10 trigger (`reject_stale_client_write`) is applied in production since 13/11. An old client's write over a Season blob is ignored.
+- A device whose save was already downgraded before it first loads 2.0.11 has no second copy yet: it still resets locally once, and the next sync brings the season back from the cloud copy the trigger now protects.
+
+#### Data repair (production, 13/11)
+- Restore point: `archive.profiles_backup_20261113` (every profile row before the repair).
+- Mystic: season restored to the last state its own events show (06:29 UTC: Season Rating 2103, 873 runs, 273 titles) with the XP of the 24 runs played after the first reset (508,022); the pre-season snapshot back to the frozen values (184,307 XP, rating 1381, 40 titles, 407 runs). Not recoverable: the rating history graph and the Season 1 challenge stars.
+- Two more accounts show a second season start with small losses (about 21 and 5 runs); not repaired yet.
+
 ## [2.0.10] — 2026-11-13 · Legacy ceiling, MENA fields, stale-client guard (BALANCE_VERSION 31)
 
 #### Balance

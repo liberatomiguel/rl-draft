@@ -11,7 +11,10 @@
 -- The rule: when the stored blob has the `season` key and the incoming one has not,
 -- the row keeps every value it had. Dashboard and service-role writes pass.
 --
--- NOT APPLIED YET (13/11): run it in the Supabase SQL editor.
+-- APPLIED in production on 13/11/2026 (migration
+-- v2011_reject_stale_client_write_and_backup, after the season leader's profile was
+-- reset by an old tab). Triggers on public.profiles: protect_preseason_columns,
+-- reject_stale_client_write.
 
 create or replace function public.reject_stale_client_write()
 returns trigger

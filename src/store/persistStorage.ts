@@ -84,6 +84,70 @@ export function reportingJSONStorage<S>(store: PersistedStoreId): PersistStorage
   };
 }
 
+/** Where `downgradeGuardedStorage` keeps its second copy of a save. */
+export function backupKeyOf(name: string): string {
+  return `${name}:backup`;
+}
+
+/**
+ * v2.0.11: a save that survives an OLDER build writing over it.
+ *
+ * What happened (13/11/2026, the Season 1 leader): a tab opened before the 2.0
+ * deploy stays alive with the pre-2.0 code and shares this origin's storage.
+ * When it wakes up it writes the profile back in ITS format and version (11).
+ * The next 2.0 load then sees a "pre-v12" save and runs the Season 1 reset on a
+ * Season 1 profile: rating, XP and season counters gone, and the lost values
+ * folded into the pre-season snapshot.
+ *
+ * The rule: every write also goes to a second key the old code has never heard
+ * of. A read takes the main key whenever it holds a save of the current version
+ * or newer (so nothing changes for a healthy save, and the frozen key and
+ * version still describe it). When the main key was downgraded (or is missing or
+ * unreadable) and the second key holds a current save, that one is returned and
+ * no migrate runs. A real pre-season save has no second key and migrates as before.
+ */
+export function downgradeGuardedStorage<S>(
+  base: PersistStorage<S> | undefined,
+  currentVersion: number,
+): PersistStorage<S> | undefined {
+  if (!base) return undefined;
+  const current = (v: StorageValue<S> | null): v is StorageValue<S> =>
+    v !== null && typeof v === "object" && (v.version ?? 0) >= currentVersion;
+  return {
+    getItem: (name) => {
+      let main: StorageValue<S> | null = null;
+      let mainError: unknown;
+      try {
+        main = base.getItem(name) as StorageValue<S> | null;
+      } catch (error) {
+        mainError = error;
+      }
+      if (current(main)) return main;
+      let backup: StorageValue<S> | null = null;
+      try {
+        backup = base.getItem(backupKeyOf(name)) as StorageValue<S> | null;
+      } catch {
+        backup = null;
+      }
+      if (current(backup)) return backup;
+      if (mainError !== undefined) throw mainError;
+      return main;
+    },
+    setItem: (name, value) => {
+      base.setItem(name, value);
+      try {
+        base.setItem(backupKeyOf(name), value);
+      } catch {
+        // The main write went through; a full disk is already reported by `base`.
+      }
+    },
+    removeItem: (name) => {
+      base.removeItem(name);
+      base.removeItem(backupKeyOf(name));
+    },
+  };
+}
+
 /** Wraps a persist `migrate`: reports the upgrade (or its failure), returns its result. */
 export function reportingMigrate<T>(
   store: PersistedStoreId,
