@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 31;
+export const BALANCE_VERSION = 32;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -793,7 +793,16 @@ export const SEASON_RATING = {
     // 80 / 40 / 18 -> 70 / 35 / 17 and a Swiss exit costs 5 (was 6): on the first
     // day's shares the average run still nets about +2.2, the strong one about +21.
     // Nothing already earned is re-priced (`retuneTable` keeps the 2.0.6 rows).
-    legacy: { champion: 70, runner_up: 35, third: 17, fourth: 17, playoffs: 0, swiss_exit: -5 },
+    // v2.0.11 (Miguel, 13/11): Legacy paid for reaching the top 4, not for winning.
+    // Among the ten biggest Legacy climbers (PostHog, 12-13/11) titles were 20% of the
+    // points gained, lost finals 26% and third / fourth places 53%; a player with 11
+    // titles sat above one with 288. The title stays 70; a lost final 35 -> 20, third /
+    // fourth 17 -> 6, and a Swiss exit costs 3 (was 5) so the ordinary Legacy player
+    // is not sunk (the 36 / 18 / 8 / -7 table of launch day put him at about -2 a
+    // run). On those players' own results: a strong one +8.5 -> +5.0 a run, the MENA
+    // top-4 farm +16 -> +7.3, an ordinary one +1.1 -> +0.7, and the title becomes the
+    // largest single source. Future runs only (`retuneTable` keeps the 2.0.6 rows).
+    legacy: { champion: 70, runner_up: 20, third: 6, fourth: 6, playoffs: 0, swiss_exit: -3 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>

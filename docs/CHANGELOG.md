@@ -10,6 +10,13 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.12] — 2026-11-13 · Legacy pays for winning (BALANCE_VERSION 32)
+
+#### Balance
+- **Legacy Season Rating: lost final 35 → 20, third / fourth 17 → 6, Swiss exit -5 → -3; the title stays 70.** Feedback (Arc first on the board from below 400; a player with 11 titles above one with 288). Measured on the ten biggest Legacy climbers of 12–13/11 (PostHog): titles were 20% of the points gained, lost finals 26%, third / fourth places 53%. Recomputed on those players' own results: a strong one (146 runs, 6 titles) +8.5 → +5.0 a run; the MENA top-4 farm (112 runs, 2 titles) +16 → +7.3; an ordinary one (237 runs, 3 titles) +1.1 → +0.7; one with no title in 141 runs +2.3 → -0.3. Without the MENA farm the title is now the largest single source (45% of the points, finals 22%, third / fourth 33%).
+- The launch-day table Miguel suggested (36 / 18 / 8, Swiss exit -7) was measured too and not taken: it puts the ordinary Legacy player at about -2 a run and the Normal volume (+2 a run) above every Legacy player.
+- Future runs only: nothing already earned changes (the history re-price keeps the frozen 2.0.6 rows) and the soft ceiling of 2.0.9 / 2.0.10 stays.
+
 ## [2.0.11] — 2026-11-13 · An old tab can no longer reset a Season 1 profile
 
 #### Fixed

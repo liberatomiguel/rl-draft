@@ -158,7 +158,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
   it("the first placement runs never lose rating", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: 0 })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns - 1 })).toBe(0);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-5);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-3);
   });
 
   it("mode multipliers and the hidden-overall bonus (gains only)", () => {
@@ -168,17 +168,19 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "swiss_exit", hiddenOverall: true })).toBe(-4);
   });
 
-  it("v2.0.5: the average Legacy run out-earns the average Normal run on the first live day's results", () => {
-    // Measured shares of Classic runs on 12/11/2026 (Legacy 351 runs, Normal 348).
-    const ev = (difficulty: "legacy" | "normal", shares: Record<string, number>, hiddenOverall: boolean) =>
-      Object.entries(shares).reduce(
-        (sum, [placement, share]) => sum + share * seasonRatingDelta({ ...base, difficulty, placement: placement as never, hiddenOverall }),
-        0,
-      );
-    const legacy = ev("legacy", { champion: 0.02, runner_up: 0.023, third: 0.054, fourth: 0.063, top6: 0.142, top8: 0.174, swiss_exit: 0.524 }, true);
-    const normal = ev("normal", { champion: 0.374, runner_up: 0.227, third: 0.135, fourth: 0.098, top6: 0.106, top8: 0.032, swiss_exit: 0.029 }, false);
-    expect(legacy).toBeGreaterThan(normal);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit" })).toBeLessThan(0); // it still punishes
+  it("v2.0.11: in Legacy the title is the largest source of rating, and a Swiss exit still costs", () => {
+    // Placements of the biggest Legacy climbers of 12-13/11/2026 without the MENA
+    // top-4 farm (PostHog): 16 titles, 27 lost finals, 135 third / fourth places.
+    const pts = (placement: string, n: number) =>
+      n * seasonRatingDelta({ ...base, difficulty: "legacy", placement: placement as never, hiddenOverall: true });
+    const titles = pts("champion", 16);
+    const finals = pts("runner_up", 27);
+    const semis = pts("third", 135);
+    expect(titles).toBeGreaterThan(finals);
+    expect(titles).toBeGreaterThan(semis);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit" })).toBeLessThan(0);
+    // A Legacy title is still worth more than any other result in the game.
+    expect(SEASON_RATING.delta.legacy.champion).toBeGreaterThan(SEASON_RATING.delta.hard.champion);
   });
 
   it("v2.0.5: Hard and Legacy runs in the history are re-priced once; protected losses and other modes stay", () => {
@@ -213,7 +215,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(at("legacy", "champion", c.legacy![0].above - 1)).toBe(70);
     expect(at("legacy", "champion", c.legacy![0].above)).toBe(53);
     expect(at("legacy", "champion", c.legacy![1].above)).toBe(35);
-    expect(at("legacy", "swiss_exit", 9000)).toBe(-5);
+    expect(at("legacy", "swiss_exit", 9000)).toBe(-3);
     // The history re-price is frozen at the 2.0.6 table: a later retune never reaches back.
     expect(SEASON_RATING.retuneTable.legacy!.champion).toBe(80);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion", frozenRetune: true })).toBe(80);
