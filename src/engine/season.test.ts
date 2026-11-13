@@ -197,7 +197,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(retuneRatingHistory(500, [e("normal", "champion", 4, 500)]).change).toBe(0);
   });
 
-  it("soft ceiling: above the mark a gain shrinks but never reaches 0; losses and Legacy are untouched", () => {
+  it("soft ceiling: above the mark a gain shrinks but never reaches 0; losses are untouched", () => {
     const c = SEASON_RATING.softCeiling;
     const at = (difficulty: "easy" | "normal" | "hard" | "legacy", placement: string, ratingBefore: number) =>
       seasonRatingDelta({ ...base, difficulty, placement: placement as never, ratingBefore });
@@ -210,7 +210,10 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(at("hard", "champion", c.hard![0].above)).toBe(8);
     expect(at("hard", "champion", c.hard![1].above)).toBe(5);
     expect(at("normal", "swiss_exit", 5000)).toBe(-4);
-    expect(at("legacy", "champion", 9000)).toBe(70);
+    expect(at("legacy", "champion", c.legacy![0].above - 1)).toBe(70);
+    expect(at("legacy", "champion", c.legacy![0].above)).toBe(53);
+    expect(at("legacy", "champion", c.legacy![1].above)).toBe(35);
+    expect(at("legacy", "swiss_exit", 9000)).toBe(-5);
     // The history re-price is frozen at the 2.0.6 table: a later retune never reaches back.
     expect(SEASON_RATING.retuneTable.legacy!.champion).toBe(80);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion", frozenRetune: true })).toBe(80);

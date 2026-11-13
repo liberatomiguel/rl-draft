@@ -10,6 +10,19 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.10] — 2026-11-13 · Legacy ceiling, MENA fields, stale-client guard (BALANCE_VERSION 31)
+
+#### Balance
+- **Legacy has a soft ceiling too:** title 70 → 53 from a rating of 1500 and → 35 from 2500 (finals and semi-finals scale the same way, never below 1). The table itself and the Swiss exit of -5 stay. Miguel asked for lower points and a Swiss exit of -7 or -8; on the launch day's shares (764 Legacy runs without the MENA farm: Swiss exit 49.7%, top-8 / top-6 exit 32.9%, third / fourth 13.4%, final 1.7%, title 1.0%) the average Legacy run already nets +1.7 against Normal's +2.1, and a Swiss exit of -7 / -8 takes it to +0.7 / +0.2 while a strong player (9% Swiss exits in the sim) hardly notices. The top is what is high, so the trim sits at the top.
+- **MENA Normal and Hard get the field depth of MENA Legacy (0.5), with lower boosts** (Normal 1.45 → 0.95, Hard 2.9 → 2.4). Sim, title / final / top 4 / Swiss exit: Normal 31.4 / 63.9 / 93.9 / 0.7 → 30.4 / 54.6 / 79.4 / 8.8 (worldwide 28.3 / 52.8 / 76.3 / 5.8); Hard 19.8 / 53.5 / 88.5 / 2.6 → 20.5 / 40.0 / 67.7 / 16.2 (worldwide 19.1 / 37.2 / 64.2 / 11.9). Simulator evidence only (14 live runs).
+
+#### Fixed
+- **A copy of the game opened before the Season 1 deploy could save over a Season 1 profile.** Root cause: an old tab or cached app keeps running the pre-2.0 code; its sync writes the profile blob in the old shape (no season, cosmetics, missions or lifetime blocks) and nothing on the server refused it. One account was hit on 13/11 02:00 UTC; three more pre-season accounts synced from old copies after the deploy. A v2 device repairs the cloud copy from its own on the next sync, so the loss is real only for a player whose Season 1 copy exists in the cloud alone. Guard: `docs/sql/v2010-reject-stale-client-write.sql`, a trigger that ignores a client write whose blob has no `season` block once the stored one has it. **Not applied yet**: it needs Miguel to run it (or allow it) on the production database.
+
+#### Measured, not changed
+- **Worldwide Hard and Legacy are on the model; the low title rates come from the teams players bring.** Per team overall the live results match the sim: Hard 94–95 wins 33% live (sim 34%), Legacy 96–97 wins 6% live (sim 11%). But 31% of live Hard runs and 41% of live Legacy runs start below 90–92 overall, where nobody won (0 titles in 43 and 231 runs); players reset 0.6 times a run, not the 2 the October calibration saw. Easing Legacy by 1.0 would give a 94–95 team 3% and take a player who resets 8–20 times from 12% to well above the 12% ceiling of #140, so the shift stays.
+- **Every other region is within 3 points of worldwide on titles** for Easy, Normal and Hard (sim, live reset profile). SAM and OCE Legacy differ in shape but have no live evidence yet.
+
 ## [2.0.9] — 2026-11-13 · Launch-day rating package (BALANCE_VERSION 30)
 
 Source: PostHog and Supabase, 12/11 14:00 UTC to 13/11 00:30 (99 Season 1

@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 30;
+export const BALANCE_VERSION = 31;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -349,7 +349,9 @@ export const REGION_LOCK = {
     // gives EU 33.9% and worldwide 28.3%; +0.4 brings EU to 29.2%.
     EU: { easy: 0.55, normal: 0.85, hard: 1.1, legacy: 1.5 },
     NA: { easy: 0.8, normal: 1.15, hard: 2.55, legacy: 2.15 },
-    MENA: { easy: -0.15, normal: 1.45, hard: 2.9, legacy: 4.05 },
+    // v2.0.10: Normal 1.45 -> 0.95 and Hard 2.9 -> 2.4 because the field is now
+    // deepened (`fieldDepth`), which is where the difficulty moved to.
+    MENA: { easy: -0.15, normal: 0.95, hard: 2.4, legacy: 4.05 },
     OCE: { easy: 0.45, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
   /**
@@ -360,8 +362,14 @@ export const REGION_LOCK = {
    * 62.7%, Swiss exit 9.1%, title 2.9%, against 21.9 / 45.8 / 2.9 worldwide) and
    * the top 4 pays Season Rating. At 0.5 MENA Legacy reads 23.8 / 47.6 / 2.1.
    * Absent = 0 = the field as drawn.
+   * v2.0.10: the same shallow field in MENA Normal and Hard (sim, live reset
+   * profile, title / final / top 4 / Swiss exit): Normal 31.4 / 63.9 / 93.9 / 0.7
+   * against 28.3 / 52.8 / 76.3 / 5.8 worldwide, Hard 19.8 / 53.5 / 88.5 / 2.6 against
+   * 19.1 / 37.2 / 64.2 / 11.9. With depth 0.5 and the lower boosts above: Normal
+   * 30.4 / 54.6 / 79.4 / 8.8, Hard 20.5 / 40.0 / 67.7 / 16.2. Sim only: MENA Normal
+   * and Hard had 14 live runs on launch day.
    */
-  fieldDepth: { MENA: { legacy: 0.5 } } as Partial<Record<Region, Partial<Record<Difficulty, number>>>>,
+  fieldDepth: { MENA: { normal: 0.5, hard: 0.5, legacy: 0.5 } } as Partial<Record<Region, Partial<Record<Difficulty, number>>>>,
   /**
    * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
    * stay "Coming soon" — too few rosters for a 16-team regional event — and their
@@ -799,10 +807,17 @@ export const SEASON_RATING = {
    * 1,630 on 511 and 720 Normal runs (about +2.3 a run), above every result-driven
    * climb but one. Each difficulty has steps (ascending `above`): from a step on, a
    * GAIN on that difficulty is multiplied by its `factor` and never drops below 1:
-   * the run always pays, a little less. Losses are untouched and Legacy has no
-   * ceiling. Rating already earned is never re-priced by this.
+   * the run always pays, a little less. Losses are untouched. Rating already
+   * earned is never re-priced by this.
    * Easy title 2 -> 1 from 500. Normal title 4 -> 3 from 800, -> 2 from 1500.
    * Hard title 10 -> 8 from 1300, -> 5 from 2200.
+   * v2.0.10: Legacy has steps too (title 70 -> 53 from 1500, -> 35 from 2500).
+   * Miguel asked for lower Legacy points and a Swiss exit of -7 or -8. On the
+   * launch day's shares (764 runs without the MENA farm: Swiss exit 49.7%, top-8/6
+   * exit 32.9%, third/fourth 13.4%, final 1.7%, title 1.0%) the average Legacy run
+   * nets +1.7 with the 2.0.9 table, already below Normal's +2.1; a Swiss exit of -7
+   * makes it +0.7 and -8 makes it +0.2, and it barely touches a strong player (9%
+   * Swiss exits in the sim). What is high is the top, so the ceiling takes it there.
    */
   softCeiling: {
     easy: [{ above: 500, factor: 0.5 }],
@@ -813,6 +828,10 @@ export const SEASON_RATING = {
     hard: [
       { above: 1300, factor: 0.75 },
       { above: 2200, factor: 0.5 },
+    ],
+    legacy: [
+      { above: 1500, factor: 0.75 },
+      { above: 2500, factor: 0.5 },
     ],
   } as Partial<Record<Difficulty, { above: number; factor: number }[]>>,
   /** Entries kept in `season.ratingHistory` (profile rating graph). */

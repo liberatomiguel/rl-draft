@@ -62,7 +62,7 @@ describe("regional draft & region-only separation (v1.2.0, every region since v2
     );
     expect(regionFieldDepth("MENA", "legacy")).toBeGreaterThan(0);
     expect(regionFieldDepth("EU", "legacy")).toBe(0);
-    expect(regionFieldDepth("MENA", "normal")).toBe(0);
+    expect(regionFieldDepth("MENA", "easy")).toBe(0);
   });
 
   it("a region without a Region-only mode keeps its region-only rosters dormant (rc.25)", () => {
