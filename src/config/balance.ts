@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 29;
+export const BALANCE_VERSION = 30;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -344,11 +344,24 @@ export const REGION_LOCK = {
     // transferred unchanged to rc.45. See C3-difficulty-matrix.md. Each Easy
     // boost first offsets the -0.4 shared shift, then applies its own retune.
     SAM: { easy: -1.85, normal: -0.55, hard: 1.45, legacy: 3.95 },
-    EU: { easy: 0.55, normal: 0.45, hard: 1.1, legacy: 1.5 },
+    // v2.0.9 (launch day, 12/11): EU Normal won 41-43% live against 32.5% worldwide
+    // (EU drafts average 94.5, worldwide 92.9). With the live reset profile the sim
+    // gives EU 33.9% and worldwide 28.3%; +0.4 brings EU to 29.2%.
+    EU: { easy: 0.55, normal: 0.85, hard: 1.1, legacy: 1.5 },
     NA: { easy: 0.8, normal: 1.15, hard: 2.55, legacy: 2.15 },
     MENA: { easy: -0.15, normal: 1.45, hard: 2.9, legacy: 4.05 },
     OCE: { easy: 0.45, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
+  /**
+   * FIELD DEPTH (v2.0.9, DESIGN-DECISIONS #156): share of each opponent's gap to the
+   * strongest team in the field that is closed. A flat boost cannot fix a shallow
+   * pool: MENA Legacy has one or two elite teams and a weak rest, so a good draft
+   * walked to the top 4 (live: 46 of 55 runs by one player, 1 title; sim: top 4
+   * 62.7%, Swiss exit 9.1%, title 2.9%, against 21.9 / 45.8 / 2.9 worldwide) and
+   * the top 4 pays Season Rating. At 0.5 MENA Legacy reads 23.8 / 47.6 / 2.1.
+   * Absent = 0 = the field as drawn.
+   */
+  fieldDepth: { MENA: { legacy: 0.5 } } as Partial<Record<Region, Partial<Record<Difficulty, number>>>>,
   /**
    * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
    * stay "Coming soon" — too few rosters for a 16-team regional event — and their
@@ -356,6 +369,11 @@ export const REGION_LOCK = {
    */
   regions: ["NA", "EU", "SAM", "MENA", "OCE"] as readonly Region[],
 } as const;
+
+/** Region-only field depth for a run (0 = none; see REGION_LOCK.fieldDepth). */
+export function regionFieldDepth(region: Region, difficulty: Difficulty): number {
+  return REGION_LOCK.fieldDepth[region]?.[difficulty] ?? 0;
+}
 
 /** Region-only opponent boost for a run (0 when the region has no mode). */
 export function regionOpponentBoost(region: Region, difficulty: Difficulty): number {
@@ -760,7 +778,14 @@ export const SEASON_RATING = {
     hard: { champion: 10, runner_up: 5, third: 2, fourth: 2, playoffs: 0, swiss_exit: -4 },
     // v2.0.6 (Miguel, same day): a top 8 / top 6 exit pays nothing in Legacy either;
     // only the top 4 does. The average Legacy run nets about +2.3 on the day's results.
-    legacy: { champion: 80, runner_up: 40, third: 18, fourth: 18, playoffs: 0, swiss_exit: -6 },
+    // v2.0.9 (Miguel, 13/11): a little lower at the top, the same for the average
+    // player. Launch day: the average Legacy run netted about +2.1 (212 runs, without
+    // the MENA top-4 farm) but a strong, reset-heavy player nets about +23 a run in
+    // the sim (title 12%, final 26%, top 4 57%), ten times the best Normal volume.
+    // 80 / 40 / 18 -> 70 / 35 / 17 and a Swiss exit costs 5 (was 6): on the first
+    // day's shares the average run still nets about +2.2, the strong one about +21.
+    // Nothing already earned is re-priced (`retuneTable` keeps the 2.0.6 rows).
+    legacy: { champion: 70, runner_up: 35, third: 17, fourth: 17, playoffs: 0, swiss_exit: -5 },
   } as Record<
     Difficulty,
     Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
@@ -769,11 +794,38 @@ export const SEASON_RATING = {
   modeMultiplier: { classic: 1, quick: 0.5, daily: 1.25 } as Record<string, number>,
   /** Added to positive deltas when the run was played with hidden overalls. */
   hiddenOverallBonus: 0.15,
+  /**
+   * SOFT CEILING (v2.0.9, DESIGN-DECISIONS #157). On launch day two accounts reached
+   * 1,630 on 511 and 720 Normal runs (about +2.3 a run), above every result-driven
+   * climb but one. Each difficulty has steps (ascending `above`): from a step on, a
+   * GAIN on that difficulty is multiplied by its `factor` and never drops below 1:
+   * the run always pays, a little less. Losses are untouched and Legacy has no
+   * ceiling. Rating already earned is never re-priced by this.
+   * Easy title 2 -> 1 from 500. Normal title 4 -> 3 from 800, -> 2 from 1500.
+   * Hard title 10 -> 8 from 1300, -> 5 from 2200.
+   */
+  softCeiling: {
+    easy: [{ above: 500, factor: 0.5 }],
+    normal: [
+      { above: 800, factor: 0.75 },
+      { above: 1500, factor: 0.5 },
+    ],
+    hard: [
+      { above: 1300, factor: 0.75 },
+      { above: 2200, factor: 0.5 },
+    ],
+  } as Partial<Record<Difficulty, { above: number; factor: number }[]>>,
   /** Entries kept in `season.ratingHistory` (profile rating graph). */
   historyLimit: 40,
   /** v2.0.5: the difficulties whose table changed on the first live day. Runs still
    *  in a profile's rating history are re-priced once (`retuneRatingHistory`). */
   retune1: ["hard", "legacy"] as Difficulty[],
+  /** The rows that re-price uses, FROZEN at v2.0.6. A profile that first loads after
+   *  a later retune must land where everyone else did: later tables never reach back. */
+  retuneTable: {
+    hard: { champion: 10, runner_up: 5, third: 2, fourth: 2, playoffs: 0, swiss_exit: -4 },
+    legacy: { champion: 80, runner_up: 40, third: 18, fourth: 18, playoffs: 0, swiss_exit: -6 },
+  } as Partial<Record<Difficulty, Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>>>,
 } as const;
 
 /** Season Rating delta for one finished run (signed). Pure; see `SEASON_RATING`. */
@@ -784,8 +836,14 @@ export function seasonRatingDelta(input: {
   hiddenOverall: boolean;
   /** Runs finished in this season BEFORE this one (placement protection). */
   seasonRunsBefore: number;
+  /** Rating before the run: applies `softCeiling`. Omitted = the plain table. */
+  ratingBefore?: number;
+  /** The v2.0.5 / v2.0.6 history re-price only: use the frozen `retuneTable` rows. */
+  frozenRetune?: boolean;
 }): number {
-  const row = SEASON_RATING.delta[input.difficulty];
+  const row =
+    (input.frozenRetune ? SEASON_RATING.retuneTable[input.difficulty] : undefined) ??
+    SEASON_RATING.delta[input.difficulty];
   const bucket =
     input.placement === "champion" ||
     input.placement === "runner_up" ||
@@ -797,6 +855,12 @@ export function seasonRatingDelta(input: {
   let delta = row[bucket] * (SEASON_RATING.modeMultiplier[input.mode] ?? 1);
   if (delta > 0 && input.hiddenOverall) delta *= 1 + SEASON_RATING.hiddenOverallBonus;
   if (delta < 0 && input.seasonRunsBefore < SEASON_RATING.placementRuns) delta = 0;
+  if (delta > 0 && input.ratingBefore != null) {
+    const rating = input.ratingBefore;
+    // The highest step reached (steps ascend).
+    const step = (SEASON_RATING.softCeiling[input.difficulty] ?? []).filter((s) => rating >= s.above).pop();
+    if (step) return Math.max(1, Math.round(delta * step.factor));
+  }
   return Math.round(delta);
 }
 

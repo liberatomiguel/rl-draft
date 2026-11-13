@@ -317,6 +317,7 @@ export function retuneRatingHistory(
             mode: e.mode,
             hiddenOverall: true,
             seasonRunsBefore: Number.MAX_SAFE_INTEGER,
+            frozenRetune: true,
           });
       shift += next - e.delta;
       return { ...e, delta: next, mmr: Math.max(SEASON_RATING.floor, e.mmr + shift) };

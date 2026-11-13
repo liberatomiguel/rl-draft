@@ -147,7 +147,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
 
   it("titles pay by difficulty; playoffs buckets collapse; Swiss exits cost", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(80);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion" })).toBe(70);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "top8" })).toBe(0); // v2.0.6: only the top 4 pays
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(0);
@@ -158,7 +158,7 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
   it("the first placement runs never lose rating", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: 0 })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns - 1 })).toBe(0);
-    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-6);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "swiss_exit", seasonRunsBefore: SEASON_RATING.placementRuns })).toBe(-5);
   });
 
   it("mode multipliers and the hidden-overall bonus (gains only)", () => {
@@ -195,6 +195,41 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(out.history[0].mmr).toBe(out.mmr);
     expect(out.history[4].mmr).toBe(400);
     expect(retuneRatingHistory(500, [e("normal", "champion", 4, 500)]).change).toBe(0);
+  });
+
+  it("soft ceiling: above the mark a gain shrinks but never reaches 0; losses and Legacy are untouched", () => {
+    const c = SEASON_RATING.softCeiling;
+    const at = (difficulty: "easy" | "normal" | "hard" | "legacy", placement: string, ratingBefore: number) =>
+      seasonRatingDelta({ ...base, difficulty, placement: placement as never, ratingBefore });
+    expect(at("normal", "champion", c.normal![0].above - 1)).toBe(4);
+    expect(at("normal", "champion", c.normal![0].above)).toBe(3);
+    expect(at("normal", "champion", c.normal![1].above)).toBe(2);
+    expect(at("normal", "third", 5000)).toBe(1);
+    expect(at("easy", "champion", c.easy![0].above)).toBe(1);
+    expect(at("easy", "runner_up", 5000)).toBe(1);
+    expect(at("hard", "champion", c.hard![0].above)).toBe(8);
+    expect(at("hard", "champion", c.hard![1].above)).toBe(5);
+    expect(at("normal", "swiss_exit", 5000)).toBe(-4);
+    expect(at("legacy", "champion", 9000)).toBe(70);
+    // The history re-price is frozen at the 2.0.6 table: a later retune never reaches back.
+    expect(SEASON_RATING.retuneTable.legacy!.champion).toBe(80);
+    expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "champion", frozenRetune: true })).toBe(80);
+    for (const steps of Object.values(c)) {
+      // Steps ascend and each one trims more than the last.
+      for (let i = 1; i < steps.length; i++) {
+        expect(steps[i].above).toBeGreaterThan(steps[i - 1].above);
+        expect(steps[i].factor).toBeLessThan(steps[i - 1].factor);
+      }
+    }
+    for (const [difficulty, row] of Object.entries(SEASON_RATING.delta)) {
+      for (const [placement, value] of Object.entries(row)) {
+        const d = at(difficulty as never, placement === "playoffs" ? "top8" : placement, 99999);
+        if (value > 0) expect(d).toBeGreaterThanOrEqual(1);
+        else expect(d).toBe(value);
+      }
+    }
+    // No rating given: the plain table (the v2.0.5 history re-price never applies it).
+    expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
   });
 
   it("seasonRatingAfter floors at SEASON_RATING.floor", () => {

@@ -17,6 +17,12 @@ export function generateOpponents(
   count: number,
   poolLineupIds?: string[],
   extraShift = 0,
+  /**
+   * Field depth (v2.0.9, REGION_LOCK.fieldDepth): each opponent is lifted by this
+   * share of its gap to the strongest team drawn. 0 = the field as it is. It makes
+   * a shallow regional field harder to walk through without touching its best team.
+   */
+  fieldDepth = 0,
 ): TournamentTeam[] {
   const profile = DIFFICULTY[difficulty];
   // Easter-egg lineups (Wings) and national teams (v2.0) are draft-only
@@ -51,7 +57,7 @@ export function generateOpponents(
     }
   }
 
-  return picked.map((lineup) => {
+  const built = picked.map((lineup) => {
     let specialUpgrade: { cardId: string; specialId: string } | undefined;
     if (rng.chance(profile.opponentSpecialChance)) {
       // v0.5: specials belong to the player — any of their cards can upgrade.
@@ -71,6 +77,15 @@ export function generateOpponents(
         specialUpgrade = { cardId, specialId };
       }
     }
-    return buildLineupTeam(lineup.id, difficulty, { specialUpgrade, extraShift });
+    return { lineupId: lineup.id, specialUpgrade, team: buildLineupTeam(lineup.id, difficulty, { specialUpgrade, extraShift }) };
+  });
+  if (fieldDepth <= 0) return built.map((b) => b.team);
+  // Building a team draws no random numbers, so the lift never moves the seed.
+  const top = Math.max(...built.map((b) => b.team.rating.total));
+  return built.map((b) => {
+    const lift = fieldDepth * (top - b.team.rating.total);
+    return lift > 0
+      ? buildLineupTeam(b.lineupId, difficulty, { specialUpgrade: b.specialUpgrade, extraShift: extraShift + lift })
+      : b.team;
   });
 }

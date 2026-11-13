@@ -12,7 +12,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DIFFICULTY, regionOpponentBoost, SPECIALS } from "@/config/balance";
+import { DIFFICULTY, regionFieldDepth, regionOpponentBoost, SPECIALS } from "@/config/balance";
 import {
   challengeById,
   challenges,
@@ -507,6 +507,7 @@ export const useRunStore = create<RunStore>()(
           opponentRatingBoost: run.regionLock
             ? regionOpponentBoost(run.regionLock, run.difficulty)
             : run.daily?.opponentShift ?? 0,
+          opponentFieldDepth: run.regionLock ? regionFieldDepth(run.regionLock, run.difficulty) : 0,
         });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },

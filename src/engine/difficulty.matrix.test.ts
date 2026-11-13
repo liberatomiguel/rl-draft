@@ -62,6 +62,14 @@ function boostFor(pool: string, d: Difficulty): number {
   if (typeof raw[d] === "number") return raw[d];
   return raw[pool]?.[d] ?? 0;
 }
+/** SIM_DEPTH={"MENA":{"legacy":0.5}} overrides REGION_LOCK.fieldDepth for a pool. */
+const DEPTH_OVERRIDE: Record<string, Partial<Record<Difficulty, number>>> | null = env.SIM_DEPTH ? JSON.parse(env.SIM_DEPTH) : null;
+function depthFor(pool: string, d: Difficulty): number {
+  const o = DEPTH_OVERRIDE?.[pool]?.[d];
+  if (o != null) return o;
+  if (pool === "WW") return 0;
+  return typeof B.regionFieldDepth === "function" ? B.regionFieldDepth(pool, d) : 0;
+}
 function poolIds(pool: string): string[] | undefined {
   return pool === "WW" ? undefined : lineupPoolForRegion(pool as Region);
 }
@@ -140,15 +148,17 @@ const BUCKETS: [string, (r: number) => boolean][] = [
   ["88-89", (r) => r >= 88 && r < 90], ["90-91", (r) => r >= 90 && r < 92], ["92-93", (r) => r >= 92 && r < 94],
   ["94-95", (r) => r >= 94 && r < 96], ["96-97", (r) => r >= 96 && r < 98], ["98+", (r) => r >= 98],
 ];
-function play(team: TournamentTeam, d: Difficulty, seed: number, pool: string[] | undefined, boost: number) {
+function play(team: TournamentTeam, d: Difficulty, seed: number, pool: string[] | undefined, boost: number, depth = 0) {
   const rng = createRng(seed);
-  const t = fastForward(initTournament(team, d, rng, { poolLineupIds: pool, opponentRatingBoost: boost }), d, rng);
+  const t = fastForward(initTournament(team, d, rng, { poolLineupIds: pool, opponentRatingBoost: boost, opponentFieldDepth: depth }), d, rng);
   return userPlacement(t);
 }
 const draftCache = new Map<string, ReturnType<typeof draftBestOf>>();
 function realistic(poolName: string, d: Difficulty, boost = boostFor(poolName, d)) {
   const pool = poolIds(poolName);
   const tally: Record<string, { n: number; t: number; f: number }> = {};
+  /** Placement counts over every tournament (top-4 reach drives the Season Rating). */
+  const places: Record<string, number> = {};
   const ovrs: number[] = [];
   /** One row per session: [resets, kept OVR, titles, finals] out of PER tourneys. */
   const sessions: [number, number, number, number][] = [];
@@ -164,8 +174,9 @@ function realistic(poolName: string, d: Difficulty, boost = boostFor(poolName, d
     tally[key] = tally[key] ?? { n: 0, t: 0, f: 0 };
     let st = 0, sf = 0;
     for (let j = 0; j < PER; j++) {
-      const place = play(got.team, d, 700000 + i * 311 + j * 17, pool, boost);
+      const place = play(got.team, d, 700000 + i * 311 + j * 17, pool, boost, depthFor(poolName, d));
       tally[key].n++; n++;
+      places[place] = (places[place] ?? 0) + 1;
       if (place === "champion") { tally[key].t++; t++; st++; }
       if (place === "champion" || place === "runner_up") { tally[key].f++; f++; sf++; }
     }
@@ -176,6 +187,9 @@ function realistic(poolName: string, d: Difficulty, boost = boostFor(poolName, d
   const q = (p: number) => ovrs[Math.min(ovrs.length - 1, Math.floor(p * ovrs.length))];
   return {
     boost, blendedTitle: t / n, blendedFinal: f / n,
+    blendedTop4: ((places.champion ?? 0) + (places.runner_up ?? 0) + (places.third ?? 0) + (places.fourth ?? 0)) / n,
+    swissExit: (places.swiss_exit ?? 0) / n,
+    places,
     ovr: { mean: ovrs.reduce((s, x) => s + x, 0) / ovrs.length, p10: q(0.1), p50: q(0.5), p90: q(0.9), max: ovrs[ovrs.length - 1] },
     buckets: Object.fromEntries(BUCKETS.filter(([k]) => tally[k]).map(([k]) => [k, { n: tally[k].n, title: tally[k].t / tally[k].n, final: tally[k].f / tally[k].n }])),
     per: PER,
@@ -191,7 +205,7 @@ function population(poolName: string, d: Difficulty) {
   ids.forEach((id, k) => {
     const team = buildUserTeam(rosterFromLineup(id), d, { mode: "classic" });
     for (let j = 0; j < POP_PER; j++) {
-      const place = play(team, d, 900000 + k * 977 + j * 31, pool, boost);
+      const place = play(team, d, 900000 + k * 977 + j * 31, pool, boost, depthFor(poolName, d));
       n++; if (place === "champion") t++; if (place === "champion" || place === "runner_up") f++;
     }
   });
@@ -215,7 +229,7 @@ it.skipIf(!env.SIM_MATRIX)("difficulty matrix", () => {
       const fmt = (x: number | undefined) => (x == null ? "  -  " : (x * 100).toFixed(1).padStart(5));
       console.log(
         `${pool}/${d}`.padEnd(14),
-        `real title ${fmt(r?.blendedTitle)}% final ${fmt(r?.blendedFinal)}% ovr ${r ? r.ovr.mean.toFixed(1) : "-"}`,
+        `real title ${fmt(r?.blendedTitle)}% final ${fmt(r?.blendedFinal)}% top4 ${fmt(r?.blendedTop4)}% swiss ${fmt(r?.swissExit)}% ovr ${r ? r.ovr.mean.toFixed(1) : "-"}`,
         `| pop title ${fmt(p?.blendedTitle)}% final ${fmt(p?.blendedFinal)}%`,
         `| boost ${boostFor(pool, d)} | ${((Date.now() - t0) / 1000).toFixed(0)}s`,
       );

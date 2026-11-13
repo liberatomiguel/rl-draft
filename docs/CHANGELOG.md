@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.9] — 2026-11-13 · Launch-day rating package (BALANCE_VERSION 30)
+
+Source: PostHog and Supabase, 12/11 14:00 UTC to 13/11 00:30 (99 Season 1
+accounts, 2,559 runs). No rating already earned is changed by this release.
+
+#### Balance
+- **Soft ceiling on Season Rating gains** (`SEASON_RATING.softCeiling`, DESIGN-DECISIONS #157), in steps, and a gain never drops below 1. Easy: title 2 → 1 from 500. Normal: title 4 → 3 from 800, → 2 from 1500. Hard: title 10 → 8 from 1300, → 5 from 2200. Losses are unchanged and Legacy has no ceiling. Reason: two accounts reached about 1,630 on 511 and 720 Normal runs (+2.3 a run).
+- **Legacy pays a little less at the top: title 80 → 70, final 40 → 35, semi-finals 18 → 17, Swiss exit -6 → -5** (Miguel). On the first day's shares the average Legacy run nets the same (+2.2 → +2.3, still above Normal's +2.1); a strong, reset-heavy player (sim: title 12%, final 26%, top 4 57%) nets about +21 a run instead of +23.5.
+- **The 2.0.5 / 2.0.6 history re-price is frozen at the 2.0.6 table** (`SEASON_RATING.retuneTable`). Root cause of what it prevents: `retuneRatingHistory` re-priced with the live table, so a profile loading for the first time after this release would have had its last Legacy results cut to the new values.
+- **MENA Legacy: field depth 0.5** (`REGION_LOCK.fieldDepth`, #156). Each opponent is lifted by half of its gap to the strongest team drawn; the best team is unchanged. Live, one player reached the top 4 in 46 of 55 MENA Legacy runs with 1 title (about +25 rating a run, 2,094 on 98 runs). Sim with the live reset profile (2,560 tournaments): top 4 62.7% → 25.8%, Swiss exit 9.1% → 45.3%, title 2.9% → 2.4%; worldwide reads 18.7 / 47.4 / 1.9. With 8–20 resets MENA reads 64 / 7 / 8.6 against 57 / 9 / 12.2 worldwide.
+- **EU Normal: opponent boost 0.45 → 0.85.** Live EU Normal won 41–43% against 32.5% worldwide (EU drafts average 94.5, worldwide 92.9). Sim: EU 33.9% → 28.4%, worldwide 28.4%.
+
+#### Changed
+- `generateOpponents` and `initTournament` take an optional field depth (0 = the field as drawn; building a team draws no random numbers, so seeds do not move). `difficulty.matrix.test.ts` reports top-4 reach and Swiss exits and accepts `SIM_DEPTH`.
+
+#### Not changed, with the numbers
+- Hard (13.1% on 107 runs, target 22.3%) and Legacy worldwide (0.7% on 558 runs, target 4.1%): players reset about 0.6 times a run against the 2 the calibration assumed. The fix is the shared difficulty shift, which moves every region and the fixed-seed challenges; wait for more days.
+- SAM Legacy reads easier in the sim (final 15.7%) but live it is 0 titles in 40 runs: no change.
+
 ## [2.0.8] — 2026-11-12 · Unlock pop-ups on a new browser, provider buttons
 
 #### Fixed

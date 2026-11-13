@@ -615,6 +615,7 @@ export const useProfileStore = create<ProfileState>()(
             mode: entry.mode,
             hiddenOverall: entry.hiddenOverall,
             seasonRunsBefore: state.season.runs,
+            ratingBefore: state.mmr,
           });
           const mmr = seasonRatingAfter(state.mmr, ratingDelta);
           const lastMmrGain = mmr - state.mmr;

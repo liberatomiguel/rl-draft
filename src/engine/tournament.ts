@@ -28,6 +28,8 @@ export interface TournamentOptions {
   poolLineupIds?: string[];
   /** Flat rating boost added to every opponent (region-lock normalisation, v1.3.1). */
   opponentRatingBoost?: number;
+  /** Share of each opponent's gap to the field's best that is closed (REGION_LOCK.fieldDepth). */
+  opponentFieldDepth?: number;
 }
 
 export function initTournament(
@@ -46,6 +48,7 @@ export function initTournament(
       TOURNAMENT.quick.teams - 1,
       options.poolLineupIds,
       options.opponentRatingBoost,
+      options.opponentFieldDepth,
     );
     const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
     for (const opp of opponents) teams[opp.id] = opp;
@@ -80,6 +83,7 @@ export function initTournament(
     TOURNAMENT.swiss.teams - 1,
     options.poolLineupIds,
     options.opponentRatingBoost,
+    options.opponentFieldDepth,
   );
   const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
   for (const opp of opponents) teams[opp.id] = opp;

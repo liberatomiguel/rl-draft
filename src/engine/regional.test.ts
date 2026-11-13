@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DIFFICULTY, REGION_LOCK, regionOpponentBoost } from "@/config/balance";
+import { DIFFICULTY, REGION_LOCK, regionFieldDepth, regionOpponentBoost } from "@/config/balance";
 import {
   draftableLineups,
   isObtainable,
@@ -39,6 +39,30 @@ describe("regional draft & region-only separation (v1.2.0, every region since v2
       }
     }
     expect(regionOpponentBoost("APAC", "legacy")).toBe(0); // no mode → no boost
+  });
+
+  it("field depth lifts the weaker opponents toward the field's best and nothing else (v2.0.9)", () => {
+    const pool = lineupPoolForRegion("MENA");
+    const boost = regionOpponentBoost("MENA", "legacy");
+    const plain = generateOpponents("legacy", createRng(77), 15, pool, boost);
+    const deep = generateOpponents("legacy", createRng(77), 15, pool, boost, 0.5);
+    // Same teams in the same order (the lift draws no random numbers).
+    expect(deep.map((t) => t.lineupId)).toEqual(plain.map((t) => t.lineupId));
+    const top = Math.max(...plain.map((t) => t.rating.total));
+    expect(Math.max(...deep.map((t) => t.rating.total))).toBeCloseTo(top, 5);
+    plain.forEach((t, i) => {
+      expect(deep[i].rating.total).toBeGreaterThanOrEqual(t.rating.total);
+      expect(deep[i].rating.total).toBeLessThanOrEqual(top + 1e-6);
+    });
+    const spread = (ts: typeof plain) => top - Math.min(...ts.map((t) => t.rating.total));
+    expect(spread(deep)).toBeLessThan(spread(plain));
+    // Depth 0 is the field as drawn, and only the fitted cells have one.
+    expect(generateOpponents("legacy", createRng(77), 15, pool, boost, 0).map((t) => t.rating.total)).toEqual(
+      plain.map((t) => t.rating.total),
+    );
+    expect(regionFieldDepth("MENA", "legacy")).toBeGreaterThan(0);
+    expect(regionFieldDepth("EU", "legacy")).toBe(0);
+    expect(regionFieldDepth("MENA", "normal")).toBe(0);
   });
 
   it("a region without a Region-only mode keeps its region-only rosters dormant (rc.25)", () => {
