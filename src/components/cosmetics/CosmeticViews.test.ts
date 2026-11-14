@@ -36,6 +36,21 @@ describe("manual title art is independent of Exclusive rarity", () => {
     expect(html).not.toContain("cos-title-soft");
   });
 
+  // v2.0.13: Insomniac is a manual grant drawn exactly like a Legendary title
+  // (white gold, the sheen, the pointer tilt): the same markup as Rocket Demigod.
+  it("draws the Insomniac grant as a Legendary title", () => {
+    const insomniac = cosmeticById.get("grant-title-insomniac")!;
+    const demigod = cosmeticById.get("rank-title-rocket-demigod")!;
+    expect(insomniac.tier).toBe("legend");
+    expect(insomniac.kind === "title" && demigod.kind === "title" && insomniac.style).toEqual(
+      demigod.kind === "title" && demigod.style,
+    );
+    const classes = (html: string) => [...html.matchAll(/class="([^"]*)"/g)].map((m) => m[1]);
+    expect(classes(renderToStaticMarkup(React.createElement(TitleTag, { title: insomniac })))).toEqual(
+      classes(renderToStaticMarkup(React.createElement(TitleTag, { title: demigod }))),
+    );
+  });
+
   // rc.52: the epics earned by playing are drawn a step quieter than the gold
   // epics, the Grand Champion red and the manual grants.
   it("draws the five play-earned epic titles with the soft treatment, and only those", () => {

@@ -10,6 +10,12 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.13] — 2026-11-14 · Insomniac, a Legendary title granted by hand
+
+#### Added
+- **Insomniac**, a one-of-a-kind Legendary title for the first player to reach Supersonic Legend in Season 1 (Arc, 14/11/2026). It is a manual grant (`grant_id` `insomniac`, hidden until owned) with Legendary rarity: white gold, the sheen and the pointer tilt come from the rarity, so it is drawn exactly like Rocket Demigod. It does not take a reserved grant colour (`GRANT_COLORS` covers the coloured grants only). 45 titles in the catalogue.
+- `docs/sql/v2013-insomniac-and-supporter-grants.sql`: accepts the new grant id and grants Insomniac + Special Supporter to Arc and Special Supporter to Mystic and RSphinx. **Not applied by the agent.**
+
 ## [2.0.12] — 2026-11-13 · Legacy pays for winning (BALANCE_VERSION 32)
 
 #### Balance

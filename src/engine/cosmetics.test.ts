@@ -69,10 +69,10 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
 
   // rc.51 (the review of 11/11): + Hypernova and Creator badges; the Staff title
   // is gone and 8 titles join; 9 banners join.
-  it("the official list: 37 badges, 44 titles, 27 banners", () => {
+  it("the official list: 37 badges, 45 titles (v2.0.13: + Insomniac), 27 banners", () => {
     const count = (kind: string) => COSMETICS.filter((c) => c.kind === kind).length;
     expect(count("badge")).toBe(37);
-    expect(count("title")).toBe(44);
+    expect(count("title")).toBe(45);
     expect(count("banner")).toBe(27);
   });
 
@@ -512,7 +512,13 @@ describe("rc.38 corrections and old saves", () => {
     expect(resolveEquipped({ owned: old, equipped: { title: null, banner: null, badges: ["underdog"] }, seen: [] }).badges).toEqual([]);
   });
   it("every manual grant has Exclusive rarity; rc.51: Staff is the badge only, Creator is badge + title", () => {
-    for (const c of COSMETICS.filter(c => c.source.type === "grant")) expect(c.tier).toBe("exclusive");
+    // v2.0.13: Insomniac is the one grant with Legendary rarity (still hidden until owned).
+    for (const c of COSMETICS.filter(c => c.source.type === "grant")) {
+      expect(c.tier, c.id).toBe(c.id === "grant-title-insomniac" ? "legend" : "exclusive");
+      expect(isTeasedWhenLocked(c), c.id).toBe(false);
+    }
+    expect(earned(facts({ grants: ["insomniac"] }))).toEqual(["grant-title-insomniac"]);
+    expect(earned(facts())).not.toContain("grant-title-insomniac");
     expect(earned(facts({ grants: ["50-50-staff"] }))).toEqual(["50-50-staff"]);
     expect(cosmeticById.has("grant-title-50-50-staff")).toBe(false);
     expect(earned(facts({ grants: ["creator"] })).sort()).toEqual(["creator", "grant-title-creator"]);

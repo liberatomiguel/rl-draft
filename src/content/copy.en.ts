@@ -1567,6 +1567,7 @@ export const COSMETICS = {
     "grant-pro": "Verified RLCS pro player",
     "grant-50-50-staff": "Recognised as a member of the 50/50 staff",
     "grant-creator": "Creator of Rocket Draft",
+    "grant-insomniac": "First player to reach Supersonic Legend in Season 1",
     "season-rank": (rank: string, season: string) => `Reach ${rank} in ${season}`,
     "login-streak": (d: number) => `Log in ${d} days in a row`,
     "challenge-stars": (n: number) => `Earn ${n} challenge stars`,
@@ -1712,6 +1713,7 @@ export const COSMETICS = {
     creator: { name: "Creator", desc: "Reserved for the creator of Rocket Draft." },
     "grant-title-creator": { name: "Creator", desc: "Reserved for the creator of Rocket Draft." },
     "grant-title-pro": { name: "Pro Player", desc: "A verified RLCS professional plays here too." },
+    "grant-title-insomniac": { name: "Insomniac", desc: "The first to reach Supersonic Legend in Season 1. Nobody saw them sleep." },
   } as Record<string, { name: string; desc: string }>,
 };
 

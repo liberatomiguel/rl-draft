@@ -60,7 +60,7 @@ export type CosmeticKind = "title" | "badge" | "banner";
 export type CosmeticTier = "common" | "uncommon" | "rare" | "epic" | "exclusive" | "legend";
 
 /** Manual grant ids (the cloud `profile_grants.grant_id` column). */
-export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff" | "creator";
+export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff" | "creator" | "insomniac";
 
 export type CosmeticSource =
   | { type: "legacy-participation" }
@@ -167,7 +167,9 @@ const GOLD: Stops = ["#ffeb5c", "#fff3a0"];
 const GOLD_GLOW = "#ffa300";
 
 /** Reserved manual-grant colours; Staff's requested white is the exception. */
-export const GRANT_COLORS: Record<GrantId, { colors: Stops; glow: string }> = {
+/** Insomniac (v2.0.13) has none: it is drawn as a Legendary title (white gold). */
+export type ColouredGrantId = Exclude<GrantId, "insomniac">;
+export const GRANT_COLORS: Record<ColouredGrantId, { colors: Stops; glow: string }> = {
   "early-supporter": { colors: ["#ff9ec0", "#ffd1e1"], glow: "#ff4d8d" }, // rose, a tone off the supporter's
   supporter: { colors: ["#e8356d", "#ff7aa2"], glow: "#e8356d" }, // raspberry
   contributor: { colors: ["#19d290", "#7ef0c0"], glow: "#00d1d1" }, // emerald / teal
@@ -400,7 +402,7 @@ const LEGACY: CosmeticDef[] = [
 ];
 
 /** Manual grants (reserved colours). */
-const grantTitle = (id: string, priority: number, grantId: GrantId): TitleDef =>
+const grantTitle = (id: string, priority: number, grantId: ColouredGrantId): TitleDef =>
   title(id, "exclusive", priority, { type: "grant", grantId }, GRANT_COLORS[grantId].colors, true, GRANT_COLORS[grantId].glow);
 const GRANTS: CosmeticDef[] = [
   grantTitle("grant-title-creator", 85, "creator"),
@@ -408,6 +410,10 @@ const GRANTS: CosmeticDef[] = [
   grantTitle("grant-title-supporter", 82, "supporter"),
   grantTitle("grant-title-contributor", 81, "contributor"),
   grantTitle("grant-title-pro", 80, "pro"),
+  // v2.0.13 (Miguel): a one-of-a-kind LEGENDARY title for the first player to reach
+  // Supersonic Legend in Season 1 (Arc, 14/11/2026). Granted by hand, hidden until
+  // owned, drawn like the other Legendary titles; it outranks every other grant.
+  title("grant-title-insomniac", "legend", 86, { type: "grant", grantId: "insomniac" }, WHITE_GOLD, true),
 ];
 
 export const COSMETICS: CosmeticDef[] = [...BADGES, ...LOGIN, ...RANK_TRACK, ...PLAY, ...CAREER, ...CHALLENGES, ...LEGACY, ...GRANTS];

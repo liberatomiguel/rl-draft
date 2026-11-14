@@ -1604,6 +1604,7 @@ export const PT: Copy = {
       "grant-pro": "Jogador profissional de RLCS verificado",
       "grant-50-50-staff": "Reconhecido como membro da equipe 50/50",
       "grant-creator": "Criador do Rocket Draft",
+      "grant-insomniac": "Primeiro jogador a alcançar Supersonic Legend na Temporada 1",
       "season-rank": (rank: string, season: string) => `Alcance ${rank} na ${season}`,
       "login-streak": (d: number) => `Entre ${d} dias seguidos`,
       "challenge-stars": (n: number) => `Conquiste ${n} estrelas de challenge`,
@@ -1749,6 +1750,7 @@ export const PT: Copy = {
       creator: { name: "Creator", desc: "Reservado ao criador do Rocket Draft." },
       "grant-title-creator": { name: "Creator", desc: "Reservado ao criador do Rocket Draft." },
       "grant-title-pro": { name: "Pro Player", desc: "Um profissional de RLCS verificado também joga aqui." },
+      "grant-title-insomniac": { name: "Insomniac", desc: "O primeiro a alcançar Supersonic Legend na Temporada 1. Ninguém viu essa pessoa dormir." },
     },
   },
   MISSIONS_UI: {
