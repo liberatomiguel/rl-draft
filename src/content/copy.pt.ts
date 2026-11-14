@@ -235,6 +235,15 @@ export const PT: Copy = {
     // T1 (v2.0): nomes das regiões de navegação do shell.
     ariaMain: "Principal",
     ariaLanguage: "Idioma",
+    // v2.0.14: as telas de erro (src/app/error.tsx; global-error.tsx tem o próprio texto).
+    errorKicker: "Parada inesperada",
+    errorTitle: "Algo deu errado",
+    errorDataTitle: "Erro no banco de dados",
+    errorBody: "Um erro inesperado interrompeu o jogo. Seu progresso salvo está seguro.",
+    errorReloadBody: "Esta tela parou de carregar. Recarregue a página para continuar. Seu progresso salvo está seguro.",
+    errorTranslateHint: "Se o navegador estiver traduzindo esta página, desativar a tradução para este site evita este erro.",
+    errorRetry: "Tentar de novo",
+    errorReload: "Recarregar a página",
   },
 
   RUN_UI: {

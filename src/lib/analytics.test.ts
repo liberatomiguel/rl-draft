@@ -490,6 +490,15 @@ describe("screen errors", () => {
     expect(a.sanitizeErrorMessage("x".repeat(500)).length).toBeLessThanOrEqual(120);
   });
 
+  it("keeps the code names the browser quotes (v2.0.14), still not the data", async () => {
+    const a = await load("phc_test");
+    expect(a.sanitizeErrorMessage("Cannot read properties of undefined (reading 'specialIds')")).toBe("Cannot read properties of undefined (reading specialIds)");
+    expect(a.sanitizeErrorMessage("Failed to execute 'insertBefore' on 'Node': The node is not a child of this node.")).toBe("Failed to execute insertBefore on Node: The node is not a child of this node.");
+    expect(a.sanitizeErrorMessage("undefined is not an object (evaluating 'k.squad[0].id')")).toBe("undefined is not an object (evaluating k.squad[0].id)");
+    expect(a.sanitizeErrorMessage("Cannot read properties of undefined (reading 'Miguel FC')")).toBe("Cannot read properties of undefined (reading <text>)");
+    expect(a.sanitizeErrorMessage(`Unexpected token 'M', "Miguel" is not valid JSON`)).toBe("Unexpected token <text>, <text> is not valid JSON");
+  });
+
   it("reports the error's name, route and cleaned message; the same error once; three per session at most", async () => {
     const { a, sink } = await live();
     go("/career/club");
@@ -501,7 +510,7 @@ describe("screen errors", () => {
     a.reportScreenError("window", new RangeError("two"));
     const errors = named(sink.calls, "quality_error").map(own);
     expect(errors).toHaveLength(3);
-    expect(errors[0]).toMatchObject({ source: "boundary", name: "TypeError", route: "/career/club", message: "Cannot read properties of undefined (reading <text>)" });
+    expect(errors[0]).toMatchObject({ source: "boundary", name: "TypeError", route: "/career/club", message: "Cannot read properties of undefined (reading squad)" });
     expect(errors[1]).toMatchObject({ source: "promise", name: "Error", message: "plain string" });
   });
 });

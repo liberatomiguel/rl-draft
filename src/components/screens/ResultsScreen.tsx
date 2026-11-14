@@ -946,7 +946,8 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
   // The specials the eliminator actually fielded (AI upgrades player cards), keyed
   // by playerId so we render the SAME special they beat you with (v1.3.3).
   const specialByPlayerId = new Map<string, string>();
-  for (const sid of eliminator.specialIds) {
+  // v2.0.14: a result saved before v1.3.3 has no `specialIds` (it crashed this screen).
+  for (const sid of eliminator.specialIds ?? []) {
     const sp = specialCardById.get(sid);
     if (sp) specialByPlayerId.set(sp.playerId, sid);
   }

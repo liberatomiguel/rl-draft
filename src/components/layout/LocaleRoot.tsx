@@ -16,6 +16,8 @@
  */
 
 import { usePathname } from "next/navigation";
+// v2.0.14: installed with the root chunk, before React commits (page translation crash).
+import "@/lib/domGuard";
 import { UrlLocaleContext } from "@/content/copy";
 import { HTML_LANG, localeOfPath } from "@/lib/locale";
 import { useSettings } from "@/store/settingsStore";

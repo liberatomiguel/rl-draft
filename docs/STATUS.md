@@ -5,6 +5,15 @@
 
 ## Current builds
 
+- **v2.0.14 (14/11/2026)** follows the first PostHog review after the launch
+  (docs/POSTLAUNCH-2.0-REPORT.md): page translation no longer crashes React
+  (`lib/domGuard.ts`), the black global error screen is replaced
+  (`app/global-error.tsx`), a failed chunk reloads once, old Draft results no
+  longer crash, error reports keep the property name. Production ran v2.0.1 to
+  v2.0.13 between 12 and 14/11 (CHANGELOG). Not verified: the crash end to end
+  with a real browser translator; watch `NotFoundError` under release 2.0.14.
+  Open from the report: an event for a refused career advance, the event budget
+  (about one million a month), FR / ES, mobile career entry, account sync failures.
 - **Production is v2.0.0 "Season 1"**, https://rocketdraft.app, live since
   12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
   his go-ahead because the Workers Builds queue was behind; the queued builds

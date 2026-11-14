@@ -746,9 +746,24 @@ export function takeRunResets(): number {
 /** Signatures of the errors reported this page load (the same error counts once). */
 let reportedErrors = new Set<string>();
 
+/**
+ * Quoted code the browser itself wrote into a message: the property a TypeError could
+ * not read, the DOM method that failed, the expression Safari was evaluating. These are
+ * names from our own source, never player data, and without them an error cannot be
+ * traced (v2.0.14: "reading <text>" on six routes told us nothing).
+ */
+const CODE_QUOTES: readonly RegExp[] = [
+  /\((?:reading|setting) ["'][\w$]{1,40}["']\)/g,
+  /Failed to execute ["'][\w$]{1,40}["'] on ["'][\w$]{1,40}["']/g,
+  /can['’]t access property ["'][\w$]{1,40}["']/g,
+  /\(evaluating ["'][\w$.[\]]{1,60}["']\)/g,
+];
+
 /** No quoted text (a parse error quotes the data it choked on), no URLs, no long numbers. */
 export function sanitizeErrorMessage(message: string): string {
-  return message
+  let kept = message;
+  for (const pattern of CODE_QUOTES) kept = kept.replace(pattern, (match) => match.replace(/["']/g, ""));
+  return kept
     .replace(/https?:\/\/\S+/g, "<url>")
     .replace(/"[^"]*"|'[^']*'|`[^`]*`/g, "<text>")
     .replace(/\d{5,}/g, "<n>")

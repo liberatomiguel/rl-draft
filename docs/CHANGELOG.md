@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.14] — 2026-11-14 · Page translation no longer crashes the game; the black error screen is gone
+
+Source: the first PostHog review after the launch (12–14/11, `docs/POSTLAUNCH-2.0-REPORT.md`).
+
+#### Fixed
+- **Career screens (and Draft results, the profile) crashed for players whose browser was translating the page; "Try again" showed the error again, and some landed on a black screen.** Root cause: page translation (Chrome, Edge, Firefox) and some extensions wrap React's text nodes in their own `<font>` element. React still holds the old parent, so its next `removeChild` / `insertBefore` on that node throws `NotFoundError` in the middle of a commit. The route boundary then has to clear the same broken subtree, throws again, and the page falls to Next's built-in global fallback: one grey line on black. Evidence: 44 of the 95 `quality_error` events and 16 of the 28 affected players; 10 % of the career players with a French browser (and Spanish, German, Japanese, Vietnamese ones) against 0.6 % of the English ones; routes `/career`, `/career/event`, `/career/training`, `/play`. Six of the sixteen never played again.
+  - `src/lib/domGuard.ts` (imported by `LocaleRoot`, so it is installed before React commits): the two DOM calls no longer throw. When the node React names is no longer a direct child, the guard acts on the wrapper standing in its place; when the node is gone, the removal is a no-op and the insertion goes to the end. Checked against the real DOM in a browser: the native calls throw `NotFoundError` on a translated node, the guarded ones leave the right tree. Known limit: a label React later updates inside a translated wrapper can stay stale until the next navigation.
+  - `src/app/global-error.tsx` (new): the last-resort screen is now the game's own panel with "Reload the page" and a link to the menu, in EN or PT, with inline styles only. It reports to `quality_error` like the route boundary.
+  - `src/app/error.tsx`: an error a re-render cannot fix (DOM mismatch, failed chunk) offers "Reload the page" first and explains the translation cause; other errors keep "Try again" and gain "Reload the page". Its strings moved to `NAV_UI` (EN and PT; they were fixed English).
+- **A chunk that failed to load left the player on the error screen** (two phones on launch day, seven reports, the same file on `/career`). Root cause: a tab opened before a deploy asks for a file the new deploy no longer serves, and re-rendering asks for the same file again. The route boundary now reloads the page by itself, once per minute at most (`errorRecovery.shouldAutoReload`, a timestamp in `sessionStorage`).
+- **The Draft results screen crashed on a result saved before v1.3.3** (`k.specialIds is not iterable`, `/play`). Root cause: `EliminatorReveal` iterated `eliminator.specialIds`, a field older saved results do not have. It now reads an empty list.
+
+#### Changed
+- **`quality_error` keeps the code names the browser quotes** (`reading specialIds`, `Failed to execute insertBefore on Node`, Safari's `evaluating k.squad`). The message filter removed every quoted text, so ten `TypeError` reports on six routes read "reading <text>" and could not be traced. Quoted text that is not a plain identifier is still removed (`sanitizeErrorMessage`, `CODE_QUOTES`).
+
+#### Not changed (findings for Miguel's decision)
+- No career flow threw in production: zero `quality_save_error` and zero `quality_slow_advance` since the launch. PostHog shows no soft-lock cluster by week or tier; a refused action (a hold, a blocked lobby) sends no event, so one that the screen fails to explain would be invisible. Suggested next: one event for a refused advance.
+- The event budget: about 28–33 thousand events a day (near one million a month); 49 devices hit the 400-a-day circuit breaker, which also drops their error reports. `analytics-budget.json` says 120 players a day against 230–420 measured.
+
 ## [2.0.13] — 2026-11-14 · Insomniac, a Legendary title granted by hand
 
 #### Added

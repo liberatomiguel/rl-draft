@@ -254,6 +254,15 @@ export const NAV_UI = {
   // T1 (v2.0): the shell's landmark names (they were fixed English).
   ariaMain: "Main",
   ariaLanguage: "Language",
+  // v2.0.14: the error screens (src/app/error.tsx; global-error.tsx keeps its own copy).
+  errorKicker: "Unexpected stoppage",
+  errorTitle: "Something went wrong",
+  errorDataTitle: "Dataset error",
+  errorBody: "An unexpected error interrupted the game. Your saved progress is safe.",
+  errorReloadBody: "This screen stopped loading. Reload the page to continue. Your saved progress is safe.",
+  errorTranslateHint: "If your browser is translating this page, turning the translation off for this site avoids this error.",
+  errorRetry: "Try again",
+  errorReload: "Reload the page",
 };
 
 export const RUN_UI = {
