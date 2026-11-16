@@ -2000,6 +2000,13 @@
       "id": "nmj",
       "nickname": "nmj",
       "existingInGame": false
+    },
+    {
+      "sourceId": "kaoshi",
+      "id": "kaoshi",
+      "nickname": "Kaoshi",
+      "existingInGame": true,
+      "country": "BR"
     }
   ],
   "lineups": [
@@ -2986,7 +2993,7 @@
       "coach": {
         "personId": "nick",
         "nickname": "Nick",
-        "overall": 76
+        "overall": 85
       },
       "sub": null
     },
@@ -3280,7 +3287,7 @@
         {
           "personId": "droppz",
           "nickname": "droppz",
-          "overall": 85
+          "overall": 84
         },
         {
           "personId": "suco",
@@ -3296,7 +3303,7 @@
       "coach": {
         "personId": "stl",
         "nickname": "STL",
-        "overall": 81
+        "overall": 84
       },
       "sub": null
     },
@@ -3316,20 +3323,24 @@
         {
           "personId": "klaus",
           "nickname": "klaus",
-          "overall": 81
+          "overall": 83
         },
         {
           "personId": "leodkn",
           "nickname": "LeoDkn",
-          "overall": 80
+          "overall": 81
         },
         {
           "personId": "pan",
           "nickname": "pan",
-          "overall": 81
+          "overall": 82
         }
       ],
-      "coach": null,
+      "coach": {
+        "personId": "kaoshi",
+        "nickname": "Kaoshi",
+        "overall": 80
+      },
       "sub": null
     },
     {
@@ -4466,7 +4477,8 @@
     "Career calendar remains its existing historical timeline; 2027 is added to the draft dataset without inventing a Club Championship career calendar.",
     "2026-11-16 Kick-Off package: PCS Stride (shown as Project Conquerors) and NOT move to the general draft; overall refreshes for M80, PCS Stride, NOT, Tubby Troubles and Novadrift; 25 new region-only qualifiers. Package nick spellings Aztrø/sad (MIBR), Matt (1), del1very. (Parmiticos) keep the existing game ids and display names.",
     "The 25 lineups the package marks as archive are not added. Five of them were already in the game (Fortnite Flick, Space Bound Cowboys, AVID, Ballerrinas, nimmt55) and stay, since removing cards would break saves.",
-    "lsf's Speed is the British Speed (same person id, now on an NA team). T18's misery is 80 instead of the package's 82 (his career best is 77). New players without a sourced country get none (no flag, no same-country chemistry)."
+    "lsf's Speed is the British Speed (same person id, now on an NA team). T18's misery is 80 instead of the package's 82 (his career best is 77). New players without a sourced country get none (no flag, no same-country chemistry).",
+    "2026-11-16 review by Miguel: droppz 84 (was 85) and coach STL 84 (was 81) on PCS Stride; coach Nick 85 (was 76) on M80. Bigodes 2026 coach Kaoshi 81 (was 79) is outside this snapshot. BS+COMPETITION: coach Kaoshi 80 added, klaus 83, LeoDkn 81, pan 82."
   ],
   "updatedAt": "2026-11-16"
 }

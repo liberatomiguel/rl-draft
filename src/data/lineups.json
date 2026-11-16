@@ -7447,9 +7447,10 @@
       "leodkn-bs-competition-2027",
       "pan-bs-competition-2027"
     ],
+    "coachId": "kaoshi-coach-bs-competition-2027",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "avid-esports-2027",

@@ -4359,7 +4359,7 @@ player 1: Bemmz 84
 player 2: nxghtt 85
 player 3: drufinho 87
 sub: -
-coach: Kaoshi 79
+coach: Kaoshi 81
 org: Bigodes ~
 flag: sam-only, legacy
 ```
@@ -4449,7 +4449,7 @@ player 1: Joreuz 89
 player 2: drufinho 88
 player 3: Motta 86
 sub: -
-coach: Nick 76
+coach: Nick 85
 org: M80 ~
 ```
 
@@ -4846,20 +4846,20 @@ org: MIBR ++
 ```
 
 ```team: Project Conquerors · 2027
-player 1: droppz 85
+player 1: droppz 84
 player 2: sucoo 85
 player 3: wistyy 87
 sub: -
-coach: STL 81
+coach: STL 84
 org: Project Conquerors ~
 ```
 
 ```team: BS+COMPETITION · 2027
-player 1: klaus 81
-player 2: LeoDkn 80
-player 3: pan 81
+player 1: klaus 83
+player 2: LeoDkn 81
+player 3: pan 82
 sub: -
-coach: -
+coach: Kaoshi 80
 org: BS+COMPETITION ~
 flag: region-only
 ```

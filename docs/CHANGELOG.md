@@ -10,6 +10,17 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.16] — 2026-11-16 · Overall review: PCS Stride, M80, BS+COMPETITION and Bigodes
+
+#### Balance
+- **PCS Stride 2027** (shown as Project Conquerors): droppz 84 (was 85), coach STL 84 (was 81). sucoo stays 85.
+- **M80 2027**: coach Nick 85 (was 76).
+- **BS+COMPETITION 2027**: klaus 83 (was 81), LeoDkn 81 (was 80), pan 82 (was 81), and Kaoshi joins as coach (80). The lineup moves from the underdog tier to solid.
+- **Bigodes 2026**: coach Kaoshi 81 (was 79).
+
+#### Changed
+- Daily calendar: the new overalls moved two recorded replays off their paths, so 2027-04-11 and 2027-07-20 get new seeds. Every other date, today and tomorrow included, keeps its seed. Challenges keep every star reachable.
+
 ## [2.0.15] — 2026-11-16 · RLCS 2027 Kick-Off rosters and logos
 
 #### Added

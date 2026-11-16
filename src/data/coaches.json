@@ -3752,7 +3752,7 @@
     "orgId": "bigodes",
     "lineupId": "bigodes-2026",
     "seasonId": "rlcs-2026",
-    "overall": 79,
+    "overall": 81,
     "bonusType": "experience",
     "bonusLevel": "+"
   },
@@ -3843,9 +3843,9 @@
     "orgId": "m80",
     "lineupId": "m80-2027",
     "seasonId": "rlcs-2027",
-    "overall": 76,
+    "overall": 85,
     "bonusType": "offense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "rawgreg-coach-next2nu-esports-2027",
@@ -4062,8 +4062,21 @@
     "orgId": "pcs-stride",
     "lineupId": "pcs-stride-2027",
     "seasonId": "rlcs-2027",
-    "overall": 81,
+    "overall": 84,
     "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "kaoshi-coach-bs-competition-2027",
+    "personId": "kaoshi",
+    "name": "Kaoshi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "bs-competition",
+    "lineupId": "bs-competition-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "bonusType": "experience",
     "bonusLevel": "+"
   },
   {
