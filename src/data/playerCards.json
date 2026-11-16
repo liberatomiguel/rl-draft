@@ -11966,7 +11966,7 @@
     "orgId": "m80",
     "lineupId": "m80-2027",
     "seasonId": "rlcs-2027",
-    "overall": 88,
+    "overall": 89,
     "manualAdjustment": 0
   },
   {
@@ -11975,7 +11975,7 @@
     "orgId": "m80",
     "lineupId": "m80-2027",
     "seasonId": "rlcs-2027",
-    "overall": 87,
+    "overall": 88,
     "manualAdjustment": 0
   },
   {
@@ -11984,7 +11984,7 @@
     "orgId": "m80",
     "lineupId": "m80-2027",
     "seasonId": "rlcs-2027",
-    "overall": 85,
+    "overall": 86,
     "manualAdjustment": 0
   },
   {
@@ -12074,7 +12074,7 @@
     "orgId": "tubby-troubles",
     "lineupId": "tubby-troubles-2027",
     "seasonId": "rlcs-2027",
-    "overall": 81,
+    "overall": 82,
     "manualAdjustment": 0
   },
   {
@@ -12083,7 +12083,7 @@
     "orgId": "tubby-troubles",
     "lineupId": "tubby-troubles-2027",
     "seasonId": "rlcs-2027",
-    "overall": 83,
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -12092,7 +12092,7 @@
     "orgId": "tubby-troubles",
     "lineupId": "tubby-troubles-2027",
     "seasonId": "rlcs-2027",
-    "overall": 83,
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -12201,6 +12201,141 @@
     "lineupId": "1-2027",
     "seasonId": "rlcs-2027",
     "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "dvo-arancini-2027",
+    "playerId": "dvo",
+    "orgId": "arancini",
+    "lineupId": "arancini-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sosa-arancini-2027",
+    "playerId": "sosa",
+    "orgId": "arancini",
+    "lineupId": "arancini-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "tms-arancini-2027",
+    "playerId": "tms",
+    "orgId": "arancini",
+    "lineupId": "arancini-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "aris-gulp-2027",
+    "playerId": "aris",
+    "orgId": "gulp",
+    "lineupId": "gulp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "eris-gulp-2027",
+    "playerId": "eris",
+    "orgId": "gulp",
+    "lineupId": "gulp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "impoh-gulp-2027",
+    "playerId": "impoh",
+    "orgId": "gulp",
+    "lineupId": "gulp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ahduhm-legion-of-boom-2027",
+    "playerId": "ahduhm",
+    "orgId": "legion-of-boom",
+    "lineupId": "legion-of-boom-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ivan-legion-of-boom-2027",
+    "playerId": "ivan",
+    "orgId": "legion-of-boom",
+    "lineupId": "legion-of-boom-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "oath-legion-of-boom-2027",
+    "playerId": "oath",
+    "orgId": "legion-of-boom",
+    "lineupId": "legion-of-boom-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "aqua-lsf-2027",
+    "playerId": "aqua",
+    "orgId": "lsf",
+    "lineupId": "lsf-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "hazo-lsf-2027",
+    "playerId": "hazo",
+    "orgId": "lsf",
+    "lineupId": "lsf-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "speed-lsf-2027",
+    "playerId": "speed",
+    "orgId": "lsf",
+    "lineupId": "lsf-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "alxx-wassup-2027",
+    "playerId": "alxx",
+    "orgId": "wassup",
+    "lineupId": "wassup-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "scythe-wassup-2027",
+    "playerId": "scythe",
+    "orgId": "wassup",
+    "lineupId": "wassup-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "xpurt-wassup-2027",
+    "playerId": "xpurt",
+    "orgId": "wassup",
+    "lineupId": "wassup-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
     "manualAdjustment": 0
   },
   {
@@ -12555,6 +12690,303 @@
     "manualAdjustment": 0
   },
   {
+    "id": "pisky-blg-doran-2027",
+    "playerId": "pisky",
+    "orgId": "blg-doran",
+    "lineupId": "blg-doran-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "mat-blg-doran-2027",
+    "playerId": "mat",
+    "orgId": "blg-doran",
+    "lineupId": "blg-doran-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "giuk-blg-doran-2027",
+    "playerId": "giuk",
+    "orgId": "blg-doran",
+    "lineupId": "blg-doran-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nxlly-cka-2027",
+    "playerId": "nxlly",
+    "orgId": "cka",
+    "lineupId": "cka-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kadely-cka-2027",
+    "playerId": "kadely",
+    "orgId": "cka",
+    "lineupId": "cka-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "cofam-cka-2027",
+    "playerId": "cofam",
+    "orgId": "cka",
+    "lineupId": "cka-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "shila-detect-esports-2027",
+    "playerId": "shila",
+    "orgId": "detect-esports",
+    "lineupId": "detect-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nuqqet-detect-esports-2027",
+    "playerId": "nuqqet",
+    "orgId": "detect-esports",
+    "lineupId": "detect-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "brainiac-detect-esports-2027",
+    "playerId": "brainiac",
+    "orgId": "detect-esports",
+    "lineupId": "detect-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "jweyts-frites-esports-club-2027",
+    "playerId": "jweyts",
+    "orgId": "frites-esports-club",
+    "lineupId": "frites-esports-club-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "wozyen-frites-esports-club-2027",
+    "playerId": "wozyen",
+    "orgId": "frites-esports-club",
+    "lineupId": "frites-esports-club-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kiroxsinho-frites-esports-club-2027",
+    "playerId": "kiroxsinho",
+    "orgId": "frites-esports-club",
+    "lineupId": "frites-esports-club-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "aztral-hey-its-me-its-joshyv-2027",
+    "playerId": "aztral",
+    "orgId": "hey-its-me-its-joshyv",
+    "lineupId": "hey-its-me-its-joshyv-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "rebmob-hey-its-me-its-joshyv-2027",
+    "playerId": "rebmob",
+    "orgId": "hey-its-me-its-joshyv",
+    "lineupId": "hey-its-me-its-joshyv-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "vorce-hey-its-me-its-joshyv-2027",
+    "playerId": "vorce",
+    "orgId": "hey-its-me-its-joshyv",
+    "lineupId": "hey-its-me-its-joshyv-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "energizer-joseadores-2027",
+    "playerId": "energizer",
+    "orgId": "joseadores",
+    "lineupId": "joseadores-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sml-joseadores-2027",
+    "playerId": "sml",
+    "orgId": "joseadores",
+    "lineupId": "joseadores-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "dj-joseadores-2027",
+    "playerId": "dj",
+    "orgId": "joseadores",
+    "lineupId": "joseadores-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "zamberg-ogc-fc-2027",
+    "playerId": "zamberg",
+    "orgId": "ogc-fc",
+    "lineupId": "ogc-fc-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "flexx-ogc-fc-2027",
+    "playerId": "flexx",
+    "orgId": "ogc-fc",
+    "lineupId": "ogc-fc-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "viktor-ogc-fc-2027",
+    "playerId": "viktor",
+    "orgId": "ogc-fc",
+    "lineupId": "ogc-fc-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nolta-oxalys-bunch-2027",
+    "playerId": "nolta",
+    "orgId": "oxalys-bunch",
+    "lineupId": "oxalys-bunch-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "tomio-oxalys-bunch-2027",
+    "playerId": "tomio",
+    "orgId": "oxalys-bunch",
+    "lineupId": "oxalys-bunch-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "encore-oxalys-bunch-2027",
+    "playerId": "encore",
+    "orgId": "oxalys-bunch",
+    "lineupId": "oxalys-bunch-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ejby-radosin-corp-2027",
+    "playerId": "ejby",
+    "orgId": "radosin-corp",
+    "lineupId": "radosin-corp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "radosin-radosin-corp-2027",
+    "playerId": "radosin",
+    "orgId": "radosin-corp",
+    "lineupId": "radosin-corp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "mozzarella-radosin-corp-2027",
+    "playerId": "mozzarella",
+    "orgId": "radosin-corp",
+    "lineupId": "radosin-corp-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "chippy-rotation-station-2027",
+    "playerId": "chippy",
+    "orgId": "rotation-station",
+    "lineupId": "rotation-station-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "mimillosama-rotation-station-2027",
+    "playerId": "mimillosama",
+    "orgId": "rotation-station",
+    "lineupId": "rotation-station-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "noahsaki-rotation-station-2027",
+    "playerId": "noahsaki",
+    "orgId": "rotation-station",
+    "lineupId": "rotation-station-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "reeho-wlt-gaming-2027",
+    "playerId": "reeho",
+    "orgId": "wlt-gaming",
+    "lineupId": "wlt-gaming-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "pukis-wlt-gaming-2027",
+    "playerId": "pukis",
+    "orgId": "wlt-gaming",
+    "lineupId": "wlt-gaming-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "prysm-wlt-gaming-2027",
+    "playerId": "prysm",
+    "orgId": "wlt-gaming",
+    "lineupId": "wlt-gaming-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
     "id": "yanxnz-furia-2027",
     "playerId": "yanxnz",
     "orgId": "furia",
@@ -12641,7 +13073,7 @@
     "orgId": "pcs-stride",
     "lineupId": "pcs-stride-2027",
     "seasonId": "rlcs-2027",
-    "overall": 82,
+    "overall": 85,
     "manualAdjustment": 0
   },
   {
@@ -12650,7 +13082,7 @@
     "orgId": "pcs-stride",
     "lineupId": "pcs-stride-2027",
     "seasonId": "rlcs-2027",
-    "overall": 83,
+    "overall": 85,
     "manualAdjustment": 0
   },
   {
@@ -12659,7 +13091,7 @@
     "orgId": "pcs-stride",
     "lineupId": "pcs-stride-2027",
     "seasonId": "rlcs-2027",
-    "overall": 86,
+    "overall": 87,
     "manualAdjustment": 0
   },
   {
@@ -12776,7 +13208,7 @@
     "orgId": "novadrift",
     "lineupId": "novadrift-2027",
     "seasonId": "rlcs-2027",
-    "overall": 82,
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -12785,7 +13217,7 @@
     "orgId": "novadrift",
     "lineupId": "novadrift-2027",
     "seasonId": "rlcs-2027",
-    "overall": 79,
+    "overall": 82,
     "manualAdjustment": 0
   },
   {
@@ -12794,7 +13226,88 @@
     "orgId": "novadrift",
     "lineupId": "novadrift-2027",
     "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "courtz-arrogantchi-2027",
+    "playerId": "courtz",
+    "orgId": "arrogantchi",
+    "lineupId": "arrogantchi-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "maathzudo-arrogantchi-2027",
+    "playerId": "maathzudo",
+    "orgId": "arrogantchi",
+    "lineupId": "arrogantchi-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nahuz-arrogantchi-2027",
+    "playerId": "nahuz",
+    "orgId": "arrogantchi",
+    "lineupId": "arrogantchi-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ferraz-dynasty-2027",
+    "playerId": "ferraz",
+    "orgId": "dynasty",
+    "lineupId": "dynasty-2027",
+    "seasonId": "rlcs-2027",
     "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "iguinn-dynasty-2027",
+    "playerId": "iguinn",
+    "orgId": "dynasty",
+    "lineupId": "dynasty-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "zeeph-dynasty-2027",
+    "playerId": "zeeph",
+    "orgId": "dynasty",
+    "lineupId": "dynasty-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "misery-t18-esports-2027",
+    "playerId": "misery",
+    "orgId": "t18-esports",
+    "lineupId": "t18-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "umbroken-t18-esports-2027",
+    "playerId": "umbroken",
+    "orgId": "t18-esports",
+    "lineupId": "t18-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "viitin-t18-esports-2027",
+    "playerId": "viitin",
+    "orgId": "t18-esports",
+    "lineupId": "t18-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 82,
     "manualAdjustment": 0
   },
   {
@@ -12857,7 +13370,7 @@
     "orgId": "not",
     "lineupId": "not-2027",
     "seasonId": "rlcs-2027",
-    "overall": 85,
+    "overall": 86,
     "manualAdjustment": 0
   },
   {
@@ -12866,7 +13379,7 @@
     "orgId": "not",
     "lineupId": "not-2027",
     "seasonId": "rlcs-2027",
-    "overall": 85,
+    "overall": 86,
     "manualAdjustment": 0
   },
   {
@@ -12875,7 +13388,7 @@
     "orgId": "not",
     "lineupId": "not-2027",
     "seasonId": "rlcs-2027",
-    "overall": 82,
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -12903,6 +13416,168 @@
     "lineupId": "5head-2027",
     "seasonId": "rlcs-2027",
     "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "willie-1v1-2027",
+    "playerId": "willie",
+    "orgId": "1v1",
+    "lineupId": "1v1-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "vfbi-1v1-2027",
+    "playerId": "vfbi",
+    "orgId": "1v1",
+    "lineupId": "1v1-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "shadi-1v1-2027",
+    "playerId": "shadi",
+    "orgId": "1v1",
+    "lineupId": "1v1-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "glowz-b3den-nsme-2027",
+    "playerId": "glowz",
+    "orgId": "b3den-nsme",
+    "lineupId": "b3den-nsme-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "jsm-b3den-nsme-2027",
+    "playerId": "jsm",
+    "orgId": "b3den-nsme",
+    "lineupId": "b3den-nsme-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "m6r-b3den-nsme-2027",
+    "playerId": "m6r",
+    "orgId": "b3den-nsme",
+    "lineupId": "b3den-nsme-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "hmod-room-mate-london-2027",
+    "playerId": "hmod",
+    "orgId": "room-mate-london",
+    "lineupId": "room-mate-london-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "isl6nii-room-mate-london-2027",
+    "playerId": "isl6nii",
+    "orgId": "room-mate-london",
+    "lineupId": "room-mate-london-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sqqp-room-mate-london-2027",
+    "playerId": "sqqp",
+    "orgId": "room-mate-london",
+    "lineupId": "room-mate-london-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "b2sel-shmn8a-mr7-2027",
+    "playerId": "b2sel",
+    "orgId": "shmn8a-mr7",
+    "lineupId": "shmn8a-mr7-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nadr-shmn8a-mr7-2027",
+    "playerId": "nadr",
+    "orgId": "shmn8a-mr7",
+    "lineupId": "shmn8a-mr7-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "o0vvl-shmn8a-mr7-2027",
+    "playerId": "o0vvl",
+    "orgId": "shmn8a-mr7",
+    "lineupId": "shmn8a-mr7-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "suspect-team-x-2027",
+    "playerId": "suspect",
+    "orgId": "team-x",
+    "lineupId": "team-x-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "t7lm-team-x-2027",
+    "playerId": "t7lm",
+    "orgId": "team-x",
+    "lineupId": "team-x-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "twiz-team-x-2027",
+    "playerId": "twiz",
+    "orgId": "team-x",
+    "lineupId": "team-x-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "bang-the-white-horse-2027",
+    "playerId": "bang",
+    "orgId": "the-white-horse",
+    "lineupId": "the-white-horse-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "israkan-the-white-horse-2027",
+    "playerId": "israkan",
+    "orgId": "the-white-horse",
+    "lineupId": "the-white-horse-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nmj-the-white-horse-2027",
+    "playerId": "nmj",
+    "orgId": "the-white-horse",
+    "lineupId": "the-white-horse-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 78,
     "manualAdjustment": 0
   },
   {

@@ -10,6 +10,24 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.15] — 2026-11-16 · RLCS 2027 Kick-Off rosters and logos
+
+#### Added
+- **25 new RLCS 2027 region-only lineups** from the Kick-Off package of 16/11 (EU 11, NA 5, MENA 6, SAM 3): BLG Doran, CKA, Detect Esports, Frites Esports Club, "Hey, its me, its joshyv.", joseadores, OGC FC, Oxalys Bunch, Radosin Corp, Rotation Station, WLT Gaming; arancini, Gulp, Legion of Boom, lsf, WASSUP; 1v1, b3den nsme, Room Mate London, shmn8a mr7, Team X, The white horse; Arrogantchi, Dynasty, T18 Esports. RLCS 2027 now has 71 lineups (26 worldwide, 45 regional). 60 new players; returning ones keep their ids (AztraL, Radosin, ejby, GiuK, sosa, Aqua, Speed, misery, UmBroken, Suspect, T7LM, Twiz, SQQP, B2seL, Wozyen).
+- **9 org logos**: Detect Esports, Frites Esports Club, Legion of Boom, lsf, OGC FC, Oxalys Bunch, T18 Esports, WASSUP, WLT Gaming. The Detect logo is black only, so it ships as a white silhouette (the game draws logos on a dark background with no plate). Team X's logo is still under identity review and was not applied; the other new orgs show the styled fallback.
+
+#### Changed
+- **PCS Stride (shown as Project Conquerors) and NOT join the worldwide draft** (they were region-only).
+- Overall refreshes: M80 89/88/86, Project Conquerors 85/85/87, NOT 86/86/84, Tubby Troubles 82/84/84, Novadrift 84/82/82.
+- Overall check of the package: every value stays within a few points of the player's own history, except T18's misery (82 against a career best of 77), set to 80.
+- Not applied from the package: its 20 new "archive" lineups (the five archive lineups already in the game stay, since removing cards would break saves), and its nick spellings Aztrø / sad / Matt / del1very. (the existing ids and display names stay).
+- `data-sources/rlcs-2027-audit.json` and `season2027.test.ts` pin the new 71-lineup snapshot.
+- Challenges are capped at RLCS 2026, so their pools do not change: every challenge still earns all three stars on its fixed seed (CH-02) and stays in its win-rate band, with no re-authoring.
+- **Daily calendar refreshed** (`DAILY_REFRESH`): the daily pools include the 2027 region-only lineups, so the new teams moved the fixed-seed drafts (316 of 365 replays failed). Every date keeps its seed when a title + bonus path still exists on it. Today and tomorrow (16–17/11) keep theirs. 108 dates from 19/11 on and two past dates (09/11, 13/11; seeds are read only for today's run) got new seeds. The refresh tool takes `DAILY_POLICIES` to search harder on dates that cannot be reseeded.
+
+#### Known gaps
+- The 60 new players have no country yet (no flag, no same-country chemistry) because the package carries none.
+
 ## [2.0.14] — 2026-11-14 · Page translation no longer crashes the game; the black error screen is gone
 
 Source: the first PostHog review after the launch (12–14/11, `docs/POSTLAUNCH-2.0-REPORT.md`).
@@ -28,7 +46,7 @@ Source: the first PostHog review after the launch (12–14/11, `docs/POSTLAUNCH-
 #### Not changed (findings for Miguel's decision)
 - No career flow threw in production: zero `quality_save_error` and zero `quality_slow_advance` since the launch. PostHog shows no soft-lock cluster by week or tier; a refused action (a hold, a blocked lobby) sends no event, so one that the screen fails to explain would be invisible. Suggested next: one event for a refused advance.
 - The event budget: about 28–33 thousand events a day (near one million a month); 49 devices hit the 400-a-day circuit breaker, which also drops their error reports. `analytics-budget.json` says 120 players a day against 230–420 measured.
-
+=
 ## [2.0.13] — 2026-11-14 · Insomniac, a Legendary title granted by hand
 
 #### Added

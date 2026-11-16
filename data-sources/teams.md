@@ -4390,10 +4390,12 @@ flag: sam-only rare
 
 ## RLCS 2027 — pre-season snapshot (2026-11-05)
 
-46 lineups reviewed for this expansion: 24 general and 22 region-only.
+71 lineups reviewed for this expansion: 26 general and 45 region-only.
 Overalls are pre-season estimates. Sources, roster confirmation status and
 canonical identity mappings: `rlcs-2027-audit.json`. A roster listed here
 does not imply an official organization announcement or a future LAN result.
+Kick-Off update (2026-11-16): PCS Stride (Project Conquerors) and NOT join
+the general draft, five overall refreshes and 25 new region-only qualifiers.
 
 ### NA
 
@@ -4443,9 +4445,9 @@ org: NRG +++
 ```
 
 ```team: M80 · 2027
-player 1: Joreuz 88
-player 2: drufinho 87
-player 3: Motta 85
+player 1: Joreuz 89
+player 2: drufinho 88
+player 3: Motta 86
 sub: -
 coach: Nick 76
 org: M80 ~
@@ -4482,9 +4484,9 @@ flag: region-only
 ```
 
 ```team: Tubby Troubles · 2027
-player 1: Crispy 81
-player 2: Fiv3Up 83
-player 3: rehzzy 83
+player 1: Crispy 82
+player 2: Fiv3Up 84
+player 3: rehzzy 84
 sub: -
 coach: -
 org: Tubby Troubles ~
@@ -4528,6 +4530,56 @@ player 3: Royales 85
 sub: -
 coach: pxress 77
 org: 1 ~
+flag: region-only
+```
+
+```team: arancini · 2027
+player 1: dvo 81
+player 2: sosa 83
+player 3: tms 81
+sub: -
+coach: -
+org: arancini ~
+flag: region-only
+```
+
+```team: Gulp · 2027
+player 1: aris 80
+player 2: Eris 79
+player 3: Impoh 79
+sub: -
+coach: -
+org: Gulp ~
+flag: region-only
+```
+
+```team: Legion of Boom · 2027
+player 1: Ahduhm 81
+player 2: ivan 82
+player 3: oath 82
+sub: -
+coach: -
+org: Legion of Boom ~
+flag: region-only
+```
+
+```team: lsf · 2027
+player 1: Aqua 85
+player 2: hazo 82
+player 3: Speed 83
+sub: -
+coach: -
+org: lsf ~
+flag: region-only
+```
+
+```team: WASSUP · 2027
+player 1: Alxx 82
+player 2: scythe 82
+player 3: xpurt 82
+sub: -
+coach: -
+org: WASSUP ~
 flag: region-only
 ```
 
@@ -4654,6 +4706,116 @@ org: RMH ~
 flag: region-only
 ```
 
+```team: BLG Doran · 2027
+player 1: Pisky 79
+player 2: Mat. 79
+player 3: GiuK 79
+sub: -
+coach: -
+org: BLG Doran ~
+flag: region-only
+```
+
+```team: CKA · 2027
+player 1: Nxlly 78
+player 2: kadely 78
+player 3: Cofam 78
+sub: -
+coach: -
+org: CKA ~
+flag: region-only
+```
+
+```team: Detect Esports · 2027
+player 1: shila 79
+player 2: Nuqqet 79
+player 3: Brainiac 79
+sub: -
+coach: -
+org: Detect Esports ~
+flag: region-only
+```
+
+```team: Frites Esports Club · 2027
+player 1: JWeyts 81
+player 2: Wozyen 80
+player 3: Kiroxsinho 80
+sub: -
+coach: -
+org: Frites Esports Club ~
+flag: region-only
+```
+
+```team: Hey, its me, its joshyv. · 2027
+player 1: AztraL 83
+player 2: rebmob 80
+player 3: vorce 80
+sub: -
+coach: -
+org: Hey, its me, its joshyv. ~
+flag: region-only
+```
+
+```team: joseadores · 2027
+player 1: Energizer 78
+player 2: sml. 78
+player 3: dj. 78
+sub: -
+coach: -
+org: joseadores ~
+flag: region-only
+```
+
+```team: OGC FC · 2027
+player 1: Zamberg 80
+player 2: flexx 80
+player 3: Viktor 80
+sub: -
+coach: -
+org: OGC FC ~
+flag: region-only
+```
+
+```team: Oxalys Bunch · 2027
+player 1: Nolta 78
+player 2: Tomio 78
+player 3: Encore 78
+sub: -
+coach: -
+org: Oxalys Bunch ~
+flag: region-only
+```
+
+```team: Radosin Corp · 2027
+player 1: ejby 82
+player 2: Radosin 86
+player 3: Mozzarella 80
+sub: -
+coach: -
+org: Radosin Corp ~
+flag: region-only
+```
+
+```team: Rotation Station · 2027
+player 1: Chippy 79
+player 2: Mimillo Sama 79
+player 3: noahsaki 79
+sub: -
+coach: -
+org: Rotation Station ~
+flag: region-only
+```
+
+```team: WLT Gaming · 2027
+player 1: reeho! 79
+player 2: pukis 79
+player 3: prysm! 79
+sub: -
+coach: -
+org: WLT Gaming ~
+flag: region-only
+```
+
 ### SAM
 
 ```team: FURIA · 2027
@@ -4684,13 +4846,12 @@ org: MIBR ++
 ```
 
 ```team: Project Conquerors · 2027
-player 1: droppz 82
-player 2: sucoo 83
-player 3: wistyy 86
+player 1: droppz 85
+player 2: sucoo 85
+player 3: wistyy 87
 sub: -
 coach: STL 81
 org: Project Conquerors ~
-flag: region-only
 ```
 
 ```team: BS+COMPETITION · 2027
@@ -4734,12 +4895,42 @@ flag: region-only
 ```
 
 ```team: Novadrift · 2027
-player 1: KnS 82
-player 2: Kevinacho 79
-player 3: Rmn 79
+player 1: KnS 84
+player 2: Kevinacho 82
+player 3: Rmn 82
 sub: -
 coach: -
 org: Novadrift ~
+flag: region-only
+```
+
+```team: Arrogantchi · 2027
+player 1: courtz 80
+player 2: Maathzudo 80
+player 3: nahuz 80
+sub: -
+coach: -
+org: Arrogantchi ~
+flag: region-only
+```
+
+```team: Dynasty · 2027
+player 1: Ferraz 79
+player 2: Iguinn 79
+player 3: zeeph 79
+sub: -
+coach: -
+org: Dynasty ~
+flag: region-only
+```
+
+```team: T18 Esports · 2027
+player 1: misery 80
+player 2: UmBroken 82
+player 3: ViitiN 82
+sub: -
+coach: -
+org: T18 Esports ~
 flag: region-only
 ```
 
@@ -4764,13 +4955,12 @@ org: Twisted Minds +++
 ```
 
 ```team: NOT · 2027
-player 1: Nush 85
-player 2: Trook 85
-player 3: ops 82
+player 1: Nush 86
+player 2: Trook 86
+player 3: ops 84
 sub: -
 coach: -
 org: NOT ~
-flag: region-only
 ```
 
 ```team: 5Head · 2027
@@ -4780,6 +4970,66 @@ player 3: M7md 83
 sub: -
 coach: -
 org: 5Head ~
+flag: region-only
+```
+
+```team: 1v1 · 2027
+player 1: Willie 78
+player 2: vFbi 78
+player 3: shadi 78
+sub: -
+coach: -
+org: 1v1 ~
+flag: region-only
+```
+
+```team: b3den nsme · 2027
+player 1: Glowz 81
+player 2: JSM 81
+player 3: M6R 81
+sub: -
+coach: -
+org: b3den nsme ~
+flag: region-only
+```
+
+```team: Room Mate London · 2027
+player 1: Hmod 79
+player 2: iSL6Nii 79
+player 3: SQQP 79
+sub: -
+coach: -
+org: Room Mate London ~
+flag: region-only
+```
+
+```team: shmn8a mr7 · 2027
+player 1: B2seL 79
+player 2: Nadr 79
+player 3: o0vvl 79
+sub: -
+coach: -
+org: shmn8a mr7 ~
+flag: region-only
+```
+
+```team: Team X · 2027
+player 1: Suspect 81
+player 2: T7LM 81
+player 3: Twiz 81
+sub: -
+coach: -
+org: Team X ~
+flag: region-only
+```
+
+```team: The white horse · 2027
+player 1: Bang 78
+player 2: isRakan 78
+player 3: nmj 78
+sub: -
+coach: -
+org: The white horse ~
 flag: region-only
 ```
 

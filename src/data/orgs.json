@@ -14,6 +14,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "1v1",
+    "name": "1v1",
+    "region": "MENA",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
     "id": "3rats",
     "name": "3RATS",
     "region": "APAC",
@@ -77,6 +84,20 @@
     "buffLevel": "~"
   },
   {
+    "id": "arancini",
+    "name": "arancini",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "arrogantchi",
+    "name": "Arrogantchi",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
     "id": "avid-esports",
     "name": "AVID Esports",
     "region": "SAM",
@@ -88,6 +109,13 @@
     "name": "Avidity Esports",
     "region": "SAM",
     "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "b3den-nsme",
+    "name": "b3den nsme",
+    "region": "MENA",
+    "buffType": "consistency",
     "buffLevel": "~"
   },
   {
@@ -115,6 +143,13 @@
     "id": "blazar",
     "name": "Blazar",
     "region": "SAM",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "blg-doran",
+    "name": "BLG Doran",
+    "region": "EU",
     "buffType": "defense",
     "buffLevel": "~"
   },
@@ -189,6 +224,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "cka",
+    "name": "CKA",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
     "id": "cloud9",
     "name": "Cloud9",
     "region": "NA",
@@ -229,6 +271,13 @@
     "id": "denial-esports",
     "name": "Denial eSports",
     "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "detect-esports",
+    "name": "Detect Esports",
+    "region": "EU",
     "buffType": "clutch",
     "buffLevel": "~"
   },
@@ -290,6 +339,13 @@
     "name": "Dreamstation",
     "region": "APAC",
     "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "dynasty",
+    "name": "Dynasty",
+    "region": "SAM",
+    "buffType": "defense",
     "buffLevel": "~"
   },
   {
@@ -432,6 +488,13 @@
     "id": "fortnite-flick",
     "name": "Fortnite Flick",
     "region": "NA",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "frites-esports-club",
+    "name": "Frites Esports Club",
+    "region": "EU",
     "buffType": "mechanics",
     "buffLevel": "~"
   },
@@ -628,6 +691,13 @@
     "buffLevel": "+"
   },
   {
+    "id": "gulp",
+    "name": "Gulp",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
     "id": "hawks",
     "name": "Hawks",
     "region": "SAM",
@@ -646,6 +716,13 @@
     "name": "Hero Base",
     "region": "SAM",
     "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "hey-its-me-its-joshyv",
+    "name": "Hey, its me, its joshyv.",
+    "region": "EU",
+    "buffType": "offense",
     "buffLevel": "~"
   },
   {
@@ -688,6 +765,13 @@
     "name": "Jobless",
     "region": "EU",
     "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "joseadores",
+    "name": "joseadores",
+    "region": "EU",
+    "buffType": "experience",
     "buffLevel": "~"
   },
   {
@@ -740,6 +824,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "legion-of-boom",
+    "name": "Legion of Boom",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
     "id": "leviatan",
     "name": "Leviatán",
     "region": "SAM",
@@ -779,6 +870,13 @@
     "name": "Lowkey Esports",
     "region": "SAM",
     "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "lsf",
+    "name": "lsf",
+    "region": "NA",
+    "buffType": "mechanics",
     "buffLevel": "~"
   },
   {
@@ -1198,6 +1296,13 @@
     "buffLevel": "+"
   },
   {
+    "id": "ogc-fc",
+    "name": "OGC FC",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
     "id": "optic-gaming",
     "name": "OpTic Gaming",
     "region": "NA",
@@ -1237,6 +1342,13 @@
     "name": "OWL Esports",
     "region": "MENA",
     "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "oxalys-bunch",
+    "name": "Oxalys Bunch",
+    "region": "EU",
+    "buffType": "mechanics",
     "buffLevel": "~"
   },
   {
@@ -1380,6 +1492,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "radosin-corp",
+    "name": "Radosin Corp",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
     "id": "rebel",
     "name": "Rebel",
     "region": "SAM",
@@ -1420,6 +1539,20 @@
     "region": "NA",
     "buffType": "clutch",
     "buffLevel": "+"
+  },
+  {
+    "id": "room-mate-london",
+    "name": "Room Mate London",
+    "region": "MENA",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "rotation-station",
+    "name": "Rotation Station",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "~"
   },
   {
     "id": "rpc",
@@ -1468,6 +1601,13 @@
     "name": "Senbei Strikers",
     "region": "APAC",
     "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "shmn8a-mr7",
+    "name": "shmn8a mr7",
+    "region": "MENA",
+    "buffType": "clutch",
     "buffLevel": "~"
   },
   {
@@ -1541,6 +1681,13 @@
     "name": "Susquehanna Soniqs",
     "region": "NA",
     "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "t18-esports",
+    "name": "T18 Esports",
+    "region": "SAM",
+    "buffType": "consistency",
     "buffLevel": "~"
   },
   {
@@ -1704,6 +1851,13 @@
     ]
   },
   {
+    "id": "team-x",
+    "name": "Team X",
+    "region": "MENA",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
     "id": "the-bricks",
     "name": "The Bricks",
     "region": "EU",
@@ -1744,6 +1898,13 @@
     "region": "NA",
     "buffType": "consistency",
     "buffLevel": "++"
+  },
+  {
+    "id": "the-white-horse",
+    "name": "The white horse",
+    "region": "MENA",
+    "buffType": "experience",
+    "buffLevel": "~"
   },
   {
     "id": "three-point-shooters",
@@ -1858,6 +2019,13 @@
     "buffLevel": "++"
   },
   {
+    "id": "wassup",
+    "name": "WASSUP",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
     "id": "we-dem-girlz",
     "name": "We Dem Girlz",
     "region": "EU",
@@ -1877,6 +2045,13 @@
     "region": "SAM",
     "buffType": "consistency",
     "buffLevel": "+"
+  },
+  {
+    "id": "wlt-gaming",
+    "name": "WLT Gaming",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "~"
   },
   {
     "id": "wolves-esports",

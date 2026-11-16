@@ -15,14 +15,14 @@ describe("RLCS 2027 — approved expansion and identity contract", () => {
     expect(seasonById.get("rlcs-2026")?.order).toBe(15);
   });
 
-  it("contains the 46 reviewed trios, with exactly 24 worldwide and 22 regional-only", () => {
+  it("contains the 71 reviewed trios, with exactly 26 worldwide and 45 regional-only", () => {
     const added = lineups.filter((l) => l.seasonId === audit.seasonId);
     expect(added.map((l) => l.id).sort()).toEqual(audit.lineups.map((l) => l.id).sort());
-    expect(added).toHaveLength(46);
-    expect(added.filter((l) => !l.samOnly)).toHaveLength(24);
-    expect(added.filter((l) => l.samOnly)).toHaveLength(22);
+    expect(added).toHaveLength(71);
+    expect(added.filter((l) => !l.samOnly)).toHaveLength(26);
+    expect(added.filter((l) => l.samOnly)).toHaveLength(45);
     const starters = added.flatMap((l) => l.playerCardIds.map((id) => playerCardById.get(id)!.playerId));
-    expect(new Set(starters).size).toBe(138);
+    expect(new Set(starters).size).toBe(213);
   });
 
   for (const expected of audit.lineups) {
