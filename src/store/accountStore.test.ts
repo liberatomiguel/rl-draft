@@ -778,6 +778,32 @@ describe("2.0.0: what a sync brings is announced by the normal unlock pop-up", (
     expect(useCosmeticUnlocks.getState().queue).toEqual([]);
   });
 
+  it("v2.0.17: the Verified grant queues its pop-up until it is dismissed, then never again", async () => {
+    const { useCosmeticUnlocks } = await import("./cosmeticUnlockStore");
+    useCosmeticUnlocks.getState().clear();
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(cloud({}, { grants: ["verified"] }));
+    await useAccountStore.getState().syncNow(s);
+    expect(useProfileStore.getState().grants).toContain("verified");
+    expect(useCosmeticUnlocks.getState().queue).toEqual(["verified"]);
+    // Not a cosmetic: nothing owned, nothing equipped.
+    expect(useProfileStore.getState().cosmetics.owned.verified).toBeUndefined();
+
+    // Not dismissed yet (closed tab): the next sync offers it again.
+    useCosmeticUnlocks.getState().clear();
+    await useAccountStore.getState().syncNow(s);
+    expect(useCosmeticUnlocks.getState().queue).toEqual(["verified"]);
+
+    // Dismissed: recorded in the synced `announced` list, and never queued again.
+    useCosmeticUnlocks.getState().clear();
+    useProfileStore.getState().markVerifiedAnnounced();
+    expect(useProfileStore.getState().cosmetics.announced).toContain("verified");
+    await useAccountStore.getState().syncNow(s);
+    expect(useCosmeticUnlocks.getState().queue).toEqual([]);
+    const pushed = sb.pushCloudProfile.mock.calls.at(-1)?.[2] as DurableProfile | undefined;
+    expect(pushed?.cosmetics?.announced).toContain("verified");
+  });
+
   it("pre-season rewards wait for the recap; once it was seen, a late sign-in announces them", async () => {
     const { useCosmeticUnlocks } = await import("./cosmeticUnlockStore");
     useCosmeticUnlocks.getState().clear();

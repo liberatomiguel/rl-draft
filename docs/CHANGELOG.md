@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.17] — 2026-11-16 · Verified seal
+
+#### Added
+- **Verified**: a blue scalloped seal with a white check, drawn right after the player's name on the profile, on every leaderboard row and in the profile peek. Miguel grants it by hand: a `profile_grants` row with `grant_id = 'verified'` (`docs/sql/v2017-verified-grant.sql` widens the check constraint and has the grant and check queries). The public `leaderboard` view already carries every grant, so the boards need no schema change.
+- It is not a cosmetic: no locker slot, no toggle, nothing to equip or hide. It shows wherever the account's grants carry it.
+- A newly verified player gets the unlock pop-up once (same ceremony as a title or badge, the seal as the art, no "wear it"). Dismissing it records `verified` in the synced `cosmetics.announced` list, so it never replays on any device. Until it is dismissed, it is offered again on the next load or sync.
+- Staging preview board: the fictional pros carry the seal.
+
 ## [2.0.16] — 2026-11-16 · Overall review: PCS Stride, M80, BS+COMPETITION and Bigodes
 
 #### Balance

@@ -88,6 +88,8 @@ export function previewLeaderboardRows(): PreviewRow[] {
     if (r() < 0.06) grants.push("pro");
     if (r() < 0.12) grants.push("supporter");
     if (r() < 0.05) grants.push("contributor");
+    // v2.0.17: the fictional pros carry the Verified seal (no extra draw: the rows stay put).
+    if (grants.includes("pro")) grants.push("verified");
     return {
       username: i % 9 === 4 ? `${name}${Math.floor(r() * 90 + 10)}` : name,
       season_xp: xp,

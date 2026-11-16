@@ -18,11 +18,13 @@ import {
 } from "@/config/balance";
 import { achievementById, specialCardIds, specialRarityOf } from "@/data/catalog";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
+import { isVerified, VERIFIED_GRANT } from "@/data/cosmetics";
 import { evaluateCounterAchievements, evaluateSeasonSystemAchievements, profileCounters } from "@/engine/counterAchievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import {
   cosmeticFacts,
   EMPTY_COSMETICS,
+  markAnnounced,
   markSeen,
   newlyOwnedIds,
   unseenOwnedIds,
@@ -281,6 +283,9 @@ export interface ProfileState {
   setEquipped: (patch: Partial<EquippedState>) => void;
   /** rc.2: mark owned cosmetics as seen in the locker (clears the "new" count). */
   markCosmeticsSeen: (ids: string[]) => void;
+  /** v2.0.17: the Verified pop-up was shown (records it in `cosmetics.announced`,
+   *  synced, so it never plays again on any device). */
+  markVerifiedAnnounced: () => void;
   /** rc.2 preview tools (dev / staging only): every cosmetic counts as owned. */
   previewUnlockAll: boolean;
   setPreviewUnlockAll: (on: boolean) => void;
@@ -905,6 +910,7 @@ export const useProfileStore = create<ProfileState>()(
         const recapPending = !after.flags.seenSeasonRecap && !!after.legacy?.preseason;
         const ids = recapPending ? withoutLegacyRewards(arrived) : arrived;
         if (ids.length) queueUnlocks(ids);
+        queueVerifiedOnce();
       },
 
       awardAchievements: (ids) => {
@@ -977,6 +983,13 @@ export const useProfileStore = create<ProfileState>()(
       markCosmeticsSeen: (ids) => {
         set((state) => {
           const next = markSeen(state.cosmetics, ids);
+          return next === state.cosmetics ? {} : { cosmetics: next };
+        });
+      },
+
+      markVerifiedAnnounced: () => {
+        set((state) => {
+          const next = markAnnounced(state.cosmetics, [VERIFIED_GRANT]);
           return next === state.cosmetics ? {} : { cosmetics: next };
         });
       },
@@ -1267,6 +1280,17 @@ useProfileStore.subscribe((state, prev) => {
   if (ids.length) queueUnlocks(ids);
 });
 
+/** v2.0.17: a Verified account whose pop-up no device has shown yet gets it, after
+ *  any cosmetic unlocks already waiting. Keyed on `cosmetics.announced` alone (not on
+ *  "the grant just arrived"): an older client may already have folded the grant into
+ *  the local save without knowing it. The pop-up records itself when dismissed
+ *  (`markVerifiedAnnounced`); queueing writes nothing, so a hydration stays quiet. */
+function queueVerifiedOnce(): void {
+  if (FEATURES.playtest) return;
+  const s = useProfileStore.getState();
+  if (isVerified(s.grants) && unannouncedIds(s.cosmetics, [VERIFIED_GRANT]).length) queueUnlocks([VERIFIED_GRANT]);
+}
+
 /** Queue the unlock pop-up. v2.0.8: nothing is stored here (a hydration must
  *  never write back, persist contract). That a device has announced what it owns
  *  is recorded in the profile's durable form (`toDurable`, `cosmetics.announced`). */
@@ -1287,7 +1311,10 @@ function announceOwnedOnce(): void {
   useProfileStore.setState({ flags: { ...s.flags, unlocksCaughtUp: true } });
   if (ids.length) queueUnlocks(ids);
 }
-if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) announceOwnedOnce();
+if (typeof window !== "undefined" && useProfileStore.persist?.hasHydrated()) {
+  announceOwnedOnce();
+  queueVerifiedOnce();
+}
 
 // 2.0.5: one pass per profile. The first live day's rating table sank Legacy-only
 // players; the Hard and Legacy runs still in the history are re-priced with the

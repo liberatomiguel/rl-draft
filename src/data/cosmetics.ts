@@ -62,6 +62,19 @@ export type CosmeticTier = "common" | "uncommon" | "rare" | "epic" | "exclusive"
 /** Manual grant ids (the cloud `profile_grants.grant_id` column). */
 export type GrantId = "early-supporter" | "supporter" | "contributor" | "pro" | "50-50-staff" | "creator" | "insomniac";
 
+/**
+ * v2.0.17: the Verified seal's grant id (`profile_grants.grant_id = 'verified'`).
+ * It is NOT a cosmetic: nothing to equip, hide or earn. The seal is drawn by the
+ * name wherever the account's grants carry it (profile hero, leaderboard rows,
+ * the profile peek). The same string marks its unlock pop-up in the queue and in
+ * `cosmetics.announced`, so the pop-up plays once per account.
+ */
+export const VERIFIED_GRANT = "verified";
+
+export function isVerified(grants: readonly string[] | null | undefined): boolean {
+  return !!grants && grants.includes(VERIFIED_GRANT);
+}
+
 export type CosmeticSource =
   | { type: "legacy-participation" }
   /** Peak pre-season rank ≥ `rankId` (cumulative). `exact`: only that rank. */

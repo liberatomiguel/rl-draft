@@ -28,6 +28,8 @@ import {
   type LeaderboardRow,
 } from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
+import { isVerified } from "@/data/cosmetics";
+import { VerifiedSeal } from "@/components/ui/VerifiedSeal";
 import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
@@ -205,6 +207,7 @@ export function LeaderboardsView() {
                         <span className="flex min-w-0 flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
                           <span className="flex min-w-0 max-w-full items-center gap-2">
                             <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
+                            {isVerified(r.grants) ? <VerifiedSeal size={14} className="-ml-1" /> : null}
                             {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
                           </span>
                           {/* Wrapped: .cos-title sets its own display, so the
@@ -266,7 +269,10 @@ function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLa
         <div className="flex items-center gap-4 p-4 sm:p-5">
           <RankBadge rank={rank} variant="menu" size="md" className="shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="display truncate text-2xl font-bold uppercase leading-tight tracking-wide text-ink">{row.username}</p>
+            <p className="flex min-w-0 items-center gap-2">
+              <span className="display truncate text-2xl font-bold uppercase leading-tight tracking-wide text-ink">{row.username}</span>
+              {isVerified(row.grants) ? <VerifiedSeal size={17} className="-translate-y-[0.5px]" /> : null}
+            </p>
             {row.cosmetics.title ? (
               <div className="mt-1.5">
                 <TitleTag title={row.cosmetics.title} size="sm" />

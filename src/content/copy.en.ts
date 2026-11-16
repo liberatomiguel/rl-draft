@@ -1565,6 +1565,16 @@ export const COSMETICS = {
   unlockContinue: "Continue",
   unlockNext: "Next",
   unlockCount: (i: number, n: number) => `${i} of ${n}`,
+  // v2.0.17: the Verified seal (a hand-given mark by the name, not a cosmetic)
+  verified: {
+    label: "Verified",
+    tooltip: "Verified account",
+    kicker: "Your account is verified",
+    name: "Verified",
+    desc: "The blue seal now sits next to your name on your profile and on every leaderboard.",
+    how: "Granted by the Rocket Draft team",
+    permanent: "Part of your account: it is always shown and cannot be removed.",
+  },
   sources: {
     "legacy-participation": "Finished a run in the pre-season",
     "legacy-rank": (rank: string) => `Peak pre-season rank: ${rank}`,

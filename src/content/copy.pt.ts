@@ -1602,6 +1602,15 @@ export const PT: Copy = {
     unlockContinue: "Continuar",
     unlockNext: "Próximo",
     unlockCount: (i: number, n: number) => `${i} de ${n}`,
+    verified: {
+      label: "Verificado",
+      tooltip: "Conta verificada",
+      kicker: "Sua conta foi verificada",
+      name: "Verificado",
+      desc: "O selo azul agora aparece ao lado do seu nome no seu perfil e em todos os rankings.",
+      how: "Concedido pela equipe do Rocket Draft",
+      permanent: "Faz parte da sua conta: aparece sempre e não pode ser removido.",
+    },
     sources: {
       "legacy-participation": "Concluiu uma run na pré-temporada",
       "legacy-rank": (rank: string) => `Rank máximo na pré-temporada: ${rank}`,

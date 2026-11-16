@@ -24,6 +24,9 @@ import {
   type OAuthProvider,
 } from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
+import { useProfileStore } from "@/store/profileStore";
+import { isVerified } from "@/data/cosmetics";
+import { VerifiedSeal } from "@/components/ui/VerifiedSeal";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { PencilIcon } from "@/components/ui/icons";
@@ -38,6 +41,8 @@ export function ProfileNickname() {
   const status = useAccountStore((s) => s.status);
   const username = useAccountStore((s) => s.username);
   const setUsername = useAccountStore((s) => s.setUsername);
+  // v2.0.17: the Verified seal sits right after the name (no toggle: not a cosmetic).
+  const verified = useProfileStore((s) => isVerified(s.grants));
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -96,6 +101,7 @@ export function ProfileNickname() {
       <span className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">
         {username}
       </span>
+      {verified ? <VerifiedSeal size={22} className="-translate-y-[0.6px] md:h-[26px] md:w-[26px] md:-translate-y-[0.75px]" /> : null}
       <button
         type="button"
         onClick={start}
