@@ -10,6 +10,7 @@
  * the entry funnel (what a pre-2.0 profile had already done).
  */
 
+import { loginXpBreakdown } from "@/engine/missions";
 import { rankForXp } from "@/engine/progression";
 import type { PlayerHistory, SessionProps, TrackedEvent } from "@/lib/analytics";
 import type { OnboardingStep } from "@/lib/analyticsCatalog";
@@ -108,10 +109,17 @@ export function profileHistory(p: ProfileAnalyticsView): PlayerHistory {
   }
   if ((p.quiz?.played ?? 0) > 0) doneSteps.push("quiz_played");
   if (careerOnly(p.careerMarks).length > 0) doneSteps.push("career_created", "career_first_event");
+  // v2.0.23: the day's login reward is paid when the app opens, BEFORE the first
+  // session is counted, so a brand-new player already holds its XP. Until this
+  // fix `xp > 0` made 892 of the 1,061 first sessions of 12-16/11 "existing"
+  // (no run, 25 XP, streak 1) and the new-player count read 16. XP only counts as
+  // history above what a first login pays.
+  const loginOnly = loginXpBreakdown(1).total;
   const existing =
     p.runsCompleted > 0 ||
-    p.xp > 0 ||
-    (p.lifetime?.xp ?? 0) > 0 ||
+    p.xp > loginOnly ||
+    (p.lifetime?.xp ?? 0) > loginOnly ||
+    Object.keys(p.achievements).length > 0 ||
     Object.keys(p.unlockedSpecials).length > 0 ||
     doneSteps.length > 0;
   return { existing, doneSteps };
