@@ -1057,6 +1057,11 @@ export const useProfileStore = create<ProfileState>()(
 
       recordLogin: () => {
         let out = { counted: false, xp: 0, streak: 0, milestone: null as number | null };
+        // v2.0.24: a newcomer's very first login pays its XP without opening the
+        // calendar (it was the third full-screen pop-up before the game). It opens
+        // from the second day on, and at once for anyone who has played before.
+        const before = get();
+        const firstVisit = before.login.total === 0 && before.runsCompleted === 0 && !before.legacy?.preseason;
         set((state) => {
           const r = countLogin(state.login);
           out = { counted: r.counted, xp: r.xp, streak: r.state.streak, milestone: r.milestone };
@@ -1076,7 +1081,7 @@ export const useProfileStore = create<ProfileState>()(
           };
         });
         if (out.counted) {
-          useRewardToasts.getState().showLogin({ streak: out.streak, xp: out.xp, milestone: out.milestone });
+          if (!firstVisit) useRewardToasts.getState().showLogin({ streak: out.streak, xp: out.xp, milestone: out.milestone });
           awardSeasonSystemAchievements(); // E1: the login-streak achievements
         }
         return out;

@@ -2040,3 +2040,7 @@ Miguel's launch-day decisions, with the consequences that are not obvious from t
 ## 2026-11-13 — v2.0.12
 
 - **#163 Legacy rating pays for the title, not for the top 4; this replaces the 2.0.5 rule that the average Legacy run must out-earn the average Normal run.** Miguel (13/11) on player feedback: Legacy paid too much. The points came from third / fourth places (53%), so those and the lost final were cut (17 → 6, 35 → 20) and the title kept (70). A player who reaches Legacy brackets without winning now nets about zero a run; the Swiss exit went from -5 to -3 so that he does not sink. The full launch-day table (36 / 18 / 8 / -7) was rejected on the same data.
+
+## 2026-11-17 — v2.0.24
+
+- **#164 A newcomer meets one pop-up, not three; the first language follows the browser.** Miguel (17/11) on the launch data. The 2.0 announcement is for players with a pre-season only (it replaces "to new and returning players alike" of the cutover build), the login calendar stays closed on a newcomer's very first login (the XP is still paid), and a device with no saved settings starts in Portuguese when the browser's first language is Portuguese. The static HTML of an English URL is still English, so such a player sees English for a moment before the page mounts, as a returning Portuguese player always has. The welcome tour is kept as it is.

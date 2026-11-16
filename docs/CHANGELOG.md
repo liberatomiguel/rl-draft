@@ -10,6 +10,16 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.24] — 2026-11-17 · A newcomer reaches the game sooner
+
+Launch data, 12–16/11: 519 of 903 new players left without playing anything; on mobile 36% left after one page. A new player had to close three full-screen pop-ups before the home page (welcome tour, the 2.0 announcement, the login calendar), and the home page was always English.
+
+#### Changed
+- **The game starts in Portuguese when the browser asks for Portuguese** (`initialLang`, first language of `navigator.languages`). Only the initial value on a device with no saved settings: a saved choice wins and the /pt pages still set PT. About 140 new players with a Portuguese browser had seen the English game (119 from Brazil); the ones who got Portuguese played in 77% of cases against 46%.
+- **The 2.0 announcement is shown only to a player with a pre-season** (`legacy.preseason`). It announces a new version and pre-season rewards to someone who never played 1.x. A veteran on a new device sees it once the account syncs.
+- **A newcomer's first login pays its XP without opening the calendar.** It opens from the second day on, and at once for anyone who has already played.
+- The welcome tour is unchanged, so its own effect can be measured next.
+
 ## [2.0.23] — 2026-11-16 · The new-player flag counts new players; Hard pays the title and the final
 
 #### Balance
