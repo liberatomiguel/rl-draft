@@ -10,6 +10,16 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.21] — 2026-11-16 · The career landing page shows the game
+
+#### Changed
+- **`/rocket-league-manager` and `/pt/manager-rocket-league` are a landing page**: the "Start a Road to Worlds career" button sits under the intro, beside four selling points (free, no download, no account, desktop and mobile), above a capture of HQ. Four sections carry a capture of their screen (Calendar, Market, Finances, Standings), and the four guides are cards. The copy, the H1, the section headings and the FAQ are unchanged, so the page keeps what it ranks for. `ContentArticle` takes an optional `landing` config; every other content page renders as before.
+- The button opens `/career` (it opened the home page, two clicks from the mode).
+- Captures: `public/landing/career-<screen>.webp` at 1600 px and 900 px, taken at 2x from the static export with a save from `careerPerfFixtures.probe.test.ts`; `careerShotSrc` in `src/lib/assets.ts`; a `/landing/*` cache rule in `_headers`.
+
+#### Fixed
+- The landing said training "targets individual attributes". Root cause: copy written before the rc.35 training cycle. It now says training runs in two-week cycles with one plan for the squad.
+
 ## [2.0.20] — 2026-11-16 · Three Road to Worlds guides: transfer market, finances, training
 
 #### Added

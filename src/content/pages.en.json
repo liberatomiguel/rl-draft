@@ -329,7 +329,7 @@
       },
       {
         "heading": "Sign, train and develop players",
-        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players — three starters and a substitute. Training targets individual attributes, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
+        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players — three starters and a substitute. Training runs in two-week cycles with a plan for the whole squad, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
       },
       {
         "heading": "Run the business",
@@ -362,7 +362,9 @@
         "a": "Yes. The player and coach market is built from the same database of real RLCS lineups, from 2016 to today, that the draft game uses."
       }
     ],
-    "ctaLabel": "Start a Road to Worlds career"
+    "ctaLabel": "Start a Road to Worlds career",
+    "badges": ["Free", "No download", "No account", "Desktop and mobile"],
+    "guidesLabel": "Road to Worlds guides"
   },
   "career-guide": {
     "metaTitle": "Rocket League Career Mode Guide — Road to Worlds",

@@ -33,6 +33,9 @@
 /badges/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+/landing/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 # 30 days (PageSpeed flagged the 7-day TTL as a short cache lifetime). Not a
 # year: the header logo and the web manifest request /icon.svg bare, with no
 # content hash, so a new icon must still reach returning players in weeks.

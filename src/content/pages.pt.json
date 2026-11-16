@@ -329,7 +329,7 @@
       },
       {
         "heading": "Contrate, treine e desenvolva jogadores",
-        "body": "O mercado de transferências funciona em janelas, com valores de compra, salários, contratos e propostas de rivais. O seu elenco tem quatro jogadores — três titulares e um substitute. O treino mira atributos individuais, os coaches definem a velocidade da evolução, e coaches reais da RLCS aparecem no mercado. Os jogadores evoluem com partidas e treino e caem com o passar dos anos, então o roster precisa ser renovado."
+        "body": "O mercado de transferências funciona em janelas, com valores de compra, salários, contratos e propostas de rivais. O seu elenco tem quatro jogadores — três titulares e um substitute. O treino acontece em ciclos de duas semanas com um plano para o elenco inteiro, os coaches definem a velocidade da evolução, e coaches reais da RLCS aparecem no mercado. Os jogadores evoluem com partidas e treino e caem com o passar dos anos, então o roster precisa ser renovado."
       },
       {
         "heading": "Cuide do negócio",
@@ -362,7 +362,9 @@
         "a": "Sim. O mercado de jogadores e coaches é montado com a mesma base de lineups reais da RLCS, de 2016 até hoje, usada no jogo de draft."
       }
     ],
-    "ctaLabel": "Começar uma carreira no Road to Worlds"
+    "ctaLabel": "Começar uma carreira no Road to Worlds",
+    "badges": ["Grátis", "Sem download", "Sem conta", "Desktop e celular"],
+    "guidesLabel": "Guias do Road to Worlds"
   },
   "career-guide": {
     "metaTitle": "Guia do Modo Carreira de Rocket League: Dicas",

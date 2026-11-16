@@ -4,7 +4,7 @@ import { PT } from "@/content/copy.pt";
 import { LIVE_PAGE_SLUGS, PAGES_EN, PAGES_PT, PAGE_ROUTES, REGION_PAGES, type PageSlug } from "@/content/pages";
 import { regionShowcase } from "@/lib/database";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
-import type { ContentPageCopy, RelatedLink } from "./ContentArticle";
+import type { ContentPageCopy, LandingConfig, RelatedLink } from "./ContentArticle";
 import { LocaleContent } from "./LocaleContent";
 
 /**
@@ -26,6 +26,24 @@ function relatedLinks(slug: PageSlug, locale: "en" | "pt"): RelatedLink[] {
       label: pages[s].title,
     })),
   ];
+}
+
+/** The Road to Worlds guides, as cards on the landing page. */
+const CAREER_GUIDES: readonly PageSlug[] = ["career-guide", "career-market", "career-finances", "career-training"];
+
+/** The landing layout of the pages that have one (v2.0.21: the career landing). */
+function landingFor(slug: PageSlug, locale: "en" | "pt"): LandingConfig | undefined {
+  if (slug !== "manager") return undefined;
+  const pages = locale === "pt" ? PAGES_PT : PAGES_EN;
+  return {
+    hero: "hq",
+    // Sections: club, calendar, signings and training, business, world, data.
+    shots: { 1: "calendar", 2: "market", 3: "finances", 4: "standings" },
+    guides: CAREER_GUIDES.filter((s) => LIVE_PAGE_SLUGS.includes(s)).map((s) => ({
+      href: PAGE_ROUTES[s][locale],
+      label: pages[s].title,
+    })),
+  };
 }
 
 /**
@@ -73,6 +91,8 @@ export function ContentPage({
         relatedEn={relatedLinks(slug, "en")}
         relatedPt={relatedLinks(slug, "pt")}
         region={REGION_PAGES[slug] ? regionShowcase(REGION_PAGES[slug]) : undefined}
+        landingEn={landingFor(slug, "en")}
+        landingPt={landingFor(slug, "pt")}
         initialLocale={initialLocale}
         backHref={backHref}
         ctaHref={ctaHref}
