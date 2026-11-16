@@ -101,7 +101,7 @@ export function ProfileNickname() {
       <span className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">
         {username}
       </span>
-      {verified ? <VerifiedSeal size={22} className="-translate-y-[0.6px] md:h-[26px] md:w-[26px] md:-translate-y-[0.75px]" /> : null}
+      {verified ? <VerifiedSeal size={17} className="-translate-y-[0.6px] md:h-[20px] md:w-[20px] md:-translate-y-[0.75px]" /> : null}
       <button
         type="button"
         onClick={start}

@@ -10,6 +10,13 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.18] — 2026-11-16 · Rank emblem in the pre-season rank titles, smaller Verified seal
+
+#### Changed
+- **Pre-season rank titles** carry the rank emblem between the prefix and the rank: "PRE-SEASON (emblem) CHAMPION", from Bronze to Supersonic Legend. Wherever the title shows (leaderboards, profile, peek, locker, unlock pop-up); colours, glow and rarity unchanged.
+- **Verified seal** on the profile is smaller (17 px, 20 px on wide screens; was 22 / 26), still centred on the capitals.
+- Staging preview board: the fictional players' season XP spreads over every rank (it stopped at Silver).
+
 ## [2.0.17] — 2026-11-16 · Verified seal
 
 #### Added
