@@ -1,8 +1,9 @@
 /**
  * Road to Worlds — /career route group layout (SERVER component).
  *
- * - Career mode is an alpha: never indexed, whatever the flag says.
- * - FEATURES.careerMode off (the production default — see balance.ts) →
+ * - Never indexed, whatever the flag says: these screens depend on the save on
+ *   the device. Search lands on /rocket-league-manager and /road-to-worlds-guide.
+ * - FEATURES.careerMode off (the kill switch — see balance.ts) →
  *   notFound(): every /career/* route renders the 404 boundary with a noindex
  *   tag instead of the career UI. A static export still writes those files
  *   (with HTTP 200), so `scripts/postexport.mjs` deletes `out/career*` and the

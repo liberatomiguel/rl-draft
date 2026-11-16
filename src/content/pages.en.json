@@ -313,11 +313,11 @@
     "ctaLabel": "Simulate an RLCS tournament"
   },
   "manager": {
-    "metaTitle": "Rocket League Manager Game & Career Simulator",
-    "metaDescription": "Road to Worlds is a free Rocket League manager game: found a club, sign real RLCS players, train them, run sponsors and finances, and win the World Championship.",
+    "metaTitle": "Rocket League Career Mode — Free RLCS Manager Game",
+    "metaDescription": "Road to Worlds is a free Rocket League career mode and manager game: found a club, sign real RLCS players, train them, run the finances and win the World Championship.",
     "kicker": "Career mode",
-    "title": "Road to Worlds — Rocket League Manager Game",
-    "intro": "Road to Worlds is Rocket Draft's career mode: a free Rocket League esports manager game that runs in your browser. Found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
+    "title": "Road to Worlds — Rocket League Career Mode & Manager Game",
+    "intro": "Road to Worlds is the Rocket League career mode of Rocket Draft: a free Rocket League esports manager game that runs in your browser. Found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
     "sections": [
       {
         "heading": "Found your club",
@@ -346,6 +346,10 @@
     ],
     "faqs": [
       {
+        "q": "Does Rocket League have a career mode?",
+        "a": "Rocket League itself has no career mode built around its esports scene. Road to Worlds is a free, fan-made Rocket League career mode: you found a club and take it through the RLCS seasons to the World Championship."
+      },
+      {
         "q": "Is there a Rocket League manager game?",
         "a": "Road to Worlds, the career mode of Rocket Draft, is a free fan-made Rocket League esports manager game. You run a club: signings, training, finances and the RLCS calendar."
       },
@@ -356,6 +360,54 @@
       {
         "q": "Does it use real RLCS players and teams?",
         "a": "Yes. The player and coach market is built from the same database of real RLCS lineups, from 2016 to today, that the draft game uses."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-guide": {
+    "metaTitle": "Rocket League Career Mode Guide — Road to Worlds",
+    "metaDescription": "A beginner's guide to Road to Worlds, the free Rocket League career mode: pick a region, build a roster you can afford, train it and win the World Championship.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Guide — How to Win the Rocket League Career Mode",
+    "intro": "A beginner's guide to Road to Worlds, the Rocket League career mode in Rocket Draft. It covers the choices that decide a career: the region and the difficulty, a first roster you can pay for, training, the RLCS calendar, the money, and when to renew the squad.",
+    "sections": [
+      {
+        "heading": "Pick your region and difficulty",
+        "body": "The region decides who you play every week and which events you enter, and each region card shows its relative difficulty before you choose. The difficulty sets your starting budget and how forgiving the finances are. For a first career, take Normal and a region whose teams you know: recognising the names on the market makes every signing easier to judge."
+      },
+      {
+        "heading": "Build a roster you can pay for",
+        "body": "A squad is four players: three starters and a substitute. The transfer fee is paid once, but wages leave the account every week, so read the wage before the overall. A new club has little reputation, and the elite names and players under contract elsewhere stay out of reach until it grows. Start with players you can afford, win with them, and let the reputation open the market."
+      },
+      {
+        "heading": "Train with a plan",
+        "body": "Training targets individual attributes, so decide what each player needs instead of spreading the work evenly. A coach sets how fast the squad grows and lowers the risk of a player missing a week through training wear; real RLCS coaches appear on the coach market. The substitute earns less experience from a series than the starters do, so rotate the lineup at HQ when you want the bench to keep up."
+      },
+      {
+        "heading": "Read the calendar",
+        "body": "Each season is a run of regional events with open qualifiers. Regional points send the best teams to the Majors, and season points decide who goes to the World Championship. Open weeks offer community cups and invitationals: they pay prize money and give the squad matches. RLCS Season X, where the career opens, has no World Championship, as it had none in real life, so the first title race is the next season's."
+      },
+      {
+        "heading": "Keep the club solvent",
+        "body": "Prize money, sponsors and reputation bring the money in; wages, staff and transfer fees take it out. Sponsor offers wait for you to accept or decline them and carry goals for the length of the contract, so sign the ones your squad can meet. The Finances screen shows the weekly statement and the projection for the season. Check it before every signing. Loans cover a bad stretch, and they have to be repaid. Support staff each help in one area and each cost a retainer."
+      },
+      {
+        "heading": "Renew the squad before it declines",
+        "body": "Players improve with matches and training and decline as the years pass. Rival clubs bid for your players during the transfer windows, and a good offer for a player near the end of their peak pays for the next one. If the world title has not come by the end of 2026, the career continues in an endless mode with new seasons, and the RLCS 2027 lineups join the world there."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How do you win Road to Worlds?",
+        "a": "By winning the World Championship. Score regional points to reach the Majors, collect enough season points to qualify for Worlds, and then win its bracket."
+      },
+      {
+        "q": "Which region should I start a Rocket League career in?",
+        "a": "Each region card shows its relative difficulty before you choose. Take an easier region for a first career and a harder one when you want a longer climb."
+      },
+      {
+        "q": "Is my career saved?",
+        "a": "Yes. Careers are saved on your device, in separate save slots, and the game is free with no download."
       }
     ],
     "ctaLabel": "Start a Road to Worlds career"

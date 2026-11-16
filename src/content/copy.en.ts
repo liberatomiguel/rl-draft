@@ -205,8 +205,8 @@ export const HOME_SEO = {
     // v2.0 (WEB-01): shown only by a build that ships Road to Worlds (HomeSeoContent).
     {
       id: "career",
-      title: "Road to Worlds — a Rocket League manager mode",
-      body: "Road to Worlds turns the draft into a career. Found a club, sign and develop real RLCS players, manage wages, sponsors and transfers, and play the RLCS calendar season after season — regional events, Majors and the World Championship — in a world that is simulated around you.",
+      title: "Road to Worlds — a Rocket League career mode",
+      body: "Road to Worlds is a Rocket League career mode and manager game. Found a club, sign and develop real RLCS players, manage wages, sponsors and transfers, and play the RLCS calendar season after season — regional events, Majors and the World Championship — in a world that is simulated around you.",
     },
   ],
   /** Descriptive internal links (no \"click here\"). Hrefs live in the component. */
@@ -223,7 +223,8 @@ export const HOME_SEO = {
     // v2.0 (WEB-01): the search-intent pages.
     simulator: "Rocket League esports simulator",
     fantasy: "RLCS fantasy draft",
-    manager: "Road to Worlds, the Rocket League manager game",
+    manager: "Road to Worlds, the Rocket League career mode and manager game",
+    careerGuide: "Rocket League career mode guide",
     database: "RLCS rosters, teams and player ratings",
   },
 };
@@ -2070,12 +2071,12 @@ export const DATABASE_UI = {
   seasonTitle: (season: string) => `${season} Rosters & Player Ratings`,
   seasonIntro: (season: string, rosters: number, regions: number) =>
     `Every ${season} roster in Rocket Draft: ${rosters} teams across ${regions} region${regions === 1 ? "" : "s"}, strongest first, with each player's overall.`,
-  teamTitle: (team: string) => `${team} RLCS Rosters by Season`,
+  teamTitle: (team: string) => `${team} Rocket League Roster by Season`,
   teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
     rosters === 1
       ? `${team} (${region}) in Rocket Draft: its ${first} roster, with each player's overall.`
       : `${team} (${region}) in Rocket Draft: ${rosters} rosters from ${first} to ${last}, with each player's overall.`,
-  playerTitle: (player: string) => `${player} — RLCS Rating & Teams`,
+  playerTitle: (player: string) => `${player} Rocket League — RLCS Rating & Teams`,
   playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
     `${player} (${region}) in Rocket Draft: ${seasons} RLCS season${seasons === 1 ? "" : "s"}, with a peak overall of ${peak} for ${peakTeam} in ${peakSeason}.`,
   teamsIndexTitle: "RLCS Teams — Every Organization by Region",

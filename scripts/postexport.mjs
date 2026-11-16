@@ -56,7 +56,12 @@ const CAREER_ENTRY = /^career(\.[a-z]+)?$/;
  * career files. Paths relative to out/, without extension — keep in sync with
  * CAREER_ONLY_PAGES in src/content/pageRoutes.ts.
  */
-const CAREER_LANDING = ["rocket-league-manager", "pt/manager-rocket-league"];
+const CAREER_LANDING = [
+  "rocket-league-manager",
+  "pt/manager-rocket-league",
+  "road-to-worlds-guide",
+  "pt/guia-road-to-worlds",
+];
 
 /** The production origin (src/config/site.ts SITE.url): canonicals and the sitemap use it. */
 const SITE_URL = "https://rocketdraft.app";

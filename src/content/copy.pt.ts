@@ -191,8 +191,8 @@ export const PT: Copy = {
       },
       {
         id: "career",
-        title: "Road to Worlds — um modo manager de Rocket League",
-        body: "O Road to Worlds transforma o draft em carreira. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada — eventos regionais, Majors e o World Championship — em um mundo simulado ao seu redor.",
+        title: "Road to Worlds — um modo carreira de Rocket League",
+        body: "O Road to Worlds é um modo carreira e manager de Rocket League. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada — eventos regionais, Majors e o World Championship — em um mundo simulado ao seu redor.",
       },
     ],
     links: {
@@ -207,7 +207,8 @@ export const PT: Copy = {
       play: "Jogue o jogo de draft da RLCS",
       simulator: "Simulador de Rocket League esports",
       fantasy: "Draft fantasy da RLCS",
-      manager: "Road to Worlds, o manager de Rocket League",
+      manager: "Road to Worlds, o modo carreira e manager de Rocket League",
+      careerGuide: "Guia do modo carreira de Rocket League",
       database: "Rosters, times e overalls da RLCS",
     },
   },
@@ -2080,12 +2081,12 @@ export const PT: Copy = {
     seasonTitle: (season: string) => `Rosters e Overalls da ${season}`,
     seasonIntro: (season: string, rosters: number, regions: number) =>
       `Todos os rosters da ${season} no Rocket Draft: ${rosters} times em ${regions} ${regions === 1 ? "região" : "regiões"}, do mais forte ao mais fraco, com o overall de cada jogador.`,
-    teamTitle: (team: string) => `Rosters da ${team} na RLCS por Temporada`,
+    teamTitle: (team: string) => `Roster da ${team} no Rocket League por Temporada`,
     teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
       rosters === 1
         ? `${team} (${region}) no Rocket Draft: o roster da ${first}, com o overall de cada jogador.`
         : `${team} (${region}) no Rocket Draft: ${rosters} rosters, da ${first} à ${last}, com o overall de cada jogador.`,
-    playerTitle: (player: string) => `${player} — Overall e Times na RLCS`,
+    playerTitle: (player: string) => `${player} no Rocket League — Overall e Times na RLCS`,
     playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
       `${player} (${region}) no Rocket Draft: ${seasons} ${seasons === 1 ? "temporada" : "temporadas"} de RLCS, com overall máximo de ${peak} pela ${peakTeam} na ${peakSeason}.`,
     teamsIndexTitle: "Times da RLCS — Todas as Organizações por Região",

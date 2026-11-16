@@ -10,6 +10,20 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.19] — 2026-11-16 · Search pass: career mode in the titles, a Road to Worlds guide
+
+Source: Search Console, 15 Aug – 14 Nov 2026 (2,426 clicks, 57 % of them on the brand name).
+
+#### Added
+- **Road to Worlds guide** at `/road-to-worlds-guide` and `/pt/guia-road-to-worlds`: region and difficulty, a first roster, training, the calendar, the finances, renewing the squad. A career-only page like the landing (`CAREER_ONLY_PAGES`, `CAREER_LANDING` in `postexport.mjs`), linked from both home pages and from every content page.
+- Landing FAQ: "Does Rocket League have a career mode?" (EN and PT).
+
+#### Changed
+- **Career landing** title and H1 lead with "Rocket League Career Mode": it is the career query with the most searches (83 impressions; "manager game" 51, "career simulator" 25) and the title did not contain it. "Manager Game" stays in both.
+- **Home description** (EN and `/pt`) names the career mode in its first sentence; it sat at the end, past the point where the snippet is cut. The home title is unchanged.
+- **Team pages**: "{team} Rocket League Roster by Season" (was "{team} RLCS Rosters by Season"). The searches are "g2 rocket league roster", "vitality rocket league roster". **Player pages** carry "Rocket League" after the nickname for the same reason.
+- Home section and link text for Road to Worlds say "career mode". `CONTENT_DATE` is 2026-11-16.
+
 ## [2.0.18] — 2026-11-16 · Rank emblem in the pre-season rank titles, smaller Verified seal
 
 #### Changed
