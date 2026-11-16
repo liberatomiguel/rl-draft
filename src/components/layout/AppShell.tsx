@@ -23,6 +23,7 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
 import { RewardToaster } from "@/components/RewardToaster";
 import { LoginStreakModal } from "@/components/LoginStreakModal";
+import { isGameRoute } from "@/lib/gameRoutes";
 import { CosmeticUnlockModal } from "@/components/cosmetics/CosmeticUnlockModal";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { PlayStrip } from "./PlayStrip";
@@ -161,7 +162,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SettingsEffects />
       <AchievementToaster />
       <RewardToaster />
-      {FEATURES.playtest ? null : (
+      {/* v2.0.22: reward pop-ups open on the game's own routes only (lib/gameRoutes). */}
+      {FEATURES.playtest || !isGameRoute(pathname) ? null : (
         <>
           <LoginStreakModal />
           <CosmeticUnlockModal />

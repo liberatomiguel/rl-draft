@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.22] — 2026-11-16 · Reward pop-ups stay off the content pages
+
+#### Changed
+- **The daily-login calendar and the cosmetic-unlock ceremony open only on the game's own routes**: the home menu, /play, /career, /challenges, /collection, /profile, /leaderboards, /missions, /achievements, /quiz and /settings (`isGameRoute`, `src/lib/gameRoutes.ts`). On the articles, the career landing, the RLCS database, /how-to-play, /pt and the reference pages nothing opens. The XP is credited as before; the pending pop-up stays in its store and opens on the first game route of the session.
+
+#### Fixed
+- A first visit from a search result was met by the Daily Login calendar on top of the page it came for, the new career landing included. Root cause: `AppShell` mounted `LoginStreakModal` and `CosmeticUnlockModal` on every route.
+
 ## [2.0.21] — 2026-11-16 · The career landing page shows the game
 
 #### Changed
