@@ -21,6 +21,9 @@ export type PageSlug =
   | "simulator"
   | "manager"
   | "career-guide"
+  | "career-market"
+  | "career-finances"
+  | "career-training"
   | "fantasy";
 
 export const PAGE_ROUTES: Record<PageSlug, { en: string; pt: string }> = {
@@ -43,6 +46,10 @@ export const PAGE_ROUTES: Record<PageSlug, { en: string; pt: string }> = {
   manager: { en: "/rocket-league-manager", pt: "/pt/manager-rocket-league" },
   // v2.0.19: the Road to Worlds beginner's guide (same "/career" rule as above).
   "career-guide": { en: "/road-to-worlds-guide", pt: "/pt/guia-road-to-worlds" },
+  // v2.0.20: one guide per career system (market, finances, training).
+  "career-market": { en: "/rocket-league-manager-transfer-market", pt: "/pt/manager-rocket-league-mercado" },
+  "career-finances": { en: "/rocket-league-manager-finances", pt: "/pt/manager-rocket-league-financas" },
+  "career-training": { en: "/rocket-league-manager-training", pt: "/pt/manager-rocket-league-treino" },
   fantasy: { en: "/rlcs-fantasy-draft", pt: "/pt/fantasy-rlcs" },
 };
 
@@ -52,7 +59,13 @@ export const PAGE_ROUTES: Record<PageSlug, { en: string; pt: string }> = {
  * `scripts/postexport.mjs` deletes the exported files (keep its
  * CAREER_LANDING list in sync with this one), and nothing links to them.
  */
-export const CAREER_ONLY_PAGES: readonly PageSlug[] = ["manager", "career-guide"];
+export const CAREER_ONLY_PAGES: readonly PageSlug[] = [
+  "manager",
+  "career-guide",
+  "career-market",
+  "career-finances",
+  "career-training",
+];
 
 /** The regional pages and the dataset region each one describes. */
 export const REGION_PAGES: Partial<Record<PageSlug, string>> = {
@@ -75,7 +88,7 @@ export const LIVE_PAGE_SLUGS: readonly PageSlug[] = (Object.keys(PAGE_ROUTES) as
  * Date of the last meaningful change to the pages' content: the sitemap's
  * `lastmod` and the articles' `dateModified`. Bump it when the copy changes.
  */
-export const CONTENT_DATE = "2026-11-16"; // v2.0.19: career-mode search pass
+export const CONTENT_DATE = "2026-11-16"; // v2.0.20: career guides
 
 /** Resolve a content page's URL for the active locale. */
 export function localePath(slug: PageSlug, locale: "en" | "pt"): string {

@@ -381,7 +381,7 @@
       },
       {
         "heading": "Train with a plan",
-        "body": "Training targets individual attributes, so decide what each player needs instead of spreading the work evenly. A coach sets how fast the squad grows and lowers the risk of a player missing a week through training wear; real RLCS coaches appear on the coach market. The substitute earns less experience from a series than the starters do, so rotate the lineup at HQ when you want the bench to keep up."
+        "body": "Training runs in two-week cycles. For each one you choose an objective (growth, chemistry or recovery), one attribute for the squad to sharpen, the intensity and the scrims. With a coach the plan comes ready and training pays more; a coach also lowers the risk of a player missing a week through training wear; real RLCS coaches appear on the coach market. The substitute earns less experience from a series than the starters do, so rotate the lineup at HQ when you want the bench to keep up."
       },
       {
         "heading": "Read the calendar",
@@ -408,6 +408,150 @@
       {
         "q": "Is my career saved?",
         "a": "Yes. Careers are saved on your device, in separate save slots, and the game is free with no download."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-market": {
+    "metaTitle": "Rocket League Manager Transfers — Market Guide",
+    "metaDescription": "How the transfer market works in Road to Worlds, the Rocket League manager game: windows, free agents, buyouts, contract talks, rival bids and the coach market.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Transfer Market — Signings, Contracts and Bids",
+    "intro": "The transfer market is where a Road to Worlds career is won or lost. This guide explains when you can sign, what a player costs, how a contract talk works, and how to sell before a player loses value.",
+    "sections": [
+      {
+        "heading": "When the market is open",
+        "body": "Deals happen only while a transfer window is open. Windows open between the splits of a season and before the World Championship. Scouting stays open the whole time, so use the closed weeks to study players and prices and arrive at the window with a list. There is one exception: when your squad is short of three players, a free agent can take the empty seat on any day."
+      },
+      {
+        "heading": "Free agents and buyouts",
+        "body": "There are two ways to sign a player. A free agent costs no fee, only the wage. A player under contract with another club has to be bought out: you pay a transfer fee to the club and then agree terms with the player. Every price on the Market shows how it was calculated. A new club can sign free agents only; buying out contracts unlocks as its reputation grows."
+      },
+      {
+        "heading": "Reputation decides who will join",
+        "body": "Money is not enough. Players above a certain level will not join a club whose reputation is too low, whatever the offer. Results raise reputation, and reputation opens the next level of player. The Market has a filter that shows only the players your club can sign today, which keeps the list honest when you are planning a window."
+      },
+      {
+        "heading": "The contract talk",
+        "body": "A player asks for three things: a weekly wage, a share of the prize money and a signing bonus. You can move each one, and the screen shows the chance that the player signs with the offer as it stands. A larger prize share or bonus lets you pay a lower wage, which helps a club with little cash each week. Pay the full ask and the player signs for certain. The contract length is part of the offer as well."
+      },
+      {
+        "heading": "Selling and rival bids",
+        "body": "Rival clubs bid for your players during the windows, and every bid waits for you to accept or decline it. You can mark a player as available and expect offers in the next window. A club in the red receives offers below market value, so sell before the money runs out, not after. A player whose contract ends leaves for free: renew it before the season closes or sell the player while there is still a price."
+      },
+      {
+        "heading": "The reserve and the coach market",
+        "body": "The fourth player is the reserve, who steps in when a starter cannot play. Without one the team misses that event. A reserve signs only inside a window, so do not leave the seat empty. Coaches have a market of their own: a generic coach comes first, and retired pros and real RLCS coaches join the shortlist as the club's reputation grows. Coaches sign contracts and renew them like players."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "When do transfer windows open in Road to Worlds?",
+        "a": "Between the splits of each season and before the World Championship. Outside a window you can scout, and a free agent can fill an empty starting seat."
+      },
+      {
+        "q": "Why can't I sign a player I can afford?",
+        "a": "Either the window is closed, the squad is full, or the club's reputation is too low for a player of that level. The Market says which one applies."
+      },
+      {
+        "q": "What happens when a contract ends?",
+        "a": "The player leaves for free. Renew the contract before the season ends, or sell the player in a window before it runs out."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-finances": {
+    "metaTitle": "Rocket League Manager Finances — Sponsors & Loans",
+    "metaDescription": "How money works in Road to Worlds, the Rocket League manager game: the Monday statement, prize money, sponsor deals and goals, loans, the floor and what to buy first.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Finances — Sponsors, Wages and Loans",
+    "intro": "A Road to Worlds career ends in two ways: with the world title or with the bank. This guide covers where the money comes from, where it goes every Monday, how sponsor deals pay, and how to borrow without losing the club.",
+    "sections": [
+      {
+        "heading": "Monday is payday",
+        "body": "The books move once a week. Every Monday the sponsor pays in, and wages, staff, facility upkeep and loan instalments go out. Prize money arrives with the results of each event. The Finances screen shows three things: the balance over time, the statement of the coming Monday, and the projection for the rest of the season. Read the projection before any signing, because a wage is paid every week until the contract ends."
+      },
+      {
+        "heading": "Prize money and the players' share",
+        "body": "Regional events, Majors, the World Championship, community cups and invitationals all pay prize money. If you agreed a prize share in a contract talk, that part goes to the players before the rest reaches the club. Open weeks matter for this reason: an invitational or a community cup is income in a week that would otherwise only cost wages."
+      },
+      {
+        "heading": "Sponsor deals",
+        "body": "A sponsor pays a guaranteed amount each split and a bonus for every goal you reach. The offers come in three profiles. A steady deal pays the least and carries no fines. A bold deal pays the most and fines a missed goal. Bold deals open as the reputation grows. Miss goals repeatedly and the next offer drops a tier, so sign the deal whose goals your squad can meet, not the one with the largest number."
+      },
+      {
+        "heading": "Loans and the floor",
+        "body": "There are two loans. The voluntary one is available whenever you want it: the bank sizes the credit by your reputation and you repay it in weekly instalments with interest. The emergency loan is not a choice. If a Monday closes below the floor, the bank lends by itself and sets a deadline. Miss that deadline and the career ends. While the emergency loan is owed you cannot pay transfer fees."
+      },
+      {
+        "heading": "What to buy first",
+        "body": "Reputation unlocks a ladder of investments: gear that speeds up training, the coach, bootcamps that build chemistry, better sponsor tiers, a psychologist and the support staff. Each one costs money up front or a retainer every week. Buy what raises results first, since results bring prize money and reputation, and add weekly costs only when the projection stays positive after them."
+      },
+      {
+        "heading": "Getting out of the red",
+        "body": "When the balance is falling, act before the floor. Check the wage bill first: one expensive player on the bench can cost more than a loan. Enter the open-week events for the prize money. Sell in the next window while the offers are still at market value, because a club in the red receives lower ones. Take the voluntary loan early if the projection shows a short gap, and keep the emergency loan as the last resort it is."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can you go bankrupt in Road to Worlds?",
+        "a": "Yes. If the balance closes a Monday below the floor, the bank makes an emergency loan with a deadline. Failing to repay it by the deadline ends the career."
+      },
+      {
+        "q": "Which sponsor deal should I sign?",
+        "a": "The one whose goals your squad can reach. A steady deal has no fines; a bold deal pays more and fines every missed goal."
+      },
+      {
+        "q": "When are wages paid?",
+        "a": "Every Monday, together with staff, upkeep and loan instalments. The Finances screen shows the next statement in advance."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-training": {
+    "metaTitle": "Rocket League Manager Training — Player Growth",
+    "metaDescription": "How training works in Road to Worlds, the Rocket League manager game: two-week cycles, growth and chemistry, wear, coaches, peak and decline, and the reserve.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Training — How Players Grow and Decline",
+    "intro": "Signing a player is half of the work in Road to Worlds. The other half is training: how fast a player reaches their potential, how long the peak lasts and how well the three starters play together. This guide explains the training cycle and the choices in it.",
+    "sections": [
+      {
+        "heading": "The two-week cycle",
+        "body": "Training runs in cycles of 14 days. For each cycle you set a plan with four parts: the objective, the focus, the intensity and the scrims. The plan applies to the whole squad, and its result lands when the cycle completes. You can keep the same plan for the next cycle or change it when the calendar changes."
+      },
+      {
+        "heading": "Three objectives",
+        "body": "The objective is the main choice. Development makes attributes grow faster toward each player's peak. Chemistry makes the squad gel faster, which matters most after a signing. Recovery lowers wear and helps veterans hold their level longer. A common pattern is development in the quiet weeks, chemistry after a transfer window and recovery before the events that decide the season."
+      },
+      {
+        "heading": "Focus, intensity and scrims",
+        "body": "The focus is one attribute that every player sharpens during the cycle. The intensity trades growth for wear: a light cycle gives a smaller boost and much less wear. Scrims add match practice at a chosen difficulty and add their own wear. Wear is the cost of training hard: a worn player can miss an event, and then the reserve has to play."
+      },
+      {
+        "heading": "What the coach does",
+        "body": "With a coach, the plan for each cycle comes ready and training pays more. You can let the coach start every cycle or only read the recommendation and decide yourself. A coach also lowers the risk of losing a player to training wear. Better coaches arrive as the club's reputation grows, from a generic coach to retired pros and real RLCS coaches."
+      },
+      {
+        "heading": "Potential, peak and decline",
+        "body": "Every player grows toward a potential, holds a peak for a time and then declines. The Training screen shows which of the three stages each player is in, and how fast a player past their prime is losing overall. Use it before every renewal: a long contract for a player who is still growing is cheap later, and the same contract for a declining player is paid in full while the overall drops."
+      },
+      {
+        "heading": "The reserve and the gear",
+        "body": "The reserve earns less experience from a series than the starters, and falls behind unless you rotate the lineup or hire an assistant coach, who raises what reserves learn. Gear bought on the progression ladder, from peripherals to a performance centre, speeds up training for everyone. Bootcamps add chemistry and a rating edge before the big events."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How do players improve in Road to Worlds?",
+        "a": "Through training cycles and official matches. Players grow toward their potential every week, faster with a coach, better gear and a development plan."
+      },
+      {
+        "q": "Do players get worse with age?",
+        "a": "Yes. After the peak a player declines, and the Training screen shows the rate. Recovery cycles help veterans hold their level longer."
+      },
+      {
+        "q": "Do I need a coach?",
+        "a": "No, but training pays more with one, the plan comes ready each cycle, and the risk of a player missing an event from wear is lower."
       }
     ],
     "ctaLabel": "Start a Road to Worlds career"

@@ -61,6 +61,12 @@ const CAREER_LANDING = [
   "pt/manager-rocket-league",
   "road-to-worlds-guide",
   "pt/guia-road-to-worlds",
+  "rocket-league-manager-transfer-market",
+  "pt/manager-rocket-league-mercado",
+  "rocket-league-manager-finances",
+  "pt/manager-rocket-league-financas",
+  "rocket-league-manager-training",
+  "pt/manager-rocket-league-treino",
 ];
 
 /** The production origin (src/config/site.ts SITE.url): canonicals and the sitemap use it. */

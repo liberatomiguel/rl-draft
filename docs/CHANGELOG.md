@@ -10,6 +10,17 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.20] — 2026-11-16 · Three Road to Worlds guides: transfer market, finances, training
+
+#### Added
+- **Transfer market guide** (`/rocket-league-manager-transfer-market`, `/pt/manager-rocket-league-mercado`): windows, free agents and buyouts, the reputation gate, the contract talk, rival bids, the reserve and the coach market.
+- **Finances guide** (`/rocket-league-manager-finances`, `/pt/manager-rocket-league-financas`): the Monday statement, prize money and the players' share, sponsor profiles and goals, the two loans and the floor, the progression ladder, getting out of the red.
+- **Training guide** (`/rocket-league-manager-training`, `/pt/manager-rocket-league-treino`): the 14-day cycle, the three objectives, focus / intensity / scrims, the coach, potential / peak / decline, the reserve and the gear.
+- All three are career-only pages (`CAREER_ONLY_PAGES`, `CAREER_LANDING`), written from the in-game tour and explainer copy, with no balance numbers except the 14-day cycle. Every content page links to them.
+
+#### Fixed
+- The Road to Worlds guide (v2.0.19) said training "targets individual attributes". Root cause: the sentence was taken from the landing page, which predates the rc.35 training cycle. It now describes the cycle: objective, one squad focus, intensity, scrims.
+
 ## [2.0.19] — 2026-11-16 · Search pass: career mode in the titles, a Road to Worlds guide
 
 Source: Search Console, 15 Aug – 14 Nov 2026 (2,426 clicks, 57 % of them on the brand name).
