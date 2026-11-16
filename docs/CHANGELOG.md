@@ -10,7 +10,10 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.23] — 2026-11-16 · The new-player flag counts new players
+## [2.0.23] — 2026-11-16 · The new-player flag counts new players; Hard pays the title and the final
+
+#### Balance
+- **Hard pays Season Rating for the title and the final only** (third / fourth 2 → 0; BALANCE_VERSION 33). On the current table Hard was the best climb per run: +3.1 on 744 worldwide runs against Normal +1.7 and Legacy +1.1; the same results now net about +2.4. Future runs only.
 
 #### Fixed
 - **`session_started.existingPlayer` was true for almost every new player** (16 "new" in 1,061 first sessions, 12–16/11). Root cause: `profileHistory` treated any XP as history, and the day's login reward (25 XP) is paid when the app opens, before the device's first session is counted. XP now counts as history only above what a first login pays; achievements count too. The flag is decided once per device, so devices first seen before this release keep the wrong value: for 12–16/11 a new player is a first session (`sessionNumber` 1) with `runsCompleted` 0, `xp` ≤ 50 and `achievements` 0, which gives 903 new players (116 / 285 / 162 / 137 / 203 a day).

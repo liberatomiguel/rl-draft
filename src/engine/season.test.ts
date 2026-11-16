@@ -151,6 +151,10 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     expect(seasonRatingDelta({ ...base, difficulty: "legacy", placement: "top8" })).toBe(0); // v2.0.6: only the top 4 pays
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top8" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "top6" })).toBe(0);
+    // v2.0.23: Hard pays the title and the final only.
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "third" })).toBe(0);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "fourth" })).toBe(0);
+    expect(seasonRatingDelta({ ...base, difficulty: "hard", placement: "runner_up" })).toBe(5);
     expect(seasonRatingDelta({ ...base, difficulty: "easy", placement: "top4" })).toBe(0);
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "swiss_exit" })).toBe(-4);
   });

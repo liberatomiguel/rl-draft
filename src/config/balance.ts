@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 32;
+export const BALANCE_VERSION = 33;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -783,7 +783,12 @@ export const SEASON_RATING = {
     // 18 -> 40, semis 8 -> 18, MAKING THE BRACKET now pays 5 (was 0), a Swiss exit
     // costs 6 (was 7). On the same results the average Legacy run nets about +4,
     // twice Normal's. Hard moves above Normal: 10 / 5 / 2 / 2, Swiss exit -4.
-    hard: { champion: 10, runner_up: 5, third: 2, fourth: 2, playoffs: 0, swiss_exit: -4 },
+    // v2.0.23 (Miguel, 16/11): Hard pays the title and the final only (third / fourth
+    // 2 -> 0). On the v2.0.12 table Hard had become the best climb per run: +3.1 on
+    // 744 worldwide runs (title 17.6%, lost final 13.9%, third / fourth 30.8%, Swiss
+    // exit 14.4%) against Normal +1.7 and Legacy +1.1. Without the third / fourth
+    // points the same results net about +2.4. Future runs only (`retuneTable`).
+    hard: { champion: 10, runner_up: 5, third: 0, fourth: 0, playoffs: 0, swiss_exit: -4 },
     // v2.0.6 (Miguel, same day): a top 8 / top 6 exit pays nothing in Legacy either;
     // only the top 4 does. The average Legacy run nets about +2.3 on the day's results.
     // v2.0.9 (Miguel, 13/11): a little lower at the top, the same for the average
