@@ -76,6 +76,10 @@ import {
   continueInfiniteFlow,
   createCareerSave,
   declineBidFlow,
+  delistPlayerFlow,
+  listPlayerFlow,
+  proposeTradeFlow,
+  withdrawTradeFlow,
   declineUnofficial,
   endCareer,
   finishEvent,
@@ -252,8 +256,15 @@ interface CareerStoreState {
   ) => void;
   releasePlayer: (playerId: string) => void;
   renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offer?: ContractOffer) => void;
+  /** Also answers an agreed or countered trade (R134): the id is the proposal's. */
   acceptBid: (offerId: string) => void;
   declineBid: (offerId: string) => void;
+  /** R134 (ECO-06): list a squad player at an asking fee (or re-price him). */
+  listPlayer: (playerId: string, ask: number) => void;
+  delistPlayer: (playerId: string) => void;
+  /** R134 (ECO-06): propose one of the squad for an AI org's player. */
+  proposeTrade: (giveId: string, takeId: string, opts: { lengthSeasons: 1 | 2 | 3; cash: number }) => void;
+  withdrawTrade: (proposalId: string) => void;
 
   setStarters: (ids: [string, string, string]) => void;
   /**
@@ -610,6 +621,10 @@ export const useCareerStore = create<CareerStoreState>()(
           withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offer), { kind: "renew", playerId }),
         acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId), { kind: "sell", offerId }),
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
+        listPlayer: (playerId, ask) => withResult((s) => listPlayerFlow(s, playerId, ask)),
+        delistPlayer: (playerId) => withSave((s) => delistPlayerFlow(s, playerId)),
+        proposeTrade: (giveId, takeId, opts) => withResult((s) => proposeTradeFlow(s, giveId, takeId, opts)),
+        withdrawTrade: (proposalId) => withSave((s) => withdrawTradeFlow(s, proposalId)),
 
         setStarters: (ids) => withResult((s) => setStartersFlow(s, ids)),
         setTrainingPackage: (pkg) => withResult((s) => setTrainingPackageFlow(s, pkg)),

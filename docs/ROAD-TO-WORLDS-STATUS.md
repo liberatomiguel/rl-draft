@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-12**. Candidate **v2.0.0-rc.50**, staging.
-> Decisions R1–R132. BALANCE_VERSION **25**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-17**. Production **v2.0.24**; **v2.0.25** on `feat/sell-trade`.
+> Decisions R1–R134. BALANCE_VERSION **34**. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## Current candidate
 
@@ -50,6 +50,8 @@ rc.47 (R122–R128): contract-long sponsor goals, database-driven region moves, 
 
 rc.50 (R130–R132): a region short of organizations fills its events with local sides (the season-3 soft lock of rc.47–rc.49), one start rule for events, no silent failure of an action; mobile selector navigation, the guided tour per tab, cleaner copy, one analytics event per tournament. After any career engine or store change run the soft-lock probe (P1_SOFT=1, src/store/careerSoftlock.probe.test.ts) before staging.
 
+v2.0.25 (R134, closes ECO-06): the transfer list (ask 70–160 % of value, an org answers in 1–3 window days: paid, countered or nobody) and player-for-player trades with an AI org of the same region (answered in 1–3 days: agreed, countered in cash or refused; an agreed trade holds the clock as a "bid" decision). Window only, never the first window, never under the resale lock; a player under a season at the club is worth 60 % to a buyer. `engine/career/transferList.ts`; flows in careerFlow's "R134" section; `careerSellTrade.test.ts`; opt-in probe `SELLTRADE_PROBE=1` (`careerSellTrade.probe.test.ts`). Not measured in a battery.
+
 ## Run and verify
 
 Dev: Home → Road to Worlds → wizard → HQ. Staging uses
@@ -77,6 +79,7 @@ first infinite season. The 4,914-career battery is in docs/battery-rc37.
 | Fields/results/titles | worldSim/careerResults/honors → careerFlow → Event, Standings, CareerHonorsTable |
 | Training/coaches | development/training → careerTraining → Training, TrainingBlock |
 | Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, Toolbox |
+| Selling/trading | transferList/market → careerFlow (R134 section)/careerDecisions → Market (My Deals), ListPlayerSheet, TradeSheet, Squad, HQ NowTrade |
 | News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
 
 ## Open and frozen contracts
@@ -84,5 +87,5 @@ first infinite season. The 4,914-career battery is in docs/battery-rc37.
 Gate 3b pacing/affordability and Miguel's playtest acceptance remain open;
 see ROADMAP-NEXT-2026-11-05.md and the rc.37 handoffs. No production deploy.
 Persist version **3**, saveVersion **5**, unchanged. New colour/weekly/title
-fields are additive. Permanent achievements survive save/season resets.
+fields and R134's `transferList` / `tradeProposals` are additive. Permanent achievements survive save/season resets.
 Organization relocation as a player action, T1 and PvP remain deferred.

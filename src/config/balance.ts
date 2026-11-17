@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 33;
+export const BALANCE_VERSION = 34;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2324,6 +2324,71 @@ export const CAREER_TRANSFER = {
   // for sale" (`listingEnabled`, `listingOfferRange`, `listingOfferDays`) and
   // the late signing (`lateSigningDays`) are gone; random AI bids stay. A
   // future update rethinks selling (ECO-06).
+  /**
+   * R134 (ECO-06): a player the user sold or traded away does not sign for
+   * him again before this many seasons have passed (`CareerSave.soldOn`,
+   * `transferList.buyBackLocked`). Without it, selling at a buyer's ceiling
+   * and buying him back in the next window, on a day his new contract makes
+   * the fee cheap, pays the difference every time.
+   */
+  buyBackLockSeasons: 1,
+  /**
+   * R134 (ECO-06, 17/11/2026): the transfer list. The user lists a squad
+   * player with an asking fee inside `askRange` × his market value; after
+   * `answerDays` window days one org of his region that would field him
+   * answers. Its ceiling is market value × `buyerRange` (one draw per player
+   * and window, so re-listing never re-rolls it) plus `premiumShare` of the
+   * youth / reach premium an unsolicited bid pays (CAREER_TALENT.bidPremium):
+   * on average selling on request pays less than being poached, and it never
+   * reaches a poach's top (`aiBidRange`); the two bands overlap. An ask at
+   * or under the ceiling is paid in full; up to `counterReach` above it draws
+   * a counter-offer at the ceiling; higher, nobody answers. Window rules
+   * apply: the first window is closed (`firstWindowBidFree`) and the resale
+   * lock holds (`CAREER_VALUATION.resaleLockWindows`). The late signing does
+   * not come back. `engine/career/transferList.ts`.
+   */
+  listing: {
+    enabled: true,
+    maxListed: 2,
+    askRange: [0.7, 1.6] as const,
+    /** The ask slider's step, as a share of his market value. */
+    askStep: 0.05,
+    answerDays: [1, 3] as const,
+    buyerRange: [0.85, 1.15] as const,
+    premiumShare: 0.5,
+    counterReach: 0.25,
+    /**
+     * A player who arrived less than `shortTenureSeasons` ago is worth only
+     * `shortTenureShare` of the ceiling to a buyer, and of a trade's credit.
+     * A free agent costs no fee, so signing one to sell him on a few weeks
+     * later would print money; a season at the club is what makes him worth
+     * his value to someone else. Founders (no signing day) are never
+     * discounted. `transferList.shortTenure`.
+     */
+    shortTenureSeasons: 1,
+    shortTenureShare: 0.6,
+  },
+  /**
+   * R134 (ECO-06): a player-for-player trade with an AI org, answered after
+   * `answerDays` days. The org credits the user's player at market value ×
+   * `creditRange` (one draw per pair and window) plus `premiumShare` of the
+   * bid premium, against the fee a plain buy of its player would cost. The
+   * user's cash covers a shortfall; the org never pays a difference (decision
+   * 7-A: no AI money). It refuses a player more than `maxDowngrade` overall
+   * below the one it gives up, and a proposal short by more than
+   * `counterMaxShare` of the fee; a smaller gap comes back as a counter in
+   * cash. The incoming player passes every signing gate and signs at his ask.
+   * The listing's short-tenure discount applies to the credit too.
+   */
+  trade: {
+    enabled: true,
+    maxPending: 1,
+    answerDays: [1, 3] as const,
+    creditRange: [0.85, 1.05] as const,
+    premiumShare: 0.5,
+    maxDowngrade: 8,
+    counterMaxShare: 0.6,
+  },
 } as const;
 
 // rc.37 F1 — market, valuation and renewals (ROADMAP-NEXT-2026-11-05 §3 F1).

@@ -10,6 +10,29 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.25] — 2026-11-17 · Road to Worlds: sell and trade on your own initiative
+
+Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed an AI bid to arrive. Closes ECO-06; decision R134 (reopens R63). Ships without waiting for the Etapa 1 gate.
+
+#### Added
+- **The transfer list.** Market → My Deals → *List a player* (also from the Squad screen): pick an asking fee between 70 % and 160 % of his market value, two players at most. An org of his region answers in 1 to 3 days: it pays a fair ask in full, counters a high one, or does not answer one that is far too high. The answer is an ordinary offer to accept or decline. `engine/career/transferList.ts`, `listPlayerFlow`, `delistPlayerFlow`.
+- **Player-for-player trades.** From the offer sheet of a player under contract: *Propose a trade* with one of your squad and optional cash. The org answers in 1 to 3 days: yes, a counter in cash, or no (the gap is too large, or your player is more than 8 overall below theirs). A yes waits for your confirmation and holds the clock like a bid. The arrival passes every signing gate and signs at his ask; no fee, no severance. `proposeTradeFlow`, `acceptTradeFlow`.
+- HQ shows an agreed or countered trade as a decision card; the inbox and the feed report every answer.
+
+#### Balance
+- BALANCE_VERSION 34. `CAREER_TRANSFER.listing` and `.trade` (all provisional). A buyer's ceiling is market value × 0.85–1.15 plus half the youth premium, below what a poach pays (1.0–1.35 with the full premium). A trade credits your player at × 0.85–1.05 against the fee a plain buy would cost; the org never pays a difference.
+- **Short tenure:** a player who signed under a season ago is worth 60 % to a buyer and in a trade. A free agent costs no fee, so signing one to sell him on would otherwise be a repeatable profit. Founders are not discounted.
+- **No buying back:** a player you sold or traded away does not sign for you again for one season (`buyBackLockSeasons`), an ordinary bid's sale included. Selling at a buyer's ceiling and buying back on a cheap day would otherwise pay the difference every time.
+- Both work in a transfer window only, never in the career's first window, never under the resale lock. One draw per player and window: re-pricing does not re-roll the buyer.
+
+#### Changed
+- Saves gain three optional fields (`transferList`, `tradeProposals`, `soldOn`) and two optional offer fields (`listed`, `ask`). Persist keys and versions are unchanged; new RNG streams only, so a career that never lists or trades draws the same numbers as before (the one difference: it can no longer re-sign a player it sold within the season). No new analytics event.
+
+#### Not verified
+- Measured in a short probe only (2 careers, 4 seasons: no soft lock, world rosters intact), not in a battery. Checked in a desktop browser and at 320 px in emulation; no physical device.
+
+---
+
 ## [2.0.24] — 2026-11-17 · A newcomer reaches the game sooner
 
 Launch data, 12–16/11: 519 of 903 new players left without playing anything; on mobile 36% left after one page. A new player had to close three full-screen pop-ups before the home page (welcome tour, the 2.0 announcement, the login calendar), and the home page was always English.

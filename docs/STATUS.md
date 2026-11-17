@@ -1,10 +1,19 @@
 # Project Status — current state only
 
-> Updated: **2026-11-12**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 proposal (not
-> approved): ROADMAP-RTW-2026-11-17.md.
+> Updated: **2026-11-17**. History: CHANGELOG.md. Career map:
+> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 roadmap (decided
+> 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 
 ## Current builds
+
+- **v2.0.25 (17/11/2026, branch `feat/sell-trade`, not on staging or main
+  yet)**: Road to Worlds gets the transfer list and player-for-player trades
+  (R134, closes ECO-06; BALANCE_VERSION 34). Additive save fields, persist
+  contract unchanged. Checked in a desktop browser and at 320 px; a short
+  probe (2 careers, 4 seasons) and the soft-lock probe; no battery, no
+  physical device. Waiting for Miguel's go-ahead for staging, then main.
+  The cloud-save front runs in parallel on `feat/cloud-save` and may take
+  the same version number: whichever lands second is renumbered.
 
 - **v2.0.14 (14/11/2026)** follows the first PostHog review after the launch
   (docs/POSTLAUNCH-2.0-REPORT.md): page translation no longer crashes React
@@ -57,7 +66,7 @@
    remains Gate 3b. rc.42 does not close it.
 2. Review open rc.37 handoff questions (F1/F2/F3); F5 approval before code.
    Gate 2 play and ENG-03 real-save fixtures remain.
-3. Etapa 4: collection pacing, DATA-02, SEA-01 and ECO-06. Etapa 5:
+3. Etapa 4: collection pacing, DATA-02 and SEA-01 (ECO-06 closed by R134). Etapa 5:
    integrated playtests, real saves, account/sync, performance, final EN/PT/art,
    tutorial and launch notes. Etapa 6: season dates, migration/rollback and
    Miguel's cutover tasks in V2-IMPLEMENTATION-PLAN.md §6. No main deployment.

@@ -38,6 +38,9 @@ function templateKeyOf(titleKey: string, raw: Record<string, string | number>): 
  */
 const MONEY_PARAM_KEYS = new Set([
   "fee",
+  // R134: the transfer list and trades.
+  "ask",
+  "cash",
   "bonus",
   "f1",
   "f2",
