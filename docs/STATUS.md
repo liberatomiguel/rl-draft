@@ -1,7 +1,8 @@
 # Project Status — current state only
 
 > Updated: **2026-11-12**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md.
+> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 proposal (not
+> approved): ROADMAP-RTW-2026-11-17.md.
 
 ## Current builds
 
