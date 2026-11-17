@@ -25,7 +25,10 @@ import { SEASON } from "@/config/season";
 import { totalStars } from "@/engine/challengeStars";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import { PRESEASON_BOARDS, type PreseasonBoard } from "@/engine/season";
+import type { CloudSlotMeta } from "./careerCloud";
 import type { DurableProfile } from "./profileSync";
+import type { SavePayload } from "./saveCodec";
+import { classifySyncError, type SyncFailure } from "./syncErrors";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -347,7 +350,39 @@ export type CloudRowResult =
       preseasonPositions: Partial<Record<PreseasonBoard, number>>;
     }
   | { status: "no-row" }
-  | { status: "error"; error: string };
+  | ({ status: "error" } & SyncFailure);
+
+/** A failed cloud call, named (v2.0.25): the reason goes out with the analytics
+ *  event and decides whether the sync tries again. */
+function failure(message: string | null | undefined, fallback: string, code?: string | null, status?: number | null): SyncFailure {
+  const error = message || fallback;
+  const online = typeof navigator !== "undefined" ? navigator.onLine : undefined;
+  return { error, reason: classifySyncError({ message: error, code, status, online }), ...(code ? { code } : {}) };
+}
+
+const SDK_UNAVAILABLE: SyncFailure = { error: UNAVAILABLE, reason: "unavailable" };
+
+/**
+ * v2.0.25: a cloud call for `userId` must carry THAT user's token. supabase-js
+ * falls back to the public anon key when it has no session to offer (an expired
+ * token whose refresh failed: a phone waking a tab after an hour). The read then
+ * ran as nobody, row-level security hid the row, and the sync took an existing
+ * account for a new one and failed on the push. Returns that user's token, or
+ * the failure. The caller puts the token on the request itself (`setHeader`):
+ * supabase-js only adds its own Authorization when none is set, so the request
+ * can never go out as nobody, even if the session vanishes in between. A stale
+ * token is then a 401 (`auth`), never an empty read.
+ */
+async function ownToken(c: SupabaseClient, userId: string): Promise<{ token: string } | SyncFailure> {
+  const { data, error } = await c.auth.getSession();
+  const session = data.session;
+  if (session?.user.id === userId && session.access_token) return { token: session.access_token };
+  const fallback = session ? "session of another user" : "no session";
+  const named = failure(error?.message, fallback, null, (error as { status?: number } | null)?.status ?? null);
+  // A refresh that failed on the network is a network problem; anything else is auth.
+  const keep = named.reason === "network" || named.reason === "offline" || named.reason === "server" || named.reason === "rate";
+  return { error: named.error, reason: keep ? named.reason : "auth" };
+}
 
 /** The `preseason_positions` jsonb, trusted only as far as its shape goes. */
 function readPlaces(raw: unknown): Partial<Record<PreseasonBoard, number>> {
@@ -367,13 +402,16 @@ function readPlaces(raw: unknown): Partial<Record<PreseasonBoard, number>> {
 export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
   try {
     const c = await client();
-    if (!c) return { status: "error", error: UNAVAILABLE };
-    const { data, error } = await c
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
       .from("profiles")
       .select("durable, username, preseason_position, preseason_positions, profile_grants(grant_id)")
       .eq("id", userId)
+      .setHeader("Authorization", `Bearer ${auth.token}`)
       .maybeSingle();
-    if (error) return { status: "error", error: error.message || "read failed" };
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
     if (!data) return { status: "no-row" };
     const grantRows = (data.profile_grants as { grant_id: string }[] | null) ?? [];
     return {
@@ -388,37 +426,42 @@ export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
       preseasonPositions: readPlaces(data.preseason_positions),
     };
   } catch (e) {
-    return { status: "error", error: e instanceof Error ? e.message : String(e) };
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
   }
 }
 
 /** Upsert the user's profile: the full durable blob + the flattened columns.
- *  Returns the error message on failure. */
+ *  Returns the failure (message + reason) when it did not go through. */
 export async function pushCloudProfile(
   userId: string,
   username: string,
   durable: DurableProfile,
   stats: LeaderboardStats,
-): Promise<{ error?: string }> {
+): Promise<Partial<SyncFailure>> {
   try {
     const c = await client();
-    if (!c) return { error: UNAVAILABLE };
+    if (!c) return SDK_UNAVAILABLE;
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return auth;
     // v2.0: `xp` / `mmr` are deliberately NOT written — they are the frozen
     // pre-season archive (a DB trigger also refuses them). Season values travel in
     // the `season_*` columns of `stats`.
-    const { error } = await c.from("profiles").upsert(
-      {
-        id: userId,
-        username,
-        durable,
-        ...stats,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
-    return error ? { error: error.message || "write failed" } : {};
+    const { error, status } = await c
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          username,
+          durable,
+          ...stats,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      )
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    return error ? failure(error.message, "write failed", error.code, status) : {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
+    return failure(e instanceof Error ? e.message : String(e), "write failed");
   }
 }
 
@@ -574,4 +617,190 @@ export async function fetchHallOfFame(limit = 100): Promise<HallOfFameRow[]> {
     .limit(limit);
   if (error || !data) return [];
   return (data as unknown as Partial<HallOfFameRow>[]).map((r) => normalizeRow(r) as HallOfFameRow);
+}
+
+// ---------------------------------------------------------------------------
+// Road to Worlds cloud save (v2.0.26) — table `career_saves`
+// (docs/sql/v2026-career-saves.sql). One row per account and slot. Every call
+// carries the player's own token (`ownToken`), like the profile calls above.
+// ---------------------------------------------------------------------------
+
+type CareerRow = Record<string, unknown>;
+
+const CAREER_META_COLUMNS = "slot, career_id, save_version, seq, summary, device_id, saved_at, revision, updated_at";
+
+const msOf = (v: unknown): number => {
+  const ms = typeof v === "string" ? Date.parse(v) : NaN;
+  return Number.isFinite(ms) ? ms : 0;
+};
+
+/** One row's metadata, trusted only as far as its shape goes (null = unusable). */
+function careerMetaOf(row: CareerRow | null | undefined): CloudSlotMeta | null {
+  if (!row || typeof row.career_id !== "string" || typeof row.revision !== "number" || typeof row.slot !== "number") return null;
+  return {
+    slot: row.slot,
+    careerId: row.career_id,
+    saveVersion: typeof row.save_version === "number" ? row.save_version : 0,
+    seq: typeof row.seq === "number" ? row.seq : 0,
+    revision: row.revision,
+    savedAt: msOf(row.saved_at),
+    updatedAt: msOf(row.updated_at),
+    deviceId: typeof row.device_id === "string" ? row.device_id : "",
+    summary: row.summary && typeof row.summary === "object" ? (row.summary as CloudSlotMeta["summary"]) : {},
+  };
+}
+
+export type CareerMetasResult = { status: "ok"; slots: CloudSlotMeta[] } | ({ status: "error" } & SyncFailure);
+
+/** The account's career slots, without their payloads. */
+export async function fetchCareerMetas(userId: string): Promise<CareerMetasResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .from("career_saves")
+      .select(CAREER_META_COLUMNS)
+      .eq("user_id", userId)
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
+    const slots = ((data as CareerRow[] | null) ?? []).map(careerMetaOf).filter((m): m is CloudSlotMeta => m !== null);
+    return { status: "ok", slots };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
+  }
+}
+
+export type CareerSaveResult =
+  | { status: "ok"; meta: CloudSlotMeta; payload: SavePayload }
+  /** The read succeeded and the slot has no row. */
+  | { status: "empty" }
+  | ({ status: "error" } & SyncFailure);
+
+/** One slot WITH its payload. */
+export async function fetchCareerSave(userId: string, slot: number): Promise<CareerSaveResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .rpc("get_career_save", { p_slot: slot })
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
+    if (!data) return { status: "empty" };
+    const row = data as CareerRow;
+    const meta = careerMetaOf(row);
+    const encoding = row.encoding;
+    if (!meta || (encoding !== "gzip" && encoding !== "json") || typeof row.payload !== "string") {
+      return { status: "error", error: "malformed row", reason: "other" };
+    }
+    return { status: "ok", meta, payload: { encoding, payload: row.payload } };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
+  }
+}
+
+export interface CareerPushInput {
+  slot: number;
+  careerId: string;
+  saveVersion: number;
+  seq: number;
+  summary: CloudSlotMeta["summary"];
+  payload: SavePayload;
+  deviceId: string;
+  release: string;
+  /** The device's clock at the save's last action (ms). */
+  savedAt: number;
+  /** The revision this device last saw; null = it knows of no row. */
+  expectedRevision: number | null;
+  /** The player chose this device's copy in the notice: write regardless. */
+  force?: boolean;
+}
+
+export type CareerPushResult =
+  | { status: "ok"; revision: number; updatedAt: number }
+  /** The account copy moved on (another device wrote it): nothing was written. */
+  | { status: "conflict"; meta: CloudSlotMeta }
+  /** The row this device last saw is gone (deleted elsewhere): nothing was written. */
+  | { status: "missing" }
+  | ({ status: "error" } & SyncFailure);
+
+/** Write one slot through `push_career_save` (the only way to write the table).
+ *  Every argument is sent, null when empty: PostgREST finds the function by the
+ *  names it receives. */
+export async function pushCareerSave(userId: string, input: CareerPushInput): Promise<CareerPushResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .rpc("push_career_save", {
+        p_slot: input.slot,
+        p_career_id: input.careerId,
+        p_save_version: input.saveVersion,
+        p_seq: input.seq,
+        p_summary: input.summary ?? {},
+        p_encoding: input.payload.encoding,
+        p_payload: input.payload.payload,
+        p_device_id: input.deviceId,
+        p_client_release: input.release ?? null,
+        // A save that was never stamped (0) says so: the epoch, not "now", so the
+        // account row still equals the local stamp and the same copy is recognised.
+        p_saved_at: new Date(Math.max(0, input.savedAt || 0)).toISOString(),
+        p_expected_revision: input.expectedRevision ?? null,
+        p_force: Boolean(input.force),
+      })
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "write failed", error.code, status) };
+    const out = (data ?? {}) as CareerRow;
+    if (out.status === "ok" && typeof out.revision === "number") {
+      return { status: "ok", revision: out.revision, updatedAt: msOf(out.updated_at) };
+    }
+    if (out.status === "missing") return { status: "missing" };
+    if (out.status === "conflict") {
+      const meta = careerMetaOf({ ...out, slot: input.slot });
+      if (meta) return { status: "conflict", meta };
+    }
+    return { status: "error", error: "malformed answer", reason: "other" };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "write failed") };
+  }
+}
+
+export type CareerDeleteResult =
+  /** `deleted` false: the row is not the one this device saw (another device has
+   *  written it since, or it is already gone). Nothing was deleted. */
+  | { status: "ok"; deleted: boolean }
+  | ({ status: "error" } & SyncFailure);
+
+/** Delete the account copy of `careerId` in `slot`, but only the very revision
+ *  this device last saw: a copy another device has played since is left alone. */
+export async function deleteCareerSave(
+  userId: string,
+  slot: number,
+  careerId: string,
+  revision: number,
+): Promise<CareerDeleteResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .from("career_saves")
+      .delete()
+      .eq("user_id", userId)
+      .eq("slot", slot)
+      .eq("career_id", careerId)
+      .eq("revision", revision)
+      .select("slot")
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "delete failed", error.code, status) };
+    return { status: "ok", deleted: Array.isArray(data) && data.length > 0 };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "delete failed") };
+  }
 }

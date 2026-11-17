@@ -1,5 +1,5 @@
 /**
- * R134 (ECO-06) — transfer list / trade probe (opt-in: SELLTRADE_PROBE=1).
+ * R135 (ECO-06) — transfer list / trade probe (opt-in: SELLTRADE_PROBE=1).
  * Plays whole careers with the arc bot and, on top of its normal play, drives
  * the list and the trades at random (seeded, deterministic):
  *
@@ -76,7 +76,7 @@ const newStats = (): Stats => ({
   countered: 0, refused: 0, lapsed: 0, completed: 0, tradeCash: 0, userInFees: 0, bonuses: 0, declined: 0, acceptErrors: {},
 });
 
-describe.skipIf(!ON)("R134 transfer list / trade probe", () => {
+describe.skipIf(!ON)("R135 transfer list / trade probe", () => {
   it(
     "whole careers: the world stays consistent, the clock never sticks, nothing throws",
     async () => {

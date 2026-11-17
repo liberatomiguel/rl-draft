@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * R134 (ECO-06): the trade sheet. From a contracted player's offer sheet the
+ * R135 (ECO-06): the trade sheet. From a contracted player's offer sheet the
  * user proposes one of his own players for him (an AI org of the same
  * region), optionally adding cash. `tradePlanFor` is the one source of every
  * gate, the wage and the outlook; the org answers after a few days.

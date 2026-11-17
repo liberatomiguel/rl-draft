@@ -1097,16 +1097,16 @@ export interface TransferOffer {
    */
   listing?: boolean;
   /**
-   * R134 (ECO-06): the offer answers the user's transfer list
+   * R135 (ECO-06): the offer answers the user's transfer list
    * (`CareerSave.transferList`). An older client reads it as a plain bid.
    */
   listed?: true;
-  /** R134: the fee the user asked; `fee` below it = a counter-offer. */
+  /** R135: the fee the user asked; `fee` below it = a counter-offer. */
   ask?: number;
 }
 
 /**
- * R134 (ECO-06): a squad player on the transfer list (engine/career/transferList.ts).
+ * R135 (ECO-06): a squad player on the transfer list (engine/career/transferList.ts).
  * Not the withdrawn rc.32 `SaleListing`: `saleListings` is deleted on every load.
  */
 export interface ListedPlayer {
@@ -1128,7 +1128,7 @@ export interface ListedPlayer {
 }
 
 /**
- * R134 (ECO-06): a player-for-player trade the user proposed to an AI org.
+ * R135 (ECO-06): a player-for-player trade the user proposed to an AI org.
  * "waiting" until `answerDay`; then the org refuses (the proposal is removed
  * and a mail says why), agrees ("agreed") or asks for cash ("countered",
  * `cashAsked`). An agreed or countered trade waits for the user's yes or no
@@ -1678,12 +1678,12 @@ export interface CareerSave {
   saleListings?: SaleListing[];
   /** @deprecated rc.32 (M8) — withdrawn in rc.33 (ECO-12): never written; the load repair (careerFlow.repairMoneyOnLoad) deletes it. */
   lateSigning?: LateSigningState | null;
-  /** R134 (ECO-06): the transfer list. Additive; absent = empty. */
+  /** R135 (ECO-06): the transfer list. Additive; absent = empty. */
   transferList?: ListedPlayer[];
-  /** R134 (ECO-06): trades proposed to AI orgs. Additive; absent = none. */
+  /** R135 (ECO-06): trades proposed to AI orgs. Additive; absent = none. */
   tradeProposals?: TradeProposal[];
   /**
-   * R134 (ECO-06): when the user sold or traded each player away, by player
+   * R135 (ECO-06): when the user sold or traded each player away, by player
    * id. He does not sign for the user again for CAREER_TRANSFER.buyBackLockSeasons;
    * older entries are dropped. Additive; absent = none.
    */

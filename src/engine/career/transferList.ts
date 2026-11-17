@@ -1,5 +1,5 @@
 /**
- * R134 (ECO-06): the user's transfer list and player-for-player
+ * R135 (ECO-06): the user's transfer list and player-for-player
  * trades, the pure engine side. A listed player is answered after a derived
  * delay by one AI org; a trade is answered by the org that holds the target.
  * Every tunable is CAREER_TRANSFER.listing / .trade. Streams are NEW names, so

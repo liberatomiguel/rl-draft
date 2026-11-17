@@ -16,6 +16,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CLOUD_SYNC } from "@/config/balance";
+import type { SyncFailReason } from "@/lib/syncErrors";
 import { toDurable, type DurableProfile } from "@/lib/profileSync";
 import type { CloudRowResult } from "@/lib/supabase";
 
@@ -27,12 +28,20 @@ const sb = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthChange: vi.fn(),
   onStoredAuthSession: vi.fn(),
+  signOut: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/supabase")>()),
   accountsEnabled: true,
   ...sb,
+}));
+
+const track = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/analytics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/analytics")>()),
+  trackEvent: track,
 }));
 
 import { useAccountStore } from "./accountStore";
@@ -98,6 +107,7 @@ beforeEach(() => {
   // state (synced-this-load set, pending debounced push, last-pushed signature).
   storeAuth(null, "SIGNED_OUT");
   for (const f of Object.values(sb)) f.mockReset();
+  track.mockReset();
   sb.pushCloudProfile.mockResolvedValue({});
   sb.hasStoredAuthSession.mockReturnValue(false);
   sb.startAuth.mockResolvedValue(true);
@@ -167,7 +177,7 @@ describe("syncNow — tagged cloud read", () => {
     const s = session();
     const cb = initAndGetAuthCb();
     sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
-    sb.pushCloudProfile.mockResolvedValueOnce({ error: "rls" });
+    sb.pushCloudProfile.mockResolvedValueOnce({ error: "rls", reason: "denied" });
     cb(s, "INITIAL_SESSION");
     await flush();
     cb(s, "SIGNED_IN");
@@ -204,7 +214,7 @@ describe("display name (a signed-in player always sees one — never a stale one
     useAccountStore.getState().setNeedsName(false);
     const s2 = signedIn(session());
     sb.pushCloudProfile.mockReset();
-    sb.pushCloudProfile.mockResolvedValueOnce({ error: "duplicate key" }).mockResolvedValue({});
+    sb.pushCloudProfile.mockResolvedValueOnce({ error: "duplicate key", reason: "conflict" }).mockResolvedValue({});
     await useAccountStore.getState().syncNow(s2);
     expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
     expect(useAccountStore.getState().username).toMatch(new RegExp(`^${prefix(s2)}[0-9]{4}$`));
@@ -250,7 +260,7 @@ describe("display name (a signed-in player always sees one — never a stale one
       cb(s, "INITIAL_SESSION");
       await flush();
       cb(null, "SIGNED_OUT");
-      read.resolve(outcome === "read-error" ? { status: "error", error: "503" } : cloud({}));
+      read.resolve(outcome === "read-error" ? { status: "error", error: "503", reason: "other" } : cloud({}));
       await flush();
       expect(useAccountStore.getState().username).toBeNull();
     }
@@ -826,3 +836,344 @@ describe("2.0.0: what a sync brings is announced by the normal unlock pop-up", (
   });
 });
 
+
+describe("v2.0.25: named failures, retries and the owed sync", () => {
+  const RETRY = CLOUD_SYNC.retryDelaysMs;
+  const RESYNC = CLOUD_SYNC.resyncDelaysMs;
+  const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
+  const retrySum = sum(RETRY);
+  const resyncSum = sum(RESYNC);
+  const tick = async (ms = 0) => {
+    await vi.advanceTimersByTimeAsync(ms);
+    await vi.advanceTimersByTimeAsync(0);
+  };
+  const fail = (reason: SyncFailReason, code?: string) => ({
+    status: "error" as const,
+    error: "boom",
+    reason,
+    ...(code ? { code } : {}),
+  });
+  const failedEvents = () => track.mock.calls.filter((c) => c[0] === "account_sync_failed");
+
+  /** Run one sync to the end, advancing through every in-sync pause. */
+  async function syncThrough(s: Session): Promise<void> {
+    const done = useAccountStore.getState().syncNow(s);
+    await tick(retrySum);
+    await done;
+  }
+
+  /** Stand-ins for the browser: handlers by event type, as init() registers them. */
+  function stubBrowser() {
+    const doc = {
+      visibilityState: "visible",
+      handlers: new Map<string, () => void>(),
+      addEventListener(type: string, fn: () => void) {
+        this.handlers.set(type, fn);
+      },
+      removeEventListener() {},
+    };
+    const win = {
+      handlers: new Map<string, () => void>(),
+      addEventListener(type: string, fn: () => void) {
+        this.handlers.set(type, fn);
+      },
+      removeEventListener() {},
+    };
+    vi.stubGlobal("document", doc);
+    vi.stubGlobal("window", win);
+    return { doc, win };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    // Sign out through the store: clears syncOwed, the resync timer and its attempt count.
+    storeAuth(null, "SIGNED_OUT");
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("a transient read failure is retried inside the same sync: no event, the push happens", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValueOnce(fail("network")).mockResolvedValue({ status: "no-row" });
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+    expect(failedEvents()).toEqual([]);
+  });
+
+  it("a denied read is not retried: no push, the event names stage and reason", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(fail("denied"));
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+    expect(failedEvents()).toEqual([
+      ["account_sync_failed", { actionId: "sync_failed:read:denied", stage: "read", reason: "denied" }],
+    ]);
+  });
+
+  it("a read that keeps failing is tried 1 + retryDelaysMs.length times, then reported", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(fail("network"));
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length);
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+    expect(failedEvents()).toHaveLength(1);
+    expect(failedEvents()[0][1]).toMatchObject({ stage: "read", reason: "network" });
+  });
+
+  it("a failure without a reason counts as other and is not retried", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "error", error: "503" });
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(failedEvents()[0][1]).toMatchObject({ actionId: "sync_failed:read:other", reason: "other" });
+  });
+
+  it("the database code goes on the event only when there is one", async () => {
+    sb.fetchCloudRow.mockResolvedValue(fail("auth", "PGRST301"));
+    await syncThrough(signedIn(session()));
+    expect(failedEvents()[0][1]).toMatchObject({ reason: "auth", code: "PGRST301" });
+
+    track.mockReset();
+    sb.fetchCloudRow.mockResolvedValue(fail("denied"));
+    await syncThrough(signedIn(session()));
+    expect(failedEvents()).toHaveLength(1);
+    expect(Object.keys(failedEvents()[0][1] as object)).not.toContain("code");
+  });
+
+  it("a new account whose first push fails with network never takes the fallback name", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    sb.pushCloudProfile.mockResolvedValue({ error: "boom", reason: "network" });
+    await syncThrough(s);
+    await tick(RESYNC[0] + retrySum); // and again in the owed sync
+    expect(sb.pushCloudProfile.mock.calls.length).toBeGreaterThan(1);
+    for (const call of sb.pushCloudProfile.mock.calls) expect(call[1]).toBe(prefix(s));
+    expect(failedEvents()[0][1]).toMatchObject({ actionId: "sync_failed:push:network", stage: "push" });
+    expect(useAccountStore.getState().username).toBe(prefix(s));
+  });
+
+  it("a push failing with network is called once within the sync: no in-sync push retry", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    sb.pushCloudProfile.mockResolvedValue({ error: "boom", reason: "network" });
+    await syncThrough(s);
+    expect(retrySum).toBeLessThan(RESYNC[0]);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("a new account whose name is refused (conflict) takes prefix + 4 digits on the second push", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    sb.pushCloudProfile.mockResolvedValueOnce({ error: "dup", reason: "conflict", code: "23505" }).mockResolvedValue({});
+    await syncThrough(s);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe(prefix(s));
+    expect(sb.pushCloudProfile.mock.calls[1][1]).toMatch(new RegExp(`^${prefix(s)}[0-9]{4}$`));
+    expect(failedEvents()).toEqual([]);
+  });
+
+  it("a failed push is a whole new sync later (re-read + push), with the same name, and then nothing is owed", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    sb.pushCloudProfile.mockResolvedValueOnce({ error: "boom", reason: "network" }).mockResolvedValue({});
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+    expect(failedEvents()).toHaveLength(1);
+    expect(failedEvents()[0][1]).toMatchObject({ actionId: "sync_failed:push:network", stage: "push", reason: "network" });
+
+    await tick(RESYNC[0]);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2); // the retry re-reads the cloud
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile.mock.calls[0][1]).toBe(prefix(s));
+    expect(sb.pushCloudProfile.mock.calls[1][1]).toBe(prefix(s));
+    expect(failedEvents()).toHaveLength(1);
+
+    await tick(resyncSum * 3);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(2);
+  });
+
+  it("a read failing with auth is not retried inside the sync, but it is owed", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValueOnce(fail("auth")).mockResolvedValue({ status: "no-row" });
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+    expect(failedEvents()[0][1]).toMatchObject({ actionId: "sync_failed:read:auth", reason: "auth" });
+    await tick(RESYNC[0]);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("a rate-limited read is owed but not retried inside the sync", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValueOnce(fail("rate")).mockResolvedValue({ status: "no-row" });
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    await tick(RESYNC[0]);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("an owed sync runs again after the first resync pause, and once it works nothing else fires", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValueOnce(fail("network")).mockResolvedValueOnce(fail("network")).mockResolvedValueOnce(fail("network"));
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    await syncThrough(s);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length);
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+
+    await tick(RESYNC[0] - 1);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length);
+    await tick(1);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2 + RETRY.length);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+
+    await tick(resyncSum * 2);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2 + RETRY.length);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("an owed sync walks the pause list; the last pause repeats while the failure lasts; success stops it", async () => {
+    const s = signedIn(session());
+    sb.fetchCloudRow.mockResolvedValue(fail("server"));
+    await syncThrough(s);
+    const perSync = 1 + RETRY.length;
+    const last = RESYNC[RESYNC.length - 1];
+    // Every listed pause, then the last one twice more.
+    const pauses = [...RESYNC, last, last];
+    for (const [i, pause] of pauses.entries()) {
+      expect(sb.fetchCloudRow).toHaveBeenCalledTimes(perSync * (i + 1));
+      await tick(pause - 1); // not yet
+      expect(sb.fetchCloudRow).toHaveBeenCalledTimes(perSync * (i + 1));
+      await tick(1 + retrySum);
+    }
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(perSync * (pauses.length + 1));
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+
+    // The cloud is back: the next repeat goes through, and then no timer fires a sync.
+    sb.fetchCloudRow.mockClear();
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    await tick(last);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+    await tick(last * 5);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  describe("a late sync of a user who signed out touches nothing of the user signed in now", () => {
+    async function switchUsers(lateResult: "fail" | "ok") {
+      const cb = initAndGetAuthCb();
+      const a = session();
+      const b = session();
+      const held = deferred<CloudRowResult>();
+      let aReads = 0;
+      sb.fetchCloudRow.mockImplementation((id: string) => {
+        if (id === a.user.id) return ++aReads === 1 ? held.promise : Promise.resolve(fail("network"));
+        return Promise.resolve(fail("network")); // B is owed
+      });
+      cb(a, "INITIAL_SESSION");
+      await tick();
+      cb(null, "SIGNED_OUT");
+      cb(b, "SIGNED_IN");
+      await tick(retrySum); // B's sync fails through its in-sync retries and is owed
+      const reads = (u: Session) => sb.fetchCloudRow.mock.calls.filter((c) => c[0] === u.user.id).length;
+      expect(reads(b)).toBe(1 + RETRY.length);
+
+      held.resolve(lateResult === "ok" ? cloud({}) : (fail("network") as CloudRowResult));
+      await tick(retrySum); // A's late sync finishes (still before B's pause ends)
+      expect(reads(b)).toBe(1 + RETRY.length);
+
+      sb.fetchCloudRow.mockImplementation(() => Promise.resolve({ status: "no-row" }));
+      await tick(RESYNC[0] - retrySum);
+      expect(reads(b)).toBe(2 + RETRY.length); // B's owed sync ran
+      const pushesFor = (u: Session) => sb.pushCloudProfile.mock.calls.filter((c) => c[0] === u.user.id).length;
+      expect(pushesFor(b)).toBe(1);
+      return { pushesFor, a };
+    }
+
+    it("A's late sync FAILS: B's owed retry still runs", async () => {
+      const { pushesFor, a } = await switchUsers("fail");
+      expect(pushesFor(a)).toBe(0);
+    });
+
+    it("A's late sync SUCCEEDS: B's owed retry still runs", async () => {
+      await switchUsers("ok");
+    });
+  });
+
+  it("an owed sync runs at once when the connection comes back", async () => {
+    const { win } = stubBrowser();
+    const cb = initAndGetAuthCb();
+    sb.fetchCloudRow.mockResolvedValue(fail("network"));
+    cb(session(), "INITIAL_SESSION");
+    await tick(retrySum);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length);
+
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    win.handlers.get("online")?.(); // what window.dispatchEvent(new Event("online")) runs
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2 + RETRY.length);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+    await tick(resyncSum * 2);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2 + RETRY.length);
+  });
+
+  it("an owed sync runs at once when the tab becomes visible", async () => {
+    const { doc } = stubBrowser();
+    const cb = initAndGetAuthCb();
+    sb.fetchCloudRow.mockResolvedValue(fail("server"));
+    cb(session(), "INITIAL_SESSION");
+    await tick(retrySum);
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length);
+
+    sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
+    doc.visibilityState = "hidden";
+    doc.handlers.get("visibilitychange")?.();
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1 + RETRY.length); // hiding does not retry
+    doc.visibilityState = "visible";
+    doc.handlers.get("visibilitychange")?.();
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(2 + RETRY.length);
+    expect(sb.pushCloudProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("a denied failure is not owed: no pause, online or tab return runs another sync", async () => {
+    const { doc, win } = stubBrowser();
+    const cb = initAndGetAuthCb();
+    sb.fetchCloudRow.mockResolvedValue(fail("denied"));
+    cb(session(), "INITIAL_SESSION");
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+    await tick(resyncSum * 2);
+    win.handlers.get("online")?.();
+    doc.handlers.get("visibilitychange")?.();
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(1);
+  });
+
+  it("signing out clears an owed sync", async () => {
+    const { win } = stubBrowser();
+    const cb = initAndGetAuthCb();
+    sb.fetchCloudRow.mockResolvedValue(fail("network"));
+    cb(session(), "INITIAL_SESSION");
+    await tick(retrySum);
+    const reads = sb.fetchCloudRow.mock.calls.length;
+    expect(reads).toBe(1 + RETRY.length);
+
+    await useAccountStore.getState().signOut();
+    await tick(resyncSum * 2);
+    win.handlers.get("online")?.();
+    await tick();
+    expect(sb.fetchCloudRow).toHaveBeenCalledTimes(reads);
+  });
+});

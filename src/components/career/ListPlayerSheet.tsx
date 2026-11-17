@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * R134 (ECO-06): the listing sheet. Pick a squad player (when opened without
+ * R135 (ECO-06): the listing sheet. Pick a squad player (when opened without
  * one), set the asking fee inside the bounds `listingPlanFor` gives, list him.
  * The same sheet re-prices a player already on the list.
  */

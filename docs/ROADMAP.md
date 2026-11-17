@@ -719,7 +719,7 @@ historical Worlds-title pacing or approve Gate 3b.
 - SEA-01, review part: XP versus Season Rating, cadence and gains (no endless
   farm), the season's events and rewards. Plan §3 puts XP/rating and rewards
   in M4; the dates stay in Etapa 6.
-- ECO-06: decide on active sales and trades. **Closed 17/11/2026 by R134 (v2.0.25): transfer list and player-for-player trades.**
+- ECO-06: decide on active sales and trades. **Closed 17/11/2026 by R135 (v2.0.27): transfer list and player-for-player trades.**
 
 **Gate 4:** every card reachable, every Challenge star shown reachable in a
 real draft, rewards granted once and progress correct (plan §3, M4). Miguel

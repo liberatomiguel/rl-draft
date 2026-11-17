@@ -418,7 +418,7 @@ export function NowBid({
           </p>
         </>
       ) : null}
-      {/* R134 (ECO-06): the offer answers the user's own listing. */}
+      {/* R135 (ECO-06): the offer answers the user's own listing. */}
       {offer.listed ? (
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge tone="blue">{C.market.transferList.offerTag}</Badge>
@@ -469,7 +469,7 @@ export function NowBid({
   );
 }
 
-/** R134 (ECO-06): an agreed or countered player-for-player trade waits for the manager's yes or no. */
+/** R135 (ECO-06): an agreed or countered player-for-player trade waits for the manager's yes or no. */
 export function NowTrade({
   save,
   C,

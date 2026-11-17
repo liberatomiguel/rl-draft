@@ -1,5 +1,5 @@
 /**
- * Road to Worlds — R134 (ECO-06): the transfer list and player-for-player
+ * Road to Worlds — R135 (ECO-06): the transfer list and player-for-player
  * trades, through the store flows. The pure arithmetic is in
  * engine/career/transferList.test.ts; here the flows move saves: listing,
  * the market's answer, accepting / declining, the window's close, the trade's
@@ -306,7 +306,7 @@ const statusOf = (save: CareerSave, id: string) => tradeProposalsOf(save).find((
 // Listing
 // ---------------------------------------------------------------------------
 
-describe("R134 listing — the rules of the list", () => {
+describe("R135 listing — the rules of the list", () => {
   it("is closed in the career's first window (listFirstWindow) and outside any window (windowClosed)", () => {
     const first = createCareerSave(INPUT, 7);
     expect(windowIndexOf(weekOfDay(first.clock.day))).toBe(0);
@@ -361,7 +361,7 @@ describe("R134 listing — the rules of the list", () => {
   });
 });
 
-describe("R134 listing — the market's answer", () => {
+describe("R135 listing — the market's answer", () => {
   it("an ask at or under the ceiling: a listed offer paying the ask in full, with a mail and a news item", () => {
     const { save: base, playerId, ask } = listScenario("ok");
     const listed = listOk(base, playerId, ask);
@@ -427,7 +427,7 @@ describe("R134 listing — the market's answer", () => {
   });
 });
 
-describe("R134 listing — answering the offer", () => {
+describe("R135 listing — answering the offer", () => {
   function offered(): { save: CareerSave; playerId: string; offer: TransferOffer } {
     const { save: base, playerId, ask } = listScenario("ok");
     const listed = listOk(base, playerId, ask);
@@ -507,7 +507,7 @@ describe("R134 listing — answering the offer", () => {
   });
 });
 
-describe("R134 listing — the window's close and other exits", () => {
+describe("R135 listing — the window's close and other exits", () => {
   it("entries not sold are gone the first day outside the window, with one listingLapsed news item", () => {
     const { save: base, playerId, ask } = listScenario("dear");
     const listed = listOk(base, playerId, ask);
@@ -570,7 +570,7 @@ describe("R134 listing — the window's close and other exits", () => {
 // Trades
 // ---------------------------------------------------------------------------
 
-describe("R134 trade — the plan's refusals", () => {
+describe("R135 trade — the plan's refusals", () => {
   it("errors: first window, outside a window, unknown giver, free agent, another region", () => {
     const fresh = createCareerSave(INPUT, 7);
     const anyTake = Object.values(fresh.world.orgs)[0].playerIds[0];
@@ -617,7 +617,7 @@ describe("R134 trade — the plan's refusals", () => {
   });
 });
 
-describe("R134 trade — proposing", () => {
+describe("R135 trade — proposing", () => {
   it("stores one waiting proposal and moves nothing; a second is refused (tradePending)", () => {
     const s = tradeScenario("agree");
     const before = snapshot(s.save);
@@ -658,7 +658,7 @@ describe("R134 trade — proposing", () => {
   });
 });
 
-describe("R134 trade — the org's verdict", () => {
+describe("R135 trade — the org's verdict", () => {
   it("credit + cash covering the fee: agreed, a holding bid decision, tradeAgreed", () => {
     const s = tradeScenario("agree");
     const { save, id } = answered(s);
@@ -717,7 +717,7 @@ describe("R134 trade — the org's verdict", () => {
   });
 });
 
-describe("R134 trade — completing", () => {
+describe("R135 trade — completing", () => {
   it("an agreed trade is atomic: seats swap, the arrival signs fresh, only the cash moves", () => {
     const s = tradeScenario("agree");
     const { save, id } = answered(s);
@@ -841,7 +841,7 @@ describe("R134 trade — completing", () => {
   });
 });
 
-describe("R134 trade — lapsing and other exits", () => {
+describe("R135 trade — lapsing and other exits", () => {
   it("a proposal never answered lapses at the window's close with a tradeLapsed news item", () => {
     const { save, proposal } = propose(tradeScenario("agree"));
     const stuck = structuredClone(save);
@@ -914,7 +914,7 @@ describe("R134 trade — lapsing and other exits", () => {
 // Persistence
 // ---------------------------------------------------------------------------
 
-describe("R134 persistence", () => {
+describe("R135 persistence", () => {
   function withBothFields(): CareerSave {
     const s = tradeScenario("agree");
     const { save } = propose(s);
@@ -987,7 +987,7 @@ describe("R134 persistence", () => {
 // The anti-flip anchor
 // ---------------------------------------------------------------------------
 
-describe("R134 money anchor — the list is no flip", () => {
+describe("R135 money anchor — the list is no flip", () => {
   const SEEDS = [3, 11, 29, 47, 61, 83, 101, 127, 149, 173, 197, 211];
 
   it("no listing can be made on a player signed in this window or the next (resaleLocked)", () => {
@@ -1064,7 +1064,7 @@ describe("R134 money anchor — the list is no flip", () => {
   });
 });
 
-describe("R134 — sanity of the fixtures", () => {
+describe("R135 — sanity of the fixtures", () => {
   it("the squad fits under the cap and windows are where the tests expect", () => {
     const save = windowSave(7);
     expect(save.squad.length).toBeLessThanOrEqual(CAREER_CONTRACT.squadCap);
@@ -1073,7 +1073,7 @@ describe("R134 — sanity of the fixtures", () => {
   });
 });
 
-describe("R134 — no buying back (the pre-commit review's loop)", () => {
+describe("R135 — no buying back (the pre-commit review's loop)", () => {
   function sold(): { save: CareerSave; playerId: string } {
     const { save: base, playerId, ask } = listScenario("ok");
     const listed = listOk(base, playerId, ask);

@@ -1,30 +1,35 @@
 # Project Status — current state only
 
 > Updated: **2026-11-17**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 roadmap (decided
-> 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
+> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
+> (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 
 ## Current builds
 
-- **v2.0.25 (17/11/2026, branch `feat/sell-trade`, not on staging or main
-  yet)**: Road to Worlds gets the transfer list and player-for-player trades
-  (R134, closes ECO-06; BALANCE_VERSION 34). Additive save fields, persist
-  contract unchanged. Checked in a desktop browser and at 320 px; a short
-  probe (2 careers, 4 seasons) and the soft-lock probe; no battery, no
-  physical device. Waiting for Miguel's go-ahead for staging, then main.
-  The cloud-save front runs in parallel on `feat/cloud-save` and may take
-  the same version number: whichever lands second is renumbered.
-
-- **v2.0.14 (14/11/2026)** follows the first PostHog review after the launch
-  (docs/POSTLAUNCH-2.0-REPORT.md): page translation no longer crashes React
-  (`lib/domGuard.ts`), the black global error screen is replaced
-  (`app/global-error.tsx`), a failed chunk reloads once, old Draft results no
-  longer crash, error reports keep the property name. Production ran v2.0.1 to
-  v2.0.13 between 12 and 14/11 (CHANGELOG). Not verified: the crash end to end
-  with a real browser translator; watch `NotFoundError` under release 2.0.14.
-  Open from the report: an event for a refused career advance, the event budget
-  (about one million a month), FR / ES, mobile career entry, account sync failures.
-- **Production is v2.0.0 "Season 1"**, https://rocketdraft.app, live since
+- **v2.0.27 (17/11/2026), branch `feat/sell-trade`, on staging, not on main
+  yet: Road to Worlds gets the transfer list and player-for-player trades**
+  (R135, closes ECO-06; BALANCE_VERSION 36). Three additive save fields,
+  persist contract unchanged. Checked in a desktop browser and at 320 px; a
+  short probe (2 careers, 4 seasons) and the soft-lock probe; no battery, no
+  physical device. Waiting for Miguel's play on staging and his go-ahead for main.
+- **v2.0.26 (17/11/2026), branch `feat/cloud-save`, not on main yet: the career
+  save in the account.** One row per account and slot in `career_saves` (SQL
+  applied by Miguel 17/11), localStorage still the copy the game plays from, a
+  notice when two copies differ, save files for everyone (DESIGN-DECISIONS
+  #165–#169). The `creator` grant only (Miguel) until the account path is checked in
+  production (`CAREER_CLOUD_AUDIENCE`, `lib/careerCloudGate.ts`); then one
+  constant opens it. Not verified: a real account, two devices, mobile Safari.
+- **v2.0.25 (17/11/2026), same branch.**
+  Account sync, first step of the career cloud save (roadmap Etapa 1): every
+  failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
+  a failure that may pass is tried again, and a call never runs without the
+  player's own token (an expired token used to read as "new account"). Not
+  verified against the production database: staging has accounts off.
+- **Production is v2.0.24** (main `5eb3078`); v2.0.15 to v2.0.24 are in
+  CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
+  page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused
+  career advance, the event budget, FR / ES, mobile career entry.
+- **v2.0.0 "Season 1"** went live at https://rocketdraft.app on
   12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
   his go-ahead because the Workers Builds queue was behind; the queued builds
   publish the same commits). Pre-season frozen at 13:05 UTC, three rewarded
@@ -66,7 +71,7 @@
    remains Gate 3b. rc.42 does not close it.
 2. Review open rc.37 handoff questions (F1/F2/F3); F5 approval before code.
    Gate 2 play and ENG-03 real-save fixtures remain.
-3. Etapa 4: collection pacing, DATA-02 and SEA-01 (ECO-06 closed by R134). Etapa 5:
+3. Etapa 4: collection pacing, DATA-02 and SEA-01 (ECO-06 closed by R135). Etapa 5:
    integrated playtests, real saves, account/sync, performance, final EN/PT/art,
    tutorial and launch notes. Etapa 6: season dates, migration/rollback and
    Miguel's cutover tasks in V2-IMPLEMENTATION-PLAN.md §6. No main deployment.

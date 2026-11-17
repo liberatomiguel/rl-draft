@@ -404,10 +404,29 @@ export const EVENT_CATALOG = {
   account_signed_in: spec("app", "critical", {
     hadLocalProgress: "boolean",
   }),
-  /** A cloud sync aborted (stage: read / push). Once per session and stage. */
+  /** A cloud sync aborted (stage: read / push). Once per session, stage and
+   *  reason. v2.0.25: `reason` names the failure (lib/syncErrors) and `code` is
+   *  the short database / PostgREST code when there is one. */
   account_sync_failed: spec("app", "critical", {
     actionId: "string",
     stage: "string",
+    reason: "string",
+    code: "string?",
+  }),
+
+  /** v2.0.26: a career cloud step failed (stage: list / read / push / delete /
+   *  load). Once per session, stage and reason. */
+  career_cloud_failed: spec("app", "critical", {
+    actionId: "string",
+    stage: "string",
+    reason: "string",
+    code: "string?",
+  }),
+  /** v2.0.26: the player answered the notice about two copies of a career
+   *  (kind: diverged / different-career / cloud-deleted; choice: local / cloud). */
+  career_cloud_conflict: spec("app", "critical", {
+    kind: "string",
+    choice: "string",
   }),
 
   // -------------------------------------------------------------------------

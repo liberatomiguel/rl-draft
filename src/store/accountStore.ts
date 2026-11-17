@@ -30,6 +30,15 @@
  *    at once when the tab is hidden) that only syncs when the durable profile
  *    differs from what this tab last pushed. Idle tabs never sync.
  *
+ * Failures (v2.0.25, POSTLAUNCH-2.0-REPORT item 6): every failed read or push is
+ * NAMED (lib/syncErrors). A failed READ that may simply pass (dropped connection,
+ * server error) is tried again within the sync. A failed PUSH is never repeated
+ * on its own (the cloud may have changed since the read): the sync is owed
+ * instead, per user, and the whole read, merge and push runs again after a
+ * pause, when the connection comes back, when the tab returns, or with the next
+ * progress. A new account takes the fallback name only when the name itself was
+ * refused, never because the network failed.
+ *
  * Engine purity holds: this is store/lib only; nothing under src/engine touches it.
  */
 
@@ -62,6 +71,8 @@ import { CLOUD_SYNC } from "@/config/balance";
 import { useSignInDialog } from "./signInDialog";
 import { registerSessionProps, trackEvent } from "@/lib/analytics";
 import type { DurableProfile } from "@/lib/profileSync";
+import { retrying } from "@/lib/retry";
+import { isRecoverableSyncFailure, isTransientSyncFailure, type SyncFailReason } from "@/lib/syncErrors";
 
 type Status = "loading" | "signedOut" | "signedIn";
 
@@ -144,6 +155,11 @@ const durableSig = (): string => JSON.stringify(toDurable(useProfileStore.getSta
 /** "synced" = cloud and local reconciled and pushed; "aborted" = nothing written
  *  to the cloud (failed read, failed push, or an unexpected error). */
 type SyncOutcome = "synced" | "aborted";
+/** One run's result: `owed` when it failed for a reason that may pass. */
+interface SyncRun {
+  outcome: SyncOutcome;
+  owed: boolean;
+}
 
 /** Users whose automatic sync already succeeded during this page load. */
 const syncedThisLoad = new Set<string>();
@@ -158,6 +174,14 @@ let pushTimer: ReturnType<typeof setTimeout> | undefined;
 /** True while a sync writes its merged profile into the store — that write is
  *  the sync's own result (already being pushed), not new progress. */
 let applyingSync = false;
+/** v2.0.25: the user whose last sync failed for a reason that may pass (network,
+ *  server, token, offline). It is owed: retried after a pause, on `online`, or
+ *  when the tab returns. Per user, so a late sync of a previous user never
+ *  touches it. Cleared by that user's sync going through and on sign-out. */
+let owedFor: string | null = null;
+/** The pending retry of an owed sync, and how many pauses were already spent. */
+let resyncTimer: ReturnType<typeof setTimeout> | undefined;
+let resyncAttempt = 0;
 /** Undo for the watchers init() registers (a re-init replaces them — tests only;
  *  in the app init() runs once). */
 let stopWatchers: (() => void) | undefined;
@@ -175,17 +199,33 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     if (!get().username) showName(session.user.id, emailPrefix(session));
   };
 
+  /** A sync stopped at `stage`: name it for analytics (once per session, stage and
+   *  reason) and remember whether it is worth trying again later. */
+  const failed = (stage: "read" | "push", failure: { reason?: SyncFailReason; code?: string }): SyncRun => {
+    const reason = failure.reason ?? "other";
+    trackEvent("account_sync_failed", {
+      actionId: `sync_failed:${stage}:${reason}`,
+      stage,
+      reason,
+      ...(failure.code ? { code: failure.code } : {}),
+    });
+    return { outcome: "aborted", owed: isRecoverableSyncFailure(failure.reason) };
+  };
+
   /** One full reconcile: read cloud → merge → hydrate local → push. */
-  const runSync = async (session: Session): Promise<SyncOutcome> => {
+  const runSync = async (session: Session): Promise<SyncRun> => {
     const userId = session.user.id;
     await whenProfileHydrated();
-    const row = await fetchCloudRow(userId);
+    const row = await retrying(
+      () => fetchCloudRow(userId),
+      (r) => r.status === "error" && isTransientSyncFailure(r.reason),
+      CLOUD_SYNC.retryDelaysMs,
+    );
     // Never push over a backup we could not read: a transient read error must not
     // be treated as "no row" (fresh device + one 5xx would wipe the cloud copy).
     if (row.status === "error") {
       keepName(session);
-      trackEvent("account_sync_failed", { actionId: "sync_failed:read", stage: "read" });
-      return "aborted";
+      return failed("read", row);
     }
     // The stored name is known now — show it even if the push below fails.
     const cloudName = row.status === "ok" ? row.username : null;
@@ -255,15 +295,19 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // picks the name in the sign-in dialog (`needsName`), after the account exists.
     let username = cloudName || emailPrefix(session);
     const streak = selectDailyStreak(useProfileStore.getState());
+    // One attempt: `merged` is the cloud as it was at the read. A push repeated
+    // after a pause could replace what another device wrote meanwhile, so a failed
+    // push leaves the sync owed and the whole read, merge and push runs again.
     let pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
-    if (pushed.error && !cloudName) {
+    // v2.0.25: only a refused NAME takes the fallback. Until 2.0.24 any failed
+    // first push did (a dropped connection gave a new account a name with digits).
+    if (pushed.error && !cloudName && pushed.reason === "conflict") {
       username = `${emailPrefix(session).slice(0, 19)}${1000 + Math.floor(Math.random() * 9000)}`;
       pushed = await pushCloudProfile(userId, username, merged, leaderboardStats(merged, streak));
     }
     if (pushed.error) {
       keepName(session);
-      trackEvent("account_sync_failed", { actionId: "sync_failed:push", stage: "push" });
-      return "aborted";
+      return failed("push", pushed);
     }
     if (!cloudName) showName(userId, username); // the fallback name is now the stored one
     // v2.0.4: the row did not exist before this sync = the account was just created.
@@ -273,7 +317,7 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       useSignInDialog.getState().show();
     }
     if (get().session?.user.id === userId) lastPushed = { userId, sig };
-    return "synced";
+    return { outcome: "synced", owed: false };
   };
 
   /** Run a sync for this user, or join the one already in flight. */
@@ -283,14 +327,27 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     if (running) return running;
     set({ syncing: true });
     const p = runSync(session)
-      .catch((): SyncOutcome => {
+      .catch((): SyncRun => {
         keepName(session);
-        return "aborted";
+        return { outcome: "aborted", owed: false };
       })
-      .then((outcome) => {
+      .then(({ outcome, owed }) => {
         // Only while this user is still signed in: a sync that lands after a
-        // sign-out must not make the next sign-in skip its own sync.
-        if (outcome === "synced" && get().session?.user.id === userId) syncedThisLoad.add(userId);
+        // sign-out must not make the next sign-in skip its own sync, and must not
+        // touch the owed state or the timer of whoever is signed in now.
+        if (get().session?.user.id !== userId) return outcome;
+        if (outcome === "synced") {
+          syncedThisLoad.add(userId);
+          owedFor = null;
+          clearResync();
+          resyncAttempt = 0;
+        } else if (owed) {
+          owedFor = userId;
+          scheduleResync();
+        } else {
+          owedFor = null;
+          clearResync();
+        }
         return outcome;
       })
       .finally(() => {
@@ -300,6 +357,34 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     inFlight.set(userId, p);
     return p;
   };
+
+  const clearResync = (): void => {
+    if (resyncTimer !== undefined) clearTimeout(resyncTimer);
+    resyncTimer = undefined;
+  };
+
+  /** Run the owed sync now (a pause ran out, the connection is back, the tab
+   *  returned). Nothing to do when a sync is running or nothing is owed. */
+  const retryOwed = (): void => {
+    const session = get().session;
+    if (!session || owedFor !== session.user.id || inFlight.has(session.user.id)) return;
+    clearResync();
+    void syncGuarded(session);
+  };
+
+  /** Arm the next pause of an owed sync. The last pause repeats while the
+   *  failure lasts, so an open, idle tab still backs up once the cloud is back. */
+  function scheduleResync(): void {
+    clearResync();
+    const delays = CLOUD_SYNC.resyncDelaysMs;
+    const delay = delays[Math.min(resyncAttempt, delays.length - 1)];
+    if (delay === undefined) return;
+    resyncAttempt += 1;
+    resyncTimer = setTimeout(() => {
+      resyncTimer = undefined;
+      retryOwed();
+    }, delay);
+  }
 
   /** Automatic sync: once per page load per user. A failed attempt (nothing was
    *  pushed) may be retried by a later sign-in event. */
@@ -317,6 +402,9 @@ export const useAccountStore = create<AccountStore>((set, get) => {
   const resetPush = (): void => {
     clearPushTimer();
     lastPushed = null;
+    clearResync();
+    resyncAttempt = 0;
+    owedFor = null;
   };
 
   /** The debounced mid-session push: sync only when the durable profile differs
@@ -333,8 +421,12 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       void running.then(schedulePush);
       return;
     }
-    // The load's first sync belongs to INITIAL_SESSION / SIGNED_IN (and their retry).
-    if (!syncedThisLoad.has(userId)) return;
+    // The load's first sync belongs to INITIAL_SESSION / SIGNED_IN (and their retry),
+    // unless it failed for a reason that may pass: then new progress retries it.
+    if (!syncedThisLoad.has(userId)) {
+      retryOwed();
+      return;
+    }
     if (lastPushed?.userId === userId && lastPushed.sig === durableSig()) return; // nothing new
     void syncGuarded(session);
   };
@@ -351,7 +443,7 @@ export const useAccountStore = create<AccountStore>((set, get) => {
   const onProfileChange = (): void => {
     if (applyingSync) return; // the sync's own merge write — already being pushed
     const userId = get().session?.user.id;
-    if (userId && (syncedThisLoad.has(userId) || inFlight.has(userId))) schedulePush();
+    if (userId && (syncedThisLoad.has(userId) || inFlight.has(userId) || owedFor === userId)) schedulePush();
   };
 
   const onAuth = (session: Session | null, event: AuthChangeEvent): void => {
@@ -422,11 +514,24 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       const doc = typeof document !== "undefined" ? document : null;
       const onVisibility = (): void => {
         if (doc?.visibilityState === "hidden" && pushTimer !== undefined) pushIfChanged();
+        // v2.0.25: back on the tab with a sync owed (a phone waking up): run it now.
+        if (doc?.visibilityState === "visible") retryOwed();
       };
       doc?.addEventListener("visibilitychange", onVisibility);
+      // v2.0.25: the connection is back: the owed sync runs at once, pauses start over.
+      const win = typeof window !== "undefined" ? window : null;
+      const onOnline = (): void => {
+        // A connection that flaps must not restart the pauses each time: they
+        // start over only when no retry is already waiting.
+        if (resyncTimer === undefined) resyncAttempt = 0;
+        retryOwed();
+      };
+      win?.addEventListener("online", onOnline);
       stopWatchers = () => {
         stopProfile();
         doc?.removeEventListener("visibilitychange", onVisibility);
+        win?.removeEventListener("online", onOnline);
+        clearResync();
       };
       if (hasStoredAuthSession()) {
         startSession(); // returning signed-in player / auth redirect

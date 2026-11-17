@@ -164,7 +164,9 @@ properties of `session_started`, not events.
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
 | `account_signed_in` | critical | A sign-in completes in this tab (not a restored session) | `hadLocalProgress` |
-| `account_sync_failed` | critical | A cloud sync aborts, once per session and stage | `stage` (`read`, `push`) |
+| `account_sync_failed` | critical | A cloud sync aborts, once per session, stage and reason | `stage` (`read`, `push`), `reason` (`offline`, `network`, `auth`, `denied`, `conflict`, `server`, `rate`, `unavailable`, `other`; since 2.0.25), `code` (database / PostgREST code, when there is one) |
+| `career_cloud_failed` | critical | A step of the career cloud save fails, once per session, stage and reason (2.0.26) | `stage` (`list`, `read`, `push`, `delete`, `load`), `reason` (as `account_sync_failed`), `code` |
+| `career_cloud_conflict` | critical | The player answers the notice about two copies of a career (2.0.26) | `kind` (`diverged`, `different-career`, `cloud-deleted`), `choice` (`local`, `cloud`) |
 | `quality_save_error` | critical | A persisted store fails to save or load | `store`, `kind` (`quota`, `parse`, `migrate`, `write`) |
 | `quality_migration` | critical | A save is upgraded to a newer shape | `store`, `fromVersion`, `toVersion` |
 | `quality_duplicate_reward` | critical | A grant is refused as already given | `kind`, `id` |

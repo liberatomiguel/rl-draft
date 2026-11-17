@@ -1600,7 +1600,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
   }
 
-  // ============ EVERY DAY: R134 — the transfer list and proposed trades =====
+  // ============ EVERY DAY: R135 — the transfer list and proposed trades =====
   rollTransferList(save, dayWindowIdx);
   rollTradeProposals(save, dayWindowIdx);
 
@@ -1626,7 +1626,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
   if (beforeCount > 0) {
     save.pendingOffers = save.pendingOffers.filter((o) => o.status === "pending");
   }
-  // R134: a listing whose offer lapsed, or whose player left, ends with it.
+  // R135: a listing whose offer lapsed, or whose player left, ends with it.
   pruneTransferBusiness(save);
 
   // ==================== MON-FRI: scheduled scrims (v0.3) ===================
@@ -2853,7 +2853,7 @@ function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: stri
  * Sunday's playoffs for the user).
  */
 export function acceptBidFlow(input: CareerSave, offerId: string): FlowResult {
-  // R134: an agreed trade is answered through the same door as a bid (one "bid" decision kind).
+  // R135: an agreed trade is answered through the same door as a bid (one "bid" decision kind).
   if (input.tradeProposals?.some((p) => p.id === offerId)) return acceptTradeFlow(input, offerId);
   if (input.activeEvent) return { save: input, error: "rosterLocked" };
   const offer = input.pendingOffers.find((o) => o.id === offerId);
@@ -2919,7 +2919,7 @@ function sellSquadPlayer(
   // ECO-03 (R47): the sale settles every bid for him — none is left to
   // "complete" later (a release drops them the same way).
   save.pendingOffers = save.pendingOffers.filter((o) => !(o.direction === "out" && o.playerId === player.id));
-  dropTransferBusinessFor(save, player.id); // R134: his listing and any trade for him
+  dropTransferBusinessFor(save, player.id); // R135: his listing and any trade for him
   stampSoldOn(save, player.id);
   pushNews(save, {
     type: "transfer",
@@ -5170,7 +5170,7 @@ export function signingPlanFor(
     /** rc.33 (ECO-11): the weekly wage and prize share offered (omitted = his ask). */
     offer?: ContractOffer;
     /**
-     * R134 (ECO-06): a player-for-player trade. `releaseId` is the player who
+     * R135 (ECO-06): a player-for-player trade. `releaseId` is the player who
      * goes to his org instead of being released: no fee and no severance, the
      * user pays `cash` only. Every other gate and money check is the signing's.
      */
@@ -5209,7 +5209,7 @@ export function signingPlanFor(
   if (!signableAtRep(view, save.reputation)) return { error: "repGate" };
   // rc.35 (front C): a player an org signed in this window takes no other offer before it closes.
   if (justSignedElsewhere(save, playerId)) return { error: "justSigned" };
-  // R134: a player the user sold or traded away does not come back within a season.
+  // R135: a player the user sold or traded away does not come back within a season.
   if (buyBackLocked(save.soldOn?.[playerId], save.clock.seasonIndex, save.clock.day)) return { error: "buyBack" };
 
   // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
@@ -5224,7 +5224,7 @@ export function signingPlanFor(
   const pack = askPackOf(save, view, lengthSeasons, Boolean(onOrg));
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
-  // R134: in a trade the leaver is not released (no severance) and cash replaces the fee.
+  // R135: in a trade the leaver is not released (no severance) and cash replaces the fee.
   const severance = leaver && !opts.trade ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const feePaid = opts.trade ? opts.trade.cash : pack.fee;
   // rc.35 (front N): the signing bonus is the talk's (a lever), not the package's.
@@ -5298,7 +5298,7 @@ function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: numb
   if (refill) syncSquadRoles(save);
   // A pending bid for him can no longer complete.
   save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
-  dropTransferBusinessFor(save, player.id); // R134
+  dropTransferBusinessFor(save, player.id); // R135
   keepInWorld(save, player);
   save.world.freeAgentIds.push(player.id);
   save.world.version += 1;
@@ -5390,7 +5390,7 @@ export function signPlayerFlow(
 /**
  * The arrival half of a signing: he joins the squad on the plan's terms and
  * takes the open seat. The caller has already taken him out of the world and
- * moved the money. One function for a signing and for a trade (R134).
+ * moved the money. One function for a signing and for a trade (R135).
  */
 function joinSquadFromPlan(save: CareerSave, plan: SigningPlan): void {
   const { view, slot, finalSeason, lengthSeasons, talk } = plan;
@@ -5505,7 +5505,7 @@ export function renewPlayerFlow(
 }
 
 export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
-  // R134: refusing an agreed or countered trade drops the proposal.
+  // R135: refusing an agreed or countered trade drops the proposal.
   if (input.tradeProposals?.some((p) => p.id === offerId)) return withdrawTradeFlow(input, offerId);
   const save = clone(input);
   const offer = save.pendingOffers.find((o) => o.id === offerId);
@@ -5514,7 +5514,7 @@ export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
     // rc.32: refusing a Blockbuster surcharges his next renewal (the offer and
     // the mail say so).
     stampBlockbusterRefusal(save, offer);
-    // R134: refusing the answer to a listing takes him off the list (he stays).
+    // R135: refusing the answer to a listing takes him off the list (he stays).
     if (offer.listed && save.transferList) {
       save.transferList = save.transferList.filter((l) => l.playerId !== offer.playerId);
     }
@@ -5523,7 +5523,7 @@ export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
 }
 
 // ---------------------------------------------------------------------------
-// R134 (ECO-06): the transfer list and player-for-player trades
+// R135 (ECO-06): the transfer list and player-for-player trades
 // ---------------------------------------------------------------------------
 //
 // The user lists a squad player with an asking fee, or proposes one of his
@@ -5548,7 +5548,7 @@ function valueCtxOf(save: CareerSave): { careerSeed: number; seasonIndex: number
   return { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, growthModel: growthModelOf(save.world) };
 }
 
-/** R134: the transfer list, without entries whose player has left the squad. */
+/** R135: the transfer list, without entries whose player has left the squad. */
 export function transferListOf(save: CareerSave): ListedPlayer[] {
   const list = save.transferList;
   if (!list || list.length === 0) return [];
@@ -5556,12 +5556,12 @@ export function transferListOf(save: CareerSave): ListedPlayer[] {
   return list.filter((l) => ids.has(l.playerId));
 }
 
-/** R134: the trades proposed and not settled. */
+/** R135: the trades proposed and not settled. */
 export function tradeProposalsOf(save: CareerSave): TradeProposal[] {
   return save.tradeProposals ?? [];
 }
 
-/** R134: what the listing sheet reads. `error` null = he can be listed (or re-priced) today. */
+/** R135: what the listing sheet reads. `error` null = he can be listed (or re-priced) today. */
 export interface ListingPlan {
   /** His market value, the unit of the ask. */
   value: number;
@@ -5598,7 +5598,7 @@ export function listingPlanFor(save: CareerSave, playerId: string): ListingPlan 
 }
 
 /**
- * R134: put a squad player on the transfer list at `ask` (forced inside the
+ * R135: put a squad player on the transfer list at `ask` (forced inside the
  * ask bounds), or re-price him while no offer is on the table. Not a roster
  * move, so an event in progress does not lock it; accepting the offer does.
  */
@@ -5622,7 +5622,7 @@ export function listPlayerFlow(input: CareerSave, playerId: string, ask: number)
   return { save };
 }
 
-/** R134: take him off the list; an offer answering the listing goes with it (he stays). */
+/** R135: take him off the list; an offer answering the listing goes with it (he stays). */
 export function delistPlayerFlow(input: CareerSave, playerId: string): CareerSave {
   const save = clone(input);
   save.transferList = (save.transferList ?? []).filter((l) => l.playerId !== playerId);
@@ -5714,7 +5714,7 @@ function rollTransferList(save: CareerSave, windowIdx: 0 | 1 | 2 | 3 | null): vo
   }
 }
 
-/** R134: what the trade sheet reads, and what a proposal is checked against. */
+/** R135: what the trade sheet reads, and what a proposal is checked against. */
 export interface TradePlan {
   /** The arrival, planned as a signing with the leaver's seat (gates, wage, slot, money checks). */
   signing: SigningPlan;
@@ -5755,7 +5755,7 @@ export function tradePlanFor(
   return { plan: { signing: planned.plan, give, orgRef: org.ref, fee, cash, outlook } };
 }
 
-/** R134: send the proposal; the org answers on `answerDay` (`rollTradeProposals`). Nothing moves yet. */
+/** R135: send the proposal; the org answers on `answerDay` (`rollTradeProposals`). Nothing moves yet. */
 export function proposeTradeFlow(
   input: CareerSave,
   giveId: string,
@@ -5792,7 +5792,7 @@ export function proposeTradeFlow(
   return { save };
 }
 
-/** R134: withdraw a proposal, or refuse an agreed or countered trade. Nothing moves. */
+/** R135: withdraw a proposal, or refuse an agreed or countered trade. Nothing moves. */
 export function withdrawTradeFlow(input: CareerSave, proposalId: string): CareerSave {
   const save = clone(input);
   save.tradeProposals = (save.tradeProposals ?? []).filter((p) => p.id !== proposalId);
@@ -5847,13 +5847,13 @@ function rollTradeProposals(save: CareerSave, windowIdx: 0 | 1 | 2 | 3 | null): 
   save.tradeProposals = keep;
 }
 
-/** R134: the cash an agreed or countered trade costs the user. */
+/** R135: the cash an agreed or countered trade costs the user. */
 export function tradeCashOf(p: TradeProposal): number {
   return p.status === "countered" ? (p.cashAsked ?? p.cash) : p.cash;
 }
 
 /**
- * R134: what accepting an agreed or countered trade does today. The confirm
+ * R135: what accepting an agreed or countered trade does today. The confirm
  * reads it and `acceptTradeFlow` applies it, so the sheet shows the deal the
  * confirm writes. Unlike `tradePlanFor` it has no proposal-time rules (the
  * closing day, the resale lock): the org already said yes.
@@ -5881,7 +5881,7 @@ export function tradeAcceptPlanFor(
 }
 
 /**
- * R134: complete an agreed (or countered) trade. Atomic like a signing (R47):
+ * R135: complete an agreed (or countered) trade. Atomic like a signing (R47):
  * the user's player takes the other's seat on the org, the arrival signs at
  * his ask into the seat left open, and only the cash moves. A roster move,
  * so it waits for an event in progress.
@@ -6881,6 +6881,11 @@ export function migrateSaveToV4(raw: unknown): CareerSave | null {
  *    qualifier it plays or played → outside the 8; the regional it holds
  *    without one → inside), so Saturday and Sunday cannot re-seed the user.
  */
+/** v2.0.26: the newest `saveVersion` this build writes and can load (what
+ *  `migrateSaveToV5` upgrades to). A save from outside the play loop (the account
+ *  copy, an imported file) with a higher one is refused, never downgraded. */
+export const CURRENT_SAVE_VERSION = 5;
+
 export function migrateSaveToV5(raw: unknown): CareerSave | null {
   const save = migrateSaveToV4(raw);
   if (!save) return null;

@@ -1604,7 +1604,7 @@ export const CAREER_EN = {
       tooYoung: "Too young to compete — players sign from age 13.",
       /** rc.32 (M4): the lock on commitments that shorten the runway (off since rc.34 — CAREER_LOAN.lockCommitments). */
       loanRunway: "Locked while the emergency loan is owed. Repay it or free some wages first.",
-      /** R134 (ECO-06): the transfer list and player-for-player trades. */
+      /** R135 (ECO-06): the transfer list and player-for-player trades. */
       listDisabled: "The transfer list is not available.",
       listFirstWindow: "The first window is closed to sales: no listings and no trades yet.",
       listWindowClosing: "The window closes today. It is too late to list a player or propose a trade.",
@@ -1618,7 +1618,7 @@ export const CAREER_EN = {
       buyBack: "He left your club under a season ago. He will not sign for you again yet.",
       tradeGone: "One of the two players is no longer available.",
     },
-    /** R134 (ECO-06): the transfer list, on the Market's deals tab and the Squad screen. */
+    /** R135 (ECO-06): the transfer list, on the Market's deals tab and the Squad screen. */
     transferList: {
       title: "Transfer list",
       empty: "Set an asking fee for a squad player and an org of his region answers within a few days. Nobody leaves until you accept.",
@@ -1647,7 +1647,7 @@ export const CAREER_EN = {
       confirmReprice: "Update price",
       shortTenure: (pct: number) => `He arrived under a season ago: clubs will pay about ${pct}% of his value for now.`,
     },
-    /** R134 (ECO-06): player-for-player trades. */
+    /** R135 (ECO-06): player-for-player trades. */
     trade: {
       title: "Trades",
       empty: "To propose a trade, open the offer for a player under contract. Trades work only inside a transfer window, with an org from the region of the player you give.",
@@ -2938,6 +2938,54 @@ export const CAREER_EN = {
     infiniteExplainer:
       "From 2027 the world is fully procedural: rookies are generated, veterans retire, history is whatever you make.",
     defendTitle: "Defend the title",
+  },
+
+  cloud: {
+    synced: (when: string) => `Saved in your account · ${when}`,
+    pending: "Changes waiting to be saved in your account",
+    syncing: "Saving to your account…",
+    conflict: "Two copies of this career",
+    choose: "Choose",
+    newer: "The copy in your account was saved by a newer version of the game. Reload to update.",
+    error: "Could not reach your account. It will be tried again.",
+    tryNow: "Try now",
+    restoring: "Restoring from your account…",
+    exportSave: "Export save",
+    importSave: "Import a save file",
+    importErrors: {
+      unreadable: "That file could not be read.",
+      "not-a-save": "That is not a Rocket Draft career save.",
+      newer: "That save comes from a newer version of the game. Reload to update, then import again.",
+      damaged: "That file is incomplete or damaged.",
+      invalid: "The game could not load that save.",
+      "slot-taken": "This slot already holds a career.",
+    },
+    deleteAlso: "The copy in your account is deleted too.",
+    helpActive: "Your careers are also saved in your account. Export a save file to keep your own backup.",
+    helpLocal: "Careers are saved in this browser. Export a save file to move one to another device or keep a backup.",
+    helpSignIn: "Sign in to keep a copy in your account.",
+    notice: {
+      titleDiverged: "This career was played on two devices",
+      titleDifferent: "This slot holds a different career in your account",
+      titleDeleted: "This career was deleted from your account",
+      bodyDiverged: "The two copies cannot be merged. Choose the one to keep; the other is replaced.",
+      bodyDifferent: "Choose the career to keep in this slot; the other is replaced.",
+      bodyDeleted: "It was deleted on another device. Keep it here and it goes back to your account, or delete it here too.",
+      thisDevice: "This device",
+      account: "Your account",
+      mostRecent: "Most recent",
+      keepDevice: "Keep this device's career",
+      useAccount: "Use the career from your account",
+      keepHere: "Keep it here",
+      deleteHere: "Delete it here too",
+      exportFirst: "Export this device's career first",
+      decideLater: "Decide later",
+      seasonWeek: (season: string, week: string) => `${season} · ${week}`,
+    },
+    toast: {
+      updated: (org: string) => `${org}: updated from your account (played on another device).`,
+      restored: (org: string) => `${org}: restored from your account.`,
+    },
   },
 
   saves: {

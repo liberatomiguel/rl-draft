@@ -62,7 +62,7 @@ estão pedindo), sem esperar o gate da etapa:
   exige entrada em DESIGN-DECISIONS porque toca a regra dos saves.
 - **Vender e trocar (M, fecha ECO-06).** Listar jogador com preço pedido,
   propor troca jogador por jogador, propostas da IA em 1 a 3 dias.
-  **Feito em 17/11 (v2.0.25, R134), aguardando ok para staging e main.**
+  **Feito em 17/11 (v2.0.27, R135), aguardando ok para staging e main.**
 - **Sondagens técnicas (P cada):** o motor v2 rodando numa Edge Function do
   Supabase (viabilidade do online); estudo de replays para o visualizador.
 

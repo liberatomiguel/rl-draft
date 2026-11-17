@@ -251,7 +251,7 @@ export function MarketScreen() {
   const [signableOnly, setSignableOnly] = useState(false);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [confirmFire, setConfirmFire] = useState(false);
-  /** R134: the listing sheet (open + the player; null player = squad picker) and the trade sheet / confirm. */
+  /** R135: the listing sheet (open + the player; null player = squad picker) and the trade sheet / confirm. */
   const [listSheet, setListSheet] = useState<{ playerId: string | null } | null>(null);
   const [tradeOpen, setTradeOpen] = useState(false);
   const [confirmTrade, setConfirmTrade] = useState<TradeProposal | null>(null);
@@ -391,7 +391,7 @@ export function MarketScreen() {
   const bids = save.pendingOffers.filter(
     (o) => o.status === "pending" && o.direction === "out",
   );
-  // R134 (ECO-06): the transfer list and the trades proposed.
+  // R135 (ECO-06): the transfer list and the trades proposed.
   const listed = transferListOf(save);
   const trades = tradeProposalsOf(save);
   const tradesToAnswer = trades.filter((p) => p.status !== "waiting");
@@ -866,7 +866,7 @@ export function MarketScreen() {
             </div>
           )}
           </Panel>
-          {/* R134 (ECO-06): the transfer list. */}
+          {/* R135 (ECO-06): the transfer list. */}
           <Panel className="p-4">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="kicker text-[10px]">{C.market.transferList.title}</p>
@@ -924,7 +924,7 @@ export function MarketScreen() {
             )}
           </Panel>
 
-          {/* R134 (ECO-06): player-for-player trades. */}
+          {/* R135 (ECO-06): player-for-player trades. */}
           <Panel className="p-4">
             <p className="kicker mb-2 text-[10px]">{C.market.trade.title}</p>
             {trades.length === 0 ? (
@@ -1188,7 +1188,7 @@ export function MarketScreen() {
               </div>
             </div>
 
-            {/* R134 (ECO-06): a contracted player can also be bought with a player of yours. */}
+            {/* R135 (ECO-06): a contracted player can also be bought with a player of yours. */}
             {target.orgRef ? (
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="min-w-0 flex-1 text-[11px] text-faint">{C.market.trade.proposeHint}</p>
@@ -1275,7 +1275,7 @@ export function MarketScreen() {
         ) : null}
       </Modal>
 
-      {/* ================= R134: listing sheet, trade sheet, trade confirm ================= */}
+      {/* ================= R135: listing sheet, trade sheet, trade confirm ================= */}
       {listSheet ? (
         <ListPlayerSheet
           key={listSheet.playerId ?? "pick"}

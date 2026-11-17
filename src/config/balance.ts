@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 34;
+export const BALANCE_VERSION = 36;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2325,7 +2325,7 @@ export const CAREER_TRANSFER = {
   // the late signing (`lateSigningDays`) are gone; random AI bids stay. A
   // future update rethinks selling (ECO-06).
   /**
-   * R134 (ECO-06): a player the user sold or traded away does not sign for
+   * R135 (ECO-06): a player the user sold or traded away does not sign for
    * him again before this many seasons have passed (`CareerSave.soldOn`,
    * `transferList.buyBackLocked`). Without it, selling at a buyer's ceiling
    * and buying him back in the next window, on a day his new contract makes
@@ -2333,7 +2333,7 @@ export const CAREER_TRANSFER = {
    */
   buyBackLockSeasons: 1,
   /**
-   * R134 (ECO-06, 17/11/2026): the transfer list. The user lists a squad
+   * R135 (ECO-06, 17/11/2026): the transfer list. The user lists a squad
    * player with an asking fee inside `askRange` × his market value; after
    * `answerDays` window days one org of his region that would field him
    * answers. Its ceiling is market value × `buyerRange` (one draw per player
@@ -2369,7 +2369,7 @@ export const CAREER_TRANSFER = {
     shortTenureShare: 0.6,
   },
   /**
-   * R134 (ECO-06): a player-for-player trade with an AI org, answered after
+   * R135 (ECO-06): a player-for-player trade with an AI org, answered after
    * `answerDays` days. The org credits the user's player at market value ×
    * `creditRange` (one draw per pair and window) plus `premiumShare` of the
    * bid premium, against the fee a plain buy of its player would cost. The
@@ -4285,4 +4285,24 @@ export const CLOUD_SYNC = {
    *  progress is pushed mid-session (coalesces a run's burst of writes —
    *  results, achievements, unlocks — into one read + push). */
   pushDebounceMs: 4500,
+  /** v2.0.25: pauses before a failed cloud READ is tried again within the same
+   *  sync. Only for failures that may simply pass (dropped connection, server
+   *  error). The list length is the number of extra attempts. A failed push is
+   *  never repeated on its own: the cloud may have changed, so the whole sync
+   *  (read, merge, push) runs again instead. */
+  retryDelaysMs: [1200, 4000],
+  /** v2.0.25: when a sync still failed, the whole sync is tried again after these
+   *  pauses, one after the other; the last one repeats while the failure lasts.
+   *  The second is past the minute auth-js remembers a failed token refresh. The
+   *  next profile change, the connection coming back and the tab returning also
+   *  run it. */
+  resyncDelaysMs: [8_000, 75_000, 300_000],
+  /** v2.0.26 (career cloud save): quiet period after the last career action
+   *  before the slot is copied to the account. A save is 30 to 50 KB compressed,
+   *  so it does not go up after every click; the end of an event or a season and
+   *  leaving the tab send it at once. */
+  careerPushDebounceMs: 30_000,
+  /** v2.0.26: a tab that was hidden for at least this long asks the account
+   *  again when it returns (another device may have played meanwhile). */
+  careerRecheckAfterMs: 60_000,
 } as const;

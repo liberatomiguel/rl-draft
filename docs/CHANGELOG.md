@@ -10,9 +10,9 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.25] — 2026-11-17 · Road to Worlds: sell and trade on your own initiative
+## [2.0.27] — 2026-11-17 · Road to Worlds: sell and trade on your own initiative
 
-Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed an AI bid to arrive. Closes ECO-06; decision R134 (reopens R63). Ships without waiting for the Etapa 1 gate.
+Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed an AI bid to arrive. Closes ECO-06; decision R135 (reopens R63). Ships without waiting for the Etapa 1 gate.
 
 #### Added
 - **The transfer list.** Market → My Deals → *List a player* (also from the Squad screen): pick an asking fee between 70 % and 160 % of his market value, two players at most. An org of his region answers in 1 to 3 days: it pays a fair ask in full, counters a high one, or does not answer one that is far too high. The answer is an ordinary offer to accept or decline. `engine/career/transferList.ts`, `listPlayerFlow`, `delistPlayerFlow`.
@@ -20,7 +20,7 @@ Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed 
 - HQ shows an agreed or countered trade as a decision card; the inbox and the feed report every answer.
 
 #### Balance
-- BALANCE_VERSION 34. `CAREER_TRANSFER.listing` and `.trade` (all provisional). A buyer's ceiling is market value × 0.85–1.15 plus half the youth premium, below what a poach pays (1.0–1.35 with the full premium). A trade credits your player at × 0.85–1.05 against the fee a plain buy would cost; the org never pays a difference.
+- BALANCE_VERSION 36. `CAREER_TRANSFER.listing` and `.trade` (all provisional). A buyer's ceiling is market value × 0.85–1.15 plus half the youth premium, below what a poach pays (1.0–1.35 with the full premium). A trade credits your player at × 0.85–1.05 against the fee a plain buy would cost; the org never pays a difference.
 - **Short tenure:** a player who signed under a season ago is worth 60 % to a buyer and in a trade. A free agent costs no fee, so signing one to sell him on would otherwise be a repeatable profit. Founders are not discounted.
 - **No buying back:** a player you sold or traded away does not sign for you again for one season (`buyBackLockSeasons`), an ordinary bid's sale included. Selling at a buyer's ceiling and buying back on a cheap day would otherwise pay the difference every time.
 - Both work in a transfer window only, never in the career's first window, never under the resale lock. One draw per player and window: re-pricing does not re-roll the buyer.
@@ -32,6 +32,38 @@ Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed 
 - Measured in a short probe only (2 careers, 4 seasons: no soft lock, world rosters intact), not in a battery. Checked in a desktop browser and at 320 px in emulation; no physical device.
 
 ---
+## [2.0.26] — 2026-11-17 · Road to Worlds: the career save in your account, and save files
+
+Roadmap Etapa 1 (ROADMAP-RTW-2026-11-17), shipped ahead of the stage gate because players are asking. Decisions: DESIGN-DECISIONS #165–#169. SQL: `docs/sql/v2026-career-saves.sql` (applied by Miguel on 17/11).
+
+#### Added
+- **A copy of each career slot in the account** (`store/careerCloudStore.ts`, rule in `lib/careerCloud.ts`). The save in the browser stays the one the game plays from. Progress goes up 30 seconds after the last action, at once at the end of an event or a season and when the tab is hidden. A device that is behind takes the account copy when the career opens, with a one-line message. **First release: the creator grant only, which is Miguel's account** (`CAREER_CLOUD_AUDIENCE`).
+- **A notice when two copies differ**: the career was played on two devices, the slot holds another career in the account, or the account copy was deleted elsewhere. Both copies are described (club, season and week, date), the newer one is marked, and the player chooses; the device's career can be exported first. Nothing is replaced without that choice.
+- **Save files** on the saves screen, for everyone, guests included: export a career to a file, import one into an empty slot. The import runs the game's own migrations and refuses a damaged file, a file from a newer version and a file the game cannot load.
+- Analytics: `career_cloud_failed` (stage, reason) and `career_cloud_conflict` (kind, choice).
+
+#### Changed
+- Deleting a career slot while signed in deletes its account copy too; the confirmation says so.
+- `careerStore.adoptSave`: the one way a save from outside the play loop enters a slot (account copy or file), through the same migrations and repairs as a save loaded from storage.
+- `lastPlayedAt` is strictly increasing (the clock, but always past the previous stamp): the cloud rule compares it for equality.
+- Found by the persistence review before release and fixed: on a shared browser a second account's career could be written over the first account's copy without a question (a slot with a different career now goes up only after the player's own delete or replace); an answer in the notice could be applied to a situation that had changed while it waited (it is now checked against what the player saw); a delete could remove a copy another device had just played (it now names the revision).
+- BALANCE_VERSION 35: `CLOUD_SYNC.careerPushDebounceMs` and `careerRecheckAfterMs`. No gameplay value changed. The persist contract is unchanged (key `rocket-draft:career:v1`, version 3, saveVersion 5); the sync's bookkeeping is a new plain key, `rocket-draft:career-cloud:v1`.
+- Not verified: the account path against the production database (staging runs with accounts off; the store is tested against a simulated Supabase and the SQL was reviewed, not executed by the tests). Two real devices, mobile Safari, and a browser without `CompressionStream` are not checked.
+
+## [2.0.25] — 2026-11-17 · Account sync: failures are named, tried again, and an expired token no longer reads as a new account
+
+First step of the Road to Worlds cloud save (ROADMAP-RTW-2026-11-17, Etapa 1): the profile sync it will ride on. POSTLAUNCH-2.0-REPORT item 6 counted failures on 12% of signed-in players. PostHog, 12–17/11: 47 sessions with a failed sync, 35 of them on a phone, 26 on the read and 24 on the push, on every release from 2.0.1 to 2.0.24. Almost all happen in the middle of a session (four in the first 20 seconds) and the session goes on afterwards, so it is neither a regression nor a tab being closed. The event carried only the stage, so the share of each cause below is not known yet.
+
+#### Fixed
+- **A sync with an expired token ran as nobody.** Root cause: when the access token has expired and its refresh fails (a phone waking a tab after an hour), supabase-js sends the request with the public anon key (`_getAccessToken` falls back to it). Row-level security then hides the player's row, `fetchCloudRow` answered "no row", and the sync treated an existing account as a new one: it pushed without merging the cloud copy and the push was refused. Nothing was lost (the refused push wrote nothing), but it was counted as a push failure and the session stayed unsynced. `fetchCloudRow` and `pushCloudProfile` now check that the session belongs to the user they are called for and report `auth` otherwise.
+- **A failed sync was not tried again.** Root cause: one attempt per read and per push, and a sync that failed was repeated only by the next profile change (or, for the first sync of a page load, by a later sign-in event; until then no progress was pushed at all). A failed read that may pass (dropped connection, server error) is now tried again inside the sync (`CLOUD_SYNC.retryDelaysMs`). A sync that still failed is owed, per user: the whole read, merge and push runs again after a pause (`CLOUD_SYNC.resyncDelaysMs`, the last one repeating), when the connection comes back, when the tab returns, or with the next progress. A failed push is never repeated on its own, because the cloud may have changed since the read.
+- **The request carries the checked token itself** (`setHeader`), so it cannot go out with the anon key even if the session disappears between the check and the request.
+- **A new account could get a name with four digits because the network failed.** Root cause: any failed first push of a new account took the fallback name (email prefix plus four digits), not only a refused name. Only a constraint refusal (the unique name) takes it now.
+
+#### Changed
+- `account_sync_failed` carries `reason` (offline, network, auth, denied, conflict, server, rate, unavailable, other; `lib/syncErrors.ts`) and the database code when there is one. It is sent once per session, stage and reason.
+- BALANCE_VERSION 34: `CLOUD_SYNC` gained the retry pauses (it lives in `balance.ts`, so the fingerprint moves). No gameplay value changed.
+- Not verified: against the production database (staging runs with accounts off; the store is covered by tests with a simulated Supabase). The share of each reason is only known once this release has run in production for a few days.
 
 ## [2.0.24] — 2026-11-17 · A newcomer reaches the game sooner
 

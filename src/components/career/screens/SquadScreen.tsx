@@ -88,7 +88,7 @@ export function SquadScreen() {
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
-  /** R134: the listing sheet for one player. */
+  /** R135: the listing sheet for one player. */
   const [listing, setListing] = useState<string | null>(null);
   const [renewLen, setRenewLen] = useState<1 | 2 | 3>(2);
   /** rc.33 (ECO-10/11): the renewal offer on the table — weekly wage + prize share (empty = his ask). */
@@ -505,7 +505,7 @@ export function SquadScreen() {
                   >
                     {C.squad.renew}
                   </Button>
-                  {/* R134 (ECO-06): the transfer list. */}
+                  {/* R135 (ECO-06): the transfer list. */}
                   {(() => {
                     const listError = listingPlanFor(save, p.id)?.error ?? null;
                     return (

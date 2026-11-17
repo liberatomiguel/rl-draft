@@ -1579,7 +1579,7 @@ export const CAREER_PT: CareerCopy = {
       tooYoung: "Jovem demais para competir — jogadores assinam a partir dos 13 anos.",
       /** rc.32 (M4, provisório): a trava do Investidor sobre compromissos que encurtam o fôlego. */
       loanRunway: "Bloqueado enquanto houver dívida emergencial. Quite o empréstimo ou libere salários antes.",
-      /** R134 (ECO-06): lista de transferências e trocas de jogador por jogador. */
+      /** R135 (ECO-06): lista de transferências e trocas de jogador por jogador. */
       listDisabled: "A lista de transferências não está disponível.",
       listFirstWindow: "A primeira janela está fechada para vendas: sem listagens e sem trocas por enquanto.",
       listWindowClosing: "A janela fecha hoje. Tarde demais para listar um jogador ou propor uma troca.",
@@ -1593,7 +1593,7 @@ export const CAREER_PT: CareerCopy = {
       buyBack: "Ele saiu do seu clube há menos de uma temporada. Ainda não assina com você de novo.",
       tradeGone: "Um dos dois jogadores não está mais disponível.",
     },
-    /** R134 (ECO-06): a lista de transferências, na aba de negociações do Mercado e na tela do Elenco. */
+    /** R135 (ECO-06): a lista de transferências, na aba de negociações do Mercado e na tela do Elenco. */
     transferList: {
       title: "Lista de transferências",
       empty: "Defina um preço pedido por um jogador do elenco e uma org da região dele responde em poucos dias. Ninguém sai sem o seu aceite.",
@@ -1622,7 +1622,7 @@ export const CAREER_PT: CareerCopy = {
       confirmReprice: "Atualizar preço",
       shortTenure: (pct: number) => `Ele chegou há menos de uma temporada: os clubes pagam cerca de ${pct}% do valor por enquanto.`,
     },
-    /** R134 (ECO-06): trocas de jogador por jogador. */
+    /** R135 (ECO-06): trocas de jogador por jogador. */
     trade: {
       title: "Trocas",
       empty: "Para propor uma troca, abra a oferta de um jogador sob contrato. Trocas só valem dentro de uma janela de transferências, com uma org da região do jogador que você cede.",
@@ -2914,6 +2914,54 @@ export const CAREER_PT: CareerCopy = {
     infiniteExplainer:
       "A partir de 2027 o mundo é totalmente procedural: novatos são gerados, veteranos se aposentam, a história é a que você fizer.",
     defendTitle: "Defender o título",
+  },
+
+  cloud: {
+    synced: (when: string) => `Salvo na sua conta · ${when}`,
+    pending: "Alterações aguardando para serem salvas na sua conta",
+    syncing: "Salvando na sua conta…",
+    conflict: "Duas cópias desta carreira",
+    choose: "Escolher",
+    newer: "A cópia na sua conta foi salva por uma versão mais nova do jogo. Recarregue para atualizar.",
+    error: "Não foi possível acessar a sua conta. Vamos tentar de novo.",
+    tryNow: "Tentar agora",
+    restoring: "Restaurando da sua conta…",
+    exportSave: "Exportar save",
+    importSave: "Importar arquivo de save",
+    importErrors: {
+      unreadable: "Não foi possível ler esse arquivo.",
+      "not-a-save": "Esse não é um save de carreira do Rocket Draft.",
+      newer: "Esse save vem de uma versão mais nova do jogo. Recarregue para atualizar e importe de novo.",
+      damaged: "Esse arquivo está incompleto ou danificado.",
+      invalid: "O jogo não conseguiu carregar esse save.",
+      "slot-taken": "Este espaço já tem uma carreira.",
+    },
+    deleteAlso: "A cópia na sua conta também é apagada.",
+    helpActive: "Suas carreiras também ficam salvas na sua conta. Exporte um arquivo de save para ter o seu próprio backup.",
+    helpLocal: "As carreiras ficam salvas neste navegador. Exporte um arquivo de save para levar uma para outro aparelho ou guardar um backup.",
+    helpSignIn: "Entre para manter uma cópia na sua conta.",
+    notice: {
+      titleDiverged: "Esta carreira foi jogada em dois aparelhos",
+      titleDifferent: "Este espaço guarda uma carreira diferente na sua conta",
+      titleDeleted: "Esta carreira foi apagada da sua conta",
+      bodyDiverged: "As duas cópias não podem ser combinadas. Escolha a que fica; a outra é substituída.",
+      bodyDifferent: "Escolha a carreira que fica neste espaço; a outra é substituída.",
+      bodyDeleted: "Ela foi apagada em outro aparelho. Mantenha aqui e ela volta para a sua conta, ou apague aqui também.",
+      thisDevice: "Este aparelho",
+      account: "Sua conta",
+      mostRecent: "Mais recente",
+      keepDevice: "Manter a carreira deste aparelho",
+      useAccount: "Usar a carreira da sua conta",
+      keepHere: "Manter aqui",
+      deleteHere: "Apagar aqui também",
+      exportFirst: "Exportar a carreira deste aparelho antes",
+      decideLater: "Decidir depois",
+      seasonWeek: (season: string, week: string) => `${season} · ${week}`,
+    },
+    toast: {
+      updated: (org: string) => `${org}: atualizada pela sua conta (jogada em outro aparelho).`,
+      restored: (org: string) => `${org}: restaurada da sua conta.`,
+    },
   },
 
   saves: {

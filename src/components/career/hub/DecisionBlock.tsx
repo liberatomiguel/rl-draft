@@ -65,7 +65,7 @@ function decisionLabelOf(C: CareerCopy, save: CareerSave, d: PendingDecision): s
   if (d.kind === "bid") {
     const offer = save.pendingOffers.find((o) => o.id === d.id);
     if (!offer) {
-      // R134: an agreed or countered trade rides the same decision kind.
+      // R135: an agreed or countered trade rides the same decision kind.
       const trade = tradeProposalsOf(save).find((p) => p.id === d.id);
       if (trade) return C.hub.decisionKind.trade(trade.takeName);
     }
@@ -258,7 +258,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       case "bid": {
         const offer = save.pendingOffers.find((o) => o.id === d.id);
         if (!offer) {
-          // R134 (ECO-06): no bid by this id, so it is a trade the org agreed to or countered.
+          // R135 (ECO-06): no bid by this id, so it is a trade the org agreed to or countered.
           const trade = tradeProposalsOf(save).find((p) => p.id === d.id);
           if (!trade) return null;
           return (
@@ -419,7 +419,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         ) : null}
       </Modal>
 
-      {/* R134 (ECO-06): accept-trade confirm, the Market's own wording. */}
+      {/* R135 (ECO-06): accept-trade confirm, the Market's own wording. */}
       {(() => {
         const p = confirmTrade;
         const res = p ? tradeAcceptPlanFor(save, p.id) : null;

@@ -282,7 +282,7 @@ function bidDecisionsOf(save: CareerSave): PendingDecision[] {
 }
 
 /**
- * R134 (ECO-06): a trade the org agreed to, or countered, waits for the
+ * R135 (ECO-06): a trade the org agreed to, or countered, waits for the
  * manager's yes or no like a bid (same kind, the proposal's id): accepted
  * or refused through `acceptBidFlow` / `declineBidFlow`. A proposal still
  * waiting for its answer owes nothing.

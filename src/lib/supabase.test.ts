@@ -11,6 +11,12 @@ const h = vi.hoisted(() => ({
   createClient: vi.fn(),
   maybeSingle: vi.fn(),
   upsert: vi.fn(),
+  getSession: vi.fn(),
+  setHeader: vi.fn(),
+  listRows: vi.fn(),
+  rpc: vi.fn(),
+  del: vi.fn(),
+  delEq: vi.fn(),
   authCbs: [] as ((event: string, session: unknown) => void)[],
 }));
 
@@ -19,10 +25,54 @@ vi.mock("@supabase/supabase-js", () => ({ createClient: h.createClient }));
 function fakeClient() {
   return {
     from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: h.maybeSingle }) }),
-      upsert: h.upsert,
+      select: () => ({
+        eq: () => ({
+          setHeader: (name: string, value: string) => {
+            h.setHeader("read", name, value);
+            // The real builder is a thenable: awaiting it sends the request.
+            return {
+              maybeSingle: h.maybeSingle,
+              then: (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(h.listRows()).then(ok, bad),
+            };
+          },
+        }),
+      }),
+      delete: () => {
+        const eqs: unknown[][] = [];
+        const selects: unknown[][] = [];
+        const chain = {
+          eq: (...a: unknown[]) => {
+            eqs.push(a);
+            return chain;
+          },
+          select: (...a: unknown[]) => {
+            selects.push(a);
+            return chain;
+          },
+          setHeader: (name: string, value: string) => {
+            h.setHeader("delete", name, value);
+            h.delEq(eqs, selects);
+            return Promise.resolve(h.del());
+          },
+        };
+        return chain;
+      },
+      upsert: (...args: unknown[]) => ({
+        // The real builder sends on await: the request leaves only once the header is set.
+        setHeader: (name: string, value: string) => {
+          h.setHeader("push", name, value);
+          return h.upsert(...args);
+        },
+      }),
+    }),
+    rpc: (name: string, args: Record<string, unknown>) => ({
+      setHeader: (header: string, value: string) => {
+        h.setHeader("rpc", header, value);
+        return Promise.resolve(h.rpc(name, args));
+      },
     }),
     auth: {
+      getSession: h.getSession,
       onAuthStateChange: (cb: AuthCb) => {
         h.authCbs.push(cb);
         return { data: { subscription: { unsubscribe: () => {} } } };
@@ -32,6 +82,12 @@ function fakeClient() {
 }
 
 const URL_ENV = "https://abcdref.supabase.co";
+
+/** What `auth.getSession()` answers for a signed-in user. */
+const sessionOf = (userId: string) => ({
+  data: { session: { user: { id: userId }, access_token: `tok-${userId}` } },
+  error: null,
+});
 
 async function load(enabled = true): Promise<Sb> {
   vi.resetModules();
@@ -44,6 +100,12 @@ beforeEach(() => {
   h.createClient.mockReset().mockImplementation(() => fakeClient());
   h.maybeSingle.mockReset();
   h.upsert.mockReset().mockResolvedValue({ error: null });
+  h.getSession.mockReset().mockResolvedValue(sessionOf("u1"));
+  h.setHeader.mockReset();
+  h.listRows.mockReset().mockResolvedValue({ data: [], error: null });
+  h.rpc.mockReset().mockResolvedValue({ data: null, error: null });
+  h.del.mockReset().mockResolvedValue({ data: [], error: null });
+  h.delEq.mockReset();
   h.authCbs.length = 0;
 });
 
@@ -100,13 +162,18 @@ describe("fetchCloudRow — tagged result", () => {
   it("error: a PostgREST error is NOT reported as no-row", async () => {
     const sb = await load();
     h.maybeSingle.mockResolvedValue({ data: null, error: { message: "upstream timeout", code: "57014" } });
-    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "upstream timeout" });
+    expect(await sb.fetchCloudRow("u1")).toEqual({
+      status: "error",
+      error: "upstream timeout",
+      reason: "server",
+      code: "57014",
+    });
   });
 
   it("error: a thrown network failure is NOT reported as no-row", async () => {
     const sb = await load();
     h.maybeSingle.mockRejectedValue(new TypeError("Failed to fetch"));
-    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error" });
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "network" });
   });
 
   it("error: the SDK could not be created — and the next call retries", async () => {
@@ -114,7 +181,7 @@ describe("fetchCloudRow — tagged result", () => {
     h.createClient.mockImplementationOnce(() => {
       throw new Error("chunk load failed");
     });
-    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error" });
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "unavailable" });
     h.maybeSingle.mockResolvedValue({ data: null, error: null });
     expect(await sb.fetchCloudRow("u1")).toEqual({ status: "no-row" });
     expect(h.createClient).toHaveBeenCalledTimes(2);
@@ -144,7 +211,59 @@ describe("pushCloudProfile", () => {
     h.upsert.mockResolvedValue({ error: { message: "rls" } });
     const durable = { xp: 1 } as never;
     const res = await sb.pushCloudProfile("u1", "ace", durable, {} as never);
-    expect(res).toEqual({ error: "rls" });
+    expect(res).toEqual({ error: "rls", reason: "other" });
+  });
+
+  it("names a refused display name (unique violation) as a conflict", async () => {
+    const sb = await load();
+    h.upsert.mockResolvedValue({ error: { message: "duplicate key value", code: "23505" }, status: 409 });
+    const res = await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never);
+    expect(res).toEqual({ error: "duplicate key value", reason: "conflict", code: "23505" });
+  });
+});
+
+describe("v2.0.25: a cloud call carries the player's own token, or is not sent", () => {
+  // supabase-js falls back to the anon key when it has no session to offer. The
+  // read then ran as nobody, row-level security hid the row and an existing
+  // account read as "no row".
+  it("no session (expired token, refresh failed): auth error, nothing is sent", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    h.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "no session", reason: "auth" });
+    expect(await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never)).toEqual({
+      error: "no session",
+      reason: "auth",
+    });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it("the session of another user: auth error, nothing is sent", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue(sessionOf("someone-else"));
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "auth" });
+    expect(await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never)).toMatchObject({ reason: "auth" });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it("a token refresh that failed on the network is a network failure, not auth", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue({ data: { session: null }, error: { message: "Failed to fetch", status: 0 } });
+    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "Failed to fetch", reason: "network" });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("the read and the push put the checked token on the request itself", async () => {
+    const sb = await load();
+    h.maybeSingle.mockResolvedValue({ data: null, error: null });
+    await sb.fetchCloudRow("u1");
+    await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never);
+    expect(h.setHeader.mock.calls).toEqual([
+      ["read", "Authorization", "Bearer tok-u1"],
+      ["push", "Authorization", "Bearer tok-u1"],
+    ]);
   });
 });
 
@@ -216,5 +335,254 @@ describe("hasStoredAuthSession — startup probe (no SDK download)", () => {
     const sb = await load(false);
     stubBrowser({ "sb-abcdref-auth-token": "{}" });
     expect(sb.hasStoredAuthSession()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Road to Worlds cloud save (v2.0.26)
+// ---------------------------------------------------------------------------
+
+const ROW = {
+  slot: 1,
+  career_id: "c1",
+  save_version: 5,
+  seq: 42,
+  summary: { orgName: "Immutable" },
+  device_id: "d-1",
+  saved_at: "2026-11-01T10:00:00.000Z",
+  revision: 3,
+  updated_at: "2026-11-01T10:00:05.000Z",
+};
+
+const PUSH_INPUT = {
+  slot: 1,
+  careerId: "c1",
+  saveVersion: 5,
+  seq: 42,
+  summary: { orgName: "Immutable" },
+  payload: { encoding: "gzip" as const, payload: "QUJD" },
+  deviceId: "d-1",
+  release: "2.0.26",
+  savedAt: Date.parse("2026-11-01T10:00:00.000Z"),
+  expectedRevision: null as number | null,
+};
+
+const P_KEYS = [
+  "p_slot",
+  "p_career_id",
+  "p_save_version",
+  "p_seq",
+  "p_summary",
+  "p_encoding",
+  "p_payload",
+  "p_device_id",
+  "p_client_release",
+  "p_saved_at",
+  "p_expected_revision",
+  "p_force",
+];
+
+describe("fetchCareerMetas", () => {
+  it("maps rows (snake_case, ISO dates to ms) and drops malformed ones", async () => {
+    const sb = await load();
+    h.listRows.mockResolvedValue({
+      data: [ROW, { ...ROW, slot: 2, career_id: 5 }, { ...ROW, slot: 0, revision: "3" }, null, { ...ROW, slot: "x" }, { slot: 2, career_id: "c2", revision: 1 }],
+      error: null,
+    });
+    const res = await sb.fetchCareerMetas("u1");
+    expect(res.status).toBe("ok");
+    if (res.status !== "ok") return;
+    expect(res.slots).toHaveLength(2);
+    expect(res.slots[0]).toEqual({
+      slot: 1,
+      careerId: "c1",
+      saveVersion: 5,
+      seq: 42,
+      revision: 3,
+      savedAt: Date.parse("2026-11-01T10:00:00.000Z"),
+      updatedAt: Date.parse("2026-11-01T10:00:05.000Z"),
+      deviceId: "d-1",
+      summary: { orgName: "Immutable" },
+    });
+    // a row with only the required fields gets safe defaults
+    expect(res.slots[1]).toMatchObject({ slot: 2, careerId: "c2", saveVersion: 0, seq: 0, savedAt: 0, updatedAt: 0, deviceId: "", summary: {} });
+  });
+
+  it("null data is an empty list; an error is an error, never an empty list", async () => {
+    const sb = await load();
+    h.listRows.mockResolvedValue({ data: null, error: null });
+    expect(await sb.fetchCareerMetas("u1")).toEqual({ status: "ok", slots: [] });
+    h.listRows.mockResolvedValue({ data: null, error: { message: "upstream timeout", code: "57014" }, status: 504 });
+    expect(await sb.fetchCareerMetas("u1")).toMatchObject({ status: "error", reason: "server", code: "57014" });
+  });
+
+  it("a thrown network failure is an error", async () => {
+    const sb = await load();
+    h.listRows.mockRejectedValue(new TypeError("Failed to fetch"));
+    expect(await sb.fetchCareerMetas("u1")).toMatchObject({ status: "error", reason: "network" });
+  });
+});
+
+describe("fetchCareerSave", () => {
+  it("null data is empty", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: null, error: null });
+    expect(await sb.fetchCareerSave("u1", 1)).toEqual({ status: "empty" });
+    expect(h.rpc).toHaveBeenCalledWith("get_career_save", { p_slot: 1 });
+  });
+
+  it("maps meta and payload", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: { ...ROW, encoding: "json", payload: "e30=" }, error: null });
+    const res = await sb.fetchCareerSave("u1", 1);
+    expect(res).toMatchObject({ status: "ok", meta: { slot: 1, careerId: "c1", revision: 3 }, payload: { encoding: "json", payload: "e30=" } });
+  });
+
+  it.each([
+    ["no payload", { ...ROW, encoding: "gzip" }],
+    ["unknown encoding", { ...ROW, encoding: "zip", payload: "x" }],
+    ["no career id", { ...ROW, career_id: undefined, encoding: "gzip", payload: "x" }],
+  ])("a malformed row (%s) is an error", async (_n, data) => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data, error: null });
+    expect(await sb.fetchCareerSave("u1", 1)).toEqual({ status: "error", error: "malformed row", reason: "other" });
+  });
+
+  it("an rpc error is an error", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: null, error: { message: "boom", code: "XX000" }, status: 500 });
+    expect(await sb.fetchCareerSave("u1", 1)).toMatchObject({ status: "error", reason: "server", code: "XX000" });
+  });
+});
+
+describe("pushCareerSave", () => {
+  it("sends every argument key, with a null expected revision present and the release", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: { status: "ok", revision: 4, updated_at: "2026-11-01T10:00:09.000Z" }, error: null });
+    const res = await sb.pushCareerSave("u1", PUSH_INPUT);
+    expect(res).toEqual({ status: "ok", revision: 4, updatedAt: Date.parse("2026-11-01T10:00:09.000Z") });
+    const [name, args] = h.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(name).toBe("push_career_save");
+    expect(Object.keys(args).sort()).toEqual([...P_KEYS].sort());
+    expect(args.p_expected_revision).toBeNull();
+    expect(args.p_force).toBe(false);
+    expect(args.p_client_release).toBe("2.0.26");
+    expect(args.p_encoding).toBe("gzip");
+    expect(args.p_payload).toBe("QUJD");
+    expect(args.p_saved_at).toBe("2026-11-01T10:00:00.000Z");
+  });
+
+  it("passes the expected revision and force through", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: { status: "ok", revision: 8 }, error: null });
+    await sb.pushCareerSave("u1", { ...PUSH_INPUT, expectedRevision: 7, force: true });
+    const args = h.rpc.mock.calls[0][1] as Record<string, unknown>;
+    expect(args.p_expected_revision).toBe(7);
+    expect(args.p_force).toBe(true);
+  });
+
+  it("maps conflict (with the row's meta), missing, and malformed answers", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: { status: "conflict", ...ROW, slot: undefined }, error: null });
+    expect(await sb.pushCareerSave("u1", PUSH_INPUT)).toMatchObject({ status: "conflict", meta: { slot: 1, careerId: "c1", revision: 3 } });
+    h.rpc.mockResolvedValue({ data: { status: "missing" }, error: null });
+    expect(await sb.pushCareerSave("u1", PUSH_INPUT)).toEqual({ status: "missing" });
+    h.rpc.mockResolvedValue({ data: { status: "conflict" }, error: null });
+    expect(await sb.pushCareerSave("u1", PUSH_INPUT)).toEqual({ status: "error", error: "malformed answer", reason: "other" });
+    h.rpc.mockResolvedValue({ data: null, error: null });
+    expect(await sb.pushCareerSave("u1", PUSH_INPUT)).toEqual({ status: "error", error: "malformed answer", reason: "other" });
+  });
+
+  it("an error with a code is named", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: null, error: { message: "permission denied", code: "42501" }, status: 403 });
+    expect(await sb.pushCareerSave("u1", PUSH_INPUT)).toEqual({ status: "error", error: "permission denied", reason: "denied", code: "42501" });
+  });
+});
+
+describe("deleteCareerSave", () => {
+  it("filters by user, slot, career AND revision, asks for the deleted rows, and maps rows to deleted: true", async () => {
+    const sb = await load();
+    h.del.mockResolvedValue({ data: [{ slot: 2 }], error: null });
+    expect(await sb.deleteCareerSave("u1", 2, "c9", 7)).toEqual({ status: "ok", deleted: true });
+    expect(h.delEq).toHaveBeenCalledWith(
+      [
+        ["user_id", "u1"],
+        ["slot", 2],
+        ["career_id", "c9"],
+        ["revision", 7],
+      ],
+      [["slot"]],
+    );
+  });
+
+  it("no row came back: deleted false (not an error)", async () => {
+    const sb = await load();
+    h.del.mockResolvedValue({ data: [], error: null });
+    expect(await sb.deleteCareerSave("u1", 2, "c9", 7)).toEqual({ status: "ok", deleted: false });
+    h.del.mockResolvedValue({ data: null, error: null });
+    expect(await sb.deleteCareerSave("u1", 2, "c9", 7)).toEqual({ status: "ok", deleted: false });
+  });
+
+  it("reports an error", async () => {
+    const sb = await load();
+    h.del.mockResolvedValue({ data: null, error: { message: "rls", code: "42501" }, status: 403 });
+    expect(await sb.deleteCareerSave("u1", 2, "c9", 7)).toEqual({ status: "error", error: "rls", reason: "denied", code: "42501" });
+  });
+
+  it("a thrown network failure is an error", async () => {
+    const sb = await load();
+    h.del.mockRejectedValue(new TypeError("Failed to fetch"));
+    expect(await sb.deleteCareerSave("u1", 2, "c9", 7)).toMatchObject({ status: "error", reason: "network" });
+  });
+});
+
+describe("career calls: the player's own token, or nothing is sent", () => {
+  const calls = (sb: Sb) => [
+    () => sb.fetchCareerMetas("u1"),
+    () => sb.fetchCareerSave("u1", 0),
+    () => sb.pushCareerSave("u1", PUSH_INPUT),
+    () => sb.deleteCareerSave("u1", 0, "c1", 1),
+  ];
+
+  it("no session: reason auth on all four, and nothing is sent", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    for (const call of calls(sb)) {
+      expect(await call()).toMatchObject({ reason: "auth" });
+    }
+    expect(h.listRows).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
+    expect(h.del).not.toHaveBeenCalled();
+  });
+
+  it("the session of another user: auth on all four", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue(sessionOf("someone-else"));
+    for (const call of calls(sb)) {
+      expect(await call()).toMatchObject({ reason: "auth" });
+    }
+    expect(h.rpc).not.toHaveBeenCalled();
+  });
+
+  it("the Authorization header is set from the checked token on all four", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: null, error: null });
+    for (const call of calls(sb)) await call();
+    expect(h.setHeader.mock.calls).toEqual([
+      ["read", "Authorization", "Bearer tok-u1"],
+      ["rpc", "Authorization", "Bearer tok-u1"],
+      ["rpc", "Authorization", "Bearer tok-u1"],
+      ["delete", "Authorization", "Bearer tok-u1"],
+    ]);
+  });
+});
+
+describe("pushCareerSave: the stamp", () => {
+  it("a stamp of 0 is sent as the epoch, not as now", async () => {
+    const sb = await load();
+    h.rpc.mockResolvedValue({ data: { status: "ok", revision: 1 }, error: null });
+    await sb.pushCareerSave("u1", { ...PUSH_INPUT, savedAt: 0 });
+    expect((h.rpc.mock.calls[0][1] as Record<string, unknown>).p_saved_at).toBe("1970-01-01T00:00:00.000Z");
   });
 });

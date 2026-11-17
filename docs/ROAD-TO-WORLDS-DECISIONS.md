@@ -2362,7 +2362,11 @@ After, same probe: the championship offered and played twice in 24 of 24 seasons
 
 The 50/50 Community Cup (and every partner event) now keeps its logo on the playback header as well as on the lobby and the result.
 
-## R134 — 17 November 2026: selling and trading on the user's initiative (closes ECO-06; reopens R63)
+## R134 — 17 November 2026: the career save has a copy in the account (v2.0.26)
+
+Recorded in DESIGN-DECISIONS #165–#169, because it amends the rule on player saves: a copy per slot in `career_saves`, localStorage still the copy the game plays from, no merge, a notice when two copies differ, save files for guests, Staff accounts first.
+
+## R135 — 17 November 2026: selling and trading on the user's initiative (closes ECO-06; reopens R63)
 
 Miguel, 17/11 (ROADMAP-RTW-2026-11-17, Etapa 1): players ask to sell and to trade; until now a sale needed an AI bid to arrive. R63 (rc.33, ECO-12) withdrew rc.32's "List for sale" and left the question to ECO-06. This is the answer. It ships to `main` without waiting for the Etapa 1 gate.
 
@@ -2380,4 +2384,4 @@ Miguel, 17/11 (ROADMAP-RTW-2026-11-17, Etapa 1): players ask to sell and to trad
 
 **Analytics.** No new event (the event budget). A completed trade reports the departing player as a `sell` with fee 0.
 
-Rejected: a guaranteed sale at a fixed share of value (rc.32's shape: no decision in the price); a trade the org tops up in cash (7-A); trades across regions (an AI roster is rebuilt from its own region); listing in the first window (R47). All values provisional; BALANCE_VERSION 34.
+Rejected: a guaranteed sale at a fixed share of value (rc.32's shape: no decision in the price); a trade the org tops up in cash (7-A); trades across regions (an AI roster is rebuilt from its own region); listing in the first window (R47). All values provisional; BALANCE_VERSION 36.
