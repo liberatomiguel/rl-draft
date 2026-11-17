@@ -10,7 +10,7 @@
   save in the account.** One row per account and slot in `career_saves` (SQL
   applied by Miguel 17/11), localStorage still the copy the game plays from, a
   notice when two copies differ, save files for everyone (DESIGN-DECISIONS
-  #165–#169). Staff accounts only until the account path is checked in
+  #165–#169). The `creator` grant only (Miguel) until the account path is checked in
   production (`CAREER_CLOUD_AUDIENCE`, `lib/careerCloudGate.ts`); then one
   constant opens it. Not verified: a real account, two devices, mobile Safari.
 - **v2.0.25 (17/11/2026), same branch.**
