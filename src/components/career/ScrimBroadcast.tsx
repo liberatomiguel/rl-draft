@@ -34,11 +34,13 @@ export function ScrimSeriesRow({ entry, save, C }: { entry: ScrimLogEntry; save:
   const games = entry.games.slice(0, reduced ? entry.games.length : count).map(g => g.split("-").map(Number));
   const a = games.filter(([x,y]) => x > y).length;
   const b = games.filter(([x,y]) => y > x).length;
-  return <li className="flex min-w-0 items-center gap-2 rounded-lg border border-line/60 bg-white/[0.025] px-2.5 py-2 text-xs" aria-label={C.scrim.live}>
-    <span className="w-6 shrink-0 text-[10px] text-faint">{C.dates.weekdays[(entry.day - 1) % 7]}</span>
+  // A row of the week's practice list (a hairline under it, no box); the
+  // score counts up game by game and does not pulse.
+  return <li className="flex min-w-0 items-center gap-2 border-b border-line py-2 text-xs" aria-label={C.scrim.live}>
+    <span className="display w-7 shrink-0 text-[11px] font-semibold uppercase text-faint">{C.dates.weekdays[(entry.day - 1) % 7]}</span>
     <OrgMark save={save} orgRef="user" size="sm" />
     <span className="min-w-0 flex-1 truncate text-sub">{save.identity.abbrev}</span>
-    <span key={count} className="rounded-md bg-black/20 px-2 py-1 font-mono text-sm font-bold tabular-nums text-sub motion-safe:animate-pulse">{a}–{b}</span>
+    <span className="display px-1 text-base font-bold tabular-nums text-ink">{a}–{b}</span>
     <span className="min-w-0 flex-[2] truncate text-sub">{entry.oppName}</span>
     <OrgMark save={save} orgRef={entry.oppRef} size="sm" />
   </li>;

@@ -178,7 +178,7 @@ function WeekendDayCell({
       className={cx(
         "relative min-w-0 rounded-xl border p-3 text-left sm:p-4",
         d.state === "today"
-          ? "border-orange/60 bg-orange/10 shadow-[0_0_18px_rgba(249,115,22,0.14)]"
+          ? "border-orange/60 bg-orange/10"
           : d.state === "done"
             ? "border-line bg-white/[0.02]"
             : "border-line bg-white/[0.04]",

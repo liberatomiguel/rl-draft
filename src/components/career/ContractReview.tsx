@@ -15,6 +15,7 @@ import type { CareerSave } from "@/engine/career/types";
 import { useCareerStore } from "@/store/careerStore";
 import { contractReviewFlagFor, leavingAtRolloverOf, rolloverHoldOf } from "@/store/careerDecisions";
 import { coachContractOf, coachLeavingAtRolloverOf } from "@/store/careerFlow";
+import { cx } from "@/lib/util";
 import { squadAge, wageLabel } from "@/components/career/careerUi";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -43,25 +44,24 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
     <Panel glow={reviewed ? undefined : "orange"} className="rise-in p-4 sm:p-5">
       {count > 0 ? (
         <>
-          <p className="kicker mb-1 text-[10px] text-orange-bright">{C.squad.reviewTitle}</p>
-          <p className="text-sm text-sub">{C.squad.reviewBody(count)}</p>
-          <ul className="mt-3 space-y-1.5">
+          <h3 className="display text-lg uppercase leading-none text-ink">{C.squad.reviewTitle}</h3>
+          <p className="mt-1.5 text-sm text-sub">{C.squad.reviewBody(count)}</p>
+          {/* Who leaves, as a list with hairline rows: the overall first, the wage last. */}
+          <ul className="mt-3 border-t border-line">
             {leaving.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-line bg-white/[0.02] px-3 py-2 text-xs">
-                <span className="min-w-0 flex-1 truncate font-semibold text-ink">{p.name}</span>
-                <span className="text-sub">
-                  {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))}
-                </span>
-                <span className="text-faint">{wageLabel(C, p.salaryPerSplit)}</span>
+              <li key={p.id} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-line py-2 text-xs">
+                <span className="display w-8 shrink-0 text-lg font-bold leading-none text-ink" title={C.common.ovr}>{Math.round(p.overall)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{p.name}</span>
+                <span className="text-sub">{C.player.age(squadAge(save, p))}</span>
+                <span className="text-sub">{wageLabel(C, p.salaryPerSplit)}</span>
               </li>
             ))}
             {coachLeaving && coachDeal ? (
-              <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-line bg-white/[0.02] px-3 py-2 text-xs">
-                <span className="min-w-0 flex-1 truncate font-semibold text-ink">{coachLeaving.name}</span>
-                <span className="text-sub">
-                  {Math.round(coachLeaving.overall)} {C.common.ovr} · {C.launch.coachTypes[coachLeaving.source]}
-                </span>
-                <span className="text-faint">{C.launch.coachRenewAsk} {wageLabel(C, coachDeal.renewalWagePerSplit)}</span>
+              <li className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-2 text-xs">
+                <span className="display w-8 shrink-0 text-lg font-bold leading-none text-ink" title={C.common.ovr}>{Math.round(coachLeaving.overall)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{coachLeaving.name}</span>
+                <span className="text-sub">{C.launch.coachTypes[coachLeaving.source]}</span>
+                <span className="text-sub">{C.launch.coachRenewAsk} {wageLabel(C, coachDeal.renewalWagePerSplit)}</span>
                 {reviewed ? null : (
                   <span className="flex w-full flex-wrap gap-2">
                     {coachDeal.lengths.map((n) => (
@@ -73,10 +73,10 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
             ) : null}
           </ul>
           {reviewed ? (
-            <p className="mt-3 text-xs font-semibold text-good">{C.squad.reviewDone}</p>
+            <p className="mt-3 text-sm text-good">{C.squad.reviewDone}</p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <AppLink href="/career/squad" className={buttonClass("secondary", "md") + " min-h-11"}>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <AppLink href="/career/squad" className={cx(buttonClass("secondary", "md"), "min-h-11")}>
                 {C.squad.reviewRenew}
               </AppLink>
               <Button variant="danger" size="md" className="min-h-11" onClick={reviewContracts}>
@@ -87,7 +87,7 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
         </>
       ) : null}
       {otherHold ? (
-        <AppLink href="/career" className="mt-3 flex min-h-11 items-center text-xs font-semibold text-orange-bright hover:underline">
+        <AppLink href="/career" className="mt-3 flex min-h-11 items-center text-sm text-orange-bright hover:underline">
           {C.squad.reviewHeld} →
         </AppLink>
       ) : null}

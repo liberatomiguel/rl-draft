@@ -158,7 +158,7 @@ export function CareerTopBar() {
     (key === "market" && marketDot) || (key === "hub" && hubDot);
 
   return (
-    <div className="sticky top-14 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
+    <div className="sticky top-14 z-30 border-b border-line bg-bg">
       <div className="mx-auto flex min-h-14 max-w-6xl items-center gap-2 px-3 py-1 sm:gap-3 sm:px-4">
         <AppLink href="/career/club" className="flex shrink-0 items-center gap-2">
           <UserCrest
@@ -271,7 +271,7 @@ export function CareerTopBar() {
               className={cx(
                 "whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
                 active
-                  ? "bg-blue/15 text-blue-bright shadow-[inset_0_-2px_0_var(--blue)]"
+                  ? "text-ink shadow-[inset_0_-2px_0_var(--orange)]"
                   : "text-sub hover:bg-white/5 hover:text-ink",
               )}
             >

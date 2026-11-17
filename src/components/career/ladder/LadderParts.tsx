@@ -74,7 +74,7 @@ export function RungBadge({
         rung.status === "owned" && "border-orange bg-orange/20 text-orange-bright",
         rung.status === "open" && "border-blue-bright bg-blue/15 text-blue-bright",
         rung.status === "locked" && "border-line-strong bg-white/5 text-faint",
-        highlight && "shadow-[0_0_18px_-4px_rgba(249,115,22,0.7)] ring-2 ring-orange/50 ring-offset-2 ring-offset-transparent",
+        highlight && " ring-2 ring-orange/50 ring-offset-2 ring-offset-transparent",
       )}
     >
       <RungIcon id={rung.id} className={icon} />

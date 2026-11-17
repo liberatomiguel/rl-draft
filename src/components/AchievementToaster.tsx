@@ -77,16 +77,16 @@ function Toast({ id, held }: { id: string; held: boolean }) {
       )}
     >
       <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-md", style.chip)}>
-        <AchievementIcon group={def.group} className="h-4.5 w-4.5" />
+        <AchievementIcon group={def.group} className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cx("block text-[9px] font-bold uppercase tracking-[0.18em]", style.text)}>
+        <span className={cx("display block text-[11px] font-semibold uppercase leading-tight tracking-[0.05em]", style.text)}>
           {ACH_UI.unlocked}
         </span>
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
           {ACH_UI.items[def.id]?.name ?? def.title}
         </span>
-        <span className="block text-[11px] text-faint">+{def.xp} XP</span>
+        <span className="block text-xs text-sub">+{def.xp} XP</span>
       </span>
     </button>
   );

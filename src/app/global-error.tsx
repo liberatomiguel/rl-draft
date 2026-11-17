@@ -60,7 +60,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
           justifyContent: "center",
           padding: 24,
           boxSizing: "border-box",
-          background: "#05080f",
+          background: "#070a11",
           color: "#e9eef8",
           fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         }}

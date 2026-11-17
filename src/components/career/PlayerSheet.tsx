@@ -12,10 +12,9 @@ import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { StatBar } from "@/components/ui/ProgressBar";
-import { CountryChip } from "@/components/ui/Badge";
+import { Badge, CountryChip } from "@/components/ui/Badge";
 import { weeklyWage } from "@/engine/career/economy";
 import { formatMoney } from "@/lib/format";
-import { cx } from "@/lib/util";
 import type { ArchetypeId, PotentialBand } from "@/engine/career/types";
 import type { Stats } from "@/engine/types";
 
@@ -47,6 +46,16 @@ const STAT_ORDER: (keyof Stats)[] = [
   "clutch",
 ];
 
+/** One contract figure: the value first, its quiet label under it. */
+function SheetFigure({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-1 text-xs text-sub">{label}</dt>
+      <dd className="display text-base font-bold leading-tight text-ink">{value}</dd>
+    </div>
+  );
+}
+
 export function PlayerSheet({
   data,
   onClose,
@@ -68,40 +77,35 @@ export function PlayerSheet({
   return (
     <Modal open={Boolean(data)} onClose={onClose} title={data.name} wide actions={actions}>
       <div className="space-y-5">
-        {/* Header line */}
-        <div className="flex flex-wrap items-center gap-2 text-xs text-sub">
-          {data.country ? <CountryChip code={data.country} /> : null}
-          {data.age !== undefined ? <span>{C.player.age(data.age)}</span> : null}
-          {data.archetype ? (
-            <span
-              className="rounded bg-white/6 px-2 py-0.5 font-semibold text-sub"
-              title={C.player.archetypeHint[data.archetype]}
-            >
-              {C.player.archetype[data.archetype]}
-            </span>
-          ) : null}
-          {data.phase ? (
-            <span
-              className={cx(
-                "rounded px-2 py-0.5 font-semibold",
-                data.phase === "unknown" ? "bg-white/6 text-faint" : "bg-blue/10 text-cyan",
-              )}
-              title={data.phase === "unknown" ? C.player.phaseUnknownHint : undefined}
-            >
-              {C.player.phase[data.phase]}
-            </span>
-          ) : null}
-          <span className="ml-auto display text-2xl font-bold text-ink">
-            {Math.round(data.overall)}
-            <span className="ml-1 kicker text-[10px] text-faint">{C.common.ovr}</span>
-          </span>
+        {/* Who he is on one quiet line (flag, age, role, phase); the overall
+            is the sheet's figure, large, with its label under it. */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-sub">
+            {data.country ? <CountryChip code={data.country} /> : null}
+            {data.age !== undefined ? <span>{C.player.age(data.age)}</span> : null}
+            {data.archetype ? (
+              <span title={C.player.archetypeHint[data.archetype]}>
+                {data.age !== undefined ? "· " : ""}
+                {C.player.archetype[data.archetype]}
+              </span>
+            ) : null}
+            {data.phase ? (
+              <span title={data.phase === "unknown" ? C.player.phaseUnknownHint : undefined}>
+                <Badge tone={data.phase === "unknown" ? "neutral" : "blue"}>{C.player.phase[data.phase]}</Badge>
+              </span>
+            ) : null}
+          </div>
+          <div className="shrink-0 text-right leading-none">
+            <p className="display text-4xl font-bold text-ink">{Math.round(data.overall)}</p>
+            <p className="mt-1 text-xs text-sub">{C.common.ovr}</p>
+          </div>
         </div>
 
         {/* Potential band track */}
         <div>
-          <div className="mb-1 flex items-center justify-between text-[11px]">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
             <span className="kicker">{C.player.potential}</span>
-            <span className="font-semibold text-cyan">
+            <span className="display text-sm font-semibold text-blue-bright">
               {data.band.min === data.band.max
                 ? C.player.potExact(data.band.max)
                 : C.player.potBand(data.band.min, data.band.max)}
@@ -118,11 +122,11 @@ export function PlayerSheet({
             </div>
             <div
               aria-hidden
-              className="absolute -bottom-0.5 -top-0.5 w-1 rounded-full bg-orange shadow-[0_0_8px_rgba(249,115,22,0.7)]"
+              className="absolute -bottom-0.5 -top-0.5 w-1 rounded-full bg-orange"
               style={{ left: `clamp(1px, calc(${ovrPos}% - 2px), calc(100% - 5px))` }}
             />
           </div>
-          <div className="mt-1 flex items-center justify-between text-[10px] text-faint">
+          <div className="display mt-1 flex items-center justify-between text-[11px] font-medium text-faint">
             <span>60</span>
             <span>{data.band.max}</span>
           </div>
@@ -130,40 +134,23 @@ export function PlayerSheet({
 
         {/* Attributes */}
         <div>
-          <p className="kicker mb-2 text-[11px]">{C.player.attributes}</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <p className="kicker mb-2">{C.player.attributes}</p>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
             {STAT_ORDER.map((k) => (
               <StatBar key={k} label={t.STAT_LABELS[k]} value={Math.round(data.stats[k])} />
             ))}
           </div>
         </div>
 
-        {/* Development / contract */}
+        {/* The contract as one strip of figures under a hairline: the value,
+            its quiet label under it (no box inside the sheet). */}
         {data.wage !== undefined ? (
-          <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-white/[0.02] p-3 text-sm sm:grid-cols-3">
-            <div>
-              <p className="kicker text-[10px]">{C.squad.wage}</p>
-              <p className="font-semibold text-ink">{C.squad.perWeek(formatMoney(weeklyWage(data.wage)))}</p>
-            </div>
-            {data.contractLabel ? (
-              <div>
-                <p className="kicker text-[10px]">{C.player.contract}</p>
-                <p className="font-semibold text-ink">{data.contractLabel}</p>
-              </div>
-            ) : null}
-            {data.shareLabel ? (
-              <div>
-                <p className="kicker text-[10px]">{C.player.prizeShare}</p>
-                <p className="font-semibold text-ink">{data.shareLabel}</p>
-              </div>
-            ) : null}
-            {data.focusLabel ? (
-              <div>
-                <p className="kicker text-[10px]">{C.player.trainingFocusLabel}</p>
-                <p className="font-semibold text-ink">{data.focusLabel}</p>
-              </div>
-            ) : null}
-          </div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4 sm:grid-cols-4">
+            <SheetFigure label={C.squad.wage} value={C.squad.perWeek(formatMoney(weeklyWage(data.wage)))} />
+            {data.contractLabel ? <SheetFigure label={C.player.contract} value={data.contractLabel} /> : null}
+            {data.shareLabel ? <SheetFigure label={C.player.prizeShare} value={data.shareLabel} /> : null}
+            {data.focusLabel ? <SheetFigure label={C.player.trainingFocusLabel} value={data.focusLabel} /> : null}
+          </dl>
         ) : null}
       </div>
     </Modal>

@@ -3,9 +3,12 @@
 /**
  * Achievement grid shared by /achievements and the profile page.
  * v0.5: every achievement has a unique icon AND a stable hue inside its
- * category family (see achievementStyle.ts), earned cards get a light 3D
- * tilt, and legend-tier achievements wear an animated prismatic border —
- * the trophy case should feel like a trophy case.
+ * category family (see achievementStyle.ts).
+ * Broadcast pass (DESIGN.md): the feats are a LIST in groups, one hairline
+ * row each, not a wall of boxes. Earned and locked differ by more than
+ * dimming (chip, title colour, a check with the date against the XP on
+ * offer). The one board left is an earned Legend feat: it keeps its animated
+ * prismatic border and its tilt, because that one is a trophy.
  *
  * rc.36 (UX-05, DESIGN-DECISIONS #155): Road to Worlds' achievements join the
  * list, behind a mode filter (All · Draft · Road to Worlds; career mode's
@@ -22,6 +25,7 @@ import { CAREER_ACHIEVEMENTS } from "@/data/career/achievements";
 import { FEATURES } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cx, formatDate } from "@/lib/util";
+import { CheckIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AchievementIcon } from "@/components/AchievementIcon";
@@ -51,14 +55,17 @@ export function achievementTotals(earned: Record<string, string>, careerMarks: r
   };
 }
 
+/** The feats of one group: rows on a shared hairline grid (no gap between rows). */
+const LIST = "grid grid-cols-1 gap-x-8 sm:grid-cols-2 lg:grid-cols-3";
+
 function SectionHead({ title, done, total, icon }: { title: string; done: number; total: number; icon?: ReactNode }) {
   return (
-    <div className="mb-2.5 flex items-baseline justify-between gap-2 border-b border-line/60 pb-1.5">
-      <h3 className="display flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-sub">
+    <div className="flex items-baseline justify-between gap-2 border-b border-line-strong pb-2">
+      <h3 className="display flex items-center gap-2 text-lg uppercase leading-none text-ink">
         {icon}
         {title}
       </h3>
-      <span className="text-[11px] font-semibold text-faint">
+      <span className="display text-sm font-semibold text-sub">
         {done}/{total}
       </span>
     </div>
@@ -96,7 +103,7 @@ export function AchievementsGrid({
   };
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-9">
       {showCareer ? (
         <div role="group" aria-label={ACH_UI.modesLabel} className="flex flex-wrap gap-2">
           {MODES.map((m) => (
@@ -106,15 +113,14 @@ export function AchievementsGrid({
               onClick={() => setMode(m)}
               aria-pressed={active === m}
               className={cx(
-                "display inline-flex min-h-9 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
+                "display inline-flex min-h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold uppercase tracking-[0.04em] transition-colors",
                 active === m
-                  ? "border-blue/50 bg-blue/15 text-blue-bright"
-                  : "border-line-strong bg-white/5 text-sub hover:text-ink",
+                  ? "border-orange/60 bg-white/[0.04] text-ink"
+                  : "border-line text-sub hover:border-line-strong hover:text-ink",
               )}
             >
-              {m === "career" ? <AchievementIcon group="career" className="h-3.5 w-3.5" /> : null}
               {ACH_UI.modes[m] ?? m}
-              <span className="font-mono text-[10px] normal-case tracking-normal text-faint">
+              <span className="text-faint">
                 {counts[m][0]}/{counts[m][1]}
               </span>
             </button>
@@ -126,7 +132,7 @@ export function AchievementsGrid({
         ? byGroup.map(({ group, defs, earnedCount }) => (
             <section key={group}>
               <SectionHead title={ACH_UI.groups[group] ?? group} done={earnedCount} total={defs.length} />
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className={LIST}>
                 {defs.map((def) => {
                   const date = earned[def.id];
                   const style = achievementStyle(def);
@@ -141,7 +147,7 @@ export function AchievementsGrid({
                         hidden ? (
                           <span className="display text-base font-bold text-faint">?</span>
                         ) : (
-                          <AchievementIcon group={def.group} className="h-4.5 w-4.5" />
+                          <AchievementIcon group={def.group} className="h-5 w-5" />
                         )
                       }
                       title={hidden ? ACH_UI.secretTitle : (ACH_UI.items[def.id]?.name ?? def.title)}
@@ -162,10 +168,9 @@ export function AchievementsGrid({
             title={ACH_UI.careerGroup}
             done={careerEarned}
             total={CAREER_ACHIEVEMENTS.length}
-            icon={<AchievementIcon group="career" className="h-3.5 w-3.5 text-orange-bright" />}
           />
-          <p className="-mt-1 mb-2.5 text-[11px] text-faint">{ACH_UI.careerHint}</p>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          <p className="mt-2 text-sm leading-snug text-sub">{ACH_UI.careerHint}</p>
+          <div className={LIST}>
             {CAREER_ACHIEVEMENTS.map((def) => {
               const has = marks.has(def.id);
               const style = achievementStyle({ id: def.id, category: def.tier });
@@ -175,11 +180,11 @@ export function AchievementsGrid({
                   key={def.id}
                   earned={has}
                   style={style}
-                  icon={<AchievementIcon group="career" id={def.id} className="h-4.5 w-4.5" />}
+                  icon={<AchievementIcon group="career" id={def.id} className="h-5 w-5" />}
                   title={item.name}
                   tier={ACH_UI.careerTier[def.tier] ?? def.tier}
                   body={item.desc}
-                  foot={has ? `✓ ${ACH_UI.careerEarned}` : `+${def.xp} XP`}
+                  foot={has ? ACH_UI.careerEarned : `+${def.xp} XP`}
                 />
               );
             })}
@@ -190,7 +195,14 @@ export function AchievementsGrid({
   );
 }
 
-/** One trophy card (draft or Road to Worlds) — the same visual for both. */
+/**
+ * One feat (draft or Road to Worlds), the same visual for both: a row on a
+ * hairline. Earned and locked differ in three ways that do not depend on
+ * dimming: the chip (filled in the feat's colour against an empty dashed
+ * outline), the title (ink against grey) and the foot (a check with the date
+ * against the XP it pays). An earned Legend feat is the exception: it keeps
+ * its board, its prismatic border and its tilt.
+ */
 export function AchievementCard({
   earned,
   style,
@@ -208,39 +220,44 @@ export function AchievementCard({
   body: string;
   foot: string;
 }) {
-  const card = (
-    <Panel
-      className={cx(
-        "flex h-full items-start gap-3 p-3.5",
-        earned ? cx(style.ring, style.glow, style.legend && "ach-legend") : "opacity-45",
-      )}
-    >
+  const row = (
+    <>
       <span
         className={cx(
           "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
-          earned ? style.chip : "bg-white/5 text-faint",
+          earned ? style.chip : "border border-dashed border-line-strong text-faint",
           earned && style.legend && "ach-legend-chip",
         )}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2">
-          <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">{title}</span>
+        <span className="flex items-baseline justify-between gap-2">
+          <span className={cx("display block truncate text-base font-bold uppercase leading-tight", earned ? "text-ink" : "text-sub")}>{title}</span>
+          {/* Rarity is a real category: a plain caps word in the feat's colour. */}
           <span
             className={cx(
-              "shrink-0 text-[9px] font-bold uppercase tracking-[0.14em]",
+              "display shrink-0 text-[11px] font-semibold uppercase tracking-[0.05em]",
               earned ? style.text : "text-faint",
             )}
           >
             {tier}
           </span>
         </span>
-        <span className="block text-xs leading-snug text-sub">{body}</span>
-        <span className="mt-0.5 block text-[10px] text-faint">{foot}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-sub">{body}</span>
+        <span className={cx("mt-1 flex items-center gap-1 text-xs", earned ? "text-ink" : "text-faint")}>
+          {earned ? <CheckIcon className="h-4 w-4 shrink-0 text-good" /> : null}
+          {foot}
+        </span>
       </span>
-    </Panel>
+    </>
   );
-  // Earned achievements respond to the cursor; locked ones stay flat.
-  return earned ? <TiltCard intensity="light">{card}</TiltCard> : <div>{card}</div>;
+  if (earned && style.legend) {
+    return (
+      <TiltCard intensity="light" className="my-2">
+        <Panel className={cx("ach-legend flex h-full items-start gap-3 p-3.5", style.glow)}>{row}</Panel>
+      </TiltCard>
+    );
+  }
+  return <div className="flex h-full items-start gap-3 border-b border-line py-3">{row}</div>;
 }

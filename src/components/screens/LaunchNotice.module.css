@@ -1,6 +1,6 @@
 .overlay { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; }
 .backdrop { position:absolute; inset:0; background:rgba(2,5,10,.88); }
-.dialog { position:relative; display:flex; flex-direction:column; width:100%; max-width:1040px; max-height:calc(100dvh - 48px); color:#e9edf6; border:1px solid #354053; border-top:3px solid #ff8b28; border-radius:18px; background:#0b101b; box-shadow:0 30px 120px #000a; overflow:hidden; outline:none; }
+.dialog { position:relative; display:flex; flex-direction:column; width:100%; max-width:1040px; max-height:calc(100dvh - 48px); color:#e9edf6; border:1px solid #2a3348; border-radius:14px; background:#0b101b; overflow:hidden; outline:none; }
 .header { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:15px 28px; border-bottom:1px solid #ffffff0d; background:#080c14; }
 .brand { font-weight:800; font-size:17px; letter-spacing:.035em; }
 .brand > span:first-child { color:#ff902e; }
@@ -9,8 +9,6 @@
 .close:hover { color:white; background:#ffffff14; }
 .content { overflow-y:auto; min-height:0; padding:26px 28px 22px; scrollbar-width:thin; scrollbar-color:#38445c transparent; }
 .intro { position:relative; margin-bottom:23px; }
-.eyebrow { display:flex; align-items:center; gap:8px; color:#ff9d4d; font-size:10px; font-weight:750; letter-spacing:.19em; text-transform:uppercase; margin-bottom:10px; }
-.eyebrow span { width:6px; height:6px; border-radius:50%; background:#ff8c28; box-shadow:0 0 12px #ff8c2870; }
 .intro h2 { font-size:clamp(28px,3.6vw,44px); font-weight:800; line-height:1.05; text-transform:uppercase; letter-spacing:-.01em; }
 .headline { margin-top:10px; font-size:17px; color:#edf0f8; font-weight:600; }
 .lead { margin-top:5px; color:#9caac0; font-size:13px; line-height:1.6; }
@@ -25,19 +23,19 @@
 .previewTabs button span { border:1px solid #ff902e35; padding:2px 6px; border-radius:4px; font-size:8px; text-transform:uppercase; letter-spacing:.08em; }
 .feature { display:grid; grid-template-columns:.8fr 1.3fr; grid-template-rows:minmax(0,1fr); align-items:center; gap:26px; padding:24px 24px 0; overflow:hidden; height:250px; background:radial-gradient(ellipse at 4% 100%,#ff741313,transparent 70%); }
 .featureCopy { align-self:center; padding-bottom:20px; }
-.featureNumber { color:#6faef8!important; font-size:9px!important; letter-spacing:.14em; font-weight:700; margin-bottom:10px; }
+
 .featureCopy h3 { text-transform:uppercase; font-weight:800; font-size:30px; line-height:1.1; margin-bottom:12px; }
-.featureCopy p { color:#a7b5ca; font-size:12px; line-height:1.8; }
-.screenshot { width:100%; height:auto; align-self:start; border-radius:8px 8px 0 0; border:1px solid #4b628140; box-shadow:0 0 35px #0007; }
-.caption { background:#090f19; padding:8px 16px; color:#72849e; font-size:9px; text-align:right; border-top:1px solid #ffffff08; }
+.featureCopy p { color:#a7b5ca; font-size:13px; line-height:1.7; }
+.screenshot { width:100%; height:auto; align-self:start; border-radius:8px 8px 0 0; border:1px solid #4b628140; }
+.caption { background:#090f19; padding:8px 16px; color:#7c8aa3; font-size:11px; text-align:right; border-top:1px solid #ffffff08; }
 .details { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin-top:23px; }
-.details section { display:flex; align-items:flex-start; gap:12px; }
-.detailIcon { display:grid; place-items:center; flex-shrink:0; height:34px; width:34px; border:1px solid #ff902e30; background:#ff902e09; border-radius:9px; color:#ff9b42; font-size:22px; }
-.details h3 { font-size:13px; font-weight:700; margin-bottom:5px; }
-.details p { color:#95a6bf; font-size:11px; line-height:1.7; }
+.details section { padding-top:12px; border-top:1px solid #ffffff1a; }
+
+.details h3 { font-size:14px; font-weight:600; margin-bottom:4px; }
+.details p { color:#95a6bf; font-size:12.5px; line-height:1.6; }
 .footer { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:19px 28px; border-top:1px solid #ff902e30; background:linear-gradient(105deg,#25190f,#101622 80%); }
 .footer > div:first-child { max-width:490px; }
-.footer p { font-size:11px; line-height:1.6; color:#b6becb; }
+.footer p { font-size:12px; line-height:1.6; color:#b6becb; }
 .footer .accountTitle { color:#ffba7f; font-size:13px; font-weight:750; margin-bottom:3px; }
 .actions { display:flex; align-items:center; gap:7px; flex-shrink:0; }
 .actions button { font-size:11px; letter-spacing:.06em; padding-inline:14px; }

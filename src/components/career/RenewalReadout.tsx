@@ -11,6 +11,7 @@
  */
 
 import { AppLink } from "@/components/ui/AppLink";
+import { buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { CAREER_PAYROLL, CAREER_SALARY } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -25,22 +26,23 @@ import { wageLabel } from "./careerUi";
 export function RenewalsPanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const expiring = save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex);
   return (
-    <Panel className="p-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="kicker text-[10px]">{C.squad.renewalsTitle}</p>
+    <Panel className="p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="display text-lg uppercase leading-none text-ink">{C.squad.renewalsTitle}</h3>
         {expiring.length > 0 ? (
-          <AppLink href="/career/squad" className="text-xs font-semibold text-cyan hover:underline">
+          <AppLink href="/career/squad" className={buttonClass("secondary", "sm")}>
             {C.squad.renewalsGo}
           </AppLink>
         ) : null}
       </div>
       {expiring.length === 0 ? (
-        <p className="text-xs text-faint">{C.squad.renewalsEmpty}</p>
+        <p className="mt-2 text-sm text-sub">{C.squad.renewalsEmpty}</p>
       ) : (
-        <div className="space-y-2">
+        // One row per expiring contract, divided by hairlines (no box per player).
+        <div className="mt-3 border-t border-line">
           {expiring.map((p) => (
-            <div key={p.id}>
-              <p className="display mb-1 text-sm font-bold text-ink">{p.name}</p>
+            <div key={p.id} className="border-b border-line py-3 last:border-b-0 last:pb-0">
+              <p className="display mb-1.5 text-base font-bold text-ink">{p.name}</p>
               <RenewalReadout terms={renewalTermsOf(save, p, 2)} C={C} save={save} player={p} />
             </div>
           ))}
@@ -97,27 +99,29 @@ export function RenewalReadout({
   const jump = String(terms.maxJump);
   const capFloor = terms.rule === "capFloor";
   return (
-    <div className={cx("rounded-lg border border-line bg-white/[0.02] p-3 text-xs", className)}>
-      <p className="kicker mb-1.5 text-[10px]">{C.squad.renewalTerms}</p>
-      <p className="leading-relaxed text-sub">
-        {capFloor ? C.squad.renewalRuleCapFloor(cap, floorPct, jump) : C.squad.renewalRuleFresh}
-      </p>
-      <div className="mt-2 grid grid-cols-2 gap-2">
+    // A section of its host (the renewal sheet, a row of the renewals board),
+    // not a box inside it: the two asks as figures, then the rule's lines.
+    <div className={cx("text-xs", className)}>
+      <p className="kicker mb-2">{C.squad.renewalTerms}</p>
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-[10px] text-faint">{C.squad.renewalMarketAsk}</p>
-          <p className="font-semibold text-ink">{wageLabel(C, terms.freshAsk, false)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-faint">{C.squad.renewalAsk}</p>
-          <p className={cx("font-semibold", terms.ask < terms.freshAsk ? "text-good" : "text-ink")}>
+          <p className={cx("display text-xl font-bold leading-none", terms.ask < terms.freshAsk ? "text-good" : "text-ink")}>
             {wageLabel(C, terms.ask, false)}
           </p>
+          <p className="mt-1 text-xs text-sub">{C.squad.renewalAsk}</p>
+        </div>
+        <div>
+          <p className="display text-xl font-bold leading-none text-sub">{wageLabel(C, terms.freshAsk, false)}</p>
+          <p className="mt-1 text-xs text-sub">{C.squad.renewalMarketAsk}</p>
         </div>
       </div>
+      <p className="mt-3 leading-relaxed text-sub">
+        {capFloor ? C.squad.renewalRuleCapFloor(cap, floorPct, jump) : C.squad.renewalRuleFresh}
+      </p>
       {/* rc.37 (F1): with the premiums capped he renews under the market ask (it carries
           them in full), so "he renews at his market ask" would mislead — the capped line says why. */}
       {capFloor && !(terms.premiumCapped && terms.bound === "fresh") ? (
-        <p className="mt-1.5 text-[11px] text-sub">
+        <p className="mt-1.5 text-sub">
           {terms.bound === "cap"
             ? C.squad.renewalBoundCap(cap)
             : terms.bound === "floor"
@@ -128,27 +132,27 @@ export function RenewalReadout({
         </p>
       ) : null}
       {capFloor && terms.tenureSteps > 0 ? (
-        <p className="mt-1 text-[11px] text-sub">{C.squad.renewalTenure(terms.tenure)}</p>
+        <p className="mt-1 text-sub">{C.squad.renewalTenure(terms.tenure)}</p>
       ) : null}
       {/* rc.37 (F1): a capped stack shows its one applied total, never the premiums in full. */}
       {terms.premiumCapped ? (
-        <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalPremiumCapped(pct(terms.premiumMult))}</p>
+        <p className="mt-1 text-orange-bright">{C.squad.renewalPremiumCapped(pct(terms.premiumMult))}</p>
       ) : null}
       {!terms.premiumCapped && terms.titlePremium > 0 ? (
-        <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalTitles(Math.round(terms.titlePremium * 100))}</p>
+        <p className="mt-1 text-orange-bright">{C.squad.renewalTitles(Math.round(terms.titlePremium * 100))}</p>
       ) : null}
       {!terms.premiumCapped && capFloor && terms.ambitious ? (
-        <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalAmbition(pct(S.ambitionRenewalMult))}</p>
+        <p className="mt-1 text-orange-bright">{C.squad.renewalAmbition(pct(S.ambitionRenewalMult))}</p>
       ) : null}
       {!terms.premiumCapped && terms.blockbusterRefused ? (
-        <p className="mt-1 text-[11px] text-orange-bright">
+        <p className="mt-1 text-orange-bright">
           {C.squad.renewalBlockbuster(pct(S.blockbusterRefusalRenewalMult))}
         </p>
       ) : null}
       {runway !== undefined ? (
         <p
           className={cx(
-            "mt-1.5 text-[11px] font-semibold",
+            "mt-1.5",
             runway === null ? "text-good" : runway <= CAREER_PAYROLL.runwayWarnWeeks ? "text-bad" : "text-sub",
           )}
         >

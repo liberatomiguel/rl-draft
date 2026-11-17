@@ -94,7 +94,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
       <p className="text-xs text-sub">{C.finances.chartRange(points.length, when(first.s, first.w, first.d), when(last.s, last.w, last.d))}</p>
 
       {/* Legend: the balance, the floor and the season starts — never colour alone. */}
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-sub">
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-sub">
         <li className="flex items-center gap-1.5">
           <svg width="18" height="8" aria-hidden className="shrink-0">
             <line x1="1" y1="4" x2="17" y2="4" className="stroke-cyan" strokeWidth="2" strokeLinecap="round" />
@@ -207,12 +207,12 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
 
         {act ? (
           <div
-            className="pointer-events-none absolute top-0 rounded-md border border-line-strong bg-panel-strong px-2 py-1.5 text-[11px] leading-snug shadow-lg"
+            className="pointer-events-none absolute top-0 rounded-md border border-line-strong bg-panel-strong px-2 py-1.5 text-xs leading-snug"
             style={{ left: tipLeft, width: TOOLTIP_WIDTH }}
           >
             <p className="text-faint">{seasonLabelFor(act.s)}</p>
             <p className="text-sub">{when(act.s, act.w, act.d)}</p>
-            <p className={cx("display text-sm font-bold", act.balance < 0 ? "text-bad" : "text-ink")}>{money(act.balance)}</p>
+            <p className={cx("display text-base font-bold tabular-nums", act.balance < 0 ? "text-bad" : "text-ink")}>{money(act.balance)}</p>
             {act.floor !== undefined ? <p className="text-faint">{C.finances.chartFloor(money(act.floor))}</p> : null}
           </div>
         ) : null}
@@ -222,22 +222,22 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
       </p>
 
       {/* The same data as text: one row per season on the chart. */}
-      <table className="w-full table-fixed text-left text-[11px]">
-        <thead className="text-faint">
+      <table className="w-full table-fixed text-left text-xs">
+        <thead>
           <tr>
-            <th className="w-[34%] py-1 font-semibold">{C.finances.chartColSeason}</th>
-            <th className="py-1 font-semibold">{C.finances.chartColLow}</th>
-            <th className="py-1 font-semibold">{C.finances.chartColHigh}</th>
-            <th className="py-1 text-right font-semibold">{C.finances.chartColLast}</th>
+            <th scope="col" className="kicker w-[34%] py-1.5 text-[11px] text-faint">{C.finances.chartColSeason}</th>
+            <th scope="col" className="kicker py-1.5 text-[11px] text-faint">{C.finances.chartColLow}</th>
+            <th scope="col" className="kicker py-1.5 text-[11px] text-faint">{C.finances.chartColHigh}</th>
+            <th scope="col" className="kicker py-1.5 text-right text-[11px] text-faint">{C.finances.chartColLast}</th>
           </tr>
         </thead>
         <tbody className="text-sub">
           {seasonSummaries(ring).map((row) => (
-            <tr key={row.s} className="border-t border-line/50">
-              <td className="py-1 pr-1 text-ink">{seasonLabelFor(row.s)}</td>
-              <td className={cx("py-1 font-mono", row.low < 0 && "text-bad")}>{money(row.low)}</td>
-              <td className="py-1 font-mono">{money(row.high)}</td>
-              <td className={cx("py-1 text-right font-mono", row.last < 0 && "text-bad")}>{money(row.last)}</td>
+            <tr key={row.s} className="border-t border-line">
+              <th scope="row" className="py-1.5 pr-1 font-normal text-ink">{seasonLabelFor(row.s)}</th>
+              <td className={cx("display py-1.5 text-sm tabular-nums", row.low < 0 && "text-bad")}>{money(row.low)}</td>
+              <td className="display py-1.5 text-sm tabular-nums">{money(row.high)}</td>
+              <td className={cx("display py-1.5 text-right text-sm tabular-nums", row.last < 0 && "text-bad")}>{money(row.last)}</td>
             </tr>
           ))}
         </tbody>

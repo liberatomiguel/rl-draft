@@ -133,10 +133,13 @@ export function LeaderboardsView() {
   const loading = !preview && loaded?.board !== board;
   const rows = preview ?? (loaded?.board === board ? loaded.rows : []);
 
+  // Job: see where you stand. The one decision: which board to read. So the
+  // table is the page: quiet board switches above it, real column heads, and
+  // the player's own row marked by an orange hairline.
+  const valueHead = board === "season" ? L.rating : L.titlesShort;
   return (
     <div className="rise-in mx-auto max-w-3xl">
-      <SectionTitle kicker={L.globalTab} title={L.title} className="mb-2" />
-      <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{L.subtitle}</p>
+      <SectionTitle kicker={L.subtitle} title={L.title} className="mb-6" />
 
       {!accountsEnabled && !previewMode ? (
         <Panel className="p-4 text-sm leading-relaxed text-sub">
@@ -145,35 +148,41 @@ export function LeaderboardsView() {
       ) : (
         <>
           {previewMode ? (
-            <p className="mb-3">
-              <Badge tone="orange">{L.previewData}</Badge>
-            </p>
+            <p className="mb-3 text-xs text-sub">{L.previewData}</p>
           ) : null}
           <div className="mb-3 flex flex-wrap gap-1.5">
             {BOARDS.map((b) => (
               <button
                 key={b.key}
                 type="button"
+                aria-pressed={board === b.key}
                 onClick={() => {
                   sfx.click();
                   setBoard(b.key);
                 }}
                 className={cx(
-                  "display rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors",
-                  board === b.key ? "bg-orange/15 text-orange-bright" : "text-sub hover:text-ink",
+                  "display min-h-11 rounded-md border px-3 text-xs font-semibold uppercase tracking-[0.04em] transition-colors sm:min-h-8",
+                  board === b.key ? "border-orange/60 bg-white/[0.04] text-ink" : "border-transparent text-sub hover:border-line hover:text-ink",
                 )}
               >
                 {L.boards[b.key]}
               </button>
             ))}
           </div>
-          <p className="mb-4 text-xs text-faint">{board === "season" ? L.seasonBoardHint : (L.boardHints[board] ?? null)}</p>
+          <p className="mb-4 text-sm leading-snug text-sub">{board === "season" ? L.seasonBoardHint : (L.boardHints[board] ?? null)}</p>
 
-          <Panel className="divide-y divide-line/60 overflow-hidden">
+          <Panel className="divide-y divide-line overflow-hidden">
+            {/* Column heads, on the same widths as the cells below. */}
+            <div className="display flex items-center gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-faint sm:px-4">
+              <span className="w-7 shrink-0">{L.rankCol}</span>
+              <span className="min-w-0 flex-1">{L.peekTitle}</span>
+              <span className="hidden w-28 shrink-0 sm:block">{L.rank}</span>
+              <span className="w-16 shrink-0 text-right">{valueHead}</span>
+            </div>
             {loading ? (
-              <p className="p-4 text-sm text-faint">{L.syncing}</p>
+              <p className="p-4 text-sm text-sub">{L.syncing}</p>
             ) : rows.length === 0 ? (
-              <p className="p-4 text-sm text-faint">{L.empty}</p>
+              <p className="p-4 text-sm text-sub">{L.empty}</p>
             ) : (
               rows.map((r, i) => {
                 const isYou = !!username && r.username === username;
@@ -185,8 +194,8 @@ export function LeaderboardsView() {
                     displayPx={800}
                     key={`${r.username}-${i}`}
                     banner={r.cosmetics.banner}
-                    className={cx("cos-banner-row", isYou && "ring-1 ring-inset ring-orange/50")}
-                    plainClassName={cx(isYou && "bg-orange/5")}
+                    className={cx("cos-banner-row", isYou && "ring-1 ring-inset ring-orange/60")}
+                    plainClassName={cx(isYou && "bg-white/[0.04]")}
                   >
                     <button
                       type="button"
@@ -196,7 +205,7 @@ export function LeaderboardsView() {
                       }}
                       className="flex min-h-[52px] w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-white/5 sm:px-4"
                     >
-                      <span className={cx("display w-7 shrink-0 text-sm font-bold", place === 1 ? "text-amber-300" : place <= 3 ? "text-sub" : "text-faint")}>
+                      <span className={cx("display w-7 shrink-0 text-base font-bold", place === 1 ? "text-amber-300" : place <= 3 ? "text-ink" : "text-sub")}>
                         {place}
                       </span>
                       <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -224,9 +233,9 @@ export function LeaderboardsView() {
                       </span>
                       <span className="hidden w-28 shrink-0 items-center gap-1.5 sm:flex">
                         <RankBadge rank={rank} variant="menu" size="sm" className="!h-7 !w-7" />
-                        <span className="truncate text-[10px] font-semibold uppercase tracking-wider text-faint">{rank.label}</span>
+                        <span className="display truncate text-[11px] font-semibold uppercase tracking-[0.04em] text-sub">{rank.label}</span>
                       </span>
-                      <span className="display w-14 shrink-0 text-right text-sm font-bold text-orange-bright">{r.value}</span>
+                      <span className="display w-16 shrink-0 text-right text-base font-bold text-ink">{r.value}</span>
                     </button>
                   </BannerSurface>
                 );
@@ -275,15 +284,16 @@ function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLa
           </div>
           <div className="shrink-0 text-right">
             <p className={cx("display text-4xl font-bold leading-none", place === 1 ? "text-amber-300" : place <= 3 ? "text-ink" : "text-sub")}>#{place}</p>
-            <p className="mt-1 max-w-[7rem] text-[10px] font-semibold uppercase leading-tight tracking-[0.12em] text-faint">{boardLabel}</p>
+            <p className="display ml-auto mt-1 max-w-[7rem] text-[11px] font-semibold uppercase leading-tight tracking-[0.05em] text-sub">{boardLabel}</p>
           </div>
         </div>
       </BannerSurface>
 
-      <div className="rounded-xl border border-line bg-white/[0.02] px-2 pb-4 pt-3">
-        <p className="kicker mb-2 text-center !text-[10px]">{L.peekBadges}</p>
+      {/* The badges are the reward on show: no box around them, only their title. */}
+      <div className="px-2 pb-2 pt-1">
+        <h3 className="display mb-2 text-center text-sm uppercase leading-none text-sub">{L.peekBadges}</h3>
         {showcase.length === 0 ? (
-          <p className="py-2 text-center text-xs text-faint">{L.peekNoBadges}</p>
+          <p className="py-2 text-center text-sm text-sub">{L.peekNoBadges}</p>
         ) : (
           <div className="flex items-start justify-center gap-1 sm:gap-3">
             {showcase.map(({ badge, featured }) => (
@@ -292,15 +302,16 @@ function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLa
                 <span className="flex items-end justify-center" style={{ height: PEEK_FEATURED_PX }}>
                   <BadgeEmblem badge={badge} size={featured ? PEEK_FEATURED_PX : PEEK_BADGE_PX} />
                 </span>
-                <span className={cx("line-clamp-2 text-[11px] font-semibold leading-tight", featured ? "text-ink" : "text-sub")}>{copy.name(badge.id)}</span>
+                <span className={cx("line-clamp-2 text-xs font-semibold leading-tight", featured ? "text-ink" : "text-sub")}>{copy.name(badge.id)}</span>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <PeekStat label={L.rating} value={String(row.seasonMmr)} accent />
+      {/* One strip of three figures between hairlines, not three boxes. */}
+      <div className="grid grid-cols-3 divide-x divide-line border-y border-line text-center">
+        <PeekStat label={L.rating} value={String(row.seasonMmr)} />
         <PeekStat label={L.rank} value={rank.label} />
         <PeekStat label={L.titlesShort} value={String(row.championships)} />
       </div>
@@ -308,11 +319,11 @@ function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLa
   );
 }
 
-function PeekStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function PeekStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="panel p-3">
-      <p className="kicker !text-[10px]">{label}</p>
-      <p className={cx("display mt-1 truncate text-lg font-bold", accent ? "text-orange-bright" : "text-ink")}>{value}</p>
+    <div className="min-w-0 px-2 py-3">
+      <p className="display truncate text-xl font-bold leading-none text-ink">{value}</p>
+      <p className="mt-1.5 text-xs text-sub">{label}</p>
     </div>
   );
 }

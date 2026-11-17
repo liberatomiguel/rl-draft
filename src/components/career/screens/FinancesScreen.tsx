@@ -105,13 +105,12 @@ import { otherIncomeRoomOfSave } from "@/engine/career/inserts";
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { Badge } from "@/components/ui/Badge";
 import { AppLink } from "@/components/ui/AppLink";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
-import { CheckIcon } from "@/components/ui/icons";
 import { ladderOf, ladderRungs, type LadderRungId } from "@/engine/career/ladder";
-import { Children, cloneElement, isValidElement, type ReactNode } from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 type LedgerFilter = "all" | "in" | "out";
@@ -139,16 +138,17 @@ function FinanceErrorNotice({ className }: { className?: string }) {
       )}
     >
       <span className="text-sm text-bad">{errorTextFor(C, lastError)}</span>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={clearError}
         aria-label={C.common.close}
-        className="shrink-0 rounded-md p-1.5 text-bad transition-colors hover:bg-white/10"
+        className="shrink-0 !px-2.5 !text-bad"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
         </svg>
-      </button>
+      </Button>
     </div>
   );
 }
@@ -192,34 +192,18 @@ function PayDown({
   const balanceAfter = balance - amount;
 
   return (
-    <div className="mt-3 border-t border-line pt-3">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={C.finances.amountDown}
-          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => setRaw(clamp(amount - step))}
-          disabled={!canPay || amount - step < payMin}
-        >
-          −
-        </button>
-        <div className="min-w-0 flex-1 text-center">
-          <p className="display text-lg font-bold tabular-nums text-ink">{formatMoney(amount)}</p>
-          <p className="text-[10px] text-faint">{C.finances.payDebtAmount}</p>
-        </div>
-        <button
-          type="button"
-          aria-label={C.finances.amountUp}
-          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => setRaw(clamp(amount + step))}
-          disabled={!canPay || amount >= maxPay}
-        >
-          +
-        </button>
-      </div>
+    <div className="mt-4 border-t border-line pt-4">
+      <AmountStepper
+        amount={amount}
+        label={C.finances.payDebtAmount}
+        onDown={() => setRaw(clamp(amount - step))}
+        onUp={() => setRaw(clamp(amount + step))}
+        downDisabled={!canPay || amount - step < payMin}
+        upDisabled={!canPay || amount >= maxPay}
+      />
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="primary" size="sm" disabled={!canPay} onClick={() => onPay(amount)}>
+        <Button variant="secondary" size="sm" disabled={!canPay} onClick={() => onPay(amount)}>
           {cta}
         </Button>
         <Button variant="ghost" size="sm" disabled={!canPayAll} onClick={() => onPay(remaining)}>
@@ -228,18 +212,66 @@ function PayDown({
       </div>
 
       {canPay ? (
-        <p className={cx("mt-2 text-xs font-semibold", balanceAfter < 0 ? "text-bad" : "text-sub")}>
+        <p className={cx("mt-2 text-xs", balanceAfter < 0 ? "text-bad" : "text-sub")}>
           {C.market.balanceAfter(formatMoney(balanceAfter))}
         </p>
       ) : null}
       {canPay && balanceAfter < 0 ? (
-        <p className="mt-1 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
+        <p className="mt-1 text-xs leading-relaxed text-bad">
           {next.next === "rescue" && !Number(next.owing)
             ? C.finances.payRiskBacker(formatMoney(floor, { compact: true }))
             : C.finances.payRiskNext(formatMoney(floor, { compact: true }), next)}
         </p>
       ) : null}
-      {hint ? <p className="mt-2 text-[10px] text-faint">{hint}</p> : null}
+      {hint ? <p className="mt-2 text-xs text-faint">{hint}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * The amount control of the pay-downs and the bank request: the figure with
+ * its label under it, a step down and a step up either side (44px targets).
+ */
+function AmountStepper({
+  amount,
+  label,
+  onDown,
+  onUp,
+  downDisabled,
+  upDisabled,
+}: {
+  amount: number;
+  label: string;
+  onDown: () => void;
+  onUp: () => void;
+  downDisabled: boolean;
+  upDisabled: boolean;
+}) {
+  const C = useCareerCopy();
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="secondary"
+        aria-label={C.finances.amountDown}
+        className="h-11 w-11 shrink-0 !px-0 !text-lg"
+        onClick={onDown}
+        disabled={downDisabled}
+      >
+        −
+      </Button>
+      <div className="min-w-0 flex-1 text-center">
+        <p className="display text-2xl font-bold leading-none tabular-nums text-ink">{formatMoney(amount)}</p>
+        <p className="mt-1 text-xs text-sub">{label}</p>
+      </div>
+      <Button
+        variant="secondary"
+        aria-label={C.finances.amountUp}
+        className="h-11 w-11 shrink-0 !px-0 !text-lg"
+        onClick={onUp}
+        disabled={upDisabled}
+      >
+        +
+      </Button>
     </div>
   );
 }
@@ -262,7 +294,7 @@ function BankSchedule({ loan, clock }: { loan: BankLoanState; clock: { seasonInd
   const next = nextPaydayFor(clock);
   const due = Math.min(loan.remaining, loan.weeklyPayment);
   return (
-    <p className="mt-0.5 text-xs text-sub">
+    <p className="mt-1 text-xs text-sub">
       {C.finances.bankNext(
         formatMoney(due),
         formatDateTiny(D, dateOfDay(next.seasonIndex, next.day)),
@@ -315,50 +347,35 @@ function BankLoanRequest({
   }
   if (refusal === "active" || refusal === "backer" || refusal === "negative") {
     return (
-      <p className="mt-2 text-xs font-semibold text-faint">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
+      <p className="mt-2 text-xs text-sub">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
     );
   }
   return (
-    <div className="mt-3 border-t border-line pt-3">
-      <p className="text-[11px] font-semibold text-sub">{C.finances.bankAvailable(formatMoney(limit))}</p>
+    <div className="mt-4 border-t border-line pt-4">
+      {/* The amount first (the control), then what that amount means, then the one button. */}
+      <AmountStepper
+        amount={amount}
+        label={C.finances.bankAmount}
+        onDown={() => setRaw(clamp(amount - step))}
+        onUp={() => setRaw(clamp(amount + step))}
+        downDisabled={amount - step < minAmount}
+        upDisabled={amount >= limit}
+      />
+      <p className="mt-2 text-center text-xs text-sub">{C.finances.bankAvailable(formatMoney(limit))}</p>
       <LoanSummary C={C} received={amount} total={terms.total} weekly={terms.weeklyPayment} weeks={terms.termWeeks} />
-      <div className="mt-2 flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={C.finances.amountDown}
-          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => setRaw(clamp(amount - step))}
-          disabled={amount - step < minAmount}
-        >
-          −
-        </button>
-        <div className="min-w-0 flex-1 text-center">
-          <p className="display text-lg font-bold tabular-nums text-ink">{formatMoney(amount)}</p>
-          <p className="text-[10px] text-faint">{C.finances.bankAmount}</p>
-        </div>
-        <button
-          type="button"
-          aria-label={C.finances.amountUp}
-          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => setRaw(clamp(amount + step))}
-          disabled={amount >= limit}
-        >
-          +
-        </button>
-      </div>
       {refusal ? (
-        <p className="mt-2 text-xs font-semibold text-bad">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
+        <p className="mt-2 text-xs text-bad">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
       ) : null}
       <Button
-        variant="primary"
+        variant="secondary"
         size="sm"
-        className="mt-3"
+        className="mt-1"
         disabled={refusal !== null}
         onClick={() => takeBankLoan(amount)}
       >
         {C.finances.bankRequest} · {formatMoney(amount, { compact: true })}
       </Button>
-      <p className="mt-2 text-[10px] text-faint">
+      <p className="mt-2 text-xs text-faint">
         {C.finances.projected}: {formatMoney(balance + amount, { compact: true })}
       </p>
     </div>
@@ -382,21 +399,21 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
     { key: "sponsorFine", amount: -st.sponsorFine },
   ];
   return (
-    <div className="rounded-lg border border-line bg-white/[0.02]">
+    <dl className="border-t border-line">
       {rows
         .filter((r) => r.amount !== 0)
         .map((r) => (
           <div
             key={r.key}
-            className="flex items-baseline justify-between gap-3 border-b border-line/50 px-2.5 py-1.5 text-xs last:border-0"
+            className="flex items-baseline justify-between gap-3 border-b border-line py-1.5 last:border-b-0"
           >
-            <span className="text-sub">{C.finances.line[r.key]}</span>
-            <span className={cx("font-mono font-semibold", r.amount >= 0 ? "text-good" : "text-bad")}>
+            <dt className="text-sm text-sub">{C.finances.line[r.key]}</dt>
+            <dd className={cx("display shrink-0 text-base font-semibold tabular-nums", r.amount >= 0 ? "text-good" : "text-bad")}>
               {formatMoneyDelta(r.amount)}
-            </span>
+            </dd>
           </div>
         ))}
-    </div>
+    </dl>
   );
 }
 
@@ -427,7 +444,7 @@ function BalanceSparkline({ data }: { data: number[] }) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
-      className="h-24 w-full text-cyan"
+      className="h-20 w-full text-cyan"
       aria-hidden
     >
       {min < 0 && max > 0 ? (
@@ -459,10 +476,11 @@ function BalanceSparkline({ data }: { data: number[] }) {
 // ---------------------------------------------------------------------------
 
 /**
- * One step of the arsenal (rc.34's stacked list). rc.36: its node on the rail
- * shows completion only; the item icon belongs beside its card title.
- * On a phone the price / Buy sits
- * under the text instead of squeezing it.
+ * One step of the arsenal: a row of the purchase list, not a box. The item's
+ * icon, its title (with the one state tag it may carry), what it does and its
+ * notes on the left; on the right the deciding figure (the price) over the
+ * action. Rows are separated by a hairline. A locked row is the same row,
+ * one step quieter. On a phone the price and the action sit under the text.
  */
 function LadderStep({
   status,
@@ -472,7 +490,6 @@ function LadderStep({
   badges,
   aside,
   notes,
-  last,
 }: {
   status: StepStatus;
   rung: LadderRungId;
@@ -481,71 +498,68 @@ function LadderStep({
   badges?: React.ReactNode;
   aside?: React.ReactNode;
   notes?: React.ReactNode;
-  last?: boolean;
 }) {
+  const locked = status === "locked";
   return (
-    <li className={cx("relative pl-11", !last && "pb-3")}>
-      {!last ? (
-        <span
-          aria-hidden
-          className={cx(
-            "absolute left-[15px] top-10 h-[calc(100%-34px)] w-0.5 rounded",
-            status === "owned" ? "bg-orange/50" : "bg-line",
-          )}
-        />
-      ) : null}
-      <span aria-hidden className={cx("absolute left-0 top-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-panel", status === "owned" ? "border-orange/50 text-orange-bright" : status === "next" ? "border-orange/40 text-orange/35" : "border-line text-faint/30")} >
-        <CheckIcon className="h-4 w-4" />
-      </span>
-      <div
-        className={cx(
-          "rounded-lg border p-3 transition-colors",
-          status === "owned" && "border-orange/40 bg-orange/[0.05]",
-          status === "next" &&
-            "border-orange/60 bg-white/[0.03] shadow-[0_0_20px_-8px_rgba(249,115,22,0.55)]",
-          status === "locked" && "border-line bg-white/[0.02] opacity-70",
-        )}
-      >
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-2.5">
-              <RungIcon id={rung} className={cx("mt-0.5 h-5 w-5 shrink-0", status === "locked" ? "text-orange/40" : "text-orange-bright")} />
-              <div className="flex flex-wrap items-center gap-2">
-              <span className="display text-sm font-bold uppercase tracking-wide text-ink">
-                {title}
-              </span>
-              {badges}
-              </div>
-            </div>
-            <p className="mt-1 text-xs leading-relaxed text-sub">{desc}</p>
-            {notes}
-          </div>
-          {aside ? <div className="flex shrink-0 flex-wrap items-center gap-2">{aside}</div> : null}
+    <li className="flex flex-col gap-3 border-b border-line py-4 last:border-b-0 last:pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <RungIcon id={rung} className={cx("h-5 w-5 shrink-0", locked ? "text-faint" : "text-sub")} />
+        <div className="min-w-0 flex-1">
+          <h4 className={cx("display flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold uppercase leading-tight", locked ? "text-sub" : "text-ink")}>
+            {title}
+            {badges}
+          </h4>
+          <p className="mt-1 text-sm leading-snug text-sub">{desc}</p>
+          {notes}
         </div>
       </div>
+      {aside ? (
+        <div className="flex shrink-0 items-center justify-between gap-3 pl-8 sm:min-w-28 sm:flex-col sm:items-end sm:justify-start sm:gap-2 sm:pl-0">
+          {aside}
+        </div>
+      ) : null}
     </li>
   );
 }
 
-/** Keep the purchase rail in the same gate order as HQ, including new staff. */
+/** Keep the purchase list in the same gate order as HQ, including new staff. */
 function OrderedProgression({ children }: { children: ReactNode }) {
   const order = ladderRungs().map(r => r.id);
   const steps = Children.toArray(children)
-    .filter(isValidElement<{ rung: LadderRungId; last?: boolean }>)
+    .filter(isValidElement<{ rung: LadderRungId }>)
     .sort((a, b) => order.indexOf(a.props.rung) - order.indexOf(b.props.rung));
-  return <ol>{steps.map((step, i) => cloneElement(step, { last: i === steps.length - 1 }))}</ol>;
+  return <ol className="border-t border-line">{steps}</ol>;
 }
 
-/** Price tag with the base struck through when a sponsor perk discounts it. */
-function PriceTag({ base, price }: { base: number; price: number }) {
-  if (price >= base) return null;
-  return <s className="text-xs text-faint">{formatMoney(base, { compact: true })}</s>;
+/**
+ * The deciding figure of a purchase row: the price, set as a number. A base
+ * price struck through sits beside it when a sponsor perk discounts it; a
+ * locked row's price is quiet.
+ */
+function Price({ value, base, tone = "ink" }: { value: string; base?: string | null; tone?: "ink" | "good" | "quiet" }) {
+  return (
+    <span className="flex items-baseline gap-2">
+      {base ? <s className="text-xs text-faint">{base}</s> : null}
+      <span
+        className={cx(
+          "display text-xl font-bold leading-none tabular-nums",
+          tone === "good" ? "text-good" : tone === "quiet" ? "text-faint" : "text-ink",
+        )}
+      >
+        {value}
+      </span>
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
+// Job: say whether the club can pay the coming weeks. The one decision: spend
+// (the next upgrade, a retainer) or bring money in (a sponsor, a loan).
+// Hierarchy: the three figures as one strip (balance first and largest), then
+// the purchase list beside the sponsor desk; loans and the ledger are reference.
 export function FinancesScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
@@ -569,17 +583,14 @@ export function FinancesScreen() {
   if (!mounted || !save) {
     return (
       <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4" aria-busy>
-        <div className="h-12 w-64 animate-pulse rounded-xl bg-white/5" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
-          <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
-          <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
-        </div>
+        {/* Loading skeleton: the title, the figure strip, the two columns. */}
+        <div className="h-10 w-56 animate-pulse rounded-md bg-white/5" />
+        <div className="h-56 animate-pulse rounded-xl bg-white/5" />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="h-[32rem] animate-pulse rounded-2xl bg-white/5 lg:col-span-3" />
+          <div className="h-[32rem] animate-pulse rounded-xl bg-white/5 lg:col-span-3" />
           <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
-            <div className="h-56 animate-pulse rounded-2xl bg-white/5" />
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
+            <div className="h-56 animate-pulse rounded-xl bg-white/5" />
+            <div className="h-72 animate-pulse rounded-xl bg-white/5" />
           </div>
         </div>
       </div>
@@ -640,21 +651,29 @@ export function FinancesScreen() {
   const gearStatus = (item: (typeof CAREER_GEAR.items)[number]): StepStatus =>
     gear[item.id] ? "owned" : nextGear?.id === item.id && rep >= item.repGate ? "next" : "locked";
 
+  // One filled button on the screen: the next gear purchase, unless a sponsor
+  // decision is waiting (its Sign buttons are the action then).
+  const sponsorPending = Boolean(save.sponsorOffers && save.sponsorOffers.length > 0);
+
   const gearAside = (item: (typeof CAREER_GEAR.items)[number]): React.ReactNode => {
     const status = gearStatus(item);
     const price = gearPriceFor(item.cost, sponsorTier, seasonIndex);
+    const base = gearPriceFor(item.cost, null, seasonIndex);
     if (status === "owned") return null;
     if (status === "next") {
       return (
         <>
-          <PriceTag base={gearPriceFor(item.cost, null, seasonIndex)} price={price} />
-          <Button variant="primary" size="sm" onClick={() => buyGear(item.id)}>
-            {C.finances.buy} · {formatMoney(price, { compact: true })}
+          <Price
+            value={formatMoney(price, { compact: true })}
+            base={price < base ? formatMoney(base, { compact: true }) : null}
+          />
+          <Button variant={sponsorPending ? "secondary" : "primary"} size="sm" onClick={() => buyGear(item.id)}>
+            {C.finances.buy}
           </Button>
         </>
       );
     }
-    return <span className="text-xs text-faint">{formatMoney(price, { compact: true })}</span>;
+    return <Price value={formatMoney(price, { compact: true })} tone="quiet" />;
   };
 
   const gearNotes = (item: (typeof CAREER_GEAR.items)[number]): React.ReactNode => {
@@ -662,12 +681,12 @@ export function FinancesScreen() {
     return (
       <>
         {item.upkeepPerSplit > 0 ? (
-          <p className="mt-1 text-[10px] text-faint">
+          <p className="mt-1 text-xs text-faint">
             {C.finances.upkeepLabel(formatMoney(weeklyOf(item.upkeepPerSplit * flatIndex), { compact: true }))}
           </p>
         ) : null}
         {status === "locked" ? (
-          <p className="mt-1 text-[10px] font-semibold text-faint">
+          <p className="mt-1 text-xs text-faint">
             {rep < item.repGate ? C.finances.lockedAtRep(item.repGate) : C.common.locked}
           </p>
         ) : null}
@@ -675,7 +694,7 @@ export function FinancesScreen() {
     );
   };
 
-  const bootcampStep = (tier: 1 | 2, last = false): React.ReactNode => {
+  const bootcampStep = (tier: 1 | 2): React.ReactNode => {
     const def = CAREER_GEAR.bootcamp[tier - 1];
     const campCost = bootcampCostFor(tier, seasonIndex);
     const unlocked = rep >= def.repGate;
@@ -687,17 +706,11 @@ export function FinancesScreen() {
       <LadderStep
         status={status}
         rung={tier === 1 ? "bootcamp1" : "bootcamp2"}
-        last={last}
         title={tier === 1 ? C.finances.bootcampT1 : C.finances.bootcampT2}
         desc={`${tier === 1 ? C.finances.bootcampT1Desc : C.finances.bootcampT2Desc} ${C.toolbox.rating(String(CAREER_GEAR.bootcamp[tier - 1].sharpRating * (CAREER_GEAR.bootcampSpan === "split" ? CAREER_GEAR.bootcampSplitEdgeShare : 1)))}`}
         badges={
           superseded ? (
-            <Badge tone="orange">{C.finances.ownedLabel}</Badge>
-          ) : isActiveTier && nextRunFree ? (
-            <>
-              <Badge tone="gold">{C.common.free}</Badge>
-              {newTag(tier === 2 ? "bootcamp2" : "bootcamp1")}
-            </>
+            <Badge tone="neutral">{C.finances.ownedLabel}</Badge>
           ) : isActiveTier ? (
             newTag(tier === 2 ? "bootcamp2" : "bootcamp1")
           ) : null
@@ -705,41 +718,45 @@ export function FinancesScreen() {
         aside={
           isActiveTier ? (
             <>
+              {/* A sponsor-paid run reads "Free" where the price would be, the price struck beside it. */}
               {nextRunFree ? (
-                <s className="text-xs text-faint">{formatMoney(campCost, { compact: true })}</s>
-              ) : null}
+                <Price value={C.common.free} base={formatMoney(campCost, { compact: true })} tone="good" />
+              ) : (
+                <Price value={formatMoney(campCost, { compact: true })} />
+              )}
               <Button
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 disabled={fin.bootcampUsedThisSplit}
                 onClick={runBootcamp}
               >
                 {C.finances.buy}
-                {nextRunFree ? null : <> · {formatMoney(campCost, { compact: true })}</>}
               </Button>
             </>
-          ) : !unlocked ? null : undefined
+          ) : !unlocked ? (
+            <Price value={formatMoney(campCost, { compact: true })} tone="quiet" />
+          ) : undefined
         }
         notes={
           <>
             {isActiveTier && fin.bootcampUsedThisSplit ? (
-              <p className="mt-1 text-[10px] font-semibold text-faint">
+              <p className="mt-1 text-xs text-faint">
                 {C.finances.bootcampUsed}
               </p>
             ) : null}
-            {/* rc.34 (UX-01f, 5-A): the edge lasts the split — its end date. */}
+            {/* rc.34 (UX-01f, 5-A): the edge lasts the split, so its end date is stated. */}
             {isActiveTier && fin.bootcampSharp > 0 && fin.bootcampUntil ? (
-              <p className="mt-1 text-[10px] font-semibold text-orange-bright">
+              <p className="mt-1 text-xs text-good">
                 {C.finances.bootcampUntil(formatDateTiny(D, dateOfDay(fin.bootcampUntil.seasonIndex, fin.bootcampUntil.day)))}
               </p>
             ) : null}
             {isActiveTier && freeLeft > 0 ? (
-              <p className="mt-1 text-[10px] font-semibold text-amber-300">
+              <p className="mt-1 text-xs text-sub">
                 {C.finances.freeBootcampLeft(freeLeft)}
               </p>
             ) : null}
             {!unlocked ? (
-              <p className="mt-1 text-[10px] font-semibold text-faint">
+              <p className="mt-1 text-xs text-faint">
                 {C.finances.lockedAtRep(def.repGate)}
               </p>
             ) : null}
@@ -789,30 +806,32 @@ export function FinancesScreen() {
     if (row.gearDiscountPct > 0) chips.push(C.finances.perkDiscount(row.gearDiscountPct));
     if (row.freeBootcampsPerSeason > 0)
       chips.push(C.finances.perkBootcamps(row.freeBootcampsPerSeason));
-    return (
-      <div className="mt-2">
-        <p className="kicker mb-1 text-[9px]">{C.finances.sponsorPerks}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {chips.length > 0 ? (
-            chips.map((c) => (
-              <Badge key={c} tone="blue">
-                {c}
-              </Badge>
-            ))
-          ) : (
-            <Badge tone="neutral">{C.finances.perkNone}</Badge>
-          )}
-        </div>
-      </div>
+    // The perks are sentences, so they read as a short list, not as tags.
+    return chips.length > 0 ? (
+      <ul className="mt-1 space-y-0.5 text-xs text-sub">
+        {chips.map((c) => (
+          <li key={c}>{c}</li>
+        ))}
+      </ul>
+    ) : (
+      <p className="mt-1 text-xs text-faint">{C.finances.perkNone}</p>
     );
   };
 
+  /** The perks under their own head, where no host titles them. */
+  const perkBlock = (tier: number): React.ReactNode => (
+    <div className="mt-3 border-t border-line pt-3">
+      <p className="kicker text-[11px]">{C.finances.sponsorPerks}</p>
+      {perkChips(tier)}
+    </div>
+  );
+
   const sponsorMoneyLine = (s: SponsorState): React.ReactNode => (
     <>
-      <p className="mt-2 text-sm font-semibold text-good">
+      <p className="display mt-2 text-xl font-bold leading-none tabular-nums text-good">
         {C.finances.perWeekBase(formatMoney(weeklyOf(s.basePerSplit), { compact: true }))}
       </p>
-      <p className="text-xs text-sub">{C.finances.bonusFor(formatMoney(s.bonus, { compact: true }))}</p>
+      <p className="mt-1 text-xs text-sub">{C.finances.bonusFor(formatMoney(s.bonus, { compact: true }))}</p>
     </>
   );
 
@@ -829,61 +848,98 @@ export function FinancesScreen() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
-      <SectionTitle kicker={C.meta.title} title={C.finances.title} className="rise-in" />
+      <SectionTitle title={C.finances.title} kicker={C.finances.statementHint} className="rise-in" />
 
       <FinanceErrorNotice className="rise-in" />
 
       <nav className="flex flex-wrap gap-2 sm:hidden" aria-label={C.finances.title}>
-        <AppLink href="#career-finance-summary" className="inline-flex items-center rounded-lg border border-line px-3 text-xs font-semibold text-sub">{C.finances.weeklyStatement}</AppLink>
-        <AppLink href="#career-sponsors" className="inline-flex items-center rounded-lg border border-blue/40 bg-blue/10 px-3 text-xs font-semibold text-blue-bright">{C.finances.sponsors}</AppLink>
+        <AppLink href="#career-finance-summary" className={buttonClass("secondary", "sm")}>{C.finances.weeklyStatement}</AppLink>
+        <AppLink href="#career-sponsors" className={buttonClass("secondary", "sm")}>{C.finances.sponsors}</AppLink>
       </nav>
 
-      {/* Three complementary views: cash history, weekly detail, then forecast. */}
-      <div id="career-finance-summary" data-tour="finances-overview" className="grid scroll-mt-44 grid-cols-1 items-stretch gap-3 md:grid-cols-3">
-        <Panel strong className="rise-in flex min-w-0 flex-col p-4">
-          <p className="kicker text-[10px]">{C.finances.balance}</p>
-          <p className={cx("display mt-1 text-3xl font-bold leading-none", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
-          <MoneyChange save={save} />
-          <button type="button" onClick={() => setChartOpen(true)} aria-label={C.finances.chartOpen} title={C.finances.chartOpen} className="group my-4 flex min-h-24 w-full items-center gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan/60">
-            <span className="min-w-0 flex-1">{sparkTail.length >= 2 ? <BalanceSparkline data={sparkTail} /> : <span className="flex h-24 items-center justify-center border-b border-dashed border-line text-[11px] text-faint">{C.finances.chartTitle}</span>}</span>
-            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      {/* The books as ONE strip of three figures (the 1px gaps are its
+          dividers): what is in the bank, what a Monday does to it, where that
+          leaves it. Each cell is the figure first and large, its label under
+          it, then the detail that explains it. */}
+      <div
+        id="career-finance-summary"
+        data-tour="finances-overview"
+        className="rise-in grid scroll-mt-44 grid-cols-1 gap-px overflow-hidden rounded-xl border border-line-strong bg-line md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]"
+      >
+        {/* Balance: the figure of the screen, its history and how long it lasts. */}
+        <div className="flex min-w-0 flex-col bg-surface-strong p-4 sm:p-5">
+          <p className={cx("display text-4xl font-extrabold leading-none tabular-nums sm:text-5xl md:text-4xl lg:text-5xl", fin.balance < 0 ? "text-bad" : "text-ink")}>{formatMoney(fin.balance)}</p>
+          <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-xs text-sub">
+            {C.finances.balance}
+            <MoneyChange save={save} />
+          </p>
+          <button
+            type="button"
+            onClick={() => setChartOpen(true)}
+            aria-label={C.finances.chartOpen}
+            title={C.finances.chartOpen}
+            className="group my-4 flex min-h-20 w-full items-center gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-bright"
+          >
+            <span className="min-w-0 flex-1">
+              {sparkTail.length >= 2 ? (
+                <BalanceSparkline data={sparkTail} />
+              ) : (
+                <span className="flex h-20 items-center border-b border-dashed border-line text-xs leading-snug text-faint">{C.finances.chartEmpty}</span>
+              )}
+            </span>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint transition-colors group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <div className="mt-auto border-t border-line pt-3">
-            <p className={cx("text-xs font-semibold", runway === null ? "text-good" : runway <= CAREER_PAYROLL.runwayWarnWeeks ? "text-bad" : "text-orange-bright")}>{runway === null ? C.finances.runwayOk : C.finances.runway(runway)}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">{fin.loan ? <Badge tone="bad">{C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}</Badge> : null}{fin.bankLoan ? <Badge tone="orange">{C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining, { compact: true }))}</Badge> : null}</div>
+          <div className="mt-auto space-y-1 border-t border-line pt-3">
+            <p className={cx("text-sm", runway === null ? "text-good" : runway <= CAREER_PAYROLL.runwayWarnWeeks ? "text-bad" : "text-ink")}>{runway === null ? C.finances.runwayOk : C.finances.runway(runway)}</p>
+            {fin.loan ? <p className="text-xs text-bad">{C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}</p> : null}
+            {fin.bankLoan ? <p className="text-xs text-sub">{C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining, { compact: true }))}</p> : null}
           </div>
-        </Panel>
-        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "40ms" }}>
-          <p className="kicker text-[10px]">{C.finances.weeklyStatement}</p>
-          <div className="mb-4 mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1"><p className={cx("display text-3xl font-bold leading-none", net >= 0 ? "text-good" : "text-bad")}>{formatMoneyDelta(net, { compact: true })}</p><span className="text-[10px] text-faint">{C.finances.net}</span></div>
-          <div className="max-h-44 overflow-y-auto"><StatementLines st={statement} /></div>
-          <p className="mt-auto pt-3 text-[11px] text-faint">{C.finances.payday} · {formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day))}</p>
-        </Panel>
-        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "80ms" }}>
-          <p className="kicker text-[10px]">{C.finances.projected}</p>
-          <p className={cx("display mt-1 text-3xl font-bold leading-none", projected < 0 ? "text-bad" : "text-ink")}>{formatMoney(projected, { compact: true })}</p>
-          <div className="my-4 grid grid-cols-2 gap-3 border-y border-line py-3 text-xs">
-            <div><p className="kicker mb-1 text-[9px]">{C.finances.income}</p><p className="font-mono font-semibold text-good">{formatMoney(income, { compact: true })}</p></div>
-            <div><p className="kicker mb-1 text-[9px]">{C.finances.expenses}</p><p className="font-mono font-semibold text-bad">{formatMoney(expenses, { compact: true })}</p></div>
-          </div>
-          {save.phase !== "ended" ? <p className={cx("mt-auto text-xs leading-relaxed", projection.balance < 0 ? "text-bad" : "text-sub")}>{C.finances.projectionSplit(formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)), formatMoney(projection.balance, { compact: true }))}</p> : null}
-        </Panel>
+        </div>
+
+        {/* A Monday: the net, then the lines that make it. */}
+        <div className="flex min-w-0 flex-col bg-surface p-4 sm:p-5">
+          <p className={cx("display text-4xl font-extrabold leading-none tabular-nums", net >= 0 ? "text-good" : "text-bad")}>{formatMoneyDelta(net, { compact: true })}</p>
+          <p className="mt-2 text-xs text-sub">
+            {C.finances.net} · {C.finances.payday} {formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day))}
+          </p>
+          <h3 className="kicker mb-1.5 mt-4 text-[11px]">{C.finances.weeklyStatement}</h3>
+          <StatementLines st={statement} />
+        </div>
+
+        {/* After Monday, and at the end of the split. */}
+        <div className="flex min-w-0 flex-col bg-surface p-4 sm:p-5">
+          <p className={cx("display text-4xl font-extrabold leading-none tabular-nums", projected < 0 ? "text-bad" : "text-ink")}>{formatMoney(projected, { compact: true })}</p>
+          <p className="mt-2 text-xs text-sub">{C.finances.projected}</p>
+          <dl className="mb-3 mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3">
+            <div className="flex flex-col-reverse justify-end gap-1">
+              <dt className="text-xs text-sub">{C.finances.income}</dt>
+              <dd className="display text-2xl font-bold leading-none tabular-nums text-good">{formatMoney(income, { compact: true })}</dd>
+            </div>
+            <div className="flex flex-col-reverse justify-end gap-1">
+              <dt className="text-xs text-sub">{C.finances.expenses}</dt>
+              <dd className="display text-2xl font-bold leading-none tabular-nums text-bad">{formatMoney(expenses, { compact: true })}</dd>
+            </div>
+          </dl>
+          {save.phase !== "ended" ? <p className={cx("mt-auto border-t border-line pt-3 text-xs leading-relaxed", projection.balance < 0 ? "text-bad" : "text-sub")}>{C.finances.projectionSplit(formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)), formatMoney(projection.balance, { compact: true }))}</p> : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-3">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
-        <Panel data-tour="finances-progress" className="rise-in p-4 sm:p-5" style={{ animationDelay: "120ms" }}>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="kicker text-[11px]">{C.ladder.title}</h2>
-            <span className="shrink-0 text-[10px] font-semibold text-faint">
-              {C.common.reputation} {Math.round(rep)}
-            </span>
+        <Panel data-tour="finances-progress" className="rise-in p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
+          {/* The board's title, and the one number that opens its rows: reputation. */}
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <h3 className="display text-lg uppercase leading-none text-ink">{C.ladder.title}</h3>
+            <p className="shrink-0 text-right">
+              <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(rep)}</span>
+              <span className="mt-1 block text-xs text-sub">{C.common.reputation}</span>
+            </p>
           </div>
 
-          {/* rc.36: every step stacked again (rc.34's list), each with its icon. */}
+          {/* Every step, in gate order, as one list: a row each, the price on the right. */}
           <OrderedProgression>
-            {/* 1-3 · peripherals → monitors → PCs */}
+            {/* 1-3 · peripherals, monitors, PCs */}
             {gearFront.map((item) => (
               <LadderStep
                 key={item.id}
@@ -892,7 +948,7 @@ export function FinancesScreen() {
                 title={C.finances.gear[item.id as keyof typeof C.finances.gear]}
                 desc={C.finances.gearDesc[item.id as keyof typeof C.finances.gearDesc]}
                 badges={
-                  gear[item.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : newTag(item.id)
+                  gear[item.id] ? <Badge tone="neutral">{C.finances.ownedLabel}</Badge> : newTag(item.id)
                 }
                 aside={gearAside(item)}
                 notes={gearNotes(item)}
@@ -903,7 +959,7 @@ export function FinancesScreen() {
             {bootcampStep(1)}
             {bootcampStep(2)}
 
-            {/* 6 · sports psychologist (rolling retainer) */}
+            {/* 6 · sports psychologist (rolling retainer): the weekly cost is its price. */}
             <LadderStep
               status={psychStatus}
               rung="psychologist"
@@ -913,30 +969,28 @@ export function FinancesScreen() {
                 gear.psychologist ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : newTag("psych")
               }
               aside={
-                gear.psychologist ? (
-                  <Button variant="danger" size="sm" onClick={() => setPsychologist(false)}>
-                    {C.finances.dropLabel}
-                  </Button>
-                ) : psychUnlocked ? (
-                  <Button variant="primary" size="sm" onClick={() => setPsychologist(true)}>
-                    {C.finances.hireLabel} ·{" "}
-                    {C.squad.perWeek(formatMoney(weeklyOf(psychologistPerSplitFor(seasonIndex)), { compact: true }))}
-                  </Button>
-                ) : null
-              }
-              notes={
                 <>
-                  <p className="mt-1 text-[10px] text-faint">
-                    {C.finances.upkeepLabel(
-                      formatMoney(weeklyOf(psychologistPerSplitFor(seasonIndex)), { compact: true }),
-                    )}
-                  </p>
-                  {!psychUnlocked ? (
-                    <p className="mt-1 text-[10px] font-semibold text-faint">
-                      {C.finances.lockedAtRep(CAREER_GEAR.psychologistRep)}
-                    </p>
+                  <Price
+                    value={C.squad.perWeek(formatMoney(weeklyOf(psychologistPerSplitFor(seasonIndex)), { compact: true }))}
+                    tone={gear.psychologist || psychUnlocked ? "ink" : "quiet"}
+                  />
+                  {gear.psychologist ? (
+                    <Button variant="ghost" size="sm" onClick={() => setPsychologist(false)}>
+                      {C.finances.dropLabel}
+                    </Button>
+                  ) : psychUnlocked ? (
+                    <Button variant="secondary" size="sm" onClick={() => setPsychologist(true)}>
+                      {C.finances.hireLabel}
+                    </Button>
                   ) : null}
                 </>
+              }
+              notes={
+                !psychUnlocked ? (
+                  <p className="mt-1 text-xs text-faint">
+                    {C.finances.lockedAtRep(CAREER_GEAR.psychologistRep)}
+                  </p>
+                ) : null
               }
             />
 
@@ -955,22 +1009,20 @@ export function FinancesScreen() {
                   desc={C.finances.staff[id].desc}
                   badges={on ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : null}
                   aside={
-                    on ? (
-                      <Button variant="danger" size="sm" onClick={() => setStaff(id, false)}>
-                        {C.finances.dropLabel}
-                      </Button>
-                    ) : open ? (
-                      <Button variant="primary" size="sm" onClick={() => setStaff(id, true)}>
-                        {C.finances.hireLabel} · {C.squad.perWeek(weekly)}
-                      </Button>
-                    ) : null
-                  }
-                  notes={
                     <>
-                      <p className="mt-1 text-[10px] text-faint">{C.finances.upkeepLabel(weekly)}</p>
-                      {!open ? <p className="mt-1 text-[10px] font-semibold text-faint">{C.finances.lockedAtRep(role.repGate)}</p> : null}
+                      <Price value={C.squad.perWeek(weekly)} tone={on || open ? "ink" : "quiet"} />
+                      {on ? (
+                        <Button variant="ghost" size="sm" onClick={() => setStaff(id, false)}>
+                          {C.finances.dropLabel}
+                        </Button>
+                      ) : open ? (
+                        <Button variant="secondary" size="sm" onClick={() => setStaff(id, true)}>
+                          {C.finances.hireLabel}
+                        </Button>
+                      ) : null}
                     </>
                   }
+                  notes={!open ? <p className="mt-1 text-xs text-faint">{C.finances.lockedAtRep(role.repGate)}</p> : null}
                 />
               );
             })}
@@ -979,17 +1031,16 @@ export function FinancesScreen() {
             <LadderStep
               status={gearStatus(perfCenter)}
               rung={perfCenter.id}
-              last
               title={C.finances.gear[perfCenter.id as keyof typeof C.finances.gear]}
               desc={`${C.finances.gearDesc[perfCenter.id as keyof typeof C.finances.gearDesc]} ${C.toolbox.rating(String(perfCenter.ratingBonus))}`}
               badges={
-                gear[perfCenter.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : newTag(perfCenter.id)
+                gear[perfCenter.id] ? <Badge tone="neutral">{C.finances.ownedLabel}</Badge> : newTag(perfCenter.id)
               }
               aside={gearAside(perfCenter)}
               notes={gearNotes(perfCenter)}
             />
           </OrderedProgression>
-          <Button variant="ghost" size="sm" onClick={() => setLadderOpen(true)}>{C.ladder.seeMore}</Button>
+          <Button variant="ghost" size="sm" className="-ml-3.5 mt-2" onClick={() => setLadderOpen(true)}>{C.ladder.seeMore}</Button>
           <Modal open={ladderOpen} title={C.ladder.title} onClose={() => setLadderOpen(false)}><LadderGrid rungs={ladderOf(save)} C={C} /></Modal>
         </Panel>
 

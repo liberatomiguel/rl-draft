@@ -11,8 +11,8 @@
  *  · Season — the interactive rank-reward track (rc.20: paid on rank-up),
  *    the season numbers + rating sparkline under it, and the BADGE
  *    SHOWCASE beside it: owned badges, best first, with the rest in the locker.
- *  · Lifetime — three headline numbers, a secondary grid, then the rest as
- *    quiet chips.
+ *  · Lifetime — three headline figures between hairlines, then every other
+ *    number as a row of a plain list (no boxes).
  *  · Achievements + run history (as before), the pre-season recap replay,
  *    the dev/staging preview tools, and the danger zone.
  */
@@ -52,6 +52,9 @@ import { SeasonRankTrack } from "@/components/cosmetics/SeasonRankTrack";
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
 const HERO_FEATURED_PX = 56;
 const HERO_BADGE_PX = 44;
+
+/** The quiet text actions under the rank bar (sign out, connect, change banner). */
+const HERO_LINK = "text-xs text-sub underline-offset-2 transition-colors hover:text-ink hover:underline focus-visible:text-ink focus-visible:underline";
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS, LEADERBOARDS_UI: L, SEASON_RECAP: R, COSMETICS: CC } = useCopy();
@@ -101,29 +104,28 @@ export default function ProfilePage() {
 
   const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : P.none);
 
+  // Job: the player's season at a glance. The one decision: which rank reward
+  // to chase next (and what to wear from the locker). So the banner with the
+  // rating leads, the season track is the strong board, and the lifetime
+  // numbers, feats and run history read below it as plain strips and lists.
   return (
     <div className="rise-in">
       <BackToMenu />
       <SectionTitle
-        kicker={P.career}
         title={P.title}
         right={
           extras ? (
-          <button
-            type="button"
-            onClick={() => openLocker("title")}
-            className="display relative inline-flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-white/5 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-ink transition-colors hover:border-orange/50"
-          >
+          <Button variant="secondary" size="sm" onClick={() => openLocker("title")} className="relative">
             <LockerGlyph /> {P.openLocker}
             {unseen > 0 ? <NewDot className="absolute -right-1 -top-1 !h-2.5 !w-2.5" label={CC.newItems} /> : null}
-          </button>
+          </Button>
           ) : undefined
         }
         className="mb-5"
       />
 
       {/* ---- HERO (the v2 banner, with every cosmetic slot tappable) --------- */}
-      <BannerSurface banner={extras ? shown.banner : null} glow className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
+      <BannerSurface banner={extras ? shown.banner : null} glow className="mb-6 rounded-xl border border-line-strong" plainClassName="panel-strong">
         <div className="flex flex-col items-center gap-5 p-5 sm:flex-row sm:gap-6">
           <RankBadge rank={rank} variant="menu" size="lg" />
 
@@ -177,7 +179,7 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => openLocker("title")}
-                        className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                        className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
                       >
                         + {P.editTitle}
                       </button>
@@ -189,43 +191,44 @@ export default function ProfilePage() {
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
               </div>
-              <div className="flex shrink-0 items-center justify-center gap-4 sm:gap-5">
-                <div className="text-center sm:text-right">
-                  <p className="kicker mb-0.5">{P.seasonRating}</p>
-                  <p className="display whitespace-nowrap text-[1.9rem] font-bold leading-none text-orange-bright">
+              {/* The figure that matters here, on paper as on the Home: the
+                  number first, its label under it. */}
+              <div className="flex shrink-0 justify-center">
+                <div className="rounded-lg bg-paper px-4 py-2.5 text-center text-paper-ink sm:text-right">
+                  <p className="display whitespace-nowrap text-4xl font-extrabold leading-[0.9]">
                     {profile.mmr}
                     {lastDelta !== null && lastDelta !== 0 ? (
-                      <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
+                      <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-emerald-700" : "text-red-700")}>
                         {lastDelta > 0 ? "+" : ""}
                         {lastDelta}
                       </span>
                     ) : null}
                   </p>
-                  <p className="display mt-1 whitespace-nowrap text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+                  <p className="display mt-1.5 whitespace-nowrap text-xs font-bold uppercase leading-none tracking-[0.04em]">{P.seasonRating}</p>
                 </div>
               </div>
             </div>
 
             <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
-            <div className="mt-2.5 flex items-center justify-between gap-3">
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
               <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 {signedIn ? (
                   <button
                     type="button"
                     onClick={accountSignOut}
-                    className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+                    className={HERO_LINK}
                   >
                     {L.signOut}
                   </button>
                 ) : null}
                 {signedIn ? (
-                  <ConnectProviders className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline" />
+                  <ConnectProviders className={HERO_LINK} />
                 ) : null}
                 {extras ? (
                 <button
                   type="button"
                   onClick={() => openLocker("banner")}
-                  className="relative text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+                  className={cx("relative", HERO_LINK)}
                 >
                   {P.editBanner}
                   {fresh.banner ? <NewDot className="absolute -right-2.5 -top-1" label={CC.newItems} /> : null}
@@ -233,6 +236,7 @@ export default function ProfilePage() {
                 ) : null}
               </span>
               <p className="text-xs text-sub">
+                <span className="display mr-2 text-sm font-bold uppercase text-ink">{rank.label}</span>
                 {profile.xp} {P.xp}
                 {rank.next ? <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span> : <span className="text-faint"> · {P.maxRank}</span>}
               </p>
@@ -246,30 +250,33 @@ export default function ProfilePage() {
       {/* ---- Season ------------------------------------------------------------ */}
       {extras ? (
       <>
+      {/* The track is the strong board (the thing to chase). The season's four
+          numbers and the rating line are ONE board under it: a strip of
+          figures, then the sparkline below a hairline. */}
       <SectionTitle title={SEASON.name} className="mb-4" />
-      <div className="mb-8 grid grid-cols-1 gap-3 lg:grid-cols-5">
-        <div className="space-y-3 lg:col-span-3">
-          <Panel className="p-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="kicker !text-[10px]">{P.seasonTrack}</p>
-              <p className="text-[11px] text-faint">{P.seasonTrackHint}</p>
-            </div>
+      <div className="mb-12 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
+          <Panel strong className="p-4 sm:p-5">
+            <h3 className="display text-lg uppercase leading-none text-ink">{P.seasonTrack}</h3>
+            <p className="mb-4 mt-1.5 text-sm leading-snug text-sub">{P.seasonTrackHint}</p>
             <SeasonRankTrack xp={profile.xp} peakRankId={profile.season.peakRankId} />
           </Panel>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label={P.seasonRating} value={String(profile.mmr)} accent />
-            <StatTile label={P.peakRating} value={String(Math.max(profile.season.peakMmr, profile.mmr))} />
-            <StatTile label={P.seasonRuns} value={String(profile.season.runs)} />
-            <StatTile label={P.seasonTitles} value={String(profile.season.titles)} />
+          <div className="overflow-hidden rounded-xl border border-line">
+            <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+              <Figure label={P.seasonRating} value={String(profile.mmr)} />
+              <Figure label={P.peakRating} value={String(Math.max(profile.season.peakMmr, profile.mmr))} />
+              <Figure label={P.seasonRuns} value={String(profile.season.runs)} />
+              <Figure label={P.seasonTitles} value={String(profile.season.titles)} tone="gold" />
+            </div>
+            <div className="border-t border-line bg-surface p-4">
+              <h3 className="display mb-2 text-sm uppercase leading-none text-sub">{P.ratingHistory}</h3>
+              {profile.season.ratingHistory.length < 2 ? (
+                <p className="text-sm text-sub">{P.ratingHistoryEmpty}</p>
+              ) : (
+                <RatingSparkline history={profile.season.ratingHistory} />
+              )}
+            </div>
           </div>
-          <Panel className="p-3">
-            <p className="kicker mb-1 !text-[10px]">{P.ratingHistory}</p>
-            {profile.season.ratingHistory.length < 2 ? (
-              <p className="text-xs text-faint">{P.ratingHistoryEmpty}</p>
-            ) : (
-              <RatingSparkline history={profile.season.ratingHistory} />
-            )}
-          </Panel>
         </div>
         <div className="relative lg:col-span-2">
           <BadgeShowcase owned={profile.cosmetics.owned} onOpen={() => openLocker("badge")} className="h-80 lg:absolute lg:inset-0 lg:h-auto" />
@@ -279,106 +286,109 @@ export default function ProfilePage() {
       ) : null}
 
       {/* ---- Lifetime ---------------------------------------------------------- */}
+      {/* No boxes here: three headline figures between two hairlines, then
+          every other number as a row of a plain list. */}
       <SectionTitle title={P.lifetime} className="mb-4" />
-      <div className="mb-3 grid grid-cols-3 gap-3">
-        <HeroStat label={P.runs} value={String(profile.runsCompleted)} />
-        <HeroStat label={P.titles} value={String(titles)} tone="gold" />
-        <HeroStat label={P.titleRate} value={pct(titles, profile.runsCompleted)} tone="blue" />
+      <div className="grid grid-cols-3 divide-x divide-line border-y border-line">
+        <Headline label={P.runs} value={String(profile.runsCompleted)} />
+        <Headline label={P.titles} value={String(titles)} tone="gold" />
+        <Headline label={P.titleRate} value={pct(titles, profile.runsCompleted)} />
       </div>
-      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY_LABELS[bestClear].label : P.none} />
-        <StatTile label={P.specials} value={`${unlockedCount}/${COUNTS.specialCards}`} />
-        <StatTile label={P.playoffRate} value={pct(profile.playoffAppearances, profile.runsCompleted)} />
-        <StatTile label={P.achievements} value={`${achTotals.earned}/${achTotals.total}`} />
-      </div>
-      <Panel className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
-        <MiniStat label={P.podiums} value={String(profile.podiums)} />
-        <MiniStat label={P.swissWins} value={String(profile.swissWinsTotal)} />
-        <MiniStat label={P.gamesWon} value={String(profile.gamesWon)} />
-        <MiniStat label={P.goals} value={String(profile.goalsScored)} />
-        <MiniStat label={P.lifetimeXp} value={String(profile.lifetime.xp)} />
+      <dl className="grid grid-cols-1 gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
+        <StatRow label={P.bestClear} value={bestClear ? DIFFICULTY_LABELS[bestClear].label : P.none} />
+        <StatRow label={P.specials} value={`${unlockedCount}/${COUNTS.specialCards}`} />
+        <StatRow label={P.playoffRate} value={pct(profile.playoffAppearances, profile.runsCompleted)} />
+        <StatRow label={P.achievements} value={`${achTotals.earned}/${achTotals.total}`} />
+        <StatRow label={P.podiums} value={String(profile.podiums)} />
+        <StatRow label={P.swissWins} value={String(profile.swissWinsTotal)} />
+        <StatRow label={P.gamesWon} value={String(profile.gamesWon)} />
+        <StatRow label={P.goals} value={String(profile.goalsScored)} />
+        <StatRow label={P.lifetimeXp} value={String(profile.lifetime.xp)} />
         {extras ? (
           <>
-            <MiniStat label={P.quizSolved} value={String(profile.quiz.solved)} />
-            <MiniStat label={P.missionsDone} value={String(profile.missions.completedTotal)} />
-            <MiniStat label={P.loginBest} value={String(profile.login.best)} />
+            <StatRow label={P.quizSolved} value={String(profile.quiz.solved)} />
+            <StatRow label={P.missionsDone} value={String(profile.missions.completedTotal)} />
+            <StatRow label={P.loginBest} value={String(profile.login.best)} />
           </>
         ) : null}
-        <MiniStat
+        <StatRow
           label={P.winsBy}
           value={(["easy", "normal", "hard", "legacy"] as const).map((d) => `${DIFFICULTY_LABELS[d].label.slice(0, 1)} ${profile.wins[d]}`).join(" · ")}
         />
-      </Panel>
+      </dl>
       {extras && profile.legacy.preseason ? (
-        <div className="mb-8 flex justify-center">
-          <Button variant="ghost" size="sm" onClick={() => setReplayRecap(true)}>
+        <div className="mb-12 mt-3 flex">
+          <Button variant="ghost" size="sm" onClick={() => setReplayRecap(true)} className="-ml-3.5">
             {R.replay}
           </Button>
         </div>
       ) : (
-        <div className="mb-8" />
+        <div className="mb-12" />
       )}
 
       {/* ---- Achievements ------------------------------------------------------ */}
       <SectionTitle
         title={P.achievements}
         right={
-          <AppLink href="/achievements">
-            <Badge tone="blue" className="cursor-pointer hover:bg-blue/20">
-              {P.viewAll(achTotals.earned, achTotals.total)}
-            </Badge>
+          <AppLink href="/achievements" className="text-sm text-blue-bright underline-offset-2 hover:underline">
+            {P.viewAll(achTotals.earned, achTotals.total)}
           </AppLink>
         }
         className="mb-4"
       />
-      <div className="mb-8">
+      <div className="mb-12">
         {gridReady ? (
           <AchievementsGrid earned={earned} careerMarks={profile.careerMarks} />
         ) : (
-          <div className="h-96 animate-pulse rounded-2xl bg-white/5" aria-busy />
+          <div className="h-96 animate-pulse rounded-xl bg-white/5" aria-busy />
         )}
       </div>
 
       {/* ---- Run history ------------------------------------------------------ */}
+      {/* A list, one hairline per run: result, record, roster, then the quiet
+          facts (difficulty, hidden overall, XP, date) as text. */}
       <SectionTitle title={P.history} className="mb-4" />
       {profile.runHistory.length === 0 ? (
-        <Panel className="p-8 text-center text-sm text-sub">{P.emptyHistory}</Panel>
+        <p className="border-y border-line py-8 text-center text-sm text-sub">{P.emptyHistory}</p>
       ) : (
-        <div className="space-y-2">
+        <ul className="border-t border-line">
           {profile.runHistory.slice(0, 10).map((run) => (
-            <button
-              key={run.runId}
-              type="button"
-              onClick={() => setRecapRun(run)}
-              aria-label={P.viewRun}
-              className="panel flex w-full flex-wrap items-center gap-x-4 gap-y-2 p-3.5 text-left text-sm transition-colors hover:!border-line-strong"
-            >
-              <Badge tone={run.placement === "champion" ? "gold" : "neutral"} className="w-20 justify-center">
-                {P.placement[run.placement as Placement] ?? run.placement}
-              </Badge>
-              <span className="display font-bold text-ink">
-                {run.swissRecord.wins}–{run.swissRecord.losses}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-xs text-sub">{run.rosterNames.join(" · ")}</span>
-              <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
-              {run.hiddenOverall ? <Badge tone="neutral">{P.hidden}</Badge> : null}
-              <span className="display text-xs font-bold text-orange-bright">+{run.xpGained} XP</span>
-              <span className="text-[11px] text-faint">{formatDate(run.date)}</span>
-            </button>
+            <li key={run.runId}>
+              <button
+                type="button"
+                onClick={() => setRecapRun(run)}
+                aria-label={P.viewRun}
+                className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-1 py-3 text-left text-sm transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] sm:px-2"
+              >
+                <Badge tone={run.placement === "champion" ? "gold" : "neutral"} className="w-20 justify-center">
+                  {P.placement[run.placement as Placement] ?? run.placement}
+                </Badge>
+                <span className="display text-base font-bold text-ink">
+                  {run.swissRecord.wins}–{run.swissRecord.losses}
+                </span>
+                <span className="min-w-0 flex-1 basis-40 truncate text-sm text-sub">{run.rosterNames.join(" · ")}</span>
+                <span className="text-xs text-sub">
+                  {DIFFICULTY_LABELS[run.difficulty].label}
+                  {run.hiddenOverall ? ` · ${P.hidden}` : ""}
+                </span>
+                <span className="display text-sm font-bold text-ink">+{run.xpGained} XP</span>
+                <span className="text-xs text-faint">{formatDate(run.date)}</span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {/* ---- Preview tools (dev / staging only) ---------------------------------- */}
       {FEATURES.previewTools ? (
         <Panel className="mt-10 border-dashed p-4">
-          <p className="kicker mb-2 !text-[10px]">{CC.previewTitle}</p>
+          <h3 className="display mb-2 text-sm uppercase leading-none text-sub">{CC.previewTitle}</h3>
           <Toggle checked={profile.previewUnlockAll} onChange={(on) => profile.setPreviewUnlockAll(on)} label={CC.previewUnlockAll} hint={CC.previewHint} />
         </Panel>
       ) : null}
 
       {/* ---- Danger zone --------------------------------------------------------- */}
-      <div className="mt-10 flex flex-wrap justify-center gap-3">
+      <div className="mt-12 flex flex-wrap justify-center gap-3 border-t border-line pt-6">
         <Button variant="danger" size="sm" onClick={() => setConfirmReset(true)}>
           {P.reset}
         </Button>
@@ -442,27 +452,28 @@ export default function ProfilePage() {
       <Modal open={!!recapRun} title={P.runDetailTitle} onClose={() => setRecapRun(null)}>
         {recapRun ? (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
+            {/* The result is the one tag; the run's settings read as a line. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <Badge tone={recapRun.placement === "champion" ? "gold" : "neutral"}>
                 {P.placement[recapRun.placement as Placement] ?? recapRun.placement}
               </Badge>
-              <Badge tone="blue">{DIFFICULTY_LABELS[recapRun.difficulty].label}</Badge>
-              {recapRun.region ? <Badge tone="neutral">{recapRun.region}</Badge> : null}
-              {recapRun.hiddenOverall ? <Badge tone="neutral">{P.hidden}</Badge> : null}
-              <span className="ml-auto text-[11px] text-faint">{formatDate(recapRun.date)}</span>
+              <span className="text-sm text-sub">
+                {[DIFFICULTY_LABELS[recapRun.difficulty].label, recapRun.region, recapRun.hiddenOverall ? P.hidden : null].filter(Boolean).join(" · ")}
+              </span>
+              <span className="ml-auto text-xs text-faint">{formatDate(recapRun.date)}</span>
             </div>
             {recapRun.recap?.championName && recapRun.placement !== "champion" ? (
-              <p className="text-xs text-sub">{P.wonBy(recapRun.recap.championName)}</p>
+              <p className="text-sm text-sub">{P.wonBy(recapRun.recap.championName)}</p>
             ) : null}
-            {recapRun.recap ? <FieldView roster={recapRun.recap.roster} showOverall showBench /> : <p className="text-xs text-faint">{P.olderRun}</p>}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <StatTile label={P.teamOverallLabel} value={String(recapRun.teamOverall)} />
-              <StatTile label={P.swissWins} value={`${recapRun.swissRecord.wins}–${recapRun.swissRecord.losses}`} />
-              {recapRun.recap ? <StatTile label={P.chemistry} value={recapRun.recap.chemistryTier} /> : null}
-              {recapRun.recap ? <StatTile label={P.conceded} value={String(recapRun.recap.goalsConceded)} /> : null}
-              <StatTile label={P.xp} value={`+${recapRun.xpGained}`} />
-            </div>
-            {!recapRun.recap ? <p className="text-xs text-sub">{recapRun.rosterNames.join(" · ")}</p> : null}
+            {recapRun.recap ? <FieldView roster={recapRun.recap.roster} showOverall showBench /> : <p className="text-sm text-sub">{P.olderRun}</p>}
+            <dl className="grid grid-cols-1 gap-x-10 border-t border-line sm:grid-cols-2">
+              <StatRow label={P.teamOverallLabel} value={String(recapRun.teamOverall)} />
+              <StatRow label={P.swissWins} value={`${recapRun.swissRecord.wins}–${recapRun.swissRecord.losses}`} />
+              {recapRun.recap ? <StatRow label={P.chemistry} value={recapRun.recap.chemistryTier} /> : null}
+              {recapRun.recap ? <StatRow label={P.conceded} value={String(recapRun.recap.goalsConceded)} /> : null}
+              <StatRow label={P.xp} value={`+${recapRun.xpGained}`} />
+            </dl>
+            {!recapRun.recap ? <p className="text-sm text-sub">{recapRun.rosterNames.join(" · ")}</p> : null}
           </div>
         ) : null}
       </Modal>
@@ -472,46 +483,35 @@ export default function ProfilePage() {
   );
 }
 
-function StatTile({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+/** A cell of a stat strip: the figure first, its quiet label under it. The
+ *  strip's 1px gaps are the dividers (the Home's YOUR PROGRESS). Gold is kept
+ *  for titles, the one reward among the numbers. */
+function Figure({ label, value, tone }: { label: string; value: string; tone?: "gold" }) {
   return (
-    <Panel className="p-3.5 text-center">
-      <p className="kicker !text-[10px]">{label}</p>
-      <p className={cx("display mt-1 truncate text-2xl font-bold", accent ? "text-orange-bright" : "text-ink")}>{value}</p>
-    </Panel>
+    <div className="min-w-0 bg-surface p-4">
+      <p className={cx("display truncate text-3xl font-bold leading-none", tone === "gold" ? "text-amber-300" : "text-ink")}>{value}</p>
+      <p className="mt-1.5 text-xs text-sub">{label}</p>
+    </div>
   );
 }
 
-function HeroStat({ label, value, tone }: { label: string; value: string; tone?: "gold" | "blue" }) {
+/** A lifetime headline: a large figure on the floor, no box. */
+function Headline({ label, value, tone }: { label: string; value: string; tone?: "gold" }) {
   return (
-    <Panel
-      strong
-      className={cx(
-        "relative overflow-hidden p-4 text-center sm:p-5",
-        tone === "gold" && "!border-amber-300/40",
-        tone === "blue" && "!border-blue/40",
-      )}
-    >
-      <div
-        className={cx(
-          "pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl",
-          tone === "gold" ? "bg-amber-300/15" : tone === "blue" ? "bg-blue/15" : "bg-orange/15",
-        )}
-        aria-hidden
-      />
-      <p className="kicker !text-[10px]">{label}</p>
-      <p className={cx("display mt-1 truncate text-4xl font-bold leading-none sm:text-5xl", tone === "gold" ? "text-amber-300" : tone === "blue" ? "text-blue-bright" : "text-orange-bright")}>
-        {value}
-      </p>
-    </Panel>
+    <div className="min-w-0 px-3 py-5 first:pl-0 sm:px-6">
+      <p className={cx("display truncate text-4xl font-extrabold leading-none sm:text-5xl", tone === "gold" ? "text-amber-300" : "text-ink")}>{value}</p>
+      <p className="mt-2 text-xs text-sub sm:text-sm">{label}</p>
+    </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+/** One row of a plain stat list: label on the left, value on the right. */
+function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-baseline gap-1.5 text-xs">
-      <span className="text-faint">{label}</span>
-      <span className="display font-bold text-ink">{value}</span>
-    </span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-line py-2.5">
+      <dt className="min-w-0 text-sm text-sub">{label}</dt>
+      <dd className="display shrink-0 text-base font-bold text-ink">{value}</dd>
+    </div>
   );
 }
 
@@ -531,16 +531,10 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
   return (
     <div className="flex items-end gap-3">
       <svg viewBox={`0 0 ${w} ${h}`} className="h-20 min-w-0 flex-1" preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <linearGradient id="rating-fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="#f97316" stopOpacity="0.35" />
-            <stop offset="1" stopColor="#f97316" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={`${d} L${w},${h} L0,${h} Z`} fill="url(#rating-fill)" />
-        <path d={d} fill="none" stroke="#fb923c" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        {/* A plain line: no gradient area under it. */}
+        <path d={d} fill="none" stroke="var(--orange)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
       </svg>
-      <div className="shrink-0 text-right text-[10px] leading-tight text-faint">
+      <div className="shrink-0 text-right text-xs leading-tight text-faint">
         <p>
           {min}–{max}
         </p>
@@ -583,15 +577,15 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
   const more = badges.length - shown.length;
   return (
     <Panel className={cx("flex min-h-0 flex-col p-4", className)}>
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-        <p className="kicker !text-[10px]">{P.showcaseTitle}</p>
-        <span className="display text-xs font-bold text-sub">
+      <div className="mb-3 flex shrink-0 items-baseline justify-between gap-2">
+        <h3 className="display text-lg uppercase leading-none text-ink">{P.showcaseTitle}</h3>
+        <span className="display text-lg font-bold leading-none text-ink">
           {badges.length}
-          <span className="text-faint">/{total}</span>
+          <span className="text-sm text-faint">/{total}</span>
         </span>
       </div>
       {badges.length === 0 ? (
-        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-xs leading-relaxed text-faint">{P.showcaseEmpty}</p>
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm leading-relaxed text-sub">{P.showcaseEmpty}</p>
       ) : (
         <div ref={viewportRef} className="min-h-0 flex-1 overflow-hidden">
           <div className="grid auto-rows-[64px] grid-cols-3 content-start gap-2 sm:grid-cols-4">
@@ -609,14 +603,9 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
           </div>
         </div>
       )}
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-haspopup="dialog"
-        className="mt-3 shrink-0 self-center text-[11px] font-semibold uppercase tracking-wider text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
-      >
-        {more > 0 ? P.showcaseMore(more) : P.openLocker} →
-      </button>
+      <Button variant="ghost" size="sm" onClick={onOpen} aria-haspopup="dialog" className="mt-3 shrink-0 self-center">
+        {more > 0 ? P.showcaseMore(more) : P.openLocker}
+      </Button>
     </Panel>
   );
 }

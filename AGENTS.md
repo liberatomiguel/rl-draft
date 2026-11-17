@@ -56,6 +56,13 @@ narrative to CHANGELOG.md and trim STATUS. Keep both under ~600 words.
 
 ## Hard rules
 
+- **UI work starts at `DESIGN.md`** (repo root, ~900 words): the direction
+  (minimal and premium, the draft card as the reference object), the palette,
+  the type and weight rules, the material, and a "never" list. Read it before
+  changing any screen; record a deviation in
+  `docs/DESIGN-DECISIONS.md`. The trial Industry font in `public/fonts-trial/`
+  is git-ignored and local-preview only: never commit or deploy it.
+
 - **Game logic only in `src/engine`** (pure TS, no React, deterministic via
   the seeded RNG in `src/lib/rng.ts`). UI calls engine through `src/store`.
 - **Every tunable number** goes in `src/config/balance.ts` — never inline

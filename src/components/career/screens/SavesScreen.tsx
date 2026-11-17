@@ -136,16 +136,6 @@ function SlotCard({
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Org-colored glow — each slot card wears its own identity */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full opacity-20 blur-2xl"
-        style={{ background: `radial-gradient(circle, ${meta.colors.primary}, transparent 70%)` }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-12 -left-12 h-36 w-36 rounded-full opacity-10 blur-2xl"
-        style={{ background: `radial-gradient(circle, ${meta.colors.secondary}, transparent 70%)` }}
-      />
 
       <div className="relative mb-3 flex items-start gap-3">
         <UserCrest crestId={meta.crestId} colors={meta.colors} abbrev={meta.abbrev} size="lg" />

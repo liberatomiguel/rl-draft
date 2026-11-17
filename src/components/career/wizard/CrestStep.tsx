@@ -33,7 +33,6 @@ import {
   type PatternId,
   type SymbolId,
 } from "@/components/career/UserCrest";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 
@@ -92,14 +91,16 @@ export function CrestStep({
   const patternChoices: readonly PatternId[] = !pick.pattern || (WIZARD_PATTERN_IDS as readonly PatternId[]).includes(pick.pattern)
     ? WIZARD_PATTERN_IDS : [...WIZARD_PATTERN_IDS, pick.pattern];
 
+  // Job: design the crest. The decision is the mark itself, so the live
+  // preview is the strong board and the pickers are one plain board of fields.
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_minmax(16rem,19rem)]">
       <Panel className="p-4 sm:p-5">
         {/* phones: the crest stays in sight while the pickers scroll (the big preview sits below) */}
-        <div className="sticky top-16 z-20 -mx-1 mb-4 flex items-center gap-3 rounded-xl border border-line-strong bg-[color:var(--bg-raised)] px-3 py-2 shadow-lg lg:hidden">
+        <div className="sticky top-16 z-20 -mx-1 mb-4 flex items-center gap-3 rounded-xl border border-line-strong bg-[color:var(--bg-raised)] px-3 py-2 lg:hidden">
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="lg" />
           <div className="min-w-0 flex-1">
-            <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">{orgName || "—"}</p>
+            <p className="display truncate text-base font-bold uppercase leading-none text-ink">{orgName}</p>
           </div>
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="sm" />
         </div>
@@ -133,8 +134,8 @@ export function CrestStep({
         </div>
 
         {pick.symbol ? <div className="mt-4 flex flex-wrap items-center gap-2" role="radiogroup" aria-label={W.iconColor}>
-          <span className="mr-2 text-xs text-sub">{W.iconColor}</span>
-          {(["primary", "secondary", "tertiary"] as const).map(role => <button key={role} type="button" role="radio" aria-checked={(pick.iconColor ?? "secondary") === role} onClick={() => onPick({ iconColor: role })} className={cx("min-h-11 rounded-lg border px-3 text-xs", (pick.iconColor ?? "secondary") === role ? "border-blue-bright bg-blue/15 text-ink" : "border-line text-sub")}><span className="mr-2 inline-block h-3 w-3 rounded-full border border-white/30" style={{ background: colors[role] }} />{role === "primary" ? W.primaryColor : role === "tertiary" ? W.tertiaryColor : W.secondaryColor}</button>)}
+          <span className="kicker mr-2">{W.iconColor}</span>
+          {(["primary", "secondary", "tertiary"] as const).map(role => <button key={role} type="button" role="radio" aria-checked={(pick.iconColor ?? "secondary") === role} onClick={() => onPick({ iconColor: role })} className={cx(CHOICE, (pick.iconColor ?? "secondary") === role ? CHOICE_ON : CHOICE_OFF)}><span className="mr-2 inline-block h-3 w-3 rounded-sm border border-white/30" style={{ background: colors[role] }} />{role === "primary" ? W.primaryColor : role === "tertiary" ? W.tertiaryColor : W.secondaryColor}</button>)}
         </div> : null}
         {/* Layout (rc.36): the emblem alone, over the letters, or a band carrying them */}
         <p className="kicker mb-3 mt-6">{W.crestLayout}</p>
@@ -148,7 +149,7 @@ export function CrestStep({
               className="min-h-[6.5rem] flex-col gap-1 py-2"
             >
               <UserCrest crestId={composeCrestId({ ...pick, layout: ly })} colors={colors} abbrev={abbrev || "ORG"} size="lg" />
-              <span className={cx("display text-[10px] font-bold uppercase tracking-[0.1em]", pick.layout === ly ? "text-orange-bright" : "text-sub")}>
+              <span className={cx("display text-[11px] font-semibold uppercase tracking-[0.06em]", pick.layout === ly ? "text-ink" : "text-sub")}>
                 {W.crestLayouts[ly]}
               </span>
             </CrestTile>
@@ -185,8 +186,8 @@ export function CrestStep({
                 title={kitName}
                 onClick={() => onColors({ primary: k.primary, secondary: k.secondary, tertiary: colors.tertiary ?? "#f5f7fa" })}
                 className={cx(
-                  "relative h-11 overflow-hidden rounded-lg border transition-transform hover:scale-105",
-                  active ? "border-orange ring-2 ring-orange/50" : "border-line-strong",
+                  "relative h-11 overflow-hidden rounded-lg border-2 transition-transform",
+                  active ? "scale-110 border-white/80" : "border-white/15 hover:border-white/40",
                 )}
                 style={{ background: `linear-gradient(135deg, ${k.primary} 0 55%, ${k.secondary} 55% 100%)` }}
               />
@@ -220,47 +221,40 @@ export function CrestStep({
                 role="radio"
                 aria-checked={active}
                 onClick={() => onBuff(key)}
-                className={cx(
-                  "display h-11 rounded-lg border px-3.5 text-xs font-bold uppercase tracking-[0.12em] transition-all",
-                  active
-                    ? "border-orange/60 bg-orange/15 text-orange-bright"
-                    : "border-line-strong bg-white/5 text-sub hover:border-line-strong hover:text-ink",
-                )}
+                className={cx(CHOICE, active ? CHOICE_ON : CHOICE_OFF)}
               >
                 {statLabels[key]}
               </button>
             );
           })}
         </div>
-        <p className="mt-3 max-w-lg border-l-2 border-orange/40 pl-3 text-xs leading-relaxed text-sub" role="status">
+        <p className="mt-3 max-w-lg text-sm leading-snug text-sub" role="status">
           {W.playstyleHelp[buffType]}
         </p>
       </Panel>
 
       {/* Live crest preview + small-size legibility strip */}
-      <Panel strong className="relative flex flex-col items-center justify-center gap-4 overflow-hidden p-6 text-center lg:sticky lg:top-20 lg:self-start">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
-          style={{ background: `radial-gradient(circle, ${colors.primary}, transparent 70%)` }}
-        />
+      <Panel strong className="flex flex-col items-center justify-center gap-4 p-6 text-center lg:sticky lg:top-20 lg:self-start">
         <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="xl" />
         <div>
-          <p className="display text-xl font-bold uppercase tracking-wide text-ink">{orgName || "—"}</p>
-          <div className="mt-2 flex items-center justify-center gap-2">
-            {abbrev ? <Badge tone="blue">{abbrev}</Badge> : null}
-            <Badge tone="orange">{statLabels[buffType]}</Badge>
-          </div>
+          <p className="display min-h-5 text-xl font-bold uppercase leading-none text-ink">{orgName}</p>
+          <p className="mt-2 text-xs text-sub">
+            {abbrev ? `${abbrev} · ` : ""}
+            {W.identityBuff}: {statLabels[buffType]}
+          </p>
         </div>
 
-        {/* Standings-row mock: the crest at sm size between dimmed filler rows */}
-        <div className="relative w-full rounded-xl border border-line bg-black/30 p-1 text-left">
+        {/* Standings-row mock: the crest at sm size between dimmed filler rows
+            (a table's own rows and hairlines; no invented record). */}
+        <div className="w-full border-t border-line text-left">
           <MockStandingRow pos="3" crest={MOCK_ROW_ABOVE} />
-          <div className="flex items-center gap-2.5 rounded-lg border border-orange/40 bg-orange/10 px-2 py-1.5">
-            <span className="w-4 shrink-0 text-center font-mono text-[11px] font-semibold text-orange-bright">4</span>
+          <div className="flex items-center gap-2.5 border-b border-line bg-white/[0.04] px-2 py-1.5">
+            <span className="display w-4 shrink-0 text-center text-xs font-semibold text-ink" aria-hidden>
+              4
+            </span>
             <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="sm" />
-            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">{orgName || abbrev || "—"}</span>
-            <span className="shrink-0 font-mono text-[11px] text-sub">7–2</span>
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">{orgName || abbrev}</span>
+            <span aria-hidden className="h-2 w-6 shrink-0 rounded-sm bg-white/15" />
           </div>
           <MockStandingRow pos="5" crest={MOCK_ROW_BELOW} />
         </div>
@@ -268,6 +262,12 @@ export function CrestStep({
     </div>
   );
 }
+
+/** A text choice in a radio row (emblem colour, org identity): the pick is the orange hairline. */
+const CHOICE =
+  "display inline-flex min-h-11 items-center rounded-lg border bg-white/[0.04] px-3.5 text-xs font-bold uppercase leading-none tracking-[0.04em] transition-colors";
+const CHOICE_ON = "border-orange/60 text-ink";
+const CHOICE_OFF = "border-line-strong text-sub hover:text-ink";
 
 /** One colour role, picked from the predefined palette. */
 function ColorRow({
@@ -284,7 +284,7 @@ function ColorRow({
   return (
     <div className="mt-5">
       <div className="mb-2 flex items-center gap-2">
-        <span aria-hidden className="h-4 w-4 rounded-full border border-white/30" style={{ background: value }} />
+        <span aria-hidden className="h-4 w-4 rounded-sm border border-white/30" style={{ background: value }} />
         <p className="kicker">{label}</p>
         <span className="font-mono text-[10px] uppercase text-faint">{value}</span>
       </div>
@@ -335,10 +335,8 @@ function CrestTile({
       aria-label={ariaLabel}
       onClick={onClick}
       className={cx(
-        "flex items-center justify-center rounded-xl border p-1 transition-all",
-        active
-          ? "border-orange/60 bg-orange/10 panel-glow-orange"
-          : "border-line bg-white/[0.03] hover:border-line-strong hover:bg-white/[0.06]",
+        "flex items-center justify-center rounded-xl border bg-white/[0.03] p-1 transition-colors",
+        active ? "border-orange/60" : "border-line hover:border-line-strong hover:bg-white/[0.06]",
         className,
       )}
     >
@@ -350,7 +348,7 @@ function CrestTile({
 /** "None" tile content for the symbol / pattern pickers. */
 function NoneLabel({ active, children }: { active: boolean; children: React.ReactNode }) {
   return (
-    <span className={cx("display text-[11px] font-bold uppercase tracking-[0.12em]", active ? "text-orange-bright" : "text-sub")}>
+    <span className={cx("display text-[11px] font-semibold uppercase tracking-[0.06em]", active ? "text-ink" : "text-sub")}>
       {children}
     </span>
   );
@@ -359,11 +357,13 @@ function NoneLabel({ active, children }: { active: boolean; children: React.Reac
 /** Dimmed neighbor row for the legibility mock (skeleton bars, no fake copy). */
 function MockStandingRow({ pos, crest }: { pos: string; crest: ReturnType<typeof proceduralCrestFor> }) {
   return (
-    <div aria-hidden className="flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 opacity-45">
-      <span className="w-4 shrink-0 text-center font-mono text-[11px] text-faint">{pos}</span>
-      <UserCrest crestId={crest.crestId} colors={crest.colors} size="sm" />
-      <span className="h-2 w-16 rounded-full bg-white/15" />
-      <span className="ml-auto h-2 w-6 shrink-0 rounded-full bg-white/10" />
+    <div aria-hidden className="flex items-center gap-2.5 border-b border-line px-2 py-1.5">
+      <span className="display w-4 shrink-0 text-center text-xs text-faint opacity-60">{pos}</span>
+      <span className="opacity-45">
+        <UserCrest crestId={crest.crestId} colors={crest.colors} size="sm" />
+      </span>
+      <span className="h-2 w-16 rounded-sm bg-white/10" />
+      <span className="ml-auto h-2 w-6 shrink-0 rounded-sm bg-white/10" />
     </div>
   );
 }

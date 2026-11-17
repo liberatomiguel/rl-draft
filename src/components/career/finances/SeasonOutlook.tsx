@@ -19,9 +19,11 @@ import { deadlineDateText } from "@/components/career/finances/loanDates";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-black/20 p-3">
-      <p className="kicker text-[10px] text-faint">{label}</p>
-      <div className="mt-0.5 space-y-0.5 text-sm leading-snug text-sub">{children}</div>
+    // One line of the books: a column head and what stands under it. The
+    // hairline above is the divider; the board around the four is the box.
+    <div className="min-w-0 border-t border-line py-3">
+      <p className="kicker text-[11px]">{label}</p>
+      <div className="mt-1.5 space-y-1 text-sm leading-snug text-sub">{children}</div>
     </div>
   );
 }
@@ -32,16 +34,17 @@ export function SeasonOutlook({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const now = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
   return (
     <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "210ms" }}>
-      <p className="kicker mb-3 !text-[10px]">{O.title}</p>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <h3 className="display mb-3 text-lg uppercase leading-none text-ink">{O.title}</h3>
+      <div className="grid gap-x-8 sm:grid-cols-2">
         <Row label={O.payroll}>
-          <p className="display text-xl font-bold text-ink">{formatMoney(view.payrollNow)} <span className="text-faint">→</span> {formatMoney(view.payrollNext)}</p>
+          {/* The arrow is the change itself (now, then after the review), not an ornament. */}
+          <p className="display text-2xl font-bold leading-none tabular-nums text-ink">{formatMoney(view.payrollNow)} <span className="text-faint">→</span> {formatMoney(view.payrollNext)}</p>
           {view.leaving.length > 0 ? <p className="text-xs">{O.leaving(view.leaving.join(", "))}</p> : null}
         </Row>
         <Row label={O.debt}>
           {view.debt.total <= 0 ? <p>{O.debtNone}</p> : null}
           {view.debt.emergency > 0 ? (
-            <p className="font-semibold text-orange-bright">{O.debtEmergency(formatMoney(view.debt.emergency))}</p>
+            <p className="text-bad">{O.debtEmergency(formatMoney(view.debt.emergency))}</p>
           ) : null}
           {view.deadline ? (
             <p className="text-xs">{O.deadline(deadlineDateText(C.dates, view.deadline, now), view.deadline.weeksLeft)}</p>
@@ -51,16 +54,16 @@ export function SeasonOutlook({ save, C }: { save: CareerSave; C: CareerCopy }) 
           ) : null}
         </Row>
         <Row label={O.cash}>
-          <p className={cx("display text-xl font-bold", view.nextIncome.balanceAtIt < 0 ? "text-bad" : "text-ink")}>
+          <p className={cx("display text-2xl font-bold leading-none tabular-nums", view.nextIncome.balanceAtIt < 0 ? "text-bad" : "text-ink")}>
             {formatMoney(view.nextIncome.balanceAtIt)}
           </p>
-          <p className="mt-2 text-xs text-sub">{C.finances.net}: <strong>{formatMoney(view.nextIncome.weeklyNetNext)}</strong> · {C.finances.payday} × {view.nextIncome.mondays}</p>
+          <p className="text-xs text-sub">{C.finances.net}: <span className="font-semibold text-ink">{formatMoney(view.nextIncome.weeklyNetNext)}</span> · {C.finances.payday} × {view.nextIncome.mondays}</p>
           {view.sponsorEnds ? <p className="text-xs">{O.sponsorEnds}</p> : null}
         </Row>
         <Row label={O.retirements}>
           {view.retirements.length === 0 ? <p>{O.retireNone}</p> : null}
           {view.retirements.map((r) => (
-            <p key={r.playerId} className={r.when === "now" ? "font-semibold text-ink" : undefined}>
+            <p key={r.playerId} className={r.when === "now" ? "text-ink" : undefined}>
               {r.when === "now" ? O.retireNow(r.name) : r.when === "likely" ? O.retireLikely(r.name) : O.retirePossible(r.name)}
             </p>
           ))}

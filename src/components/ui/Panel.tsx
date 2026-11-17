@@ -34,11 +34,10 @@ export function SectionTitle({
   return (
     <div className={cx("flex flex-wrap items-end justify-between gap-x-4 gap-y-2", className)}>
       <div className="min-w-0 flex-1 basis-40">
-        {kicker ? <p className="kicker mb-1">{kicker}</p> : null}
-        <h2 className="display text-xl font-bold uppercase tracking-wide text-ink md:text-2xl">
-          <span className="mr-2 inline-block h-4 w-1 -skew-x-12 bg-orange align-baseline" aria-hidden />
-          {title}
-        </h2>
+        {/* The title on its paper slab. The line that used to sit above it
+            as a caps eyebrow reads under it, as a sentence (DESIGN.md). */}
+        <h2 className="title-slab text-xl md:text-2xl">{title}</h2>
+        {kicker ? <p className="mt-1.5 text-sm leading-snug text-sub">{kicker}</p> : null}
       </div>
       {right ? <div className="max-w-full sm:shrink-0">{right}</div> : null}
     </div>

@@ -32,6 +32,21 @@ import { Badge } from "@/components/ui/Badge";
 export { OrgMark } from "@/components/career/OrgMark";
 
 // ---------------------------------------------------------------------------
+// HQ type scale (DESIGN.md): one focal title, board titles, quiet rail titles.
+// ---------------------------------------------------------------------------
+
+/** The title of whatever the day card is asking (an event, a bid, an invite). */
+export const DECISION_TITLE = "display text-2xl uppercase leading-none text-ink sm:text-3xl";
+/** A block's title inside a board of the main column. */
+export const BLOCK_TITLE = "display text-lg uppercase leading-none text-ink";
+/** A section's title in the side rail: one step quieter than a board's. */
+export const RAIL_TITLE = "display text-base uppercase leading-none text-ink";
+/** A rail section: no box, a hairline above it (the first one on desktop has none). */
+export const RAIL_SECTION = "border-t border-line pt-4 lg:first:border-t-0 lg:first:pt-0";
+/** A text link out of a block. */
+export const BLOCK_LINK = "text-xs font-semibold text-blue-bright underline-offset-4 hover:underline";
+
+// ---------------------------------------------------------------------------
 // Tier chip
 // ---------------------------------------------------------------------------
 
@@ -108,9 +123,10 @@ export function ErrorBanner({ className }: { className?: string }) {
     >
       <span className="text-sm text-bad">{errorTextFor(C, lastError, nextBreach)}</span>
       <button
+        type="button"
         onClick={clearError}
         aria-label={C.common.close}
-        className="shrink-0 rounded-md p-1.5 text-bad transition-colors hover:bg-white/10"
+        className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-bad transition-colors hover:bg-white/10 sm:min-h-8 sm:min-w-8"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />

@@ -8,5 +8,5 @@ import { cx } from "@/lib/util";
 export function MoneyChange({ save }: { save: CareerSave }) {
   const change = latestMoneyChangeOf(save);
   if (!change) return null;
-  return <span className={cx("font-mono text-[11px] font-semibold", change.amount > 0 ? "text-good" : "text-bad")} aria-live="polite">{formatMoneyDelta(change.amount, { compact: true })}</span>;
+  return <span className={cx("display text-sm font-semibold tabular-nums", change.amount > 0 ? "text-good" : "text-bad")} aria-live="polite">{formatMoneyDelta(change.amount, { compact: true })}</span>;
 }

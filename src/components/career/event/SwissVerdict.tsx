@@ -60,7 +60,7 @@ export function SwissVerdict({
           className={cx(
             "pop-in flex items-center gap-3 rounded-xl border px-4 py-3",
             through
-              ? "border-good/50 bg-good/10 shadow-[0_0_22px_rgba(52,211,153,0.12)]"
+              ? "border-good/50 bg-good/10"
               : "border-bad/40 bg-bad/10",
           )}
         >

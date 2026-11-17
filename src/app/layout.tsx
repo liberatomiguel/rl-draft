@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { GeistSans } from "geist/font/sans";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { webSiteJsonLd } from "@/lib/jsonld";
@@ -14,13 +13,52 @@ import "./globals.css";
 // cause of the 45-min Vercel build timeout (a build-network stall on the Google
 // Fonts request; the build itself is ~45s locally). Bundling them locally makes
 // the build deterministic / offline-proof and drops an external request at
-// runtime. Geist + Geist Mono come from the official `geist` package (the same
-// files Google serves) and expose the same --font-geist-sans / --font-geist-mono
-// CSS variables globals.css already targets; Rajdhani is committed woff2 in
-// ./fonts (sourced from @fontsource), wired via next/font/local.
+// runtime. Geist Mono comes from the official `geist` package (the same file
+// Google serves) and exposes the --font-geist-mono variable globals.css
+// targets. Geist Sans is no longer loaded.
+//
+// Broadcast package (DESIGN.md): Barlow Condensed is the display face and
+// Barlow the text face, committed woff2 in ./fonts (from @fontsource, OFL,
+// licence beside them). Only the latin files are declared here and preloaded;
+// the latin-ext files are plain @font-face rules in globals.css with a
+// unicode-range, so they are fetched only when a name needs them.
+// Weights (DESIGN.md, "weight"): Bold is the heaviest upright file. Labels and
+// tags use 600, text 400 and 600, and globals.css turns off synthetic
+// bold, so nothing can go heavier by accident. Titles ask
+// for 800 and get the Bold file too. The one italic file serves the Home wordmark.
+// Six files are preloaded.
+const barlowCondensed = localFont({
+  variable: "--font-barlow-condensed",
+  display: "swap",
+  // The sizes in the interface were set with Industry (wider). A condensed
+  // stand-in at the same size reads a step smaller, so it is scaled up a
+  // little to keep titles and labels near the designed presence.
+  declarations: [{ prop: "size-adjust", value: "106%" }],
+  src: [
+    { path: "./fonts/barlow-condensed-latin-500-normal.woff2", weight: "500", style: "normal" },
+    // The Bold file answers 700 and 800: `font-bold` and titles.
+    { path: "./fonts/barlow-condensed-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/barlow-condensed-latin-700-normal.woff2", weight: "700 800", style: "normal" },
+    { path: "./fonts/barlow-condensed-latin-800-italic.woff2", weight: "800", style: "italic" },
+  ],
+});
+
+const barlow = localFont({
+  variable: "--font-barlow",
+  display: "swap",
+  src: [
+    { path: "./fonts/barlow-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/barlow-latin-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+});
+
+// Rajdhani is no longer an interface face. It stays declared, not preloaded,
+// for the share card: lib/shareCard.ts draws its canvas text in "Rajdhani" and
+// loads it on demand (next/font names the family after this const).
 const rajdhani = localFont({
   variable: "--font-rajdhani",
   display: "swap",
+  preload: false,
   src: [
     { path: "./fonts/rajdhani-500.woff2", weight: "500", style: "normal" },
     { path: "./fonts/rajdhani-600.woff2", weight: "600", style: "normal" },
@@ -124,7 +162,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#05080f",
+  themeColor: "#070a11",
 };
 
 /** Structured data so search engines understand this is a (free) web game. */
@@ -157,9 +195,17 @@ export default function RootLayout({
   // the /pt pages export lang="pt-BR" and PT chrome (rc.32, DRAFT-11, #148).
   return (
     <LocaleRoot
-      className={`${GeistSans.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Development only: the Industry trial font for local preview. The
+            file and the fonts sit in a git-ignored folder, so a checkout
+            without them gets one 404 in dev and nothing else; a production
+            build never emits this tag (see the note in globals.css). */}
+        {process.env.NODE_ENV === "development" ? (
+          // eslint-disable-next-line @next/next/no-css-tags
+          <link rel="stylesheet" href="/fonts-trial/industry.css" />
+        ) : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}

@@ -70,6 +70,10 @@ const warmRunStore = {
   onFocus: warmUp,
 };
 
+/** One row of the TODAY rundown: title and line on the left, action on the right. */
+const ROW =
+  "group relative flex flex-col gap-3 border-b border-line px-1 py-5 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-3";
+
 export default function HomeMenu() {
   const { APP, HOME, HOME_SEO, QUIZ_UI, DAILY_TEXT, NAV_UI } = useCopy();
   const mounted = useMounted();
@@ -144,91 +148,85 @@ export default function HomeMenu() {
       <FirstRunTutorial />
       {playtest ? null : <LaunchNotice />}
       {playtest ? null : <SeasonRecap />}
-      {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
-      <section className="px-2 pb-4 pt-3 text-center sm:pb-6 sm:pt-10 md:pt-14">
-        {/* 2.0.0: the season's name, quiet, above the tagline (not in the playtest build). */}
-        {playtest ? null : (
-          <p className="mb-2 flex items-center justify-center gap-3 sm:mb-3" aria-label={SEASON.name}>
-            <span aria-hidden="true" className="h-px w-8 bg-gradient-to-r from-transparent to-orange/50" />
-            <span className="display text-[11px] font-bold uppercase tracking-[0.42em] text-orange-bright/90 sm:text-xs">{SEASON.name}</span>
-            <span aria-hidden="true" className="h-px w-8 bg-gradient-to-l from-transparent to-orange/50" />
-          </p>
-        )}
-        <p className="kicker mb-2 sm:mb-4">{APP.tagline}</p>
-        <h1 className="display mx-auto max-w-3xl text-4xl font-bold uppercase leading-[0.95] tracking-[0.08em] sm:text-5xl md:text-7xl">
-          <span className="text-ink">Rocket</span>
-          <span className="bg-gradient-to-r from-orange to-orange-bright bg-clip-text text-transparent">Draft</span>
-        </h1>
-        <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-sub sm:mt-3 sm:text-sm md:text-base">{APP.description}</p>
+      {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately.
+          DESIGN.md: the wordmark is the only italic in the game and the only
+          large orange; the player's own line (rank art, season rating, rank)
+          sits beside it on one quiet board. Nothing else competes here. */}
+      <section className="grid grid-cols-1 items-end gap-x-12 gap-y-6 pb-8 pt-2 sm:pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:pb-10 md:pt-6">
+        <div className="min-w-0">
+          <h1 className="display text-5xl font-extrabold uppercase italic leading-[0.9] sm:text-7xl md:text-[5.25rem]">
+            <span className="text-ink">Rocket</span>
+            <span className="text-orange">Draft</span>
+          </h1>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-sub md:text-[15px]">{APP.description}</p>
+
+          {/* Community links (v2.0): under the pitch, where they are seen. */}
+          {SITE.discordUrl || SITE.supportUrl ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              {SITE.discordUrl ? (
+                <a
+                  href={SITE.discordUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-sm text-sub transition-colors hover:border-line-strong hover:text-ink sm:min-h-9"
+                >
+                  <DiscordIcon className="h-4 w-4" /> {HOME.joinDiscord}
+                </a>
+              ) : null}
+              {SITE.supportUrl ? (
+                <a
+                  href={SITE.supportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-sm text-sub transition-colors hover:border-line-strong hover:text-ink sm:min-h-9"
+                >
+                  <CoffeeGlyph /> {HOME.support}
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-3 flex min-h-16 max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-4 sm:min-h-[132px] sm:flex-col sm:gap-3">
+        <div className="flex min-h-[5.75rem] w-full items-stretch overflow-hidden rounded-xl md:w-auto">
           {mounted ? (
             <>
-              <RankBadge rank={rank} variant="menu" size="md" />
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                <Badge tone="blue">{rank.label}</Badge>
-                <Badge tone="orange">
-                  {HOME.seasonStrip.rating} {mmr}
-                </Badge>
-                {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
-                {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
+              {/* Dark cell: the rank art (drawn for a dark ground), rank, season. */}
+              <div className="flex min-w-0 flex-1 items-center gap-3 bg-surface-strong px-4 py-3 md:flex-none">
+                <RankBadge rank={rank} variant="menu" size="md" />
+                <div className="min-w-0">
+                  <p className="display text-xl font-bold uppercase leading-none text-ink">{rank.label}</p>
+                  {playtest ? null : <p className="mt-1.5 text-xs text-sub">{SEASON.name}</p>}
+                  {runs > 0 ? <p className="text-xs text-faint">{HOME.runs(runs)}</p> : null}
+                  {titles > 0 ? <p className="text-xs text-amber-300">{HOME.titles(titles)}</p> : null}
+                </div>
+              </div>
+              {/* Paper cell: the number that moves, the season rating. */}
+              <div className="flex shrink-0 flex-col justify-center bg-paper px-5 py-3 text-paper-ink">
+                <p className="display text-5xl font-extrabold leading-[0.9]">{mmr}</p>
+                <p className="display mt-1.5 text-xs font-bold uppercase leading-none tracking-[0.04em]">{HOME.seasonStrip.rating}</p>
               </div>
             </>
           ) : null}
         </div>
-
-        {/* Community pills (v2.0): right under the rank tags, where they are seen. */}
-        {SITE.discordUrl || SITE.supportUrl ? (
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5 sm:mt-4">
-            {SITE.discordUrl ? (
-              <a
-                href={SITE.discordUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
-              >
-                <DiscordIcon className="h-4 w-4" /> {HOME.joinDiscord}
-              </a>
-            ) : null}
-            {SITE.supportUrl ? (
-              <a
-                href={SITE.supportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
-              >
-                <CoffeeGlyph /> {HOME.support}
-              </a>
-            ) : null}
-          </div>
-        ) : null}
       </section>
 
       <div className="rise-in">
         {/* ---- PLAY ------------------------------------------------------------- */}
-        <p className="kicker mb-2">{HOME.sectionPlay}</p>
+        {/* The two modes are solid fields in the two sides' colours, the draft
+            on orange and the career on blue, finished like a card (`.solid`:
+            the card's corner, sheen and texture). Upright Bold titles; the
+            action on each is the inverse of its field. */}
         <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <div className={cx(careerOn ? "md:col-span-7" : "md:col-span-8")}>
-            <Panel
-              strong
-              glow="orange"
-              className="group relative flex h-full min-h-[13rem] flex-col justify-between overflow-hidden !border-orange/40 p-4 transition-transform hover:-translate-y-0.5 hover:!border-orange/70 sm:min-h-[15rem] sm:p-6 md:p-8"
-            >
-              <div className="pointer-events-none absolute -right-20 -top-20 hidden h-72 w-72 rounded-full bg-orange/15 blur-3xl sm:block" aria-hidden />
+            <div className="solid solid-orange group flex h-full min-h-[14rem] flex-col justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5 sm:min-h-[17rem] sm:p-7 md:p-9">
               <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} {...warmRunStore} />
               <div className="pointer-events-none relative">
-                <div className="mb-2 flex items-center gap-2.5">
-                  <h2 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{HOME.playClassic}</h2>
-                  <Badge tone="orange">{HOME.liveBadge}</Badge>
-                </div>
-                <p className="max-w-md text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
+                <h2 className="display text-4xl uppercase leading-[0.92] sm:text-5xl md:text-6xl">{HOME.playClassic}</h2>
+                <p className="mt-3 max-w-md text-[15px] font-semibold leading-snug">{HOME.playClassicDesc}</p>
               </div>
-              <div className="pointer-events-none relative mt-6 flex flex-wrap items-center gap-3">
-                <span
-                  aria-hidden
-                  className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all group-hover:brightness-110"
-                >
+              <div className="pointer-events-none relative mt-8 flex flex-wrap items-center gap-3">
+                <span aria-hidden className={cx(buttonClass("primary", "lg"), "px-8 !bg-paper-ink !text-paper group-hover:!bg-[#1b2030]")}>
                   {HOME.playNow}
                 </span>
                 {/* The one exception: Quick Draft sits above the card's hit area. */}
@@ -237,47 +235,36 @@ export default function HomeMenu() {
                   onClick={() => goToSetup("quick")}
                   {...warmRunStore}
                   title={HOME.quickDraftDesc}
-                  className="display pointer-events-auto relative z-10 inline-flex items-center justify-center rounded-xl border border-line-strong px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-sub transition-colors hover:border-orange/50 hover:text-ink"
+                  className="display pointer-events-auto relative z-10 inline-flex min-h-12 items-center rounded-lg border-[1.5px] border-paper-ink/70 px-5 text-base font-bold uppercase leading-none tracking-[0.04em] text-paper-ink transition-colors hover:bg-paper-ink hover:text-paper"
                 >
                   {HOME.quickDraftCta}
                 </button>
               </div>
-            </Panel>
+            </div>
           </div>
 
           {careerOn ? (
             <AppLink href="/career" className="group block md:col-span-5">
-              <Panel
-                strong
-                glow="blue"
-                className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:p-8"
-              >
-                <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/15 blur-3xl" aria-hidden />
-                {/* NEW: a small sticker on the corner, inside the panel so its
-                    overflow-hidden does not clip it. BETA sits beside the title. */}
-                <span className="display pointer-events-none absolute right-2.5 top-2.5 z-10 rounded-md border border-orange/40 bg-orange/15 px-3 py-1.5 text-xs font-bold uppercase leading-none tracking-[0.14em] text-orange-bright shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-                  {HOME.careerBadge}
-                </span>
+              <div className="solid solid-blue flex h-full min-h-[14rem] flex-col justify-between p-5 transition-transform duration-200 group-hover:-translate-y-0.5 sm:p-7 md:p-9">
+                {/* One status tag only: BETA is a fact about the mode (balance is
+                    still moving). NEW already sits on the nav item. */}
                 <div className="relative">
-                  <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 pr-9">
-                    <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
-                    <Badge tone="gold" className="shrink-0">{NAV_UI.beta}</Badge>
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                    <h2 className="display text-3xl uppercase leading-[0.92] sm:text-4xl md:text-[2.6rem]">{HOME.careerTitle}</h2>
+                    <span className="display rounded-sm bg-paper px-1.5 py-0.5 text-[11px] font-bold uppercase leading-tight tracking-[0.05em] text-paper-ink">{NAV_UI.beta}</span>
                   </div>
-                  <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
-                  <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-amber-300/80">{HOME.careerBetaNote}</p>
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed">{HOME.careerDesc}</p>
+                  <p className="mt-2 max-w-sm text-xs leading-relaxed">{HOME.careerBetaNote}</p>
                 </div>
-                <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
-                  {HOME.careerCta}
+                <span className={cx(buttonClass("primary", "lg"), "relative mt-8 w-fit px-8 !bg-paper !text-paper-ink group-hover:!bg-white")}>
+                  {HOME.careerPlay}
                 </span>
-              </Panel>
+              </div>
             </AppLink>
           ) : (
             <button type="button" onClick={() => goToSetup("quick")} {...warmRunStore} className="group text-left md:col-span-4">
               <Panel className="flex h-full flex-col justify-center p-5 transition-all group-hover:!border-blue/50">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quickDraft}</h3>
-                  <Badge tone="blue">{HOME.liveBadge}</Badge>
-                </div>
+                <h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{HOME.quickDraft}</h3>
                 <p className="text-xs leading-relaxed text-sub">{HOME.quickDraftDesc}</p>
               </Panel>
             </button>
@@ -285,142 +272,138 @@ export default function HomeMenu() {
         </section>
 
         {/* ---- TODAY ------------------------------------------------------------ */}
-        <p className="kicker mb-2 mt-7">{HOME.sectionDaily}</p>
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12 md:grid-rows-[auto_auto]">
-          {playtest ? null : (
-          <Panel className={cx("group relative flex flex-col overflow-hidden p-5 md:col-span-4", !dailyDone && "transition-colors hover:!border-line-strong")}>
-            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
-            {!dailyDone ? (
-              <CardHit label={HOME.dailyPlay} onClick={() => playWith((run) => run.startDailyRun())} {...warmRunStore} />
-            ) : null}
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
-                {HOME.daily}
-                <span className="ml-2 text-sm text-faint">{mounted ? `#${daily.n}` : ""}</span>
-              </h3>
-              {mounted && streak > 0 ? <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge> : <Badge tone="blue">{HOME.liveBadge}</Badge>}
-            </div>
-            <div className="min-h-[56px] flex-1">
-              {mounted ? (
-                <>
-                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
-                    {dailyLabel(daily, DAILY_TEXT)}
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-sub">
-                    {dailyDescription(daily, DAILY_TEXT)}
-                  </p>
-                </>
-              ) : null}
-            </div>
-            {dailyDone ? (
-              <div className="mt-3">
-                {dailyResults[today]?.placement === "champion" ? (
-                  <Badge tone="good">{HOME.dailyVictory} · +{dailyResults[today]?.xp} XP</Badge>
-                ) : (
-                  <Badge tone="bad">{HOME.dailyDefeat}</Badge>
-                )}
-                <p className="mt-2 text-[11px] text-faint">{HOME.dailyComeBack}</p>
-              </div>
-            ) : (
-              <span aria-hidden className={cx(buttonClass("secondary", "sm"), "pointer-events-none mt-3 w-fit group-hover:bg-blue/20")}>
-                {HOME.dailyPlay}
-              </span>
-            )}
-          </Panel>
-          )}
-
-          {locked ? (
-            <div className={cx("cursor-not-allowed", playtest ? "sm:col-span-2 md:col-span-12" : "md:col-span-4")} aria-disabled="true" title={HOME.challengesLocked}>
-              <Panel className="flex h-full flex-col p-5 opacity-60">
-                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
-                <p className="mt-1 text-xs text-sub">{HOME.challengesLocked}</p>
-              </Panel>
-            </div>
-          ) : (
-            <AppLink href="/challenges" className={cx("group", playtest ? "sm:col-span-2 md:col-span-12" : "md:col-span-4")}>
-              <Panel className="relative flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
-                {dots.challenges ? <NewDot className="absolute right-2 top-2" label={NAV_UI.newHere} /> : null}
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
-                  <span className="text-orange-bright" aria-hidden>
-                    <MissionGlyph />
-                  </span>
+        {/* TODAY is a rundown, not a grid of boxes: one row per thing that
+            resets today, title and line on the left, the action or today's
+            result on the right. Missions keep their board beside it. */}
+        <h2 className="title-slab mt-12 text-xl md:text-2xl">{HOME.sectionDaily}</h2>
+        <section className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-12">
+          <div className={cx("border-t border-line", playtest ? "md:col-span-12" : "md:col-span-8")}>
+            {playtest ? null : (
+              <div className={cx(ROW, !dailyDone && "hover:bg-white/[0.04]")}>
+                {!dailyDone ? (
+                  <CardHit label={HOME.dailyPlay} onClick={() => playWith((run) => run.startDailyRun())} {...warmRunStore} />
+                ) : null}
+                <div className="min-h-[4.25rem] min-w-0 flex-1">
+                  <h3 className="display flex flex-wrap items-baseline gap-x-2.5 text-lg uppercase leading-none text-ink">
+                    {HOME.daily}
+                    <span className="text-sm text-faint">{mounted ? `#${daily.n}` : ""}</span>
+                    {mounted && streak > 0 ? <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge> : null}
+                  </h3>
+                  {mounted ? (
+                    <p className="mt-1.5 text-sm leading-snug text-sub">
+                      <span className="text-ink">{dailyLabel(daily, DAILY_TEXT)}.</span>{" "}
+                      {dailyDescription(daily, DAILY_TEXT)}
+                    </p>
+                  ) : null}
                 </div>
-                <p className="text-xs leading-relaxed text-sub">{HOME.challengesDesc}</p>
-              </Panel>
-            </AppLink>
-          )}
+                {dailyDone ? (
+                  <div className="shrink-0 sm:text-right">
+                    {dailyResults[today]?.placement === "champion" ? (
+                      <Badge tone="good">{HOME.dailyVictory} +{dailyResults[today]?.xp} XP</Badge>
+                    ) : (
+                      <Badge tone="bad">{HOME.dailyDefeat}</Badge>
+                    )}
+                    <p className="mt-1.5 text-xs text-faint">{HOME.dailyComeBack}</p>
+                  </div>
+                ) : (
+                  <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
+                    {HOME.dailyPlay}
+                  </span>
+                )}
+              </div>
+            )}
 
-          {playtest ? null : (
-          <>
-          <div className="md:col-span-4 md:row-span-2">
-            <MissionsPanel compact />
-          </div>
+            {playtest ? null : (
+              <div className={cx(ROW, "hover:bg-white/[0.04]")}>
+                <CardHit
+                  label={quizDone ? HOME.quiz : HOME.quizPlay}
+                  onClick={() => {
+                    sfx.click();
+                    setQuizOpen(true);
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="display text-lg uppercase leading-none text-ink">{HOME.quiz}</h3>
+                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.quizDesc}</p>
+                </div>
+                {quizDone ? (
+                  <Badge tone={quizToday?.solved ? "good" : "neutral"} className="shrink-0">{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
+                ) : (
+                  <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
+                    {HOME.quizPlay}
+                  </span>
+                )}
+              </div>
+            )}
 
-          {/* rc.4: same anatomy as the Daily Challenge — title + Live tag on top,
-              the line under it, the CTA (or today's result) at the bottom. */}
-          <Panel className="group relative flex h-full flex-col overflow-hidden p-5 transition-colors hover:!border-line-strong sm:col-span-2 md:col-span-8">
-            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-400/10 blur-2xl" aria-hidden />
-            <CardHit
-              label={quizDone ? HOME.quiz : HOME.quizPlay}
-              onClick={() => {
-                sfx.click();
-                setQuizOpen(true);
-              }}
-            />
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
-              <Badge tone="blue">{HOME.liveBadge}</Badge>
-            </div>
-            <p className="flex-1 text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
-            <div className="mt-3">
-              {quizDone ? (
-                <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
-              ) : (
-                <span aria-hidden className={cx(buttonClass("secondary", "sm"), "pointer-events-none w-fit group-hover:bg-blue/20")}>
-                  {HOME.quizPlay}
-                </span>
-              )}
-            </div>
-          </Panel>
-          </>
-          )}
-        </section>
-
-        {/* ---- YOU --------------------------------------------------------------- */}
-        <p className="kicker mb-2 mt-7">{HOME.sectionYou}</p>
-        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {locked ? (
-            <div className="cursor-not-allowed" aria-disabled="true" title={HOME.collectionLocked}>
-              <Panel className="flex h-full items-center justify-between gap-3 p-4 opacity-60">
-                <div>
-                  <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{HOME.collection}</h3>
-                  <p className="mt-1 text-xs text-sub">{HOME.collectionLocked}</p>
+            {locked ? (
+              <div className={cx(ROW, "cursor-not-allowed opacity-60")} aria-disabled="true" title={HOME.challengesLocked}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="display text-lg uppercase leading-none text-ink">{HOME.challenges}</h3>
+                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesLocked}</p>
                 </div>
                 <span className="shrink-0 text-faint" aria-hidden>
                   <MenuLockGlyph />
                 </span>
-              </Panel>
+              </div>
+            ) : (
+              <AppLink href="/challenges" className={cx(ROW, "hover:bg-white/[0.04]")}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="display flex items-center gap-2.5 text-lg uppercase leading-none text-ink">
+                    {HOME.challenges}
+                    {dots.challenges ? <NewDot label={NAV_UI.newHere} /> : null}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesDesc}</p>
+                </div>
+                <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
+                  {HOME.challenges}
+                </span>
+              </AppLink>
+            )}
+          </div>
+
+          {playtest ? null : (
+            <div className="md:col-span-4">
+              <MissionsPanel compact />
+            </div>
+          )}
+        </section>
+
+        {/* ---- YOU --------------------------------------------------------------- */}
+        {/* YOUR PROGRESS is one stat strip: four cells on a single board, the
+            figure first and large, the label under it. The 1px gaps are the
+            board's dividers. */}
+        <h2 className="title-slab mt-12 text-xl md:text-2xl">{HOME.yourProgress}</h2>
+        <section className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
+          {locked ? (
+            <div className="flex cursor-not-allowed flex-col justify-between gap-3 bg-surface p-4 opacity-70 sm:p-5" aria-disabled="true" title={HOME.collectionLocked}>
+              <span className="text-faint" aria-hidden>
+                <MenuLockGlyph />
+              </span>
+              <div>
+                <h3 className="display text-base uppercase leading-none text-ink">{HOME.collection}</h3>
+                <p className="mt-1.5 text-xs leading-snug text-sub">{HOME.collectionLocked}</p>
+              </div>
             </div>
           ) : (
             <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc} dot={dots.collection} dotLabel={NAV_UI.newHere}>
-              <span className="display shrink-0 text-2xl font-bold text-cyan">
+              <span className="display text-5xl font-extrabold leading-none text-ink">
                 {mounted ? unlocked : 0}
-                <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
+                <span className="text-base text-faint">/{COUNTS.specialCards}</span>
               </span>
             </Tile>
           )}
           <Tile href="/achievements" title={HOME.achievements} desc={HOME.achievementsDesc}>
-            <span className="display shrink-0 text-2xl font-bold text-orange-bright">
+            <span className="display text-5xl font-extrabold leading-none text-ink">
               {mounted ? achieved : 0}
-              <span className="text-sm text-faint">/{COUNTS.achievements}</span>
+              <span className="text-base text-faint">/{COUNTS.achievements}</span>
             </span>
           </Tile>
           <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc} dot={dots.profile} dotLabel={NAV_UI.newHere}>
-            {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : null}
+            {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : <span className="h-12" />}
           </Tile>
           <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
-            <span className="shrink-0 text-cyan" aria-hidden>
+            <span className="flex h-12 items-center text-ink" aria-hidden>
               <TrophyGlyph />
             </span>
           </Tile>
@@ -438,7 +421,7 @@ export default function HomeMenu() {
               <DiscordIcon className="h-6 w-6" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="display block text-sm font-bold uppercase tracking-wide text-ink">{HOME.joinDiscord}</span>
+              <span className="display block text-sm uppercase tracking-wide text-ink">{HOME.joinDiscord}</span>
               <span className="block text-xs leading-relaxed text-sub">{HOME.discordDesc}</span>
             </span>
             <span className="shrink-0 text-[#aab1ff] transition-transform group-hover:translate-x-0.5" aria-hidden>
@@ -448,7 +431,7 @@ export default function HomeMenu() {
         ) : null}
 
         <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
-          <AppLink href="/how-to-play" className="text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline">
+          <AppLink href="/how-to-play" className="text-sm text-sub underline-offset-4 hover:text-ink hover:underline">
             {HOME.howToPlay} →
           </AppLink>
           {SITE.authorUrl ? (
@@ -456,7 +439,7 @@ export default function HomeMenu() {
               href={SITE.authorUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm text-sub underline-offset-4 hover:text-ink hover:underline"
             >
               <XGlyph /> {HOME.followTwitter}
             </a>
@@ -524,15 +507,13 @@ function Tile({
   children: React.ReactNode;
 }) {
   return (
-    <AppLink href={href} className="group">
-      <Panel className="relative flex h-full flex-col items-start justify-between gap-2 p-4 transition-colors group-hover:!border-line-strong min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-3">
-        {dot ? <NewDot className="absolute right-2 top-2" label={dotLabel} /> : null}
-        <div className="min-w-0">
-          <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
-          <p className="mt-1 hidden text-xs text-sub sm:block">{desc}</p>
-        </div>
-        {children}
-      </Panel>
+    <AppLink href={href} className="group relative flex flex-col justify-between gap-4 bg-surface p-4 transition-colors hover:bg-surface-strong sm:p-5">
+      {dot ? <NewDot className="absolute right-3 top-3" label={dotLabel} /> : null}
+      {children}
+      <div className="min-w-0">
+        <h3 className="display text-base uppercase leading-none text-ink">{title}</h3>
+        <p className="mt-1.5 hidden text-xs leading-snug text-sub sm:block">{desc}</p>
+      </div>
     </AppLink>
   );
 }
@@ -571,16 +552,6 @@ function XGlyph() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
-    </svg>
-  );
-}
-
-function MissionGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

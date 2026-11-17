@@ -74,7 +74,7 @@ export function ProfileNickname() {
               if (e.key === "Enter") save();
               if (e.key === "Escape") setEditing(false);
             }}
-            className="min-w-0 max-w-[12rem] rounded-lg border border-line bg-bg/60 px-2.5 py-1 text-lg font-bold text-ink outline-none focus:border-orange/60"
+            className="min-w-0 max-w-[12rem] rounded-lg border border-line bg-bg/60 px-2.5 py-1 text-lg font-bold text-ink outline-none focus:border-orange/60 focus-visible:ring-1 focus-visible:ring-orange/60"
           />
           <Button variant="secondary" size="sm" onClick={save} disabled={saving || !draft.trim()}>
             {L.save}
@@ -159,13 +159,13 @@ export function ChooseNameForm({ L, onDone }: { L: L; onDone: () => void }) {
           autoComplete="nickname"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-orange/60"
+          className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-orange/60 focus-visible:ring-1 focus-visible:ring-orange/60"
         />
         <Button type="submit" variant="primary" disabled={busy || !draft.trim()}>
           {L.chooseNameSave}
         </Button>
       </form>
-      {error ? <p className="mt-2.5 text-xs text-red-400" role="alert">{error}</p> : null}
+      {error ? <p className="mt-2.5 text-xs text-bad" role="alert">{error}</p> : null}
       <p className="mt-2.5 text-xs text-faint">{L.chooseNameLater}</p>
     </div>
   );
@@ -174,7 +174,7 @@ export function ChooseNameForm({ L, onDone }: { L: L; onDone: () => void }) {
 const PROVIDER_NAME: Record<OAuthProvider, string> = { google: "Google", discord: "Discord" };
 /** Each provider's sign-in button colours (white Google button, Discord blurple). */
 const PROVIDER_STYLE: Record<OAuthProvider, string> = {
-  google: "bg-white text-[#1f1f1f] shadow-[0_0_0_1px_rgba(255,255,255,0.15)]",
+  google: "bg-white text-[#1f1f1f]",
   discord: "bg-[#5865F2] text-white",
 };
 
@@ -230,7 +230,7 @@ function ProviderButtons({ L, onError }: { L: L; onError: (message: string | nul
           </button>
         ))}
       </div>
-      <p className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-faint">
+      <p className="display my-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-faint">
         <span className="h-px flex-1 bg-line" />
         {L.orEmail}
         <span className="h-px flex-1 bg-line" />
@@ -260,7 +260,7 @@ export function ConnectProviders({ className }: { className: string }) {
           {L.connectProvider(PROVIDER_NAME[p])}
         </button>
       ))}
-      {failed ? <span role="alert" className="text-[11px] font-semibold text-bad">{L.providerError}</span> : null}
+      {failed ? <span role="alert" className="text-xs font-semibold text-bad">{L.providerError}</span> : null}
     </>
   );
 }
@@ -335,7 +335,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
 
   const content = (
     <>
-      {!compact ? <><h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
+      {!compact ? <><h3 className="display mb-1.5 text-lg uppercase leading-none text-ink">{L.signInTitle}</h3>
       <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p></> : null}
       {step === "email" ? <ProviderButtons L={L} onError={setError} /> : null}
       {step === "email" ? (
@@ -350,7 +350,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={L.emailPlaceholder}
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60 focus-visible:ring-1 focus-visible:ring-orange/60"
           />
           <Button type="submit" variant="primary" disabled={busy || !email.trim()}>
             {busy ? L.sending : L.sendCode}
@@ -371,7 +371,7 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
               placeholder={L.codePlaceholder}
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm tracking-[0.3em] text-ink outline-none focus:border-orange/60"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-orange/60 focus-visible:ring-1 focus-visible:ring-orange/60"
             />
             <Button type="submit" variant="primary" disabled={busy || code.length < 4}>
               {busy ? L.verifying : L.verify}
@@ -402,5 +402,6 @@ export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) 
       {error ? <p role="alert" className="mt-3 text-xs font-semibold text-bad">{error}</p> : null}
     </>
   );
-  return compact ? content : <Panel strong glow="blue" className="mb-6 p-5">{content}</Panel>;
+  // A plain board: signing in is an offer, not a state, so no coloured hairline.
+  return compact ? content : <Panel className="mb-6 p-5">{content}</Panel>;
 }

@@ -6,10 +6,15 @@
  * room (the empty Worlds pedestal visible from day one), records, season
  * history and career settings.
  *
- * v0.2 UX pass: org-colored identity glow, rep bar with gate ticks, three-state
- * gear ladder (owned / unlocked-available / locked), staggered entrances.
+ * v0.2 UX pass: rep bar with gate ticks, three-state gear ladder
+ * (owned / unlocked-available / locked).
  * NOTE: "Edit crest" stays out until the store grows an identity action —
  * there is no mutation path for identity.colors yet (see build report).
+ *
+ * Layout (DESIGN.md): the identity board first and largest, the career's
+ * records as figures on the same board; then one column for what the club
+ * has won (trophies, achievements) and one for what its reputation opens
+ * next; the season table and the settings close the page.
  */
 
 import { AchievementCard } from "@/components/AchievementsGrid";
@@ -28,6 +33,7 @@ import { useCareerStore } from "@/store/careerStore";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { CheckIcon, LockIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -40,39 +46,20 @@ import { unlockTrack, useCareerSave, userStars } from "@/components/career/caree
 // Small bits
 // ---------------------------------------------------------------------------
 
-function StatTile({ label, value, delay }: { label: string; value: string; delay?: number }) {
+/** A record set as a number: the figure large, its label quiet under it. */
+function Figure({ label, value }: { label: string; value: string }) {
   return (
-    <Panel
-      className="rise-in p-4 text-center"
-      style={delay ? { animationDelay: `${delay}ms` } : undefined}
-    >
-      <p className="kicker !text-[10px]">{label}</p>
-      <p className="display mt-1 truncate text-2xl font-bold text-ink">{value}</p>
-    </Panel>
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-1.5 text-xs leading-snug text-sub">{label}</dt>
+      <dd className="display truncate text-3xl font-extrabold leading-none text-ink">{value}</dd>
+    </div>
   );
 }
 
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden>
-      <path d="m5 13 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function LockIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
-      <rect x="6" y="11" width="12" height="9" rx="2" />
-      <path d="M9 11V8a3 3 0 0 1 6 0v3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** Open-ring "available" marker: unlocked by rep, not yet bought. */
+/** Open-ring "available" marker: unlocked by rep, not yet bought (the shared set has no such glyph). */
 function AvailableIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
       <circle cx="12" cy="12" r="8" strokeDasharray="3.4 3.4" />
       <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
     </svg>
@@ -143,6 +130,7 @@ const TROPHY_TINT: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function ClubScreen() {
+  // Job: the club's record (who it is, what it has won, how far its reputation has come). The one thing to read for a decision: what the next reputation gate unlocks.
   const achievements = useCareerStore((s) => s.achievements);
   const copy = useCareerCopy();
   // rc.36 (UX-05, #155): the achievements' words live in the core copy (one source with the general list).
@@ -159,12 +147,11 @@ export function ClubScreen() {
       <div className="mx-auto max-w-6xl px-3 py-6 sm:px-4">
         <div className="space-y-4" aria-busy>
           <div className="h-10 w-48 animate-pulse rounded-lg bg-white/5" />
-          <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
+          <div className="h-40 animate-pulse rounded-xl bg-white/5" />
           <div className="grid gap-4 md:grid-cols-5">
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5 md:col-span-2" />
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5 md:col-span-3" />
+            <div className="h-72 animate-pulse rounded-xl bg-white/5 md:col-span-3" />
+            <div className="h-72 animate-pulse rounded-xl bg-white/5 md:col-span-2" />
           </div>
-          <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
         </div>
       </div>
     );
@@ -188,6 +175,8 @@ export function ClubScreen() {
     { key: "t2", count: stats.titlesT2 },
     { key: "t3", count: stats.titlesT3 },
   ] as const;
+  const worldsWon = stats.titlesWorlds > 0;
+  const achievementsDone = CAREER_ACHIEVEMENTS.filter((a) => achievements.unlocked[a.id]).length;
 
   const onAbandon = () => {
     if (activeSlot === null) return;
@@ -198,141 +187,143 @@ export function ClubScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle kicker={copy.meta.title} title={copy.club.title} className="mb-5" />
+      <SectionTitle title={copy.club.title} className="mb-5" />
 
-      <div className="mb-4 grid grid-cols-1 items-stretch gap-4 md:grid-cols-5">
-        <div className="flex min-w-0 flex-col gap-4 md:col-span-3">
-      {/* 1 — Identity (wears the org's own colors) */}
-      <Panel strong glow="blue" className="relative overflow-hidden p-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-14 -top-14 h-52 w-52 rounded-full opacity-20 blur-3xl"
-          style={{
-            background: `radial-gradient(circle, ${save.identity.colors.primary}, transparent 70%)`,
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full opacity-10 blur-3xl"
-          style={{
-            background: `radial-gradient(circle, ${save.identity.colors.secondary}, transparent 70%)`,
-          }}
-        />
-        <div className="relative flex flex-col items-center gap-4 sm:flex-row">
+      {/* 1. Identity: the crest and the name lead the page; the career's
+          records sit on the same board as a strip of figures. */}
+      <Panel strong className="mb-4 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
+        <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:gap-5">
           <UserCrest
             crestId={save.identity.crestId}
             colors={save.identity.colors}
             abbrev={save.identity.abbrev}
             size="xl"
-            className="shrink-0 drop-shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
+            className="shrink-0"
           />
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <p className="kicker mb-1">{copy.club.identity}</p>
-            <h3 className="display truncate text-3xl font-bold uppercase tracking-wide text-ink">
+            <h3 className="display truncate text-3xl uppercase leading-none text-ink sm:text-4xl">
               {save.identity.orgName}
             </h3>
-            <p className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-sub sm:justify-start">
-              <span className="kicker !text-[10px]">{copy.club.manager}</span>
+            <p className="mt-2.5 flex flex-wrap items-center justify-center gap-2 text-sm text-sub sm:justify-start">
+              <span>{copy.club.manager}</span>
               <span className="font-semibold text-ink">{save.identity.managerName}</span>
               <CountryChip code={save.identity.country} />
             </p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 sm:justify-start">
               <Badge className={REGION_BADGE[save.identity.region]}>{save.identity.region}</Badge>
-              <Badge>{copy.wizard.founded}</Badge>
               {/* rc.36 (POL-02, Miguel on rc.35): the stars only — no "0.5-star org" text (its words stay the stars' accessible name). */}
               <TeamStars stars={stars} size="md" label={copy.club.starLabel(stars)} />
             </div>
           </div>
         </div>
+        <dl
+          aria-label={copy.club.records}
+          className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-line pt-4 sm:grid-cols-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0"
+        >
+          <Figure label={copy.club.recordTitles} value={String(titlesTotal)} />
+          <Figure label={copy.club.recordSeries} value={`${stats.seriesWins}–${stats.seriesLosses}`} />
+          <Figure label={copy.club.recordPrize} value={formatMoney(stats.totalPrize, { compact: true })} />
+          <Figure label={copy.club.recordBiggestFee} value={formatMoney(stats.biggestSigningFee, { compact: true })} />
+        </dl>
       </Panel>
 
+      <div className="mb-4 grid grid-cols-1 items-start gap-x-4 gap-y-6 md:grid-cols-5">
+        {/* Primary column: what the club has won. */}
+        <div className="flex min-w-0 flex-col gap-6 md:col-span-3">
+          {/* 2. Trophy room: the Worlds pedestal (visible from day one, design §11)
+              beside the shelf. Trophies are rewards and keep their gold. */}
+          <Panel data-tour="club-trophies" className="p-5">
+            <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.trophies}</h3>
+            <div className="mt-4 grid gap-5 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-stretch">
+              <div
+                className={cx(
+                  "flex flex-col items-center justify-center rounded-lg border px-3 py-4 text-center",
+                  worldsWon
+                    ? "border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
+                    : "border-dashed border-line-strong",
+                )}
+              >
+                <WorldsPedestal
+                  won={worldsWon}
+                  className={cx(
+                    "h-14 w-14",
+                    worldsWon ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" : "text-faint",
+                  )}
+                />
+                {worldsWon ? (
+                  <p className="display mt-2 text-3xl font-extrabold leading-none text-amber-300">
+                    {stats.titlesWorlds}
+                  </p>
+                ) : null}
+                <p className={cx("mt-1.5 text-xs leading-snug", worldsWon ? "text-amber-300" : "text-sub")}>
+                  {worldsWon ? copy.common.tier.worlds : copy.club.worldsPedestal}
+                </p>
+              </div>
 
-      {/* 4 — Trophy room */}
-      <Panel data-tour="club-trophies" className="rise-in p-4" style={{ animationDelay: "150ms" }}>
-        <p className="kicker mb-3">{copy.club.trophies}</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {/* The Worlds pedestal — visible from day one (design §11). */}
-          <div
-            className={cx(
-              "col-span-2 flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-colors sm:col-span-1",
-              stats.titlesWorlds > 0
-                ? "border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
-                : "border-dashed border-line-strong bg-white/3",
-            )}
-          >
-            <WorldsPedestal
-              won={stats.titlesWorlds > 0}
-              className={cx(
-                "h-14 w-14",
-                stats.titlesWorlds > 0
-                  ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-                  : "text-faint",
-              )}
-            />
-            {stats.titlesWorlds > 0 ? (
-              <p className="display mt-1 text-2xl font-bold text-amber-300">
-                {stats.titlesWorlds}
-              </p>
-            ) : null}
-            <p className={cx("kicker mt-1 !text-[9px]", stats.titlesWorlds > 0 && "text-amber-300")}>
-              {stats.titlesWorlds > 0 ? copy.common.tier.worlds : copy.club.worldsPedestal}
-            </p>
-          </div>
-
-          {shelf.map((t) => (
-            <div
-              key={t.key}
-              className={cx(
-                "flex flex-col items-center justify-center rounded-xl border border-line bg-white/3 p-4 text-center transition-all",
-                t.count === 0 ? "opacity-45" : "hover:border-line-strong hover:bg-white/5",
-              )}
-            >
-              <TrophyCup
-                dashed={t.count === 0}
-                className={cx("h-10 w-10", t.count > 0 ? TROPHY_TINT[t.key] : "text-faint")}
-              />
-              <p className="display mt-1 text-2xl font-bold text-ink">{t.count}</p>
-              <p className="kicker mt-1 !text-[9px]">{copy.common.tier[t.key]}</p>
+              <ul className="grid grid-cols-2 gap-y-4 sm:grid-cols-4">
+                {shelf.map((t) => (
+                  <li
+                    key={t.key}
+                    className="flex min-w-0 flex-col items-center justify-center px-2 text-center sm:border-l sm:border-line sm:first:border-l-0"
+                  >
+                    <TrophyCup
+                      dashed={t.count === 0}
+                      className={cx("h-9 w-9", t.count > 0 ? TROPHY_TINT[t.key] : "text-faint")}
+                    />
+                    <p
+                      className={cx(
+                        "display mt-2 text-3xl font-extrabold leading-none",
+                        t.count > 0 ? "text-ink" : "text-faint",
+                      )}
+                    >
+                      {t.count}
+                    </p>
+                    <p className="mt-1.5 text-xs leading-snug text-sub">{copy.common.tier[t.key]}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
-        </div>
-        {titlesTotal === 0 ? (
-          <p className="mt-3 text-center text-xs text-faint">{copy.club.trophyEmpty}</p>
-        ) : null}
-      </Panel>
-
-
-          {/* 5 — Records */}
-          <Panel className="flex flex-1 flex-col p-4">
-            <p className="kicker mb-3">{copy.club.records}</p>
-            <div className="grid flex-1 grid-cols-2 gap-3">
-              <StatTile
-                label={copy.club.recordPrize}
-                value={formatMoney(stats.totalPrize, { compact: true })}
-                delay={90}
-              />
-              <StatTile
-                label={copy.club.recordSeries}
-                value={`${stats.seriesWins}–${stats.seriesLosses}`}
-                delay={120}
-              />
-              <StatTile
-                label={copy.club.recordBiggestFee}
-                value={formatMoney(stats.biggestSigningFee, { compact: true })}
-                delay={150}
-              />
-              <StatTile label={copy.club.recordTitles} value={String(titlesTotal)} delay={180} />
-            </div>
+            {titlesTotal === 0 ? <p className="mt-4 text-sm text-sub">{copy.club.trophyEmpty}</p> : null}
           </Panel>
+
+          {/* 3. Career achievements (v2.0 R32): each one is its own card, so the section needs no board. */}
+          <section>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 className="display text-lg uppercase leading-none text-ink">{copy.achievements.title}</h3>
+              <span className="text-sm text-sub">
+                {copy.achievements.progress(achievementsDone, CAREER_ACHIEVEMENTS.length)}
+              </span>
+            </div>
+            <p className="mt-1.5 max-w-prose text-sm leading-snug text-sub">{copy.achievements.hint}</p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {CAREER_ACHIEVEMENTS.map((a) => {
+                const at = achievements.unlocked[a.id];
+                const item = ACH_UI.careerItems[a.id] ?? { name: a.id, desc: "" };
+                return (
+                  <AchievementCard
+                    key={a.id}
+                    earned={Boolean(at)}
+                    style={achievementStyle({ id: a.id, category: a.tier })}
+                    icon={<AchievementIcon group="career" id={a.id} className="h-5 w-5" />}
+                    title={item.name}
+                    tier={ACH_UI.careerTier[a.tier]}
+                    body={item.desc}
+                    foot={at ? copy.achievements.unlockedOn(new Date(at).toLocaleDateString()) : copy.achievements.xp(a.xp)}
+                  />
+                );
+              })}
+            </div>
+          </section>
         </div>
 
-        {/* 3 — Progression Track (the unlock ladder, never hidden) */}
-        <div data-tour="club-progress" className="flex min-w-0 flex-col gap-4 md:col-span-2">
-          <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>
-            <p className="kicker mb-1">{copy.club.reputation}</p>
-            <p className="display text-4xl font-bold text-ink">
+        {/* Secondary column: reputation and the Progression Track (the unlock
+            ladder, never hidden) on one board, the track as a plain list. */}
+        <div data-tour="club-progress" className="min-w-0 md:col-span-2">
+          <Panel className="p-5">
+            <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.reputation}</h3>
+            <p className="display mt-3 text-5xl font-extrabold leading-none text-ink">
               <AnimatedNumber value={rep} />
-              <span className="ml-2 align-middle text-sm font-semibold text-faint">/ 100</span>
+              <span className="ml-1.5 text-base font-semibold text-faint">/ 100</span>
             </p>
             {/* 0..100 scale with a tick on every unlock gate — the whole road. */}
             <div className="relative mt-3">
@@ -350,141 +341,89 @@ export function ClubScreen() {
               ))}
             </div>
             {nextGate ? (
-              <p className="mt-2 text-xs text-sub">
+              <p className="mt-2.5 text-sm text-sub">
                 {copy.club.repNext(nextGate.gate, unlockLabels[nextGate.key] ?? nextGate.key)}
               </p>
             ) : null}
-          </Panel>
-          <Panel className="rise-in flex flex-1 flex-col p-5" style={{ animationDelay: "90ms" }}>
-          <p className="kicker mb-0.5">{copy.club.progression}</p>
-          <p className="mb-3 text-xs text-faint">{copy.club.progressionDesc}</p>
-          <ul className="flex flex-1 flex-col justify-between">
-            {track.map((entry) => {
-              const owned = entry.unlocked && entry.owned === true;
-              const available = entry.unlocked && entry.owned === false;
-              return (
-                <li
-                  key={entry.key}
-                  className={cx(
-                    "flex min-h-11 items-center gap-3 border-b border-line py-2 last:border-b-0",
-                    owned && "bg-orange/[0.04]",
-                  )}
-                >
-                  {owned ? (
-                    <CheckIcon className="h-5 w-5 shrink-0 text-orange-bright" />
-                  ) : available ? (
-                    <AvailableIcon className="h-5 w-5 shrink-0 text-blue-bright" />
-                  ) : entry.unlocked ? (
-                    <CheckIcon className="h-5 w-5 shrink-0 text-good" />
-                  ) : (
-                    <LockIcon className="h-5 w-5 shrink-0 text-faint" />
-                  )}
-                  <span
-                    className={cx(
-                      "min-w-0 flex-1 truncate text-sm",
-                      owned
-                        ? "font-semibold text-orange-bright"
-                        : entry.unlocked
-                          ? "font-semibold text-ink"
-                          : "text-faint",
-                    )}
-                  >
-                    {unlockLabels[entry.key] ?? entry.key}
-                  </span>
-                  {owned ? (
-                    <Badge tone="orange" className="shrink-0 !px-1.5 !text-[9px]">
-                      {copy.finances.ownedLabel}
-                    </Badge>
-                  ) : available ? (
-                    <Badge tone="blue" className="shrink-0 !px-1.5 !text-[9px]">
-                      {copy.club.unlocked}
-                    </Badge>
-                  ) : entry.unlocked ? (
-                    <span className="kicker !text-[9px] text-good">{copy.club.unlocked}</span>
-                  ) : entry.future ? (
-                    <span className="flex shrink-0 items-center gap-2">
-                      <span className="hidden text-[11px] text-faint sm:block">
-                        {copy.club.unlockWorlds}
+
+            <div className="mt-5 border-t border-line pt-4">
+              <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.progression}</h3>
+              <p className="mt-1.5 text-sm leading-snug text-sub">{copy.club.progressionDesc}</p>
+              <ul className="mt-2">
+                {track.map((entry) => {
+                  const owned = entry.unlocked && entry.owned === true;
+                  const available = entry.unlocked && entry.owned === false;
+                  return (
+                    <li
+                      key={entry.key}
+                      className="flex min-h-11 items-center gap-3 border-b border-line py-2 last:border-b-0"
+                    >
+                      {available ? (
+                        <AvailableIcon className="h-5 w-5 shrink-0 text-blue-bright" />
+                      ) : entry.unlocked ? (
+                        <CheckIcon className="h-5 w-5 shrink-0 text-good" />
+                      ) : (
+                        <LockIcon className="h-5 w-5 shrink-0 text-faint" />
+                      )}
+                      <span className={cx("min-w-0 flex-1 truncate text-sm", entry.unlocked ? "text-ink" : "text-sub")}>
+                        {unlockLabels[entry.key] ?? entry.key}
                       </span>
-                      <Badge tone="gold" className="!text-[9px]">
-                        {copy.club.unlockFuture}
-                      </Badge>
-                    </span>
-                  ) : (
-                    <span className="shrink-0 text-[11px] text-sub">
-                      {copy.club.unlockAt(entry.gate)}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </Panel>
+                      {owned ? (
+                        <span className="shrink-0 text-xs text-sub">{copy.finances.ownedLabel}</span>
+                      ) : available ? (
+                        <Badge tone="blue" className="shrink-0">
+                          {copy.club.unlocked}
+                        </Badge>
+                      ) : entry.unlocked ? (
+                        <span className="shrink-0 text-xs text-good">{copy.club.unlocked}</span>
+                      ) : entry.future ? (
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="hidden text-xs text-faint sm:block">{copy.club.unlockWorlds}</span>
+                          <Badge>{copy.club.unlockFuture}</Badge>
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-xs text-sub">{copy.club.unlockAt(entry.gate)}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </Panel>
         </div>
       </div>
 
-      {/* 5b — Career achievements (v2.0 R32) */}
-      <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "165ms" }}>
-        <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
-          <p className="kicker">{copy.achievements.title}</p>
-          <span className="text-[11px] font-semibold text-sub">
-            {copy.achievements.progress(
-              CAREER_ACHIEVEMENTS.filter((a) => achievements.unlocked[a.id]).length,
-              CAREER_ACHIEVEMENTS.length,
-            )}
-          </span>
-        </div>
-        <p className="mb-3 text-xs text-faint">{copy.achievements.hint}</p>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {CAREER_ACHIEVEMENTS.map((a) => {
-            const at = achievements.unlocked[a.id];
-            const item = ACH_UI.careerItems[a.id] ?? { name: a.id, desc: "" };
-            return <AchievementCard key={a.id} earned={Boolean(at)} style={achievementStyle({ id: a.id, category: a.tier })} icon={<AchievementIcon group="career" id={a.id} className="h-5 w-5" />} title={item.name} tier={ACH_UI.careerTier[a.tier]} body={item.desc} foot={at ? copy.achievements.unlockedOn(new Date(at).toLocaleDateString()) : copy.achievements.xp(a.xp)} />;
-          })}
-        </div>
-      </Panel>
-
-
-
-      {/* 6 — Season history */}
+      {/* 4. Season history: one row per finished season, the points column carrying the weight. */}
       {save.history.length > 0 ? (
-        <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "180ms" }}>
-          <p className="kicker mb-3">{copy.club.seasonHistory}</p>
-          <div className="min-w-0">
+        <Panel className="mb-4 p-5">
+          <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.seasonHistory}</h3>
+          <div className="mt-3 min-w-0">
             <table className="mobile-history-table w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-line-strong">
                   <th aria-label={copy.club.seasonHistory} className="px-2 pb-2" />
-                  <th className="kicker px-2 pb-2 text-center !text-[9px]">#</th>
-                  <th className="kicker px-2 pb-2 text-right !text-[9px]">
-                    {copy.common.seasonPoints}
-                  </th>
-                  <th className="kicker px-2 pb-2 text-right !text-[9px]">
-                    {copy.common.tier.worlds}
-                  </th>
-                  <th className="kicker px-2 pb-2 text-right !text-[9px]">{copy.common.prize}</th>
+                  <th className="kicker px-2 pb-2 text-center !text-[11px]">#</th>
+                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.seasonPoints}</th>
+                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.tier.worlds}</th>
+                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.prize}</th>
                 </tr>
               </thead>
               <tbody>
                 {save.history.map((h) => (
-                  <tr key={h.seasonIndex} className="border-b border-line transition-colors hover:bg-white/3">
+                  <tr key={h.seasonIndex} className="border-b border-line last:border-b-0">
                     <td className="px-2 py-2.5">
                       <span className="flex items-center gap-2">
                         <span className="truncate font-semibold text-ink">{h.label}</span>
-                        <Badge tone={GRADE_TONE[h.grade] ?? "neutral"} className="!px-1.5 !text-[9px]">
-                          {h.grade}
-                        </Badge>
+                        <Badge tone={GRADE_TONE[h.grade] ?? "neutral"}>{h.grade}</Badge>
                         {h.userWorldsPlacement === "champion" ? (
-                          <Badge tone="gold" className="!px-1.5 !text-[9px]">
-                            {copy.saves.champion}
-                          </Badge>
+                          <Badge tone="gold">{copy.saves.champion}</Badge>
                         ) : null}
                       </span>
                     </td>
-                    <td data-label="#" className="display px-2 py-2.5 text-center font-bold text-sub">
+                    <td data-label="#" className="display px-2 py-2.5 text-center font-semibold text-sub">
                       #{h.userRegionRank}
                     </td>
-                    <td data-label={copy.common.seasonPoints} className="display px-2 py-2.5 text-right font-bold text-ink">
+                    <td data-label={copy.common.seasonPoints} className="display px-2 py-2.5 text-right text-lg font-bold leading-none text-ink">
                       {h.userSeasonPoints}
                     </td>
                     <td data-label={copy.common.tier.worlds} className="px-2 py-2.5 text-right text-xs text-sub">
@@ -492,7 +431,7 @@ export function ClubScreen() {
                         ? (copy.common.placement as Record<string, string>)[
                             h.userWorldsPlacement
                           ] ?? h.userWorldsPlacement
-                        : "—"}
+                        : "–"}
                     </td>
                     <td data-label={copy.common.prize} className="px-2 py-2.5 text-right text-xs font-semibold text-good">
                       {formatMoney(h.earnings, { compact: true })}
@@ -505,13 +444,13 @@ export function ClubScreen() {
         </Panel>
       ) : null}
 
-      {/* 7 — Career settings */}
-      <Panel className="rise-in p-5" style={{ animationDelay: "210ms" }}>
-        <p className="kicker mb-3">{copy.club.settings}</p>
+      {/* 5. Career settings: one destructive action, kept apart at the foot of the page. */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+        <h3 className="display text-base uppercase leading-none text-sub">{copy.club.settings}</h3>
         <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
           {copy.club.abandonCareer}
         </Button>
-      </Panel>
+      </div>
 
       <Modal
         open={confirmOpen}

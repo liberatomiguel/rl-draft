@@ -162,21 +162,18 @@ export function ChallengeMatchBoard({
   };
 
   return (
+    // Job: follow the series. The score is the figure; "Live" is a tag and an
+    // orange hairline, shown only while a game is being played.
     <Panel strong glow={live ? "orange" : undefined} className="p-4 sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="kicker !text-[10px]">{kicker}</p>
-        {live ? (
-          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-orange-bright">
-            <span className="live-dot h-2 w-2 rounded-full bg-orange" aria-hidden />
-            {B.live}
-          </span>
-        ) : null}
+        <p className="kicker">{kicker}</p>
+        {live ? <Badge tone="orange">{B.live}</Badge> : null}
       </div>
 
       {/* scoreboard: goals · clock · goals, the series score under it */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
         <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:justify-end sm:gap-3">
-          <p className="display order-2 min-w-0 max-w-full truncate text-xs font-bold uppercase tracking-wide text-orange-bright sm:order-1 sm:text-lg">
+          <p className={cx("display order-2 min-w-0 max-w-full truncate text-xs font-bold uppercase sm:order-1 sm:text-lg", teamA.isUser ? "text-orange-bright" : "text-ink")}>
             {nameA}
           </p>
           <TeamLogo orgId={teamA.orgId} size="md" className="order-1 shrink-0 sm:order-2" />
@@ -184,7 +181,7 @@ export function ChallengeMatchBoard({
         <div className="px-1 text-center">
           {currentGame ? (
             <>
-              <p className="kicker !text-[10px] text-faint">{T.game(currentGame.index)}</p>
+              <p className="kicker !text-[11px] !text-faint">{T.game(currentGame.index)}</p>
               <div className="flex items-center justify-center gap-2 sm:gap-3">
                 <span key={`a${gameScore[0]}`} className="display pop-in min-w-[1ch] text-4xl font-bold leading-tight text-ink sm:text-5xl">
                   {gameScore[0]}
@@ -199,10 +196,10 @@ export function ChallengeMatchBoard({
                     syncKey={beatStepKey(roundKey, progress!.game, progress!.beat)}
                     label={B.gameClock}
                     className={cx(
-                      "display rounded-md border px-1.5 py-0.5 text-sm font-bold leading-snug sm:px-2 sm:text-base",
+                      "display rounded-sm border px-1.5 py-0.5 text-sm font-bold leading-snug sm:px-2 sm:text-base",
                       overtimeReached
-                        ? "border-orange/60 bg-orange/15 text-orange-bright"
-                        : "border-line-strong bg-black/30 text-ink",
+                        ? "border-orange/60 text-orange-bright"
+                        : "border-line-strong text-ink",
                     )}
                   />
                 ) : null}
@@ -211,7 +208,7 @@ export function ChallengeMatchBoard({
                 </span>
               </div>
               <p className="display mt-0.5 flex items-baseline justify-center gap-1.5 text-sm font-bold text-sub">
-                <span className="kicker !text-[9px] text-faint">{B.series}</span>
+                <span className="kicker !text-[10px] !text-faint">{B.series}</span>
                 {winsA} – {winsB}
               </p>
             </>
@@ -224,22 +221,22 @@ export function ChallengeMatchBoard({
           )}
           <div className="mt-1 flex min-h-5 flex-wrap items-center justify-center gap-1">
             {overtimeReached ? (
-              <Badge tone="orange" className="pop-in !text-[9px]">
+              <Badge tone="orange" className="pop-in !text-[10px]">
                 {B.overtime}
               </Badge>
             ) : null}
             {currentGame?.deciding ? (
-              <Badge tone="blue" className="!text-[9px]">
+              <Badge tone="blue" className="!text-[10px]">
                 {B.deciding}
               </Badge>
             ) : matchPoint ? (
-              <Badge className="!text-[9px]">{T.matchPoint}</Badge>
+              <Badge className="!text-[10px]">{T.matchPoint}</Badge>
             ) : null}
           </div>
         </div>
         <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
           <TeamLogo orgId={teamB.orgId} size="md" className="shrink-0" />
-          <p className="display min-w-0 max-w-full truncate text-xs font-bold uppercase tracking-wide text-ink sm:text-lg">
+          <p className={cx("display min-w-0 max-w-full truncate text-xs font-bold uppercase sm:text-lg", teamB.isUser ? "text-orange-bright" : "text-ink")}>
             {nameB}
           </p>
         </div>
@@ -257,8 +254,8 @@ export function ChallengeMatchBoard({
                 key={i}
                 title={`${T.game(g.index)} · ${goalsA}–${goalsB}${g.overtime ? ` ${T.overtime}` : ""}`}
                 className={cx(
-                  "pop-in display inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold",
-                  wonByUser ? "border-good/50 bg-good/10 text-good" : "border-bad/50 bg-bad/10 text-bad",
+                  "pop-in display inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-bold leading-tight",
+                  wonByUser ? "bg-good/15 text-good" : "bg-bad/15 text-bad",
                 )}
               >
                 {goalsA}–{goalsB}
@@ -274,8 +271,9 @@ export function ChallengeMatchBoard({
               key={i}
               aria-hidden
               className={cx(
-                "inline-flex h-[21px] w-8 items-center justify-center rounded-md border text-[9px]",
-                isCurrent ? "pulse-soft border-orange/70 bg-orange/15 text-orange-bright" : "border-line bg-white/[0.03] text-faint",
+                // The game in play is marked by its hairline; nothing pulses.
+                "display inline-flex h-[21px] w-8 items-center justify-center rounded-sm border text-[10px] font-semibold",
+                isCurrent ? "border-orange/70 text-orange-bright" : "border-line text-faint",
                 !live && "opacity-40",
               )}
             >
@@ -296,15 +294,15 @@ export function ChallengeMatchBoard({
                 <li
                   key={key}
                   className={cx(
-                    "flex items-center justify-center gap-2 rounded-md border border-orange/35 bg-orange/[0.07] px-2 py-1 text-center",
+                    "flex items-center justify-center gap-2 rounded-md border border-orange/35 px-2 py-1 text-center",
                     newest ? "pop-in" : "opacity-70",
                   )}
                 >
-                  <span className="kicker !text-[9px] !tracking-[0.16em] text-orange-bright">{B.endOfRegulation}</span>
+                  <span className="kicker !text-[11px] !text-orange-bright">{B.endOfRegulation}</span>
                   <span className="display shrink-0 text-xs font-bold text-ink">
                     {beat.scoreAfter[0]}–{beat.scoreAfter[1]}
                   </span>
-                  <Badge tone="orange" className="!px-1.5 !text-[8px]">
+                  <Badge tone="orange" className="!text-[10px]">
                     {B.overtime}
                   </Badge>
                 </li>
@@ -316,9 +314,9 @@ export function ChallengeMatchBoard({
                 className={cx(
                   "flex items-center gap-2 rounded-md px-2 py-1 text-sm",
                   beat.side === "b" && "flex-row-reverse text-right",
-                  beat.golden && "border border-orange/45 bg-orange/12",
+                  beat.golden && "border border-orange/45",
                   newest && "pop-in",
-                  newest && !beat.golden && "bg-orange/8",
+                  newest && !beat.golden && "bg-white/[0.05]",
                   !newest && "opacity-70",
                 )}
               >
@@ -329,12 +327,12 @@ export function ChallengeMatchBoard({
                 />
                 <span
                   className={cx(
-                    "display shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider",
+                    "display shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase leading-tight tracking-[0.05em]",
                     beat.golden
-                      ? "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]"
+                      ? "bg-orange text-paper-ink"
                       : newest
-                        ? "bg-orange/25 text-orange-bright"
-                        : "bg-white/8 text-sub",
+                        ? "bg-orange/15 text-orange-bright"
+                        : "bg-white/[0.07] text-sub",
                   )}
                 >
                   {beat.golden ? B.goldenGoal : B.goal}

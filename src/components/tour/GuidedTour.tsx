@@ -10,6 +10,9 @@
  *   no target, or whose element is not on the screen, shows a centred card.
  * - The dim is the spotlight's own box-shadow (one element, no SVG mask), and
  *   a transparent layer under it swallows clicks: the page is shown, not used.
+ * - DESIGN.md: the spotlight is a plain orange hairline (the "selected" state),
+ *   no halo; the card is an ordinary strong board with one filled button. The
+ *   steps do not carry a colour of their own.
  * - The frame loop re-reads the element's box while the tour is open, so the
  *   spotlight follows scrolling, resizes, late layout and entrance animations.
  * - Rendered in a portal on <body> (animated ancestors re-anchor `fixed`).
@@ -34,8 +37,6 @@ import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useOverlayHold } from "@/store/overlayHoldStore";
 
-export type TourTone = "blue" | "orange" | "cyan" | "good";
-
 export interface TourPoint {
   icon?: ReactNode;
   label: string;
@@ -46,7 +47,6 @@ export interface TourStep {
   id: string;
   /** `data-tour` token of the element to spotlight; none = a centred card. */
   target?: string;
-  tone?: TourTone;
   icon: ReactNode;
   title: string;
   body: string;
@@ -71,13 +71,6 @@ interface Box {
   width: number;
   height: number;
 }
-
-const TONES: Record<TourTone, { chip: string; text: string; bar: string; ring: string }> = {
-  blue: { chip: "border-blue/40 bg-blue/10 text-blue-bright", text: "text-blue-bright", bar: "bg-blue-bright", ring: "var(--blue-bright)" },
-  orange: { chip: "border-orange/40 bg-orange/10 text-orange-bright", text: "text-orange-bright", bar: "bg-orange", ring: "var(--orange-bright)" },
-  cyan: { chip: "border-cyan/40 bg-cyan/10 text-cyan", text: "text-cyan", bar: "bg-cyan", ring: "var(--cyan)" },
-  good: { chip: "border-good/40 bg-good/10 text-good", text: "text-good", bar: "bg-good", ring: "var(--good)" },
-};
 
 const GUTTER = 12;
 const PAD = 6;
@@ -141,7 +134,6 @@ export function GuidedTour({
 
   const step = steps[Math.min(index, steps.length - 1)];
   const last = index >= steps.length - 1;
-  const tone = TONES[step?.tone ?? "blue"];
 
   // Done and Skip both leave the page at the top (the tour scrolled it to its
   // elements). Once now, and once after the caller's own re-render has landed
@@ -313,16 +305,8 @@ export function GuidedTour({
         className="pointer-events-none fixed rounded-xl shadow-[0_0_0_200vmax_rgba(4,7,14,0.76)]"
         style={spotStyle}
       />
-      {spot ? (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed rounded-xl"
-          style={{
-            ...spotStyle,
-            boxShadow: `0 0 0 2px ${tone.ring}, 0 0 0 6px color-mix(in srgb, ${tone.ring} 22%, transparent), 0 0 26px 2px color-mix(in srgb, ${tone.ring} 45%, transparent)`,
-          }}
-        />
-      ) : null}
+      {/* The ring: one hairline around the hole, nothing outside it. */}
+      {spot ? <div aria-hidden className="pointer-events-none fixed rounded-xl border-[1.5px] border-orange" style={spotStyle} /> : null}
 
       {/* The card. Measured and placed before the first paint; `opacity-0` (not
           `invisible`: it must stay focusable) only covers a card with no place yet. */}
@@ -330,7 +314,7 @@ export function GuidedTour({
         ref={cardRef}
         tabIndex={-1}
         className={cx(
-          "panel-strong fixed flex max-h-[calc(100dvh-1.5rem)] flex-col p-4 shadow-[0_18px_60px_rgba(0,0,0,0.6)] outline-none sm:p-5",
+          "panel-strong fixed flex max-h-[calc(100dvh-1.5rem)] flex-col p-4 outline-none sm:p-5",
           card ? "opacity-100" : "opacity-0",
         )}
         style={{ top: card?.top ?? 0, left: card?.left ?? 0, width: card?.width ?? `min(${CARD_MAX}px, calc(100vw - ${GUTTER * 2}px))` }}
@@ -339,33 +323,30 @@ export function GuidedTour({
           <span
             aria-hidden
             className={cx(
-              "absolute h-3 w-3 rotate-45 border-line-strong bg-[#141d33]",
-              card.side === "below" ? "-top-1.5 border-l border-t" : "-bottom-1.5 border-b border-r bg-[#0d1424]",
+              "absolute h-3 w-3 rotate-45 border-line-strong bg-surface-strong",
+              card.side === "below" ? "-top-1.5 border-l border-t" : "-bottom-1.5 border-b border-r",
             )}
             style={{ left: card.caret - 6 }}
           />
         ) : null}
 
         <div className="flex shrink-0 items-start gap-3">
-          <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border", tone.chip)}>
+          <span className="mt-0.5 shrink-0 text-sub" aria-hidden>
             {step.icon}
           </span>
           <div className="min-w-0 flex-1">
-            <p className={cx("kicker flex min-w-0 text-[10px]", tone.text)}>
-              <span className="truncate">{kicker}</span>
-              <span className="shrink-0 whitespace-pre text-faint"> · {labels.progress(index + 1, steps.length)}</span>
-            </p>
-            <h3 id={titleId} className="display mt-0.5 text-lg font-bold uppercase leading-tight tracking-wide text-ink">
+            <h3 id={titleId} className="display text-lg uppercase leading-tight text-ink">
               {step.title}
             </h3>
+            {/* Where you are: the chapter and the step count (a fact, under the title). */}
+            <p className="mt-1 flex min-w-0 text-xs text-faint">
+              <span className="truncate">{kicker}</span>
+              <span className="shrink-0 whitespace-pre"> · {labels.progress(index + 1, steps.length)}</span>
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={skip}
-            className="-mr-1 -mt-1 shrink-0 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint transition-colors hover:bg-white/5 hover:text-ink"
-          >
+          <Button variant="ghost" size="sm" onClick={skip} className="-mr-2 -mt-1.5 shrink-0">
             {labels.skip}
-          </button>
+          </Button>
         </div>
 
         <div className="-mr-2 mt-3 min-h-0 overflow-y-auto pr-2" aria-live="polite">
@@ -373,16 +354,13 @@ export function GuidedTour({
             {step.body}
           </p>
           {step.points?.length ? (
-            <ul className={cx("mt-3 grid gap-1.5", step.pointsLayout === "grid" ? "grid-cols-2" : "grid-cols-1")}>
+            <ul className={cx("mt-3 grid gap-x-4 border-t border-line", step.pointsLayout === "grid" ? "grid-cols-2" : "grid-cols-1")}>
               {step.points.map((point) => (
-                <li
-                  key={point.label}
-                  className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-white/[0.03] px-2.5 py-1.5"
-                >
-                  {point.icon ? <span className={cx("shrink-0", tone.text)}>{point.icon}</span> : null}
+                <li key={point.label} className="flex min-w-0 items-start gap-2 border-b border-line py-2">
+                  {point.icon ? <span className="mt-0.5 shrink-0 text-sub">{point.icon}</span> : null}
                   <span className="min-w-0 leading-tight">
                     <span className="block truncate text-xs font-semibold text-ink">{point.label}</span>
-                    {point.text ? <span className="block text-[11px] leading-snug text-faint">{point.text}</span> : null}
+                    {point.text ? <span className="mt-0.5 block text-xs leading-snug text-sub">{point.text}</span> : null}
                   </span>
                 </li>
               ))}
@@ -396,8 +374,8 @@ export function GuidedTour({
               <span
                 key={s.id}
                 className={cx(
-                  "h-1 max-w-7 flex-1 rounded-full",
-                  i === index ? tone.bar : i < index ? "bg-white/35" : "bg-white/12",
+                  "h-1 max-w-7 flex-1 rounded-sm",
+                  i === index ? "bg-ink" : i < index ? "bg-white/35" : "bg-white/12",
                 )}
               />
             ))}

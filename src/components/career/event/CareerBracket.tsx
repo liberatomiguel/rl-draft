@@ -167,13 +167,13 @@ export function CareerBracket({
       ) : (
         <div className="space-y-5 pb-1 sm:overflow-x-auto">
           <div>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-cyan">
               {C.event.upperBracket}
             </p>
             <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(wideColumn)}</div>
           </div>
           <div>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-orange-bright">
               {C.event.lowerBracket}
             </p>
             <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(wideColumn)}</div>
@@ -216,8 +216,8 @@ function BracketCell({
   const outline =
     revealed && userIn
       ? userWon
-        ? "border-good/70 shadow-[0_0_14px_rgba(52,211,153,0.15)]"
-        : "border-bad/70 shadow-[0_0_14px_rgba(248,113,113,0.15)]"
+        ? "border-good/70"
+        : "border-bad/70"
       : live
         ? "border-orange"
         : userIn

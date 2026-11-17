@@ -39,36 +39,20 @@ function experienceMeter(impact: CoachImpact): number {
   return clamp01((impact.planQualityPct / 100 - base) / (1 - base));
 }
 
-function Meter({
-  icon,
-  label,
-  value,
-  fill,
-  hint,
-  tone,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  fill: number;
-  hint: string;
-  tone: string;
-}) {
+/** One attribute: its label and value on a line, a ten-step meter, what it does. */
+function Meter({ label, value, fill, hint }: { label: string; value: string; fill: number; hint: string }) {
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 text-[11px]">
-        <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-          <span className={tone}>{icon}</span>
-          {label}
-        </span>
-        <span className="font-mono font-bold text-ink">{value}</span>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="kicker">{label}</span>
+        <span className="display text-base font-bold leading-none text-ink">{value}</span>
       </div>
-      <div className="mt-1 flex gap-0.5" aria-hidden>
+      <div className="mt-1.5 flex gap-0.5" aria-hidden>
         {Array.from({ length: 10 }, (_, i) => (
-          <span key={i} className={cx("h-1 flex-1 rounded-sm", i < Math.round(fill * 10) ? "bg-blue/55" : "bg-white/8")} />
+          <span key={i} className={cx("h-1 flex-1 rounded-sm", i < Math.round(fill * 10) ? "bg-blue-bright/70" : "bg-white/8")} />
         ))}
       </div>
-      <p className="mt-0.5 text-[10px] text-faint">{hint}</p>
+      <p className="mt-1 text-xs text-sub">{hint}</p>
     </div>
   );
 }
@@ -97,74 +81,98 @@ export function CoachAttributeLines({
   const specialtyPct = Math.round(CAREER_PLAN.coach.specialtyBoost * 100);
   const spec = OBJECTIVE_TONE[impact.specialty];
   const vs = impact.vsCurrent;
+  // His stat boost, rating effect and best card: one quiet line, not a row of pills.
+  const extras = [
+    `${statLabels[coach.bonusType] ?? coach.bonusType} ${coach.bonusLevel}`,
+    fx.ratingMod > 0 ? C.market.coachRating(fx.ratingMod) : null,
+    coach.bestCard ? C.market.coachBestCard(coach.bestCard) : null,
+  ].filter(Boolean).join(" · ");
+  // The coach in post: three columns of one strip (label, value, what it does).
   if (compact) return (
-    <div className="grid grid-cols-1 gap-2 border-t border-line pt-2.5 sm:grid-cols-3" aria-label={C.market.coachEffects}>
-      <div><p className="text-[9px] uppercase tracking-[0.1em] text-faint">{K.quality}</p><p className="mt-0.5 text-xs font-semibold text-ink"><StarIcon className="mr-1 inline h-3 w-3 text-amber-300" filled />{impact.quality}<span className="ml-2 text-[10px] font-normal text-sub">{K.qualityEffect(impact.efficiencyPct)}</span></p></div>
-      <div><p className="text-[9px] uppercase tracking-[0.1em] text-faint">{K.experience}</p><p className="mt-0.5 text-xs font-semibold text-ink"><HourglassIcon className="mr-1 inline h-3 w-3 text-blue-bright" />{K.experienceEffect(impact.experience)}</p><p className="mt-0.5 text-[10px] text-faint">{K.experienceHint(impact.planQualityPct, impact.wearCutPct)}</p></div>
-      <div><p className="text-[9px] uppercase tracking-[0.1em] text-faint">{K.specialty}</p><p className={cx("mt-0.5 flex items-center gap-1 text-xs font-semibold", spec.text)}><ObjectiveIcon objective={impact.specialty} className="h-3 w-3" />{Y.objectives[impact.specialty]}</p><p className="mt-0.5 text-[10px] text-faint">{K.specialtyEffect(specialtyPct)} · {statLabels[coach.bonusType] ?? coach.bonusType} {coach.bonusLevel}</p></div>
-      {fx.ratingMod > 0 || coach.bestCard ? <p className="text-[10px] text-faint sm:col-span-3">{fx.ratingMod > 0 ? C.market.coachRating(fx.ratingMod) : ""}{fx.ratingMod > 0 && coach.bestCard ? " · " : ""}{coach.bestCard ? C.market.coachBestCard(coach.bestCard) : ""}</p> : null}
+    <div className="grid grid-cols-1 gap-x-5 gap-y-3 border-t border-line pt-3 sm:grid-cols-3" aria-label={C.market.coachEffects}>
+      <div>
+        <p className="kicker">{K.quality}</p>
+        <p className="display mt-1 text-lg font-bold leading-none text-ink">{impact.quality}</p>
+        <p className="mt-1 text-xs text-sub">{K.qualityEffect(impact.efficiencyPct)}</p>
+      </div>
+      <div>
+        <p className="kicker">{K.experience}</p>
+        <p className="display mt-1 text-lg font-bold leading-none text-ink">{K.experienceEffect(impact.experience)}</p>
+        <p className="mt-1 text-xs text-sub">{K.experienceHint(impact.planQualityPct, impact.wearCutPct)}</p>
+      </div>
+      <div>
+        <p className="kicker">{K.specialty}</p>
+        <p className="display mt-1 flex items-center gap-1.5 text-lg font-bold leading-none text-ink">
+          <ObjectiveIcon objective={impact.specialty} className={cx("h-4 w-4 shrink-0", spec.text)} />
+          {Y.objectives[impact.specialty]}
+        </p>
+        <p className="mt-1 text-xs text-sub">{K.specialtyEffect(specialtyPct)}</p>
+      </div>
+      <p className="text-xs text-sub sm:col-span-3">{extras}</p>
     </div>
   );
   return (
-    <div className="space-y-2.5" aria-label={C.market.coachEffects}>
+    <div className="space-y-4" aria-label={C.market.coachEffects}>
+      {/* The number that decides: the expected gain per starter, against today's setup. */}
       {showImpact ? (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-white/[0.02] px-2.5 py-2">
+        <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div className="min-w-0">
-            <p className="flex items-center gap-1 text-[9px] uppercase tracking-[0.1em] text-sub">
-              <TrendUpIcon className="h-3 w-3 text-good" />
-              {K.expected}
-            </p>
-            <p className={cx("text-[10px] font-semibold", vs > 0.005 ? "text-good" : vs < -0.005 ? "text-bad" : "text-faint")}>
-              {Math.abs(vs) < 0.005 ? K.same : K.vsNow(`${vs > 0 ? "+" : "−"}${Math.abs(vs).toFixed(2)}`)}
-            </p>
+            <p className="display text-2xl font-bold leading-none text-ink">{Y.expectedGain(impact.perStarter.toFixed(2))}</p>
+            <p className="mt-1 text-xs text-sub">{K.expected}</p>
           </div>
-          <p className="display shrink-0 text-lg font-bold text-ink">{Y.expectedGain(impact.perStarter.toFixed(2))}</p>
+          <p className={cx("shrink-0 text-xs", vs > 0.005 ? "text-good" : vs < -0.005 ? "text-bad" : "text-sub")}>
+            {Math.abs(vs) < 0.005 ? K.same : K.vsNow(`${vs > 0 ? "+" : "−"}${Math.abs(vs).toFixed(2)}`)}
+          </p>
         </div>
       ) : null}
       <Meter
-        icon={<StarIcon className="h-3.5 w-3.5" filled />}
         label={K.quality}
         value={String(impact.quality)}
         fill={qualityMeter(impact)}
         hint={K.qualityEffect(impact.efficiencyPct)}
-        tone="text-amber-300"
       />
       <Meter
-        icon={<HourglassIcon className="h-3.5 w-3.5" />}
         label={K.experience}
         value={K.experienceEffect(impact.experience)}
         fill={experienceMeter(impact)}
         hint={K.experienceHint(impact.planQualityPct, impact.wearCutPct)}
-        tone="text-blue-bright"
       />
-      <div className="flex items-center gap-2 border-t border-line pt-2">
-        <span className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.03]", spec.text)}>
-          <ObjectiveIcon objective={impact.specialty} className="h-[18px] w-[18px]" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[9px] uppercase tracking-[0.1em] text-faint">{K.specialty}</p>
-          <p className={cx("truncate text-xs font-bold", spec.text)}>{Y.objectives[impact.specialty]}</p>
-          <p className="text-[10px] text-faint">{K.specialtyEffect(specialtyPct)}</p>
+      <div>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="kicker">{K.specialty}</span>
+          <span className="display flex items-center gap-1.5 text-base font-bold leading-none text-ink">
+            <ObjectiveIcon objective={impact.specialty} className={cx("h-4 w-4 shrink-0", spec.text)} />
+            {Y.objectives[impact.specialty]}
+          </span>
         </div>
+        <p className="mt-1 text-xs text-sub">{K.specialtyEffect(specialtyPct)}</p>
       </div>
-      <p className="flex flex-wrap items-center gap-1.5 text-[10px] text-faint">
-        <span className="rounded-full bg-white/5 px-2 py-0.5 font-semibold text-sub">
-          {statLabels[coach.bonusType] ?? coach.bonusType} {coach.bonusLevel}
-        </span>
-        {fx.ratingMod > 0 ? <span className="rounded-full bg-white/5 px-2 py-0.5">{C.market.coachRating(fx.ratingMod)}</span> : null}
-        {coach.bestCard ? <span className="rounded-full bg-white/5 px-2 py-0.5">{C.market.coachBestCard(coach.bestCard)}</span> : null}
-      </p>
+      <p className="text-xs text-sub">{extras}</p>
     </div>
   );
 }
 
-export function CoachDevelopment({ coach, C }: { coach: CoachState; C: CareerCopy }) {
+/** How a coach develops: his quality against his ceiling, then the two rules every contract follows. */
+export function CoachDevelopment({
+  coach,
+  C,
+  notesOnly = false,
+}: {
+  coach: CoachState;
+  C: CareerCopy;
+  /** Only the two rules (the host already prints the quality line). */
+  notesOnly?: boolean;
+}) {
   const profile = coachTrainingProfileOf(coach)!;
-  return <div className="space-y-2 rounded-lg border border-line bg-black/15 p-3">
-    <p className="text-xs font-semibold text-ink">{C.launch.coachGrowth(Math.round(profile.quality), profile.ceiling)}</p>
-    <p className="text-[11px] leading-relaxed text-sub">{C.launch.coachEvolution}</p>
-    <p className="text-[11px] leading-relaxed text-faint">{C.launch.coachRetainer}</p>
-  </div>;
+  return (
+    <div className="space-y-1">
+      {notesOnly ? null : (
+        <p className="text-sm font-semibold text-ink">{C.launch.coachGrowth(Math.round(profile.quality), profile.ceiling)}</p>
+      )}
+      <p className="text-xs leading-relaxed text-sub">{C.launch.coachEvolution}</p>
+      <p className="text-xs leading-relaxed text-sub">{C.launch.coachRetainer}</p>
+    </div>
+  );
 }
 
 /** One coach on the shortlist: identity → expected effect → meters → wage → Hire. */

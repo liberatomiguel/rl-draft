@@ -13,11 +13,11 @@
  */
 
 import { GuidedTour, type TourStep } from "@/components/tour/GuidedTour";
-import { BoltIcon, ShieldIcon, StarIcon, TargetIcon, TrendUpIcon, TrophyIcon } from "@/components/ui/icons";
+import { BoltIcon, GaugeIcon, ShieldIcon, TargetIcon, TrendUpIcon, TrophyIcon } from "@/components/ui/icons";
 import { useCopy } from "@/content/copy";
 
 const BIG = "h-5 w-5";
-const SMALL = "h-3.5 w-3.5";
+const SMALL = "h-4 w-4";
 
 export function DraftTour({ onClose }: { onClose: () => void }) {
   const { ONBOARDING } = useCopy();
@@ -27,7 +27,6 @@ export function DraftTour({ onClose }: { onClose: () => void }) {
     {
       id: "offer",
       target: "draft-offer",
-      tone: "orange",
       icon: <TargetIcon className={BIG} />,
       title: T.offer.title,
       body: T.offer.body,
@@ -35,26 +34,23 @@ export function DraftTour({ onClose }: { onClose: () => void }) {
     {
       id: "roster",
       target: "draft-roster",
-      tone: "blue",
       icon: <ShieldIcon className={BIG} />,
       title: T.roster.title,
       body: T.roster.body,
       points: [
-        { icon: <StarIcon className={SMALL} />, ...T.roster.points[0] },
+        { icon: <GaugeIcon className={SMALL} />, ...T.roster.points[0] },
         { icon: <TrendUpIcon className={SMALL} />, ...T.roster.points[1] },
       ],
     },
     {
       id: "reroll",
       target: "draft-reroll",
-      tone: "cyan",
       icon: <BoltIcon className={BIG} />,
       title: T.reroll.title,
       body: T.reroll.body,
     },
     {
       id: "finish",
-      tone: "orange",
       icon: <TrophyIcon className={BIG} />,
       title: T.finish.title,
       body: T.finish.body,

@@ -612,8 +612,8 @@ export function CalendarScreen() {
               href="/career/event"
               className={cx(
                 "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
-                "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]",
-                "shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all hover:brightness-110",
+                "bg-orange text-paper-ink",
+                "transition-colors hover:bg-orange-bright",
               )}
             >
               {C.calendar.advanceToStop(eventDue.name)}

@@ -36,10 +36,10 @@ export function SaleConsequences({
   const squadAfter = save.squad.filter((p) => p.id !== offer.playerId).length;
   return (
     <>
-      <p className="kicker text-[10px]">{C.market.consequences}</p>
+      <p className="kicker">{C.market.consequences}</p>
       {offer.emergency ? (
         <>
-          <p className="font-semibold text-ink">
+          <p className="text-ink">
             {C.market.saleLeaves(
               offer.playerName ?? "?",
               offer.otherRef ? nameOfRef(save, offer.otherRef) : "?",
@@ -47,7 +47,7 @@ export function SaleConsequences({
             )}
           </p>
           {squadAfter < LINEUP_SEATS ? (
-            <p className="text-xs font-semibold text-orange-bright">{C.market.saleShortSeat}</p>
+            <p className="text-xs text-orange-bright">{C.market.saleShortSeat}</p>
           ) : null}
           <p className="font-semibold text-good">
             {preview.garnished > 0
@@ -59,7 +59,7 @@ export function SaleConsequences({
       ) : null}
       <p className="font-semibold text-good">{C.market.balanceAfter(formatMoney(preview.balanceAfter))}</p>
       {preview.garnished > 0 && !offer.emergency ? (
-        <p className="text-xs font-semibold text-orange-bright">
+        <p className="text-xs text-orange-bright">
           {C.market.saleBackerRepaid(formatMoney(preview.garnished))}
         </p>
       ) : null}

@@ -3,10 +3,14 @@
 /**
  * Road to Worlds — career creation wizard (design doc §6).
  *
- * Five full-screen steps with progress dots; each step teaches its concept in
- * one kicker line. All state is local until the final "Found [ORG]" press,
- * which creates the save via careerStore.createCareer with the SAME seed the
- * step-4 roster preview used — so the created world matches what was shown.
+ * Five full-screen steps with a progress strip; each step teaches its concept
+ * in one line. All state is local until the final "Found [ORG]" press, which
+ * creates the save via careerStore.createCareer with the SAME seed the step-4
+ * roster preview used, so the created world matches what was shown.
+ *
+ * DESIGN.md: one decision per step and one filled button (Next, then Found).
+ * An option card marks the pick with its hairline (`panel-glow-orange`) and
+ * nothing else; "Recommended" is a plain tag beside the preset's name.
  */
 
 import { useRouter } from "next/navigation";
@@ -36,11 +40,9 @@ import {
 import type { CrestId, LayoutId, PatternId, SymbolId } from "@/components/career/UserCrest";
 import { CrestStep } from "@/components/career/wizard/CrestStep";
 import { crestContrastOf } from "@/components/career/wizard/crestContrast";
-import { NewTag } from "@/components/ui/NewDot";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import {
-  CheckIcon,
   FlameIcon,
   PeakIcon,
   ScaleIcon,
@@ -83,11 +85,19 @@ const PRESET_ICON: Record<CareerDifficulty, typeof ShieldIcon> = {
   normal: TargetIcon,
   hard: FlameIcon,
 };
-const PRESET_TONE: Record<CareerDifficulty, string> = {
-  easy: "bg-good/15 text-good",
-  normal: "bg-amber-400/15 text-amber-300",
-  hard: "bg-bad/15 text-bad",
+/** How deep a region's field is, on the three-bar meter of its card (3 = the hard road). */
+const REGION_LEVEL: Record<Region, { bars: 1 | 2 | 3; key: "hard" | "mid" | "easy" }> = {
+  NA: { bars: 3, key: "hard" },
+  EU: { bars: 3, key: "hard" },
+  SAM: { bars: 2, key: "mid" },
+  MENA: { bars: 2, key: "mid" },
+  OCE: { bars: 2, key: "mid" },
+  APAC: { bars: 1, key: "easy" },
+  SSA: { bars: 1, key: "easy" },
 };
+/** An option card (region, roster, preset): the pick is the orange hairline, nothing more. */
+const optionCard = (active: boolean): string =>
+  cx("panel text-left transition-colors", active ? "panel-glow-orange" : "hover:!border-line-strong");
 
 /** null = the "None" tile in the pattern picker / randomizer pool. */
 const DEFAULT_CREST_COLORS = CREST_WIZARD_KITS.find((k) => k.id === "navy-gold") ?? CREST_WIZARD_KITS[0];
@@ -281,11 +291,15 @@ export function WizardScreen() {
 
   const canContinue = step === 1 ? step1Ok : true;
   const rivals = rivalsByRegion();
+  const rosterLabel =
+    rosterKey === "prospects" ? C.wizard.rosterProspects : rosterKey === "journeymen" ? C.wizard.rosterJourneymen : C.wizard.rosterBalanced;
 
+  // Job: found a new organisation. One decision per step (identity, crest,
+  // region, first signings, difficulty); the one filled button moves on.
   return (
     <div className="mobile-action-space mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
       <SectionTitle
-        kicker={C.meta.title}
+        kicker={C.wizard.step(step, TOTAL_STEPS)}
         title={C.wizard.title}
         right={
           step === 1 ? (
@@ -296,40 +310,40 @@ export function WizardScreen() {
         }
       />
 
-      {/* Progress dots */}
-      <div className="mt-4 flex items-center gap-3">
-        <div className="flex items-center">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              disabled={n >= step}
-              onClick={() => n < step && setStep(n)}
-              aria-label={C.wizard.step(n, TOTAL_STEPS)}
-              aria-current={n === step ? "step" : undefined}
-              className="flex h-9 w-7 items-center justify-center disabled:cursor-default"
-            >
-              <span
-                className={cx(
-                  "h-2.5 rounded-full transition-all",
-                  n === step ? "w-6 bg-orange" : "w-2.5",
-                  n < step && "bg-orange/50",
-                  n > step && "bg-white/15",
-                )}
-              />
-            </button>
-          ))}
-        </div>
-        <span className="kicker">{C.wizard.step(step, TOTAL_STEPS)}</span>
+      {/* Progress: five flat segments (a finished one goes back to its step).
+          The count reads under the title, as a sentence. */}
+      <div className="mt-3 flex items-center gap-1">
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={n >= step}
+            onClick={() => n < step && setStep(n)}
+            aria-label={C.wizard.step(n, TOTAL_STEPS)}
+            aria-current={n === step ? "step" : undefined}
+            className="group flex h-9 w-10 items-center disabled:cursor-default"
+          >
+            <span
+              className={cx(
+                "h-1 w-full rounded-sm transition-colors",
+                n === step && "bg-ink",
+                n < step && "bg-white/35 group-hover:bg-white/60",
+                n > step && "bg-white/12",
+              )}
+            />
+          </button>
+        ))}
       </div>
 
-      <div key={step} className="rise-in mt-6">
+      <div key={step} className="rise-in mt-5">
         {/* ------------------------------------------------ Step 1 · Identity */}
         {step === 1 ? (
           <>
             <StepHeader title={C.wizard.identityTitle} kicker={C.wizard.identityKicker} />
-            <div className="grid gap-4 lg:grid-cols-[1fr_minmax(15rem,18rem)]">
-              <Panel className="grid gap-5 p-5 sm:grid-cols-2">
+            {/* One board: the four fields, and beside them (under them on a
+                phone) what they make, past a hairline. */}
+            <Panel className="grid lg:grid-cols-[1fr_minmax(15rem,18rem)]">
+              <div className="grid content-start gap-5 p-5 sm:grid-cols-2">
                 <Field
                   label={C.wizard.orgName}
                   hint={`${nameTrim.length}/18`}
@@ -371,7 +385,7 @@ export function WizardScreen() {
                     }}
                     maxLength={4}
                     aria-label={C.wizard.abbrev}
-                    className={cx(inputCls, "font-mono uppercase tracking-[0.2em]")}
+                    className={cx(inputCls, "display uppercase tracking-[0.06em]")}
                   />
                 </Field>
                 <Field label={C.wizard.managerName}>
@@ -387,22 +401,21 @@ export function WizardScreen() {
                 <Field label={C.wizard.country}>
                   <CountrySelect value={country} onChange={setCountry} label={C.wizard.country} />
                 </Field>
-              </Panel>
+              </div>
 
-              {/* Live identity preview */}
-              <Panel className="flex flex-col items-center justify-center gap-3 p-5 text-center">
+              {/* Live identity preview: the crest, the name, then the tag and the manager on one quiet line. */}
+              <div className="flex flex-col items-center justify-center gap-3 border-t border-line p-5 text-center lg:border-l lg:border-t-0">
                 <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="lg" />
-                <p className="display text-lg font-bold uppercase tracking-wide text-ink">
-                  {nameTrim || "—"}
-                </p>
+                <p className="display min-h-[1.125rem] text-lg font-bold uppercase leading-none text-ink">{nameTrim}</p>
                 <div className="flex items-center gap-2">
-                  {abbrevOk ? <Badge tone="blue">{abbrev}</Badge> : null}
                   <CountryChip code={country} />
                   <Badge className={REGION_BADGE[region]}>{region}</Badge>
                 </div>
-                {managerOk ? <p className="text-xs text-sub">{managerName.trim()}</p> : null}
-              </Panel>
-            </div>
+                {abbrevOk || managerOk ? (
+                  <p className="text-xs text-sub">{[abbrevOk ? abbrev : null, managerOk ? managerName.trim() : null].filter(Boolean).join(" · ")}</p>
+                ) : null}
+              </div>
+            </Panel>
           </>
         ) : null}
 
@@ -438,10 +451,11 @@ export function WizardScreen() {
         {step === 3 ? (
           <>
             <StepHeader title={C.wizard.regionTitle} kicker={C.wizard.regionKicker} />
-            <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={C.wizard.regionTitle}>
+            <div className="grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label={C.wizard.regionTitle}>
               {REGION_ORDER.map((r) => {
                 const active = region === r;
                 const regionRivals = rivals[r];
+                const level = REGION_LEVEL[r];
                 return (
                   <button
                     key={r}
@@ -449,29 +463,35 @@ export function WizardScreen() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setRegionPick(r)}
-                    className={cx(
-                      "panel p-4 text-left transition-all",
-                      active && "panel-glow-orange !border-orange/60",
-                      !active && "hover:!border-line-strong",
-                    )}
+                    className={cx(optionCard(active), "p-4")}
                   >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2">
+                    {/* The region, and the number that decides the road: its Worlds seats. */}
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2">
                         <Badge className={REGION_BADGE[r]}>{r}</Badge>
-                        <span className="display text-base font-bold uppercase tracking-wide text-ink">
+                        <span className="display truncate text-lg font-bold uppercase leading-none text-ink">
                           {copy.SETUP.regionNames[r]}
                         </span>
                       </span>
-                      {active ? <Badge tone="orange">{copy.SETUP.selected}</Badge> : null}
+                      <span className="display shrink-0 text-sm font-semibold uppercase leading-none text-sub">
+                        {C.wizard.regionSlots(CAREER_SLOTS.worlds[r])}
+                      </span>
                     </div>
-                    <div className="mb-3 flex items-center gap-2"><span className={cx("flex gap-1", ["EU", "NA"].includes(r) ? "text-orange-bright" : ["APAC", "SSA"].includes(r) ? "text-good" : "text-blue-bright")}>{[1,2,3].map(n => <span key={n} className={cx("h-2 w-6 rounded-full bg-current", n > (["EU", "NA"].includes(r) ? 3 : ["APAC", "SSA"].includes(r) ? 1 : 2) && "opacity-15")} />)}</span><span className="text-xs font-semibold text-sub">{C.wizard.regionLevels[["EU", "NA"].includes(r) ? "hard" : ["APAC", "SSA"].includes(r) ? "easy" : "mid"]}</span></div>
-                    <p className="mb-2 text-xs leading-relaxed text-sub">
-                      {C.wizard.regionStrength} · {C.wizard[STRENGTH_KEY[r]]}
+                    {/* Field depth: a three-bar meter and its word. */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="flex gap-0.5" aria-hidden>
+                        {[1, 2, 3].map((n) => (
+                          <span key={n} className={cx("h-1.5 w-5 rounded-sm", n <= level.bars ? "bg-ink" : "bg-white/12")} />
+                        ))}
+                      </span>
+                      <span className="text-xs text-ink">{C.wizard.regionLevels[level.key]}</span>
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-sub">
+                      {C.wizard.regionStrength}: {C.wizard[STRENGTH_KEY[r]]}
                     </p>
-                    <Badge tone="blue">{C.wizard.regionSlots(CAREER_SLOTS.worlds[r])}</Badge>
                     {regionRivals.length > 0 ? (
                       <div className="mt-3 border-t border-line pt-2.5">
-                        <p className="kicker mb-1.5 !text-[10px]">{C.wizard.regionRivals}</p>
+                        <p className="kicker mb-1.5 !text-[11px]">{C.wizard.regionRivals}</p>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                           {regionRivals.map((rv) => (
                             <span key={rv.orgId} className="flex items-center gap-1.5 text-xs text-sub">
@@ -486,7 +506,7 @@ export function WizardScreen() {
                 );
               })}
             </div>
-            <p className="mt-3 text-xs text-faint">{C.wizard.regionNote}</p>
+            <p className="mt-3 text-xs text-sub">{C.wizard.regionNote}</p>
           </>
         ) : null}
 
@@ -494,7 +514,7 @@ export function WizardScreen() {
         {step === 4 ? (
           <>
             <StepHeader title={C.wizard.rosterTitle} kicker={C.wizard.rosterKicker} />
-            <div className="grid gap-3 lg:grid-cols-3" role="radiogroup" aria-label={C.wizard.rosterTitle}>
+            <div className="grid gap-4 lg:grid-cols-3" role="radiogroup" aria-label={C.wizard.rosterTitle}>
               {ROSTER_KEYS.map((key) => {
                 const offer = offers.find((o) => o.key === key);
                 if (!offer) return null;
@@ -524,84 +544,45 @@ export function WizardScreen() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setRosterKey(key)}
-                    className={cx(
-                      "panel flex flex-col p-4 text-left transition-all",
-                      active && "panel-glow-orange !border-orange/60",
-                      !active && "hover:!border-line-strong",
-                    )}
+                    className={cx(optionCard(active), "flex flex-col p-4")}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span
-                          className={cx(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                            active ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-sub",
-                          )}
-                        >
-                          <RosterIcon className="h-5 w-5" />
-                        </span>
-                        <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                          {labels[key].label}
-                        </span>
-                      </span>
-                      {/* rc.35 (front C, Miguel): the middle offer is tagged "Balanced". */}
-                      {key === "balanced" ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300">
-                          <ScaleIcon className="h-3 w-3" />
-                          {C.wizard.rosterBalancedTag}
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="mb-3 text-xs leading-relaxed text-sub">{labels[key].desc}</p>
+                    {/* The offer's name says what it is (the old "Balanced" tag on
+                        the card called Balanced is gone). */}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <RosterIcon className="h-5 w-5 shrink-0 text-sub" />
+                      <span className="display truncate text-lg font-bold uppercase leading-none text-ink">{labels[key].label}</span>
+                    </span>
+                    <p className="mt-2 text-sm leading-snug text-sub">{labels[key].desc}</p>
 
-                    <div className="mb-3 space-y-2">
+                    {/* The three players: a list, one row each. */}
+                    <div className="mt-3 border-t border-line">
                       {offer.players.map((p) => {
                         // DEV-04: the band HQ shows once the career exists (never one centred on the truth).
                         const band = founderPotentialBandFor(p, seed);
                         return (
-                          <div
-                            key={p.id}
-                            className="flex items-center gap-2.5 rounded-lg border border-line bg-black/20 px-2.5 py-2"
-                          >
-                            <span className="display w-8 shrink-0 text-center text-lg font-bold text-ink">
-                              {Math.round(p.overall)}
-                            </span>
+                          <div key={p.id} className="flex items-center gap-3 border-b border-line py-2">
+                            <span className="display w-8 shrink-0 text-xl font-bold leading-none text-ink">{Math.round(p.overall)}</span>
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>
-                              <span className="block text-[11px] text-faint">
+                              <span className="block text-xs text-sub">
                                 {C.player.archetype[p.archetype]} · {C.player.age(p.age)}
                               </span>
                             </span>
-                            <Badge tone="blue" className="shrink-0">
-                              {C.player.potBand(band.min, band.max)}
-                            </Badge>
+                            <span className="shrink-0 text-xs text-sub">{C.player.potBand(band.min, band.max)}</span>
                           </div>
                         );
                       })}
                     </div>
 
-                    <div className="mt-auto space-y-2 border-t border-line pt-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-sub">{C.wizard.avgOverall}</span>
-                        <span className="display font-bold text-ink">{avgOvr}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-sub">{C.wizard.avgAge}</span>
-                        <span className="display font-bold text-ink">{avgAge}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-sub">{C.wizard.wageBill}</span>
-                        <span className="display font-bold text-orange-bright">
-                          {C.squad.perWeek(`~${formatMoney(weeklyWage(wage), { compact: true })}`)}
-                        </span>
-                      </div>
-                      {/* rc.34 review: the budget on the difficulty picked (Normal until step 5 changes it). */}
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-sub">{C.wizard.rosterBudget(C.wizard.presets[difficulty].label)}</span>
-                        <span className="display font-bold text-good">{formatMoney(budget)}</span>
-                      </div>
-                      <p className="text-[11px] text-faint">{C.wizard.rosterRunway(runway)}</p>
+                    {/* The offer in four figures. rc.34 review: the budget is the one on the
+                        difficulty picked (Normal until step 5 changes it). */}
+                    <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-3 pt-4">
+                      <Figure value={avgOvr} label={C.wizard.avgOverall} />
+                      <Figure value={avgAge} label={C.wizard.avgAge} />
+                      <Figure value={C.squad.perWeek(`~${formatMoney(weeklyWage(wage), { compact: true })}`)} label={C.wizard.wageBill} />
+                      <Figure value={formatMoney(budget)} label={C.wizard.rosterBudget(C.wizard.presets[difficulty].label)} />
                     </div>
+                    <p className="mt-3 text-xs text-sub">{C.wizard.rosterRunway(runway)}</p>
                   </button>
                 );
               })}
@@ -614,13 +595,10 @@ export function WizardScreen() {
           <>
             <StepHeader title={C.wizard.finalTitle} kicker={C.wizard.finalKicker} />
             {/* rc.34 (front I, Miguel 31/10): three clear choices for a first-time
-                player on a phone — a promise and three plain bullets each, the
-                selected card unmistakable (orange frame, tint and check). */}
-            {/* rc.35 (front C, Miguel on rc.34): an icon per preset, the promise as
-                the headline, and Normal marked RECOMMENDED — an amber stroke, a
-                tag over its top edge and a taller card, so it draws the eye
-                before any pick (the pick itself stays the orange frame + check). */}
-            <div className="grid items-stretch gap-3 pt-3 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.finalTitle}>
+                player on a phone: a promise and three plain bullets each.
+                DESIGN.md: the three cards are the same size; the pick is the
+                orange hairline and Normal carries a plain "Recommended" tag. */}
+            <div className="grid items-stretch gap-4 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.finalTitle}>
               {DIFFICULTIES.map((id) => {
                 const active = difficulty === id;
                 const recommended = id === CAREER_DIFFICULTY.defaultPreset;
@@ -632,49 +610,15 @@ export function WizardScreen() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setDifficulty(id)}
-                    className={cx(
-                      "panel relative flex min-h-11 flex-col p-4 text-left transition-all",
-                      // rc.36 (UX-04): the recommended card keeps its emphasis in the NEW tag's green.
-                      recommended && "!border-2 !border-good/60 shadow-[0_0_28px_-10px_rgba(74,222,128,0.45)] sm:-my-2 sm:py-6",
-                      active && "panel-glow-orange !border-orange !bg-orange/10",
-                      !active && !recommended && "hover:!border-line-strong",
-                    )}
+                    className={cx(optionCard(active), "flex min-h-11 flex-col p-4")}
                   >
-                    {recommended ? (
-                      // rc.36 (UX-04, Miguel): "Recommended" is the special cards' NEW pill, the word from copy.
-                      <NewTag className="absolute -top-2 left-4 !px-2 !py-0.5 !text-[10px]">{C.wizard.recommended}</NewTag>
-                    ) : null}
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={cx(
-                          "flex shrink-0 items-center justify-center rounded-xl",
-                          recommended ? "h-12 w-12" : "h-10 w-10",
-                          PRESET_TONE[id],
-                        )}
-                      >
-                        <PresetIcon className={recommended ? "h-7 w-7" : "h-6 w-6"} />
-                      </span>
-                      <span
-                        className={cx(
-                          "display min-w-0 flex-1 font-bold uppercase tracking-wide",
-                          recommended ? "text-xl" : "text-lg",
-                          active ? "text-orange-bright" : "text-ink",
-                        )}
-                      >
-                        {C.wizard.presets[id].label}
-                      </span>
-                      <span
-                        aria-hidden
-                        className={cx(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
-                          active ? "border-orange bg-orange text-white" : "border-line-strong",
-                        )}
-                      >
-                        {active ? <CheckIcon className="h-4 w-4" /> : null}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm font-semibold leading-snug text-ink">{C.wizard.presets[id].promise}</p>
-                    <div className="mt-3 border-t border-line pt-1">
+                    <span className="flex items-center gap-2">
+                      <PresetIcon className="h-5 w-5 shrink-0 text-sub" />
+                      <span className="display min-w-0 flex-1 text-lg font-bold uppercase leading-none text-ink">{C.wizard.presets[id].label}</span>
+                      {recommended ? <Badge tone="blue">{C.wizard.recommended}</Badge> : null}
+                    </span>
+                    <p className="mt-3 text-sm leading-snug text-ink">{C.wizard.presets[id].promise}</p>
+                    <div className="mt-3 border-t border-line">
                       <PresetEffects difficulty={id} C={C} />
                     </div>
                   </button>
@@ -682,43 +626,41 @@ export function WizardScreen() {
               })}
             </div>
 
-            {/* Recap */}
-            <Panel strong className="mt-6 p-5">
-              <p className="kicker mb-4">{C.wizard.summaryTitle}</p>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-4">
+            {/* Recap: what the Found button is about to create. Not a board: the
+                organisation on the left, the four earlier picks as labelled
+                figures on the right (the budget's label names the difficulty). */}
+            <section className="mt-8 border-t border-line pt-5" aria-label={C.wizard.summaryTitle}>
+              <h3 className="display text-lg uppercase leading-none text-ink">{C.wizard.summaryTitle}</h3>
+              <div className="mt-4 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
                   <UserCrest crestId={crestId} colors={colors} abbrev={abbrev} size="lg" />
-                  <div>
-                    <p className="display text-xl font-bold uppercase tracking-wide text-ink">{nameTrim}</p>
-                    <p className="mt-0.5 flex items-center gap-2 text-sm text-sub">
+                  <div className="min-w-0">
+                    <p className="display truncate text-xl font-bold uppercase leading-none text-ink">{nameTrim}</p>
+                    <p className="mt-1.5 flex items-center gap-2 text-sm text-sub">
                       <CountryChip code={country} />
                       {managerName.trim()}
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                  <Badge className={REGION_BADGE[region]}>{region}</Badge>
-                  <Badge tone="orange">{copy.STAT_LABELS[buffType]}</Badge>
-                  <Badge tone="neutral">
-                    {rosterKey === "prospects"
-                      ? C.wizard.rosterProspects
-                      : rosterKey === "journeymen"
-                        ? C.wizard.rosterJourneymen
-                        : C.wizard.rosterBalanced}
-                  </Badge>
-                  <Badge tone="neutral">{C.wizard.presets[difficulty].label}</Badge>
-                  <Badge tone="blue">{formatMoney(budgetOf(offers.find((o) => o.key === rosterKey)))}</Badge>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+                  <Figure value={copy.SETUP.regionNames[region]} label={C.wizard.regionTitle} />
+                  <Figure value={copy.STAT_LABELS[buffType]} label={C.wizard.identityBuff} />
+                  <Figure value={rosterLabel} label={C.wizard.rosterTitle} />
+                  <Figure
+                    value={formatMoney(budgetOf(offers.find((o) => o.key === rosterKey)))}
+                    label={C.wizard.rosterBudget(C.wizard.presets[difficulty].label)}
+                  />
                 </div>
               </div>
               {slotsFull ? (
                 <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-bad/40 bg-bad/10 px-3 py-2.5">
-                  <p className="text-sm font-semibold text-bad">{C.saves.slotsFull}</p>
+                  <p className="text-sm text-bad">{C.saves.slotsFull}</p>
                   <Button variant="secondary" size="sm" onClick={() => router.push("/career/saves")}>
                     {C.nav.saves}
                   </Button>
                 </div>
               ) : null}
-            </Panel>
+            </section>
           </>
         ) : null}
       </div>
@@ -766,12 +708,23 @@ const inputCls =
   "h-11 w-full rounded-lg border border-line-strong bg-white/5 px-3 text-sm text-ink " +
   "placeholder:text-faint transition-colors focus:border-orange/60 focus:outline-none";
 
+/** The step's name and its one line: the largest thing on the step after the slab. */
 function StepHeader({ title, kicker }: { title: string; kicker: string }) {
   return (
-    <div className="mb-4">
-      <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{title}</h3>
-      <p className="mt-1 text-sm text-sub">{kicker}</p>
+    <div className="mb-5">
+      <h3 className="display text-2xl uppercase leading-none text-ink">{title}</h3>
+      <p className="mt-2 max-w-xl text-sm leading-snug text-sub">{kicker}</p>
     </div>
+  );
+}
+
+/** A figure with its quiet label under it (spans: it also sits inside the option buttons). */
+function Figure({ value, label }: { value: React.ReactNode; label: string }) {
+  return (
+    <span className="block min-w-0">
+      <span className="display block truncate text-xl font-bold uppercase leading-none text-ink">{value}</span>
+      <span className="mt-1 block text-xs leading-snug text-sub">{label}</span>
+    </span>
   );
 }
 
@@ -790,11 +743,7 @@ function Field({
     <div>
       <p className="kicker mb-1.5">{label}</p>
       {children}
-      {error ? (
-        <p className="mt-1 text-xs font-semibold text-bad">{error}</p>
-      ) : hint ? (
-        <p className="mt-1 text-[11px] text-faint">{hint}</p>
-      ) : null}
+      {error ? <p className="mt-1 text-xs text-bad">{error}</p> : hint ? <p className="mt-1 text-xs text-sub">{hint}</p> : null}
     </div>
   );
 }

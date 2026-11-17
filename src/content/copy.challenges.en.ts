@@ -2,7 +2,7 @@
 export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }> = {
   "ch-first-final": {
     "title": "The First Final",
-    "brief": "Where it all began. iBUYPOWER ran the very first RLCS final — out-draft them and rewrite history."
+    "brief": "Where it all began. iBUYPOWER ran the very first RLCS final. Out-draft them and rewrite history."
   },
   "ch-european-dawn": {
     "title": "European Dawn",
@@ -18,7 +18,7 @@ export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }>
   },
   "ch-old-guard": {
     "title": "Old Guard",
-    "brief": "No superstars to hide behind. Nobody over 86 overall — win it the hard way, with reads and chemistry."
+    "brief": "No superstars to hide behind. Nobody over 86 overall. Win it the hard way, with reads and chemistry."
   },
   "ch-south-american-steel": {
     "title": "South American Steel",
@@ -30,19 +30,19 @@ export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }>
   },
   "ch-vive-la-france": {
     "title": "Vive la France",
-    "brief": "Les Bleus assemble. Every player on your roster must be French — then go beat the Americans."
+    "brief": "Les Bleus assemble. Every player on your roster must be French, then go beat the Americans."
   },
   "ch-samba-style": {
     "title": "Samba Style",
-    "brief": "Joga bonito. An all-Brazilian roster, the way the crowd wants it — now beat FURIA at their own game."
+    "brief": "Joga bonito. An all-Brazilian roster, the way the crowd wants it. Now beat FURIA at their own game."
   },
   "ch-no-stars": {
     "title": "No Stars",
-    "brief": "Nobody over 88 overall. No superstars to hide behind — chemistry and reads are all you've got."
+    "brief": "Nobody over 88 overall. No superstars to hide behind: chemistry and reads are all you've got."
   },
   "ch-raw-talent": {
     "title": "Raw Talent",
-    "brief": "No special cards — base talent only. Strip away the highlights and just out-play Moist."
+    "brief": "No special cards: base talent only. Strip away the highlights and just out-play Moist."
   },
   "ch-carry-the-rookie": {
     "title": "Carry the Rookie",
@@ -58,15 +58,15 @@ export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }>
   },
   "ch-desert-storm": {
     "title": "Desert Storm",
-    "brief": "The Falcons rewrote the map. No twist, no excuses — just out-draft the kings of the desert."
+    "brief": "The Falcons rewrote the map. No twist, no excuses. Just out-draft the kings of the desert."
   },
   "ch-break-the-wall": {
     "title": "Break the Wall",
-    "brief": "M0nkey M00n's BDS swept 2021-22. A dynasty in its prime — out-draft a wall that never cracked."
+    "brief": "M0nkey M00n's BDS swept 2021-22. A dynasty in its prime. Out-draft a wall that never cracked."
   },
   "ch-topple-the-titans": {
     "title": "Topple the Titans",
-    "brief": "The 2022-23 Vitality — many call them the greatest of all time. Beat the best roster ever assembled."
+    "brief": "The 2022-23 Vitality. Many call them the greatest of all time. Beat the best roster ever assembled."
   },
   "ch-south-american-miracle": {
     "title": "South American Miracle",
@@ -74,11 +74,11 @@ export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }>
   },
   "ch-the-goat-hunt": {
     "title": "The GOAT Hunt",
-    "brief": "No special cards, no margin for error. Kaydop's Dignitas at full strength — pure skill, nothing else."
+    "brief": "No special cards, no margin for error. Kaydop's Dignitas at full strength: pure skill, nothing else."
   },
   "ch-perfect-storm": {
     "title": "Perfect Storm",
-    "brief": "The final exam. Nobody over 90, no rerolls — and the greatest team ever waiting on the other side."
+    "brief": "The final exam. Nobody over 90, no rerolls, and the greatest team ever waiting on the other side."
   },
   "ch-gauntlet-rookie-road": {
     "title": "Rookie Road",
@@ -94,7 +94,7 @@ export const CHALLENGE_TEXT_EN: Record<string, { title: string; brief: string }>
   },
   "ch-gauntlet-world-tour": {
     "title": "World Tour",
-    "brief": "NRG 2025, Falcons 2024 and Karmine Corp 2025 — then Vitality's 2025 world champions. The longest road in the game."
+    "brief": "NRG 2025, Falcons 2024 and Karmine Corp 2025, then Vitality's 2025 world champions. The longest road in the game."
   },
   "ch-pure-talent": {
     "title": "Pure Talent",

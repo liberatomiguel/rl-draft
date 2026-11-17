@@ -9,6 +9,12 @@
       "autoPort": true
     },
     {
+      "name": "sell-trade-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\PIPERUN\\MIGUEL\\CLAUDE\\rl-draft\\.claude\\worktrees\\sell-trade", "run", "dev", "--", "--port", "3100"],
+      "port": 3100
+    },
+    {
       "name": "rocket-draft-static",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["wrangler", "dev", "--ip", "127.0.0.1", "--port", "8791"],

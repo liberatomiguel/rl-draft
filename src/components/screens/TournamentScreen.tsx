@@ -912,11 +912,11 @@ function PlayoffBracketView({
         ) : (
           <>
             <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">{T.upperBracket}</p>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-cyan">{T.upperBracket}</p>
               <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(renderColumn)}</div>
             </div>
             <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">{T.lowerBracket}</p>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-orange-bright">{T.lowerBracket}</p>
               <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(renderColumn)}</div>
             </div>
           </>
@@ -953,8 +953,8 @@ function BracketCell({
 
   const outline = revealed && userIn
     ? userWon
-      ? "border-good/70 shadow-[0_0_14px_rgba(52,211,153,0.15)]"
-      : "border-bad/70 shadow-[0_0_14px_rgba(248,113,113,0.15)]"
+      ? "border-good/70"
+      : "border-bad/70"
     : live
       ? "border-orange"
       : userIn

@@ -85,7 +85,7 @@ export function CareerAnnouncement() {
         <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="display flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-orange-bright">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-orange-bright shadow-[0_0_10px_rgba(249,115,22,0.35)]" />
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-orange-bright" />
               {C.launch.breaking}
             </p>
             <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">{C.news.feed.subject[news.type]}</span>

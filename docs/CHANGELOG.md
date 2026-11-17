@@ -10,6 +10,64 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot`, not approved, not committed)
+
+Source: Miguel's request of 17/11 to remove the generated look from the game, audited against the anti-slop rulebook (github.com/miqdadbadjuber/anti-slop). Direction chosen by Miguel: RLCS broadcast package. Scope of this pilot: the shared primitives, the Home and the Classic Draft flow. Career screens only inherit the primitives.
+
+### Fourth pass (17/11, after Miguel's review: "too light now; bring back the solids and the title highlight, heavier weights, on to the career")
+Current state (decision #167). Where it disagrees with the passes below, this one wins.
+- **Home modes are solids again**, with a card finish: `.solid` (14px corner, the card's top sheen and diagonal texture, a slow tone shift) in `.solid-orange` (Classic Draft) and `.solid-blue` (Road to Worlds). Upright Bold titles; the action on each is inverted (dark on orange, paper on blue).
+- **Title highlight is back**: `.title-slab`, dark upright Bold on a paper slab with a slanted end and the orange chip. `SectionTitle` uses it, so every screen gets it.
+- **Weights up one step**: Bold for titles, buttons and key figures (`font-bold` resolves to Bold again), Demi for labels, tags and nav, text 400 / 600. Black and Ultra are still not loaded; synthetic bold is still off.
+- **Home**: about 40px less air above the wordmark; the season rating sits on a paper cell beside the rank; the header logo is upright.
+- **Career**: 7 blurred colour orbs removed (Club, Saves, Standings, crest step, founding splash); glow removed from states (bracket cells, Swiss verdict, weekend plan, ladder highlight, player tiles, finance and wizard selections, the announcement dot); the two leftover gradient-plus-halo buttons (Calendar, match centre) are the flat primary; the career tab bar is solid and marks the current tab with ink text and an orange rule; wide-tracked labels tightened. Gold glow stays on trophies, the S grade, champion saves and Championship Sunday (reward). No career layout was changed.
+- Checked in a desktop browser at 1366 px on this pass: Home, career HQ, career Finances. Not checked: mobile, PT, the other career screens, tournament, results.
+
+### Third pass (17/11, after Miguel's review: "on the right road, overdone; more minimal and premium")
+Current state. Where it disagrees with the two passes below, this one wins (decision #166, `DESIGN.md` rewritten).
+- **The card is the reference object.** Floor and boards went back to the cards' night blue (`--bg #070a11`, boards in the two tones of a common card's body); `.panel` is that body inside a hairline with a 12px corner. The radius scale steps up to the card: tag 3, button 7, board 12, card 14.
+- **Weight**: nothing heavier than Demi, text never heavier than Medium. Enforced in the font files (display 500 / 600, text 400 / 500, no heavier upright file) plus `font-synthesis-weight: none`, so every `font-bold` in the app resolves down with no code change.
+- **Italic** only on the wordmark (header logo, Home title). The global italic rule for headings is gone.
+- **Removed from the second pass**: paper title slabs (`.slab`), the slanted primary button (`.btn-cut`), stripe fills (`.stripes`), the solid orange and blue mode fields, the paper and orange scorebug, the paper active tab.
+- **Top bar on panels removed.** `panel-glow-blue` / `panel-glow-orange` and the `glow` prop now only colour the panel's hairline.
+- **Section titles**: the small slanted orange tick, then the title in upright Demi (`.title-tick`); the kicker still reads under the title as a sentence.
+- **Buttons**: primary is flat orange with dark text; sizes back one step. **Badge**: Medium, 11px. **Header**: the current section is ink text over a 2px orange rule.
+- **Home**: italic wordmark at a calmer size; rank art, rating and season on one quiet board; the two modes use the gold and blue card frames with the card texture (they are the two largest cards in the game); TODAY list and YOUR PROGRESS strip kept, in lighter type.
+- Checked in a desktop browser at 1366 px: Home, draft (cards beside the team board), review. Not checked in this pass: mobile, PT, tournament, results, career.
+
+### Second pass (17/11, after Miguel's review: "not close, bolder")
+The first pass below only removed things and left dark boxes with thin lines, the "sterile default" the rulebook warns about. This pass adds the direction, written first in `DESIGN.md` (decision #165). Where the two passes disagree, this one is current.
+- **Direction file**: `DESIGN.md` at the repo root (design read, palette, type, the motif, composition, motion, copy, a "never" list).
+- **Type**: Rajdhani and Geist Sans are out of the interface. Text is Barlow (400, 600). The display face Miguel chose is **Industry**; the only files in hand are the trial set (personal-use licence, 66 characters), so it is wired for LOCAL PREVIEW ONLY from the git-ignored `public/fonts-trial/`, in a marked block of `globals.css` that must go before anything ships. Barlow Condensed (600, 700, 800 italic; OFL, committed) is the live stand-in and the fallback for every character the trial files lack.
+- **Palette**: floor `#0b0d12` (neutral ink, was navy `#05080f`; theme colour, manifest and error screen follow), orange `#ff6a1a`, blue `#2463ff`, paper `#f3efe6`. Cyan became the lightest blue. Text greys re-solved for contrast.
+- **The cut**: one 12 degree slant in three places. Section titles are a paper slab with an orange chip (`.slab`, used by `SectionTitle`, whose kicker now reads under the title as a sentence); the primary button is an orange slab cut on both ends (`.btn-cut`); the active nav item is a paper slab. Plus `.stripes` as texture for an empty field.
+- **Headings** in the display face are heavy italic everywhere (one CSS rule on `h1`-`h3.display`).
+- **Panels** are fills with no outline (transparent border kept for callers' state colours); a panel inside a panel steps up one fill.
+- **Header**: solid bar, no blur.
+- **Home recomposed**: wordmark as a title card with a three-cell scorebug (rank art, season rating on paper, rank on orange); the two modes as solid orange and blue fields facing each other; TODAY as a rundown list beside the missions board; YOUR PROGRESS as one four-cell stat strip.
+- **Base**: `cursor: pointer` on every enabled control, `not-allowed` on disabled ones (in `@layer base`).
+
+### Changed
+- **Surfaces are solid.** `.panel` and `.panel-strong` lost the gradient and the backdrop blur and use two flat fills (`--surface`, `--surface-strong`). The lite-effects fallback for panels is gone: there is nothing left to fall back from.
+- **Corners are hard.** The Tailwind radius scale is cut in `@theme` (sm 2, md 3, lg 4, xl 6, 2xl 8, 3xl 10 px), so every `rounded-*` in the app follows. Trading cards keep their own 14 px (`.card-frame`).
+- **No ambient glow.** The three radial glows behind every page (`body::before`) were removed; the canvas is flat `--bg`.
+- **The `glow` of a panel is a team bar.** `panel-glow-blue` / `panel-glow-orange` (and the `glow` prop of `<Panel>`) draw a 3 px bar on the panel's top edge instead of a halo. Class names unchanged, the 34 call sites untouched.
+- **Primary button**: flat orange, no gradient, no halo. **Secondary button**: neutral outline with ink text; blue only on hover.
+- **Badge**: a flat tinted tag with no outline, tighter tracking.
+- **`.kicker`**: letter-spacing 0.22em → 0.06em, so it reads as a scoreboard column head.
+- **Header**: the current section is marked by an orange bar on the header's bottom edge, not by a tinted pill.
+- **Home**: the centred hero (season eyebrow, tagline, gradient wordmark, rank chips) became a left-aligned wordmark and pitch with the player's line (season, rank, rating, runs, titles) set as a scorebug on the right. The two mode blocks lost their blurred orbs. The "Live" tags on Classic Draft, Daily Challenge and Daily Quiz are gone (nothing was live; a streak still shows). Road to Worlds keeps one tag (Beta); "New" stays on the nav item only. Its button now says "Play career" and the slogan became a line of text. The arrows left "Play now" and "Quick Draft" (EN and PT).
+- **Tournament**: finished bracket cells no longer glow (the green / red border already says win or loss); bracket labels use the tight tracking.
+
+### Not changed, on purpose
+- Card rarity frames, sheens and halos, cosmetics, rank art, the rank-up and reward ceremonies: glow and motion stay where they mean rarity or reward.
+- The colour values. The audit named the stock hues; the pilot fixes how colour is used and leaves the hexes, which appear as literals in over a hundred places.
+
+### Not verified
+- Mobile widths, PT screens, lite-effects mode, and every career screen except the HQ. Checked in a desktop browser at 1366 px: Home, setup, draft, review, tournament, results, career HQ.
+
+---
+
 ## [2.0.14] — 2026-11-14 · Page translation no longer crashes the game; the black error screen is gone
 
 Source: the first PostHog review after the launch (12–14/11, `docs/POSTLAUNCH-2.0-REPORT.md`).

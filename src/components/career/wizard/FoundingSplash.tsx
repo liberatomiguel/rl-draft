@@ -52,33 +52,22 @@ export function FoundingSplash({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-bg/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-bg"
       role="status"
-      aria-label={`${orgName} — ${establishedLabel}`}
+      aria-label={`${orgName}, ${establishedLabel}`}
     >
-      {/* Org-colored glow behind the crest */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute h-[28rem] w-[28rem] rounded-full opacity-25 blur-3xl"
-        style={{ background: `radial-gradient(circle, ${colors.primary}, transparent 65%)` }}
-      />
       <div className="relative flex flex-col items-center px-6 text-center">
         <div className="pop-in">
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev} size="xl" />
         </div>
         <h1
-          className="display rise-in mt-6 text-3xl font-bold uppercase tracking-wide text-ink sm:text-4xl"
+          className="display rise-in mt-6 text-3xl uppercase leading-none text-ink sm:text-4xl"
           style={{ animationDelay: "0.25s" }}
         >
           {orgName}
         </h1>
-        <p
-          className="rise-in mt-3 inline-flex items-center gap-2 rounded-md border border-line-strong bg-white/5 px-3 py-1"
-          style={{ animationDelay: "0.5s" }}
-        >
-          <span className="display text-xs font-semibold uppercase tracking-[0.3em] text-orange-bright">
-            {establishedLabel}
-          </span>
+        <p className="display rise-in mt-3 text-sm font-semibold uppercase tracking-[0.06em] text-sub" style={{ animationDelay: "0.5s" }}>
+          {establishedLabel}
         </p>
         <p className="rise-in mt-4 text-sm text-sub" style={{ animationDelay: "0.75s" }}>
           {tagline}

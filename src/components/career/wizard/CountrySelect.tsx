@@ -99,7 +99,7 @@ export function CountrySelect({
       </button>
 
       {open ? (
-        <div className="panel-strong absolute left-0 right-0 top-[calc(100%+0.375rem)] z-30 overflow-hidden p-2 shadow-xl">
+        <div className="panel-strong absolute left-0 right-0 top-[calc(100%+0.375rem)] z-30 overflow-hidden p-2">
           <input
             ref={inputRef}
             value={query}
@@ -129,18 +129,19 @@ export function CountrySelect({
                     onClick={() => pick(c.code)}
                     className={cx(
                       "flex h-11 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors",
-                      active ? "bg-orange/15 text-orange-bright" : "text-sub hover:bg-white/5 hover:text-ink",
+                      active ? "bg-white/[0.07] text-ink" : "text-sub hover:bg-white/5 hover:text-ink",
                     )}
                   >
                     <CountryChip code={c.code} />
                     <span className="truncate">{c.name}</span>
-                    <span className="ml-auto font-mono text-[10px] tracking-widest text-faint">{c.code}</span>
+                    <span className="display ml-auto text-[11px] font-semibold uppercase tracking-[0.06em] text-faint">{c.code}</span>
                   </button>
                 </li>
               );
             })}
             {filtered.length === 0 ? (
-              <li className="px-2.5 py-3 text-center text-xs text-faint">—</li>
+              // No copy string for "no country matches" yet: the field's name and a zero.
+              <li className="px-2.5 py-3 text-xs text-sub">{label}: 0</li>
             ) : null}
           </ul>
         </div>

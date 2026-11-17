@@ -26,7 +26,6 @@ import { useMounted } from "@/store/useMounted";
 import styles from "./LaunchNotice.module.css";
 
 const TABS: LaunchNoticeTab[] = ["career", "season", "challenges", "collection"];
-const DETAIL_ICONS = ["◎", "✦", "☆", "↗", "＋", "⋯"];
 
 export function LaunchNotice() {
   const { HOME } = useCopy();
@@ -92,10 +91,6 @@ export function LaunchNotice() {
         </header>
         <div className={styles.content}>
           <div className={styles.intro}>
-            <p className={styles.eyebrow}>
-              <span />
-              {L.kicker}
-            </p>
             <h2 id="launch-title" className="display">
               {L.title}
             </h2>
@@ -113,7 +108,6 @@ export function LaunchNotice() {
             </div>
             <div className={styles.feature}>
               <div className={styles.featureCopy}>
-                <p className={styles.featureNumber}>{current.number}</p>
                 <h3 className="display">{current.title}</h3>
                 <p>{current.body}</p>
               </div>
@@ -124,15 +118,12 @@ export function LaunchNotice() {
             <p className={styles.caption}>{L.caption}</p>
           </section>
           <div className={styles.details}>
-            {L.details.map((d, i) => (
+            {/* A plain ruled list: the six glyph tiles that sat here (a target,
+                a sparkle, a star) denoted nothing about their items. */}
+            {L.details.map((d) => (
               <section key={d.title}>
-                <span className={styles.detailIcon} aria-hidden="true">
-                  {DETAIL_ICONS[i % DETAIL_ICONS.length]}
-                </span>
-                <div>
-                  <h3>{d.title}</h3>
-                  <p>{d.body}</p>
-                </div>
+                <h3>{d.title}</h3>
+                <p>{d.body}</p>
               </section>
             ))}
           </div>

@@ -55,7 +55,7 @@ export function lockPageScroll(doc: Document = document): () => void {
     // overlay, so it shows the canvas: a strip of undimmed page at the window's
     // edge (review R3). The canvas is the body's background (propagated), so
     // dim that while locked. On <body>, never on <html>: an <html> background
-    // would stop the propagation and hide the ambient glow (body::before).
+    // would stop the propagation.
     // Overlay scrollbars and the padding fallback leave no gutter: no change.
     const viewport = doc.defaultView?.innerWidth ?? 0;
     if (viewport - body.clientWidth > 1) body.style.backgroundColor = DIMMED_CANVAS;

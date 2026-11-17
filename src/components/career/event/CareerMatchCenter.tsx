@@ -372,7 +372,7 @@ export function CareerMatchCenter({
                   className={cx(
                     "display shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider",
                     beat.golden
-                      ? "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]"
+                      ? "bg-orange text-paper-ink"
                       : newest
                         ? "bg-orange/25 text-orange-bright"
                         : "bg-white/8 text-sub",

@@ -50,7 +50,7 @@ const NAV_ITEMS: typeof BASE_NAV_ITEMS = FEATURES.careerMode
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cx("display font-bold uppercase tracking-[0.18em]", className)}>
+    <span className={cx("display font-extrabold uppercase leading-none tracking-[0.03em]", className)}>
       <span className="text-ink">Rocket</span>
       <span className="text-orange">Draft</span>
     </span>
@@ -171,7 +171,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
+        {/* A solid bar, not glass (DESIGN.md): the page does not show through. */}
+        <header className="sticky top-0 z-40 border-b border-line bg-raised">
           {/* v2.0 (G2): three zones. Brand (home) · destinations, left-aligned
               beside it · utilities on the right, with language and account
               split off by a rule. The logo is the Home link on desktop, so the
@@ -180,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <GuardedHomeLink href="/" className="flex shrink-0 items-center gap-2" aria-label={t.APP.name}>
               <LogoMark />
               {/* Wordmark hidden where the bar is tight (phones, and tablets with the full nav). */}
-              <Logo className="hidden text-sm sm:inline-block md:hidden lg:inline-block" />
+              <Logo className="hidden text-lg sm:inline-block md:hidden lg:inline-block" />
             </GuardedHomeLink>
             <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label={t.NAV_UI.ariaMain}>
               {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
@@ -190,15 +191,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     key={item.href}
                     item={item}
                     className={cx(
-                      "display relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors lg:px-3.5 lg:text-sm",
+                      "display relative flex h-14 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-semibold uppercase leading-none tracking-[0.05em] transition-colors lg:px-3.5",
+                      // The current section: ink text and a 2px orange rule on
+                      // the header's bottom edge. Nothing else changes.
                       active
-                        ? "bg-orange/12 text-orange-bright"
-                        : "text-sub hover:bg-white/5 hover:text-ink",
+                        ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-orange lg:after:inset-x-3.5"
+                        : "text-sub hover:text-ink",
                     )}
                   >
                     {t.NAV[item.key]}
                     {item.key === "career" ? (
-                      <span className="pointer-events-none -ml-0.5 inline-flex h-4 items-center self-center rounded border border-orange/40 bg-orange/15 px-1 text-[9px] font-bold leading-none tracking-[0.08em] text-orange-bright">
+                      <span className="pointer-events-none -ml-0.5 inline-flex h-4 items-center self-center rounded-sm bg-orange/15 px-1 text-[10px] font-medium leading-none tracking-[0.05em] text-orange-bright">
                         {t.HOME.careerBadge}
                       </span>
                     ) : null}

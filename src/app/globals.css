@@ -2,35 +2,50 @@
 
 /* ===========================================================================
    ROCKET DRAFT — design tokens
-   Dark premium theme. Blue = structure/info, Orange = action/highlight.
+   Direction: DESIGN.md (esports broadcast graphics package). Solid fields of
+   colour, hard corners, one repeated gesture (the 12 degree cut), Barlow
+   Condensed as the voice. Orange = the player's side and the one action.
+   Blue = the other side and information. Paper = the white of a lower-third.
+   Glow and motion belong to rarity and rewards only.
    =========================================================================== */
 
 :root {
-  --bg: #05080f;
+  /* The floor is the cards' own night blue, one step under a card's body, so a
+     card and the board it sits on are the same stock. */
+  --bg: #070a11;
   /* The canvas while a dialog's scrim covers the page (components/ui/dialog.ts).
      The reserved scrollbar gutter is the one strip no overlay covers and shows
      the canvas as is, while the overlays show it through 70-95% black scrims:
      black is the one tone at which the two read the same. */
   --bg-dimmed: #000;
-  --bg-raised: #0a101d;
-  --panel: rgba(13, 20, 36, 0.72);
-  --panel-strong: rgba(16, 24, 43, 0.92);
-  --line: rgba(146, 164, 196, 0.14);
-  --line-strong: rgba(146, 164, 196, 0.28);
+  --bg-raised: #0a0e17;
+  --panel: rgba(13, 19, 34, 0.94);
+  --panel-strong: rgba(18, 24, 41, 0.96);
+  /* Hairlines in the grey of a common card's frame (#39435c / #232b3f). */
+  --line: rgba(146, 164, 196, 0.13);
+  --line-strong: rgba(146, 164, 196, 0.26);
   --ink: #e9eef8;
   --sub: #8d9ab3;
   --faint: #7c8aa3;
 
+  /* Colour is rare in the chrome: orange for the one action and the tick,
+     blue for information. The cards and the rank art carry the rest. */
   --blue: #3b82f6;
-  --blue-bright: #60a5fa;
-  --cyan: #38bdf8;
-  --orange: #f97316;
-  --orange-bright: #fb923c;
+  --blue-bright: #7aa5ff;
+  --cyan: #67c5fb;
+  --orange: #ff6a1a;
+  --orange-bright: #ff8b47;
   --good: #34d399;
   --bad: #f87171;
 
-  --glow-blue: 0 0 28px rgba(59, 130, 246, 0.22);
-  --glow-orange: 0 0 28px rgba(249, 115, 22, 0.25);
+  /* Boards, in the two tones of a common card's body. */
+  --surface: #0d1322;
+  --surface-strong: #121a2c;
+  --paper: #f3efe6;
+  --paper-ink: #0b0d12;
+
+  /* The angle of the section tick and of the wordmark's lean. */
+  --cut: 12deg;
 }
 
 @theme inline {
@@ -50,10 +65,84 @@
   --color-orange-bright: var(--orange-bright);
   --color-good: var(--good);
   --color-bad: var(--bad);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-paper: var(--paper);
+  --color-paper-ink: var(--paper-ink);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-rajdhani), var(--font-geist-sans), sans-serif;
+  /* "Barlow Ext" / "Barlow Condensed Ext" are the latin-ext files declared
+     below with a unicode-range: listed first, used only for those glyphs. */
+  --font-sans: "Barlow Ext", var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Industry Trial", "Barlow Condensed Ext", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* The radius scale steps up to the card's own corner (14px in
+     `.card-frame`): a tag 3, a button 7, a board 12. Nothing is a pill
+     except what is round by nature (`rounded-full`: avatars, toggles, bars). */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 7px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+}
+
+/* "Industry Trial" (first in --font-display) has no @font-face here on purpose.
+   Industry is the display face Miguel chose (DESIGN.md) but the only files in
+   hand are a personal-use trial with 66 characters, so nothing of it is in the
+   repo. In development, layout.tsx links /fonts-trial/industry.css (a
+   git-ignored folder) and the name resolves; everywhere else it is skipped and
+   Barlow Condensed is the display face. When the licensed webfont arrives it
+   becomes a localFont in layout.tsx and this note goes. */
+
+/* Latin-ext glyphs (player and org names): fetched only when one is on screen. */
+@font-face {
+  font-family: "Barlow Ext";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/barlow-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Ext";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/barlow-latin-ext-600-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Condensed Ext";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/barlow-condensed-latin-ext-600-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Condensed Ext";
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/barlow-condensed-latin-ext-700-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Condensed Ext";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/barlow-condensed-latin-ext-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Condensed Ext";
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+  src: url("./fonts/barlow-condensed-latin-ext-800-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 /* ---------------------------------------------------------------------------
@@ -62,12 +151,15 @@
 
 html {
   color-scheme: dark;
+  /* No synthetic bold: a `font-bold` gets the heaviest file that exists
+     (Demi for the display face, Medium for text), never a smeared one. */
+  font-synthesis-weight: none;
   /* rc.29 (DRAFT-06): the scrollbar's space stays reserved while a dialog
      locks the page scroll (body overflow hidden), so the page, the sticky
      header and the fixed bars never jump sideways. Overlay scrollbars
      (phones, default macOS) reserve nothing. Lock: components/ui/dialog.ts.
-     With classic scrollbars the gutter is outside the fixed layers (overlays,
-     the ambient glow) and shows the canvas: on a short page it reads like the
+     With classic scrollbars the gutter is outside the fixed overlays and
+     shows the canvas: on a short page it reads like the
      scrollbar track of a long one, and under a dialog the lock dims the
      canvas to --bg-dimmed so the scrim reaches the edge. */
   scrollbar-gutter: stable;
@@ -80,29 +172,9 @@ body {
   min-height: 100dvh;
 }
 
-/*
- * Ambient glows (perf): a fixed, viewport-sized layer instead of
- * `background-attachment: fixed` on <body>, which repainted the whole page on
- * every scroll frame. Same look (a fixed box covering the viewport is the old
- * viewport-anchored background), but the browser composites it once.
- * Stacking: <body> creates no stacking context, so z-index:-1 puts this layer
- * in the root context — above the canvas colour (body's background-color,
- * propagated) and below all page content. Nothing in the app uses a negative
- * z-index, and portaled modals/toasts sit at positive z-indexes. Keep <html>
- * and <body> free of an opaque background / transform / filter, or this layer
- * is hidden or stops being viewport-fixed.
- */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(900px 540px at 12% -8%, rgba(59, 130, 246, 0.14), transparent 62%),
-    radial-gradient(820px 520px at 96% 108%, rgba(249, 115, 22, 0.1), transparent 60%),
-    radial-gradient(620px 380px at 78% -12%, rgba(56, 189, 248, 0.07), transparent 55%);
-}
+/* The page canvas is flat --bg. The three ambient radial glows that sat behind
+   every page were removed with the broadcast package: colour now comes from
+   the content (team bars, cards, rank art), not from the backdrop. */
 
 ::selection {
   background: rgba(249, 115, 22, 0.45);
@@ -124,48 +196,160 @@ body::before {
    Typography helpers
 --------------------------------------------------------------------------- */
 
+/* The condensed face, upright: labels, numerals, buttons, tags. */
 .display {
   font-family: var(--font-display);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .display-tight {
   font-family: var(--font-display);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
+/* Headings in the display face are upright Bold: the one place the heavier
+   file is used. Italic is the Home wordmark's alone (DESIGN.md, "weight"). */
+:is(h1, h2, h3).display {
+  font-weight: 800;
+  letter-spacing: 0.015em;
+}
+
+/* A scoreboard label: tight caps, read as a column head, not as an eyebrow.
+   Use it where it says something the title under it does not. */
 .kicker {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--sub);
+}
+
+/* A section title is highlighted: upright Bold in dark ink on a paper slab
+   with a slanted end, followed by the orange chip (the old section tick).
+   The slab is drawn by a skewed ::before, so the text itself stays upright
+   and the element's box stays a rectangle. Section titles are the only place
+   the paper slab is used (DESIGN.md, "the highlight"). */
+.title-slab {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.16em 0.8em 0.12em 0.65em;
+  margin-right: 0.75em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  color: var(--paper-ink);
+}
+
+.title-slab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 2px;
+  background: var(--paper);
+  transform: skewX(calc(var(--cut) * -1));
+}
+
+.title-slab::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(100% + 0.18em);
+  width: 0.26em;
+  border-radius: 1px;
+  background: var(--orange);
+  transform: skewX(calc(var(--cut) * -1));
+}
+
+/* A solid: a block in one of the two sides' colours, finished like a
+   card so it reads as printed stock and not as a flat fill. It takes the
+   card's corner, a slow tone shift across the face (the card body's 168deg),
+   the card's top sheen and the card's diagonal texture. Used for the two
+   modes on the Home; a solid is for a thing the player enters, never for a
+   highlight. Both pseudo-elements sit under the content (isolation). */
+.solid {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.solid::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 55% 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.17), transparent);
+  pointer-events: none;
+}
+
+.solid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(125deg, var(--field-line) 0 2px, transparent 2px 9px);
+  pointer-events: none;
+}
+
+.solid-orange {
+  --field-line: rgba(11, 13, 18, 0.055);
+  background: linear-gradient(168deg, #ff7d33 0%, #ff6a1a 52%, #ee590a 100%);
+  color: var(--paper-ink);
+}
+
+/* White text holds 4.7:1 or better across the whole face. */
+.solid-blue {
+  --field-line: rgba(255, 255, 255, 0.045);
+  background: linear-gradient(168deg, #2a66ff 0%, #2158ee 52%, #1a48d2 100%);
+  color: #fff;
+}
+
+@layer base {
+  /* Every enabled control says it can be used; utilities can still override. */
+  :where(a[href], button, summary, select, label[for], [role="button"], [role="tab"], [role="switch"], [role="radio"]) {
+    cursor: pointer;
+  }
+  :where(button, select, input, textarea):disabled,
+  :where([aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
 }
 
 /* ---------------------------------------------------------------------------
    Panels
 --------------------------------------------------------------------------- */
 
+/* A board is cut from the same stock as a common card (`.card-common`): the
+   card's night-blue body, opaque, inside a hairline in the grey of its frame,
+   with a corner one step under the card's 14px. No blur, no shadow, no bar. */
 .panel {
-  background: linear-gradient(160deg, rgba(20, 29, 51, 0.66), rgba(10, 16, 30, 0.78));
+  background: linear-gradient(168deg, #0d1322 0%, #0a0f1b 58%, #0d1320 100%);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
+  border-radius: 12px;
 }
 
 .panel-strong {
-  background: linear-gradient(160deg, rgba(23, 33, 58, 0.92), rgba(11, 17, 32, 0.96));
+  background: linear-gradient(168deg, #121a2c 0%, #0d1424 58%, #111a2c 100%);
   border: 1px solid var(--line-strong);
-  border-radius: 16px;
+  border-radius: 12px;
 }
 
+/* The `glow` prop of <Panel> and these two classes mark a real state (the
+   selected option, the live series). They colour the hairline and nothing
+   else: no halo, no bar. The class names stay so no caller changes. */
 .panel-glow-blue {
-  box-shadow: var(--glow-blue);
+  border-color: color-mix(in srgb, var(--blue-bright) 55%, transparent);
 }
 
 .panel-glow-orange {
-  box-shadow: var(--glow-orange);
+  border-color: color-mix(in srgb, var(--orange) 60%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1211,16 +1395,8 @@ html.reduce-fx .card-float {
   backdrop-filter: none;
 }
 
-/*
- * Panel without blur: the same two gradient stops, re-solved at a higher alpha
- * so that over the page colour (--bg) they produce the SAME colour as
- * before (0.66/0.78 → 0.88/0.92), while busy content behind a panel now
- * shows through at 8-12% instead of 22-34% unblurred. `.ach-legend` keeps its
- * own (already opaque) prismatic-border background.
- */
-:is(html.lite-fx, html.reduce-fx) .panel:not(.ach-legend) {
-  background: linear-gradient(160deg, rgba(16, 24, 42, 0.88), rgba(9, 15, 28, 0.92));
-}
+/* `.panel` is opaque and unblurred in every mode since the broadcast package,
+   so it needs no lite fallback of its own. */
 
 /*
  * Blurred translucent bars/overlays that carry text: without the blur, page
