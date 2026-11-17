@@ -78,6 +78,7 @@ first infinite season. The 4,914-career battery is in docs/battery-rc37.
 | Training/coaches | development/training → careerTraining → Training, TrainingBlock |
 | Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, Toolbox |
 | News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
+| Cloud save / files (2.0.26) | lib/careerCloud, lib/careerSaveFile → careerCloudStore, careerSaveTransfer → Saves, components/career/cloud |
 
 ## Open and frozen contracts
 

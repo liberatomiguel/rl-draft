@@ -25,7 +25,9 @@ import { SEASON } from "@/config/season";
 import { totalStars } from "@/engine/challengeStars";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import { PRESEASON_BOARDS, type PreseasonBoard } from "@/engine/season";
+import type { CloudSlotMeta } from "./careerCloud";
 import type { DurableProfile } from "./profileSync";
+import type { SavePayload } from "./saveCodec";
 import { classifySyncError, type SyncFailure } from "./syncErrors";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -615,4 +617,190 @@ export async function fetchHallOfFame(limit = 100): Promise<HallOfFameRow[]> {
     .limit(limit);
   if (error || !data) return [];
   return (data as unknown as Partial<HallOfFameRow>[]).map((r) => normalizeRow(r) as HallOfFameRow);
+}
+
+// ---------------------------------------------------------------------------
+// Road to Worlds cloud save (v2.0.26) — table `career_saves`
+// (docs/sql/v2026-career-saves.sql). One row per account and slot. Every call
+// carries the player's own token (`ownToken`), like the profile calls above.
+// ---------------------------------------------------------------------------
+
+type CareerRow = Record<string, unknown>;
+
+const CAREER_META_COLUMNS = "slot, career_id, save_version, seq, summary, device_id, saved_at, revision, updated_at";
+
+const msOf = (v: unknown): number => {
+  const ms = typeof v === "string" ? Date.parse(v) : NaN;
+  return Number.isFinite(ms) ? ms : 0;
+};
+
+/** One row's metadata, trusted only as far as its shape goes (null = unusable). */
+function careerMetaOf(row: CareerRow | null | undefined): CloudSlotMeta | null {
+  if (!row || typeof row.career_id !== "string" || typeof row.revision !== "number" || typeof row.slot !== "number") return null;
+  return {
+    slot: row.slot,
+    careerId: row.career_id,
+    saveVersion: typeof row.save_version === "number" ? row.save_version : 0,
+    seq: typeof row.seq === "number" ? row.seq : 0,
+    revision: row.revision,
+    savedAt: msOf(row.saved_at),
+    updatedAt: msOf(row.updated_at),
+    deviceId: typeof row.device_id === "string" ? row.device_id : "",
+    summary: row.summary && typeof row.summary === "object" ? (row.summary as CloudSlotMeta["summary"]) : {},
+  };
+}
+
+export type CareerMetasResult = { status: "ok"; slots: CloudSlotMeta[] } | ({ status: "error" } & SyncFailure);
+
+/** The account's career slots, without their payloads. */
+export async function fetchCareerMetas(userId: string): Promise<CareerMetasResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .from("career_saves")
+      .select(CAREER_META_COLUMNS)
+      .eq("user_id", userId)
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
+    const slots = ((data as CareerRow[] | null) ?? []).map(careerMetaOf).filter((m): m is CloudSlotMeta => m !== null);
+    return { status: "ok", slots };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
+  }
+}
+
+export type CareerSaveResult =
+  | { status: "ok"; meta: CloudSlotMeta; payload: SavePayload }
+  /** The read succeeded and the slot has no row. */
+  | { status: "empty" }
+  | ({ status: "error" } & SyncFailure);
+
+/** One slot WITH its payload. */
+export async function fetchCareerSave(userId: string, slot: number): Promise<CareerSaveResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .rpc("get_career_save", { p_slot: slot })
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
+    if (!data) return { status: "empty" };
+    const row = data as CareerRow;
+    const meta = careerMetaOf(row);
+    const encoding = row.encoding;
+    if (!meta || (encoding !== "gzip" && encoding !== "json") || typeof row.payload !== "string") {
+      return { status: "error", error: "malformed row", reason: "other" };
+    }
+    return { status: "ok", meta, payload: { encoding, payload: row.payload } };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
+  }
+}
+
+export interface CareerPushInput {
+  slot: number;
+  careerId: string;
+  saveVersion: number;
+  seq: number;
+  summary: CloudSlotMeta["summary"];
+  payload: SavePayload;
+  deviceId: string;
+  release: string;
+  /** The device's clock at the save's last action (ms). */
+  savedAt: number;
+  /** The revision this device last saw; null = it knows of no row. */
+  expectedRevision: number | null;
+  /** The player chose this device's copy in the notice: write regardless. */
+  force?: boolean;
+}
+
+export type CareerPushResult =
+  | { status: "ok"; revision: number; updatedAt: number }
+  /** The account copy moved on (another device wrote it): nothing was written. */
+  | { status: "conflict"; meta: CloudSlotMeta }
+  /** The row this device last saw is gone (deleted elsewhere): nothing was written. */
+  | { status: "missing" }
+  | ({ status: "error" } & SyncFailure);
+
+/** Write one slot through `push_career_save` (the only way to write the table).
+ *  Every argument is sent, null when empty: PostgREST finds the function by the
+ *  names it receives. */
+export async function pushCareerSave(userId: string, input: CareerPushInput): Promise<CareerPushResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .rpc("push_career_save", {
+        p_slot: input.slot,
+        p_career_id: input.careerId,
+        p_save_version: input.saveVersion,
+        p_seq: input.seq,
+        p_summary: input.summary ?? {},
+        p_encoding: input.payload.encoding,
+        p_payload: input.payload.payload,
+        p_device_id: input.deviceId,
+        p_client_release: input.release ?? null,
+        // A save that was never stamped (0) says so: the epoch, not "now", so the
+        // account row still equals the local stamp and the same copy is recognised.
+        p_saved_at: new Date(Math.max(0, input.savedAt || 0)).toISOString(),
+        p_expected_revision: input.expectedRevision ?? null,
+        p_force: Boolean(input.force),
+      })
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "write failed", error.code, status) };
+    const out = (data ?? {}) as CareerRow;
+    if (out.status === "ok" && typeof out.revision === "number") {
+      return { status: "ok", revision: out.revision, updatedAt: msOf(out.updated_at) };
+    }
+    if (out.status === "missing") return { status: "missing" };
+    if (out.status === "conflict") {
+      const meta = careerMetaOf({ ...out, slot: input.slot });
+      if (meta) return { status: "conflict", meta };
+    }
+    return { status: "error", error: "malformed answer", reason: "other" };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "write failed") };
+  }
+}
+
+export type CareerDeleteResult =
+  /** `deleted` false: the row is not the one this device saw (another device has
+   *  written it since, or it is already gone). Nothing was deleted. */
+  | { status: "ok"; deleted: boolean }
+  | ({ status: "error" } & SyncFailure);
+
+/** Delete the account copy of `careerId` in `slot`, but only the very revision
+ *  this device last saw: a copy another device has played since is left alone. */
+export async function deleteCareerSave(
+  userId: string,
+  slot: number,
+  careerId: string,
+  revision: number,
+): Promise<CareerDeleteResult> {
+  try {
+    const c = await client();
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
+      .from("career_saves")
+      .delete()
+      .eq("user_id", userId)
+      .eq("slot", slot)
+      .eq("career_id", careerId)
+      .eq("revision", revision)
+      .select("slot")
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error) return { status: "error", ...failure(error.message, "delete failed", error.code, status) };
+    return { status: "ok", deleted: Array.isArray(data) && data.length > 0 };
+  } catch (e) {
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "delete failed") };
+  }
 }

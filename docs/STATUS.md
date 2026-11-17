@@ -6,19 +6,19 @@
 
 ## Current builds
 
-- **v2.0.25 (17/11/2026), branch `feat/cloud-save`, not on staging or main yet.**
+- **v2.0.26 (17/11/2026), branch `feat/cloud-save`, not on main yet: the career
+  save in the account.** One row per account and slot in `career_saves` (SQL
+  applied by Miguel 17/11), localStorage still the copy the game plays from, a
+  notice when two copies differ, save files for everyone (DESIGN-DECISIONS
+  #165–#169). Staff accounts only until the account path is checked in
+  production (`CAREER_CLOUD_AUDIENCE`, `lib/careerCloudGate.ts`); then one
+  constant opens it. Not verified: a real account, two devices, mobile Safari.
+- **v2.0.25 (17/11/2026), same branch.**
   Account sync, first step of the career cloud save (roadmap Etapa 1): every
   failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
   a failure that may pass is tried again, and a call never runs without the
   player's own token (an expired token used to read as "new account"). Not
   verified against the production database: staging has accounts off.
-- **Next, v2.0.26: the career save in the account.** SQL written and reviewed,
-  NOT applied: `docs/sql/v2026-career-saves.sql` (table `career_saves`, one row
-  per account and slot, gzip payload, revision check). Miguel applies it; the
-  client work starts after that. Decisions taken 17/11: silent fast-forward when
-  only the other device played, a notice on a real divergence, push 30 s after
-  the last career action, deleting a slot deletes the account copy, first
-  release limited to Staff accounts, file export / import for guests.
 - **Production is v2.0.24** (main `5eb3078`); v2.0.15 to v2.0.24 are in
   CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
   page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused

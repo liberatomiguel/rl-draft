@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 34;
+export const BALANCE_VERSION = 35;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4232,4 +4232,12 @@ export const CLOUD_SYNC = {
    *  next profile change, the connection coming back and the tab returning also
    *  run it. */
   resyncDelaysMs: [8_000, 75_000, 300_000],
+  /** v2.0.26 (career cloud save): quiet period after the last career action
+   *  before the slot is copied to the account. A save is 30 to 50 KB compressed,
+   *  so it does not go up after every click; the end of an event or a season and
+   *  leaving the tab send it at once. */
+  careerPushDebounceMs: 30_000,
+  /** v2.0.26: a tab that was hidden for at least this long asks the account
+   *  again when it returns (another device may have played meanwhile). */
+  careerRecheckAfterMs: 60_000,
 } as const;

@@ -6411,6 +6411,11 @@ export function migrateSaveToV4(raw: unknown): CareerSave | null {
  *    qualifier it plays or played → outside the 8; the regional it holds
  *    without one → inside), so Saturday and Sunday cannot re-seed the user.
  */
+/** v2.0.26: the newest `saveVersion` this build writes and can load (what
+ *  `migrateSaveToV5` upgrades to). A save from outside the play loop (the account
+ *  copy, an imported file) with a higher one is refused, never downgraded. */
+export const CURRENT_SAVE_VERSION = 5;
+
 export function migrateSaveToV5(raw: unknown): CareerSave | null {
   const save = migrateSaveToV4(raw);
   if (!save) return null;

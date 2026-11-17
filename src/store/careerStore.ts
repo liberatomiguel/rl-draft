@@ -82,6 +82,7 @@ import {
   fireCoachFlow,
   renewCoachFlow,
   hireCoachFlow,
+  CURRENT_SAVE_VERSION,
   migrateSaveToV5,
   payBankLoanFlow,
   payDebtFlow,
@@ -194,6 +195,11 @@ interface CareerStoreState {
   createCareer: (slot: number, input: CreateCareerInput, customSeed?: number) => void;
   selectSlot: (slot: number) => void;
   deleteSlot: (slot: number) => void;
+  /** v2.0.26: put a save that came from OUTSIDE the play loop into a slot (the
+   *  account copy, an imported file). It goes through the same migrations and
+   *  repairs as a save loaded from storage. False = the game cannot load it, and
+   *  the slot is untouched. The active slot does not change. */
+  adoptSave: (slot: number, raw: CareerSave) => boolean;
 
   advanceDay: () => void;
   setCommunityParticipants: (ids: string[]) => void;
@@ -323,6 +329,13 @@ interface CareerStoreState {
   markMailRead: (mailId: string) => void;
   markAllMailRead: () => void;
   clearError: () => void;
+}
+
+/** The stamp of a write: the clock, but always past the previous stamp. The
+ *  cloud save (v2.0.26) tells "changed since the last sync" by this number, and
+ *  a clock can repeat (a browser that rounds it) or step back. */
+function nextStamp(prev: CareerSave | null | undefined): number {
+  return Math.max(Date.now(), (prev?.lastPlayedAt ?? 0) + 1);
 }
 
 function emptySlots(): (CareerSave | null)[] {
@@ -477,7 +490,7 @@ export const useCareerStore = create<CareerStoreState>()(
         if (worldsWon > 0) useProfileStore.getState().addCareerWorlds(worldsWon);
         // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
         grantCareerXp(prevSave, next);
-        next.lastPlayedAt = Date.now();
+        next.lastPlayedAt = nextStamp(prevSave);
         const nextSlots = [...slots];
         nextSlots[activeSlot] = next;
         const fresh = collectToasts(next, prevSeq);
@@ -519,7 +532,7 @@ export const useCareerStore = create<CareerStoreState>()(
         const changed = save !== slots[activeSlot];
         // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
         if (changed) grantCareerXp(prevSave, save);
-        if (changed) save.lastPlayedAt = Date.now();
+        if (changed) save.lastPlayedAt = nextStamp(prevSave);
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = changed ? seedCareerNew(prevSave, save) : undefined;
         if (seeded) save.newItems = seeded;
@@ -571,6 +584,24 @@ export const useCareerStore = create<CareerStoreState>()(
           slots[slot] = null;
           const active = get().activeSlot === slot ? null : get().activeSlot;
           set({ slots, activeSlot: active });
+        },
+
+        adoptSave: (slot, raw) => {
+          if (!Number.isInteger(slot) || slot < 0 || slot >= get().slots.length) return false;
+          try {
+            // A copy: the migrations upgrade in place, and the caller's object
+            // (a parsed file, a decoded payload) must stay as it was read.
+            const upgraded = migrateSaveToV5(JSON.parse(JSON.stringify(raw)));
+            if (!upgraded || upgraded.saveVersion > CURRENT_SAVE_VERSION) return false;
+            syncSquadRoles(upgraded);
+            slotMetaFor([upgraded]); // read it the way the saves list does: throws on a broken save
+            const slots = [...get().slots];
+            slots[slot] = upgraded;
+            set({ slots, lastError: null, autoAdvance: false, scrimPlayback: null, toasts: [] });
+            return true;
+          } catch {
+            return false;
+          }
         },
 
         advanceDay: () => { if (!get().scrimPlayback) timed("day", () => withSave(advanceDayFlow)); },

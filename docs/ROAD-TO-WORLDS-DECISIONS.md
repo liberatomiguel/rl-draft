@@ -2361,3 +2361,7 @@ The desk (`engine/career/rocketStreet.ts`, careers based in SAM only): the build
 After, same probe: the championship offered and played twice in 24 of 24 seasons; 13.9 / 19.5 / 19.6 signed items a season (the rollover's four departing organisations and the rookie class included from the second season), about a fifth of the feed. No save field is added and no existing RNG draw moves: a career in progress keeps its results and gets the partner weeks and the desk from its next Monday; on a partner week a Community Cup that would have rolled 1v1 or 2v2 is played 3v3. All values provisional.
 
 The 50/50 Community Cup (and every partner event) now keeps its logo on the playback header as well as on the lobby and the result.
+
+## R134 — 17 November 2026: the career save has a copy in the account (v2.0.26)
+
+Recorded in DESIGN-DECISIONS #165–#169, because it amends the rule on player saves: a copy per slot in `career_saves`, localStorage still the copy the game plays from, no merge, a notice when two copies differ, save files for guests, Staff accounts first.

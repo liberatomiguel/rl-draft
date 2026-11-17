@@ -10,6 +10,24 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.26] — 2026-11-17 · Road to Worlds: the career save in your account, and save files
+
+Roadmap Etapa 1 (ROADMAP-RTW-2026-11-17), shipped ahead of the stage gate because players are asking. Decisions: DESIGN-DECISIONS #165–#169. SQL: `docs/sql/v2026-career-saves.sql` (applied by Miguel on 17/11).
+
+#### Added
+- **A copy of each career slot in the account** (`store/careerCloudStore.ts`, rule in `lib/careerCloud.ts`). The save in the browser stays the one the game plays from. Progress goes up 30 seconds after the last action, at once at the end of an event or a season and when the tab is hidden. A device that is behind takes the account copy when the career opens, with a one-line message. **First release: Staff accounts only** (`CAREER_CLOUD_AUDIENCE`).
+- **A notice when two copies differ**: the career was played on two devices, the slot holds another career in the account, or the account copy was deleted elsewhere. Both copies are described (club, season and week, date), the newer one is marked, and the player chooses; the device's career can be exported first. Nothing is replaced without that choice.
+- **Save files** on the saves screen, for everyone, guests included: export a career to a file, import one into an empty slot. The import runs the game's own migrations and refuses a damaged file, a file from a newer version and a file the game cannot load.
+- Analytics: `career_cloud_failed` (stage, reason) and `career_cloud_conflict` (kind, choice).
+
+#### Changed
+- Deleting a career slot while signed in deletes its account copy too; the confirmation says so.
+- `careerStore.adoptSave`: the one way a save from outside the play loop enters a slot (account copy or file), through the same migrations and repairs as a save loaded from storage.
+- `lastPlayedAt` is strictly increasing (the clock, but always past the previous stamp): the cloud rule compares it for equality.
+- Found by the persistence review before release and fixed: on a shared browser a second account's career could be written over the first account's copy without a question (a slot with a different career now goes up only after the player's own delete or replace); an answer in the notice could be applied to a situation that had changed while it waited (it is now checked against what the player saw); a delete could remove a copy another device had just played (it now names the revision).
+- BALANCE_VERSION 35: `CLOUD_SYNC.careerPushDebounceMs` and `careerRecheckAfterMs`. No gameplay value changed. The persist contract is unchanged (key `rocket-draft:career:v1`, version 3, saveVersion 5); the sync's bookkeeping is a new plain key, `rocket-draft:career-cloud:v1`.
+- Not verified: the account path against the production database (staging runs with accounts off; the store is tested against a simulated Supabase and the SQL was reviewed, not executed by the tests). Two real devices, mobile Safari, and a browser without `CompressionStream` are not checked.
+
 ## [2.0.25] — 2026-11-17 · Account sync: failures are named, tried again, and an expired token no longer reads as a new account
 
 First step of the Road to Worlds cloud save (ROADMAP-RTW-2026-11-17, Etapa 1): the profile sync it will ride on. POSTLAUNCH-2.0-REPORT item 6 counted failures on 12% of signed-in players. PostHog, 12–17/11: 47 sessions with a failed sync, 35 of them on a phone, 26 on the read and 24 on the push, on every release from 2.0.1 to 2.0.24. Almost all happen in the middle of a session (four in the first 20 seconds) and the session goes on afterwards, so it is neither a regression nor a tab being closed. The event carried only the stage, so the share of each cause below is not known yet.
