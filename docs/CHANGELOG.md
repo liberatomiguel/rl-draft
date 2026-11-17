@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.25] — 2026-11-17 · Account sync: failures are named, tried again, and an expired token no longer reads as a new account
+
+First step of the Road to Worlds cloud save (ROADMAP-RTW-2026-11-17, Etapa 1): the profile sync it will ride on. POSTLAUNCH-2.0-REPORT item 6 counted failures on 12% of signed-in players. PostHog, 12–17/11: 47 sessions with a failed sync, 35 of them on a phone, 26 on the read and 24 on the push, on every release from 2.0.1 to 2.0.24. Almost all happen in the middle of a session (four in the first 20 seconds) and the session goes on afterwards, so it is neither a regression nor a tab being closed. The event carried only the stage, so the share of each cause below is not known yet.
+
+#### Fixed
+- **A sync with an expired token ran as nobody.** Root cause: when the access token has expired and its refresh fails (a phone waking a tab after an hour), supabase-js sends the request with the public anon key (`_getAccessToken` falls back to it). Row-level security then hides the player's row, `fetchCloudRow` answered "no row", and the sync treated an existing account as a new one: it pushed without merging the cloud copy and the push was refused. Nothing was lost (the refused push wrote nothing), but it was counted as a push failure and the session stayed unsynced. `fetchCloudRow` and `pushCloudProfile` now check that the session belongs to the user they are called for and report `auth` otherwise.
+- **A failed sync was not tried again.** Root cause: one attempt per read and per push, and a sync that failed was repeated only by the next profile change (or, for the first sync of a page load, by a later sign-in event; until then no progress was pushed at all). A failed read that may pass (dropped connection, server error) is now tried again inside the sync (`CLOUD_SYNC.retryDelaysMs`). A sync that still failed is owed, per user: the whole read, merge and push runs again after a pause (`CLOUD_SYNC.resyncDelaysMs`, the last one repeating), when the connection comes back, when the tab returns, or with the next progress. A failed push is never repeated on its own, because the cloud may have changed since the read.
+- **The request carries the checked token itself** (`setHeader`), so it cannot go out with the anon key even if the session disappears between the check and the request.
+- **A new account could get a name with four digits because the network failed.** Root cause: any failed first push of a new account took the fallback name (email prefix plus four digits), not only a refused name. Only a constraint refusal (the unique name) takes it now.
+
+#### Changed
+- `account_sync_failed` carries `reason` (offline, network, auth, denied, conflict, server, rate, unavailable, other; `lib/syncErrors.ts`) and the database code when there is one. It is sent once per session, stage and reason.
+- BALANCE_VERSION 34: `CLOUD_SYNC` gained the retry pauses (it lives in `balance.ts`, so the fingerprint moves). No gameplay value changed.
+- Not verified: against the production database (staging runs with accounts off; the store is covered by tests with a simulated Supabase). The share of each reason is only known once this release has run in production for a few days.
+
 ## [2.0.24] — 2026-11-17 · A newcomer reaches the game sooner
 
 Launch data, 12–16/11: 519 of 903 new players left without playing anything; on mobile 36% left after one page. A new player had to close three full-screen pop-ups before the home page (welcome tour, the 2.0 announcement, the login calendar), and the home page was always English.

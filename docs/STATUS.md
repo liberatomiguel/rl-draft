@@ -1,21 +1,29 @@
 # Project Status — current state only
 
-> Updated: **2026-11-12**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 proposal (not
-> approved): ROADMAP-RTW-2026-11-17.md.
+> Updated: **2026-11-17**. History: CHANGELOG.md. Career map:
+> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
+> (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 
 ## Current builds
 
-- **v2.0.14 (14/11/2026)** follows the first PostHog review after the launch
-  (docs/POSTLAUNCH-2.0-REPORT.md): page translation no longer crashes React
-  (`lib/domGuard.ts`), the black global error screen is replaced
-  (`app/global-error.tsx`), a failed chunk reloads once, old Draft results no
-  longer crash, error reports keep the property name. Production ran v2.0.1 to
-  v2.0.13 between 12 and 14/11 (CHANGELOG). Not verified: the crash end to end
-  with a real browser translator; watch `NotFoundError` under release 2.0.14.
-  Open from the report: an event for a refused career advance, the event budget
-  (about one million a month), FR / ES, mobile career entry, account sync failures.
-- **Production is v2.0.0 "Season 1"**, https://rocketdraft.app, live since
+- **v2.0.25 (17/11/2026), branch `feat/cloud-save`, not on staging or main yet.**
+  Account sync, first step of the career cloud save (roadmap Etapa 1): every
+  failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
+  a failure that may pass is tried again, and a call never runs without the
+  player's own token (an expired token used to read as "new account"). Not
+  verified against the production database: staging has accounts off.
+- **Next, v2.0.26: the career save in the account.** SQL written and reviewed,
+  NOT applied: `docs/sql/v2026-career-saves.sql` (table `career_saves`, one row
+  per account and slot, gzip payload, revision check). Miguel applies it; the
+  client work starts after that. Decisions taken 17/11: silent fast-forward when
+  only the other device played, a notice on a real divergence, push 30 s after
+  the last career action, deleting a slot deletes the account copy, first
+  release limited to Staff accounts, file export / import for guests.
+- **Production is v2.0.24** (main `5eb3078`); v2.0.15 to v2.0.24 are in
+  CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
+  page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused
+  career advance, the event budget, FR / ES, mobile career entry.
+- **v2.0.0 "Season 1"** went live at https://rocketdraft.app on
   12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
   his go-ahead because the Workers Builds queue was behind; the queued builds
   publish the same commits). Pre-season frozen at 13:05 UTC, three rewarded

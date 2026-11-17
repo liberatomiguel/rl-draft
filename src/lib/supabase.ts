@@ -26,6 +26,7 @@ import { totalStars } from "@/engine/challengeStars";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import { PRESEASON_BOARDS, type PreseasonBoard } from "@/engine/season";
 import type { DurableProfile } from "./profileSync";
+import { classifySyncError, type SyncFailure } from "./syncErrors";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -347,7 +348,39 @@ export type CloudRowResult =
       preseasonPositions: Partial<Record<PreseasonBoard, number>>;
     }
   | { status: "no-row" }
-  | { status: "error"; error: string };
+  | ({ status: "error" } & SyncFailure);
+
+/** A failed cloud call, named (v2.0.25): the reason goes out with the analytics
+ *  event and decides whether the sync tries again. */
+function failure(message: string | null | undefined, fallback: string, code?: string | null, status?: number | null): SyncFailure {
+  const error = message || fallback;
+  const online = typeof navigator !== "undefined" ? navigator.onLine : undefined;
+  return { error, reason: classifySyncError({ message: error, code, status, online }), ...(code ? { code } : {}) };
+}
+
+const SDK_UNAVAILABLE: SyncFailure = { error: UNAVAILABLE, reason: "unavailable" };
+
+/**
+ * v2.0.25: a cloud call for `userId` must carry THAT user's token. supabase-js
+ * falls back to the public anon key when it has no session to offer (an expired
+ * token whose refresh failed: a phone waking a tab after an hour). The read then
+ * ran as nobody, row-level security hid the row, and the sync took an existing
+ * account for a new one and failed on the push. Returns that user's token, or
+ * the failure. The caller puts the token on the request itself (`setHeader`):
+ * supabase-js only adds its own Authorization when none is set, so the request
+ * can never go out as nobody, even if the session vanishes in between. A stale
+ * token is then a 401 (`auth`), never an empty read.
+ */
+async function ownToken(c: SupabaseClient, userId: string): Promise<{ token: string } | SyncFailure> {
+  const { data, error } = await c.auth.getSession();
+  const session = data.session;
+  if (session?.user.id === userId && session.access_token) return { token: session.access_token };
+  const fallback = session ? "session of another user" : "no session";
+  const named = failure(error?.message, fallback, null, (error as { status?: number } | null)?.status ?? null);
+  // A refresh that failed on the network is a network problem; anything else is auth.
+  const keep = named.reason === "network" || named.reason === "offline" || named.reason === "server" || named.reason === "rate";
+  return { error: named.error, reason: keep ? named.reason : "auth" };
+}
 
 /** The `preseason_positions` jsonb, trusted only as far as its shape goes. */
 function readPlaces(raw: unknown): Partial<Record<PreseasonBoard, number>> {
@@ -367,13 +400,16 @@ function readPlaces(raw: unknown): Partial<Record<PreseasonBoard, number>> {
 export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
   try {
     const c = await client();
-    if (!c) return { status: "error", error: UNAVAILABLE };
-    const { data, error } = await c
+    if (!c) return { status: "error", ...SDK_UNAVAILABLE };
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return { status: "error", ...auth };
+    const { data, error, status } = await c
       .from("profiles")
       .select("durable, username, preseason_position, preseason_positions, profile_grants(grant_id)")
       .eq("id", userId)
+      .setHeader("Authorization", `Bearer ${auth.token}`)
       .maybeSingle();
-    if (error) return { status: "error", error: error.message || "read failed" };
+    if (error) return { status: "error", ...failure(error.message, "read failed", error.code, status) };
     if (!data) return { status: "no-row" };
     const grantRows = (data.profile_grants as { grant_id: string }[] | null) ?? [];
     return {
@@ -388,37 +424,42 @@ export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
       preseasonPositions: readPlaces(data.preseason_positions),
     };
   } catch (e) {
-    return { status: "error", error: e instanceof Error ? e.message : String(e) };
+    return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "read failed") };
   }
 }
 
 /** Upsert the user's profile: the full durable blob + the flattened columns.
- *  Returns the error message on failure. */
+ *  Returns the failure (message + reason) when it did not go through. */
 export async function pushCloudProfile(
   userId: string,
   username: string,
   durable: DurableProfile,
   stats: LeaderboardStats,
-): Promise<{ error?: string }> {
+): Promise<Partial<SyncFailure>> {
   try {
     const c = await client();
-    if (!c) return { error: UNAVAILABLE };
+    if (!c) return SDK_UNAVAILABLE;
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return auth;
     // v2.0: `xp` / `mmr` are deliberately NOT written — they are the frozen
     // pre-season archive (a DB trigger also refuses them). Season values travel in
     // the `season_*` columns of `stats`.
-    const { error } = await c.from("profiles").upsert(
-      {
-        id: userId,
-        username,
-        durable,
-        ...stats,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
-    return error ? { error: error.message || "write failed" } : {};
+    const { error, status } = await c
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          username,
+          durable,
+          ...stats,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      )
+      .setHeader("Authorization", `Bearer ${auth.token}`);
+    return error ? failure(error.message, "write failed", error.code, status) : {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
+    return failure(e instanceof Error ? e.message : String(e), "write failed");
   }
 }
 

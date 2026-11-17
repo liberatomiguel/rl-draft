@@ -164,7 +164,7 @@ properties of `session_started`, not events.
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
 | `account_signed_in` | critical | A sign-in completes in this tab (not a restored session) | `hadLocalProgress` |
-| `account_sync_failed` | critical | A cloud sync aborts, once per session and stage | `stage` (`read`, `push`) |
+| `account_sync_failed` | critical | A cloud sync aborts, once per session, stage and reason | `stage` (`read`, `push`), `reason` (`offline`, `network`, `auth`, `denied`, `conflict`, `server`, `rate`, `unavailable`, `other`; since 2.0.25), `code` (database / PostgREST code, when there is one) |
 | `quality_save_error` | critical | A persisted store fails to save or load | `store`, `kind` (`quota`, `parse`, `migrate`, `write`) |
 | `quality_migration` | critical | A save is upgraded to a newer shape | `store`, `fromVersion`, `toVersion` |
 | `quality_duplicate_reward` | critical | A grant is refused as already given | `kind`, `id` |

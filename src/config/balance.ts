@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 33;
+export const BALANCE_VERSION = 34;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4220,4 +4220,16 @@ export const CLOUD_SYNC = {
    *  progress is pushed mid-session (coalesces a run's burst of writes —
    *  results, achievements, unlocks — into one read + push). */
   pushDebounceMs: 4500,
+  /** v2.0.25: pauses before a failed cloud READ is tried again within the same
+   *  sync. Only for failures that may simply pass (dropped connection, server
+   *  error). The list length is the number of extra attempts. A failed push is
+   *  never repeated on its own: the cloud may have changed, so the whole sync
+   *  (read, merge, push) runs again instead. */
+  retryDelaysMs: [1200, 4000],
+  /** v2.0.25: when a sync still failed, the whole sync is tried again after these
+   *  pauses, one after the other; the last one repeats while the failure lasts.
+   *  The second is past the minute auth-js remembers a failed token refresh. The
+   *  next profile change, the connection coming back and the tab returning also
+   *  run it. */
+  resyncDelaysMs: [8_000, 75_000, 300_000],
 } as const;

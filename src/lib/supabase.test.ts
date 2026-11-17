@@ -11,6 +11,8 @@ const h = vi.hoisted(() => ({
   createClient: vi.fn(),
   maybeSingle: vi.fn(),
   upsert: vi.fn(),
+  getSession: vi.fn(),
+  setHeader: vi.fn(),
   authCbs: [] as ((event: string, session: unknown) => void)[],
 }));
 
@@ -19,10 +21,24 @@ vi.mock("@supabase/supabase-js", () => ({ createClient: h.createClient }));
 function fakeClient() {
   return {
     from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: h.maybeSingle }) }),
-      upsert: h.upsert,
+      select: () => ({
+        eq: () => ({
+          setHeader: (name: string, value: string) => {
+            h.setHeader("read", name, value);
+            return { maybeSingle: h.maybeSingle };
+          },
+        }),
+      }),
+      upsert: (...args: unknown[]) => ({
+        // The real builder sends on await: the request leaves only once the header is set.
+        setHeader: (name: string, value: string) => {
+          h.setHeader("push", name, value);
+          return h.upsert(...args);
+        },
+      }),
     }),
     auth: {
+      getSession: h.getSession,
       onAuthStateChange: (cb: AuthCb) => {
         h.authCbs.push(cb);
         return { data: { subscription: { unsubscribe: () => {} } } };
@@ -32,6 +48,12 @@ function fakeClient() {
 }
 
 const URL_ENV = "https://abcdref.supabase.co";
+
+/** What `auth.getSession()` answers for a signed-in user. */
+const sessionOf = (userId: string) => ({
+  data: { session: { user: { id: userId }, access_token: `tok-${userId}` } },
+  error: null,
+});
 
 async function load(enabled = true): Promise<Sb> {
   vi.resetModules();
@@ -44,6 +66,8 @@ beforeEach(() => {
   h.createClient.mockReset().mockImplementation(() => fakeClient());
   h.maybeSingle.mockReset();
   h.upsert.mockReset().mockResolvedValue({ error: null });
+  h.getSession.mockReset().mockResolvedValue(sessionOf("u1"));
+  h.setHeader.mockReset();
   h.authCbs.length = 0;
 });
 
@@ -100,13 +124,18 @@ describe("fetchCloudRow — tagged result", () => {
   it("error: a PostgREST error is NOT reported as no-row", async () => {
     const sb = await load();
     h.maybeSingle.mockResolvedValue({ data: null, error: { message: "upstream timeout", code: "57014" } });
-    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "upstream timeout" });
+    expect(await sb.fetchCloudRow("u1")).toEqual({
+      status: "error",
+      error: "upstream timeout",
+      reason: "server",
+      code: "57014",
+    });
   });
 
   it("error: a thrown network failure is NOT reported as no-row", async () => {
     const sb = await load();
     h.maybeSingle.mockRejectedValue(new TypeError("Failed to fetch"));
-    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error" });
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "network" });
   });
 
   it("error: the SDK could not be created — and the next call retries", async () => {
@@ -114,7 +143,7 @@ describe("fetchCloudRow — tagged result", () => {
     h.createClient.mockImplementationOnce(() => {
       throw new Error("chunk load failed");
     });
-    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error" });
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "unavailable" });
     h.maybeSingle.mockResolvedValue({ data: null, error: null });
     expect(await sb.fetchCloudRow("u1")).toEqual({ status: "no-row" });
     expect(h.createClient).toHaveBeenCalledTimes(2);
@@ -144,7 +173,59 @@ describe("pushCloudProfile", () => {
     h.upsert.mockResolvedValue({ error: { message: "rls" } });
     const durable = { xp: 1 } as never;
     const res = await sb.pushCloudProfile("u1", "ace", durable, {} as never);
-    expect(res).toEqual({ error: "rls" });
+    expect(res).toEqual({ error: "rls", reason: "other" });
+  });
+
+  it("names a refused display name (unique violation) as a conflict", async () => {
+    const sb = await load();
+    h.upsert.mockResolvedValue({ error: { message: "duplicate key value", code: "23505" }, status: 409 });
+    const res = await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never);
+    expect(res).toEqual({ error: "duplicate key value", reason: "conflict", code: "23505" });
+  });
+});
+
+describe("v2.0.25: a cloud call carries the player's own token, or is not sent", () => {
+  // supabase-js falls back to the anon key when it has no session to offer. The
+  // read then ran as nobody, row-level security hid the row and an existing
+  // account read as "no row".
+  it("no session (expired token, refresh failed): auth error, nothing is sent", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    h.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "no session", reason: "auth" });
+    expect(await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never)).toEqual({
+      error: "no session",
+      reason: "auth",
+    });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it("the session of another user: auth error, nothing is sent", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue(sessionOf("someone-else"));
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({ status: "error", reason: "auth" });
+    expect(await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never)).toMatchObject({ reason: "auth" });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it("a token refresh that failed on the network is a network failure, not auth", async () => {
+    const sb = await load();
+    h.getSession.mockResolvedValue({ data: { session: null }, error: { message: "Failed to fetch", status: 0 } });
+    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "error", error: "Failed to fetch", reason: "network" });
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("the read and the push put the checked token on the request itself", async () => {
+    const sb = await load();
+    h.maybeSingle.mockResolvedValue({ data: null, error: null });
+    await sb.fetchCloudRow("u1");
+    await sb.pushCloudProfile("u1", "ace", { xp: 1 } as never, {} as never);
+    expect(h.setHeader.mock.calls).toEqual([
+      ["read", "Authorization", "Bearer tok-u1"],
+      ["push", "Authorization", "Bearer tok-u1"],
+    ]);
   });
 });
 
