@@ -10,6 +10,12 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.30] — 2026-11-18 · A way back to the career picker
+
+#### Fixed
+- **Road to Worlds had no way back to the career picker once a career was active** (Miguel, 18/11: "ao clicar na carreira já entra direto no save"). Root cause: `/career/saves` was reached only when no slot was active, after retiring, or from the wizard; the top bar had no link to it, so a second or third career (or one the account brought from another device) could not be opened. The top bar (desktop tabs and the mobile menu) now ends with **Careers / Carreiras**, using the `nav.saves` label that already existed in both languages.
+- **A profile row could not be emptied by hand** (Miguel, cleaning the account mixed by the 2.0.29 bug: `durable` is NOT NULL, so `set durable = null` fails). A row whose `durable` is `{}` now reads as "no saved profile": the next sign-in pushes the device's profile over it, name, grants and frozen pre-season columns untouched.
+
 ## [2.0.29] — 2026-11-18 · Signing out leaves a fresh guest; one account's progress and careers never reach another
 
 #### Fixed

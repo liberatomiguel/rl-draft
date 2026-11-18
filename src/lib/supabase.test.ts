@@ -128,6 +128,13 @@ describe("fetchCloudRow — tagged result", () => {
     });
   });
 
+  it("v2.0.30: an emptied row ('{}') reads as no saved profile, keeping its name", async () => {
+    const sb = await load();
+    h.maybeSingle.mockResolvedValue({ data: { durable: {}, username: "ace" }, error: null });
+    const row = await sb.fetchCloudRow("u1");
+    expect(row).toMatchObject({ status: "ok", durable: null, username: "ace" });
+  });
+
   it("ok: embedded grants + the frozen pre-season position are read (v2.0)", async () => {
     const sb = await load();
     h.maybeSingle.mockResolvedValue({

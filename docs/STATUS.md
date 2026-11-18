@@ -6,7 +6,10 @@
 
 ## Current builds
 
-- **Production is v2.0.29 (18/11/2026): the device's saves belong to one
+- **Production is v2.0.30 (18/11/2026): the career top bar links to the saves
+  picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
+  saved profile.** Cross-device career saves still unverified on two devices.
+- **v2.0.29 (18/11/2026): the device's saves belong to one
   account at a time** (DESIGN-DECISIONS #170, `lib/localOwner.ts`). Signing out
   leaves a fresh guest with no careers; another account never inherits the
   profile, grants or career slots; the owner's next sign-in brings them back.
