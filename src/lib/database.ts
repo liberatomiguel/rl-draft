@@ -174,6 +174,16 @@ export const DB_PLAYERS: DbPlayer[] = (() => {
     .sort((a, b) => a.nickname.localeCompare(b.nickname, "en", { sensitivity: "base" }));
 })();
 
+/**
+ * The newest season's label when the team has a roster in it ("RLCS 2027"),
+ * else undefined. v2.0.33: an active team's title names its current roster,
+ * the way roster searches are worded ("gentle mates rocket league roster 2027").
+ */
+export function currentSeasonOf(team: DbTeam): string | undefined {
+  const latest = DB_SEASONS[DB_SEASONS.length - 1];
+  return latest && team.lineups.some((l) => l.season.slug === latest.slug) ? latest.label : undefined;
+}
+
 export const dbSeason = (slug: string): DbSeason | undefined => DB_SEASONS.find((s) => s.slug === slug);
 export const dbTeam = (id: string): DbTeam | undefined => DB_TEAMS.find((t) => t.id === id);
 export const dbPlayer = (id: string): DbPlayer | undefined => DB_PLAYERS.find((p) => p.id === id);

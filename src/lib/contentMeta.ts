@@ -36,9 +36,14 @@ export function pageMetadata(opts: {
   twins?: { en: string; pt: string };
   /** false → `noindex, follow` (per-device pages a search result should not show). */
   index?: boolean;
+  /** The page's own 1200 × 630 JPEG share image (v2.0.33: the career landing). */
+  image?: { url: string; alt: string };
 }): Metadata {
-  const { title, description, path, locale = "en", twins, index = true } = opts;
+  const { title, description, path, locale = "en", twins, index = true, image } = opts;
   const url = path === "/" ? SITE.url : `${SITE.url}${path}`;
+  const shareImage = image
+    ? { url: image.url, width: 1200, height: 630, alt: image.alt, type: "image/jpeg" }
+    : OG_IMAGE;
   return {
     title: { absolute: title },
     description,
@@ -56,14 +61,14 @@ export function pageMetadata(opts: {
       description,
       locale: locale === "pt" ? "pt_BR" : "en_US",
       ...(twins ? { alternateLocale: locale === "pt" ? "en_US" : "pt_BR" } : {}),
-      images: [OG_IMAGE],
+      images: [shareImage],
     },
     twitter: {
       card: "summary_large_image",
       creator: "@liberatoRL_",
       title,
       description,
-      images: [{ url: OG_IMAGE.url, alt: OG_IMAGE.alt }],
+      images: [{ url: shareImage.url, alt: shareImage.alt }],
     },
     // The staging build's blanket noindex (root layout) is inherited; a page
     // only states its own robots when it opts out of the index.
@@ -83,7 +88,7 @@ export function withBrand(title: string): string {
  */
 export function contentMetadata(
   copy: ContentPageCopy,
-  opts: { enPath: string; ptPath: string; locale: "en" | "pt" },
+  opts: { enPath: string; ptPath: string; locale: "en" | "pt"; image?: { url: string; alt: string } },
 ): Metadata {
   return pageMetadata({
     title: withBrand(copy.metaTitle),
@@ -91,5 +96,6 @@ export function contentMetadata(
     path: opts.locale === "pt" ? opts.ptPath : opts.enPath,
     locale: opts.locale,
     twins: { en: opts.enPath, pt: opts.ptPath },
+    image: opts.image,
   });
 }

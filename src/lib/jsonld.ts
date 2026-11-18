@@ -96,6 +96,8 @@ export function articleJsonLd(opts: {
   description: string;
   path: string;
   inLanguage: string;
+  /** The page's own share image (v2.0.33: the career landing); the site's by default. */
+  image?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -105,11 +107,46 @@ export function articleJsonLd(opts: {
     inLanguage: opts.inLanguage,
     url: absoluteUrl(opts.path),
     mainEntityOfPage: absoluteUrl(opts.path),
-    image: absoluteUrl("/opengraph-image.png"),
+    image: absoluteUrl(opts.image ?? "/opengraph-image.png"),
     dateModified: CONTENT_DATE,
     author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
     publisher: { "@type": "Organization", name: SITE.name, url: SITE.url },
     isPartOf: { "@type": "WebSite", name: SITE.name, url: SITE.url },
+  };
+}
+
+/**
+ * VideoGame — Road to Worlds, the career mode, as its own entity on its landing
+ * page (v2.0.33). The root layout's node describes Rocket Draft as a whole; this
+ * one tells search engines and answer engines that the career mode is a free
+ * browser manager game, part of Rocket Draft, with real screenshots.
+ */
+export function careerGameJsonLd(opts: {
+  description: string;
+  path: string;
+  inLanguage: string;
+  image: string;
+  screenshots: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    name: "Road to Worlds",
+    alternateName: `${SITE.name}: Road to Worlds`,
+    description: opts.description,
+    url: absoluteUrl(opts.path),
+    image: absoluteUrl(opts.image),
+    screenshot: opts.screenshots.map(absoluteUrl),
+    inLanguage: opts.inLanguage,
+    genre: ["Sports management", "Esports", "Simulation"],
+    applicationCategory: "GameApplication",
+    operatingSystem: "Web browser",
+    gamePlatform: "Web browser",
+    playMode: "SinglePlayer",
+    isAccessibleForFree: true,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD", availability: "https://schema.org/InStock" },
+    author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
+    isPartOf: { "@type": "VideoGame", name: SITE.name, url: SITE.url },
   };
 }
 

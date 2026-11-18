@@ -10,6 +10,26 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.33] — 2026-11-18 · The career landing answers "career mode" searches, with a one-tap start beside the usual one
+
+Search pass from Miguel's Search Console export (17/08–16/11) and PostHog (12–18/11): `/rocket-league-manager` became the first organic landing page on 17–18/11 (145 search visitors in two days, the home 96); of its visitors 51 % opened the career and 30 % founded one, and 42 % of those who reached the founding wizard left it. Google showed the guide, not the landing, for "rocket league career mode". DESIGN-DECISIONS #172, ROAD-TO-WORLDS-DECISIONS R136.
+
+#### Added
+- **Two buttons on the career landing (EN/PT):** "Found your club" / "Fundar o seu clube" opens the founding wizard as before, and beside it "Start with a random club" / "Começar com clube sorteado" opens **`/career?start=quick`** (`lib/careerEntry.ts`, `LandingConfig.secondaryCta`, copy `ctaAltLabel`). With the flag, a player who has a career lands on it as before; a newcomer goes to the founding wizard with the flag kept (`CareerShell`), and the wizard runs its own Quick start (a random club, straight to the last step: pick the difficulty, found it). Which start works better is measurable in PostHog: the `$pageview` of `/career/new` carries `?start=quick` or not.
+- **An active team's page names its current roster:** "Gentle Mates Rocket League Roster — RLCS 2027 & Past Seasons" (title and H1, `currentSeasonOf` in `lib/database`), for a team with a roster in the newest season; the others keep "… Roster by Season". The roster searches in Search Console carry the year ("… rocket league roster 2027", positions 5–11).
+- **`public/llms.txt`**: a short map of the site for answer engines (the two modes, the career landing and guides, the draft guides, the RLCS database). robots.txt already allows every crawler.
+- **Career landing (EN/PT):** a first section answering "Does Rocket League have a career mode?" (not in the game; fan-made mods on PC, downloadable manager games and browser games; Road to Worlds is the browser club-manager kind) and two FAQs, "Do I need a mod, a download or a PC?" and "Do I play as a player or as the manager?". The section captures shift by one (`ContentPage`).
+- **The landing's own share image**, Open Graph and X card, EN and PT (`public/landing/career-share-{en,pt}.jpg`, 66 KB, `careerShareSrc`), passed to the page metadata through `pageMetadata`'s new `image` option with the H1 as its alt text. `scripts/build-og-career.mjs` renders them with Chrome's headless screenshot, the site font and the HQ capture, and fails when a title overflows. Before, every page shared the site image. Not the `opengraph-image` file convention: Next ignores a route's image file when the page's metadata sets `images` (every content page does), and Turbopack drops its `.alt.txt` in a nested route (both checked on the export).
+- **A `VideoGame` node for Road to Worlds** on the landing (`careerGameJsonLd`: free, browser, part of Rocket Draft, the five landing screenshots); its Article node points at the page's own image.
+
+#### Changed
+- **Titles and the H1.** Landing: "Rocket League Career Mode & Manager Game — Free" (was "… — Free RLCS Manager Game"), H1 "Rocket League Career Mode & Manager Game — Road to Worlds" (also the anchor text every content page uses for it), description "…in your browser, no mod or download…". Guide: "Road to Worlds Guide: Rocket League Career Tips" / "Road to Worlds: Guia da Carreira de Rocket League", so it stops competing with the landing for the head query.
+- `CONTENT_DATE` 2026-11-18 (sitemap `lastmod`, Article `dateModified`).
+- `scripts/link-audit.mjs` drops a link's query and hash before matching it.
+
+#### Fixed
+- **The eight Road to Worlds guide pages sent "Start a Road to Worlds career" to the home page.** Root cause: the guides (v2.0.19–2.0.20) copied the route shell of the plain content pages, whose button ("Play Rocket Draft now") goes to `/`; only the landing pointed at `/career`. Their visitors who pressed it met the main menu and had to find the career again. They now open `/career`.
+
 ## [2.0.32] — 2026-11-18 · A page whose build files failed to load repairs itself
 
 #### Fixed

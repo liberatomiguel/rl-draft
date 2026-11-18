@@ -6,16 +6,22 @@
 
 ## Current builds
 
-- **v2.0.32 (18/11/2026, local, not committed): a page whose build files
-  failed to load repairs itself** (DESIGN-DECISIONS #171). A deploy's version
-  skew left a 404 for a career chunk in a player's cache for a year (the
-  `/_next/static/*` immutable rule also covers 404s), so his career hung on its
-  skeleton. Inline repair in the root layout, error-screen refetch, and a zone
-  rule for Miguel (DEPLOY-CLOUDFLARE §9), not applied yet.
-- **Production is v2.0.31 (18/11/2026): an invitation to Miguel's research
-  form for returning players** (draft results / season review, once per device;
-  `config/research.ts`, event `research_invite`). Career surface not checked in
-  a browser.
+- **Production is v2.0.33 (18/11/2026): search pass on the career landing**
+  (DESIGN-DECISIONS #172, R136). `/rocket-league-manager` is the first organic
+  landing page; its title and H1 lead with "Rocket League Career Mode & Manager
+  Game", a new first section answers "does Rocket League have a career mode?",
+  the guide stops competing for that query, own share image and VideoGame node.
+  Two buttons: "Found your club" (wizard) and "Start with a random club"
+  (`/career?start=quick`); the guides' button opens `/career` (it linked to
+  `/`). Active teams' titles name the current roster; `llms.txt`. Watch which
+  start founds more careers (PostHog: `/career/new` with or without the flag).
+  Baseline and rivals: memory `seo-search-landscape`. Not done: video, Reddit,
+  DE/FR pages, new landing pages.
+- **v2.0.32 (18/11/2026): a page whose build files failed to load repairs
+  itself** (DESIGN-DECISIONS #171). The zone rule for Miguel
+  (DEPLOY-CLOUDFLARE §9) is not applied yet.
+- **v2.0.31 (18/11/2026): an invitation to Miguel's research form for
+  returning players** (`config/research.ts`, event `research_invite`).
 - **v2.0.30 (18/11/2026): the career top bar links to the saves
   picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
   saved profile.** Cross-device career saves still unverified on two devices.

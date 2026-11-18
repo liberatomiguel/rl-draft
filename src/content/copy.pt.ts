@@ -2081,7 +2081,10 @@ export const PT: Copy = {
     seasonTitle: (season: string) => `Rosters e Overalls da ${season}`,
     seasonIntro: (season: string, rosters: number, regions: number) =>
       `Todos os rosters da ${season} no Rocket Draft: ${rosters} times em ${regions} ${regions === 1 ? "região" : "regiões"}, do mais forte ao mais fraco, com o overall de cada jogador.`,
-    teamTitle: (team: string) => `Roster da ${team} no Rocket League por Temporada`,
+    teamTitle: (team: string, current?: string) =>
+      current
+        ? `Roster da ${team} no Rocket League — ${current} e Anteriores`
+        : `Roster da ${team} no Rocket League por Temporada`,
     teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
       rosters === 1
         ? `${team} (${region}) no Rocket Draft: o roster da ${first}, com o overall de cada jogador.`

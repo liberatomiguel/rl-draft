@@ -10,7 +10,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { CAREER_DIFFICULTY, CAREER_ECONOMY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
@@ -19,6 +19,7 @@ import { runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/en
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
+import { wantsQuickStart } from "@/lib/careerEntry";
 import { formatMoney } from "@/lib/format";
 import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
@@ -247,6 +248,16 @@ export function WizardScreen() {
     setDifficulty(CAREER_DIFFICULTY.defaultPreset);
     setStep(TOTAL_STEPS);
   };
+
+  // v2.0.33: the search pages link here with ?start=quick (through CareerShell):
+  // run the Quick start once, as if its button had been pressed. Deferred a tick
+  // like the country default above, so the set calls are not in the effect body.
+  const runLinkedQuickStart = useEffectEvent(() => quickStart());
+  useEffect(() => {
+    if (!wantsQuickStart(window.location.search)) return;
+    const t = window.setTimeout(runLinkedQuickStart, 0);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const found = () => {
     const slot = slots.findIndex((s) => !s);

@@ -64,6 +64,7 @@ function prepare(raw: RawPage): ContentPageCopy {
     sections: raw.sections.filter(live).map((s) => ({ heading: fill(s.heading), body: fill(s.body) })),
     ...(raw.faqs ? { faqs: raw.faqs.filter(live).map((f) => ({ q: fill(f.q), a: fill(f.a) })) } : {}),
     ctaLabel: fill(raw.ctaLabel),
+    ...(raw.ctaAltLabel ? { ctaAltLabel: fill(raw.ctaAltLabel) } : {}),
     ...(raw.badges ? { badges: raw.badges.map(fill) } : {}),
     ...(raw.guidesLabel ? { guidesLabel: fill(raw.guidesLabel) } : {}),
   };

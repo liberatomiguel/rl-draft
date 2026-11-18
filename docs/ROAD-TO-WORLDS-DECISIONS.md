@@ -2385,3 +2385,13 @@ Miguel, 17/11 (ROADMAP-RTW-2026-11-17, Etapa 1): players ask to sell and to trad
 **Analytics.** No new event (the event budget). A completed trade reports the departing player as a `sell` with fee 0.
 
 Rejected: a guaranteed sale at a fixed share of value (rc.32's shape: no decision in the price); a trade the org tops up in cash (7-A); trades across regions (an AI roster is rebuilt from its own region); listing in the first window (R47). All values provisional; BALANCE_VERSION 36.
+
+## R136 — 18 November 2026: the search pages open the founding wizard on its Quick start (v2.0.33)
+
+Miguel, 18/11 ("faça tudo o que precisar fazer para garantirmos o melhor ranqueamento possível"). The career landing became the first page search visitors land on (17–18/11). Of those who reached the founding wizard from it, 42 % left: step 1 asks for three text fields before anything is shown, and the Quick start was a small button in its corner.
+
+**Rule.** The landing offers two buttons (Miguel, 18/11: not sure the Quick start is the best idea, so both): the main one, "Found your club", opens the wizard at step 1 as before; the second, "Start with a random club", links to `/career?start=quick` (`lib/careerEntry.ts`). The guides' button opens `/career`. Which start founds more careers, and which keeps them playing, is read in PostHog from the `/career/new` pageview (with or without `?start=quick`) before either goes. `CareerShell` keeps the flag when it sends a player with no career to `/career/new`; the wizard then runs the Quick start once, exactly as its button does (a free random name and abbreviation, a random crest and buff, the Balanced roster, the default preset, step 5). The player still chooses the difficulty and presses Found; the progress dots go back to any step. A player who has a career lands on it, as before. A reload of the wizard with the flag rolls another club. After founding, the address bar can still read `/career?start=quick` (Next's router cache keeps the search of the `/career` entry it saw first); with a save the flag does nothing. Checked on a local export: landing → step 5 with a random club → found → HQ; the guide's button with a career → the hub.
+
+**Unchanged.** The wizard's steps, the Quick start itself, the save, the seed (the same world the preview shows) and analytics: `career_created` has no new property; the entry shows in the `$pageview` URL (`?start=quick`).
+
+Rejected: founding the club without the last step (the preset is the one choice that sets a career's economy, R59 and R68); a separate one-click route (two ways to found a club to keep in step).

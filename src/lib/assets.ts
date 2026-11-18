@@ -46,6 +46,16 @@ export function careerShotSrc(id: CareerShotId): { src: string; srcSet: string }
   };
 }
 
+/**
+ * The career landing's share image (v2.0.33), Open Graph and X card, one per
+ * language: 1200 × 630 JPEG in public/landing/, made by
+ * scripts/build-og-career.mjs from the HQ capture.
+ */
+export const CAREER_SHARE_SIZE = { width: 1200, height: 630 } as const;
+export function careerShareSrc(locale: "en" | "pt"): string {
+  return `/landing/career-share-${locale}.jpg`;
+}
+
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };

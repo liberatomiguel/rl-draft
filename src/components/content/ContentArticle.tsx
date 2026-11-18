@@ -16,6 +16,8 @@ export type ContentPageCopy = {
    *  FAQPage JSON-LD so the rich result and the page agree. */
   faqs?: { q: string; a: string }[];
   ctaLabel: string;
+  /** Landing pages only (v2.0.33): the second hero button's label (the Quick start). */
+  ctaAltLabel?: string;
   /** Landing pages only: short selling points beside the hero button. */
   badges?: string[];
   /** Landing pages only: heading of the guide cards. */
@@ -32,10 +34,14 @@ export type LandingConfig = {
   /** Section index → the capture shown beside it. */
   shots: Partial<Record<number, CareerShotId>>;
   guides: RelatedLink[];
+  /** v2.0.33: a second, quieter button beside the hero one (the Quick start). */
+  secondaryCta?: RelatedLink;
 };
 
 const CTA_CLS =
   "display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] transition-transform hover:-translate-y-0.5";
+const CTA_ALT_CLS =
+  "display inline-flex items-center justify-center rounded-xl border border-line-strong px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-colors hover:border-orange-bright hover:text-orange-bright";
 
 function Shot({ id, alt, eager = false, sizes }: { id: CareerShotId; alt: string; eager?: boolean; sizes: string }) {
   const { src, srcSet } = careerShotSrc(id);
@@ -107,9 +113,16 @@ export function ContentArticle({
         {landing ? (
           <>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <AppLink href={ctaHref} className={CTA_CLS}>
-                {copy.ctaLabel}
-              </AppLink>
+              <div className="flex flex-wrap items-center gap-3">
+                <AppLink href={ctaHref} className={CTA_CLS}>
+                  {copy.ctaLabel}
+                </AppLink>
+                {landing.secondaryCta ? (
+                  <AppLink href={landing.secondaryCta.href} className={CTA_ALT_CLS}>
+                    {landing.secondaryCta.label}
+                  </AppLink>
+                ) : null}
+              </div>
               {copy.badges && copy.badges.length > 0 ? (
                 <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold uppercase tracking-wider text-sub">
                   {copy.badges.map((b) => (

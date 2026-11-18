@@ -314,11 +314,15 @@
   },
   "manager": {
     "metaTitle": "Modo Carreira de Rocket League — Manager Grátis",
-    "metaDescription": "Road to Worlds é o modo carreira de Rocket League, um manager grátis: funde um clube, contrate jogadores reais da RLCS, treine e vença o World Championship.",
+    "metaDescription": "Modo carreira de Rocket League grátis no navegador, sem mod e sem download: funde um clube, contrate jogadores reais da RLCS, treine e vença o World Championship.",
     "kicker": "Modo carreira",
-    "title": "Road to Worlds — Modo Carreira e Manager de Rocket League",
-    "intro": "Road to Worlds é o modo carreira de Rocket League do Rocket Draft: um jogo de manager de Rocket League esports, gratuito, que roda no seu navegador. Funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
+    "title": "Modo Carreira e Manager de Rocket League — Road to Worlds",
+    "intro": "Road to Worlds é um modo carreira de Rocket League grátis que roda no navegador, no PC ou no celular, sem nada para baixar. Você é o manager: funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
     "sections": [
+      {
+        "heading": "O Rocket League tem modo carreira?",
+        "body": "No jogo em si, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. Projetos feitos por fãs preenchem esse espaço: mods que rodam dentro do jogo no PC, jogos de manager para baixar e jogos que rodam no navegador. O Road to Worlds é do último tipo. É uma carreira de manager de clube, então você comanda uma organização, e não um único jogador, e joga no desktop e no celular sem instalar nada, com a história real da RLCS por trás."
+      },
       {
         "heading": "Funde o seu clube",
         "body": "Uma carreira começa com um clube vazio. Escolha a região em que quer competir, dê nome à organização, desenhe o escudo e as cores e defina a dificuldade. A dificuldade determina o orçamento inicial e o quanto as finanças perdoam. Depois você contrata o primeiro roster e a temporada começa."
@@ -347,27 +351,36 @@
     "faqs": [
       {
         "q": "O Rocket League tem modo carreira?",
-        "a": "O Rocket League em si não tem um modo carreira voltado ao cenário competitivo. O Road to Worlds é um modo carreira de Rocket League gratuito e feito por fã: você funda um clube e o leva pelas temporadas da RLCS até o World Championship."
+        "a": "Oficial, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. O Road to Worlds é um modo carreira de Rocket League gratuito e feito por fã, que roda no navegador: você funda um clube e o leva pelas temporadas da RLCS até o World Championship."
       },
       {
         "q": "Existe um jogo de manager de Rocket League?",
-        "a": "Road to Worlds, o modo carreira do Rocket Draft, é um manager de Rocket League esports gratuito e feito por fã. Você comanda um clube: contratações, treino, finanças e o calendário da RLCS."
+        "a": "Sim. O Road to Worlds, o modo carreira do Rocket Draft, é um manager de Rocket League esports gratuito e feito por fã. Você comanda um clube: contratações, treino, finanças e o calendário da RLCS."
+      },
+      {
+        "q": "Preciso de mod, download ou PC?",
+        "a": "Não. O Road to Worlds roda no navegador do PC, do Mac, do tablet e do celular. Não tem mod para instalar, nada para baixar e nenhuma conta para criar."
+      },
+      {
+        "q": "Eu jogo como jogador ou como manager?",
+        "a": "Como manager. Você funda a organização, contrata o elenco, o coach e o staff e mantém as contas em dia, enquanto as partidas são simuladas."
       },
       {
         "q": "O simulador de carreira de Rocket League é gratuito?",
-        "a": "Sim. É gratuito, roda no navegador, no desktop e no celular, e não precisa de download nem de conta."
+        "a": "Sim. O Road to Worlds é gratuito, como todo o Rocket Draft, e a carreira fica salva no seu dispositivo. Se você entrar na sua conta, ela também guarda uma cópia."
       },
       {
         "q": "Ele usa jogadores e times reais da RLCS?",
         "a": "Sim. O mercado de jogadores e coaches é montado com a mesma base de lineups reais da RLCS, de 2016 até hoje, usada no jogo de draft."
       }
     ],
-    "ctaLabel": "Começar uma carreira no Road to Worlds",
+    "ctaLabel": "Fundar o seu clube",
+    "ctaAltLabel": "Começar com clube sorteado",
     "badges": ["Grátis", "Sem download", "Sem conta", "Desktop e celular"],
     "guidesLabel": "Guias do Road to Worlds"
   },
   "career-guide": {
-    "metaTitle": "Guia do Modo Carreira de Rocket League: Dicas",
+    "metaTitle": "Road to Worlds: Guia da Carreira de Rocket League",
     "metaDescription": "Guia do Road to Worlds, o modo carreira de Rocket League grátis: escolha a região, monte um roster que cabe no caixa, treine e vença o World Championship.",
     "kicker": "Guia do modo carreira",
     "title": "Guia do Road to Worlds — Como Vencer o Modo Carreira de Rocket League",

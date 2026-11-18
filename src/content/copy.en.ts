@@ -2071,7 +2071,9 @@ export const DATABASE_UI = {
   seasonTitle: (season: string) => `${season} Rosters & Player Ratings`,
   seasonIntro: (season: string, rosters: number, regions: number) =>
     `Every ${season} roster in Rocket Draft: ${rosters} teams across ${regions} region${regions === 1 ? "" : "s"}, strongest first, with each player's overall.`,
-  teamTitle: (team: string) => `${team} Rocket League Roster by Season`,
+  /** `current`: the newest season's label when the team plays it (v2.0.33). */
+  teamTitle: (team: string, current?: string) =>
+    current ? `${team} Rocket League Roster — ${current} & Past Seasons` : `${team} Rocket League Roster by Season`,
   teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
     rosters === 1
       ? `${team} (${region}) in Rocket Draft: its ${first} roster, with each player's overall.`

@@ -21,6 +21,7 @@ import { pendingDecisionsOf } from "@/store/careerDecisions";
 import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
+import { newCareerHref } from "@/lib/careerEntry";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
 import { SponsorAutoBootcamp } from "@/components/career/sponsors/SponsorAutoBootcamp";
 import { CareerAnnouncement } from "@/components/career/news/CareerAnnouncement";
@@ -104,7 +105,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
     if (bare) return;
     if (!hasAnySave) {
-      router.replace("/career/new");
+      // v2.0.33: a newcomer from the search pages keeps their ?start=quick.
+      router.replace(newCareerHref(window.location.search));
       return;
     }
     if (!hasActive) {
