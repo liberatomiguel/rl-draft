@@ -16,6 +16,12 @@ here: it gets its own session.
   by pass, with Miguel's feedback on each.
 - `docs/CHANGELOG.md`, entry "[Unreleased] broadcast package pilot": what
   changed in each of the four passes.
+- `docs/redesign/REFERENCES.md`: the fifteen reference images Miguel sent after
+  the pause, read as ideas per screen (a stage for the main object, scoreboard
+  blocks, match and transfer rows, quest rows, a month grid) and the patterns
+  in them that we do not take. He restated the identity with them: RLCS
+  broadcast desk, Industry, blue and orange, premium and minimal, every
+  anti-slop principle.
 - `docs/redesign/REVIEWER-BRIEF.md`: the brief given to each screen reviewer
   (the checklist to apply per screen). Its link to the rulebook's UI skill
   points at a temp folder that is gone: fetch the skill from the repository
