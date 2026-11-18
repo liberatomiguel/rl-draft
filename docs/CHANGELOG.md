@@ -10,6 +10,17 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.32] — 2026-11-18 · A page whose build files failed to load repairs itself
+
+#### Fixed
+- **A player's Road to Worlds stayed on the loading placeholder in one browser, reloads included** (reported on Discord 18/11). His save was intact and opens normally in the current code; another browser played an older copy. Root cause: version skew during the v2.0.31 deploy (new sessions switched between 17:45 and 17:50 UTC; his last career action was at 17:49:02). A page from the new version asked a Cloudflare location still on the old one for a new career chunk and got a 404. `public/_headers` gives `/_next/static/*` `public, max-age=31536000, immutable`, and Cloudflare sends that header on the 404 too (checked with curl on production), so Chrome kept the 404 for a year and served it on every load, a normal reload included (checked: `only-if-cached` returns it). Turbopack's runtime, for a chunk whose `<script>` tag is already in the HTML, only listens for that tag's `error` event; a tag that failed before it looked never settles the chunk's promise, so hydration waits forever: the server-rendered skeleton, no error screen, no analytics event (PostHog has nothing from him). When the race goes the other way the same 404 shows "Something went wrong", and its reload brought the cached 404 straight back. Only career chunks were hit, so the other modes played. A player stuck before this release fixes it with Ctrl+Shift+R on the career page; the save is not touched.
+- **The repair (DESIGN-DECISIONS #171):** an inline script in the root layout (`lib/assetHeal.ts`, production builds only) watches the page's resource entries. A `/_next/static/` script, or a stylesheet the page applies, answered 400+ is fetched again with `cache: "reload"`, which replaces the cached copy, and the tab reloads once. Browsers without `responseStatus` (Safari) get a watchdog instead: the app not mounted 20 s after `load`. One repair per tab per minute, none without sessionStorage, none for a network failure or a prefetch. A browser that already holds such a 404 heals on its next visit, with nothing for the player to do. The error screen's reload (automatic and the button) now fetches the failed chunk again first (`errorRecovery.chunkUrlOf`, `assetHeal.refetchThenReload`).
+- Analytics: the load after a repair sends one `quality_error` with source `heal`, name `AssetHeal` (`AssetHealReport`, `analytics.reportAssetHeal`).
+- Checked: unit tests (`assetHeal.test.ts`, `errorRecovery.test.ts`, full suite); in Chromium against a local server that answers a chunk with a one-year immutable 404 first (without the script the 404 is reused on reload; with it the page heals, also when the 404 was cached before the script existed); and on a local production export served by `wrangler dev` (it answers a missing chunk exactly like production) with the player's own save: career chunk `0sym80-l3ozyx.js` cached as a 404, the career broken; once served again, the repair refetched it, reloaded once and the career opened intact. Not checked: the watchdog in a real Safari, the zone rule (Miguel's dashboard step).
+
+#### Changed
+- `docs/DEPLOY-CLOUDFLARE.md` §9: a zone Response Header Transform Rule sets `Cache-Control: no-store` on a 404 under `/_next/static/`; §10 checks it after each deploy. `public/_headers` explains why.
+
 ## [2.0.31] — 2026-11-18 · An invitation to the player-research form
 
 #### Added

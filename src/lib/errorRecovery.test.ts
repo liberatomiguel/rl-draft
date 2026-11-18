@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTO_RELOAD_KEY,
   AUTO_RELOAD_WINDOW_MS,
+  chunkUrlOf,
   isChunkLoadError,
   isDomMismatchError,
   recoveryFor,
@@ -39,6 +40,19 @@ describe("error recovery (v2.0.14)", () => {
     expect(store.data.get(AUTO_RELOAD_KEY)).toBe("1000000");
     expect(shouldAutoReload(CHUNK, store, 1_000_000 + 5_000)).toBe(false);
     expect(shouldAutoReload(CHUNK, store, 1_000_000 + AUTO_RELOAD_WINDOW_MS + 1)).toBe(true);
+  });
+
+  it("names the build file a failed chunk asked for, so the reload can fetch it again (v2.0.32)", () => {
+    expect(chunkUrlOf(CHUNK)).toBe("/_next/static/chunks/23eryilslb3rj.js");
+    expect(chunkUrlOf({ name: "ChunkLoadError", message: "Failed to load chunk /_next/static/chunks/0sym80-l3ozyx.js from module 77" })).toBe(
+      "/_next/static/chunks/0sym80-l3ozyx.js",
+    );
+    expect(chunkUrlOf({ name: "Error", message: "Loading CSS chunk /_next/static/chunks/1a2b.css failed" })).toBe("/_next/static/chunks/1a2b.css");
+    // A numbered webpack chunk names no file; other errors are not chunks at all.
+    expect(chunkUrlOf({ name: "Error", message: "Loading chunk 12 failed." })).toBeNull();
+    expect(chunkUrlOf(PLAIN)).toBeNull();
+    expect(chunkUrlOf(DOM_CHROME)).toBeNull();
+    expect(chunkUrlOf(null)).toBeNull();
   });
 
   it("never reloads by itself for other errors, or without storage", () => {

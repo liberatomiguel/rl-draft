@@ -6,6 +6,7 @@
  * v2.0.14: an error that re-rendering cannot fix (a chunk that failed to load, a DOM
  * tree something outside React rearranged) offers "Reload the page" first, because
  * "Try again" only showed this screen again. A failed chunk reloads by itself, once.
+ * v2.0.32: either reload fetches the failed chunk again first (lib/assetHeal).
  */
 
 import { useEffect } from "react";
@@ -13,7 +14,8 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { useCopy } from "@/content/copy";
 import { reportScreenError } from "@/lib/analytics";
-import { isDomMismatchError, recoveryFor, shouldAutoReload } from "@/lib/errorRecovery";
+import { refetchThenReload } from "@/lib/assetHeal";
+import { chunkUrlOf, isDomMismatchError, recoveryFor, shouldAutoReload } from "@/lib/errorRecovery";
 
 function sessionStore(): Storage | null {
   try {
@@ -34,12 +36,14 @@ export default function RouteError({
   useEffect(() => {
     // Health analytics (`quality_error`): what this boundary caught never reaches window.onerror.
     reportScreenError("boundary", error);
-    if (shouldAutoReload(error, sessionStore(), Date.now())) window.location.reload();
+    // v2.0.32 (#171): the failed chunk is fetched again first — a 404 the browser
+    // cached for a year (version skew during a deploy) would otherwise come right back.
+    if (shouldAutoReload(error, sessionStore(), Date.now())) refetchThenReload(chunkUrlOf(error));
   }, [error]);
 
   const isDataError = error.message.includes("[data]");
   const reloadFirst = !isDataError && recoveryFor(error) === "reload";
-  const reload = () => window.location.reload();
+  const reload = () => refetchThenReload(chunkUrlOf(error));
   return (
     <div className="mx-auto mt-16 max-w-xl">
       <Panel strong className="p-8 text-center">

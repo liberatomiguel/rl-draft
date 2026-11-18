@@ -262,7 +262,20 @@ Vercel used to answer www with a 308. 301 works just as well for SEO.
 - **Leave off:** Rocket Loader (it rewrites script tags and can break
   hydration), and Web Analytics / RUM (PostHog already covers analytics, and RUM
   adds a beacon per page).
-- **Caching:** nothing to configure. Cache headers come from `public/_headers`.
+- **Caching:** cache headers come from `public/_headers`, with one zone rule on
+  top (v2.0.32, DESIGN-DECISIONS #171). Cloudflare applies the
+  `/_next/static/*` rule (`public, max-age=31536000, immutable`) to a **404**
+  for a missing chunk too, and during a deploy a page from the new version can
+  ask a location still on the old one for a new chunk (version skew, a few
+  seconds). A browser that gets that 404 keeps it for a year, reloads included:
+  the 18/11/2026 career that would not open. Rules → Overview → Create rule →
+  **Response Header Transform Rule**, name `No cache for missing build files`,
+  custom expression
+  `(starts_with(http.request.uri.path, "/_next/static/") and http.response.code eq 404)`,
+  operation **Set static**, header `Cache-Control`, value `no-store`. Check it
+  with the 404 line in §10. The inline repair in the root layout
+  (`lib/assetHeal.ts`) heals browsers that already hold such a 404, with or
+  without the rule.
 
 ## 10. Post-deploy verification
 
@@ -277,6 +290,7 @@ curl -sI "$D/play/" | grep -iE '^(HTTP|location)'  # 307, location: /play
 curl -sI "$D/" | grep -iE '^(server|x-vercel)'     # server: cloudflare, no x-vercel-*
 JS=$(curl -s "$D/" | grep -o '/_next/static/[^"]*\.js' | head -1)
 curl -sI "$D$JS" | grep -iE '^(HTTP|cache-control)'          # 200, max-age=31536000, immutable
+curl -sI "$D/_next/static/chunks/missing-check.js" | grep -iE '^(HTTP|cache-control)'  # 404, no-store (zone rule, #171) — never immutable
 IMG=$(node -p "const m=require('./src/generated/asset-manifest.json');const [k,h]=Object.entries(m.orgs)[0];'/img/orgs/'+k+'.'+h+'.96.webp'")
 curl -sI "$D$IMG" | grep -iE '^(HTTP|content-type|cache-control)'  # 200, image/webp, immutable
 curl -sI "$D/opengraph-image.png" | grep -i '^content-type'   # image/png

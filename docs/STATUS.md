@@ -6,6 +6,12 @@
 
 ## Current builds
 
+- **v2.0.32 (18/11/2026, local, not committed): a page whose build files
+  failed to load repairs itself** (DESIGN-DECISIONS #171). A deploy's version
+  skew left a 404 for a career chunk in a player's cache for a year (the
+  `/_next/static/*` immutable rule also covers 404s), so his career hung on its
+  skeleton. Inline repair in the root layout, error-screen refetch, and a zone
+  rule for Miguel (DEPLOY-CLOUDFLARE §9), not applied yet.
 - **Production is v2.0.31 (18/11/2026): an invitation to Miguel's research
   form for returning players** (draft results / season review, once per device;
   `config/research.ts`, event `research_invite`). Career surface not checked in
