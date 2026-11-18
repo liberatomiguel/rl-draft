@@ -10,6 +10,12 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.28] — 2026-11-18 · Career cloud save for every account; sell and trade reach production
+
+#### Changed
+- **The career save in the account is open to every signed-in player** (`CAREER_CLOUD_AUDIENCE` "staff" → "all", `lib/careerCloudGate.ts`; Miguel's call on 18/11). v2.0.26 had it for the `creator` grant only. Setting the constant back to "staff" or "off" and deploying is the way back; localStorage stays the copy the game plays from either way.
+- **Sell and trade (v2.0.27) goes to main with this release**, on Miguel's go-ahead after seeing the screens. Not verified before release: a physical phone, a full battery, the account path on two devices and on mobile Safari.
+
 ## [2.0.27] — 2026-11-17 · Road to Worlds: sell and trade on your own initiative
 
 Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed an AI bid to arrive. Closes ECO-06; decision R135 (reopens R63). Ships without waiting for the Etapa 1 gate.

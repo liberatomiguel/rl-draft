@@ -1,31 +1,32 @@
 # Project Status — current state only
 
-> Updated: **2026-11-17**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-18**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
 > (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 
 ## Current builds
 
-- **v2.0.27 (17/11/2026), branch `feat/sell-trade`, on staging, not on main
-  yet: Road to Worlds gets the transfer list and player-for-player trades**
-  (R135, closes ECO-06; BALANCE_VERSION 36). Three additive save fields,
-  persist contract unchanged. Checked in a desktop browser and at 320 px; a
-  short probe (2 careers, 4 seasons) and the soft-lock probe; no battery, no
-  physical device. Waiting for Miguel's play on staging and his go-ahead for main.
-- **v2.0.26 (17/11/2026), branch `feat/cloud-save`, not on main yet: the career
-  save in the account.** One row per account and slot in `career_saves` (SQL
-  applied by Miguel 17/11), localStorage still the copy the game plays from, a
-  notice when two copies differ, save files for everyone (DESIGN-DECISIONS
-  #165–#169). The `creator` grant only (Miguel) until the account path is checked in
-  production (`CAREER_CLOUD_AUDIENCE`, `lib/careerCloudGate.ts`); then one
-  constant opens it. Not verified: a real account, two devices, mobile Safari.
-- **v2.0.25 (17/11/2026), same branch.**
+- **Production is v2.0.28 (18/11/2026, main = staging): the career cloud save
+  is open to every signed-in account and sell / trade is live** (Miguel's
+  go-ahead 18/11). `CAREER_CLOUD_AUDIENCE` is "all" (`lib/careerCloudGate.ts`);
+  "staff" or "off" plus a deploy is the way back.
+- **v2.0.27 (17/11/2026): Road to Worlds gets the transfer list and
+  player-for-player trades** (R135, closes ECO-06; BALANCE_VERSION 36). Three
+  additive save fields, persist contract unchanged. Checked in a desktop
+  browser and at 320 px; a short probe (2 careers, 4 seasons) and the soft-lock
+  probe; no battery, no physical device.
+- **v2.0.26 (17/11/2026): the career save in the account.** One row per account
+  and slot in `career_saves` (SQL applied by Miguel 17/11), localStorage still
+  the copy the game plays from, a notice when two copies differ, save files for
+  everyone (DESIGN-DECISIONS #165–#169). Not verified: two devices, mobile
+  Safari. Watch `account_sync_failed` after the opening.
+- **v2.0.25 (17/11/2026).**
   Account sync, first step of the career cloud save (roadmap Etapa 1): every
   failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
   a failure that may pass is tried again, and a call never runs without the
   player's own token (an expired token used to read as "new account"). Not
   verified against the production database: staging has accounts off.
-- **Production is v2.0.24** (main `5eb3078`); v2.0.15 to v2.0.24 are in
+- v2.0.15 to v2.0.24 are in
   CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
   page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused
   career advance, the event budget, FR / ES, mobile career entry.
