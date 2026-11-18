@@ -55,6 +55,21 @@ const barlow = localFont({
 // Rajdhani is no longer an interface face. It stays declared, not preloaded,
 // for the share card: lib/shareCard.ts draws its canvas text in "Rajdhani" and
 // loads it on demand (next/font names the family after this const).
+// Industry (Fort Foundry), the display face (DESIGN.md). Medium/Demi/Bold
+// cover font-medium/semibold/bold; Black answers extrabold; the Bold Italic
+// serves the Home wordmark.
+const industry = localFont({
+  variable: "--font-industry",
+  display: "swap",
+  src: [
+    { path: "./fonts/industry-medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/industry-demi.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/industry-bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/industry-black.woff2", weight: "800", style: "normal" },
+    { path: "./fonts/industry-bolditalic.woff2", weight: "700", style: "italic" },
+  ],
+});
+
 const rajdhani = localFont({
   variable: "--font-rajdhani",
   display: "swap",
@@ -195,17 +210,9 @@ export default function RootLayout({
   // the /pt pages export lang="pt-BR" and PT chrome (rc.32, DRAFT-11, #148).
   return (
     <LocaleRoot
-      className={`${barlow.variable} ${barlowCondensed.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${industry.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* Development only: the Industry trial font for local preview. The
-            file and the fonts sit in a git-ignored folder, so a checkout
-            without them gets one 404 in dev and nothing else; a production
-            build never emits this tag (see the note in globals.css). */}
-        {process.env.NODE_ENV === "development" ? (
-          // eslint-disable-next-line @next/next/no-css-tags
-          <link rel="stylesheet" href="/fonts-trial/industry.css" />
-        ) : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}

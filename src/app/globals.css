@@ -73,7 +73,7 @@
   /* "Barlow Ext" / "Barlow Condensed Ext" are the latin-ext files declared
      below with a unicode-range: listed first, used only for those glyphs. */
   --font-sans: "Barlow Ext", var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Industry Trial", "Barlow Condensed Ext", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-display: var(--font-industry), "Barlow Condensed Ext", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* The radius scale steps up to the card's own corner (14px in
@@ -87,13 +87,6 @@
   --radius-3xl: 14px;
 }
 
-/* "Industry Trial" (first in --font-display) has no @font-face here on purpose.
-   Industry is the display face Miguel chose (DESIGN.md) but the only files in
-   hand are a personal-use trial with 66 characters, so nothing of it is in the
-   repo. In development, layout.tsx links /fonts-trial/industry.css (a
-   git-ignored folder) and the name resolves; everywhere else it is skipped and
-   Barlow Condensed is the display face. When the licensed webfont arrives it
-   becomes a localFont in layout.tsx and this note goes. */
 
 /* Latin-ext glyphs (player and org names): fetched only when one is on screen. */
 @font-face {
