@@ -2980,6 +2980,15 @@ export const CAREER_PT: CareerCopy = {
     slotsFull: "Os três espaços estão ocupados.",
   },
 
+  // v2.0.31: o convite da pesquisa com jogadores na revisão da temporada.
+  research: {
+    title: "Ajude a moldar o Road to Worlds",
+    body: "Uma temporada fechada. A sua leitura da carreira e do draft ajuda a decidir o que vem a seguir. Um formulário curto sobre o que funciona, o que não funciona e o que falta.",
+    note: "Abre em uma nova aba. Só perguntamos uma vez.",
+    open: "Abrir o formulário",
+    dismiss: "Agora não, obrigado",
+  },
+
   goals: {
     reward: (n: number) => `+${n} reputação na revisão`,
     reachMajor: "Alcançar um Major",

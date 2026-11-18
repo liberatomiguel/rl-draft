@@ -159,6 +159,12 @@ properties of `session_started`, not events.
 - `potentialBandMid` is the midpoint of the band the screens show, never the
   hidden potential.
 
+### Player research
+
+| Event | Priority | Fires | Properties |
+|---|---|---|---|
+| `research_invite` | critical | The research-form card opens, its link is clicked, or it is dismissed (`components/ResearchInvite.tsx`; a few per device per campaign) | `action` (`shown`, `opened`, `dismissed`), `surface` (`draft`, `career`; also `gameMode`), `campaign`, `activeDays`, `runsCompleted`, `careerSeasons` |
+
 ### Accounts and health
 
 | Event | Priority | Fires | Properties |

@@ -3004,6 +3004,15 @@ export const CAREER_EN = {
     slotsFull: "All three slots are taken.",
   },
 
+  /** v2.0.31: the player-research invitation on the season review (lib/researchInvite.ts). */
+  research: {
+    title: "Help shape Road to Worlds",
+    body: "A season in the books. Your read on the career and the draft helps decide what comes next. A short form on what works, what does not and what is missing.",
+    note: "Opens in a new tab. We only ask once.",
+    open: "Open the form",
+    dismiss: "No thanks",
+  },
+
   goals: {
     reward: (n: number) => `+${n} reputation at review`,
     reachMajor: "Reach a Major",

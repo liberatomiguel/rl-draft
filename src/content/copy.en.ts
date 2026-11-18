@@ -2107,6 +2107,15 @@ export const DATABASE_UI = {
   cta: "Draft these rosters",
 };
 
+/** v2.0.31: the player-research invitation on the results screen (lib/researchInvite.ts). */
+export const RESEARCH_UI = {
+  title: "Help shape Rocket Draft",
+  body: "You have been playing for a while, so your read on the game carries weight. A short form on what works, what does not and what should come next.",
+  note: "Opens in a new tab. We only ask once.",
+  open: "Open the form",
+  dismiss: "No thanks",
+};
+
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
  *  EN is empty: the static `metadata` of each route already is the English
  *  title, and the shell only overrides the tab title when an entry exists. */
@@ -2149,6 +2158,7 @@ export const EN = {
   NATIONAL_UI,
   DAILY_TEXT,
   DATABASE_UI,
+  RESEARCH_UI,
   PAGE_TITLES,
 };
 

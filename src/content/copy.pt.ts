@@ -2117,6 +2117,15 @@ export const PT: Copy = {
     cta: "Draftar estes rosters",
   },
 
+  // v2.0.31: o convite da pesquisa com jogadores na tela de resultados.
+  RESEARCH_UI: {
+    title: "Ajude a moldar o Rocket Draft",
+    body: "Você já joga há um tempo, então a sua leitura do jogo pesa. Um formulário curto sobre o que funciona, o que não funciona e o que deve vir a seguir.",
+    note: "Abre em uma nova aba. Só perguntamos uma vez.",
+    open: "Abrir o formulário",
+    dismiss: "Agora não, obrigado",
+  },
+
   /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */
   PAGE_TITLES: {
     "/play": "Jogue o Draft da RLCS Online — Grátis · Rocket Draft",

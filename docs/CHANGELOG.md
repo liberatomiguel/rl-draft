@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.31] — 2026-11-18 · An invitation to the player-research form
+
+#### Added
+- **An invitation to Miguel's player-research form, for returning players only.** It never opens when the game loads: it waits for a natural pause, the draft results screen (after the ceremonies, the login calendar, the unlock pop-ups and the XP count-up, plus 2.5 s) or the Road to Worlds season review (not on an insolvency). From the **second distinct day** with the game open (`login.total`), a player qualifies with **10 completed runs** or **1 completed season** in the career on screen; on the first day only a heavy session does (**25 runs** or **2 seasons**). Miguel, 18/11: a one-day heavy player may see it, the second day is preferred. Thresholds, the form URL and a campaign id live in `src/config/research.ts` (not gameplay, so BALANCE_VERSION does not move); logic in `src/lib/researchInvite.ts`; the card is `components/ResearchInvite.tsx` on the portal Modal, the link opens in a new tab (`noopener noreferrer`).
+- Once per device and campaign: a click on the link or a dismiss ends it for good; a card left unanswered (tab closed) may open once more (`maxShows` 2), never twice in one page load. Stored in its own key `rocket-draft:research-invite:v1` (plain localStorage, not a persisted store: the persist contract is unchanged). Per device rather than per account owner: since 2.0.29 a sign-out leaves a fresh guest who does not qualify, and two accounts on one device are not asked twice. A new `campaign` id asks everyone again.
+- Analytics: `research_invite` (critical, shared mode) with `action` = `shown` / `opened` / `dismissed`, `surface`, `campaign`, `activeDays`, `runsCompleted`, `careerSeasons`. A few per device ever, so no budget pressure.
+- Copy in EN/PT (`RESEARCH_UI`; career `research` in `copy.career.*`).
+
 ## [2.0.30] — 2026-11-18 · A way back to the career picker
 
 #### Fixed

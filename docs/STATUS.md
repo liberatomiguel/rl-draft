@@ -6,7 +6,11 @@
 
 ## Current builds
 
-- **Production is v2.0.30 (18/11/2026): the career top bar links to the saves
+- **Production is v2.0.31 (18/11/2026): an invitation to Miguel's research
+  form for returning players** (draft results / season review, once per device;
+  `config/research.ts`, event `research_invite`). Career surface not checked in
+  a browser.
+- **v2.0.30 (18/11/2026): the career top bar links to the saves
   picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
   saved profile.** Cross-device career saves still unverified on two devices.
 - **v2.0.29 (18/11/2026): the device's saves belong to one
