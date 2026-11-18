@@ -52,6 +52,7 @@ import {
 } from "@/lib/careerCloud";
 import { careerCloudAllowed } from "@/lib/careerCloudGate";
 import { looksLikeCareerSave } from "@/lib/careerSaveFile";
+import { localCareerSwitching } from "@/lib/localOwner";
 import { retrying } from "@/lib/retry";
 import { decodeSaveText, encodeSaveText } from "@/lib/saveCodec";
 import {
@@ -623,7 +624,9 @@ export const useCareerCloudStore = create<CareerCloudState>((set, get) => {
     state: { slots: (CareerSave | null)[] },
     prev: { slots: (CareerSave | null)[] },
   ): void => {
-    if (applying || state.slots === prev.slots) return;
+    // v2.0.29: slots swapped for another account's (sign-in / sign-out) are not
+    // the player emptying them: no delete mark, no push.
+    if (applying || localCareerSwitching() || state.slots === prev.slots) return;
     for (let slot = 0; slot < CAREER_CLOUD_SLOTS; slot++) {
       const before = prev.slots[slot] ?? null;
       const after = state.slots[slot] ?? null;

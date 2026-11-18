@@ -10,6 +10,18 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.29] — 2026-11-18 · Signing out leaves a fresh guest; one account's progress and careers never reach another
+
+#### Fixed
+- **Signing out kept the whole profile on the device, and the next account to sign in received it, exclusive grants included** (Miguel, 18/11, on mobile: signed out of his main account, the progress stayed; signed into a second account, all of the first one's progress and grants went into it). Root cause: the local profile had no owner. There is one per device, signing out never touched it, and every sign-in merged it into the account that signed in as if it were a guest's progress (the guest → account migration). Now the device's saves belong to one account at a time (`rocket-draft:profile-owner:v1`, `lib/localOwner.ts`):
+  - a guest's progress is still claimed by the first sign-in;
+  - signing out (here, in another tab, or an expired session) pushes unsynced progress once (up to 4 s), stashes the profile under that account (`rocket-draft:account-stash:v1:<id>`) and resets the device to a fresh guest;
+  - a sign-in as another account than the owner stashes the owner's saves and starts clean; the account's next sign-in folds its stash back in;
+  - a sync whose account signed out while its cloud read was in flight aborts instead of merging into the guest.
+- **The Road to Worlds slots had the same hole since the career cloud save (2.0.26–2.0.28).** The three slots are the device's, so the second account's first sync uploaded the first account's careers into its own account (an empty account slot + a local career = "a new career, upload"). The slots now go with their owner: signing out moves them aside (`rocket-draft:career-stash:v1:<id>`, a move, not a copy, since three slots can pass 1 MB) and the device shows no careers; that account's next sign-in puts them back, a guest's careers keep their slots and the account's fill the empty ones. The career cloud store ignores the slot change a switch causes, so moving a career aside is never read as the player deleting it (it would have deleted the account copy at the next sign-in). The account's three cloud slots download to any device as before.
+- Deleting the account still keeps the local progress and careers, as its dialog says, now as the guest's.
+- Accounts already mixed by this bug are not separated by the fix: the second account's row has to be restored by hand (the merged progress is in its blob; career rows in `career_saves` for that account, if any went up).
+
 ## [2.0.28] — 2026-11-18 · Career cloud save for every account; sell and trade reach production
 
 #### Changed

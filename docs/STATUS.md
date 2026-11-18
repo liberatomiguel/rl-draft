@@ -6,7 +6,12 @@
 
 ## Current builds
 
-- **Production is v2.0.28 (18/11/2026, main = staging): the career cloud save
+- **Production is v2.0.29 (18/11/2026): the device's saves belong to one
+  account at a time** (DESIGN-DECISIONS #170, `lib/localOwner.ts`). Signing out
+  leaves a fresh guest with no careers; another account never inherits the
+  profile, grants or career slots; the owner's next sign-in brings them back.
+  Not verified on a phone or against production accounts (tests only).
+- **v2.0.28 (18/11/2026): the career cloud save
   is open to every signed-in account and sell / trade is live** (Miguel's
   go-ahead 18/11). `CAREER_CLOUD_AUDIENCE` is "all" (`lib/careerCloudGate.ts`);
   "staff" or "off" plus a deploy is the way back.

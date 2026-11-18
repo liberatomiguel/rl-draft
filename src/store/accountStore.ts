@@ -38,6 +38,18 @@
  * pause, when the connection comes back, when the tab returns, or with the next
  * progress. A new account takes the fallback name only when the name itself was
  * refused, never because the network failed.
+ * One device, several accounts (v2.0.29, DESIGN-DECISIONS #170): the local
+ * profile belongs to ONE account at a time (`rocket-draft:profile-owner:v1`).
+ *  - a guest's progress is claimed by the first account that signs in (the
+ *    guest → account migration, unchanged);
+ *  - signing out stashes the profile under that account's id and resets the
+ *    device to a fresh guest — the next account never inherits it;
+ *  - a sign-in as a different account than the owner (no sign-out in between,
+ *    e.g. an expired session) stashes the owner's profile and starts clean;
+ *  - signing back in folds that account's stash in, so progress the last push
+ *    did not carry is never lost;
+ *  - a sync whose user lost the profile while its cloud read was in flight
+ *    aborts: it never writes one account's row into another's (or a guest's).
  *
  * Engine purity holds: this is store/lib only; nothing under src/engine touches it.
  */
@@ -68,6 +80,14 @@ import {
 } from "./profileStore";
 import type { ProfileState } from "./profileStore";
 import { CLOUD_SYNC } from "@/config/balance";
+import {
+  dropCareerStash,
+  forgetLocalOwnerForTests,
+  readLocalOwner,
+  restoreCareersFor,
+  stashCareersFor,
+  writeLocalOwner,
+} from "@/lib/localOwner";
 import { useSignInDialog } from "./signInDialog";
 import { registerSessionProps, trackEvent } from "@/lib/analytics";
 import type { DurableProfile } from "@/lib/profileSync";
@@ -149,6 +169,100 @@ function storedDurable(): DurableProfile | null {
   }
 }
 
+// ── Which account the local profile belongs to (v2.0.29) ──────────────────────
+// Plain localStorage keys next to the persisted stores (not zustand stores, so
+// not part of the persist contract). Each read / write falls back to memory
+// when storage is missing or blocked (tests, private windows).
+/** How long signing out waits for a last push of unsynced progress. A network
+ *  bound, not a gameplay value (kept out of balance.ts so BALANCE_VERSION does
+ *  not move): the profile is stashed on the device either way. */
+const SIGN_OUT_FLUSH_MS = 4000;
+const STASH_PREFIX = "rocket-draft:account-stash:v1:";
+const stashMem = new Map<string, string>();
+const readOwner = readLocalOwner;
+const writeOwner = writeLocalOwner;
+
+function storage(): Storage | null {
+  try {
+    return typeof localStorage !== "undefined" ? localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStash(userId: string): DurableProfile | null {
+  let raw: string | null | undefined = stashMem.get(userId);
+  try {
+    const ls = storage();
+    if (ls) raw = ls.getItem(STASH_PREFIX + userId) ?? raw;
+  } catch {
+    // memory copy only
+  }
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as DurableProfile;
+    return parsed && typeof parsed.xp === "number" && Array.isArray(parsed.runHistory) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStash(userId: string, durable: DurableProfile | null): void {
+  const raw = durable ? JSON.stringify(durable) : null;
+  if (raw) stashMem.set(userId, raw);
+  else stashMem.delete(userId);
+  try {
+    const ls = storage();
+    if (!ls) return;
+    if (raw) ls.setItem(STASH_PREFIX + userId, raw);
+    else ls.removeItem(STASH_PREFIX + userId);
+  } catch {
+    // quota / blocked: the memory copy and the cloud row remain
+  }
+}
+
+/** Tests only: forget the owner and every stash (module state outlives a test). */
+export function forgetLocalProfileOwner(): void {
+  forgetLocalOwnerForTests();
+  stashMem.clear();
+  try {
+    const ls = storage();
+    if (!ls) return;
+    for (let i = ls.length - 1; i >= 0; i -= 1) {
+      const k = ls.key(i);
+      if (k?.startsWith(STASH_PREFIX)) ls.removeItem(k);
+    }
+  } catch {
+    // nothing stored
+  }
+}
+
+/** The local profile as a whole: memory folded with what is saved (another tab). */
+function localDurable(): DurableProfile {
+  const memory = toDurable(useProfileStore.getState());
+  const stored = storedDurable();
+  if (!stored) return memory;
+  try {
+    return mergeProfiles(memory, stored);
+  } catch {
+    return memory;
+  }
+}
+
+/** Keep `durable` aside for `userId`, folded with what was already kept. */
+function stashFor(userId: string, durable: DurableProfile): void {
+  const prev = readStash(userId);
+  let next = durable;
+  if (prev) {
+    try {
+      next = mergeProfiles(durable, prev);
+    } catch {
+      // a malformed stash: replace it
+    }
+  }
+  writeStash(userId, next);
+}
+
 /** Signature of the durable profile in memory — what a push would carry. */
 const durableSig = (): string => JSON.stringify(toDurable(useProfileStore.getState()));
 
@@ -212,10 +326,57 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     return { outcome: "aborted", owed: isRecoverableSyncFailure(failure.reason) };
   };
 
+  /** Replace the local profile with a fresh guest one. Not progress: no push. */
+  const resetLocalProfile = (): void => {
+    applyingSync = true;
+    try {
+      useProfileStore.getState().resetAll();
+    } finally {
+      applyingSync = false;
+    }
+  };
+
+  /** This account takes the local profile. A guest's progress comes along (the
+   *  guest → account migration); another account's is stashed under that
+   *  account and the device starts clean, so it never reaches this account. */
+  const claimLocalProfile = (userId: string): void => {
+    const owner = readOwner();
+    if (owner === userId) return;
+    if (owner) {
+      stashFor(owner, localDurable());
+      resetLocalProfile();
+      stashCareersFor(owner); // v2.0.29: their careers go aside with the profile
+    }
+    writeOwner(userId);
+    restoreCareersFor(userId); // what this account left here, back in its slots
+  };
+
+  /** The account leaves this device: keep its profile aside (progress the last
+   *  push did not carry is folded back in at its next sign-in) and reset the
+   *  device to a fresh guest. */
+  const releaseLocalProfile = (userId: string): void => {
+    const owner = readOwner();
+    if (owner && owner !== userId) {
+      // Another tab already handed the profile to another account: this tab's
+      // memory is stale, so adopt what that tab saved instead of resetting it.
+      try {
+        void useProfileStore.persist?.rehydrate();
+      } catch {
+        // nothing saved to adopt
+      }
+      return;
+    }
+    stashFor(userId, localDurable());
+    resetLocalProfile();
+    stashCareersFor(userId);
+    writeOwner(null);
+  };
+
   /** One full reconcile: read cloud → merge → hydrate local → push. */
   const runSync = async (session: Session): Promise<SyncRun> => {
     const userId = session.user.id;
     await whenProfileHydrated();
+    claimLocalProfile(userId);
     const row = await retrying(
       () => fetchCloudRow(userId),
       (r) => r.status === "error" && isTransientSyncFailure(r.reason),
@@ -227,6 +388,9 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       keepName(session);
       return failed("read", row);
     }
+    // The account signed out (or another one took the device) while the read was
+    // in flight: the local profile is no longer this account's to merge or push.
+    if (readOwner() !== userId) return { outcome: "aborted", owed: false };
     // The stored name is known now — show it even if the push below fails.
     const cloudName = row.status === "ok" ? row.username : null;
     if (cloudName) showName(userId, cloudName);
@@ -244,6 +408,16 @@ export const useAccountStore = create<AccountStore>((set, get) => {
         folded = true;
       } catch {
         // A malformed save: ignore it — memory alone is still a complete snapshot.
+      }
+    }
+    // What this account left on this device when it last signed out.
+    const stash = readStash(userId);
+    if (stash) {
+      try {
+        local = mergeProfiles(local, stash);
+        folded = true;
+      } catch {
+        // a malformed stash: the cloud row still holds the last push
       }
     }
     const cloudDurable = row.status === "ok" ? row.durable : null;
@@ -309,6 +483,9 @@ export const useAccountStore = create<AccountStore>((set, get) => {
       keepName(session);
       return failed("push", pushed);
     }
+    // The stash is in the cloud now. Only while the account still owns the device:
+    // a sign-out during the push wrote a newer stash that must survive.
+    if (stash && readOwner() === userId) writeStash(userId, null);
     if (!cloudName) showName(userId, username); // the fallback name is now the stored one
     // v2.0.4: the row did not exist before this sync = the account was just created.
     // Ask for the display name now (the sign-in dialog shows that step).
@@ -446,7 +623,40 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     if (userId && (syncedThisLoad.has(userId) || inFlight.has(userId) || owedFor === userId)) schedulePush();
   };
 
+  /** Signing out: give unsynced progress one last push (bounded wait). */
+  const flushBeforeSignOut = async (session: Session): Promise<void> => {
+    const userId = session.user.id;
+    const last = async (): Promise<void> => {
+      const running = inFlight.get(userId);
+      if (running) await running;
+      if (!syncedThisLoad.has(userId)) return; // never synced: nothing to update
+      if (lastPushed?.userId === userId && lastPushed.sig === durableSig()) return;
+      clearPushTimer();
+      await syncGuarded(session);
+    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      last(),
+      new Promise<void>((resolve) => (timer = setTimeout(resolve, SIGN_OUT_FLUSH_MS))),
+    ]);
+    clearTimeout(timer);
+  };
+
+  /** True while deleteAccount runs: its sign-out keeps the local profile. */
+  let deleting = false;
+
   const onAuth = (session: Session | null, event: AuthChangeEvent): void => {
+    // v2.0.29: the account left (sign-out here or in another tab, an expired
+    // session): the device goes back to a fresh guest profile.
+    const prev = get().session;
+    if (prev && !session && !deleting) releaseLocalProfile(prev.user.id);
+    // v2.0.29: an arriving account takes the device's saves BEFORE the session
+    // is published, so nothing that reacts to the session (the career cloud
+    // copy) ever reconciles another account's careers. If the profile has not
+    // hydrated yet, the sync claims it once it has.
+    if (session && session.user.id !== prev?.user.id && (useProfileStore.persist?.hasHydrated?.() ?? true)) {
+      claimLocalProfile(session.user.id);
+    }
     // 2.0 analytics: a sign-in completed in this tab (not a restored session, not
     // the SIGNED_IN Supabase re-emits on refocus: the user is already set then).
     if (event === "SIGNED_IN" && session && get().session?.user.id !== session.user.id) {
@@ -565,13 +775,32 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     },
 
     signOut: async () => {
+      const session = get().session;
+      if (session) await flushBeforeSignOut(session);
       await sbSignOut();
+      // The auth listener normally released the profile already; when it did not
+      // fire (no client), release it here.
+      if (session && get().session?.user.id === session.user.id) releaseLocalProfile(session.user.id);
+      syncedThisLoad.clear(); // as on SIGNED_OUT: the next sign-in syncs again
       resetPush();
       set({ session: null, username: null, status: "signedOut", pendingEmail: null });
     },
 
     deleteAccount: async () => {
-      await sbDeleteAccount();
+      // The copy promises the local progress stays on the device: it becomes the
+      // guest's (no owner) instead of being reset, and nothing is stashed.
+      const userId = get().session?.user.id;
+      deleting = true;
+      try {
+        await sbDeleteAccount();
+      } finally {
+        deleting = false;
+      }
+      if (userId) {
+        writeStash(userId, null);
+        dropCareerStash(userId);
+        if (readOwner() === userId) writeOwner(null);
+      }
       resetPush();
       set({ session: null, username: null, status: "signedOut" });
     },

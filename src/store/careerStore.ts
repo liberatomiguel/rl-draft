@@ -25,6 +25,7 @@
  */
 
 import { create } from "zustand";
+import { asCareerSwitch, onLocalCareerReplaced } from "@/lib/localOwner";
 import { careerAchievementById } from "@/data/career/achievements";
 import {
   EMPTY_ACHIEVEMENT_MEMORY,
@@ -848,6 +849,27 @@ export const useCareerStore = create<CareerStoreState>()(
     },
   ),
 );
+
+// v2.0.29 (DESIGN-DECISIONS #170): the slots belong to the account that owns
+// the device. When the account changes, `lib/localOwner` moves the stored slots
+// and this tab's copy follows: the new owner's slots from storage, or none.
+onLocalCareerReplaced(() => {
+  asCareerSwitch(() => {
+    const { name, storage } = useCareerStore.persist.getOptions();
+    const saved = name && storage ? storage.getItem(name) : null;
+    if (saved) return useCareerStore.persist.rehydrate();
+    useCareerStore.setState({
+      slots: emptySlots(),
+      activeSlot: null,
+      achievements: EMPTY_ACHIEVEMENT_MEMORY,
+      toasts: [],
+      lastError: null,
+      autoAdvance: false,
+      scrimPlayback: null,
+    });
+    return undefined;
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Read-side selectors (cheap, derived — never persisted)
