@@ -1,4 +1,13 @@
-# Redesign handoff (paused 2026-11-17)
+# Redesign handoff
+
+> **Update 2026-11-18.** The branch carries v2.0.33 (main merged in; the
+> pilot's decisions are #173 to #177). The fifth pass is on staging: see
+> `docs/CHANGELOG.md`, "Fifth pass", for what changed and what is left
+> (mobile, event weekend and season review, copy rhythm, first-visit flow).
+> Tests are green (2869), lint has 0 errors. The text below is the state at
+> the 17/11 pause and is kept for the reviewer brief and the font note.
+
+# State at the pause (2026-11-17)
 
 Branch: `design/broadcast-pilot`, cut from `staging` at v2.0.14. **Work in
 progress: not merged, not pushed, not published to staging.** This commit
@@ -12,7 +21,7 @@ here: it gets its own session.
 ## Where the direction lives
 
 - `DESIGN.md` (repo root): the approved direction. Read it first.
-- `docs/DESIGN-DECISIONS.md` #164 to #167: how the direction was reached, pass
+- `docs/DESIGN-DECISIONS.md` #173 to #176: how the direction was reached, pass
   by pass, with Miguel's feedback on each.
 - `docs/CHANGELOG.md`, entry "[Unreleased] broadcast package pilot": what
   changed in each of the four passes.

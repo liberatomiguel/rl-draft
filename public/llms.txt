@@ -1,0 +1,31 @@
+# Rocket Draft
+
+> Rocket Draft is a free, fan-made Rocket League esports game that runs in the browser, on desktop and mobile, with nothing to download. It has two main modes: an RLCS draft game (draft real RLCS lineups from 2016 to today, then play the Swiss stage and the playoffs) and Road to Worlds, a Rocket League career mode where you manage an RLCS club: found it, sign real players and coaches, run the finances and chase the World Championship.
+
+Not affiliated with Psyonix, Epic Games or the RLCS. Player overalls are Rocket Draft's own ratings. English, with a Portuguese (Brazil) version under /pt.
+
+## Play
+
+- [Rocket Draft](https://rocketdraft.app/): the RLCS draft game and every mode
+- [Road to Worlds — Rocket League career mode and manager game](https://rocketdraft.app/rocket-league-manager): what the career mode is, how it plays, and where to start
+- [How to play](https://rocketdraft.app/how-to-play): the draft, chemistry and the bracket
+- [RLCS tournament simulator](https://rocketdraft.app/rocket-league-simulator)
+
+## Road to Worlds guides
+
+- [Beginner's guide](https://rocketdraft.app/road-to-worlds-guide)
+- [Transfer market](https://rocketdraft.app/rocket-league-manager-transfer-market)
+- [Finances](https://rocketdraft.app/rocket-league-manager-finances)
+- [Training](https://rocketdraft.app/rocket-league-manager-training)
+
+## Draft guides
+
+- [Draft strategy](https://rocketdraft.app/strategy)
+- [How the ratings are built](https://rocketdraft.app/ratings)
+- [Special cards](https://rocketdraft.app/special-cards)
+- [FAQ](https://rocketdraft.app/faq)
+
+## RLCS database
+
+- [RLCS rosters by season, team and player](https://rocketdraft.app/rlcs)
+- [RLCS 2027 rosters](https://rocketdraft.app/rlcs/2027)

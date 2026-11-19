@@ -54,10 +54,27 @@ const DEFAULTS = {
   lang: "en" as const,
 };
 
+/**
+ * The language a device starts in (v2.0.24): Portuguese when the browser asks for
+ * it, English otherwise. Only the INITIAL value: a saved choice (the persisted
+ * settings) always wins, and the /pt pages still set PT themselves (`SyncLocale`).
+ * Before this, a visitor on the home page always got English: on 12-16/11 about
+ * 140 new players with a Portuguese browser saw the English game (119 from Brazil),
+ * and the ones who got Portuguese played far more often (77% against 46%).
+ */
+export function initialLang(languages?: readonly string[] | null): "en" | "pt" {
+  const list =
+    languages ??
+    (typeof navigator === "undefined" ? [] : navigator.languages?.length ? navigator.languages : [navigator.language]);
+  const first = (list[0] ?? "").toLowerCase();
+  return first.startsWith("pt") ? "pt" : "en";
+}
+
 export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
       ...DEFAULTS,
+      lang: initialLang(),
       set: (key, value) => set({ [key]: value } as Partial<SettingsState>),
       resetSettings: () => set({ ...DEFAULTS }),
     }),

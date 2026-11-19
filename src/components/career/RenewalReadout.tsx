@@ -27,8 +27,8 @@ export function RenewalsPanel({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const expiring = save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex);
   return (
     <Panel className="p-4 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="display text-lg uppercase leading-none text-ink">{C.squad.renewalsTitle}</h3>
+      <div className="card-head">
+        <h3 className="card-title">{C.squad.renewalsTitle}</h3>
         {expiring.length > 0 ? (
           <AppLink href="/career/squad" className={buttonClass("secondary", "sm")}>
             {C.squad.renewalsGo}

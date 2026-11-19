@@ -26,7 +26,8 @@ import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import type { ContractOffer } from "@/engine/career/contract";
-import { renewalTalkFor } from "@/store/careerFlow";
+import { listingPlanFor, renewalTalkFor, transferListOf } from "@/store/careerFlow";
+import { ListPlayerSheet } from "@/components/career/ListPlayerSheet";
 import { contractClockOf } from "@/store/careerHq";
 import { careerNewSummary, contractNewKey, contractWarnsFor } from "@/engine/career/careerNew";
 import { NewTag } from "@/components/ui/NewDot";
@@ -87,6 +88,8 @@ export function SquadScreen() {
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
+  /** R135: the listing sheet for one player. */
+  const [listing, setListing] = useState<string | null>(null);
   const [renewLen, setRenewLen] = useState<1 | 2 | 3>(2);
   /** rc.33 (ECO-10/11): the renewal offer on the table — weekly wage + prize share (empty = his ask). */
   const [renewOffer, setRenewOffer] = useState<ContractOffer>({});
@@ -106,6 +109,7 @@ export function SquadScreen() {
   const clock = clockLabel(save);
   const byId = new Map(save.squad.map((p) => [p.id, p]));
   const starters = save.starterIds.map((id) => byId.get(id)).filter(Boolean) as SquadPlayer[];
+  const listedIds = new Set(transferListOf(save).map((l) => l.playerId));
   const bench = save.squad.filter((p) => !save.starterIds.includes(p.id));
   const wageBill =
     save.squad.reduce((s, p) => s + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0);
@@ -209,7 +213,7 @@ export function SquadScreen() {
   return (
     <div className="rise-in mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-4">
       <SectionTitle
-        kicker={C.meta.title}
+        
         title={C.squad.title}
         right={
           <div className="flex items-center gap-2 text-xs">
@@ -221,31 +225,18 @@ export function SquadScreen() {
 
       <ErrorBanner />
 
+      {/* The squad as one board (starters, bench, coach) and its stability on the left; the contracts on the right. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
+      <div className="space-y-4 lg:col-span-2">
       {/* ==================== starters — the pitch ==================== */}
-      <Panel data-tour="squad-starters" strong className="relative overflow-hidden p-4">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            background:
-              "radial-gradient(120% 80% at 50% 0%, rgba(59,130,246,0.12), transparent 60%), repeating-linear-gradient(90deg, transparent 0 48px, rgba(255,255,255,0.03) 48px 49px)",
-          }}
-          aria-hidden
-        />
-        {/* center circle + halfway line */}
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.05]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-white/[0.05]"
-          aria-hidden
-        />
-
-        <div className="relative">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="kicker text-[11px]">{C.squad.starters}</p>
-            <span className="text-xs text-sub">
-              {C.club.stars} · <span className="display font-bold text-ink">{teamRating}</span>
+      <Panel data-tour="squad-starters" strong className="p-4 sm:p-5">
+        <div>
+          {/* The team rating is the figure of this board. */}
+          <div className="card-head">
+            <h2 className="card-title">{C.squad.starters}</h2>
+            <span className="flex items-baseline gap-2">
+              <span className="display text-3xl font-bold leading-none tabular-nums text-ink">{teamRating}</span>
+              <span className="text-xs text-sub">{C.club.stars}</span>
             </span>
           </div>
 
@@ -270,7 +261,7 @@ export function SquadScreen() {
           {/* swap affordance / feedback line */}
           <div className="mt-2 min-h-[1.25rem] text-center text-[11px]">
             {lineupLocked ? (
-              <span className="rounded-full bg-orange/10 px-2.5 py-0.5 font-semibold text-orange-bright">
+              <span className="rounded-sm bg-orange/10 px-2.5 py-0.5 font-semibold text-orange-bright">
                 {C.event.lineupLocked}
               </span>
             ) : selected ? (
@@ -283,21 +274,21 @@ export function SquadScreen() {
                 {C.squad.chemPreview(swapBefore.chem, team.chemistry.percent)}
               </span>
             ) : (
-              <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-faint">
+              <span className="rounded-sm bg-white/5 px-2.5 py-0.5 text-faint">
                 {C.squad.makeStarter} ↔ {C.squad.makeSub}
               </span>
             )}
           </div>
 
           {/* chemistry module — bar + tier + expandable "why" */}
-          <div className="mt-3 rounded-xl border border-line bg-black/20 p-3">
+          <div className="mt-4 border-t border-line pt-3.5">
             <button
               type="button"
               onClick={() => setChemOpen((v) => !v)}
               aria-expanded={chemOpen}
               className="flex w-full items-center gap-3 text-left"
             >
-              <span className="kicker shrink-0 text-[10px]">{C.hub.chemistry}</span>
+              <span className="kicker shrink-0">{C.hub.chemistry}</span>
               <ProgressBar
                 value={team.chemistry.percent / 100}
                 tone="good"
@@ -333,13 +324,11 @@ export function SquadScreen() {
             ) : null}
           </div>
         </div>
-      </Panel>
-
       {/* ==================== bench + coach ==================== */}
-      <div data-tour="squad-bench" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Panel className="p-4">
+      <div data-tour="squad-bench" className="mt-5 grid grid-cols-1 gap-x-8 gap-y-5 border-t border-line pt-5 sm:grid-cols-2">
+        <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="kicker text-[11px]">{C.squad.bench}</p>
+            <h2 className="card-title">{C.squad.bench}</h2>
             <Badge tone="neutral">{C.squad.subSlot}</Badge>
           </div>
           {bench.length > 0 ? (
@@ -368,20 +357,20 @@ export function SquadScreen() {
               </div>
             </AppLink>
           )}
-        </Panel>
+        </div>
 
-        <Panel className="p-4">
+        <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="kicker text-[11px]">{C.squad.coachSlot}</p>
+            <h2 className="card-title">{C.squad.coachSlot}</h2>
             <AppLink
               href="/career/market#coaches"
-              className="rounded-full bg-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-bright transition-colors hover:bg-blue/20"
+              className="rounded-sm bg-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-bright transition-colors hover:bg-blue/20"
             >
               {C.market.coaches}
             </AppLink>
           </div>
           {save.coach ? (
-            <div className="rounded-xl border border-line-strong bg-white/[0.02] p-3.5">
+            <div>
               <div className="flex items-center justify-between">
                 <span className="display font-bold text-ink">{save.coach.name}</span>
                 <span className="display text-xl font-bold text-ink">{save.coach.overall}</span>
@@ -405,24 +394,26 @@ export function SquadScreen() {
           <div className="mt-3 flex flex-wrap gap-1.5">
             <AppLink
               href="/career/finances"
-              className="rounded bg-white/6 px-2 py-1 text-[10px] font-semibold text-sub transition-colors hover:text-ink"
+              className="rounded bg-white/6 px-2 py-1 text-[11px] font-semibold text-sub transition-colors hover:text-ink"
             >
               {C.finances.gearLadder}
             </AppLink>
             {save.finances.gear.psychologist ? (
-              <span className="rounded bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-300">
+              <span className="rounded bg-emerald-500/15 px-2 py-1 text-[11px] font-semibold text-emerald-300">
                 {C.finances.psychologist}
               </span>
             ) : null}
           </div>
-        </Panel>
+        </div>
       </div>
+      </Panel>
 
       {/* ==================== roster stability ==================== */}
-      <Panel glow={showStabilityWarning ? "orange" : undefined} className="p-4">
+      <Panel glow={showStabilityWarning ? "orange" : undefined} className="p-4 sm:p-5">
+        <div className="card-head"><h2 className="card-title">{C.squad.stability}</h2></div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="kicker mb-1 text-[11px]">{C.squad.stability}</p>
+            
             <p className="text-sm text-sub">{C.squad.stabilityState(faces, maxFaces)}</p>
           </div>
           <div className="flex items-center gap-1" aria-hidden>
@@ -448,18 +439,20 @@ export function SquadScreen() {
         ) : null}
       </Panel>
 
+      </div>
       {/* ==================== contracts ==================== */}
-      <Panel data-tour="squad-contracts" className="p-4">
-        <p className="kicker mb-3 text-[11px]">{C.squad.contracts}</p>
-        <div className="space-y-2">
+      <Panel data-tour="squad-contracts" className="p-4 sm:p-5">
+        <div className="card-head"><h2 className="card-title">{C.squad.contracts}</h2></div>
+        <div>
           {save.squad.map((p) => {
             const expiring = p.contractEndSeason === save.clock.seasonIndex;
             return (
               <div
                 key={p.id}
                 className={cx(
-                  "flex flex-wrap items-center gap-3 rounded-lg border bg-white/[0.02] p-2.5",
-                  expiring ? "border-orange/40" : "border-line",
+                  // A contract is a ruled row; one that ends this season carries the orange rule.
+                  "flex flex-wrap items-center gap-3 border-b py-3.5 last:border-b-0 last:pb-0",
+                  expiring ? "border-orange/50" : "border-line",
                 )}
               >
                 <div className="min-w-0 flex-1">
@@ -469,6 +462,7 @@ export function SquadScreen() {
                     {expiring ? <Badge tone="orange">{C.squad.expiring}</Badge> : null}
                     {p.finalSeasonAnnounced ? <Badge tone="bad">{C.squad.finalSeason}</Badge> : null}
                     {freshKeys.has(contractNewKey(p.id, p.contractEndSeason)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null}
+                    {listedIds.has(p.id) ? <Badge tone="blue">{C.market.transferList.listedTag}</Badge> : null}
                   </div>
                   <div className="mt-0.5 text-[11px] text-faint">
                     {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))} ·{" "}
@@ -484,7 +478,7 @@ export function SquadScreen() {
                 <span className="text-xs text-sub">
                   {wageLabel(C, p.salaryPerSplit)}
                 </span>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <Button size="sm" variant="ghost" onClick={() => openSheet(p)}>
                     {C.market.viewSheet}
                   </Button>
@@ -500,6 +494,21 @@ export function SquadScreen() {
                   >
                     {C.squad.renew}
                   </Button>
+                  {/* R135 (ECO-06): the transfer list. */}
+                  {(() => {
+                    const listError = listingPlanFor(save, p.id)?.error ?? null;
+                    return (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={Boolean(listError)}
+                        title={listError ? ((C.market.errors as Record<string, string>)[listError] ?? C.market.errors.unknown) : undefined}
+                        onClick={() => setListing(p.id)}
+                      >
+                        {C.market.transferList.listForSale}
+                      </Button>
+                    );
+                  })()}
                   {/* rc.30: roster moves wait for the event (its team froze at the start). */}
                   <Button
                     size="sm"
@@ -516,8 +525,10 @@ export function SquadScreen() {
           })}
         </div>
       </Panel>
+      </div>
 
       <PlayerSheet data={sheet} onClose={() => setSheet(null)} />
+      {listing ? <ListPlayerSheet key={listing} save={save} open playerId={listing} onClose={() => setListing(null)} /> : null}
 
       {/* ==================== release confirm ==================== */}
       <Modal
@@ -553,7 +564,7 @@ export function SquadScreen() {
       <Modal
         open={Boolean(renew)}
         onClose={closeRenew}
-        title={renew ? `${C.squad.renew} — ${renew.name}` : ""}
+        title={renew ? `${C.squad.renew}: ${renew.name}` : ""}
       >
         {renew ? (
           <div className="space-y-4">
@@ -605,7 +616,7 @@ export function SquadScreen() {
                 <span className="text-sub">{C.player.prizeShare}</span>
                 <span className="text-right font-semibold text-ink">
                   {prizeShareLabelOf(C, renew)} →{" "}
-                  {renewTalk ? prizeShareLabelOf(C, { prizeSharePct: renewTalk.offered.sharePct }) : "—"}
+                  {renewTalk ? prizeShareLabelOf(C, { prizeSharePct: renewTalk.offered.sharePct }) : "-"}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">

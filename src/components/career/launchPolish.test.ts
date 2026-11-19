@@ -97,7 +97,7 @@ describe("G1 season statistics and compact history", () => {
     expect(seasonStatisticsOf(save).detailed).toBe(false);
     const html = renderToStaticMarkup(createElement(SeasonStatistics,{save,C:CAREER_EN}));
     expect(html).toContain(CAREER_EN.launch.seasonDetailUnavailable);
-    expect(html).toContain("—");
+    expect(html).toContain(">-<");
   });
   it.each([CAREER_EN, CAREER_PT])("renders six opponents plus the user and labels career/season totals", C => {
     const save = fresh();

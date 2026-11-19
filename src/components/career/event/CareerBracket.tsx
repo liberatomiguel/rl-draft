@@ -136,14 +136,14 @@ export function CareerBracket({
 
   const wideColumn = (name: PlayoffRoundName) => (
     <div key={name} className="flex min-w-0 flex-1 flex-col justify-around gap-2 sm:min-w-[150px]">
-      <p className="kicker text-center !text-[9px]">{T.roundNames[name] ?? name}</p>
+      <p className="kicker text-center">{T.roundNames[name] ?? name}</p>
       {renderCells(name)}
     </div>
   );
 
   const stackedSection = (name: PlayoffRoundName) => (
     <div key={name}>
-      <p className="kicker mb-1.5 !text-[9px]">{T.roundNames[name] ?? name}</p>
+      <p className="kicker mb-1.5">{T.roundNames[name] ?? name}</p>
       <div className="space-y-1.5">{renderCells(name)}</div>
     </div>
   );
@@ -151,7 +151,7 @@ export function CareerBracket({
   const isSingle = p.format === "single";
 
   return (
-    <Panel className="p-4">
+    <Panel className="p-4 sm:p-5">
       <h3 className="display mb-3 text-sm font-bold uppercase tracking-[0.16em] text-ink">
         {C.event.bracket}
       </h3>
@@ -167,13 +167,13 @@ export function CareerBracket({
       ) : (
         <div className="space-y-5 pb-1 sm:overflow-x-auto">
           <div>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-cyan">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-cyan">
               {C.event.upperBracket}
             </p>
             <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(wideColumn)}</div>
           </div>
           <div>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-orange-bright">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-orange-bright">
               {C.event.lowerBracket}
             </p>
             <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(wideColumn)}</div>
@@ -244,7 +244,7 @@ function BracketCell({
         </span>
         </>}
         {seed !== null ? (
-          <span className="display shrink-0 text-[9px] font-bold text-faint">#{seed}</span>
+          <span className="display shrink-0 text-[10px] font-bold text-faint">#{seed}</span>
         ) : null}
         {score !== null ? (
           <button type="button" disabled={!onClick} onClick={onClick} className={cx("display shrink-0 rounded px-1 font-bold hover:bg-white/10", won ? "text-good" : "text-sub")}>

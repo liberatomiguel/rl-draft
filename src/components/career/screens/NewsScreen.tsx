@@ -1,25 +1,28 @@
 "use client";
 
 /**
- * Road to Worlds — the INBOX (v0.2): an email client over `save.mail` only.
- * The world's news wire moved to the HQ; this screen is what lands on YOUR
- * desk — transfer bids, sponsor deals, contract notices, finance alerts and
- * unlock letters. Rows expand in place (accordion), expanding marks read,
- * and mail with a deep link carries an Open action.
+ * Road to Worlds: the club's desk. The inbox is an email client over
+ * `save.mail` (transfer bids, sponsor deals, contract notices, finance alerts,
+ * unlock letters): the list on the left, the open message on the right;
+ * opening marks it read, and mail with a deep link carries an Open action.
+ * The HQ's news feed and transfer wire open here in full (#news, #transfers).
  *
  * File name + /career/news route are stable; only the content changed.
  */
 
 import { useRouter } from "next/navigation";
 import { LoanSummary } from "../finances/LoanSummary";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { MailItem, MailKind } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
+import { useSettings } from "@/store/settingsStore";
+import { NewsFeed } from "@/components/career/news/NewsFeed";
+import { TransferWirePanel } from "@/components/career/screens/HubScreen";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { dateOfDay, seasonLabelFor, useCareerSave } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
@@ -54,23 +57,41 @@ import { ICON_TONE, MailKindIcon } from "../news/MailKindIcon";
 // Screen
 // ---------------------------------------------------------------------------
 
+type DeskView = "inbox" | "news" | "transfers";
+const VIEWS: DeskView[] = ["inbox", "news", "transfers"];
+const viewOfHash = (hash: string): DeskView => (VIEWS as string[]).includes(hash.replace("#", "")) ? (hash.replace("#", "") as DeskView) : "inbox";
+
+// The desk's job: read what reached the club. One decision here: which message to open (and act on).
 export function NewsScreen() {
   const C = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
+  const lang = useSettings((s) => s.lang);
   const markMailRead = useCareerStore((s) => s.markMailRead);
   const markAllMailRead = useCareerStore((s) => s.markAllMailRead);
 
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The HQ links here with #news / #transfers: each opens as its own view of the desk.
+  const [view, setViewState] = useState<DeskView>(() => (typeof window === "undefined" ? "inbox" : viewOfHash(window.location.hash)));
+  // A link to another view of this page (same path, new hash) does not remount the screen.
+  useEffect(() => {
+    const onHash = () => setViewState(viewOfHash(window.location.hash));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  const setView = (v: DeskView) => {
+    setViewState(v);
+    window.history.replaceState(null, "", v === "inbox" ? window.location.pathname : `#${v}`);
+  };
 
   if (!mounted) {
     return (
-      <div className="mx-auto max-w-3xl px-3 py-6 sm:px-4">
+      <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
         <div className="space-y-4" aria-busy>
-          <div className="h-12 animate-pulse rounded-2xl bg-white/5" />
-          <div className="h-8 animate-pulse rounded-2xl bg-white/5" />
-          <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+          <div className="h-10 w-56 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-9 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-96 animate-pulse rounded-xl bg-white/5" />
         </div>
       </div>
     );
@@ -79,100 +100,120 @@ export function NewsScreen() {
 
   const unread = save.mail.filter((m) => !m.read).length;
   const items = filter === "all" ? save.mail : save.mail.filter((m) => m.kind === filter);
+  const selected = items.find((m) => m.id === selectedId) ?? null;
 
-  const onToggle = (item: MailItem) => {
-    const opening = expandedId !== item.id;
-    setExpandedId(opening ? item.id : null);
-    if (opening && !item.read) markMailRead(item.id);
+  const onSelect = (item: MailItem) => {
+    setSelectedId(item.id);
+    if (!item.read) markMailRead(item.id);
   };
 
+  const viewLabel: Record<DeskView, string> = { inbox: C.mail.title, news: C.news.feed.name, transfers: C.hub.transfersTitle };
+
   return (
-    <div className="rise-in mx-auto max-w-3xl px-3 py-6 sm:px-4">
+    <div className="rise-in mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
       <SectionTitle
-        kicker={C.meta.title}
         title={C.mail.title}
-        className="mb-5"
         right={
-          <div className="flex items-center gap-3">
-            {unread > 0 ? (
-              <Badge tone="orange" className="hidden sm:inline-flex">
-                {C.mail.unread(unread)}
-              </Badge>
-            ) : null}
-            <Button size="sm" variant="ghost" onClick={markAllMailRead} disabled={unread === 0}>
-              {C.mail.markAllRead}
-            </Button>
-          </div>
+          view === "inbox" ? (
+            <div className="flex items-center gap-3">
+              {unread > 0 ? <Badge tone="orange">{C.mail.unread(unread)}</Badge> : null}
+              <Button size="sm" variant="ghost" onClick={markAllMailRead} disabled={unread === 0}>
+                {C.mail.markAllRead}
+              </Button>
+            </div>
+          ) : null
         }
       />
-      {unread > 0 ? (
-        <p className="mb-4 text-xs font-semibold text-orange-bright sm:hidden">
-          {C.mail.unread(unread)}
-        </p>
-      ) : null}
 
-      {/* Filter chips: All + the six kinds */}
-      <div className="mb-5 flex flex-wrap gap-2">
-        {(["all", ...KINDS] as FilterKey[]).map((key) => (
+      {/* The desk's three views: what was sent to you, the news, the transfer wire. */}
+      <div role="tablist" aria-label={C.mail.title} className="flex gap-6 border-b border-line">
+        {VIEWS.map((v) => (
           <button
-            key={key}
-            onClick={() => setFilter(key)}
-            aria-pressed={filter === key}
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={view === v}
+            onClick={() => setView(v)}
             className={cx(
-              "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
-              filter === key
-                ? "border-blue/50 bg-blue/15 text-blue-bright"
-                : "border-line-strong bg-white/5 text-sub hover:text-ink",
+              "display -mb-px flex min-h-10 items-center gap-2 border-b-2 text-[13px] uppercase tracking-[0.04em] transition-colors",
+              view === v ? "border-orange font-bold text-ink" : "border-transparent font-semibold text-sub hover:text-ink",
             )}
           >
-            {key === "all" ? C.news.filter.all : C.mail.kinds[key]}
+            {viewLabel[v]}
+            {v === "inbox" && unread > 0 ? <span className="rounded-sm bg-orange/20 px-1 text-[11px] tabular-nums leading-4 text-orange-bright">{unread}</span> : null}
           </button>
         ))}
       </div>
 
-      {/* The mail list — one panel, divided rows, accordion expand */}
-      {items.length === 0 ? (
-        <Panel className="rise-in p-10 text-center" style={{ animationDelay: "40ms" }}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mx-auto mb-3 h-10 w-10 text-faint"
-            aria-hidden
-          >
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <path d="m3 7 9 6 9-6" />
-          </svg>
-          <p className="text-sm font-semibold text-ink">{C.mail.empty}</p>
-          <p className="mt-1 text-xs text-sub">{C.mail.emptyHint}</p>
-        </Panel>
-      ) : (
-        <Panel className="rise-in overflow-hidden" style={{ animationDelay: "40ms" }}>
-          <ul className="divide-y divide-line">
-            {items.map((item) => (
-              <MailRow
-                key={item.id}
-                item={item}
-                C={C}
-                D={C.dates}
-                currentSeason={save.clock.seasonIndex}
-                expanded={expandedId === item.id}
-                onToggle={() => onToggle(item)}
-              />
+      {view === "news" ? <NewsFeed save={save} C={C} lang={lang} full /> : null}
+      {view === "transfers" ? <TransferWirePanel save={save} C={C} D={C.dates} full /> : null}
+
+      {view === "inbox" ? (
+        <>
+          {/* Filter chips: All + the six kinds */}
+          <div className="flex flex-wrap gap-2">
+            {(["all", ...KINDS] as FilterKey[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                aria-pressed={filter === key}
+                className={cx(
+                  buttonClass(filter === key ? "secondary" : "ghost", "sm"),
+                  filter === key ? "!border-blue-bright/60" : "border border-transparent",
+                )}
+              >
+                {key === "all" ? C.news.filter.all : C.mail.kinds[key]}
+              </button>
             ))}
-          </ul>
-        </Panel>
-      )}
+          </div>
+
+          {/* The list on the left, the open message on the right. */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:items-start">
+            <Panel className="overflow-hidden lg:col-span-2">
+              {items.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-sm font-semibold text-ink">{C.mail.empty}</p>
+                  <p className="mt-1 text-xs text-sub">{C.mail.emptyHint}</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {items.map((item) => (
+                    <MailRow
+                      key={item.id}
+                      item={item}
+                      C={C}
+                      D={C.dates}
+                      currentSeason={save.clock.seasonIndex}
+                      selected={selected?.id === item.id}
+                      onSelect={() => onSelect(item)}
+                    />
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel strong className="p-4 sm:p-5 lg:sticky lg:top-44 lg:col-span-3">
+              {selected ? (
+                <MailReader item={selected} C={C} D={C.dates} currentSeason={save.clock.seasonIndex} />
+              ) : (
+                <p className="py-10 text-center text-sm text-sub">{items.length === 0 ? C.mail.emptyHint : C.mail.pickOne}</p>
+              )}
+            </Panel>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
 
+function datedOf(item: MailItem, D: DatesCopy, currentSeason: number): string {
+  const stamp = formatDateTiny(D, dateOfDay(item.seasonIndex, item.day));
+  return item.seasonIndex === currentSeason ? stamp : `${seasonLabelFor(item.seasonIndex)} · ${stamp}`;
+}
+
 // ---------------------------------------------------------------------------
-// Mail row — collapsed: dot · icon · sender/subject · date. Expanded: body
-// paragraph + deep-link action. Unread = bold subject + orange dot.
+// Mail row: unread mark, kind icon, sender, subject, date. The open one carries the orange rule.
 // ---------------------------------------------------------------------------
 
 function MailRow({
@@ -180,107 +221,79 @@ function MailRow({
   C,
   D,
   currentSeason,
-  expanded,
-  onToggle,
+  selected,
+  onSelect,
 }: {
   item: MailItem;
   C: CareerCopy;
   D: DatesCopy;
   currentSeason: number;
-  expanded: boolean;
-  onToggle: () => void;
+  selected: boolean;
+  onSelect: () => void;
 }) {
-  const router = useRouter();
   const resolved = resolveMail(withMoneyParams(item), C);
-  const stamp = formatDateTiny(D, dateOfDay(item.seasonIndex, item.day));
-  const dated =
-    item.seasonIndex === currentSeason ? stamp : `${seasonLabelFor(item.seasonIndex)} · ${stamp}`;
-
   return (
-    <li className={cx(expanded && "bg-white/[0.03]")}>
+    <li>
       <button
-        onClick={onToggle}
-        aria-expanded={expanded}
-        className="flex w-full items-start gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white/[0.04] sm:px-4"
+        type="button"
+        onClick={onSelect}
+        aria-current={selected ? "true" : undefined}
+        className={cx(
+          "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors",
+          selected ? "bg-orange/[0.07] shadow-[inset_3px_0_0_var(--orange)]" : "hover:bg-white/[0.04]",
+        )}
       >
-        <span
-          className={cx(
-            "mt-[7px] h-2 w-2 shrink-0 rounded-full",
-            item.read ? "bg-white/10" : "bg-orange",
-          )}
-          aria-label={item.read ? undefined : C.mail.unread(1)}
-        />
-        <span className={cx("mt-0.5 shrink-0", ICON_TONE[item.kind])}>
+        <span className={cx("relative mt-0.5 shrink-0", ICON_TONE[item.kind])}>
           <MailKindIcon kind={item.kind} className="h-5 w-5" />
+          {!item.read ? <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-orange" aria-label={C.mail.unread(1)} /> : null}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-            <span
-              className={cx(
-                "truncate text-xs",
-                item.read ? "text-faint" : "font-semibold text-sub",
-              )}
-            >
-              {resolved.from}
-            </span>
-            <span className="shrink-0 font-mono text-[10px] text-faint">{dated}</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className={cx("truncate text-xs", item.read ? "text-faint" : "font-semibold text-sub")}>{resolved.from}</span>
+            <span className="shrink-0 text-[11px] tabular-nums text-faint">{datedOf(item, D, currentSeason)}</span>
           </span>
-          <span className="mt-0.5 flex items-center justify-between gap-2">
-            <span
-              className={cx(
-                "min-w-0 flex-1 text-sm leading-snug",
-                item.read ? "text-sub" : "font-semibold text-ink",
-                !expanded && "line-clamp-2 sm:line-clamp-1",
-              )}
-            >
-              {resolved.title}
-            </span>
-            <span className="flex shrink-0 items-center gap-1.5">
-              <Badge tone={KIND_CHIP_TONE[item.kind]} className="hidden sm:inline-flex">
-                {resolved.kindLabel}
-              </Badge>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={cx(
-                  "h-3.5 w-3.5 text-faint transition-transform",
-                  expanded && "rotate-180",
-                )}
-                aria-hidden
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
+          <span className={cx("mt-0.5 line-clamp-2 block text-sm leading-snug", item.read ? "text-sub" : "font-semibold text-ink")}>
+            {resolved.title}
           </span>
         </span>
       </button>
-
-      {expanded ? (
-        <div className="rise-in px-3.5 pb-4 pl-[46px] sm:px-4 sm:pl-[50px]">
-          <Badge tone={KIND_CHIP_TONE[item.kind]} className="mb-2 sm:hidden">
-            {resolved.kindLabel}
-          </Badge>
-          {item.titleKey === "creditOffer" && Number(item.params?.principal) > 0 ? <LoanSummary C={C} received={Number(item.params?.principal)} total={Number(item.params?.loanTotal)} weekly={Number(item.params?.loanWeekly)} weeks={Number(item.params?.loanTerm)} /> : null}
-          {resolved.body && !(item.titleKey === "creditOffer" && Number(item.params?.principal) > 0) ? (
-            <p className="max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
-          ) : null}
-          {item.linkTo ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="mt-3"
-              onClick={() => router.push(item.linkTo!)}
-            >
-              {C.mail.open}
-              <span aria-hidden>→</span>
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The open message: who sent it and when, the subject as the title, the body, its action.
+// ---------------------------------------------------------------------------
+
+function MailReader({ item, C, D, currentSeason }: { item: MailItem; C: CareerCopy; D: DatesCopy; currentSeason: number }) {
+  const router = useRouter();
+  const resolved = resolveMail(withMoneyParams(item), C);
+  const loan = item.titleKey === "creditOffer" && Number(item.params?.principal) > 0;
+  return (
+    <article>
+      <div className="card-head">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className={cx("shrink-0", ICON_TONE[item.kind])}><MailKindIcon kind={item.kind} className="h-5 w-5" /></span>
+          <span className="truncate text-sm font-semibold text-ink">{resolved.from}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2.5">
+          <Badge tone={KIND_CHIP_TONE[item.kind]}>{resolved.kindLabel}</Badge>
+          <span className="text-xs tabular-nums text-sub">{datedOf(item, D, currentSeason)}</span>
+        </span>
+      </div>
+      <h3 className="display text-2xl font-bold uppercase leading-[1.08] text-ink sm:text-3xl">{resolved.title}</h3>
+      {loan ? (
+        <div className="mt-4">
+          <LoanSummary C={C} received={Number(item.params?.principal)} total={Number(item.params?.loanTotal)} weekly={Number(item.params?.loanWeekly)} weeks={Number(item.params?.loanTerm)} />
+        </div>
+      ) : resolved.body ? (
+        <p className="mt-4 max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
+      ) : null}
+      {item.linkTo ? (
+        <Button variant="secondary" className="mt-5" onClick={() => router.push(item.linkTo!)}>
+          {C.mail.open}
+        </Button>
+      ) : null}
+    </article>
   );
 }

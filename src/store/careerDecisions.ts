@@ -281,6 +281,19 @@ function bidDecisionsOf(save: CareerSave): PendingDecision[] {
     .map((o) => decisionFrom("bid", { id: o.id, deadline: { seasonIndex: o.resolveSeason, day: o.resolveDay } }, save));
 }
 
+/**
+ * R135 (ECO-06): a trade the org agreed to, or countered, waits for the
+ * manager's yes or no like a bid (same kind, the proposal's id): accepted
+ * or refused through `acceptBidFlow` / `declineBidFlow`. A proposal still
+ * waiting for its answer owes nothing.
+ */
+function tradeDecisionsOf(save: CareerSave): PendingDecision[] {
+  if (save.phase === "ended") return [];
+  return (save.tradeProposals ?? [])
+    .filter((p) => p.status !== "waiting")
+    .map((p) => decisionFrom("bid", { id: p.id, deadline: { seasonIndex: p.seasonIndex, day: p.resolveDay } }, save));
+}
+
 // ---------------------------------------------------------------------------
 // The queue
 // ---------------------------------------------------------------------------
@@ -351,6 +364,7 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
   const training = save.phase === "running" ? DECISION_SOURCES.training(save) : null;
   if (training) out.push(decisionFrom("training", training, save));
   out.push(...bidDecisionsOf(save));
+  out.push(...tradeDecisionsOf(save));
   const sponsor = DECISION_SOURCES.sponsor(save);
   if (sponsor) out.push(decisionFrom("sponsor", sponsor, save));
   push(followDecisionOf(save));

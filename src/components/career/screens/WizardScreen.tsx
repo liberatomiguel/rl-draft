@@ -14,7 +14,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { CAREER_DIFFICULTY, CAREER_ECONOMY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
@@ -23,6 +23,7 @@ import { runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/en
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
+import { wantsQuickStart } from "@/lib/careerEntry";
 import { formatMoney } from "@/lib/format";
 import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
@@ -258,6 +259,16 @@ export function WizardScreen() {
     setStep(TOTAL_STEPS);
   };
 
+  // v2.0.33: the search pages link here with ?start=quick (through CareerShell):
+  // run the Quick start once, as if its button had been pressed. Deferred a tick
+  // like the country default above, so the set calls are not in the effect body.
+  const runLinkedQuickStart = useEffectEvent(() => quickStart());
+  useEffect(() => {
+    if (!wantsQuickStart(window.location.search)) return;
+    const t = window.setTimeout(runLinkedQuickStart, 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
   const found = () => {
     const slot = slots.findIndex((s) => !s);
     if (slot === -1) {
@@ -491,7 +502,7 @@ export function WizardScreen() {
                     </p>
                     {regionRivals.length > 0 ? (
                       <div className="mt-3 border-t border-line pt-2.5">
-                        <p className="kicker mb-1.5 !text-[11px]">{C.wizard.regionRivals}</p>
+                        <p className="kicker mb-1.5">{C.wizard.regionRivals}</p>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                           {regionRivals.map((rv) => (
                             <span key={rv.orgId} className="flex items-center gap-1.5 text-xs text-sub">
@@ -630,9 +641,9 @@ export function WizardScreen() {
                 organisation on the left, the four earlier picks as labelled
                 figures on the right (the budget's label names the difficulty). */}
             <section className="mt-8 border-t border-line pt-5" aria-label={C.wizard.summaryTitle}>
-              <h3 className="display text-lg uppercase leading-none text-ink">{C.wizard.summaryTitle}</h3>
+              <h3 className="card-title">{C.wizard.summaryTitle}</h3>
               <div className="mt-4 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-4">
                   <UserCrest crestId={crestId} colors={colors} abbrev={abbrev} size="lg" />
                   <div className="min-w-0">
                     <p className="display truncate text-xl font-bold uppercase leading-none text-ink">{nameTrim}</p>
@@ -642,7 +653,7 @@ export function WizardScreen() {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+                <div className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-[repeat(4,auto)]">
                   <Figure value={copy.SETUP.regionNames[region]} label={C.wizard.regionTitle} />
                   <Figure value={copy.STAT_LABELS[buffType]} label={C.wizard.identityBuff} />
                   <Figure value={rosterLabel} label={C.wizard.rosterTitle} />
@@ -722,7 +733,7 @@ function StepHeader({ title, kicker }: { title: string; kicker: string }) {
 function Figure({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <span className="block min-w-0">
-      <span className="display block truncate text-xl font-bold uppercase leading-none text-ink">{value}</span>
+      <span className="display block whitespace-nowrap text-xl font-bold uppercase leading-none text-ink">{value}</span>
       <span className="mt-1 block text-xs leading-snug text-sub">{label}</span>
     </span>
   );

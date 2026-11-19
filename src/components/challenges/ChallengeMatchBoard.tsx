@@ -209,7 +209,7 @@ export function ChallengeMatchBoard({
               </div>
               <p className="display mt-0.5 flex items-baseline justify-center gap-1.5 text-sm font-bold text-sub">
                 <span className="kicker !text-[10px] !text-faint">{B.series}</span>
-                {winsA} – {winsB}
+                {winsA}-{winsB}
               </p>
             </>
           ) : (

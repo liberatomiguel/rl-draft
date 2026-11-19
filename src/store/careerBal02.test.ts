@@ -216,11 +216,11 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
         { lends: true, loans: 2, deadlineWeeks: 48 },
         { lends: true, loans: 1, deadlineWeeks: 24 },
       ]);
-      expect(money.value("easy", COPY.en)).toBe("Out of money? Up to three bank loans — repay each within 64 weeks or the career ends.");
-      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans — repay each within 48 weeks or the career ends.");
-      expect(money.value("hard", COPY.en)).toBe("Out of money? One bank loan — repay it within 24 weeks or the career ends.");
-      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco — pague em até 48 semanas ou a carreira acaba.");
-      expect(money.value("hard", COPY.pt)).toBe("Sem dinheiro? Um empréstimo do banco — pague em até 24 semanas ou a carreira acaba.");
+      expect(money.value("easy", COPY.en)).toBe("Out of money? Up to three bank loans: repay each within 64 weeks or the career ends.");
+      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans: repay each within 48 weeks or the career ends.");
+      expect(money.value("hard", COPY.en)).toBe("Out of money? One bank loan: repay it within 24 weeks or the career ends.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco: pague em até 48 semanas ou a carreira acaba.");
+      expect(money.value("hard", COPY.pt)).toBe("Sem dinheiro? Um empréstimo do banco: pague em até 24 semanas ou a carreira acaba.");
       // `breachesToEnd.hard: 1` (Hard ends at the first breach): no loan is promised.
       L.breachesToEnd.hard = 1;
       expect(moneyRuleFor("hard")).toMatchObject({ lends: false, loans: 0 });
@@ -232,14 +232,14 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
       // No deadline: the loan never ends the career — the bullet says so instead of "the career ends".
       L.emergency.deadlineWeeks.normal = null;
       expect(moneyRuleFor("normal")).toEqual({ lends: true, loans: 2, deadlineWeeks: null });
-      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans — no deadline: prizes and sales repay them.");
-      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco — sem prazo: prêmios e vendas pagam.");
+      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans, no deadline: prizes and sales repay them.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco, sem prazo: prêmios e vendas pagam.");
       // No cap and no deadline: the plain loan.
       L.emergency.maxLoans.normal = null;
-      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it — no deadline: prizes and sales repay it.");
+      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it, no deadline: prizes and sales repay it.");
       L.emergency.deadlineWeeks.normal = 1;
-      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it — repay within 1 week or the career ends.");
-      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 1 semana ou a carreira acaba.");
+      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it: repay within 1 week or the career ends.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? O banco empresta: pague em até 1 semana ou a carreira acaba.");
     } finally {
       Object.assign(L.breachesToEnd, saved.end);
       Object.assign(L.emergency.deadlineWeeks, saved.dl);

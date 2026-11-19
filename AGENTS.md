@@ -97,7 +97,11 @@ narrative to CHANGELOG.md and trim STATUS. Keep both under ~600 words.
 - **Player saves = `localStorage` on `https://rocketdraft.app` only.** The
   persist keys/versions are frozen by `src/store/persistContract.test.ts`.
   Change its `CONTRACT` only on purpose, with a DESIGN-DECISIONS entry and an
-  additive `migrate`. Never serve the game from another host.
+  additive `migrate`. Never serve the game from another host. Since v2.0.26 a
+  signed-in player's career slots also have a COPY in the account (table
+  `career_saves`, `store/careerCloudStore.ts`, DESIGN-DECISIONS #165–#169):
+  localStorage stays the copy the game plays from, and a local save is replaced
+  only by a fast-forward or by the player's own choice in the notice.
 - **`FEATURES.careerMode`** (balance.ts) is ON in every build since v2.0.0
   (career shipped, BETA tag). `NEXT_PUBLIC_CAREER_MODE=0` is the kill switch.
   `scripts/postexport.mjs` mirrors the expression, so keep them in sync.

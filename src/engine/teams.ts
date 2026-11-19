@@ -277,10 +277,10 @@ export function buildUserTeam(
   const mode = options.mode ?? "classic";
   const playerPicks = [roster.player1, roster.player2, roster.player3].filter(Boolean);
   if (playerPicks.length !== 3) {
-    throw new Error("Roster incomplete — cannot build team");
+    throw new Error("Roster incomplete: cannot build team");
   }
   if (mode !== "quick" && (!roster.coach || !roster.sub || !roster.org)) {
-    throw new Error("Roster incomplete — cannot build team");
+    throw new Error("Roster incomplete: cannot build team");
   }
 
   const players = playerPicks.map((p) => playerMemberFromPick(p!.refId, p!.specialId));

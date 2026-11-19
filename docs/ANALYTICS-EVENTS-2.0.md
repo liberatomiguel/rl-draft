@@ -159,12 +159,20 @@ properties of `session_started`, not events.
 - `potentialBandMid` is the midpoint of the band the screens show, never the
   hidden potential.
 
+### Player research
+
+| Event | Priority | Fires | Properties |
+|---|---|---|---|
+| `research_invite` | critical | The research-form card opens, its link is clicked, or it is dismissed (`components/ResearchInvite.tsx`; a few per device per campaign) | `action` (`shown`, `opened`, `dismissed`), `surface` (`draft`, `career`; also `gameMode`), `campaign`, `activeDays`, `runsCompleted`, `careerSeasons` |
+
 ### Accounts and health
 
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
 | `account_signed_in` | critical | A sign-in completes in this tab (not a restored session) | `hadLocalProgress` |
-| `account_sync_failed` | critical | A cloud sync aborts, once per session and stage | `stage` (`read`, `push`) |
+| `account_sync_failed` | critical | A cloud sync aborts, once per session, stage and reason | `stage` (`read`, `push`), `reason` (`offline`, `network`, `auth`, `denied`, `conflict`, `server`, `rate`, `unavailable`, `other`; since 2.0.25), `code` (database / PostgREST code, when there is one) |
+| `career_cloud_failed` | critical | A step of the career cloud save fails, once per session, stage and reason (2.0.26) | `stage` (`list`, `read`, `push`, `delete`, `load`), `reason` (as `account_sync_failed`), `code` |
+| `career_cloud_conflict` | critical | The player answers the notice about two copies of a career (2.0.26) | `kind` (`diverged`, `different-career`, `cloud-deleted`), `choice` (`local`, `cloud`) |
 | `quality_save_error` | critical | A persisted store fails to save or load | `store`, `kind` (`quota`, `parse`, `migrate`, `write`) |
 | `quality_migration` | critical | A save is upgraded to a newer shape | `store`, `fromVersion`, `toVersion` |
 | `quality_duplicate_reward` | critical | A grant is refused as already given | `kind`, `id` |
@@ -175,6 +183,14 @@ properties of `session_started`, not events.
 `quality_error.message` is the error's own message with quoted text, URLs and
 long numbers removed (a JSON parse error quotes the data it choked on, which
 could be a name the player typed), cut to 120 characters.
+
+Since 2.0.32, `source` = `heal` (name `AssetHeal`) means the page had build
+files fail to load and the inline repair (`lib/assetHeal.ts`, DESIGN-DECISIONS
+#171) fetched them again and reloaded the tab. It is sent once, on the load
+after the repair; `message` is the reason (`status`: a 400+ answer, usually a
+404 the browser had cached; `stalled`: the app never mounted, browsers without
+`responseStatus`) and up to three chunk file names. Before 2.0.32 these players
+sent nothing: the page hung before analytics loaded.
 
 ## What left the catalogue
 

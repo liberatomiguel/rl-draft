@@ -38,6 +38,7 @@ import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/la
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useNewDots } from "@/store/useNewItems";
 import { useSignInDialog } from "@/store/signInDialog";
+import { partnerLogoSrc } from "@/lib/assets";
 import { Badge } from "@/components/ui/Badge";
 import { DiscordIcon } from "@/components/ui/icons";
 import { NewDot } from "@/components/ui/NewDot";
@@ -91,6 +92,7 @@ export default function HomeMenu() {
     (s) => Object.keys(s.unlockedSpecials).filter((id) => !isNationalSpecialId(id)).length,
   );
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
+
   const dailyResults = useProfileStore((s) => s.dailyResults);
   const streak = useProfileStore(selectDailyStreak);
   const today = useUtcDay();
@@ -133,12 +135,18 @@ export default function HomeMenu() {
     { label: HOME_SEO.links.simulator, href: localePath("simulator", active) },
     { label: HOME_SEO.links.fantasy, href: localePath("fantasy", active) },
     { label: HOME_SEO.links.database, href: "/rlcs" },
-    ...(FEATURES.careerMode ? [{ label: HOME_SEO.links.manager, href: localePath("manager", active) }] : []),
+    ...(FEATURES.careerMode
+      ? [
+          { label: HOME_SEO.links.manager, href: localePath("manager", active) },
+          { label: HOME_SEO.links.careerGuide, href: localePath("career-guide", active) },
+        ]
+      : []),
     { label: HOME_SEO.links.faq, href: localePath("faq", active) },
     { label: HOME_SEO.links.about, href: localePath("about", active) },
   ];
 
   const locked = mounted && !collectionOpen && rank.id === "unranked";
+  const fiftyFifty = partnerLogoSrc("fiftyfifty");
   const careerOn = FEATURES.careerMode;
   // Playtest build: TODAY keeps only Challenges (no daily, missions or quiz).
   const playtest = FEATURES.playtest;
@@ -187,27 +195,44 @@ export default function HomeMenu() {
           ) : null}
         </div>
 
-        {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="flex min-h-[5.75rem] w-full items-stretch overflow-hidden rounded-xl md:w-auto">
-          {mounted ? (
-            <>
-              {/* Dark cell: the rank art (drawn for a dark ground), rank, season. */}
-              <div className="flex min-w-0 flex-1 items-center gap-3 bg-surface-strong px-4 py-3 md:flex-none">
-                <RankBadge rank={rank} variant="menu" size="md" />
-                <div className="min-w-0">
-                  <p className="display text-xl font-bold uppercase leading-none text-ink">{rank.label}</p>
-                  {playtest ? null : <p className="mt-1.5 text-xs text-sub">{SEASON.name}</p>}
-                  {runs > 0 ? <p className="text-xs text-faint">{HOME.runs(runs)}</p> : null}
-                  {titles > 0 ? <p className="text-xs text-amber-300">{HOME.titles(titles)}</p> : null}
-                </div>
-              </div>
-              {/* Paper cell: the number that moves, the season rating. */}
-              <div className="flex shrink-0 flex-col justify-center bg-paper px-5 py-3 text-paper-ink">
-                <p className="display text-5xl font-extrabold leading-[0.9]">{mmr}</p>
-                <p className="display mt-1.5 text-xs font-bold uppercase leading-none tracking-[0.04em]">{HOME.seasonStrip.rating}</p>
-              </div>
-            </>
+        <div className="w-full md:w-auto md:min-w-[23rem] md:max-w-[30rem]">
+          {/* The partner line sits over the scorebug, beside the wordmark. */}
+          {fiftyFifty ? (
+            <p className="mb-3 flex items-center gap-2.5 md:justify-end">
+              <span className="display text-xs font-medium uppercase tracking-[0.05em] text-sub">{HOME.presentedBy}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production) */}
+              <img src={fiftyFifty} alt="50/50" width={92} height={36} className="h-9 w-auto object-contain" />
+            </p>
           ) : null}
+          {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR).
+              Read in this order: the rating (the number that moves), the rank, the season line. */}
+          <div className="flex min-h-[6.75rem] w-full items-stretch overflow-hidden rounded-xl border border-line-strong">
+            {mounted ? (
+              <>
+                {/* Dark cell on the left: the rank art (drawn for a dark ground), the rank, the quiet line.
+                    A long rank name ("Supersonic Legend") wraps to two lines instead of pushing the rating. */}
+                <div className="flex min-w-0 flex-1 items-center gap-3.5 bg-surface-strong px-4 py-3">
+                  <RankBadge rank={rank} variant="menu" size="md" />
+                  <div className="min-w-0">
+                    {playtest ? null : <p className="text-xs text-sub">{SEASON.name}</p>}
+                    <p className="display mt-1 text-2xl font-bold uppercase leading-[1.02] text-ink">{rank.label}</p>
+                    {runs > 0 || titles > 0 ? (
+                      <p className="mt-2 flex flex-wrap gap-x-3 text-xs">
+                        {runs > 0 ? <span className="text-sub">{HOME.runs(runs)}</span> : null}
+                        {titles > 0 ? <span className="font-semibold text-amber-300">{HOME.titles(titles)}</span> : null}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                {/* Paper cell on the right: the season rating, the one figure of the screen.
+                    Five digits or more step the figure down so the cell keeps its width. */}
+                <div className="flex shrink-0 flex-col justify-center bg-paper px-5 py-3 text-right text-paper-ink">
+                  <p className="display text-xs font-bold uppercase leading-none tracking-[0.04em]">{HOME.seasonStrip.rating}</p>
+                  <p className={cx("display mt-1.5 font-extrabold leading-[0.85] tabular-nums", String(mmr).length > 4 ? "text-[2.5rem]" : "text-6xl")}>{mmr}</p>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -246,15 +271,18 @@ export default function HomeMenu() {
           {careerOn ? (
             <AppLink href="/career" className="group block md:col-span-5">
               <div className="solid solid-blue flex h-full min-h-[14rem] flex-col justify-between p-5 transition-transform duration-200 group-hover:-translate-y-0.5 sm:p-7 md:p-9">
-                {/* One status tag only: BETA is a fact about the mode (balance is
-                    still moving). NEW already sits on the nav item. */}
+                {/* Read like the draft card beside it: the title on one line, one
+                    line of pitch, the BETA note under it, and the action at the
+                    foot on the same line as the draft card's. */}
                 <div className="relative">
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                    <h2 className="display text-3xl uppercase leading-[0.92] sm:text-4xl md:text-[2.6rem]">{HOME.careerTitle}</h2>
-                    <span className="display rounded-sm bg-paper px-1.5 py-0.5 text-[11px] font-bold uppercase leading-tight tracking-[0.05em] text-paper-ink">{NAV_UI.beta}</span>
-                  </div>
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed">{HOME.careerDesc}</p>
-                  <p className="mt-2 max-w-sm text-xs leading-relaxed">{HOME.careerBetaNote}</p>
+                  <h2 className="display whitespace-nowrap text-3xl uppercase leading-[0.92] sm:text-4xl lg:text-[2.6rem]">{HOME.careerTitle}</h2>
+                  {/* Light text on blue reads a step heavier than dark on orange: Medium here matches the draft card's line. */}
+                  <p className="mt-3 max-w-sm text-[15px] font-medium leading-snug">{HOME.careerDesc}</p>
+                  {/* The mode's status is one framed strip under the pitch: the BETA mark, a rule, its note. */}
+                  <p className="mt-4 flex max-w-sm items-center gap-3 rounded-lg border border-white/40 px-3 py-2 text-xs leading-snug">
+                    <span className="display shrink-0 text-base font-bold uppercase leading-none tracking-[0.04em]">{NAV_UI.beta}</span>
+                    <span className="min-w-0 border-l border-white/35 pl-3">{HOME.careerBetaNote}</span>
+                  </p>
                 </div>
                 <span className={cx(buttonClass("primary", "lg"), "relative mt-8 w-fit px-8 !bg-paper !text-paper-ink group-hover:!bg-white")}>
                   {HOME.careerPlay}
@@ -276,8 +304,34 @@ export default function HomeMenu() {
             resets today, title and line on the left, the action or today's
             result on the right. Missions keep their board beside it. */}
         <h2 className="title-slab mt-12 text-xl md:text-2xl">{HOME.sectionDaily}</h2>
-        <section className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-12">
-          <div className={cx("border-t border-line", playtest ? "md:col-span-12" : "md:col-span-8")}>
+        <section className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-12 md:items-stretch">
+          {/* The rows share the height of the missions board beside them. */}
+          <div className={cx("flex flex-col border-t border-line [&>*]:flex-1", playtest ? "md:col-span-12" : "md:col-span-8")}>
+            {locked ? (
+              <div className={cx(ROW, "cursor-not-allowed opacity-60")} aria-disabled="true" title={HOME.challengesLocked}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="display text-lg uppercase leading-none text-ink">{HOME.challenges}</h3>
+                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesLocked}</p>
+                </div>
+                <span className="shrink-0 text-faint" aria-hidden>
+                  <MenuLockGlyph />
+                </span>
+              </div>
+            ) : (
+              <AppLink href="/challenges" className={cx(ROW, "hover:bg-white/[0.04]")}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="display flex items-center gap-2.5 text-lg uppercase leading-none text-ink">
+                    {HOME.challenges}
+                    {dots.challenges ? <NewDot label={NAV_UI.newHere} /> : null}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesDesc}</p>
+                </div>
+                <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
+                  {HOME.challenges}
+                </span>
+              </AppLink>
+            )}
+
             {playtest ? null : (
               <div className={cx(ROW, !dailyDone && "hover:bg-white/[0.04]")}>
                 {!dailyDone ? (
@@ -336,34 +390,10 @@ export default function HomeMenu() {
               </div>
             )}
 
-            {locked ? (
-              <div className={cx(ROW, "cursor-not-allowed opacity-60")} aria-disabled="true" title={HOME.challengesLocked}>
-                <div className="min-w-0 flex-1">
-                  <h3 className="display text-lg uppercase leading-none text-ink">{HOME.challenges}</h3>
-                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesLocked}</p>
-                </div>
-                <span className="shrink-0 text-faint" aria-hidden>
-                  <MenuLockGlyph />
-                </span>
-              </div>
-            ) : (
-              <AppLink href="/challenges" className={cx(ROW, "hover:bg-white/[0.04]")}>
-                <div className="min-w-0 flex-1">
-                  <h3 className="display flex items-center gap-2.5 text-lg uppercase leading-none text-ink">
-                    {HOME.challenges}
-                    {dots.challenges ? <NewDot label={NAV_UI.newHere} /> : null}
-                  </h3>
-                  <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesDesc}</p>
-                </div>
-                <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
-                  {HOME.challenges}
-                </span>
-              </AppLink>
-            )}
           </div>
 
           {playtest ? null : (
-            <div className="md:col-span-4">
+            <div className="md:col-span-4 [&>*]:h-full">
               <MissionsPanel compact />
             </div>
           )}
@@ -409,13 +439,14 @@ export default function HomeMenu() {
           </Tile>
         </section>
 
-        {/* Discord once more at the end of the menu (v2.0): one slim strip. */}
+        {/* The two ways out at the end of the menu, side by side: the community Discord and the partner's site. */}
+        <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
         {SITE.discordUrl ? (
           <a
             href={SITE.discordUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group mx-auto mt-8 flex max-w-2xl items-center gap-3 rounded-xl border border-[#5865F2]/35 bg-[#5865F2]/[0.08] px-4 py-3 transition-colors hover:border-[#5865F2]/70 hover:bg-[#5865F2]/[0.14]"
+            className="group flex items-center gap-3 rounded-xl border border-[#5865F2]/35 bg-[#5865F2]/[0.08] px-4 py-3 transition-colors hover:border-[#5865F2]/70 hover:bg-[#5865F2]/[0.14]"
           >
             <span className="shrink-0 text-[#aab1ff]" aria-hidden>
               <DiscordIcon className="h-6 w-6" />
@@ -429,10 +460,42 @@ export default function HomeMenu() {
             </span>
           </a>
         ) : null}
+        {fiftyFifty ? (
+          SITE.partnerUrl ? (
+            <a
+              href={SITE.partnerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-4 rounded-xl border border-line-strong bg-surface px-4 py-3 transition-colors hover:border-ink/50 hover:bg-surface-strong"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production) */}
+              <img src={fiftyFifty} alt="50/50" width={72} height={28} className="h-7 w-auto shrink-0 object-contain" />
+              <span className="min-w-0 flex-1">
+                <span className="display block text-sm uppercase tracking-wide text-ink">{HOME.partnerVisit}</span>
+                <span className="block text-xs leading-relaxed text-sub">{HOME.partnerDesc}</span>
+              </span>
+              <span className="shrink-0 text-sub transition-transform group-hover:translate-x-0.5" aria-hidden>
+                →
+              </span>
+            </a>
+          ) : (
+            // TODO: set SITE.partnerUrl (config/site.ts) when Miguel has the 50/50 link; the card becomes a link.
+            <div className="flex items-center gap-4 rounded-xl border border-line bg-surface px-4 py-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production) */}
+              <img src={fiftyFifty} alt="50/50" width={72} height={28} className="h-7 w-auto shrink-0 object-contain" />
+              <span className="min-w-0 flex-1">
+                <span className="display block text-sm uppercase tracking-wide text-ink">{HOME.presentedBy} 50/50</span>
+                <span className="block text-xs leading-relaxed text-sub">{HOME.partnerDesc}</span>
+              </span>
+              <span className="display shrink-0 rounded-sm bg-white/[0.06] px-1.5 py-1 text-[11px] font-medium uppercase leading-none tracking-[0.05em] text-sub">{HOME.partnerSoon}</span>
+            </div>
+          )
+        ) : null}
+        </div>
 
         <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
           <AppLink href="/how-to-play" className="text-sm text-sub underline-offset-4 hover:text-ink hover:underline">
-            {HOME.howToPlay} →
+            {HOME.howToPlay}
           </AppLink>
           {SITE.authorUrl ? (
             <a
@@ -454,7 +517,7 @@ export default function HomeMenu() {
         <QuizPanel compact />
         <p className="mt-3 text-right">
           <AppLink href="/quiz" className="text-[11px] font-semibold text-faint underline-offset-4 hover:text-sub hover:underline">
-            {QUIZ_UI.history} →
+            {QUIZ_UI.history}
           </AppLink>
         </p>
       </Modal>
@@ -533,7 +596,7 @@ function HomeSignInNudge() {
         onClick={() => useSignInDialog.getState().show()}
         className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
       >
-        {H.signInNudge} →
+        {H.signInNudge}
       </button>
     </p>
   );

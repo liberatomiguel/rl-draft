@@ -313,12 +313,16 @@
     "ctaLabel": "Simular um torneio da RLCS"
   },
   "manager": {
-    "metaTitle": "Manager de Rocket League: Modo Carreira Grátis",
-    "metaDescription": "Road to Worlds é um manager de Rocket League gratuito: funde um clube, contrate jogadores reais da RLCS, treine, cuide das finanças e vença o World Championship.",
+    "metaTitle": "Modo Carreira de Rocket League: Manager Grátis",
+    "metaDescription": "Modo carreira de Rocket League grátis no navegador, sem mod e sem download: funde um clube, contrate jogadores reais da RLCS, treine e vença o World Championship.",
     "kicker": "Modo carreira",
-    "title": "Road to Worlds: Manager de Rocket League",
-    "intro": "Road to Worlds é o modo carreira do Rocket Draft: um jogo de manager de Rocket League esports, gratuito, que roda no seu navegador. Funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
+    "title": "Modo Carreira e Manager de Rocket League: Road to Worlds",
+    "intro": "Road to Worlds é um modo carreira de Rocket League grátis que roda no navegador, no PC ou no celular, sem nada para baixar. Você é o manager: funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
     "sections": [
+      {
+        "heading": "O Rocket League tem modo carreira?",
+        "body": "No jogo em si, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. Projetos feitos por fãs preenchem esse espaço: mods que rodam dentro do jogo no PC, jogos de manager para baixar e jogos que rodam no navegador. O Road to Worlds é do último tipo. É uma carreira de manager de clube, então você comanda uma organização, e não um único jogador, e joga no desktop e no celular sem instalar nada, com a história real da RLCS por trás."
+      },
       {
         "heading": "Funde o seu clube",
         "body": "Uma carreira começa com um clube vazio. Escolha a região em que quer competir, dê nome à organização, desenhe o escudo e as cores e defina a dificuldade. A dificuldade determina o orçamento inicial e o quanto as finanças perdoam. Depois você contrata o primeiro roster e a temporada começa."
@@ -329,7 +333,7 @@
       },
       {
         "heading": "Contrate, treine e desenvolva jogadores",
-        "body": "O mercado de transferências funciona em janelas, com valores de compra, salários, contratos e propostas de rivais. O seu elenco tem quatro jogadores: três titulares e um substitute. O treino mira atributos individuais, os coaches definem a velocidade da evolução, e coaches reais da RLCS aparecem no mercado. Os jogadores evoluem com partidas e treino e caem com o passar dos anos, então o roster precisa ser renovado."
+        "body": "O mercado de transferências funciona em janelas, com valores de compra, salários, contratos e propostas de rivais. O seu elenco tem quatro jogadores: três titulares e um substitute. O treino acontece em ciclos de duas semanas com um plano para o elenco inteiro, os coaches definem a velocidade da evolução, e coaches reais da RLCS aparecem no mercado. Os jogadores evoluem com partidas e treino e caem com o passar dos anos, então o roster precisa ser renovado."
       },
       {
         "heading": "Cuide do negócio",
@@ -346,16 +350,223 @@
     ],
     "faqs": [
       {
+        "q": "O Rocket League tem modo carreira?",
+        "a": "Oficial, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. O Road to Worlds é um modo carreira de Rocket League gratuito e feito por fã, que roda no navegador: você funda um clube e o leva pelas temporadas da RLCS até o World Championship."
+      },
+      {
         "q": "Existe um jogo de manager de Rocket League?",
-        "a": "Road to Worlds, o modo carreira do Rocket Draft, é um manager de Rocket League esports gratuito e feito por fã. Você comanda um clube: contratações, treino, finanças e o calendário da RLCS."
+        "a": "Sim. O Road to Worlds, o modo carreira do Rocket Draft, é um manager de Rocket League esports gratuito e feito por fã. Você comanda um clube: contratações, treino, finanças e o calendário da RLCS."
+      },
+      {
+        "q": "Preciso de mod, download ou PC?",
+        "a": "Não. O Road to Worlds roda no navegador do PC, do Mac, do tablet e do celular. Não tem mod para instalar, nada para baixar e nenhuma conta para criar."
+      },
+      {
+        "q": "Eu jogo como jogador ou como manager?",
+        "a": "Como manager. Você funda a organização, contrata o elenco, o coach e o staff e mantém as contas em dia, enquanto as partidas são simuladas."
       },
       {
         "q": "O simulador de carreira de Rocket League é gratuito?",
-        "a": "Sim. É gratuito, roda no navegador, no desktop e no celular, e não precisa de download nem de conta."
+        "a": "Sim. O Road to Worlds é gratuito, como todo o Rocket Draft, e a carreira fica salva no seu dispositivo. Se você entrar na sua conta, ela também guarda uma cópia."
       },
       {
         "q": "Ele usa jogadores e times reais da RLCS?",
         "a": "Sim. O mercado de jogadores e coaches é montado com a mesma base de lineups reais da RLCS, de 2016 até hoje, usada no jogo de draft."
+      }
+    ],
+    "ctaLabel": "Fundar o seu clube",
+    "ctaAltLabel": "Começar com clube sorteado",
+    "badges": ["Grátis", "Sem download", "Sem conta", "Desktop e celular"],
+    "guidesLabel": "Guias do Road to Worlds"
+  },
+  "career-guide": {
+    "metaTitle": "Road to Worlds: Guia da Carreira de Rocket League",
+    "metaDescription": "Guia do Road to Worlds, o modo carreira de Rocket League grátis: escolha a região, monte um roster que cabe no caixa, treine e vença o World Championship.",
+    "kicker": "Guia do modo carreira",
+    "title": "Guia do Road to Worlds, Como Vencer o Modo Carreira de Rocket League",
+    "intro": "Um guia para iniciantes do Road to Worlds, o modo carreira de Rocket League do Rocket Draft. Ele cobre as escolhas que decidem uma carreira: a região e a dificuldade, um primeiro roster que você consegue pagar, o treino, o calendário da RLCS, o dinheiro e a hora de renovar o elenco.",
+    "sections": [
+      {
+        "heading": "Escolha a região e a dificuldade",
+        "body": "A região define quem você enfrenta toda semana e em quais eventos entra, e cada cartão de região mostra a dificuldade relativa antes da escolha. A dificuldade determina o orçamento inicial e o quanto as finanças perdoam. Na primeira carreira, vá de Normal e de uma região cujos times você conhece: reconhecer os nomes no mercado facilita avaliar cada contratação."
+      },
+      {
+        "heading": "Monte um roster que cabe no caixa",
+        "body": "O elenco tem quatro jogadores: três titulares e um substitute. O valor da transferência é pago uma vez, mas o salário sai da conta toda semana, então leia o salário antes do overall. Um clube novo tem pouca reputação, e os nomes de elite e os jogadores sob contrato em outros clubes ficam fora de alcance até ela crescer. Comece com quem você consegue pagar, vença com eles e deixe a reputação abrir o mercado."
+      },
+      {
+        "heading": "Treine com um plano",
+        "body": "O treino acontece em ciclos de duas semanas. Em cada um você escolhe um objetivo (evolução, chemistry ou recuperação), um atributo para o elenco aprimorar, a intensidade e os scrims. Com um coach o plano já vem pronto e o treino rende mais; o coach também reduz o risco de um jogador perder a semana por desgaste de treino; coaches reais da RLCS aparecem no mercado de coaches. O substitute ganha menos experiência por série do que os titulares, então troque a lineup no HQ quando quiser que o banco acompanhe."
+      },
+      {
+        "heading": "Leia o calendário",
+        "body": "Cada temporada é uma sequência de eventos regionais com qualifiers abertos. Os pontos regionais levam os melhores times aos Majors, e os pontos da temporada decidem quem vai ao World Championship. As semanas livres trazem copas da comunidade e torneios por convite: pagam premiação e dão partidas ao elenco. A RLCS Season X, onde a carreira começa, não tem World Championship, como não teve na vida real, então a primeira corrida pelo título é a da temporada seguinte."
+      },
+      {
+        "heading": "Mantenha o clube no azul",
+        "body": "Premiações, patrocinadores e reputação trazem o dinheiro; salários, staff e transferências levam embora. As propostas de patrocínio esperam você aceitar ou recusar e trazem metas para todo o contrato, então assine as que o seu elenco consegue cumprir. A tela de Finanças mostra o extrato semanal e a projeção da temporada. Consulte antes de cada contratação. Os empréstimos cobrem uma fase ruim e precisam ser pagos. Cada membro da equipe de apoio ajuda em uma área e custa um valor fixo."
+      },
+      {
+        "heading": "Renove o elenco antes da queda",
+        "body": "Os jogadores evoluem com partidas e treino e caem com o passar dos anos. Os clubes rivais fazem propostas pelos seus jogadores nas janelas de transferência, e uma boa oferta por um jogador perto do fim do auge paga o próximo. Se o título mundial não vier até o fim de 2026, a carreira segue em um modo infinito com novas temporadas, e as lineups da RLCS 2027 entram no mundo ali."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Como vencer o Road to Worlds?",
+        "a": "Vencendo o World Championship. Some pontos regionais para chegar aos Majors, junte pontos da temporada suficientes para se classificar ao Worlds e vença a chave."
+      },
+      {
+        "q": "Em qual região começar uma carreira de Rocket League?",
+        "a": "Cada cartão de região mostra a dificuldade relativa antes da escolha. Vá de uma região mais fácil na primeira carreira e de uma mais difícil quando quiser uma subida mais longa."
+      },
+      {
+        "q": "A minha carreira fica salva?",
+        "a": "Sim. As carreiras ficam salvas no seu dispositivo, em slots separados, e o jogo é gratuito e não precisa de download."
+      }
+    ],
+    "ctaLabel": "Começar uma carreira no Road to Worlds"
+  },
+  "career-market": {
+    "metaTitle": "Mercado no Manager de Rocket League: Contratações",
+    "metaDescription": "Como funciona o mercado de transferências do Road to Worlds, o manager de Rocket League: janelas, free agents, multas, negociação de contrato e propostas de rivais.",
+    "kicker": "Guia do modo carreira",
+    "title": "Mercado de Transferências do Road to Worlds: Contratações, Contratos e Propostas",
+    "intro": "É no mercado de transferências que uma carreira no Road to Worlds se decide. Este guia explica quando dá para contratar, quanto um jogador custa, como funciona a negociação de contrato e como vender antes de o jogador perder valor.",
+    "sections": [
+      {
+        "heading": "Quando o mercado está aberto",
+        "body": "Os negócios só acontecem com a janela de transferências aberta. As janelas abrem entre os splits da temporada e antes do World Championship. A observação continua liberada o tempo todo, então use as semanas fechadas para estudar jogadores e preços e chegar à janela com uma lista. Há uma exceção: quando o elenco fica com menos de três jogadores, um free agent pode ocupar a vaga em qualquer dia."
+      },
+      {
+        "heading": "Free agents e multas",
+        "body": "Há duas formas de contratar. Um free agent não tem valor de transferência, só o salário. Um jogador sob contrato com outro clube precisa ter a multa paga: você paga a transferência ao clube e depois acerta os termos com o jogador. Todo preço no Mercado mostra como foi calculado. Um clube novo só contrata free agents; pagar multas é liberado conforme a reputação cresce."
+      },
+      {
+        "heading": "A reputação decide quem aceita vir",
+        "body": "Dinheiro não basta. Jogadores acima de certo nível não entram em um clube com reputação baixa, qualquer que seja a proposta. Os resultados aumentam a reputação, e a reputação libera o próximo nível de jogador. O Mercado tem um filtro que mostra só quem o seu clube consegue contratar hoje, o que mantém a lista realista na hora de planejar uma janela."
+      },
+      {
+        "heading": "A negociação de contrato",
+        "body": "O jogador pede três coisas: salário semanal, uma parte das premiações e um bônus de assinatura. Você pode mexer em cada uma, e a tela mostra a chance de ele assinar com a proposta do jeito que está. Uma parte maior das premiações ou um bônus maior permite pagar um salário menor, o que ajuda um clube com pouco caixa por semana. Pague tudo o que ele pede e ele assina com certeza. A duração do contrato também faz parte da proposta."
+      },
+      {
+        "heading": "Vendas e propostas de rivais",
+        "body": "Os clubes rivais fazem propostas pelos seus jogadores durante as janelas, e cada proposta espera você aceitar ou recusar. Você pode marcar um jogador como disponível e esperar ofertas na janela seguinte. Um clube no vermelho recebe ofertas abaixo do valor de mercado, então venda antes de o dinheiro acabar, não depois. Jogador com contrato vencido sai de graça: renove antes do fim da temporada ou venda enquanto ele ainda tem preço."
+      },
+      {
+        "heading": "O reserva e o mercado de coaches",
+        "body": "O quarto jogador é o reserva. Ele entra quando um titular não pode jogar, e sem reserva o time perde aquele evento. O reserva só é contratado dentro de uma janela, então não deixe a vaga vazia. Os coaches têm um mercado próprio: primeiro vem um coach genérico, e ex-pros e coaches reais da RLCS entram na lista conforme a reputação do clube cresce. Coaches assinam contrato e renovam como os jogadores."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Quando abrem as janelas de transferência no Road to Worlds?",
+        "a": "Entre os splits de cada temporada e antes do World Championship. Fora da janela dá para observar jogadores, e um free agent pode ocupar uma vaga vazia de titular."
+      },
+      {
+        "q": "Por que não consigo contratar um jogador que posso pagar?",
+        "a": "Ou a janela está fechada, ou o elenco está cheio, ou a reputação do clube é baixa demais para um jogador daquele nível. O Mercado informa qual é o caso."
+      },
+      {
+        "q": "O que acontece quando um contrato termina?",
+        "a": "O jogador sai de graça. Renove o contrato antes do fim da temporada ou venda o jogador em uma janela antes do vencimento."
+      }
+    ],
+    "ctaLabel": "Começar uma carreira no Road to Worlds"
+  },
+  "career-finances": {
+    "metaTitle": "Finanças no Manager de Rocket League: Patrocínios",
+    "metaDescription": "Como o dinheiro funciona no Road to Worlds, o manager de Rocket League: o extrato de segunda, premiações, patrocínios e metas, empréstimos e o que comprar primeiro.",
+    "kicker": "Guia do modo carreira",
+    "title": "Finanças do Road to Worlds: Patrocínios, Salários e Empréstimos",
+    "intro": "Uma carreira no Road to Worlds termina de dois jeitos: com o título mundial ou com o banco. Este guia mostra de onde vem o dinheiro, para onde ele vai toda segunda-feira, como os patrocínios pagam e como pegar empréstimo sem perder o clube.",
+    "sections": [
+      {
+        "heading": "Segunda-feira é dia de pagamento",
+        "body": "As contas mexem uma vez por semana. Toda segunda o patrocinador paga, e salários, staff, manutenção das instalações e parcelas de empréstimo saem. As premiações chegam com o resultado de cada evento. A tela de Finanças mostra três coisas: o saldo ao longo do tempo, o extrato da próxima segunda e a projeção para o resto da temporada. Leia a projeção antes de qualquer contratação, porque o salário é pago toda semana até o contrato acabar."
+      },
+      {
+        "heading": "Premiações e a parte dos jogadores",
+        "body": "Eventos regionais, Majors, o World Championship, copas da comunidade e torneios por convite pagam premiação. Se você combinou uma parte das premiações na negociação de contrato, esse valor vai para os jogadores antes de o resto chegar ao clube. Por isso as semanas livres importam: um torneio por convite ou uma copa da comunidade é receita em uma semana que, sem eles, só teria salários."
+      },
+      {
+        "heading": "Contratos de patrocínio",
+        "body": "O patrocinador paga um valor garantido por split e um bônus por meta atingida. As propostas vêm em três perfis. O contrato seguro paga menos e não tem multa. O contrato ousado paga mais e multa cada meta perdida. Os contratos ousados são liberados conforme a reputação cresce. Errar metas repetidamente faz a próxima proposta cair de nível, então assine o contrato cujas metas o seu elenco consegue cumprir, não o de número maior."
+      },
+      {
+        "heading": "Empréstimos e o piso",
+        "body": "Existem dois empréstimos. O voluntário está disponível quando você quiser: o banco define o crédito pela sua reputação e você paga em parcelas semanais com juros. O de emergência não é uma escolha. Se uma segunda-feira fechar abaixo do piso, o banco empresta sozinho e define um prazo. Perder esse prazo encerra a carreira. Enquanto o empréstimo de emergência estiver em aberto, você não pode pagar transferências."
+      },
+      {
+        "heading": "O que comprar primeiro",
+        "body": "A reputação libera uma escada de investimentos: equipamentos que aceleram o treino, o coach, bootcamps que criam chemistry, níveis melhores de patrocínio, psicólogo e a equipe de apoio. Cada um custa dinheiro na hora ou um valor fixo por semana. Compre primeiro o que melhora os resultados, já que resultado traz premiação e reputação, e só adicione custos semanais quando a projeção continuar positiva depois deles."
+      },
+      {
+        "heading": "Como sair do vermelho",
+        "body": "Quando o saldo está caindo, aja antes do piso. Olhe primeiro a folha salarial: um jogador caro no banco pode custar mais do que um empréstimo. Entre nos eventos das semanas livres pela premiação. Venda na próxima janela enquanto as ofertas ainda estão no valor de mercado, porque um clube no vermelho recebe ofertas menores. Pegue o empréstimo voluntário cedo se a projeção mostrar um buraco curto, e deixe o de emergência como o último recurso que ele é."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Dá para falir no Road to Worlds?",
+        "a": "Sim. Se o saldo fechar uma segunda-feira abaixo do piso, o banco faz um empréstimo de emergência com prazo. Não pagar até o prazo encerra a carreira."
+      },
+      {
+        "q": "Qual contrato de patrocínio assinar?",
+        "a": "Aquele cujas metas o seu elenco consegue atingir. O contrato seguro não tem multa; o ousado paga mais e multa cada meta perdida."
+      },
+      {
+        "q": "Quando os salários são pagos?",
+        "a": "Toda segunda-feira, junto com staff, manutenção e parcelas de empréstimo. A tela de Finanças mostra o próximo extrato com antecedência."
+      }
+    ],
+    "ctaLabel": "Começar uma carreira no Road to Worlds"
+  },
+  "career-training": {
+    "metaTitle": "Treino no Manager de Rocket League: Evolução",
+    "metaDescription": "Como funciona o treino no Road to Worlds, o manager de Rocket League: ciclos de duas semanas, evolução e chemistry, desgaste, coaches, auge e queda, e o reserva.",
+    "kicker": "Guia do modo carreira",
+    "title": "Treino no Road to Worlds, Como os Jogadores Evoluem e Caem",
+    "intro": "Contratar um jogador é metade do trabalho no Road to Worlds. A outra metade é o treino: a velocidade com que ele chega ao potencial, quanto tempo fica no auge e como os três titulares jogam juntos. Este guia explica o ciclo de treino e as escolhas dentro dele.",
+    "sections": [
+      {
+        "heading": "O ciclo de duas semanas",
+        "body": "O treino acontece em ciclos de 14 dias. Para cada ciclo você monta um plano com quatro partes: o objetivo, o foco, a intensidade e os scrims. O plano vale para o elenco inteiro, e o resultado chega quando o ciclo termina. Você pode manter o mesmo plano no ciclo seguinte ou trocar quando o calendário mudar."
+      },
+      {
+        "heading": "Três objetivos",
+        "body": "O objetivo é a escolha principal. Evolução faz os atributos crescerem mais rápido rumo ao auge de cada jogador. Chemistry faz o elenco entrosar mais rápido, o que pesa mais depois de uma contratação. Recuperação reduz o desgaste e ajuda os veteranos a manter o nível por mais tempo. Um padrão comum é evolução nas semanas calmas, chemistry depois de uma janela de transferências e recuperação antes dos eventos que decidem a temporada."
+      },
+      {
+        "heading": "Foco, intensidade e scrims",
+        "body": "O foco é um atributo que todos os jogadores aprimoram durante o ciclo. A intensidade troca evolução por desgaste: um ciclo leve dá um ganho menor e muito menos desgaste. Os scrims somam prática de jogo na dificuldade escolhida e trazem o próprio desgaste. O desgaste é o custo de treinar forte: um jogador desgastado pode perder um evento, e aí o reserva precisa jogar."
+      },
+      {
+        "heading": "O que o coach faz",
+        "body": "Com um coach, o plano de cada ciclo já vem pronto e o treino rende mais. Você pode deixar o coach iniciar todos os ciclos ou só ler a recomendação e decidir. O coach também reduz o risco de perder um jogador por desgaste de treino. Coaches melhores chegam conforme a reputação do clube cresce, do coach genérico aos ex-pros e aos coaches reais da RLCS."
+      },
+      {
+        "heading": "Potencial, auge e queda",
+        "body": "Todo jogador evolui até um potencial, segura o auge por um tempo e depois cai. A tela de Treino mostra em qual das três fases cada jogador está e em que ritmo quem já passou do auge perde overall. Use isso antes de cada renovação: um contrato longo para quem ainda está evoluindo fica barato depois, e o mesmo contrato para um jogador em queda é pago inteiro enquanto o overall cai."
+      },
+      {
+        "heading": "O reserva e os equipamentos",
+        "body": "O reserva ganha menos experiência por série do que os titulares e fica para trás, a menos que você rode a lineup ou contrate um auxiliar técnico, que aumenta o que os reservas aprendem. Os equipamentos comprados na escada de progressão, dos periféricos ao centro de performance, aceleram o treino de todos. Os bootcamps dão chemistry e uma vantagem de rating antes dos grandes eventos."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Como os jogadores evoluem no Road to Worlds?",
+        "a": "Com os ciclos de treino e as partidas oficiais. Os jogadores evoluem rumo ao potencial toda semana, mais rápido com coach, equipamentos melhores e um plano de evolução."
+      },
+      {
+        "q": "Os jogadores pioram com a idade?",
+        "a": "Sim. Depois do auge o jogador cai, e a tela de Treino mostra o ritmo. Ciclos de recuperação ajudam os veteranos a manter o nível por mais tempo."
+      },
+      {
+        "q": "Preciso de um coach?",
+        "a": "Não, mas com ele o treino rende mais, o plano já vem pronto a cada ciclo e o risco de um jogador perder um evento por desgaste é menor."
       }
     ],
     "ctaLabel": "Começar uma carreira no Road to Worlds"

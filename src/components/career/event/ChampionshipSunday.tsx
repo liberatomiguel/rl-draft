@@ -136,12 +136,12 @@ export function ChampionshipSunday({
       <section className="relative mx-auto flex min-h-full max-w-3xl flex-col justify-center px-4 py-8 text-center sm:px-8 sm:py-12">
         <div className="relative">
           <div className="rise-in flex flex-wrap items-center justify-center gap-2">
-            <p className="kicker !text-[11px]">
+            <p className="kicker">
               {formatDateShort(C.dates, dateOfDay(save.clock.seasonIndex, save.clock.day))}
             </p>
             <TierChip tier={def.tier} />
           </div>
-          <p className="kicker rise-in mt-2 !text-[11px] text-orange-bright" style={{ animationDelay: "60ms" }}>
+          <p className="kicker rise-in mt-2 text-orange-bright" style={{ animationDelay: "60ms" }}>
             {def.name}
           </p>
           <h1
@@ -164,7 +164,7 @@ export function ChampionshipSunday({
               under the bottom nav at 390×844. */}
           {preview ? (
             <div className="mx-auto mt-5 max-w-2xl text-left sm:mt-6">
-              <p className="kicker mb-2 text-center !text-[9px] text-cyan">{T.roundNames.ub_quarterfinal}</p>
+              <p className="kicker mb-2 text-center text-cyan">{T.roundNames.ub_quarterfinal}</p>
               <div className="grid grid-cols-2 gap-2">
                 {preview.pairs.map((p, i) => (
                   <SundayMatch
@@ -190,7 +190,7 @@ export function ChampionshipSunday({
           </p>
           {save.coach && briefing && briefing !== "keep" ? (
             <p
-              className="rise-in mt-2 inline-flex items-center gap-1.5 rounded-full border border-cyan/40 bg-cyan/10 px-2.5 py-1 text-[11px] font-semibold text-cyan"
+              className="rise-in mt-2 inline-flex items-center gap-1.5 rounded-sm border border-cyan/40 bg-cyan/10 px-2.5 py-1 text-[11px] font-semibold text-cyan"
               style={{ animationDelay: `${bracketDelay + 5 * CAREER_PLAYBACK.sundayIntroStaggerMs}ms` }}
             >
               <WhistleIcon className="h-3.5 w-3.5" />
@@ -283,7 +283,7 @@ function SundayMatch({
         const name = t.teams[side.id]?.name ?? side.id;
         return (
           <p key={side.id} className="flex items-center gap-1.5 py-0.5 text-xs sm:gap-2">
-            <span className="display w-5 shrink-0 text-[10px] font-bold text-faint sm:w-6">#{side.seed}</span>
+            <span className="display w-5 shrink-0 text-[11px] font-bold text-faint sm:w-6">#{side.seed}</span>
             <OrgMark save={save} orgRef={side.id} size="xs" className="shrink-0" />
             <span
               title={name}

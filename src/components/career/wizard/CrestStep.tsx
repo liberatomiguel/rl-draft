@@ -286,7 +286,7 @@ function ColorRow({
       <div className="mb-2 flex items-center gap-2">
         <span aria-hidden className="h-4 w-4 rounded-sm border border-white/30" style={{ background: value }} />
         <p className="kicker">{label}</p>
-        <span className="font-mono text-[10px] uppercase text-faint">{value}</span>
+        <span className="font-mono text-[11px] uppercase text-faint">{value}</span>
       </div>
       <div className="grid grid-cols-6 gap-2 sm:grid-cols-8" role="radiogroup" aria-label={label}>
         {CREST_WIZARD_PALETTE.map((c) => {

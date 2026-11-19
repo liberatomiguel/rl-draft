@@ -23,19 +23,19 @@ export function WeeklyScrimLine({ save, C }: { save: CareerSave; C: CareerCopy }
   const fmt = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
   return (
     <div className="mt-3 border-t border-line/60 pt-3" aria-label={C.training.weekScrims}>
-      {gains.length && baseline ? <div className="mb-3 rounded-lg border border-line bg-black/20 p-3"><p className="kicker mb-2 text-[10px]">{C.training.weekSummary}</p><div className="flex flex-wrap gap-x-5 gap-y-2 text-xs"><span className="text-sub">{C.common.ovr} <strong className={average >= 0 ? "text-good" : "text-bad"}>{fmt(average)}</strong></span><span className="text-sub">{C.training.weekChemistry} <strong className="text-blue-bright">{fmt(teamChemistryOf(save) - baseline.chemistry)}</strong></span>{best ? <span className="text-sub">{best.name} <strong className="text-good">{fmt(best.gain)}</strong></span> : null}</div></div> : null}
+      {gains.length && baseline ? <div className="mb-3"><p className="kicker mb-2">{C.training.weekSummary}</p><div className="flex flex-wrap gap-x-5 gap-y-2 text-xs"><span className="text-sub">{C.common.ovr} <strong className={average >= 0 ? "text-good" : "text-bad"}>{fmt(average)}</strong></span><span className="text-sub">{C.training.weekChemistry} <strong className="text-blue-bright">{fmt(teamChemistryOf(save) - baseline.chemistry)}</strong></span>{best ? <span className="text-sub">{best.name} <strong className="text-good">{fmt(best.gain)}</strong></span> : null}</div></div> : null}
       <p className="mb-2 text-[11px] font-semibold text-faint">{C.training.weekScrims}</p>
       {entries.length === 0 ? <p className="text-xs text-faint">{C.training.weekScrimsEmpty}</p> : (
         <ul className="space-y-2">
           {entries.map(e => (
             e.id === playing ? <ScrimSeriesRow key={e.id} entry={e} save={save} C={C} /> :
-            <li key={e.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-line/60 bg-white/[0.025] px-2.5 py-2 text-xs" aria-label={e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}>
-              <span className="w-6 shrink-0 text-[10px] text-faint">{C.dates.weekdays[dayOfWeekOf(e.day) - 1]}</span>
+            <li key={e.id} className="flex min-w-0 items-center gap-2 border-b border-line py-2 text-xs" aria-label={e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}>
+              <span className="w-6 shrink-0 text-[11px] text-faint">{C.dates.weekdays[dayOfWeekOf(e.day) - 1]}</span>
               <OrgMark save={save} orgRef="user" size="sm" className="shrink-0" />
               <span className="min-w-0 flex-1 truncate font-semibold text-sub" title={save.identity.orgName}>{save.identity.abbrev}</span>
-              <span className={cx("shrink-0 rounded-md bg-black/20 px-2 py-1 font-mono text-sm font-bold tabular-nums", e.won ? "text-good" : "text-bad")}>{e.scoreA}–{e.scoreB}</span>
+              <span className={cx("shrink-0 rounded-md bg-black/20 px-2 py-1 tabular-nums text-sm font-bold tabular-nums", e.won ? "text-good" : "text-bad")}>{e.scoreA}–{e.scoreB}</span>
               <span className="min-w-0 flex-[2] truncate text-sub" title={e.oppName}>{e.oppName}</span>
-              {e.oppRef ? <OrgMark save={save} orgRef={e.oppRef} size="sm" className="shrink-0" /> : <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/5 text-[10px] font-bold text-sub" aria-label={e.oppName}>{e.oppName.slice(0, 2).toUpperCase()}</span>}
+              {e.oppRef ? <OrgMark save={save} orgRef={e.oppRef} size="sm" className="shrink-0" /> : <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/5 text-[11px] font-bold text-sub" aria-label={e.oppName}>{e.oppName.slice(0, 2).toUpperCase()}</span>}
             </li>
           ))}
         </ul>

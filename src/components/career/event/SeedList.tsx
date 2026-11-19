@@ -33,8 +33,8 @@ export function SeedList({
   const T = useCopy().TOURNAMENT_UI;
   if (rows.length === 0) return null;
   return (
-    <Panel className={cx("rise-in p-4", className)} style={style}>
-      <p className="kicker mb-2.5 text-[10px]">{title}</p>
+    <Panel className={cx("rise-in p-4 sm:p-5", className)} style={style}>
+      <p className="kicker mb-2.5">{title}</p>
       <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {rows.map((r) => {
           const isUser = r.id === "user";

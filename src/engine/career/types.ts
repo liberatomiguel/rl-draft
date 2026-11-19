@@ -1096,6 +1096,64 @@ export interface TransferOffer {
    * (careerFlow.repairMoneyOnLoad) strips it, so the offer stays a plain bid.
    */
   listing?: boolean;
+  /**
+   * R135 (ECO-06): the offer answers the user's transfer list
+   * (`CareerSave.transferList`). An older client reads it as a plain bid.
+   */
+  listed?: true;
+  /** R135: the fee the user asked; `fee` below it = a counter-offer. */
+  ask?: number;
+}
+
+/**
+ * R135 (ECO-06): a squad player on the transfer list (engine/career/transferList.ts).
+ * Not the withdrawn rc.32 `SaleListing`: `saleListings` is deleted on every load.
+ */
+export interface ListedPlayer {
+  playerId: string;
+  /** The asking fee. */
+  ask: number;
+  seasonIndex: number;
+  /** The day he was listed (or re-priced). */
+  day: number;
+  /** The day the market answers. */
+  answerDay: number;
+  /**
+   * "waiting" until `answerDay` · "offered" while its offer sits in
+   * `pendingOffers` · "noTakers" once nobody answered (re-price or withdraw).
+   */
+  status: "waiting" | "offered" | "noTakers";
+  /** status "noTakers": no org would field him, or the ask was too high. */
+  reason?: "noBuyer" | "price";
+}
+
+/**
+ * R135 (ECO-06): a player-for-player trade the user proposed to an AI org.
+ * "waiting" until `answerDay`; then the org refuses (the proposal is removed
+ * and a mail says why), agrees ("agreed") or asks for cash ("countered",
+ * `cashAsked`). An agreed or countered trade waits for the user's yes or no
+ * and holds the clock like a bid. It lapses after `resolveDay`.
+ */
+export interface TradeProposal {
+  id: string;
+  /** The user's player who leaves. */
+  giveId: string;
+  giveName: string;
+  /** The org's player who arrives. */
+  takeId: string;
+  takeName: string;
+  orgRef: string;
+  /** Cash the user adds. */
+  cash: number;
+  lengthSeasons: 1 | 2 | 3;
+  seasonIndex: number;
+  day: number;
+  answerDay: number;
+  /** The window's close. */
+  resolveDay: number;
+  status: "waiting" | "agreed" | "countered";
+  /** status "countered": the total cash the org asks for (replaces `cash`). */
+  cashAsked?: number;
 }
 
 /** @deprecated rc.32 (M8): a squad player the user listed for sale — withdrawn in rc.33 (ECO-12). */
@@ -1620,6 +1678,16 @@ export interface CareerSave {
   saleListings?: SaleListing[];
   /** @deprecated rc.32 (M8) — withdrawn in rc.33 (ECO-12): never written; the load repair (careerFlow.repairMoneyOnLoad) deletes it. */
   lateSigning?: LateSigningState | null;
+  /** R135 (ECO-06): the transfer list. Additive; absent = empty. */
+  transferList?: ListedPlayer[];
+  /** R135 (ECO-06): trades proposed to AI orgs. Additive; absent = none. */
+  tradeProposals?: TradeProposal[];
+  /**
+   * R135 (ECO-06): when the user sold or traded each player away, by player
+   * id. He does not sign for the user again for CAREER_TRANSFER.buyBackLockSeasons;
+   * older entries are dropped. Additive; absent = none.
+   */
+  soldOn?: Record<string, { seasonIndex: number; day: number }>;
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string; reason?: "fatigue" | "illness" } | null;
   /**

@@ -27,8 +27,8 @@ export function EventRewardsTable({ save, def, C, compact = false }: { save: Car
   const top = Math.max(1, ...rows.map(([, prize]) => prize));
   return <div className={compact ? "mt-4" : "panel flex flex-1 flex-col p-4"}>
     <div className="mb-3 flex items-center justify-between gap-2">
-      <span className="flex items-center gap-2"><TrophyIcon className="h-4 w-4 text-orange-bright" /><span className="kicker text-[10px]">{C.event.rewardsTable}</span></span>
-      <span className="flex items-center gap-3 text-[10px] text-faint">
+      <span className="flex items-center gap-2"><TrophyIcon className="h-4 w-4 text-orange-bright" /><span className="kicker">{C.event.rewardsTable}</span></span>
+      <span className="flex items-center gap-3 text-[11px] text-faint">
         <span className="inline-flex items-center gap-1"><CoinsIcon className="h-3.5 w-3.5" />{C.common.prize}</span>
         {hasPoints ? <span className="inline-flex items-center gap-1"><StarIcon className="h-3.5 w-3.5" />{C.standings.ptsShort}</span> : null}
       </span>
@@ -39,10 +39,10 @@ export function EventRewardsTable({ save, def, C, compact = false }: { save: Car
         return <li key={placement} className={cx("relative overflow-hidden rounded-lg border px-2.5 py-2", placement === "champion" ? "border-amber-300/30 bg-amber-300/[0.05]" : "border-line bg-white/[0.02]")}>
           <span aria-hidden className={cx("absolute inset-y-0 left-0 opacity-[0.14]", m.bar)} style={{ width: `${Math.max(4, Math.round((prize / top) * 100))}%` }} />
           <span className="relative flex items-center gap-2.5 text-xs">
-            <span className={cx("display flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[10px] font-bold", m.chip)}>{placement === "champion" ? <TrophyIcon className="h-4 w-4" /> : PLACEMENT_MARK[placement]}</span>
+            <span className={cx("display flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold", m.chip)}>{placement === "champion" ? <TrophyIcon className="h-4 w-4" /> : PLACEMENT_MARK[placement]}</span>
             <span className="min-w-0 flex-1 truncate font-medium text-ink">{C.common.placement[placement]}</span>
-            <span className={cx("font-mono font-semibold", m.text)}>{formatMoney(prize)}</span>
-            {hasPoints ? <span className="w-10 shrink-0 rounded-md bg-blue/10 py-0.5 text-center font-mono text-[11px] font-semibold text-blue-bright">{pointsFor(def.tier, placement)}</span> : null}
+            <span className={cx("tabular-nums font-semibold", m.text)}>{formatMoney(prize)}</span>
+            {hasPoints ? <span className="w-10 shrink-0 rounded-md bg-blue/10 py-0.5 text-center tabular-nums text-[11px] font-semibold text-blue-bright">{pointsFor(def.tier, placement)}</span> : null}
           </span>
         </li>;
       })}

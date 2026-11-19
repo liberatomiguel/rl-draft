@@ -108,6 +108,7 @@ import {
   unofficialOfferFor,
   weekAt,
   weekOfDay,
+  windowCloseDayFor,
   windowIndexOf,
 } from "@/engine/career/calendar";
 import {
@@ -242,6 +243,20 @@ import {
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
+import {
+  buyBackLocked,
+  clampListingAsk,
+  listingAskBounds,
+  listingAnswerDayFor,
+  listingAnswerFor,
+  listingBlockFor,
+  listingValueOf,
+  shortTenure,
+  tradeAnswerDayFor,
+  tradeCreditFor,
+  tradeOutlookFor,
+  tradeVerdictFor,
+} from "@/engine/career/transferList";
 import { renewalTermsFor, type RenewalTerms, type RenewalTitles } from "@/engine/career/renewal";
 // rc.33 (ECO-10/11): the contract's prize share and the wage talk.
 import {
@@ -343,6 +358,8 @@ import type {
   SponsorState,
   SponsorTerms,
   SquadPlayer,
+  ListedPlayer,
+  TradeProposal,
   TransferLogEntry,
   TransferOffer,
   StaffId,
@@ -1583,6 +1600,10 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
   }
 
+  // ============ EVERY DAY: R135 — the transfer list and proposed trades =====
+  rollTransferList(save, dayWindowIdx);
+  rollTradeProposals(save, dayWindowIdx);
+
   // ============ EVERY DAY: rc.37 F2 — the emergency sale (cash negative) ===
   rollEmergencySale(save);
 
@@ -1605,6 +1626,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
   if (beforeCount > 0) {
     save.pendingOffers = save.pendingOffers.filter((o) => o.status === "pending");
   }
+  // R135: a listing whose offer lapsed, or whose player left, ends with it.
+  pruneTransferBusiness(save);
 
   // ==================== MON-FRI: scheduled scrims (v0.3) ===================
   if (save.phase === "running" && !save.activeEvent && save.scheduledScrims.length > 0) {
@@ -2830,6 +2853,8 @@ function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: stri
  * Sunday's playoffs for the user).
  */
 export function acceptBidFlow(input: CareerSave, offerId: string): FlowResult {
+  // R135: an agreed trade is answered through the same door as a bid (one "bid" decision kind).
+  if (input.tradeProposals?.some((p) => p.id === offerId)) return acceptTradeFlow(input, offerId);
   if (input.activeEvent) return { save: input, error: "rosterLocked" };
   const offer = input.pendingOffers.find((o) => o.id === offerId);
   if (!offer) return { save: input, error: "unknown" };
@@ -2894,6 +2919,8 @@ function sellSquadPlayer(
   // ECO-03 (R47): the sale settles every bid for him — none is left to
   // "complete" later (a release drops them the same way).
   save.pendingOffers = save.pendingOffers.filter((o) => !(o.direction === "out" && o.playerId === player.id));
+  dropTransferBusinessFor(save, player.id); // R135: his listing and any trade for him
+  stampSoldOn(save, player.id);
   pushNews(save, {
     type: "transfer",
     priority: 2,
@@ -5119,6 +5146,21 @@ export function emptySeatPriceFor(
   return best;
 }
 
+/** His ask package today (the wage, and the fee when an org holds his contract). One call for a signing plan and a trade's answer. */
+function askPackOf(save: CareerSave, view: CareerPlayerView, lengthSeasons: 1 | 2 | 3, contracted: boolean): AskPackage {
+  return askPackageFor(view, {
+    rep: save.reputation,
+    seasonIndex: save.clock.seasonIndex,
+    difficulty: save.difficulty,
+    careerSeed: save.careerSeed,
+    lengthSeasons,
+    contracted: contracted
+      ? { splitsRemaining: contractedSplitsRemaining(view.id, save.clock.seasonIndex, save.careerSeed) }
+      : undefined,
+    growthModel: growthModelOf(save.world),
+  });
+}
+
 export function signingPlanFor(
   save: CareerSave,
   playerId: string,
@@ -5127,6 +5169,12 @@ export function signingPlanFor(
     releaseId?: string;
     /** rc.33 (ECO-11): the weekly wage and prize share offered (omitted = his ask). */
     offer?: ContractOffer;
+    /**
+     * R135 (ECO-06): a player-for-player trade. `releaseId` is the player who
+     * goes to his org instead of being released: no fee and no severance, the
+     * user pays `cash` only. Every other gate and money check is the signing's.
+     */
+    trade?: { cash: number };
   },
 ): { plan: SigningPlan } | { error: string } {
   if (save.activeEvent) return { error: "rosterLocked" }; // rc.30: roster moves wait for the event
@@ -5161,6 +5209,8 @@ export function signingPlanFor(
   if (!signableAtRep(view, save.reputation)) return { error: "repGate" };
   // rc.35 (front C): a player an org signed in this window takes no other offer before it closes.
   if (justSignedElsewhere(save, playerId)) return { error: "justSigned" };
+  // R135: a player the user sold or traded away does not come back within a season.
+  if (buyBackLocked(save.soldOn?.[playerId], save.clock.seasonIndex, save.clock.day)) return { error: "buyBack" };
 
   // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
   if (save.squad.length - (leaver ? 1 : 0) >= CAREER_CONTRACT.squadCap) return { error: "squadFull" };
@@ -5171,23 +5221,15 @@ export function signingPlanFor(
   const finalSeason = signsForFinalSeason(view, save.clock.seasonIndex);
   const lengthSeasons = finalSeason ? 1 : opts.lengthSeasons;
 
-  const pack = askPackageFor(view, {
-    rep: save.reputation,
-    seasonIndex: save.clock.seasonIndex,
-    difficulty: save.difficulty,
-    careerSeed: save.careerSeed,
-    lengthSeasons,
-    contracted: onOrg
-      ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
-      : undefined,
-    growthModel: growthModelOf(save.world),
-  });
+  const pack = askPackOf(save, view, lengthSeasons, Boolean(onOrg));
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
-  const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
+  // R135: in a trade the leaver is not released (no severance) and cash replaces the fee.
+  const severance = leaver && !opts.trade ? severanceFor(leaver, save.clock.seasonIndex) : 0;
+  const feePaid = opts.trade ? opts.trade.cash : pack.fee;
   // rc.35 (front N): the signing bonus is the talk's (a lever), not the package's.
   // rc.36 (front S2): the money checks price the OFFER (what his yes would move), whatever he answers.
-  const cost = pack.fee + talk.offered.bonus + severance;
+  const cost = feePaid + talk.offered.bonus + severance;
   // RTW-05 (rc.33): no event plays short, so a broke org must still be able to
   // field three (it used to pay a stand-in's fee the same way): a free agent
   // into an empty seat skips the money checks — but only one who costs no
@@ -5195,7 +5237,7 @@ export function signingPlanFor(
   // (`emptySeatPriceFor`); anyone dearer goes through the normal checks.
   const seatPrice = !onOrg && !leaver && rosterIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
   // rc.36 (front S2, rc.35-(d)): the waiver counts the bonus offered (CAREER_NEGOTIATION.emptySeatCountsOfferedBonus).
-  const waiverCost = CAREER_NEGOTIATION.emptySeatCountsOfferedBonus ? cost : pack.fee + pack.signingBonus + severance;
+  const waiverCost = CAREER_NEGOTIATION.emptySeatCountsOfferedBonus ? cost : feePaid + pack.signingBonus + severance;
   const fillsEmptySeat =
     seatPrice !== null && waiverCost <= seatPrice.cost && talk.offered.wagePerSplit <= seatPrice.wagePerSplit;
   if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) {
@@ -5203,7 +5245,7 @@ export function signingPlanFor(
     const seatAtAskedBonus =
       seatPrice !== null &&
       talk.offered.bonus > pack.signingBonus &&
-      pack.fee + pack.signingBonus + severance <= seatPrice.cost &&
+      feePaid + pack.signingBonus + severance <= seatPrice.cost &&
       talk.offered.wagePerSplit <= seatPrice.wagePerSplit;
     return { error: seatAtAskedBonus ? "fundsSeatBonus" : "funds" };
   }
@@ -5211,7 +5253,7 @@ export function signingPlanFor(
   // false). true restores rc.33: no transfer fee while it is owed, and no signing that shortens
   // the runway — except the empty seat's cheapest free agent (a sale, an expiry or a retirement
   // can leave a squad below three; the org must be able to field its own three again).
-  if (CAREER_LOAN.lockCommitments && pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
+  if (CAREER_LOAN.lockCommitments && feePaid > 0 && save.finances.loan) return { error: "loanActive" };
   const bill = payrollProjection({
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
@@ -5256,6 +5298,7 @@ function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: numb
   if (refill) syncSquadRoles(save);
   // A pending bid for him can no longer complete.
   save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
+  dropTransferBusinessFor(save, player.id); // R135
   keepInWorld(save, player);
   save.world.freeAgentIds.push(player.id);
   save.world.version += 1;
@@ -5292,12 +5335,11 @@ export function signPlayerFlow(
 ): FlowResult {
   const planned = signingPlanFor(input, playerId, opts);
   if ("error" in planned) return { save: input, error: planned.error };
-  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons, talk } = planned.plan;
+  const { view, pack, leaver, severance, fromRef, talk } = planned.plan;
   // rc.33 (ECO-11): the talk's answer is the deal — under his floor, nothing moves.
   // rc.36 (front S2): but the refusal is counted — it raises what he needs this window.
   if (!talk.accepted) return { save: withTalkRefusal(input, playerId), error: "negotiationCounter" };
   const save = clone(input);
-  const finalSalary = talk.terms.wagePerSplit;
 
   // ECO-03 (R47): from here everything moves together — the leaver and his
   // severance, the fee, the bonus, the wage and the slot.
@@ -5325,6 +5367,35 @@ export function signPlayerFlow(
   }
 
   removePlayerFromWorld(save, playerId);
+  joinSquadFromPlan(save, planned.plan);
+
+  logTransfer(save, {
+    playerId: view.id,
+    playerName: view.name,
+    fromRef,
+    toRef: "user",
+    fee: pack.fee,
+    kind: "userIn",
+    region: save.identity.region,
+  });
+  pushNews(save, {
+    type: "transfer",
+    priority: 2,
+    titleKey: "userSigned",
+    params: { player: view.name, org: save.identity.orgName },
+  });
+  return { save: capNews(save) };
+}
+
+/**
+ * The arrival half of a signing: he joins the squad on the plan's terms and
+ * takes the open seat. The caller has already taken him out of the world and
+ * moved the money. One function for a signing and for a trade (R135).
+ */
+function joinSquadFromPlan(save: CareerSave, plan: SigningPlan): void {
+  const { view, slot, finalSeason, lengthSeasons, talk } = plan;
+  const playerId = view.id;
+  const finalSalary = talk.terms.wagePerSplit;
   // Signing a real player takes him off his script forever.
   if (view.kind === "real" && !(playerId in save.world.overallDelta)) {
     save.world.overallDelta[playerId] = 0;
@@ -5376,23 +5447,6 @@ export function signPlayerFlow(
   syncSquadRoles(save);
   // rc.36 (front T2, R83): he joins the running training cycle from today.
   onSquadJoined(save, view.id);
-
-  logTransfer(save, {
-    playerId: view.id,
-    playerName: view.name,
-    fromRef,
-    toRef: "user",
-    fee: pack.fee,
-    kind: "userIn",
-    region: save.identity.region,
-  });
-  pushNews(save, {
-    type: "transfer",
-    priority: 2,
-    titleKey: "userSigned",
-    params: { player: view.name, org: save.identity.orgName },
-  });
-  return { save: capNews(save) };
 }
 
 export function releasePlayerFlow(input: CareerSave, playerId: string): FlowResult {
@@ -5451,6 +5505,8 @@ export function renewPlayerFlow(
 }
 
 export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
+  // R135: refusing an agreed or countered trade drops the proposal.
+  if (input.tradeProposals?.some((p) => p.id === offerId)) return withdrawTradeFlow(input, offerId);
   const save = clone(input);
   const offer = save.pendingOffers.find((o) => o.id === offerId);
   save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offerId);
@@ -5458,8 +5514,422 @@ export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
     // rc.32: refusing a Blockbuster surcharges his next renewal (the offer and
     // the mail say so).
     stampBlockbusterRefusal(save, offer);
+    // R135: refusing the answer to a listing takes him off the list (he stays).
+    if (offer.listed && save.transferList) {
+      save.transferList = save.transferList.filter((l) => l.playerId !== offer.playerId);
+    }
   }
   return save;
+}
+
+// ---------------------------------------------------------------------------
+// R135 (ECO-06): the transfer list and player-for-player trades
+// ---------------------------------------------------------------------------
+//
+// The user lists a squad player with an asking fee, or proposes one of his
+// players for an AI org's. Both are answered some window days later
+// (engine/career/transferList.ts). A listing's answer is an ordinary bid in
+// `pendingOffers` (accept sells through `sellSquadPlayer`); an agreed or
+// countered trade waits in `tradeProposals` for the user's yes. Both fields
+// are additive: an older client ignores them and reads a listed offer as a
+// plain bid.
+
+const LISTING_ERROR: Record<NonNullable<ReturnType<typeof listingBlockFor>>, string> = {
+  disabled: "listDisabled",
+  windowClosed: "windowClosed",
+  firstWindow: "listFirstWindow",
+  windowClosing: "listWindowClosing",
+  resaleLocked: "resaleLocked",
+  listFull: "listFull",
+  alreadyListed: "listOffered",
+};
+
+function valueCtxOf(save: CareerSave): { careerSeed: number; seasonIndex: number; growthModel: number } {
+  return { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, growthModel: growthModelOf(save.world) };
+}
+
+/** R135: the transfer list, without entries whose player has left the squad. */
+export function transferListOf(save: CareerSave): ListedPlayer[] {
+  const list = save.transferList;
+  if (!list || list.length === 0) return [];
+  const ids = new Set(save.squad.map((p) => p.id));
+  return list.filter((l) => ids.has(l.playerId));
+}
+
+/** R135: the trades proposed and not settled. */
+export function tradeProposalsOf(save: CareerSave): TradeProposal[] {
+  return save.tradeProposals ?? [];
+}
+
+/** R135: what the listing sheet reads. `error` null = he can be listed (or re-priced) today. */
+export interface ListingPlan {
+  /** His market value, the unit of the ask. */
+  value: number;
+  min: number;
+  max: number;
+  error: string | null;
+  /** His entry on the list, if any. */
+  current: ListedPlayer | null;
+  /** He arrived under a season ago: buyers discount him (CAREER_TRANSFER.listing.shortTenureShare). */
+  shortTenure: boolean;
+}
+
+export function listingPlanFor(save: CareerSave, playerId: string): ListingPlan | null {
+  const player = save.squad.find((p) => p.id === playerId);
+  if (!player) return null;
+  const value = listingValueOf(player, valueCtxOf(save));
+  const { min, max } = listingAskBounds(value);
+  const list = transferListOf(save);
+  const current = list.find((l) => l.playerId === playerId) ?? null;
+  let error: string | null = null;
+  if (save.phase !== "running") error = "blocked";
+  else if (current?.status === "offered") error = "listOffered";
+  else {
+    // Re-pricing an entry is not a second listing: he does not count against himself.
+    const block = listingBlockFor({
+      player,
+      listed: list.filter((l) => l.playerId !== playerId),
+      seasonIndex: save.clock.seasonIndex,
+      day: save.clock.day,
+    });
+    error = block ? LISTING_ERROR[block] : null;
+  }
+  return { value, min, max, error, current, shortTenure: shortTenure(player, save.clock.seasonIndex, save.clock.day) };
+}
+
+/**
+ * R135: put a squad player on the transfer list at `ask` (forced inside the
+ * ask bounds), or re-price him while no offer is on the table. Not a roster
+ * move, so an event in progress does not lock it; accepting the offer does.
+ */
+export function listPlayerFlow(input: CareerSave, playerId: string, ask: number): FlowResult {
+  const plan = listingPlanFor(input, playerId);
+  if (!plan) return { save: input, error: "unknown" };
+  if (plan.error) return { save: input, error: plan.error };
+  const { seasonIndex, day } = input.clock;
+  const windowIdx = windowIndexOf(weekOfDay(day));
+  if (windowIdx === null) return { save: input, error: "windowClosed" };
+  const save = clone(input);
+  const entry: ListedPlayer = {
+    playerId,
+    ask: clampListingAsk(plan.value, ask),
+    seasonIndex,
+    day,
+    answerDay: listingAnswerDayFor({ careerSeed: save.careerSeed, seasonIndex, day, windowIdx, playerId }),
+    status: "waiting",
+  };
+  save.transferList = [...transferListOf(save).filter((l) => l.playerId !== playerId), entry];
+  return { save };
+}
+
+/** R135: take him off the list; an offer answering the listing goes with it (he stays). */
+export function delistPlayerFlow(input: CareerSave, playerId: string): CareerSave {
+  const save = clone(input);
+  save.transferList = (save.transferList ?? []).filter((l) => l.playerId !== playerId);
+  save.pendingOffers = save.pendingOffers.filter((o) => !(o.listed && o.playerId === playerId));
+  return save;
+}
+
+/** He was sold or traded away today: the buy-back lock starts (`buyBackLocked`); entries past it are dropped. */
+function stampSoldOn(save: CareerSave, playerId: string): void {
+  const { seasonIndex, day } = save.clock;
+  const kept = Object.entries(save.soldOn ?? {}).filter(([, left]) => buyBackLocked(left, seasonIndex, day));
+  save.soldOn = { ...Object.fromEntries(kept), [playerId]: { seasonIndex, day } };
+}
+
+/** A sale, a release or a trade settles every listing and trade that names him. */
+function dropTransferBusinessFor(save: CareerSave, playerId: string): void {
+  if (save.transferList?.some((l) => l.playerId === playerId)) {
+    save.transferList = save.transferList.filter((l) => l.playerId !== playerId);
+  }
+  if (save.tradeProposals?.some((p) => p.giveId === playerId)) {
+    save.tradeProposals = save.tradeProposals.filter((p) => p.giveId !== playerId);
+  }
+}
+
+/** A listing ends when its player left the squad (an expiry, a retirement) or its offer is gone (lapsed, or settled by an older client). */
+function pruneTransferBusiness(save: CareerSave): void {
+  const list = save.transferList;
+  if (!list || list.length === 0) return;
+  const ids = new Set(save.squad.map((p) => p.id));
+  const offered = new Set(save.pendingOffers.filter((o) => o.listed && o.status === "pending").map((o) => o.playerId));
+  const next = list.filter((l) => ids.has(l.playerId) && (l.status !== "offered" || offered.has(l.playerId)));
+  if (next.length !== list.length) save.transferList = next;
+}
+
+/** The day's answers to the transfer list. Outside a window (or in a new season) the list empties, and the feed says so once. */
+function rollTransferList(save: CareerSave, windowIdx: 0 | 1 | 2 | 3 | null): void {
+  const list = save.transferList;
+  if (!list || list.length === 0) return;
+  const { seasonIndex, day } = save.clock;
+  // The last test: an older client may have walked the clock from one window into the next.
+  if (
+    windowIdx === null ||
+    save.phase !== "running" ||
+    list.some((l) => l.seasonIndex !== seasonIndex || windowIndexOf(weekOfDay(l.day)) !== windowIdx)
+  ) {
+    const names = list
+      .filter((l) => l.status !== "offered")
+      .map((l) => save.squad.find((p) => p.id === l.playerId)?.name)
+      .filter((name): name is string => Boolean(name));
+    save.transferList = [];
+    if (names.length > 0) {
+      pushNews(save, { type: "transfer", priority: 2, titleKey: "listingLapsed", params: { players: names.join(", "), n: names.length } });
+    }
+    return;
+  }
+  for (const entry of list) {
+    if (entry.status !== "waiting" || day < entry.answerDay) continue;
+    const player = save.squad.find((p) => p.id === entry.playerId);
+    if (!player) continue; // pruned after the expiry pass
+    const answer = listingAnswerFor({
+      world: save.world,
+      player,
+      listing: entry,
+      careerSeed: save.careerSeed,
+      seasonIndex,
+      windowIdx,
+      day,
+    });
+    if (answer.kind === "noTakers") {
+      entry.status = "noTakers";
+      entry.reason = answer.reason;
+      const key = answer.reason === "noBuyer" ? "listingNoBuyer" : "listingTooDear";
+      const params = { player: player.name, ask: entry.ask };
+      pushNews(save, { type: "transfer", priority: 2, titleKey: key, params });
+      pushMail(save, { kind: "offer", titleKey: key, bodyKey: key, params, fromKey: "agent", linkTo: "/career/market" });
+      continue;
+    }
+    entry.status = "offered";
+    save.pendingOffers.push(answer.offer);
+    const key = answer.kind === "counter" ? "listingCounter" : "listingOffer";
+    const params = {
+      player: player.name,
+      org: answer.offer.otherRef ? nameOfRef(save, answer.offer.otherRef) : "?",
+      fee: answer.offer.fee,
+      ask: entry.ask,
+    };
+    pushNews(save, { type: "transfer", priority: 2, titleKey: key, params });
+    pushMail(save, { kind: "offer", titleKey: key, bodyKey: key, params, fromKey: "agent", linkTo: "/career/market" });
+  }
+}
+
+/** R135: what the trade sheet reads, and what a proposal is checked against. */
+export interface TradePlan {
+  /** The arrival, planned as a signing with the leaver's seat (gates, wage, slot, money checks). */
+  signing: SigningPlan;
+  give: SquadPlayer;
+  orgRef: string;
+  /** The fee a plain buy of him would cost: what the org weighs the trade against. */
+  fee: number;
+  cash: number;
+  /** A hint, never the answer (the org's own valuation is drawn inside a band). */
+  outlook: ReturnType<typeof tradeOutlookFor>;
+}
+
+export function tradePlanFor(
+  save: CareerSave,
+  giveId: string,
+  takeId: string,
+  opts: { lengthSeasons: 1 | 2 | 3; cash: number },
+): { plan: TradePlan } | { error: string } {
+  if (!CAREER_TRANSFER.trade.enabled) return { error: "tradeDisabled" };
+  if (save.phase !== "running") return { error: "blocked" };
+  const { seasonIndex, day } = save.clock;
+  const windowIdx = windowIndexOf(weekOfDay(day));
+  if (windowIdx === null) return { error: "windowClosed" };
+  if (userBidsBlocked(seasonIndex, windowIdx)) return { error: "listFirstWindow" };
+  if (day >= windowCloseDayFor(windowIdx)) return { error: "listWindowClosing" };
+  const give = save.squad.find((p) => p.id === giveId);
+  if (!give) return { error: "unknown" };
+  if (resaleLocked(give, seasonIndex, day)) return { error: "resaleLocked" };
+  const org = Object.values(save.world.orgs).find((o) => o.playerIds.includes(takeId));
+  if (!org) return { error: "tradeFreeAgent" };
+  // An AI roster stays inside its region (its replacements are drawn there).
+  if (org.region !== give.region) return { error: "tradeRegion" };
+  const cash = Math.max(0, quantize(opts.cash));
+  const planned = signingPlanFor(save, takeId, { lengthSeasons: opts.lengthSeasons, releaseId: giveId, trade: { cash } });
+  if ("error" in planned) return planned;
+  const fee = planned.plan.pack.fee;
+  const outlook = tradeOutlookFor({ player: give, fee, cash, takeOverall: planned.plan.view.overall, day, ...valueCtxOf(save) });
+  return { plan: { signing: planned.plan, give, orgRef: org.ref, fee, cash, outlook } };
+}
+
+/** R135: send the proposal; the org answers on `answerDay` (`rollTradeProposals`). Nothing moves yet. */
+export function proposeTradeFlow(
+  input: CareerSave,
+  giveId: string,
+  takeId: string,
+  opts: { lengthSeasons: 1 | 2 | 3; cash: number },
+): FlowResult {
+  const planned = tradePlanFor(input, giveId, takeId, opts);
+  if ("error" in planned) return { save: input, error: planned.error };
+  const pending = tradeProposalsOf(input);
+  if (pending.length >= CAREER_TRANSFER.trade.maxPending) return { save: input, error: "tradePending" };
+  const { seasonIndex, day } = input.clock;
+  const windowIdx = windowIndexOf(weekOfDay(day));
+  if (windowIdx === null) return { save: input, error: "windowClosed" };
+  const { signing, give, orgRef, cash } = planned.plan;
+  const save = clone(input);
+  save.tradeProposals = [
+    ...pending,
+    {
+      id: `trade:${seasonIndex}:${day}:${giveId}:${takeId}`,
+      giveId,
+      giveName: give.name,
+      takeId,
+      takeName: signing.view.name,
+      orgRef,
+      cash,
+      lengthSeasons: signing.lengthSeasons,
+      seasonIndex,
+      day,
+      answerDay: tradeAnswerDayFor({ careerSeed: save.careerSeed, seasonIndex, day, windowIdx, giveId, takeId }),
+      resolveDay: windowCloseDayFor(windowIdx),
+      status: "waiting",
+    },
+  ];
+  return { save };
+}
+
+/** R135: withdraw a proposal, or refuse an agreed or countered trade. Nothing moves. */
+export function withdrawTradeFlow(input: CareerSave, proposalId: string): CareerSave {
+  const save = clone(input);
+  save.tradeProposals = (save.tradeProposals ?? []).filter((p) => p.id !== proposalId);
+  return save;
+}
+
+/** The day's trade answers. A proposal lapses at the window's close, or when either player has moved. */
+function rollTradeProposals(save: CareerSave, windowIdx: 0 | 1 | 2 | 3 | null): void {
+  const list = save.tradeProposals;
+  if (!list || list.length === 0) return;
+  const { seasonIndex, day } = save.clock;
+  const viewCtx = { careerSeed: save.careerSeed, seasonIndex, world: save.world };
+  const keep: TradeProposal[] = [];
+  for (const p of list) {
+    const params = { give: p.giveName, take: p.takeName, org: nameOfRef(save, p.orgRef) };
+    const give = save.squad.find((s) => s.id === p.giveId);
+    const view = save.world.orgs[p.orgRef]?.playerIds.includes(p.takeId) ? playerViewById(p.takeId, viewCtx) : null;
+    const lapsed = windowIdx === null || save.phase !== "running" || p.seasonIndex !== seasonIndex || day > p.resolveDay;
+    if (lapsed || !give || !view) {
+      pushNews(save, { type: "transfer", priority: 2, titleKey: "tradeLapsed", params });
+      continue;
+    }
+    if (p.status !== "waiting" || day < p.answerDay) {
+      keep.push(p);
+      continue;
+    }
+    const verdict = tradeVerdictFor({
+      credit: tradeCreditFor({ player: give, takeId: p.takeId, windowIdx, day, ...valueCtxOf(save) }),
+      fee: askPackOf(save, view, p.lengthSeasons, true).fee,
+      cash: p.cash,
+      giveOverall: give.overall,
+      takeOverall: view.overall,
+    });
+    if (verdict.kind === "reject") {
+      const key = verdict.reason === "fit" ? "tradeRefusedFit" : "tradeRefusedValue";
+      pushNews(save, { type: "transfer", priority: 2, titleKey: key, params });
+      pushMail(save, { kind: "offer", titleKey: key, bodyKey: key, params, fromKey: "agent", linkTo: "/career/market" });
+      continue;
+    }
+    if (verdict.kind === "counter") {
+      p.status = "countered";
+      p.cashAsked = verdict.cash;
+    } else {
+      p.status = "agreed";
+    }
+    const key = verdict.kind === "counter" ? "tradeCountered" : "tradeAgreed";
+    const answerParams = { ...params, cash: verdict.kind === "counter" ? verdict.cash : p.cash };
+    pushNews(save, { type: "transfer", priority: 2, titleKey: key, params: answerParams });
+    pushMail(save, { kind: "offer", titleKey: key, bodyKey: key, params: answerParams, fromKey: "agent", linkTo: "/career/market" });
+    keep.push(p);
+  }
+  save.tradeProposals = keep;
+}
+
+/** R135: the cash an agreed or countered trade costs the user. */
+export function tradeCashOf(p: TradeProposal): number {
+  return p.status === "countered" ? (p.cashAsked ?? p.cash) : p.cash;
+}
+
+/**
+ * R135: what accepting an agreed or countered trade does today. The confirm
+ * reads it and `acceptTradeFlow` applies it, so the sheet shows the deal the
+ * confirm writes. Unlike `tradePlanFor` it has no proposal-time rules (the
+ * closing day, the resale lock): the org already said yes.
+ */
+export function tradeAcceptPlanFor(
+  save: CareerSave,
+  proposalId: string,
+): { plan: { signing: SigningPlan; cash: number } } | { error: string } {
+  if (save.activeEvent) return { error: "rosterLocked" };
+  const prop = tradeProposalsOf(save).find((p) => p.id === proposalId);
+  if (!prop || prop.status === "waiting") return { error: "unknown" };
+  const org = save.world.orgs[prop.orgRef];
+  if (!save.squad.some((p) => p.id === prop.giveId) || !org || !org.playerIds.includes(prop.takeId)) {
+    return { error: "tradeGone" };
+  }
+  const cash = tradeCashOf(prop);
+  const planned = signingPlanFor(save, prop.takeId, {
+    lengthSeasons: prop.lengthSeasons,
+    releaseId: prop.giveId,
+    trade: { cash },
+  });
+  if ("error" in planned) return planned;
+  if (!planned.plan.talk.accepted) return { error: "negotiationCounter" };
+  return { plan: { signing: planned.plan, cash } };
+}
+
+/**
+ * R135: complete an agreed (or countered) trade. Atomic like a signing (R47):
+ * the user's player takes the other's seat on the org, the arrival signs at
+ * his ask into the seat left open, and only the cash moves. A roster move,
+ * so it waits for an event in progress.
+ */
+export function acceptTradeFlow(input: CareerSave, proposalId: string): FlowResult {
+  const planned = tradeAcceptPlanFor(input, proposalId);
+  if ("error" in planned) {
+    // Either player has moved since the org's answer: the trade is off.
+    return { save: planned.error === "tradeGone" ? withdrawTradeFlow(input, proposalId) : input, error: planned.error };
+  }
+  const prop = tradeProposalsOf(input).find((p) => p.id === proposalId)!;
+  const { signing, cash } = planned.plan;
+  const { view, talk } = signing;
+
+  const save = clone(input);
+  const give = save.squad.find((p) => p.id === prop.giveId)!;
+  const seat = save.world.orgs[prop.orgRef].playerIds.indexOf(prop.takeId);
+  // He leaves for the org: no severance, and every bid, listing and trade for him is settled.
+  save.squad = save.squad.filter((p) => p.id !== give.id);
+  save.pendingOffers = save.pendingOffers.filter((o) => !(o.direction === "out" && o.playerId === give.id));
+  dropTransferBusinessFor(save, give.id);
+  save.tradeProposals = (save.tradeProposals ?? []).filter((p) => p.id !== prop.id);
+  keepInWorld(save, give);
+  stampSoldOn(save, give.id);
+  save.world.orgs[prop.orgRef].playerIds[seat] = give.id;
+  save.world.freeAgentIds = save.world.freeAgentIds.filter((id) => id !== give.id && id !== prop.takeId);
+  save.world.version += 1;
+
+  const stamp = { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), day: save.clock.day };
+  if (cash > 0) {
+    save.finances = pushLedger(save.finances, { ...stamp, kind: "transferOut", amount: -cash, refName: view.name });
+    save.stats.biggestSigningFee = Math.max(save.stats.biggestSigningFee, cash);
+  }
+  if (talk.terms.bonus > 0) {
+    save.finances = pushLedger(save.finances, { ...stamp, kind: "signingBonus", amount: -talk.terms.bonus, refName: view.name });
+  }
+  joinSquadFromPlan(save, signing);
+
+  const region = save.identity.region;
+  logTransfer(save, { playerId: give.id, playerName: give.name, fromRef: "user", toRef: prop.orgRef, fee: 0, kind: "userOut", region });
+  logTransfer(save, { playerId: view.id, playerName: view.name, fromRef: prop.orgRef, toRef: "user", fee: cash, kind: "userIn", region });
+  pushNews(save, {
+    type: "transfer",
+    priority: 2,
+    titleKey: "userTraded",
+    params: { give: give.name, take: view.name, org: nameOfRef(save, prop.orgRef), club: save.identity.orgName },
+  });
+  return { save: capNews(save) };
 }
 
 // ---------------------------------------------------------------------------
@@ -6411,6 +6881,11 @@ export function migrateSaveToV4(raw: unknown): CareerSave | null {
  *    qualifier it plays or played → outside the 8; the regional it holds
  *    without one → inside), so Saturday and Sunday cannot re-seed the user.
  */
+/** v2.0.26: the newest `saveVersion` this build writes and can load (what
+ *  `migrateSaveToV5` upgrades to). A save from outside the play loop (the account
+ *  copy, an imported file) with a higher one is refused, never downgraded. */
+export const CURRENT_SAVE_VERSION = 5;
+
 export function migrateSaveToV5(raw: unknown): CareerSave | null {
   const save = migrateSaveToV4(raw);
   if (!save) return null;

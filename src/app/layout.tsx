@@ -5,7 +5,9 @@ import { SITE } from "@/config/site";
 import { webSiteJsonLd } from "@/lib/jsonld";
 import { AppShell } from "@/components/layout/AppShell";
 import { LocaleRoot } from "@/components/layout/LocaleRoot";
+import { AssetHealReport } from "@/components/AssetHealReport";
 import { PostHogProvider } from "@/components/PostHogProvider";
+import { assetHealInlineScript } from "@/lib/assetHeal";
 import "./globals.css";
 
 // Self-hosted fonts (v1.4 "World Stage"). Previously fetched from
@@ -58,9 +60,17 @@ const barlow = localFont({
 // Industry (Fort Foundry), the display face (DESIGN.md). Medium/Demi/Bold
 // cover font-medium/semibold/bold; Black answers extrabold; the Bold Italic
 // serves the Home wordmark.
+// The metric overrides centre the capitals on the line: the file's own ascent
+// and descent (108% / 23%) set a 70% cap height 0.075em low, so every title in
+// a slab, tag or button sat under the middle. 100.5% / 30.5% keep the same
+// line height and put the caps in the centre.
 const industry = localFont({
   variable: "--font-industry",
   display: "swap",
+  declarations: [
+    { prop: "ascent-override", value: "100.5%" },
+    { prop: "descent-override", value: "30.5%" },
+  ],
   src: [
     { path: "./fonts/industry-medium.woff2", weight: "500", style: "normal" },
     { path: "./fonts/industry-demi.woff2", weight: "600", style: "normal" },
@@ -107,7 +117,7 @@ const GeistMono = localFont({
   weight: "100 900",
 });
 
-const TITLE = `${SITE.name} — RLCS Draft Game · Rocket League Esports History`;
+const TITLE = `${SITE.name}: RLCS Draft Game · Rocket League Esports History`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -201,6 +211,14 @@ const JSON_LD = {
 /** The site's name in search results (and its one-word spelling). */
 const SITE_JSON_LD = webSiteJsonLd();
 
+/**
+ * v2.0.32 (DESIGN-DECISIONS #171): repairs build files the browser holds as a
+ * failed answer (a version-skew 404 cached for a year by the `/_next/static/*`
+ * rule) before React needs them. Production builds only: the dev server's files
+ * are never cached that way, and a repair reload would fight hot reloading.
+ */
+const ASSET_HEAL_SCRIPT = process.env.NODE_ENV === "production" ? assetHealInlineScript() : null;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -213,6 +231,7 @@ export default function RootLayout({
       className={`${barlow.variable} ${barlowCondensed.variable} ${industry.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {ASSET_HEAL_SCRIPT ? <script dangerouslySetInnerHTML={{ __html: ASSET_HEAL_SCRIPT }} /> : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
@@ -222,6 +241,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
         />
         <PostHogProvider>
+          <AssetHealReport />
           <AppShell>{children}</AppShell>
         </PostHogProvider>
       </body>

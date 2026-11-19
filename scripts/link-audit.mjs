@@ -51,7 +51,8 @@ for (const file of walk(out)) {
   // In-content = <main> plus the play strip AppShell renders right under it.
   const main =
     (html.match(/<main[\s\S]*?<\/main>/)?.[0] ?? "") + (html.match(/<nav data-play-strip[\s\S]*?<\/nav>/)?.[0] ?? "");
-  const links = [...main.matchAll(/<a\b[^>]*href="(\/[^"]*)"/g)].map((m) => m[1]);
+  // Query and hash dropped: the career pages' button is /career?start=quick (v2.0.33).
+  const links = [...main.matchAll(/<a\b[^>]*href="(\/[^"]*)"/g)].map((m) => m[1].split(/[?#]/)[0] || "/");
   const noindex = /<meta name="robots" content="[^"]*noindex/.test(html);
   const row = { route, links: links.length, play: route === "/play" || links.includes("/play") || links.includes("/career"),home: links.includes("/") || links.includes("/pt"), noindex };
   const key = group(route);

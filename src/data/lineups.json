@@ -6815,7 +6815,7 @@
     ],
     "coachId": "nick-coach-m80-2027",
     "orgBuffLevel": "~",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "next2nu-esports-2027",
@@ -6936,6 +6936,81 @@
       "royales-1-2027"
     ],
     "coachId": "pxress-coach-1-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "arancini-2027",
+    "name": "arancini",
+    "seasonId": "rlcs-2027",
+    "orgId": "arancini",
+    "region": "NA",
+    "playerCardIds": [
+      "dvo-arancini-2027",
+      "sosa-arancini-2027",
+      "tms-arancini-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "gulp-2027",
+    "name": "Gulp",
+    "seasonId": "rlcs-2027",
+    "orgId": "gulp",
+    "region": "NA",
+    "playerCardIds": [
+      "aris-gulp-2027",
+      "eris-gulp-2027",
+      "impoh-gulp-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "legion-of-boom-2027",
+    "name": "Legion of Boom",
+    "seasonId": "rlcs-2027",
+    "orgId": "legion-of-boom",
+    "region": "NA",
+    "playerCardIds": [
+      "ahduhm-legion-of-boom-2027",
+      "ivan-legion-of-boom-2027",
+      "oath-legion-of-boom-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "lsf-2027",
+    "name": "lsf",
+    "seasonId": "rlcs-2027",
+    "orgId": "lsf",
+    "region": "NA",
+    "playerCardIds": [
+      "aqua-lsf-2027",
+      "hazo-lsf-2027",
+      "speed-lsf-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "wassup-2027",
+    "name": "WASSUP",
+    "seasonId": "rlcs-2027",
+    "orgId": "wassup",
+    "region": "NA",
+    "playerCardIds": [
+      "alxx-wassup-2027",
+      "scythe-wassup-2027",
+      "xpurt-wassup-2027"
+    ],
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "solid"
@@ -7137,6 +7212,171 @@
     "historicalStrength": "underdog"
   },
   {
+    "id": "blg-doran-2027",
+    "name": "BLG Doran",
+    "seasonId": "rlcs-2027",
+    "orgId": "blg-doran",
+    "region": "EU",
+    "playerCardIds": [
+      "pisky-blg-doran-2027",
+      "mat-blg-doran-2027",
+      "giuk-blg-doran-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "cka-2027",
+    "name": "CKA",
+    "seasonId": "rlcs-2027",
+    "orgId": "cka",
+    "region": "EU",
+    "playerCardIds": [
+      "nxlly-cka-2027",
+      "kadely-cka-2027",
+      "cofam-cka-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "detect-esports-2027",
+    "name": "Detect Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "detect-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "shila-detect-esports-2027",
+      "nuqqet-detect-esports-2027",
+      "brainiac-detect-esports-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "frites-esports-club-2027",
+    "name": "Frites Esports Club",
+    "seasonId": "rlcs-2027",
+    "orgId": "frites-esports-club",
+    "region": "EU",
+    "playerCardIds": [
+      "jweyts-frites-esports-club-2027",
+      "wozyen-frites-esports-club-2027",
+      "kiroxsinho-frites-esports-club-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "hey-its-me-its-joshyv-2027",
+    "name": "Hey, its me, its joshyv.",
+    "seasonId": "rlcs-2027",
+    "orgId": "hey-its-me-its-joshyv",
+    "region": "EU",
+    "playerCardIds": [
+      "aztral-hey-its-me-its-joshyv-2027",
+      "rebmob-hey-its-me-its-joshyv-2027",
+      "vorce-hey-its-me-its-joshyv-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "joseadores-2027",
+    "name": "joseadores",
+    "seasonId": "rlcs-2027",
+    "orgId": "joseadores",
+    "region": "EU",
+    "playerCardIds": [
+      "energizer-joseadores-2027",
+      "sml-joseadores-2027",
+      "dj-joseadores-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "ogc-fc-2027",
+    "name": "OGC FC",
+    "seasonId": "rlcs-2027",
+    "orgId": "ogc-fc",
+    "region": "EU",
+    "playerCardIds": [
+      "zamberg-ogc-fc-2027",
+      "flexx-ogc-fc-2027",
+      "viktor-ogc-fc-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "oxalys-bunch-2027",
+    "name": "Oxalys Bunch",
+    "seasonId": "rlcs-2027",
+    "orgId": "oxalys-bunch",
+    "region": "EU",
+    "playerCardIds": [
+      "nolta-oxalys-bunch-2027",
+      "tomio-oxalys-bunch-2027",
+      "encore-oxalys-bunch-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "radosin-corp-2027",
+    "name": "Radosin Corp",
+    "seasonId": "rlcs-2027",
+    "orgId": "radosin-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "ejby-radosin-corp-2027",
+      "radosin-radosin-corp-2027",
+      "mozzarella-radosin-corp-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "rotation-station-2027",
+    "name": "Rotation Station",
+    "seasonId": "rlcs-2027",
+    "orgId": "rotation-station",
+    "region": "EU",
+    "playerCardIds": [
+      "chippy-rotation-station-2027",
+      "mimillosama-rotation-station-2027",
+      "noahsaki-rotation-station-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "wlt-gaming-2027",
+    "name": "WLT Gaming",
+    "seasonId": "rlcs-2027",
+    "orgId": "wlt-gaming",
+    "region": "EU",
+    "playerCardIds": [
+      "reeho-wlt-gaming-2027",
+      "pukis-wlt-gaming-2027",
+      "prysm-wlt-gaming-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
     "id": "furia-2027",
     "name": "FURIA",
     "seasonId": "rlcs-2027",
@@ -7193,7 +7433,6 @@
       "wisty-pcs-stride-2027"
     ],
     "coachId": "stl-coach-pcs-stride-2027",
-    "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "solid"
   },
@@ -7208,9 +7447,10 @@
       "leodkn-bs-competition-2027",
       "pan-bs-competition-2027"
     ],
+    "coachId": "kaoshi-coach-bs-competition-2027",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "avid-esports-2027",
@@ -7271,6 +7511,51 @@
     ],
     "samOnly": true,
     "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "arrogantchi-2027",
+    "name": "Arrogantchi",
+    "seasonId": "rlcs-2027",
+    "orgId": "arrogantchi",
+    "region": "SAM",
+    "playerCardIds": [
+      "courtz-arrogantchi-2027",
+      "maathzudo-arrogantchi-2027",
+      "nahuz-arrogantchi-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "dynasty-2027",
+    "name": "Dynasty",
+    "seasonId": "rlcs-2027",
+    "orgId": "dynasty",
+    "region": "SAM",
+    "playerCardIds": [
+      "ferraz-dynasty-2027",
+      "iguinn-dynasty-2027",
+      "zeeph-dynasty-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "t18-esports-2027",
+    "name": "T18 Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "t18-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "misery-t18-esports-2027",
+      "umbroken-t18-esports-2027",
+      "viitin-t18-esports-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
     "historicalStrength": "underdog"
   },
   {
@@ -7313,7 +7598,6 @@
       "trook-not-2027",
       "ops-not-2027"
     ],
-    "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "solid"
   },
@@ -7331,6 +7615,96 @@
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "solid"
+  },
+  {
+    "id": "1v1-2027",
+    "name": "1v1",
+    "seasonId": "rlcs-2027",
+    "orgId": "1v1",
+    "region": "MENA",
+    "playerCardIds": [
+      "willie-1v1-2027",
+      "vfbi-1v1-2027",
+      "shadi-1v1-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "b3den-nsme-2027",
+    "name": "b3den nsme",
+    "seasonId": "rlcs-2027",
+    "orgId": "b3den-nsme",
+    "region": "MENA",
+    "playerCardIds": [
+      "glowz-b3den-nsme-2027",
+      "jsm-b3den-nsme-2027",
+      "m6r-b3den-nsme-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "room-mate-london-2027",
+    "name": "Room Mate London",
+    "seasonId": "rlcs-2027",
+    "orgId": "room-mate-london",
+    "region": "MENA",
+    "playerCardIds": [
+      "hmod-room-mate-london-2027",
+      "isl6nii-room-mate-london-2027",
+      "sqqp-room-mate-london-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "shmn8a-mr7-2027",
+    "name": "shmn8a mr7",
+    "seasonId": "rlcs-2027",
+    "orgId": "shmn8a-mr7",
+    "region": "MENA",
+    "playerCardIds": [
+      "b2sel-shmn8a-mr7-2027",
+      "nadr-shmn8a-mr7-2027",
+      "o0vvl-shmn8a-mr7-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "team-x-2027",
+    "name": "Team X",
+    "seasonId": "rlcs-2027",
+    "orgId": "team-x",
+    "region": "MENA",
+    "playerCardIds": [
+      "suspect-team-x-2027",
+      "t7lm-team-x-2027",
+      "twiz-team-x-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "the-white-horse-2027",
+    "name": "The white horse",
+    "seasonId": "rlcs-2027",
+    "orgId": "the-white-horse",
+    "region": "MENA",
+    "playerCardIds": [
+      "bang-the-white-horse-2027",
+      "israkan-the-white-horse-2027",
+      "nmj-the-white-horse-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
   },
   {
     "id": "pwr-2027",

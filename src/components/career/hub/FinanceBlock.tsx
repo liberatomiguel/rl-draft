@@ -28,7 +28,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { CalendarIcon, HourglassIcon, TrendIcon } from "@/components/ui/icons";
-import { Panel } from "@/components/ui/Panel";
+import { BLOCK_LINK, RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
 
 /** A small line of the recorded Monday balances (no axes; the chart opens larger). */
 function MondayLine({ points }: { points: number[] }) {
@@ -61,7 +61,7 @@ function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
       >
         {icon}
       </span>
-      <span className="kicker shrink-0 !text-[9px]">{label}</span>
+      <span className="kicker shrink-0">{label}</span>
       <span
         className={cx(
           "ml-auto min-w-0 truncate text-right text-[11px] font-medium",
@@ -85,13 +85,10 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const ended = save.phase === "ended";
 
   return (
-    <Panel
-      className={cx("rise-in p-4", f.balance < 0 ? "border-bad/40" : cashTight ? "border-orange/40" : "")}
-      style={{ animationDelay: "120ms" }}
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
-        <AppLink href="/career/finances" className="text-[11px] font-semibold text-blue-bright hover:underline">{C.hub.financesOpen} →</AppLink>
+    <div>
+      <div className={RAIL_HEAD}>
+        <h3 className={RAIL_TITLE}>{C.hub.financesTitle}</h3>
+        <AppLink href="/career/finances" className={BLOCK_LINK}>{C.hub.financesOpen}</AppLink>
       </div>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
@@ -110,9 +107,9 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           onClick={() => setChartOpen(true)}
           aria-label={C.finances.chartOpen}
           title={C.finances.chartOpen}
-          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-line bg-white/[0.025] px-2.5 py-2 transition-colors hover:border-blue/40 focus-visible:ring-2 focus-visible:ring-cyan/60"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-1 py-2 transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-cyan/60"
         >
-          {line.length >= 2 ? <MondayLine points={line} /> : <span className="px-1 text-[10px] text-faint">{C.finances.chartTitle}</span>}
+          {line.length >= 2 ? <MondayLine points={line} /> : <span className="px-1 text-[11px] text-faint">{C.finances.chartTitle}</span>}
         </button>
       </div>
 
@@ -155,6 +152,6 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       >
         <BalanceHistory ring={ring} />
       </Modal>
-    </Panel>
+    </div>
   );
 }

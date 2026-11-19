@@ -330,7 +330,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
             />
           ) : (
             <Panel className="p-6 text-center text-sm text-sub">
-              {T.matchCenter} — {queue.length === 0 ? T.start : T.upcoming}
+              {T.matchCenter}: {queue.length === 0 ? T.start : T.upcoming}
             </Panel>
           )}
 
@@ -719,7 +719,7 @@ function SwissPath({
   return (
     <Panel className="p-4">
       <h3 className="display mb-3 text-sm font-bold uppercase tracking-[0.16em] text-ink">
-        {T.yourPath} — {T.swiss}
+        {T.yourPath}: {T.swiss}
       </h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
         {cells.map((cell, i) => {
@@ -1044,7 +1044,7 @@ function SwissStandings({
       <Panel className="p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-            {T.standings} — {T.swiss}
+            {T.standings}: {T.swiss}
           </h3>
           {throughRound > 0 ? (
             <span className="shrink-0 text-[10px] uppercase tracking-wider text-faint">

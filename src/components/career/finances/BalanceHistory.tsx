@@ -225,10 +225,10 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
       <table className="w-full table-fixed text-left text-xs">
         <thead>
           <tr>
-            <th scope="col" className="kicker w-[34%] py-1.5 text-[11px] text-faint">{C.finances.chartColSeason}</th>
-            <th scope="col" className="kicker py-1.5 text-[11px] text-faint">{C.finances.chartColLow}</th>
-            <th scope="col" className="kicker py-1.5 text-[11px] text-faint">{C.finances.chartColHigh}</th>
-            <th scope="col" className="kicker py-1.5 text-right text-[11px] text-faint">{C.finances.chartColLast}</th>
+            <th scope="col" className="kicker w-[34%] py-1.5 text-faint">{C.finances.chartColSeason}</th>
+            <th scope="col" className="kicker py-1.5 text-faint">{C.finances.chartColLow}</th>
+            <th scope="col" className="kicker py-1.5 text-faint">{C.finances.chartColHigh}</th>
+            <th scope="col" className="kicker py-1.5 text-right text-faint">{C.finances.chartColLast}</th>
           </tr>
         </thead>
         <tbody className="text-sub">

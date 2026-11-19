@@ -38,7 +38,7 @@ export function CareerAiTicker({
   if (items.length === 0) return null;
 
   return (
-    <Panel className="p-4">
+    <Panel className="p-4 sm:p-5">
       <h3 className="display mb-2.5 text-sm font-bold uppercase tracking-[0.16em] text-ink">
         {C.event.aiTicker}
       </h3>
@@ -48,7 +48,7 @@ export function CareerAiTicker({
           const aWon = s.winnerTeamId === s.teamAId;
           const row = (
             <>
-              <span className="kicker w-[4.5rem] shrink-0 truncate !text-[8px] text-faint">
+              <span className="kicker w-[4.5rem] shrink-0 truncate text-faint">
                 {item.label}
               </span>
               <span className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -79,7 +79,7 @@ export function CareerAiTicker({
                 </EventTeamButton>
               </span>
               {s.upset ? (
-                <span className="display shrink-0 rounded bg-amber-400/15 px-1 text-[8px] font-bold uppercase tracking-wider text-amber-300">
+                <span className="display shrink-0 rounded bg-amber-400/15 px-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
                   {C.event.upset}
                 </span>
               ) : null}

@@ -16,10 +16,10 @@ import { useRouter } from "next/navigation";
 import { CAREER_EMERGENCY_SALE, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { breachesToEndFor, insertMoneyFor, loanBreachesOf } from "@/engine/career/economy";
-import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor, uncoveredAbsenceOf } from "@/store/careerFlow";
+import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor, tradeCashOf, uncoveredAbsenceOf } from "@/store/careerFlow";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { isWindowWeek, regionalForQualifier, weekOfDay } from "@/engine/career/calendar";
-import type { CareerEventDef, CareerSave, TransferOffer } from "@/engine/career/types";
+import type { CareerEventDef, CareerSave, TradeProposal, TransferOffer } from "@/engine/career/types";
 import { insertById, type InsertEffects } from "@/data/career/inserts";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -57,7 +57,7 @@ export function NowInsert({
   return (
     <div>
       <EventBrand name={id} size="lg" className="mb-3" />
-      <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
+      <p className="kicker mb-1 text-cyan">{C.inserts.kinds[def.kind]}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -76,7 +76,7 @@ export function NowInsert({
           </button>
         ))}
       </div>
-      <p className="mt-2 text-[10px] text-faint">{C.inserts.expires}</p>
+      <p className="mt-2 text-[11px] text-faint">{C.inserts.expires}</p>
     </div>
   );
 }
@@ -213,7 +213,7 @@ export function NowSquadShort({
   const absent = save.squad.length >= 3 ? uncoveredAbsenceOf(save) : null;
   return (
     <div>
-      <p className="kicker mb-1 text-[10px] text-bad">{C.hub.squadShortKicker}</p>
+      <p className="kicker mb-1 text-bad">{C.hub.squadShortKicker}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
         {absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}
       </h2>
@@ -331,19 +331,19 @@ export function NowEvent({
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
+          <p className="kicker">{C.calendar.prizePool}</p>
           <p className="display text-lg font-bold text-orange-bright">
             {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.common.seasonPoints}</p>
-          <p className="display text-lg font-bold text-ink">
-            {points !== null ? `${points} ${C.standings.ptsShort}` : "—"}
+          <p className="kicker">{C.common.seasonPoints}</p>
+          <p className="card-title">
+            {points !== null ? `${points} ${C.standings.ptsShort}` : "-"}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.fieldQuality}</p>
+          <p className="kicker">{C.calendar.fieldQuality}</p>
           <TeamStars stars={Math.round(fieldStars)} size="md" className="mt-1" />
         </div>
       </div>
@@ -418,6 +418,15 @@ export function NowBid({
           </p>
         </>
       ) : null}
+      {/* R135 (ECO-06): the offer answers the user's own listing. */}
+      {offer.listed ? (
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <Badge tone="blue">{C.market.transferList.offerTag}</Badge>
+          {offer.ask !== undefined && offer.fee < offer.ask ? (
+            <span className="text-xs font-semibold text-orange-bright">{C.market.transferList.counterLine(formatMoney(offer.ask, { compact: true }))}</span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex items-center gap-3">
         {offer.otherRef ? <OrgMark save={save} orgRef={offer.otherRef} size="lg" /> : null}
         <div className="min-w-0">
@@ -439,7 +448,7 @@ export function NowBid({
           ) : null}
         </div>
         <div className="text-right">
-          <p className="kicker text-[9px]">{C.market.fee}</p>
+          <p className="kicker">{C.market.fee}</p>
           <p className="display text-2xl font-bold text-orange-bright">
             {formatMoney(offer.fee, { compact: true })}
           </p>
@@ -448,6 +457,65 @@ export function NowBid({
 
       {/* rc.33 (UX-07): the refusal cost lives in the Blockbuster's own sentence above — a plain bid says nothing. */}
 
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button variant="primary" size="lg" onClick={onAccept}>
+          {C.market.accept}
+        </Button>
+        <Button variant="danger" size="lg" onClick={onDecline}>
+          {C.market.decline}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** R135 (ECO-06): an agreed or countered player-for-player trade waits for the manager's yes or no. */
+export function NowTrade({
+  save,
+  C,
+  proposal,
+  onAccept,
+  onDecline,
+}: {
+  save: CareerSave;
+  C: CareerCopy;
+  proposal: TradeProposal;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const orgName = nameOfRef(save, proposal.orgRef);
+  const orgStars = save.world.orgs[proposal.orgRef]?.stars ?? 0;
+  const cash = tradeCashOf(proposal);
+  return (
+    <div>
+      <Badge tone="blue" className="mb-2">
+        {C.market.trade.nowTitle}
+      </Badge>
+      <div className="flex items-center gap-3">
+        <OrgMark save={save} orgRef={proposal.orgRef} size="lg" />
+        <div className="min-w-0">
+          <p className="display truncate text-lg font-bold uppercase tracking-wide text-ink">
+            {orgName} <TeamStars stars={orgStars} size="sm" className="ml-1 align-middle" />
+          </p>
+          <p className="text-xs text-sub">
+            {proposal.status === "countered" ? C.market.trade.countered(formatMoney(cash, { compact: true })) : C.market.trade.agreed}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 space-y-1.5 rounded-lg border border-line bg-white/[0.03] p-3 text-sm">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sub">{C.market.trade.leaves}</span>
+          <span className="display min-w-0 truncate font-bold text-ink">{proposal.giveName}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sub">{C.market.trade.arrives}</span>
+          <span className="display min-w-0 truncate font-bold text-ink">{proposal.takeName}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sub">{C.market.trade.cash}</span>
+          <span className="display font-bold text-orange-bright">{cash > 0 ? formatMoney(cash, { compact: true }) : C.market.trade.noCash}</span>
+        </div>
+      </div>
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="lg" onClick={onAccept}>
           {C.market.accept}

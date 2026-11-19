@@ -44,7 +44,7 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
     <Panel glow={reviewed ? undefined : "orange"} className="rise-in p-4 sm:p-5">
       {count > 0 ? (
         <>
-          <h3 className="display text-lg uppercase leading-none text-ink">{C.squad.reviewTitle}</h3>
+          <h3 className="card-title">{C.squad.reviewTitle}</h3>
           <p className="mt-1.5 text-sm text-sub">{C.squad.reviewBody(count)}</p>
           {/* Who leaves, as a list with hairline rows: the overall first, the wage last. */}
           <ul className="mt-3 border-t border-line">
@@ -88,7 +88,7 @@ export function ContractReview({ save, C }: { save: CareerSave; C: CareerCopy })
       ) : null}
       {otherHold ? (
         <AppLink href="/career" className="mt-3 flex min-h-11 items-center text-sm text-orange-bright hover:underline">
-          {C.squad.reviewHeld} →
+          {C.squad.reviewHeld}
         </AppLink>
       ) : null}
     </Panel>

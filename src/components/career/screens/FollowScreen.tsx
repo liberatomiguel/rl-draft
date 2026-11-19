@@ -118,8 +118,8 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
 
   // who is in
   const fieldPanel = (
-    <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
-      <p className="kicker mb-2.5 text-[10px]">{C.follow.field}</p>
+    <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
+      <p className="kicker mb-2.5">{C.follow.field}</p>
       <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-4">
         {f.teams.map((t) => (
           <li key={t.id} className="flex min-w-0 items-center gap-1.5 text-xs">
@@ -130,7 +130,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
             </span>
             </EventTeamButton>
             {qualified.has(t.id) ? (
-              <span title={C.event.qualifiedTagHint} className="display shrink-0 rounded bg-cyan/20 px-1 text-[9px] font-bold text-cyan">
+              <span title={C.event.qualifiedTagHint} className="display shrink-0 rounded bg-cyan/20 px-1 text-[10px] font-bold text-cyan">
                 {C.event.qualifiedTag}
               </span>
             ) : null}
@@ -142,8 +142,8 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   // the round just revealed (watch)
   const roundPanel =
     mode === "watch" && !showPlayoffs && f.swiss.length > 0 && !done ? (
-      <Panel key={current?.key ?? "waiting"} className="pop-in p-4" data-follow-games>
-        <p className="kicker mb-2.5 text-[10px] text-cyan">{roundTitle(current?.label ?? 1)}</p>
+      <Panel key={current?.key ?? "waiting"} className="pop-in p-4 sm:p-5" data-follow-games>
+        <p className="kicker mb-2.5 text-cyan">{roundTitle(current?.label ?? 1)}</p>
         {current?.stage === "swiss" ? <SeriesList save={save} f={f} series={current.series} /> : <p className="text-xs text-faint">{C.event.nextUp}…</p>}
       </Panel>
     ) : null;
@@ -158,11 +158,11 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   // the readable results: placement, points, prize
   const resultsPanel =
     done && result ? (
-      <Panel className="rise-in p-4">
-        <p className="kicker mb-2.5 text-[10px]">{C.follow.results}</p>
+      <Panel className="rise-in p-4 sm:p-5">
+        <p className="kicker mb-2.5">{C.follow.results}</p>
         <table className="w-full table-fixed text-left text-xs">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-faint">
+            <tr className="text-[11px] uppercase tracking-wider text-faint">
               <th className="hidden w-32 pb-1.5 font-semibold sm:table-cell" scope="col">{C.event.digestPlacement}</th>
               <th className="pb-1.5 font-semibold" scope="col">{T.team}</th>
               {showPoints ? (
@@ -187,13 +187,13 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                         <OrgMark save={save} orgRef={row.ref} size="xs" className="shrink-0" />
                         <span className="min-w-0 truncate text-ink">{row.name}</span>
                       </EventTeamButton>
-                      <span className="mt-0.5 block truncate text-[10px] leading-tight text-sub sm:hidden">{label}</span>
+                      <span className="mt-0.5 block truncate text-[11px] leading-tight text-sub sm:hidden">{label}</span>
                     </td>
                     {showPoints ? (
-                      <td className="display py-1.5 text-right font-bold text-cyan">{row.points > 0 ? row.points : "—"}</td>
+                      <td className="display py-1.5 text-right font-bold text-cyan">{row.points > 0 ? row.points : "-"}</td>
                     ) : null}
                     <td className="display py-1.5 text-right font-bold text-ink">
-                      {prize > 0 ? formatMoney(prize, { compact: true }) : "—"}
+                      {prize > 0 ? formatMoney(prize, { compact: true }) : "-"}
                     </td>
                   </tr>
                 );
@@ -216,7 +216,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
       {/* header: the event, why the user follows from outside, the champion once revealed */}
       <Panel className="rise-in p-4 sm:p-5">
         <div className="relative flex flex-wrap items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-white/[0.04]">
+          <span className="flex h-9 w-9 items-center justify-center">
             <EventTierIcon tier={f.def.tier} className={cx("h-5 w-5", TIER_ICON_TONE[f.def.tier])} />
           </span>
           <TierChip tier={f.def.tier} />
@@ -230,7 +230,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
           <div className="pop-in relative mt-4 flex items-center gap-4 rounded-xl border border-amber-300/30 bg-amber-300/[0.07] px-4 py-4">
             <TrophyIcon className="h-6 w-6 shrink-0 text-amber-300" />
             <div className="min-w-0">
-              <p className="kicker !text-[9px] text-amber-300">{C.follow.champion}</p>
+              <p className="kicker text-amber-300">{C.follow.champion}</p>
               <p className="flex min-w-0 items-center gap-2">
                 <EventTeamButton teamId={f.champion} name={nameOf(f.champion)}>
                 <OrgMark save={save} orgRef={f.champion} size="sm" className="shrink-0" />

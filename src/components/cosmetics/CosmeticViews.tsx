@@ -18,6 +18,7 @@ import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@
 import { BADGE_GLOW_PAD, hasBadgeArt, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
+import { RankBadge } from "@/components/ui/RankBadge";
 import bannerMotionJson from "@/generated/banner-motion.json";
 
 /** How a banner moves (written by `npm run build:banners`). `parts`: the rc.23
@@ -331,6 +332,7 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
   const treatment = title.tier === "exclusive" ? "epic" : title.tier;
   const legend = title.tier === "legend";
   const name = copy.name(title.id);
+  const rankSplit = splitRankTitle(title, name);
   // Legendary: tilt toward the pointer (CSS vars on the element, no state).
   const onMove = legend && motion
     ? (e: React.PointerEvent<HTMLSpanElement>) => {
@@ -357,11 +359,39 @@ export function TitleTag({ title, size = "sm", className, motion = true }: { tit
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
-      <span className="cos-title-text" data-text={name}>
-        {name}
-      </span>
+      {rankSplit ? (
+        // v2.0.18: the pre-season rank titles carry the rank emblem between the
+        // prefix and the rank ("PRE-SEASON (emblem) CHAMPION"). Two text spans
+        // so each keeps its own gradient / glow layer (`data-text`).
+        <>
+          <span className="cos-title-text" data-text={rankSplit.prefix}>
+            {rankSplit.prefix}
+          </span>
+          <RankBadge
+            rank={{ id: rankSplit.rankId, label: rankSplit.rank }}
+            variant="menu"
+            className="relative z-[1] mx-[0.3em] -my-[0.25em] !h-[1.5em] !w-[1.5em]"
+          />
+          <span className="cos-title-text" data-text={rankSplit.rank}>
+            {rankSplit.rank}
+          </span>
+        </>
+      ) : (
+        <span className="cos-title-text" data-text={name}>
+          {name}
+        </span>
+      )}
     </span>
   );
+}
+
+/** "Pre-Season Champion" → prefix "Pre-Season", rank "Champion" (the copy names
+ *  every pre-season rank title "<prefix> <rank>", in both languages). */
+function splitRankTitle(def: CosmeticDef, name: string): { prefix: string; rank: string; rankId: string } | null {
+  if (def.source.type !== "legacy-rank") return null;
+  const cut = name.indexOf(" ");
+  if (cut <= 0) return null;
+  return { prefix: name.slice(0, cut), rank: name.slice(cut + 1), rankId: def.source.rankId };
 }
 
 // ---------------------------------------------------------------------------

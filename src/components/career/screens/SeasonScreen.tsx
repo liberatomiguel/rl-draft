@@ -17,6 +17,8 @@ import type { CareerSave } from "@/engine/career/types";
 import { useCareerCopy } from "@/content/careerCopy";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
+import { useProfileStore } from "@/store/profileStore";
+import { ResearchInvite } from "@/components/ResearchInvite";
 import { CAREER_SEASONS } from "@/config/balance";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -62,6 +64,8 @@ export function SeasonScreen() {
   const continueInfinite = useCareerStore((s) => s.continueInfinite);
   const retireCareer = useCareerStore((s) => s.retireCareer);
   const [infoOpen, setInfoOpen] = useState(false);
+  const activeDays = useProfileStore((s) => s.login.total);
+  const runsCompleted = useProfileStore((s) => s.runsCompleted);
 
   if (!mounted) {
     return (
@@ -123,7 +127,7 @@ export function SeasonScreen() {
           {wonWorlds ? <MilestoneMoment title={C.launch.worldsChampion} kind="worlds" /> : null}
           {isInsolvent ? (
             <>
-              <p className="kicker text-[11px] text-bad">
+              <p className="kicker text-bad">
                 {last?.label ?? seasonLabelFor(save.clock.seasonIndex)}
               </p>
               <p className="display mt-2 text-3xl font-bold text-bad">
@@ -148,7 +152,7 @@ export function SeasonScreen() {
                 size="lg"
                 className="mx-auto mb-4 drop-shadow-[0_10px_30px_rgba(251,191,36,0.35)]"
               />
-              <p className="kicker text-[11px] text-amber-300">{last?.label}</p>
+              <p className="kicker text-amber-300">{last?.label}</p>
               <p className="display mt-2 text-4xl font-bold text-orange-bright drop-shadow-[0_2px_18px_rgba(249,115,22,0.35)]">
                 {C.ceremonies.yourTitle}
               </p>
@@ -158,7 +162,7 @@ export function SeasonScreen() {
             </>
           ) : isFinalWhistle ? (
             <>
-              <p className="kicker text-[11px]">{last?.label}</p>
+              <p className="kicker">{last?.label}</p>
               <p className="display mt-2 text-3xl font-bold text-ink">
                 {C.ceremonies.finalWhistle}
               </p>
@@ -169,7 +173,7 @@ export function SeasonScreen() {
             </>
           ) : (
             <>
-              <p className="kicker text-[11px]">{C.ceremonies.seasonReview}</p>
+              <p className="kicker">{C.ceremonies.seasonReview}</p>
               <p className="display mt-2 text-3xl font-bold text-ink">{last?.label}</p>
               {worldsChampionLine}
             </>
@@ -196,7 +200,7 @@ export function SeasonScreen() {
               <span className="display text-3xl font-bold">{last.grade}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="kicker !text-[10px]">{C.ceremonies.seasonReview}</p>
+              <p className="kicker">{C.ceremonies.seasonReview}</p>
               <p className="display truncate text-lg font-bold text-ink">{last.label}</p>
               {goalLabel && goals?.targetMet !== null ? (
                 <p
@@ -235,7 +239,7 @@ export function SeasonScreen() {
             <Stat
               label={C.calendar.worlds}
               value={
-                last.userWorldsPlacement ? C.common.placement[last.userWorldsPlacement] : "—"
+                last.userWorldsPlacement ? C.common.placement[last.userWorldsPlacement] : "-"
               }
               tone={last.userWorldsPlacement === "champion" ? "gold" : undefined}
             />
@@ -244,7 +248,7 @@ export function SeasonScreen() {
           {/* rc.36 (UX-02): the season's goal, settled — target and stretch with their final meters. */}
           {goalsView && goals?.targetMet !== null ? (
             <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3.5">
-              <p className="kicker mb-2.5 !text-[10px]">{C.hub.seasonGoal}</p>
+              <p className="kicker mb-2.5">{C.hub.seasonGoal}</p>
               <SeasonGoalRows view={goalsView} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} />
             </div>
           ) : null}
@@ -259,8 +263,8 @@ export function SeasonScreen() {
             style={{ animationDelay: "120ms" }}
           >
             <div className="mb-2 flex items-baseline justify-between">
-              <p className="kicker !text-[10px]">{C.ceremonies.devRecap}</p>
-              <span className="kicker !text-[9px] text-faint">{C.common.ovr}</span>
+              <p className="kicker">{C.ceremonies.devRecap}</p>
+              <span className="kicker text-faint">{C.common.ovr}</span>
             </div>
             <ul>
               {[...save.squad]
@@ -283,7 +287,7 @@ export function SeasonScreen() {
                           +{delta.toFixed(1)}
                         </span>
                       ) : (
-                        <span className="shrink-0 text-[11px] text-faint">—</span>
+                        <span className="shrink-0 text-[11px] text-faint">-</span>
                       )}
                       <span className="display w-10 shrink-0 text-right text-lg font-bold text-ink">
                         {Math.round(p.overall)}
@@ -303,7 +307,7 @@ export function SeasonScreen() {
             )}
             style={{ animationDelay: "150ms" }}
           >
-            <p className="kicker mb-3 !text-[10px]">{C.ceremonies.bizRecap}</p>
+            <p className="kicker mb-3">{C.ceremonies.bizRecap}</p>
             <div
               className={cx(
                 "grid gap-3",
@@ -335,7 +339,7 @@ export function SeasonScreen() {
       {last && last.regionTable.length > 0 ? (
         <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "180ms" }}>
           <div className="mb-2 flex items-center justify-between">
-            <p className="kicker !text-[10px]">{C.standings.title}</p>
+            <p className="kicker">{C.standings.title}</p>
             <Badge className={REGION_BADGE[save.identity.region]}>{save.identity.region}</Badge>
           </div>
           <ul>
@@ -441,6 +445,15 @@ export function SeasonScreen() {
         <p className="text-sm font-semibold text-ink">{C.ceremonies.infiniteDesc}</p>
         <p className="mt-2 text-sm text-sub">{C.ceremonies.infiniteExplainer}</p>
       </Modal>
+
+      {/* v2.0.31: the research form, for returning players, at the season's close
+          (not on an insolvency, not while the explainer is open). */}
+      <ResearchInvite
+        surface="career"
+        ready={(save.phase === "seasonReview" || ended) && !isInsolvent && !infoOpen}
+        signals={{ activeDays, runsCompleted, careerSeasons: save.history.length }}
+        text={C.research}
+      />
     </div>
   );
 }
@@ -460,7 +473,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border border-line bg-white/[0.02] p-2.5">
-      <p className="kicker !text-[10px]">{label}</p>
+      <p className="kicker">{label}</p>
       <p
         className={cx(
           "display truncate text-lg font-bold",
@@ -484,7 +497,7 @@ function BizStat({
 }) {
   return (
     <div className="min-w-0">
-      <p className="kicker !text-[10px]">{label}</p>
+      <p className="kicker">{label}</p>
       <p className={cx("display truncate text-xl font-bold", cls ?? "text-ink")}>{value}</p>
     </div>
   );
@@ -533,7 +546,7 @@ function SnapshotRow({
         {name}
       </span>
       {isUser ? (
-        <Badge tone="orange" className="shrink-0 !px-1.5 !text-[9px]">
+        <Badge tone="orange" className="shrink-0 !px-1.5 !text-[10px]">
           {copy.standings.userChip}
         </Badge>
       ) : null}
@@ -545,7 +558,7 @@ function SnapshotRow({
       >
         {points}
       </span>
-      <span className="shrink-0 text-[10px] text-faint">{copy.standings.ptsShort}</span>
+      <span className="shrink-0 text-[11px] text-faint">{copy.standings.ptsShort}</span>
     </li>
   );
 }

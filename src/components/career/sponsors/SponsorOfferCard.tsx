@@ -91,7 +91,7 @@ export function DifficultyMeter({ level, label }: { level: 1 | 2 | 3; label: str
 function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-2 border-t border-line/50 py-1.5 first:border-t-0">
-      <span className="flex shrink-0 items-center gap-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-faint">
+      <span className="flex shrink-0 items-center gap-1.5 pt-0.5 text-[11px] font-semibold uppercase tracking-wider text-faint">
         <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
         {label}
       </span>
@@ -107,19 +107,19 @@ function ContractGoals({ view }: { view: OfferView }) {
   if (whole) {
     const by = goalDeadlineOf(whole);
     return <section className="mt-3 rounded-lg border border-line bg-black/15 p-3">
-      <h3 className="kicker mb-2 text-[10px]">{C.launch.sponsorSchedule}</h3>
+      <h3 className="kicker mb-2">{C.launch.sponsorSchedule}</h3>
       <p className="text-xs font-semibold leading-relaxed text-ink">{T.goal(whole.kind, whole.count, whole.place ?? 0, 0)}</p>
-      <p className="mt-0.5 text-[10px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))} · {whole.hitOn ? T.goalReached : whole.missed !== undefined ? T.goalMissed : T.goalOpen}</p>
+      <p className="mt-0.5 text-[11px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))} · {whole.hitOn ? T.goalReached : whole.missed !== undefined ? T.goalMissed : T.goalOpen}</p>
     </section>;
   }
   return <section className="mt-3 rounded-lg border border-line bg-black/15 p-3">
-    <h3 className="kicker mb-2 text-[10px]">{C.launch.sponsorSchedule}</h3>
+    <h3 className="kicker mb-2">{C.launch.sponsorSchedule}</h3>
     <ol className="space-y-3">{slotsOfDeal(view).map((slot, i) => {
       const goal = view.goals.find(g => g.slot === slot);
       const by = goal ? goalDeadlineOf(goal) : settleDayOf(slot);
       return <li key={slot} className="flex gap-2 text-xs">
-        <span className={cx("flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono", goal?.hitOn ? "bg-good/15 text-good" : goal?.missed !== undefined ? "bg-bad/15 text-bad" : "bg-blue/15 text-blue-bright")}>{i + 1}</span>
-        <div><p className="mb-1 text-[10px] text-faint">{seasonLabelFor(slotSeason(slot))} · {C.calendar.split(slotSplit(slot))}</p><p className="font-semibold leading-relaxed text-ink">{goal ? T.goal(goal.kind, goal.count, goal.place ?? 0, slotSplit(slot)) : C.launch.futureGoal}</p><p className="mt-0.5 text-[10px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))}{goal ? ` · ${goal.hitOn ? T.goalReached : goal.missed !== undefined ? T.goalMissed : T.goalOpen}` : ""}</p></div>
+        <span className={cx("flex h-6 w-6 shrink-0 items-center justify-center rounded-full tabular-nums", goal?.hitOn ? "bg-good/15 text-good" : goal?.missed !== undefined ? "bg-bad/15 text-bad" : "bg-blue/15 text-blue-bright")}>{i + 1}</span>
+        <div><p className="mb-1 text-[11px] text-faint">{seasonLabelFor(slotSeason(slot))} · {C.calendar.split(slotSplit(slot))}</p><p className="font-semibold leading-relaxed text-ink">{goal ? T.goal(goal.kind, goal.count, goal.place ?? 0, slotSplit(slot)) : C.launch.futureGoal}</p><p className="mt-0.5 text-[11px] text-faint">{T.goalBy(formatDateShort(C.dates, dateOfDay(by.seasonIndex, by.day)))}{goal ? ` · ${goal.hitOn ? T.goalReached : goal.missed !== undefined ? T.goalMissed : T.goalOpen}` : ""}</p></div>
       </li>;
     })}</ol>
   </section>;
@@ -158,7 +158,7 @@ function OfferCard({
       <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span className={cx("text-[11px] font-semibold", a.text)}>{T.profileTag[view.profile]}</span>
         {view.global ? (
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase text-cyan">
+          <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold uppercase text-cyan">
             <GlobeIcon className="h-3 w-3" />
             {T.globalSponsor}
           </span>
@@ -171,15 +171,15 @@ function OfferCard({
         <span className="shrink-0 text-sm font-bold text-ink">{T.upToWeekly(money(view.upToPerWeek))}</span>
       </div>
 
-      <p className="mt-1 text-right text-[10px] text-faint">{T.contractTotal(money(view.upTo), view.lengthSplits)}</p>
+      <p className="mt-1 text-right text-[11px] text-faint">{T.contractTotal(money(view.upTo), view.lengthSplits)}</p>
       <div className="mt-2">
         <Row icon={<CoinsIcon className="h-full w-full" />} label={T.rowWeekly}>
           <p className="text-sm font-bold text-good">{money(view.weekly)}</p>
         </Row>
         <Row icon={<SignIcon className="h-full w-full" />} label={T.rowUpfront}>
-          <p className="text-sm font-bold text-ink">{view.fixed > 0 ? money(view.fixed) : "—"}</p>
+          <p className="text-sm font-bold text-ink">{view.fixed > 0 ? money(view.fixed) : "-"}</p>
           {view.fixed > 0 ? (
-            <p className="flex items-center justify-end gap-0.5 text-[10px] text-faint">
+            <p className="flex items-center justify-end gap-0.5 text-[11px] text-faint">
               {view.fixedKind === "milestone" ? <FlagIcon className="h-2.5 w-2.5" /> : null}
               {view.fixedKind === "milestone" ? T.upfrontMilestone : T.upfrontSigning}
             </p>
@@ -192,10 +192,10 @@ function OfferCard({
           {view.goal ? (
             <span className="flex items-center justify-end gap-1.5">
               <DifficultyMeter level={view.difficulty} label={T.difficultyMeter(T.word[view.goal.word] ?? view.goal.word)} />
-              <span className="text-[10px] font-semibold uppercase text-sub">{T.word[view.goal.word] ?? view.goal.word}</span>
+              <span className="text-[11px] font-semibold uppercase text-sub">{T.word[view.goal.word] ?? view.goal.word}</span>
             </span>
           ) : (
-            "—"
+            "-"
           )}
         </Row>
         {view.goal ? (
@@ -203,7 +203,7 @@ function OfferCard({
             <p className="text-[11px] leading-snug text-ink">
               {T.goal(view.goal.kind, view.goal.count, view.goal.place ?? 0, goalSplitLabelOf(view.goal))}
             </p>
-            {view.goalBy ? <p className="text-[10px] text-faint">{T.goalBy(formatDateShort(D, view.goalBy))}</p> : null}
+            {view.goalBy ? <p className="text-[11px] text-faint">{T.goalBy(formatDateShort(D, view.goalBy))}</p> : null}
           </div>
         ) : null}
         <Row icon={<FineIcon className="h-full w-full" />} label={T.rowFine}>
@@ -223,7 +223,7 @@ function OfferCard({
               <span key={i} className={cx("h-1.5 w-2 rounded-sm", a.bar)} />
             ))}
           </span>
-          <p className="text-[10px] text-faint">{T.endsOn(formatDateShort(D, view.endsOn))}</p>
+          <p className="text-[11px] text-faint">{T.endsOn(formatDateShort(D, view.endsOn))}</p>
         </Row>
       </div>
 
@@ -281,7 +281,7 @@ function HandoverNet({ handover, offer }: { handover: FoundingHandoverView; offe
   const C = useCareerCopy();
   const net = handoverNetWeeklyOf(handover, offer);
   return (
-    <p className={cx("mb-2 text-[10px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
+    <p className={cx("mb-2 text-[11px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
       {C.finances.deal.handoverNet(
         formatMoneyDelta(net, { compact: true }),
         formatDateShort(C.dates, dateOfDay(handover.startsOn.seasonIndex, handover.startsOn.day)),
@@ -407,12 +407,12 @@ function Tile({
 }) {
   return (
     <div className="min-w-0 rounded-md bg-white/[0.03] p-2">
-      <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-faint">
+      <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-faint">
         <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
         <span className="leading-relaxed">{label}</span>
       </p>
       <p className={cx("mt-1 break-words text-sm font-bold", tone ?? "text-ink")}>{value}</p>
-      {sub ? <p className="text-[10px] leading-relaxed text-faint">{sub}</p> : null}
+      {sub ? <p className="text-[11px] leading-relaxed text-faint">{sub}</p> : null}
     </div>
   );
 }
@@ -442,12 +442,12 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
   const seasonCap = save.sponsor ? Math.round(CAREER_SPONSOR.fines.seasonCapWeeks * view.weekly) : 0;
   return (
     <div className={cx("rounded-lg border bg-white/[0.02] p-3", a.border)}>
-      <p className="kicker mb-1.5 text-[9px]">{T.activeTitle}</p>
+      <p className="kicker mb-1.5">{T.activeTitle}</p>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="display min-w-0 truncate text-base font-bold uppercase tracking-wide text-ink">{brand?.name ?? view.sponsorId}</p>
         <span className="flex shrink-0 items-center gap-1.5">
           {view.global ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase text-cyan">
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold uppercase text-cyan">
               <GlobeIcon className="h-3.5 w-3.5" />
               {T.globalSponsor}
             </span>
@@ -481,7 +481,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
       {cur ? (
         <div className="mt-3 rounded-lg border border-blue/20 bg-blue/[0.035] p-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">
               <TargetIcon className="h-3.5 w-3.5 text-blue-bright" />
               {T.thisGoal}
             </p>
@@ -525,7 +525,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
       ) : null}
 
       <div className="mt-4 border-t border-line pt-3">
-        <div className="flex items-center justify-between gap-2 text-[10px] text-faint">
+        <div className="flex items-center justify-between gap-2 text-[11px] text-faint">
           <span>{T.dealRun(paid, view.mondaysTotal)}</span>
           <span>{T.endsOn(formatDateShort(D, view.endsOn))}</span>
         </div>
@@ -557,7 +557,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
       </div>
 
       {view.risk.kind === "fine" ? (
-        <p className="mt-1.5 text-[10px] text-faint">
+        <p className="mt-1.5 text-[11px] text-faint">
           {T.seasonFineCap(money(seasonCap))} · {T.fineFloorNote}
         </p>
       ) : null}
@@ -572,7 +572,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
               />
             ))}
           </span>
-          <span className="text-[10px] text-faint">{C.finances.patience(view.patienceMisses, patienceMax)}</span>
+          <span className="text-[11px] text-faint">{C.finances.patience(view.patienceMisses, patienceMax)}</span>
         </div>
       ) : null}
       <ContractGoals view={view} />

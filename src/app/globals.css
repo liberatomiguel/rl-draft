@@ -218,6 +218,38 @@ body {
   color: var(--sub);
 }
 
+/* The one title of a board, anywhere in the game: same face, size and weight
+   in the main column and in a rail, so two boards side by side read as peers. */
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* The head of a board whose title is ruled off from its body: the title on the
+   left, its one figure, tag or link on the right. Sits flush with the board's
+   padding (16px, 20px from `sm`). */
+.card-head {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: -1rem -1rem 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 640px) {
+  .card-head {
+    margin: -1.25rem -1.25rem 1.25rem;
+    padding: 0.75rem 1.25rem;
+  }
+}
+
 /* A section title is highlighted: upright Bold in dark ink on a paper slab
    with a slanted end, followed by the orange chip (the old section tick).
    The slab is drawn by a skewed ::before, so the text itself stays upright
@@ -228,7 +260,7 @@ body {
   isolation: isolate;
   display: inline-block;
   max-width: 100%;
-  padding: 0.16em 0.8em 0.12em 0.65em;
+  padding: 0.14em 0.8em 0.14em 0.65em;
   margin-right: 0.75em;
   font-family: var(--font-display);
   font-weight: 800;

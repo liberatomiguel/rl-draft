@@ -54,13 +54,14 @@ import { Logo } from "@/components/layout/AppShell";
 import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
 import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
+import { ResearchInvite } from "@/components/ResearchInvite";
 import { RunStepper } from "./RunStepper";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -78,6 +79,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const mmrGain = useProfileStore((s) => s.lastMmrGain);
   const winsHard = useProfileStore((s) => s.wins.hard);
   const winsLegacy = useProfileStore((s) => s.wins.legacy);
+  const activeDays = useProfileStore((s) => s.login.total);
+  const runsCompleted = useProfileStore((s) => s.runsCompleted);
   // Pop-ups the ceremonies held back (unlocks, the login calendar) — the XP
   // count-up waits for them too.
   const unlockPending = useCosmeticUnlocks((s) => s.queue.length > 0);
@@ -509,7 +512,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                   .map((id) => RARITY_LABELS[specialCardById.get(id)?.rarity ?? ""])
                   .filter(Boolean)
                   .join(" · ")}{" "}
-                — {R.unlockedNote}
+               : {R.unlockedNote}
               </p>
             </Panel>
           ) : null}
@@ -547,6 +550,14 @@ export function ResultsScreen({ run }: { run: RunState }) {
           onClose={() => setShareData(null)}
         />
       ) : null}
+
+      {/* v2.0.31: the research form, for returning players, once the results have settled. */}
+      <ResearchInvite
+        surface="draft"
+        ready={countXp && !shareData}
+        signals={{ activeDays, runsCompleted, careerSeasons: 0 }}
+        text={RESEARCH_UI}
+      />
     </div>
   );
 }

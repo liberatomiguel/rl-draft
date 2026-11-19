@@ -21,7 +21,7 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
   const played = stats.seriesWins + stats.seriesLosses;
   const metrics = [
     [C.launch.wins, stats.seriesWins], [C.launch.losses, stats.seriesLosses],
-    [C.launch.winRate, played ? `${Math.round(stats.seriesWins / played * 100)}%` : "—"],
+    [C.launch.winRate, played ? `${Math.round(stats.seriesWins / played * 100)}%` : "-"],
     [C.launch.games, `${stats.gameWins}–${stats.gameLosses}`],
     [C.launch.goals, `${stats.goalsFor} / ${stats.goalsAgainst}`],
   ];
@@ -31,20 +31,20 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
       <Panel className="p-4 sm:p-5">
         <div className="flex items-center gap-2.5">
           <TrophyIcon className="h-5 w-5 shrink-0 text-amber-300" />
-          <h3 className="display text-lg uppercase leading-none text-ink">{C.launch.seasonTitles}</h3>
+          <h3 className="card-title">{C.launch.seasonTitles}</h3>
           <span className="display ml-auto text-4xl font-extrabold leading-none text-amber-300">{save.history.at(-1)?.titles ?? season.titles.length}</span>
         </div>
         <dl className="mt-4 grid grid-cols-3 gap-x-6 border-t border-line pt-4">
-          <Metric label={C.launch.events} value={season.detailed ? season.events : "—"} />
-          <Metric label={C.launch.podiums} value={season.detailed ? season.podiums : "—"} />
+          <Metric label={C.launch.events} value={season.detailed ? season.events : "-"} />
+          <Metric label={C.launch.podiums} value={season.detailed ? season.podiums : "-"} />
           <Metric label={C.launch.totalTitles} value={Object.values(totals).reduce((a, b) => a + b, 0)} />
         </dl>
         <table className="mt-5 w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line-strong">
-              <th scope="col" className="kicker pb-2 text-left !text-[11px]">{C.launch.competition}</th>
-              <th scope="col" className="kicker pb-2 text-right !text-[11px]">{C.launch.seasonTitles}</th>
-              <th scope="col" className="kicker pb-2 pl-4 text-right !text-[11px]">{C.launch.totalTitles}</th>
+              <th scope="col" className="kicker pb-2 text-left">{C.launch.competition}</th>
+              <th scope="col" className="kicker pb-2 text-right">{C.launch.seasonTitles}</th>
+              <th scope="col" className="kicker pb-2 pl-4 text-right">{C.launch.totalTitles}</th>
             </tr>
           </thead>
           <tbody>
@@ -56,7 +56,7 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
                     {C.common.tier[tier]}
                   </span>
                 </th>
-                <td className="display text-right text-lg font-semibold leading-none text-ink">{season.detailed ? season.titles.filter(e => e.tier === tier).length : "—"}</td>
+                <td className="display text-right text-lg font-semibold leading-none text-ink">{season.detailed ? season.titles.filter(e => e.tier === tier).length : "-"}</td>
                 <td className="display pl-4 text-right text-lg font-bold leading-none text-amber-300">{totals[tier]}</td>
               </tr>
             ))}
@@ -66,7 +66,7 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
       </Panel>
       {/* The career's record: a strip of figures, no box per number. */}
       <Panel className="p-4 sm:p-5">
-        <h3 className="display text-lg uppercase leading-none text-ink">{C.launch.careerStats}</h3>
+        <div className="card-head"><h3 className="card-title">{C.launch.careerStats}</h3></div>
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
           {metrics.map(([label, value]) => <Metric key={String(label)} label={String(label)} value={value} />)}
         </dl>

@@ -318,7 +318,7 @@ export function CollectionView() {
                   const next = new Set(prev); if (next.has(r)) next.delete(r); else next.add(r); return next;
                 })} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-3 text-left hover:bg-white/[0.03]">
                   <span className="display text-sm font-bold uppercase tracking-wider text-ink">{RARITY_LABELS[r]}</span>
-                  <span className="font-mono text-xs text-sub">{got}/{cards.length}</span>
+                  <span className="tabular-nums text-xs text-sub">{got}/{cards.length}</span>
                   {lockRank ? <span className="ml-auto flex items-center gap-1 text-[10px] text-faint"><RankBadge rank={lockRank} variant="menu" size="sm" />{C.unlocksAt(lockRank.label)}</span> : null}
                   <span aria-hidden className="ml-auto text-sub">{closed ? "+" : "−"}</span>
                 </button>
@@ -428,7 +428,7 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        "display rounded-full border px-3.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+        "display rounded-sm border px-3.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
         active
           ? "border-orange/60 bg-orange/15 text-orange-bright"
           : "border-line bg-white/3 text-sub hover:border-line-strong hover:text-ink",
@@ -505,7 +505,7 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
             {EFFECT_LABELS[sp.effect.type] ? (
               <>
                 <span className="font-semibold text-orange-bright">{EFFECT_LABELS[sp.effect.type]}</span>
-                {" — "}
+                {": "}
               </>
             ) : null}
             {national ? N.effect(sp.effect.value) : sp.effect.description}

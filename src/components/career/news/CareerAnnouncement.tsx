@@ -84,11 +84,11 @@ export function CareerAnnouncement() {
       <AnnouncementShell label={C.launch.breaking} onClose={close} tone="news" masthead={<BrandMark brand={partner} name={brandName} />} date={formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week)))}>
         <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="display flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-orange-bright">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-orange-bright" />
+            {/* "Breaking" is set like a lower-third tag: dark on paper. */}
+            <p className="display rounded-sm bg-paper px-2 py-1 text-sm font-bold uppercase leading-none tracking-[0.05em] text-paper-ink">
               {C.launch.breaking}
             </p>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">{C.news.feed.subject[news.type]}</span>
+            <span className="display text-xs font-semibold uppercase tracking-[0.05em] text-sub">{C.news.feed.subject[news.type]}</span>
           </div>
           {crests.length ? (
             <div className="mt-4 flex items-center justify-center gap-6 py-2">
@@ -97,9 +97,9 @@ export function CareerAnnouncement() {
               ))}
             </div>
           ) : null}
-          <div className="mt-4 border-l-[3px] border-blue pl-4">
-            <h2 className="display text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">{content.title}</h2>
-            {content.body ? <p className="mt-3 text-sm leading-relaxed text-sub">{content.body}</p> : null}
+          <div className="mt-4">
+            <h2 className="display text-3xl font-bold uppercase leading-[1.04] text-ink sm:text-[2.5rem]">{content.title}</h2>
+            {content.body ? <p className="mt-4 text-[15px] leading-relaxed text-sub">{content.body}</p> : null}
           </div>
           <div className="mt-5 flex justify-end">
             <Button onClick={close}>{C.common.close}</Button>
@@ -111,7 +111,7 @@ export function CareerAnnouncement() {
   if (!notice.rung) return null;
   const rung = notice.rung;
   return (
-    <AnnouncementShell label={C.launch.unlocked} onClose={close} tone="unlock" masthead={<p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-bright">{C.launch.unlocked}</p>}>
+    <AnnouncementShell label={C.launch.unlocked} onClose={close} tone="unlock" masthead={<p className="text-[11px] font-bold uppercase tracking-[0.18em] text-orange-bright">{C.launch.unlocked}</p>}>
       <div className="relative overflow-hidden px-5 pb-5 pt-3 sm:px-6 sm:pb-6">
         <div className="relative flex items-center gap-5 rounded-xl border border-orange/20 bg-gradient-to-br from-orange/[0.08] to-transparent p-4 sm:p-5">
           <div className="min-w-0 flex-1">
@@ -126,7 +126,7 @@ export function CareerAnnouncement() {
           </span>
         </div>
         <div className="relative mt-4 flex items-center justify-between gap-3">
-          <Button variant="primary" className="!shadow-none" onClick={() => { close(); router.push(notice.href); }}>{C.launch.open} →</Button>
+          <Button variant="primary" className="!shadow-none" onClick={() => { close(); router.push(notice.href); }}>{C.launch.open}</Button>
           <Button variant="ghost" onClick={close}>{C.common.close}</Button>
         </div>
       </div>
@@ -156,12 +156,12 @@ function AnnouncementShell({ label, onClose, tone, masthead, date, children }: {
         style={{ outline: "none" }}
         className={cx(
           "pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border bg-panel-strong shadow-2xl",
-          tone === "news" ? "max-w-lg border-blue/25" : "max-w-md border-orange/30 bg-[linear-gradient(135deg,rgba(249,115,22,0.07),transparent_55%)]",
+          tone === "news" ? "max-w-xl border-blue-bright/55" : "max-w-md border-orange/30 bg-[linear-gradient(135deg,rgba(249,115,22,0.07),transparent_55%)]",
         )}
       >
-        <div className={cx("flex shrink-0 items-center gap-3 pl-5 pr-2 sm:pl-6", tone === "news" ? "border-b border-blue/15 bg-blue/5 py-2" : "pt-2")}>
+        <div className={cx("flex shrink-0 items-center gap-3 pl-5 pr-2 sm:pl-6", tone === "news" ? "bg-blue py-1.5 text-white" : "pt-2")}>
           {masthead}
-          <span className="ml-auto text-[10px] uppercase tracking-[0.12em] text-faint">{date}</span>
+          <span className={cx("ml-auto text-xs", tone === "news" ? "text-white/80" : "text-faint")}>{date}</span>
           <button type="button" aria-label={C.common.close} onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-lg text-xl text-sub hover:bg-white/5 hover:text-ink">×</button>
         </div>
         <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>

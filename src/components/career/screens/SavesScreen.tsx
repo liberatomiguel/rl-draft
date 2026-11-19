@@ -10,7 +10,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSlotMeta } from "@/engine/career/types";
@@ -23,6 +23,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { CAREER_CLOUD_AUDIENCE } from "@/lib/careerCloudGate";
+import { useAccountStore } from "@/store/accountStore";
+import { useCareerCloudStore, type SlotCloud } from "@/store/careerCloudStore";
+import { importSaveFile, type SaveFileImportError } from "@/store/careerSaveTransfer";
+import { CloudStatusLine } from "@/components/career/cloud/CloudStatusLine";
+import { downloadSlotFile } from "@/components/career/cloud/downloadSave";
 import { slotMetaFor, useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 
@@ -36,6 +42,9 @@ export function SavesScreen() {
 
   const metas = useMemo(() => slotMetaFor(slots), [slots]);
   const [confirmSlot, setConfirmSlot] = useState<number | null>(null);
+  const cloudActive = useCareerCloudStore((s) => s.active);
+  const cloudSlots = useCareerCloudStore((s) => s.slots);
+  const signedIn = useAccountStore((s) => s.status === "signedIn");
 
   if (!mounted) {
     return (
@@ -64,7 +73,7 @@ export function SavesScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle kicker={C.meta.title} title={C.saves.title} className="mb-6" />
+      <SectionTitle title={C.saves.title} className="mb-6" />
 
       <div className="grid gap-4 md:grid-cols-3">
         {metas.map((meta, slot) =>
@@ -75,12 +84,28 @@ export function SavesScreen() {
               delay={slot * 70}
               onResume={() => resume(slot)}
               onDelete={() => setConfirmSlot(slot)}
+              onExport={() => downloadSlotFile(slot)}
+              cloud={cloudActive ? cloudSlots[slot] : undefined}
             />
           ) : (
-            <EmptySlot key={slot} delay={slot * 70} onFound={() => router.push("/career/new")} />
+            <EmptySlot
+              key={slot}
+              slot={slot}
+              delay={slot * 70}
+              onFound={() => router.push("/career/new")}
+              cloud={cloudActive ? cloudSlots[slot] : undefined}
+            />
           ),
         )}
       </div>
+
+      <p className="mt-4 text-xs text-sub">
+        {cloudActive
+          ? C.cloud.helpActive
+          : CAREER_CLOUD_AUDIENCE === "all" && !signedIn
+            ? `${C.cloud.helpLocal} ${C.cloud.helpSignIn}`
+            : C.cloud.helpLocal}
+      </p>
 
       <Modal
         open={confirmSlot !== null}
@@ -103,7 +128,12 @@ export function SavesScreen() {
           </>
         }
       >
-        {confirmMeta ? <p>{C.saves.deleteConfirm(confirmMeta.orgName, confirmSeasons)}</p> : null}
+        {confirmMeta ? (
+          <p>
+            {C.saves.deleteConfirm(confirmMeta.orgName, confirmSeasons)}
+            {cloudActive ? ` ${C.cloud.deleteAlso}` : ""}
+          </p>
+        ) : null}
       </Modal>
     </div>
   );
@@ -118,11 +148,15 @@ function SlotCard({
   delay,
   onResume,
   onDelete,
+  onExport,
+  cloud,
 }: {
   meta: CareerSlotMeta;
   delay: number;
   onResume: () => void;
   onDelete: () => void;
+  onExport: () => void;
+  cloud?: SlotCloud;
 }) {
   const copy = useCopy();
   const C = useCareerCopy();
@@ -170,17 +204,26 @@ function SlotCard({
         <MetaRow label={copy.SETUP.difficulty} value={copy.DIFFICULTY_LABELS[meta.difficulty].label} />
         <MetaRow
           label={C.saves.lastPlayed}
-          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "—"}
+          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "-"}
         />
       </div>
 
-      <div className="relative mt-auto flex items-center gap-2">
+      {cloud ? <CloudStatusLine cloud={cloud} occupied /> : null}
+
+      <div className="relative mt-auto flex flex-wrap items-center gap-2">
         <Button variant="primary" size="md" className="flex-1" onClick={onResume}>
           {C.saves.resume}
         </Button>
         <Button variant="danger" size="md" onClick={onDelete} aria-label={C.saves.delete}>
           {C.saves.delete}
         </Button>
+        <button
+          type="button"
+          onClick={onExport}
+          className="min-h-11 w-full rounded px-1 text-xs font-semibold text-sub hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 sm:min-h-8"
+        >
+          {C.cloud.exportSave}
+        </button>
       </div>
     </Panel>
   );
@@ -201,7 +244,7 @@ function MetaRow({
 }) {
   return (
     <div className={cx("min-w-0", wide && "col-span-2")}>
-      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
+      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
       <p
         className={cx(
           "display truncate text-sm font-bold",
@@ -214,35 +257,91 @@ function MetaRow({
   );
 }
 
-function EmptySlot({ delay, onFound }: { delay: number; onFound: () => void }) {
+function EmptySlot({
+  slot,
+  delay,
+  onFound,
+  cloud,
+}: {
+  slot: number;
+  delay: number;
+  onFound: () => void;
+  cloud?: SlotCloud;
+}) {
   const C = useCareerCopy();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<SaveFileImportError | null>(null);
+
+  const onFile = async (input: HTMLInputElement) => {
+    const file = input.files?.[0];
+    if (!file) return;
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      setError("unreadable");
+      input.value = "";
+      return;
+    }
+    setError(importSaveFile(slot, text));
+    input.value = "";
+  };
+
   return (
-    <button
-      type="button"
-      onClick={onFound}
-      className={cx(
-        "rise-in group flex min-h-[16rem] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed",
-        "border-line-strong bg-white/[0.02] p-6 text-center transition-all",
-        "hover:border-orange/50 hover:bg-orange/5",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60",
-      )}
+    <div
+      className="rise-in flex min-h-[16rem] flex-col gap-2"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <span
-        aria-hidden
+      <button
+        type="button"
+        onClick={onFound}
         className={cx(
-          "flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-white/5 text-2xl text-sub",
-          "transition-all group-hover:border-orange/50 group-hover:text-orange-bright",
+          "group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed",
+          "border-line-strong bg-white/[0.02] p-6 text-center transition-all",
+          "hover:border-orange/50 hover:bg-orange/5",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60",
         )}
       >
-        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-        </svg>
-      </span>
-      <span className="display text-base font-bold uppercase tracking-wide text-ink">
-        {C.saves.empty}
-      </span>
-      <span className="text-xs text-sub">{C.wizard.title}</span>
-    </button>
+        <span
+          aria-hidden
+          className={cx(
+            "flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-white/5 text-2xl text-sub",
+            "transition-all group-hover:border-orange/50 group-hover:text-orange-bright",
+          )}
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="display text-base font-bold uppercase tracking-wide text-ink">
+          {C.saves.empty}
+        </span>
+        <span className="text-xs text-sub">{C.wizard.title}</span>
+      </button>
+      {cloud ? <CloudStatusLine cloud={cloud} occupied={false} /> : null}
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden"
+        tabIndex={-1}
+        onChange={(e) => void onFile(e.currentTarget)}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          setError(null);
+          fileRef.current?.click();
+        }}
+        className="min-h-11 rounded px-1 text-xs font-semibold text-sub hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 sm:min-h-8"
+      >
+        {C.cloud.importSave}
+      </button>
+      {error ? (
+        <p role="alert" className="text-center text-xs text-bad">
+          {C.cloud.importErrors[error]}
+        </p>
+      ) : null}
+    </div>
   );
 }

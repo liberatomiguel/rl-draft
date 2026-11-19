@@ -64,7 +64,7 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="display flex items-center gap-2 text-base font-bold uppercase tracking-wide text-ink">
             {M.title}
-            <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
+            <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "-"}</Badge>
           </h3>
           <div role="tablist" aria-label={M.periodSwitch} className="relative z-10 inline-flex shrink-0 rounded-lg border border-line bg-white/[0.03] p-0.5">
             {(["daily", "weekly"] as const).map((p) => (

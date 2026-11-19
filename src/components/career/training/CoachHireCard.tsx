@@ -201,7 +201,7 @@ export function CoachHireCard({
       {lockedNote ? <div className="mb-3 flex items-center gap-2 rounded-lg border border-orange/25 bg-orange/5 px-2.5 py-2 text-xs font-semibold text-orange-bright"><LockIcon className="h-4 w-4 shrink-0" />{lockedNote}</div> : null}
       <div className={cx("sm:flex sm:flex-1 sm:flex-col", lockedNote ? "flex flex-1 flex-col opacity-40 grayscale" : "contents")}>
       <div className="order-1 flex items-center gap-3 sm:order-none">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue/25 bg-blue/[0.05] text-blue-bright">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center text-blue-bright">
           <WhistleIcon className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -210,7 +210,7 @@ export function CoachHireCard({
         </div>
         <div className="shrink-0 text-right leading-none">
           <div className="display text-2xl font-bold text-ink">{Math.round(coach.overall)}</div>
-          <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
+          <div className="kicker text-faint">{C.common.ovr}</div>
         </div>
       </div>
       <div className="order-4 mt-3 flex-1 space-y-3 sm:order-none">

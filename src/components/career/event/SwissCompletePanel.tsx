@@ -62,10 +62,10 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
         />
         <div className="relative">
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <p className="kicker !text-[11px]">{def.name}</p>
+            <p className="kicker">{def.name}</p>
             <TierChip tier={def.tier} />
           </div>
-          <p className="kicker mt-3 !text-[10px] text-faint">{C.event.swissComplete}</p>
+          <p className="kicker mt-3 text-faint">{C.event.swissComplete}</p>
 
           <div role="status">
             <p

@@ -38,11 +38,14 @@ export { OrgMark } from "@/components/career/OrgMark";
 /** The title of whatever the day card is asking (an event, a bid, an invite). */
 export const DECISION_TITLE = "display text-2xl uppercase leading-none text-ink sm:text-3xl";
 /** A block's title inside a board of the main column. */
-export const BLOCK_TITLE = "display text-lg uppercase leading-none text-ink";
+export const BLOCK_TITLE = "card-title";
 /** A section's title in the side rail: one step quieter than a board's. */
-export const RAIL_TITLE = "display text-base uppercase leading-none text-ink";
-/** A rail section: no box, a hairline above it (the first one on desktop has none). */
-export const RAIL_SECTION = "border-t border-line pt-4 lg:first:border-t-0 lg:first:pt-0";
+export const RAIL_TITLE = "card-title";
+/** A rail section is a board of its own: the rail reads as a stack of separate desks,
+ *  each with its title ruled off (`RAIL_HEAD`) from what it holds. Nothing inside it is boxed. */
+export const RAIL_SECTION = "panel p-4 sm:p-5";
+/** The head of a rail board: the title on the left, its one figure, tag or link on the right. */
+export const RAIL_HEAD = "card-head";
 /** A text link out of a block. */
 export const BLOCK_LINK = "text-xs font-semibold text-blue-bright underline-offset-4 hover:underline";
 

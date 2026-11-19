@@ -134,7 +134,7 @@ describe("rc.36 POL-02 — HQ finances: the balance, the weekly out, the chart, 
 
 describe("rc.36 POL-02 — the progression card: three item rows and next unlock below", () => {
   // rc.49 (Miguel): what can be bought right now comes first; the ladder's window fills the rest.
-  const rowsOf = (html: string) => html.split('<li class="flex min-h-16').slice(1);
+  const rowsOf = (html: string) => html.split('<li class="flex min-h-14').slice(1);
   it("lists what can be bought now first, then the neighbors of the latest unlock", () => {
     const save = fresh();
     save.reputation = 22; // assistant and PCs reached; ex-pro coach is next
@@ -148,7 +148,7 @@ describe("rc.36 POL-02 — the progression card: three item rows and next unlock
     expect(html).not.toContain("grid grid-cols-2 gap-2");
     expect(html).toContain(CAREER_EN.ladder.seeMore);
     expect(html).toContain('href="/career/finances"');
-    expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.lastIndexOf('<li class="flex min-h-16'));
+    expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.lastIndexOf('<li class="flex min-h-14'));
   });
   it("keeps three rows at the top of the ladder, buyable ones first", () => {
     const save = fresh();

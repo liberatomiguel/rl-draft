@@ -292,7 +292,7 @@ export function SalaryNegotiator({
     // title, then three groups divided by hairlines (offer, position, send).
     <div>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="display text-lg uppercase leading-none text-ink">{N.title}</h3>
+        <h3 className="card-title">{N.title}</h3>
         <Button variant="ghost" size="sm" onClick={() => onChange({})} disabled={disabled || atAsk}>
           {N.fullAsk}
         </Button>

@@ -12,11 +12,15 @@
  * a challenge series playing, the run ceremonies (special reveal, rank-up,
  * Legacy unlock), the first-run tour. Unlocks earned mid-tournament queue up
  * and appear after the results ceremonies (E2E DRAFT-02).
+ *
+ * v2.0.17: the queue can also hold `VERIFIED_GRANT` — the Verified seal Miguel
+ * grants by hand. Same ceremony, the seal as the art, and no "wear it": the seal
+ * is part of the account, never a slot. Dismissing it records the announcement.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { cosmeticById, type CosmeticDef } from "@/data/cosmetics";
+import { cosmeticById, VERIFIED_GRANT, type CosmeticDef } from "@/data/cosmetics";
 import { addBadge, MAX_BADGES, resolveEquipped } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
@@ -28,6 +32,7 @@ import { selectHeld, useOverlayHolds, useSettled } from "@/store/overlayHoldStor
 import { useProfileStore } from "@/store/profileStore";
 import { useRewardToasts } from "@/store/rewardToastStore";
 import { Button } from "@/components/ui/Button";
+import { VerifiedSeal } from "@/components/ui/VerifiedSeal";
 import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { BadgeEmblem, BannerSurface, TIER_ACCENT, TitleTag, useCosmeticCopy } from "./CosmeticViews";
 import { sourceLabel } from "./sourceLabel";
@@ -41,6 +46,9 @@ const TIER_RING: Record<CosmeticDef["tier"], string> = {
   legend: "rgba(252, 211, 77, 0.7)",
 };
 
+/** The Verified ceremony ring: the seal's own blue. */
+const VERIFIED_RING = "rgba(74, 168, 255, 0.7)";
+
 export function CosmeticUnlockModal() {
   const mounted = useMounted();
   const { COSMETICS: C } = useCopy();
@@ -51,22 +59,24 @@ export function CosmeticUnlockModal() {
   const held = useOverlayHolds(selectHeld);
   const cosmetics = useProfileStore((s) => s.cosmetics);
   const setEquipped = useProfileStore((s) => s.setEquipped);
+  const markVerifiedAnnounced = useProfileStore((s) => s.markVerifiedAnnounced);
   const nickname = useAccountStore((s) => s.username);
   // "i of n" for a batch: n grows while items keep arriving; reset on the last.
   const [batch, setBatch] = useState({ done: 0, total: 0 });
   const total = Math.max(batch.total, batch.done + queue.length);
   const id = queue[0];
   const def = id ? cosmeticById.get(id) : undefined;
-  const defId = def?.id ?? null;
+  const seal = id === VERIFIED_GRANT;
+  const defId = def?.id ?? (seal ? VERIFIED_GRANT : null);
   // Ready, and still ready a frame later (see `useSettled`).
-  const visible = useSettled(mounted && !!def && !loginOpen && !held);
+  const visible = useSettled(mounted && !!defId && !loginOpen && !held);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // An id the catalog no longer knows would block the queue (and the results
   // XP count-up waiting for it) forever: drop it.
   useEffect(() => {
-    if (id && !def) shift();
-  }, [id, def, shift]);
+    if (id && !def && !seal) shift();
+  }, [id, def, seal, shift]);
 
   // One sting per item, once it is actually on screen.
   useEffect(() => {
@@ -74,6 +84,7 @@ export function CosmeticUnlockModal() {
   }, [defId, visible]);
 
   const next = () => {
+    if (seal) markVerifiedAnnounced();
     setBatch((b) => (queue.length <= 1 ? { done: 0, total: 0 } : { done: b.done + 1, total: Math.max(b.total, b.done + queue.length) }));
     shift();
   };
@@ -81,7 +92,60 @@ export function CosmeticUnlockModal() {
   usePageScrollLock(visible);
   useDialogFocus(rootRef, visible, { onEscape: next });
 
-  if (!visible || !def) return null;
+  if (!visible || !defId) return null;
+  const done = batch.done;
+  const last = queue.length <= 1;
+
+  if (!def) {
+    // The Verified seal (the only non-catalog id that reaches this point).
+    const V = C.verified;
+    return createPortal(
+      <div
+        ref={rootRef}
+        tabIndex={-1}
+        style={{ outline: "none" }}
+        className="fixed inset-0 z-[58] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/85 p-6 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label={V.kicker}
+      >
+        <button type="button" onClick={next} aria-label={C.unlockContinue} className="fixed right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-raised text-xl text-sub hover:text-ink">×</button>
+        <div key={defId} className="rise-in flex w-full max-w-sm flex-col items-center gap-5 text-center">
+          <div>
+            <p className="kicker text-orange-bright">{C.unlockKicker}</p>
+            <p className="display mt-1 text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{V.kicker}</p>
+          </div>
+
+          <div className="ceremony-burst relative">
+            <span className="ceremony-ring" aria-hidden style={{ borderColor: VERIFIED_RING }} />
+            <div className="card-float flex items-center justify-center">
+              <VerifiedSeal size={128} />
+            </div>
+          </div>
+
+          <div className="w-full">
+            <p className="display flex items-center justify-center gap-2 text-xl font-bold uppercase tracking-wide text-ink">
+              {nickname ?? V.name}
+              <VerifiedSeal size={17} className="-translate-y-[0.5px]" />
+            </p>
+            <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-sub">{V.desc}</p>
+            <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-faint">{V.permanent}</p>
+            <p className="mt-3 text-[11px] text-faint">
+              <span className="uppercase tracking-wider">{C.unlockHow}</span> · {V.how}
+            </p>
+          </div>
+
+          <div className="flex w-full flex-col items-center gap-2">
+            <Button variant="primary" onClick={next}>
+              {last ? C.unlockContinue : C.unlockNext}
+            </Button>
+            {total > 1 ? <p className="text-[11px] text-faint">{C.unlockCount(done + 1, total)}</p> : null}
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
 
   const resolved = resolveEquipped(cosmetics);
   const worn = def.kind === "badge" ? resolved.badges.some((b) => b.id === def.id) : resolved[def.kind]?.id === def.id;
@@ -91,9 +155,6 @@ export function CosmeticUnlockModal() {
     if (def.kind === "badge") setEquipped({ badges: addBadge(resolved.badges.map((b) => b.id), def.id) });
     else setEquipped({ [def.kind]: def.id });
   };
-  const done = batch.done;
-  const last = queue.length <= 1;
-
   return createPortal(
     <div
       ref={rootRef}

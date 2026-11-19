@@ -23,6 +23,7 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
 import { RewardToaster } from "@/components/RewardToaster";
 import { LoginStreakModal } from "@/components/LoginStreakModal";
+import { isGameRoute } from "@/lib/gameRoutes";
 import { CosmeticUnlockModal } from "@/components/cosmetics/CosmeticUnlockModal";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { PlayStrip } from "./PlayStrip";
@@ -50,9 +51,10 @@ const NAV_ITEMS: typeof BASE_NAV_ITEMS = FEATURES.careerMode
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cx("display font-extrabold uppercase leading-none tracking-[0.03em]", className)}>
-      <span className="text-ink">Rocket</span>
-      <span className="text-orange">Draft</span>
+    // Two weights of the same face: a bold "Rocket" against a black "Draft".
+    <span className={cx("display uppercase leading-none tracking-[0.03em]", className)}>
+      <span className="font-bold text-ink">Rocket</span>
+      <span className="font-extrabold text-orange">Draft</span>
     </span>
   );
 }
@@ -161,7 +163,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SettingsEffects />
       <AchievementToaster />
       <RewardToaster />
-      {FEATURES.playtest ? null : (
+      {/* v2.0.22: reward pop-ups open on the game's own routes only (lib/gameRoutes). */}
+      {FEATURES.playtest || !isGameRoute(pathname) ? null : (
         <>
           <LoginStreakModal />
           <CosmeticUnlockModal />
@@ -181,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <GuardedHomeLink href="/" className="flex shrink-0 items-center gap-2" aria-label={t.APP.name}>
               <LogoMark />
               {/* Wordmark hidden where the bar is tight (phones, and tablets with the full nav). */}
-              <Logo className="hidden text-lg sm:inline-block md:hidden lg:inline-block" />
+              <Logo className="hidden text-base sm:inline-block md:hidden lg:inline-block" />
             </GuardedHomeLink>
             <nav className="hidden min-w-0 items-center gap-0.5 md:flex" aria-label={t.NAV_UI.ariaMain}>
               {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
