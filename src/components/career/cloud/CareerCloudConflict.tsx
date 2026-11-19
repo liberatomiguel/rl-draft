@@ -35,9 +35,9 @@ function CopyCard({
   return (
     <div className="min-w-0 rounded-lg border border-line bg-black/20 p-3">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{title}</p>
+        <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">{title}</p>
         {recent ? (
-          <span className="shrink-0 rounded border border-line-strong px-1.5 py-0.5 text-[10px] font-semibold text-sub">
+          <span className="shrink-0 rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold text-sub">
             {recent}
           </span>
         ) : null}

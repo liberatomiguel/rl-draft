@@ -23,7 +23,7 @@ export default function CareerMarketGuidePage() {
       initialLocale="en"
       path={R.en}
       backHref="/"
-      ctaHref="/"
+      ctaHref="/career"
     />
   );
 }

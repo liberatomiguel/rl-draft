@@ -16,7 +16,7 @@ export const SITE = {
   domain: "rocketdraft.app",
   url: "https://rocketdraft.app",
   /** Shown in the footer. Keep in sync with package.json. */
-  version: "2.0.28",
+  version: "2.0.33",
   versionName: "Season 1",
 
   author: "LiberatoRL",
@@ -34,4 +34,6 @@ export const SITE = {
   /** Community + support. Empty string = hidden until set. */
   discordUrl: "https://discord.gg/h4FGWHyPD2", // e.g. "https://discord.gg/xxxxxxx"
   supportUrl: "https://ko-fi.com/liberatomiguel", // e.g. "https://ko-fi.com/liberatorl"
+  /** The 50/50 site (the Home's partner card). Empty = the card shows "link coming soon" and is not a link. */
+  partnerUrl: "" as string,
 } as const;

@@ -4,7 +4,7 @@ import { DATABASE_UI, SETUP } from "@/content/copy.en";
 import { TeamView } from "@/components/database/DatabaseViews";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { pageMetadata, withBrand } from "@/lib/contentMeta";
-import { DB_TEAMS, dbTeam } from "@/lib/database";
+import { DB_TEAMS, currentSeasonOf, dbTeam } from "@/lib/database";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 
 // Static export: every team page is written at build time, nothing else exists.
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const team = dbTeam((await params).team);
   if (!team) return {};
   return pageMetadata({
-    title: withBrand(DATABASE_UI.teamTitle(team.name)),
+    title: withBrand(DATABASE_UI.teamTitle(team.name, currentSeasonOf(team))),
     description: DATABASE_UI.teamIntro(
       team.name,
       SETUP.regionNames[team.region] ?? team.region,
@@ -43,7 +43,7 @@ export default async function TeamPage({ params }: Props) {
           { name: team.name, path: `/rlcs/teams/${team.id}` },
         ])}
       />
-      <TeamView team={team} />
+      <TeamView team={team} current={currentSeasonOf(team)} />
     </>
   );
 }

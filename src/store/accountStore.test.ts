@@ -44,7 +44,7 @@ vi.mock("@/lib/analytics", async (importOriginal) => ({
   trackEvent: track,
 }));
 
-import { useAccountStore } from "./accountStore";
+import { forgetLocalProfileOwner, useAccountStore } from "./accountStore";
 import { useProfileStore } from "./profileStore";
 
 type AuthCb = (session: Session | null, event: string) => void;
@@ -106,6 +106,7 @@ beforeEach(() => {
   // Sign the previous test's user out through the store itself: clears the module
   // state (synced-this-load set, pending debounced push, last-pushed signature).
   storeAuth(null, "SIGNED_OUT");
+  forgetLocalProfileOwner(); // each test starts on a device no account owns
   for (const f of Object.values(sb)) f.mockReset();
   track.mockReset();
   sb.pushCloudProfile.mockResolvedValue({});
@@ -349,6 +350,7 @@ describe("cross-tab: the profile another tab SAVED is folded in (SAVE-2)", () =>
     sb.fetchCloudRow.mockResolvedValue({ status: "no-row" });
     for (const [i, getItem] of cases.entries()) {
       storageReturns(getItem);
+      forgetLocalProfileOwner(); // each case is a device no account owns yet
       await useAccountStore.getState().syncNow(signedIn(session()));
       expect(pushedDurable(i).xp).toBe(100);
       expect(useProfileStore.getState().xp).toBe(100);
@@ -830,6 +832,7 @@ describe("2.0.0: what a sync brings is announced by the normal unlock pop-up", (
     useProfileStore.setState({ legacy: { preseason }, flags: { ...useProfileStore.getState().flags, seenSeasonRecap: true } });
     useProfileStore.getState().refreshCosmetics();
     useCosmeticUnlocks.getState().clear();
+    forgetLocalProfileOwner(); // a guest on another device signs in
     const s2 = signedIn(session());
     await useAccountStore.getState().syncNow(s2);
     expect(useCosmeticUnlocks.getState().queue).toEqual(expect.arrayContaining(["season-third-place-ps", "legacy-title-ps-board-3"]));
@@ -1175,5 +1178,111 @@ describe("v2.0.25: named failures, retries and the owed sync", () => {
     win.handlers.get("online")?.();
     await tick();
     expect(sb.fetchCloudRow).toHaveBeenCalledTimes(reads);
+  });
+});
+
+describe("v2.0.29: one device, several accounts — the local profile is one account's", () => {
+  /** Sign `s` in through the auth listener and let its sync land. */
+  async function signInAs(s: Session, row: CloudRowResult): Promise<void> {
+    sb.fetchCloudRow.mockResolvedValueOnce(row);
+    storeAuth(s, "SIGNED_IN");
+    await flush();
+    await flush();
+  }
+
+  it("guest progress still comes along on the first sign-in", async () => {
+    useProfileStore.setState({ xp: 120 });
+    const a = session();
+    await signInAs(a, { status: "no-row" });
+    expect(pushedDurable(0).xp).toBe(120);
+    expect(useProfileStore.getState().xp).toBe(120);
+  });
+
+  it("signing out resets the device to a fresh guest", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900, grants: ["staff"] }, { grants: ["staff"] }));
+    expect(useProfileStore.getState().xp).toBe(900);
+    await useAccountStore.getState().signOut();
+    expect(useAccountStore.getState().status).toBe("signedOut");
+    expect(useProfileStore.getState().xp).toBe(0);
+    expect(useProfileStore.getState().grants ?? []).toEqual([]);
+  });
+
+  it("the listener's SIGNED_OUT (another tab, an expired session) resets too", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900 }));
+    storeAuth(null, "SIGNED_OUT");
+    expect(useProfileStore.getState().xp).toBe(0);
+  });
+
+  it("the next account never inherits the previous one's progress or grants", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900, grants: ["staff"] }, { grants: ["staff"] }));
+    await useAccountStore.getState().signOut();
+    sb.pushCloudProfile.mockClear();
+    const b = session();
+    await signInAs(b, { status: "no-row" });
+    expect(pushedDurable(0).xp).toBe(0);
+    expect(pushedDurable(0).grants ?? []).toEqual([]);
+    expect(useProfileStore.getState().xp).toBe(0);
+  });
+
+  it("a sign-in as another account without a sign-out starts clean too", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900, grants: ["staff"] }, { grants: ["staff"] }));
+    sb.pushCloudProfile.mockClear();
+    const b = session();
+    await signInAs(b, { status: "no-row" });
+    expect(pushedDurable(0).xp).toBe(0);
+    expect(pushedDurable(0).grants ?? []).toEqual([]);
+  });
+
+  it("progress the last push missed is folded back in at the account's next sign-in", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900 }));
+    useProfileStore.setState({ xp: 950 }); // unsynced
+    sb.fetchCloudRow.mockResolvedValue({ status: "error", error: "offline" }); // the last push cannot run
+    await useAccountStore.getState().signOut();
+    expect(useProfileStore.getState().xp).toBe(0);
+    sb.fetchCloudRow.mockReset();
+    sb.pushCloudProfile.mockClear();
+    await signInAs(a, cloud({ xp: 900 })); // the cloud never got the 950
+    expect(useProfileStore.getState().xp).toBe(950);
+    expect(pushedDurable(0).xp).toBe(950);
+  });
+
+  it("signing out pushes unsynced progress first", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900 }));
+    useProfileStore.setState({ xp: 950 });
+    sb.pushCloudProfile.mockClear();
+    sb.fetchCloudRow.mockResolvedValue(cloud({ xp: 900 }));
+    await useAccountStore.getState().signOut();
+    expect(pushedDurable(0).xp).toBe(950);
+    expect(useProfileStore.getState().xp).toBe(0);
+  });
+
+  it("a sync whose account signed out mid-read writes nothing into the guest", async () => {
+    const a = session();
+    const read = deferred<CloudRowResult>();
+    sb.fetchCloudRow.mockReturnValueOnce(read.promise);
+    storeAuth(a, "SIGNED_IN");
+    await flush();
+    storeAuth(null, "SIGNED_OUT");
+    read.resolve(cloud({ xp: 900 }));
+    await flush();
+    await flush();
+    expect(useProfileStore.getState().xp).toBe(0);
+    expect(sb.pushCloudProfile).not.toHaveBeenCalled();
+  });
+
+  it("deleting the account keeps the local progress as the guest's", async () => {
+    const a = session();
+    await signInAs(a, cloud({ xp: 900 }));
+    await useAccountStore.getState().deleteAccount();
+    expect(useProfileStore.getState().xp).toBe(900);
+    sb.pushCloudProfile.mockClear();
+    await signInAs(session(), { status: "no-row" }); // a new account adopts it, as a guest's
+    expect(pushedDurable(0).xp).toBe(900);
   });
 });

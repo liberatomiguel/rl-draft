@@ -1,14 +1,14 @@
 {
   "about": {
-    "metaTitle": "About Rocket Draft — Fan-Made RLCS Draft Game",
+    "metaTitle": "About Rocket Draft: Fan-Made RLCS Draft Game",
     "metaDescription": "Rocket Draft is a free, fan-made RLCS draft game by LiberatoRL. Draft real Rocket League esports lineups from 2016 to today, build chemistry and win the bracket.",
     "kicker": "About",
     "title": "About Rocket Draft",
-    "intro": "Rocket Draft is a free, fan-made RLCS draft game — a Rocket League esports roster builder that turns the history of the scene into a playable draft. Here is what it is, who made it, and why it exists.",
+    "intro": "Rocket Draft is a free, fan-made RLCS draft game, a Rocket League esports roster builder that turns the history of the scene into a playable draft. Here is what it is, who made it, and why it exists.",
     "sections": [
       {
         "heading": "What is Rocket Draft",
-        "body": "Rocket Draft is a free Rocket League esports roster builder. Each round deals one real historical RLCS lineup from 2016 to today, and you take a single card — a player, the coach, the substitute, or the organization — until you have three players, one coach, one sub, and one org. Then you build chemistry, collect special cards, and run an RLCS-style tournament. No account, no download — it plays in any browser, desktop or mobile."
+        "body": "Rocket Draft is a free Rocket League esports roster builder. Each round deals one real historical RLCS lineup from 2016 to today, and you take a single card (a player, the coach, the substitute, or the organization) until you have three players, one coach, one sub, and one org. Then you build chemistry, collect special cards, and run an RLCS-style tournament. No account, no download. It plays in any browser, desktop or mobile."
       },
       {
         "heading": "Why it exists and who made it",
@@ -16,7 +16,7 @@
       },
       {
         "heading": "What makes it different",
-        "body": "Two things set Rocket Draft apart. The first is Region-Locked Draft: North America, Europe, South America (SAM), MENA and Oceania each have their own pool, hand-researched from Liquipedia — a scene's World Championship rosters plus the regional teams that never reached Worlds, with deeper benches and cult underdogs like yanxnz. The second is transparent ratings: every overall is a calculated base plus a hand manual review, reviewed over time, and open to community pushback."
+        "body": "Two things set Rocket Draft apart. The first is Region-Locked Draft: North America, Europe, South America (SAM), MENA and Oceania each have their own pool, hand-researched from Liquipedia: a scene's World Championship rosters plus the regional teams that never reached Worlds, with deeper benches and cult underdogs like yanxnz. The second is transparent ratings: every overall is a calculated base plus a hand manual review, reviewed over time, and open to community pushback."
       },
       {
         "heading": "A fan project, not affiliated",
@@ -27,22 +27,22 @@
     "faqs": []
   },
   "faq": {
-    "metaTitle": "Rocket Draft FAQ — RLCS Draft Game Questions Answered",
+    "metaTitle": "Rocket Draft FAQ: RLCS Draft Game Questions Answered",
     "metaDescription": "Rocket Draft FAQ: is it free, do you need an account, does it run on mobile, how RLCS ratings are calculated, special cards, regions and how the draft works.",
     "kicker": "Help",
     "title": "Rocket Draft FAQ",
-    "intro": "Quick answers to the questions players ask most about Rocket Draft — the free, fan-made RLCS draft game built on real Rocket League esports history.",
+    "intro": "Quick answers to the questions players ask most about Rocket Draft, the free, fan-made RLCS draft game built on real Rocket League esports history.",
     "sections": [
       {
         "heading": "Everything you need to get started",
-        "body": "Rocket Draft lets you draft a team from real historical RLCS lineups, build chemistry, collect special cards, and play an RLCS-style tournament — all in your browser, free, no account required. Below are the questions players ask most. If you want the full walkthrough, see How to Play; for the ratings system, see Ratings; for the legends showcase, see Special Cards."
+        "body": "Rocket Draft lets you draft a team from real historical RLCS lineups, build chemistry, collect special cards, and play an RLCS-style tournament, all in your browser, free, no account required. Below are the questions players ask most. If you want the full walkthrough, see How to Play; for the ratings system, see Ratings; for the legends showcase, see Special Cards."
       }
     ],
     "ctaLabel": "Start a free draft",
     "faqs": [
       {
         "q": "Is Rocket Draft free?",
-        "a": "Yes. Rocket Draft is completely free and non-commercial — a fan-made passion project celebrating RLCS history. There is no paywall, no ads required to play, and a \"buy me a coffee\" support link is entirely optional."
+        "a": "Yes. Rocket Draft is completely free and non-commercial, a fan-made passion project celebrating RLCS history. There is no paywall, no ads required to play, and a \"buy me a coffee\" support link is entirely optional."
       },
       {
         "q": "Do I need an account to play?",
@@ -50,7 +50,7 @@
       },
       {
         "q": "Can I play on mobile?",
-        "a": "Yes. Rocket Draft runs in any modern browser on both desktop and mobile — no app to download and no install."
+        "a": "Yes. Rocket Draft runs in any modern browser on both desktop and mobile, with no app to download and no install."
       },
       {
         "q": "Is Rocket Draft official or affiliated with an esports org?",
@@ -58,19 +58,19 @@
       },
       {
         "q": "How are player ratings and overalls calculated?",
-        "a": "Every overall is built in two layers: a calculated base plus a hand manual review. The calculation weighs team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength, and consistency across events. The manual review exists because esports data can mislead — some players overperform statistically due to context, others are historically elite despite worse team results (typical adjustment is small, around plus or minus 3, exceptional plus or minus 5). Six internal stats feed simulation and card depth: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. See the Ratings page for the full methodology."
+        "a": "Every overall is built in two layers: a calculated base plus a hand manual review. The calculation weighs team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength, and consistency across events. The manual review exists because esports data can mislead: some players overperform statistically due to context, others are historically elite despite worse team results (typical adjustment is small, around plus or minus 3, exceptional plus or minus 5). Six internal stats feed simulation and card depth: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. See the Ratings page for the full methodology."
       },
       {
         "q": "What are special cards?",
-        "a": "Special cards are rare versions of players tied to iconic Rocket League esports moments — Worlds and Major MVP runs, legends, and signature plays. There are {specialCards} of them, and they can appear in any draft. Draft one and finish the run, win or lose, to unlock it in your collection forever. In-game, locked cards show as ??? until you unlock them. The Special Cards page is a curated showcase of legends and does not spoil your unlock progress."
+        "a": "Special cards are rare versions of players tied to iconic Rocket League esports moments: Worlds and Major MVP runs, legends, and signature plays. There are {specialCards} of them, and they can appear in any draft. Draft one and finish the run, win or lose, to unlock it in your collection forever. In-game, locked cards show as ??? until you unlock them. The Special Cards page is a curated showcase of legends and does not spoil your unlock progress."
       },
       {
         "q": "How does the draft work?",
-        "a": "Each round deals one real historical RLCS lineup. You take exactly one card from it — a player, the coach, the substitute, or the organization — until you have 3 players, 1 coach, 1 sub, and 1 org. The draft pool is fully random on every difficulty, so luck is the same for everyone; difficulty changes the tournament field, not your draw. If nothing in a lineup fits your open slots, the reroll is free."
+        "a": "Each round deals one real historical RLCS lineup. You take exactly one card from it (a player, the coach, the substitute, or the organization) until you have 3 players, 1 coach, 1 sub, and 1 org. The draft pool is fully random on every difficulty, so luck is the same for everyone; difficulty changes the tournament field, not your draw. If nothing in a lineup fits your open slots, the reroll is free."
       },
       {
         "q": "What is SAM, the regional mode?",
-        "a": "SAM is the South American region of Rocket League esports. In Rocket Draft it is also a Region-Locked Draft: the pool narrows to one scene's full depth — its World Championship teams plus the regional rosters that never reached Worlds, meaning deeper benches and local underdogs you won't see worldwide (for example, yanxnz). North America, Europe, MENA and Oceania have their own region-locked drafts too."
+        "a": "SAM is the South American region of Rocket League esports. In Rocket Draft it is also a Region-Locked Draft: the pool narrows to one scene's full depth: its World Championship teams plus the regional rosters that never reached Worlds, meaning deeper benches and local underdogs you won't see worldwide (for example, yanxnz). North America, Europe, MENA and Oceania have their own region-locked drafts too."
       },
       {
         "q": "Are more players and teams being added?",
@@ -78,11 +78,11 @@
       },
       {
         "q": "How is my progress saved?",
-        "a": "Progress is saved locally on the device you play on — your collection, profile, and settings live in your browser, with no sign-in required. If you do sign in with your email, the same progress is backed up to the cloud and merged in, never lost."
+        "a": "Progress is saved locally on the device you play on: your collection, profile, and settings live in your browser, with no sign-in required. If you do sign in with your email, the same progress is backed up to the cloud and merged in, never lost."
       },
       {
         "q": "Is Rocket Draft an RLCS draft game?",
-        "a": "Yes. Rocket Draft is a free RLCS draft game and tournament simulator. You draft a roster from real RLCS lineups across every season since 2016, build team chemistry, and play an RLCS-style Swiss-into-double-elimination bracket — an RLCS draft you can run in the browser with no install."
+        "a": "Yes. Rocket Draft is a free RLCS draft game and tournament simulator. You draft a roster from real RLCS lineups across every season since 2016, build team chemistry, and play an RLCS-style Swiss-into-double-elimination bracket, an RLCS draft you can run in the browser with no install."
       },
       {
         "q": "What makes this RLCS draft different from a simple team picker?",
@@ -90,7 +90,7 @@
       },
       {
         "q": "Can I do a region-locked RLCS draft (like a SAM / South America draft)?",
-        "a": "Yes. Region-Locked Draft narrows the pool to one scene's full depth — its World Championship teams plus the regional rosters that never got there. North America, Europe, South America (SAM), MENA and Oceania are live, each a dedicated RLCS draft of that region's teams."
+        "a": "Yes. Region-Locked Draft narrows the pool to one scene's full depth: its World Championship teams plus the regional rosters that never got there. North America, Europe, South America (SAM), MENA and Oceania are live, each a dedicated RLCS draft of that region's teams."
       },
       {
         "q": "Is Rocket Draft a Rocket League simulator?",
@@ -108,46 +108,46 @@
     ]
   },
   "ratings": {
-    "metaTitle": "RLCS Player Ratings — How Overalls Are Built",
+    "metaTitle": "RLCS Player Ratings: How Overalls Are Built",
     "metaDescription": "How Rocket Draft calculates RLCS player ratings: a calculated base plus a hand manual review, six internal stats, and why team overall stays the main factor.",
     "kicker": "Ratings",
     "title": "How Rocket Draft Rates RLCS Players",
-    "intro": "This is the transparent breakdown of how every player overall is built — the two layers behind the number, what the calculation weighs, and why some special cards rate above their base versions. If you have ever asked why a player carries the overall they do, this is the answer.",
+    "intro": "This is the transparent breakdown of how every player overall is built: the two layers behind the number, what the calculation weighs, and why some special cards rate above their base versions. If you have ever asked why a player carries the overall they do, this is the answer.",
     "sections": [
       {
         "heading": "How overalls are built: base plus manual review",
-        "body": "Every player overall is built in two layers. First, a calculated base derived from results and context. Then a hand manual review — led by GWR, who balances the player ratings — because esports data misleads on its own. Some players overperform statistically due to context; others are historically elite despite worse team results. The manual adjustment is typically small — around ±3, with exceptional cases reaching ±5. The goal is a number that respects both the spreadsheet and the history."
+        "body": "Every player overall is built in two layers. First, a calculated base derived from results and context. Then a hand manual review (led by GWR, who balances the player ratings) because esports data misleads on its own. Some players overperform statistically due to context; others are historically elite despite worse team results. The manual adjustment is typically small, around ±3, with exceptional cases reaching ±5. The goal is a number that respects both the spreadsheet and the history."
       },
       {
         "heading": "What the calculation considers",
-        "body": "The calculated base weighs a wide spread of historical signal: team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength and context, and consistency across events. No single stat line decides an overall — the base reads the whole career arc across RLCS history from 2016 to today."
+        "body": "The calculated base weighs a wide spread of historical signal: team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength and context, and consistency across events. No single stat line decides an overall. The base reads the whole career arc across RLCS history from 2016 to today."
       },
       {
         "heading": "The six stats behind every card",
-        "body": "Six internal stats feed the match simulation and give cards their depth. Offense covers scoring and pressure. Defense is stability and avoiding bad losses. Mechanics is ceiling — the explosive, high-roll games. Consistency reduces collapse and variance. Experience rewards longer series and playoff runs. Clutch shows up in Game 5 and Game 7, overtime, and close series. Together they shape how a roster actually plays out."
+        "body": "Six internal stats feed the match simulation and give cards their depth. Offense covers scoring and pressure. Defense is stability and avoiding bad losses. Mechanics is ceiling: the explosive, high-roll games. Consistency reduces collapse and variance. Experience rewards longer series and playoff runs. Clutch shows up in Game 5 and Game 7, overtime, and close series. Together they shape how a roster actually plays out."
       },
       {
         "heading": "Why special cards can beat base cards",
-        "body": "Special cards are rare versions tied to iconic Rocket League esports moments — Worlds and Major MVP runs, legends, signature plays. Because they capture a peak, a special card can rate above its base version. \"Pinch God\" (kuxir97, Season 2 World Champion and Worlds MVP) or \"Four Times World Champion\" (Turbopolsa) are not just reskins — the effect ramps with the moment. There are {specialCards} special cards to unlock by finishing a run with one drafted."
+        "body": "Special cards are rare versions tied to iconic Rocket League esports moments: Worlds and Major MVP runs, legends, signature plays. Because they capture a peak, a special card can rate above its base version. \"Pinch God\" (kuxir97, Season 2 World Champion and Worlds MVP) or \"Four Times World Champion\" (Turbopolsa) are not just reskins: the effect ramps with the moment. There are {specialCards} special cards to unlock by finishing a run with one drafted."
       },
       {
         "heading": "How team rating works: overall stays dominant",
-        "body": "A team rating is driven mostly by player overalls. Chemistry, org buffs, coach effects and special-card boosts add the edge — they never replace overall as the main factor. That said, a coherent, high-chemistry roster can beat a higher-rated all-star mix, so the top overall is not always the smart pick. On Hard and Legacy, chemistry is asymmetric: it helps your team while AI opponents bank no bonus."
+        "body": "A team rating is driven mostly by player overalls. Chemistry, org buffs, coach effects and special-card boosts add the edge; they never replace overall as the main factor. That said, a coherent, high-chemistry roster can beat a higher-rated all-star mix, so the top overall is not always the smart pick. On Hard and Legacy, chemistry is asymmetric: it helps your team while AI opponents bank no bonus."
       },
       {
         "heading": "How SAM and region players are rated",
-        "body": "Region-Locked Draft narrows the pool to one scene's full depth. South America (SAM) is live now, hand-researched from Liquipedia, covering Brazilian and South American teams — its World Championship rosters plus the regional Top 8 that never reached Worlds. Those players carry the same two-layer treatment, with region strength and context already folded into the base. A confirmed SAM name in the pool: yanxnz."
+        "body": "Region-Locked Draft narrows the pool to one scene's full depth. South America (SAM) is live now, hand-researched from Liquipedia, covering Brazilian and South American teams: its World Championship rosters plus the regional Top 8 that never reached Worlds. Those players carry the same two-layer treatment, with region strength and context already folded into the base. A confirmed SAM name in the pool: yanxnz."
       },
       {
         "heading": "How often ratings are reviewed",
-        "body": "Ratings are not frozen. They are reviewed and updated over time as the methodology is refined and as history is re-read with fresh eyes. The community can push back on any overall — this page exists so those conversations start from a shared, honest baseline rather than a black box."
+        "body": "Ratings are not frozen. They are reviewed and updated over time as the methodology is refined and as history is re-read with fresh eyes. The community can push back on any overall. This page exists so those conversations start from a shared, honest baseline rather than a black box."
       }
     ],
     "ctaLabel": "Draft a team and see the overalls in action",
     "faqs": []
   },
   "strategy": {
-    "metaTitle": "Rocket Draft Strategy Guide — Best Picks & How to Win",
+    "metaTitle": "Rocket Draft Strategy Guide: Best Picks & How to Win",
     "metaDescription": "A practical Rocket Draft strategy guide: best picks, how to build chemistry, when to value coach, sub and org, smart reroll use, and how to win on Hard and Legacy.",
     "kicker": "Guide",
     "title": "Rocket Draft Strategy Guide",
@@ -182,23 +182,23 @@
     "faqs": []
   },
   "special-cards": {
-    "metaTitle": "RLCS Special Cards — Rocket League Card Collection",
-    "metaDescription": "A showcase of {specialCards} RLCS special cards in Rocket Draft — rare versions tied to iconic Rocket League esports moments. Draft one, finish the run, unlock it forever.",
+    "metaTitle": "RLCS Special Cards: Rocket League Card Collection",
+    "metaDescription": "A showcase of {specialCards} RLCS special cards in Rocket Draft: rare versions tied to iconic Rocket League esports moments. Draft one, finish the run, unlock it forever.",
     "kicker": "Special Cards",
     "title": "RLCS Special Cards",
-    "intro": "Special cards are the rare, collectible side of Rocket Draft — versions of real players tied to the biggest moments in RLCS history. There are {specialCards} to chase, and every one is earned the same way: draft it, finish the run, keep it forever.",
+    "intro": "Special cards are the rare, collectible side of Rocket Draft: versions of real players tied to the biggest moments in RLCS history. There are {specialCards} to chase, and every one is earned the same way: draft it, finish the run, keep it forever.",
     "sections": [
       {
         "heading": "What special cards are",
-        "body": "Special cards are rare versions of real players tied to iconic Rocket League esports moments — Worlds and Major MVP runs, era-defining legends, signature plays. They can appear in ANY draft, on any difficulty, because the pool is always fully random. A special often rates above the player's base card and carries a stronger effect, so pulling one mid-run can reshape the whole roster you were building."
+        "body": "Special cards are rare versions of real players tied to iconic Rocket League esports moments: Worlds and Major MVP runs, era-defining legends, signature plays. They can appear in ANY draft, on any difficulty, because the pool is always fully random. A special often rates above the player's base card and carries a stronger effect, so pulling one mid-run can reshape the whole roster you were building."
       },
       {
         "heading": "How you unlock them",
-        "body": "The rule is simple: draft the special card into your lineup, then FINISH the run — win or lose, it doesn't matter. Complete the tournament with that card on your team and it unlocks in your Collection permanently. There's no grind and no account required; you just have to see the run through. Until you unlock one, it shows in-game as ??? — discovering them is part of the play."
+        "body": "The rule is simple: draft the special card into your lineup, then FINISH the run, win or lose, it doesn't matter. Complete the tournament with that card on your team and it unlocks in your Collection permanently. There's no grind and no account required; you just have to see the run through. Until you unlock one, it shows in-game as ???, and discovering them is part of the play."
       },
       {
         "heading": "Rarities and effects",
-        "body": "Special cards ramp in effect by tier — legends, MVP cards, and standout moments scale up as you climb the rarity ladder. Effects are direct attribute boosts that feed the same six internal stats every card uses: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. The higher the tier, the bigger the edge it brings to your team rating, which is why a well-placed special can lift a roster above a stronger-looking field."
+        "body": "Special cards ramp in effect by tier: legends, MVP cards, and standout moments scale up as you climb the rarity ladder. Effects are direct attribute boosts that feed the same six internal stats every card uses: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. The higher the tier, the bigger the edge it brings to your team rating, which is why a well-placed special can lift a roster above a stronger-looking field."
       },
       {
         "heading": "A few legendary examples",
@@ -206,22 +206,22 @@
       },
       {
         "heading": "How they fit the draft",
-        "body": "A special card is never a free win — your team rating is driven mostly by player overalls, with chemistry, org buffs, coaches, and special effects adding the edge on top. The smart play is fitting a special into a lineup that already has overall and chemistry, not chasing a shiny card into a roster that doesn't hold together. Use one to sharpen a build, and let the run decide whether it joins your Collection."
+        "body": "A special card is never a free win. Your team rating is driven mostly by player overalls, with chemistry, org buffs, coaches, and special effects adding the edge on top. The smart play is fitting a special into a lineup that already has overall and chemistry, not chasing a shiny card into a roster that doesn't hold together. Use one to sharpen a build, and let the run decide whether it joins your Collection."
       },
       {
-        "heading": "{specialCards} to collect — with the mystery intact",
-        "body": "There are {specialCards} special cards in all, and the in-game Collection keeps its mystery: locked cards stay as ??? until you earn them, so your unlock progress is yours alone. This page is a public, curated showcase of the legends — a celebration of RLCS history, not a spoiler dump. Head to Play, draft a real historical lineup, and start hunting your first one."
+        "heading": "{specialCards} to collect, with the mystery intact",
+        "body": "There are {specialCards} special cards in all, and the in-game Collection keeps its mystery: locked cards stay as ??? until you earn them, so your unlock progress is yours alone. This page is a public, curated showcase of the legends, a celebration of RLCS history, not a spoiler dump. Head to Play, draft a real historical lineup, and start hunting your first one."
       }
     ],
     "ctaLabel": "Start a draft and hunt special cards",
     "faqs": []
   },
   "sam": {
-    "metaTitle": "SAM Rocket League — South America's RLCS Region",
+    "metaTitle": "SAM Rocket League: South America's RLCS Region",
     "metaDescription": "What SAM means in Rocket League esports: the South American RLCS region, its Brazilian-led teams, and a free draft locked to 100+ hand-researched SAM lineups.",
     "kicker": "South America",
-    "title": "SAM Rocket League — South America's Region",
-    "intro": "SAM is the South American region of Rocket League esports. Rocket Draft covers it in depth: a hand-researched database of Brazilian and South American RLCS lineups, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "title": "SAM Rocket League: South America's Region",
+    "intro": "SAM is the South American region of Rocket League esports. Rocket Draft covers it in depth: a hand-researched database of Brazilian and South American RLCS lineups, and a Region-Locked Draft that deals from nothing else, free in your browser.",
     "sections": [
       {
         "heading": "What SAM means in Rocket League",
@@ -237,30 +237,30 @@
       },
       {
         "heading": "What the SAM region-locked draft is",
-        "body": "SAM is a Region-Locked Draft: instead of pulling from the global pool, every round deals from South America's full depth. You still draft the same way — take one card per lineup until you have 3 players, 1 coach, 1 sub and 1 org — but every card comes from the SAM scene. South America was the first region live, hand-researched from Liquipedia, covering Brazilian and South American teams from RLCS history."
+        "body": "SAM is a Region-Locked Draft: instead of pulling from the global pool, every round deals from South America's full depth. You still draft the same way (take one card per lineup until you have 3 players, 1 coach, 1 sub and 1 org) but every card comes from the SAM scene. South America was the first region live, hand-researched from Liquipedia, covering Brazilian and South American teams from RLCS history."
       },
       {
         "heading": "What's in the SAM pool",
-        "body": "The pool combines two layers of the region: its World Championship teams, and the regional Top 8 that never reached Worlds. That second layer is the difference — deeper benches, local heroes and cult underdogs you won't see in the worldwide draft. Confirmed Brazilian names like yanxnz live in here. It's the region's real depth, not just its Worlds highlight reel."
+        "body": "The pool combines two layers of the region: its World Championship teams, and the regional Top 8 that never reached Worlds. That second layer is the difference: deeper benches, local heroes and cult underdogs you won't see in the worldwide draft. Confirmed Brazilian names like yanxnz live in here. It's the region's real depth, not just its Worlds highlight reel."
       },
       {
         "heading": "Why it's a differentiator",
-        "body": "Most RLCS draft games stop at the World Championship lineups. SAM goes deeper, surfacing the regional Top 8 that never made it to a Worlds stage — the qualifier teams, the near-misses, the scene's full bench. For Brazilian and South American fans that means drafting the players you actually watched, not only the handful who reached the global stage. That regional depth is what sets Rocket Draft apart."
+        "body": "Most RLCS draft games stop at the World Championship lineups. SAM goes deeper, surfacing the regional Top 8 that never made it to a Worlds stage: the qualifier teams, the near-misses, the scene's full bench. For Brazilian and South American fans that means drafting the players you actually watched, not only the handful who reached the global stage. That regional depth is what sets Rocket Draft apart."
       },
       {
         "heading": "How region-lock changes a run",
-        "body": "Region-lock changes only the pool — nothing else. Your difficulty, chemistry rules and the full RLCS-style tournament all play exactly as normal: 16 teams, a Swiss stage into double-elimination playoffs. Same-country chemistry naturally lands more often inside one scene, so a coherent SAM roster can punch above a scattered all-star mix. The draft luck stays random; only the names on the cards are SAM."
+        "body": "Region-lock changes only the pool and nothing else. Your difficulty, chemistry rules and the full RLCS-style tournament all play exactly as normal: 16 teams, a Swiss stage into double-elimination playoffs. Same-country chemistry naturally lands more often inside one scene, so a coherent SAM roster can punch above a scattered all-star mix. The draft luck stays random; only the names on the cards are SAM."
       },
       {
         "heading": "Every region, one scene at a time",
-        "body": "South America went live first because it was hand-researched and ready. Since Season 1, North America, Europe, MENA and Oceania are live too, each built the same way — a scene's international teams plus the regional rosters that never reached a World Championship. APAC and Sub-Saharan Africa follow as their databases grow. The goal stays the same: let every fan lock the draft to the scene they grew up watching."
+        "body": "South America went live first because it was hand-researched and ready. Since Season 1, North America, Europe, MENA and Oceania are live too, each built the same way: a scene's international teams plus the regional rosters that never reached a World Championship. APAC and Sub-Saharan Africa follow as their databases grow. The goal stays the same: let every fan lock the draft to the scene they grew up watching."
       }
     ],
     "ctaLabel": "Play the SAM Rocket League draft",
     "faqs": []
   },
   "simulator": {
-    "metaTitle": "Rocket League Simulator — Free RLCS Tournament Sim",
+    "metaTitle": "Rocket League Simulator: Free RLCS Tournament Sim",
     "metaDescription": "A free Rocket League esports simulator in your browser: draft a roster from RLCS history and simulate a 16-team RLCS tournament, Swiss stage to grand final.",
     "kicker": "RLCS simulator",
     "title": "Rocket League Esports Simulator",
@@ -268,7 +268,7 @@
     "sections": [
       {
         "heading": "What this Rocket League simulator simulates",
-        "body": "It does not simulate car physics or a match on the pitch. It simulates the competition: rosters, ratings, series and brackets. Every card is a real player, coach, substitute or organization from RLCS history, 2016 to today. Each player carries an overall and six internal stats — Offense, Defense, Mechanics, Consistency, Experience and Clutch — reviewed by hand, and those numbers decide how a series plays out."
+        "body": "It does not simulate car physics or a match on the pitch. It simulates the competition: rosters, ratings, series and brackets. Every card is a real player, coach, substitute or organization from RLCS history, 2016 to today. Each player carries an overall and six internal stats (Offense, Defense, Mechanics, Consistency, Experience and Clutch) reviewed by hand, and those numbers decide how a series plays out."
       },
       {
         "heading": "How the RLCS tournament simulation works",
@@ -299,7 +299,7 @@
     "faqs": [
       {
         "q": "Is there a free Rocket League simulator?",
-        "a": "Yes. Rocket Draft is free and runs in the browser. It simulates Rocket League esports tournaments — you draft a roster from RLCS history and the bracket is simulated series by series."
+        "a": "Yes. Rocket Draft is free and runs in the browser. It simulates Rocket League esports tournaments: you draft a roster from RLCS history and the bracket is simulated series by series."
       },
       {
         "q": "Can I simulate an RLCS tournament?",
@@ -313,12 +313,16 @@
     "ctaLabel": "Simulate an RLCS tournament"
   },
   "manager": {
-    "metaTitle": "Rocket League Career Mode — Free RLCS Manager Game",
-    "metaDescription": "Road to Worlds is a free Rocket League career mode and manager game: found a club, sign real RLCS players, train them, run the finances and win the World Championship.",
+    "metaTitle": "Rocket League Career Mode & Manager Game: Free",
+    "metaDescription": "A free Rocket League career mode in your browser, no mod or download: found a club, sign real RLCS players, train them and win the World Championship.",
     "kicker": "Career mode",
-    "title": "Road to Worlds — Rocket League Career Mode & Manager Game",
-    "intro": "Road to Worlds is the Rocket League career mode of Rocket Draft: a free Rocket League esports manager game that runs in your browser. Found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
+    "title": "Rocket League Career Mode & Manager Game: Road to Worlds",
+    "intro": "Road to Worlds is a free Rocket League career mode that runs in your browser, on PC or phone, with nothing to download. You are the manager: found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
     "sections": [
+      {
+        "heading": "Does Rocket League have a career mode?",
+        "body": "Not in the game itself: Rocket League has no career mode built around its esports scene. Fan-made projects fill the gap: mods that run inside the game on PC, manager games you download, and games that run in the browser. Road to Worlds is the browser kind. It is a club manager career, so you run an organization rather than a single player, and it plays on desktop and mobile with nothing to install, built on the real history of the RLCS."
+      },
       {
         "heading": "Found your club",
         "body": "A career starts with an empty club. Pick the region you want to compete in, name the organization, design its crest and colours, and choose a difficulty. The difficulty sets your starting budget and how forgiving the finances are. Then you sign your first roster and the season begins."
@@ -329,11 +333,11 @@
       },
       {
         "heading": "Sign, train and develop players",
-        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players — three starters and a substitute. Training runs in two-week cycles with a plan for the whole squad, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
+        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players: three starters and a substitute. Training runs in two-week cycles with a plan for the whole squad, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
       },
       {
         "heading": "Run the business",
-        "body": "Prize money, sponsors and reputation pay for the squad. Wages, staff and transfer fees take it away. The Finances screen shows the weekly statement and the projection for the season, and loans are there when the balance turns red. Support staff — an assistant coach, an opponent analyst, a physical trainer and a brand manager — each help in one area."
+        "body": "Prize money, sponsors and reputation pay for the squad. Wages, staff and transfer fees take it away. The Finances screen shows the weekly statement and the projection for the season, and loans are there when the balance turns red. Support staff (an assistant coach, an opponent analyst, a physical trainer and a brand manager) each help in one area."
       },
       {
         "heading": "A simulated world that keeps moving",
@@ -347,30 +351,39 @@
     "faqs": [
       {
         "q": "Does Rocket League have a career mode?",
-        "a": "Rocket League itself has no career mode built around its esports scene. Road to Worlds is a free, fan-made Rocket League career mode: you found a club and take it through the RLCS seasons to the World Championship."
+        "a": "Not an official one: Rocket League has no career mode built around its esports scene. Road to Worlds is a free, fan-made Rocket League career mode that runs in the browser: you found a club and take it through the RLCS seasons to the World Championship."
       },
       {
         "q": "Is there a Rocket League manager game?",
-        "a": "Road to Worlds, the career mode of Rocket Draft, is a free fan-made Rocket League esports manager game. You run a club: signings, training, finances and the RLCS calendar."
+        "a": "Yes. Road to Worlds, the career mode of Rocket Draft, is a free fan-made Rocket League esports manager game. You run a club: signings, training, finances and the RLCS calendar."
+      },
+      {
+        "q": "Do I need a mod, a download or a PC?",
+        "a": "No. Road to Worlds runs in the browser on PC, Mac, tablets and phones. There is no mod to install, nothing to download and no account to create."
+      },
+      {
+        "q": "Do I play as a player or as the manager?",
+        "a": "As the manager. You found the organization, sign the roster, hire the coach and the staff and keep the books balanced, while the matches are simulated."
       },
       {
         "q": "Is the Rocket League career simulator free?",
-        "a": "Yes. It is free, runs in the browser on desktop and mobile, and needs no download or account."
+        "a": "Yes. Road to Worlds is free to play, like the rest of Rocket Draft, and your career saves on your device. Sign in and your account keeps a copy too."
       },
       {
         "q": "Does it use real RLCS players and teams?",
         "a": "Yes. The player and coach market is built from the same database of real RLCS lineups, from 2016 to today, that the draft game uses."
       }
     ],
-    "ctaLabel": "Start a Road to Worlds career",
+    "ctaLabel": "Found your club",
+    "ctaAltLabel": "Start with a random club",
     "badges": ["Free", "No download", "No account", "Desktop and mobile"],
     "guidesLabel": "Road to Worlds guides"
   },
   "career-guide": {
-    "metaTitle": "Rocket League Career Mode Guide — Road to Worlds",
+    "metaTitle": "Road to Worlds Guide: Rocket League Career Tips",
     "metaDescription": "A beginner's guide to Road to Worlds, the free Rocket League career mode: pick a region, build a roster you can afford, train it and win the World Championship.",
     "kicker": "Career mode guide",
-    "title": "Road to Worlds Guide — How to Win the Rocket League Career Mode",
+    "title": "Road to Worlds Guide: How to Win the Rocket League Career Mode",
     "intro": "A beginner's guide to Road to Worlds, the Rocket League career mode in Rocket Draft. It covers the choices that decide a career: the region and the difficulty, a first roster you can pay for, training, the RLCS calendar, the money, and when to renew the squad.",
     "sections": [
       {
@@ -415,10 +428,10 @@
     "ctaLabel": "Start a Road to Worlds career"
   },
   "career-market": {
-    "metaTitle": "Rocket League Manager Transfers — Market Guide",
+    "metaTitle": "Rocket League Manager Transfers: Market Guide",
     "metaDescription": "How the transfer market works in Road to Worlds, the Rocket League manager game: windows, free agents, buyouts, contract talks, rival bids and the coach market.",
     "kicker": "Career mode guide",
-    "title": "Road to Worlds Transfer Market — Signings, Contracts and Bids",
+    "title": "Road to Worlds Transfer Market: Signings, Contracts and Bids",
     "intro": "The transfer market is where a Road to Worlds career is won or lost. This guide explains when you can sign, what a player costs, how a contract talk works, and how to sell before a player loses value.",
     "sections": [
       {
@@ -463,10 +476,10 @@
     "ctaLabel": "Start a Road to Worlds career"
   },
   "career-finances": {
-    "metaTitle": "Rocket League Manager Finances — Sponsors & Loans",
+    "metaTitle": "Rocket League Manager Finances: Sponsors & Loans",
     "metaDescription": "How money works in Road to Worlds, the Rocket League manager game: the Monday statement, prize money, sponsor deals and goals, loans, the floor and what to buy first.",
     "kicker": "Career mode guide",
-    "title": "Road to Worlds Finances — Sponsors, Wages and Loans",
+    "title": "Road to Worlds Finances: Sponsors, Wages and Loans",
     "intro": "A Road to Worlds career ends in two ways: with the world title or with the bank. This guide covers where the money comes from, where it goes every Monday, how sponsor deals pay, and how to borrow without losing the club.",
     "sections": [
       {
@@ -511,10 +524,10 @@
     "ctaLabel": "Start a Road to Worlds career"
   },
   "career-training": {
-    "metaTitle": "Rocket League Manager Training — Player Growth",
+    "metaTitle": "Rocket League Manager Training: Player Growth",
     "metaDescription": "How training works in Road to Worlds, the Rocket League manager game: two-week cycles, growth and chemistry, wear, coaches, peak and decline, and the reserve.",
     "kicker": "Career mode guide",
-    "title": "Road to Worlds Training — How Players Grow and Decline",
+    "title": "Road to Worlds Training: How Players Grow and Decline",
     "intro": "Signing a player is half of the work in Road to Worlds. The other half is training: how fast a player reaches their potential, how long the peak lasts and how well the three starters play together. This guide explains the training cycle and the choices in it.",
     "sections": [
       {
@@ -559,7 +572,7 @@
     "ctaLabel": "Start a Road to Worlds career"
   },
   "fantasy": {
-    "metaTitle": "RLCS Fantasy Draft — Rocket League Fantasy Game",
+    "metaTitle": "RLCS Fantasy Draft: Rocket League Fantasy Game",
     "metaDescription": "Looking for Rocket League fantasy? Rocket Draft is a free RLCS fantasy draft: pick players from every era of Rocket League esports and simulate the tournament.",
     "kicker": "Fantasy draft",
     "title": "RLCS Fantasy Draft",
@@ -571,7 +584,7 @@
       },
       {
         "heading": "How the fantasy draft works",
-        "body": "Each round deals one real historical RLCS lineup and you take exactly one card from it — a player, the coach, the substitute or the organization — until you hold three players, a coach, a sub and an org. Nobody picks the same pool twice: the lineups are random on every run, so the skill is reading what each one offers."
+        "body": "Each round deals one real historical RLCS lineup and you take exactly one card from it (a player, the coach, the substitute or the organization) until you hold three players, a coach, a sub and an org. Nobody picks the same pool twice: the lineups are random on every run, so the skill is reading what each one offers."
       },
       {
         "heading": "All-time rosters, not only this season's",
@@ -603,11 +616,11 @@
     "ctaLabel": "Start a fantasy draft"
   },
   "na": {
-    "metaTitle": "NA Rocket League — North America's RLCS Region",
+    "metaTitle": "NA Rocket League: North America's RLCS Region",
     "metaDescription": "What NA means in Rocket League esports: the North American region of the RLCS, its teams and players, and a free draft locked to {NA.lineups} hand-researched NA lineups.",
     "kicker": "North America",
-    "title": "NA Rocket League — North America's Region",
-    "intro": "NA is the North American region of Rocket League esports. Rocket Draft covers it in depth: {NA.lineups} real RLCS lineups from {NA.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "title": "NA Rocket League: North America's Region",
+    "intro": "NA is the North American region of Rocket League esports. Rocket Draft covers it in depth: {NA.lineups} real RLCS lineups from {NA.orgs} organizations, and a Region-Locked Draft that deals from nothing else, free in your browser.",
     "sections": [
       {
         "heading": "What NA means in Rocket League",
@@ -627,21 +640,21 @@
       },
       {
         "heading": "Deeper than the Worlds rosters",
-        "body": "The pool combines two layers: the NA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a NA fan watched every weekend and a worldwide draft never shows."
+        "body": "The pool combines two layers: the NA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live: the teams a NA fan watched every weekend and a worldwide draft never shows."
       },
       {
         "heading": "What region-lock changes, and what it does not",
-        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent NA roster can beat a scattered mix of bigger names."
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament (a Swiss stage into double-elimination playoffs) play as usual. Same-country and same-organization links land more often inside one region, so a coherent NA roster can beat a scattered mix of bigger names."
       }
     ],
     "ctaLabel": "Play the NA Rocket League draft"
   },
   "eu": {
-    "metaTitle": "EU Rocket League — Europe's RLCS Region",
+    "metaTitle": "EU Rocket League: Europe's RLCS Region",
     "metaDescription": "What EU means in Rocket League esports: the European region of the RLCS, its teams and players, and a free draft locked to {EU.lineups} hand-researched EU lineups.",
     "kicker": "Europe",
-    "title": "EU Rocket League — Europe's Region",
-    "intro": "EU is the European region of Rocket League esports. Rocket Draft covers it in depth: {EU.lineups} real RLCS lineups from {EU.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "title": "EU Rocket League: Europe's Region",
+    "intro": "EU is the European region of Rocket League esports. Rocket Draft covers it in depth: {EU.lineups} real RLCS lineups from {EU.orgs} organizations, and a Region-Locked Draft that deals from nothing else, free in your browser.",
     "sections": [
       {
         "heading": "What EU means in Rocket League",
@@ -661,21 +674,21 @@
       },
       {
         "heading": "Deeper than the Worlds rosters",
-        "body": "The pool combines two layers: the EU teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a EU fan watched every weekend and a worldwide draft never shows."
+        "body": "The pool combines two layers: the EU teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live: the teams a EU fan watched every weekend and a worldwide draft never shows."
       },
       {
         "heading": "What region-lock changes, and what it does not",
-        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent EU roster can beat a scattered mix of bigger names."
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament (a Swiss stage into double-elimination playoffs) play as usual. Same-country and same-organization links land more often inside one region, so a coherent EU roster can beat a scattered mix of bigger names."
       }
     ],
     "ctaLabel": "Play the EU Rocket League draft"
   },
   "mena": {
-    "metaTitle": "MENA Rocket League — Middle East & North Africa",
+    "metaTitle": "MENA Rocket League: Middle East & North Africa",
     "metaDescription": "What MENA means in Rocket League esports: the Middle East and North Africa region, its teams and players, and a free draft locked to {MENA.lineups} MENA lineups.",
     "kicker": "Middle East & North Africa",
-    "title": "MENA Rocket League — Middle East & North Africa",
-    "intro": "MENA is the Middle East and North Africa region of Rocket League esports. Rocket Draft covers it in depth: {MENA.lineups} real RLCS lineups from {MENA.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "title": "MENA Rocket League: Middle East & North Africa",
+    "intro": "MENA is the Middle East and North Africa region of Rocket League esports. Rocket Draft covers it in depth: {MENA.lineups} real RLCS lineups from {MENA.orgs} organizations, and a Region-Locked Draft that deals from nothing else, free in your browser.",
     "sections": [
       {
         "heading": "What MENA means in Rocket League",
@@ -695,21 +708,21 @@
       },
       {
         "heading": "Deeper than the Worlds rosters",
-        "body": "The pool combines two layers: the MENA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a MENA fan watched every weekend and a worldwide draft never shows."
+        "body": "The pool combines two layers: the MENA teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live: the teams a MENA fan watched every weekend and a worldwide draft never shows."
       },
       {
         "heading": "What region-lock changes, and what it does not",
-        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent MENA roster can beat a scattered mix of bigger names."
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament (a Swiss stage into double-elimination playoffs) play as usual. Same-country and same-organization links land more often inside one region, so a coherent MENA roster can beat a scattered mix of bigger names."
       }
     ],
     "ctaLabel": "Play the MENA Rocket League draft"
   },
   "oce": {
-    "metaTitle": "OCE Rocket League — Oceania's RLCS Region",
+    "metaTitle": "OCE Rocket League: Oceania's RLCS Region",
     "metaDescription": "What OCE means in Rocket League esports: the Oceanic region of the RLCS, its teams and players, and a free draft locked to {OCE.lineups} hand-researched OCE lineups.",
     "kicker": "Oceania",
-    "title": "OCE Rocket League — Oceania's Region",
-    "intro": "OCE is the Oceanic region of Rocket League esports. Rocket Draft covers it in depth: {OCE.lineups} real RLCS lineups from {OCE.orgs} organizations, and a Region-Locked Draft that deals from nothing else — free in your browser.",
+    "title": "OCE Rocket League: Oceania's Region",
+    "intro": "OCE is the Oceanic region of Rocket League esports. Rocket Draft covers it in depth: {OCE.lineups} real RLCS lineups from {OCE.orgs} organizations, and a Region-Locked Draft that deals from nothing else, free in your browser.",
     "sections": [
       {
         "heading": "What OCE means in Rocket League",
@@ -729,11 +742,11 @@
       },
       {
         "heading": "Deeper than the Worlds rosters",
-        "body": "The pool combines two layers: the OCE teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live — the teams a OCE fan watched every weekend and a worldwide draft never shows."
+        "body": "The pool combines two layers: the OCE teams that reached a World Championship and the regional rosters that never did. That second layer is where the local heroes and near-misses live: the teams a OCE fan watched every weekend and a worldwide draft never shows."
       },
       {
         "heading": "What region-lock changes, and what it does not",
-        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament — a Swiss stage into double-elimination playoffs — play as usual. Same-country and same-organization links land more often inside one region, so a coherent OCE roster can beat a scattered mix of bigger names."
+        "body": "Only the pool changes. Difficulty, chemistry and the 16-team tournament (a Swiss stage into double-elimination playoffs) play as usual. Same-country and same-organization links land more often inside one region, so a coherent OCE roster can beat a scattered mix of bigger names."
       }
     ],
     "ctaLabel": "Play the OCE Rocket League draft"

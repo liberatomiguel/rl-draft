@@ -44,29 +44,32 @@ export function RunStepper({ run }: { run: RunState }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 max-w-full items-center gap-2 md:gap-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           // Just navigate — AppShell resets the run when it sees we left /play
           // (clearing here first would flash the setup screen mid-transition).
           onClick={() => router.push("/")}
           title={SETUP.back}
           aria-label={SETUP.back}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:bg-white/5 hover:text-ink"
+          className="h-8 !min-h-8 w-8 shrink-0 !px-0"
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
             <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
+        </Button>
 
+        {/* The run's steps as a quiet rundown: done steps in grey, the current
+            one in ink on a flat tag, the ones to come faint. */}
         <ol className="flex min-w-0 flex-wrap items-center gap-1.5 md:gap-2" aria-label="Run progress">
           {phaseIds.map((phase, i) => (
             <li key={phase} className="flex items-center gap-1.5 md:gap-2">
               {i > 0 ? <span className="h-px w-3 bg-line-strong md:w-5" aria-hidden /> : null}
               <span
                 className={cx(
-                  "display rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] md:text-xs",
+                  "display rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase leading-tight tracking-[0.05em] md:text-xs",
                   i === currentIndex
-                    ? "bg-orange/15 text-orange-bright"
+                    ? "bg-white/[0.08] font-bold text-ink"
                     : i < currentIndex
                       ? "text-sub"
                       : "text-faint",
@@ -82,29 +85,30 @@ export function RunStepper({ run }: { run: RunState }) {
 
       <div className="flex items-center gap-2">
         {run.difficulty === "legacy" ? (
-          // Discreet, elegant "you're in Legacy" marker — same prismatic emblem
-          // as the setup card and unlock ceremony (v1.4). Shows on every phase
-          // because RunStepper renders in draft/review/tournament/results.
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan/40 bg-gradient-to-r from-cyan/10 to-purple-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-cyan">
+          // "You're in Legacy": the same prismatic emblem as the setup option
+          // and the unlock ceremony, on the plain difficulty tag (the emblem
+          // carries the colour, the tag stays flat). Shows on every phase.
+          <Badge tone="blue">
             <LegacyEmblem className="h-3.5 w-3.5 shrink-0" gradientId="legacyGradStepper" />
             {DIFFICULTY_LABELS.legacy.label}
-          </span>
+          </Badge>
         ) : (
           <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
         )}
         {!run.showOverall ? <Badge tone="neutral">{RUN_UI.hiddenOvr}</Badge> : null}
         {/* Reset run — deliberate restart (the run is over on results). */}
         {run.phase !== "results" ? (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setConfirmReset(true)}
             title={RUN_UI.reset}
             aria-label={RUN_UI.reset}
-            className="flex h-7 items-center gap-1 rounded-md border border-line px-2 text-[11px] font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:border-bad/50 hover:bg-bad/10 hover:text-bad"
+            className="h-8 !min-h-8 !gap-1.5 !px-2 hover:!bg-bad/10 hover:!text-bad"
           >
             <ResetIcon />
             <span className="hidden sm:inline">{RUN_UI.reset}</span>
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -139,7 +143,7 @@ export function RunStepper({ run }: { run: RunState }) {
 
 function ResetIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M20 11a8 8 0 1 0-2.34 6.34" strokeLinecap="round" />
       <path d="M20 5v6h-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

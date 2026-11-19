@@ -17,8 +17,8 @@ import { selectHardUnlocked, selectLegacyUnlocked, useProfileStore } from "@/sto
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { LegacyEmblem } from "@/components/ui/icons";
-import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { GlobeIcon, LegacyEmblem, LockIcon } from "@/components/ui/icons";
+import { SectionTitle } from "@/components/ui/Panel";
 import { Toggle } from "@/components/ui/Toggle";
 
 const ORDER: Difficulty[] = ["easy", "normal", "hard", "legacy"];
@@ -68,17 +68,21 @@ export function SetupScreen() {
   const profile = DIFFICULTY[difficulty];
   const locked = profile.overallLockedHidden;
 
+  // Job: set the run's rules, then start. The one decision is the difficulty,
+  // so it comes first as a list (name, what it means, what it costs); the
+  // region and the overall switch are secondary. The chosen option is marked
+  // by its hairline alone, and Start Draft is the only filled button.
   return (
     <div className="mobile-action-space rise-in mx-auto max-w-3xl">
       <SectionTitle
         kicker={mode === "quick" ? SETUP.modeQuickHint : SETUP.modeClassicHint}
         title={mode === "quick" ? SETUP.modeQuick : SETUP.modeClassic}
-        className="mb-2"
+        className="mb-8"
       />
-      <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{SETUP.subtitle}</p>
 
-      <p className="kicker mb-3">{SETUP.difficulty}</p>
-      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={SETUP.difficulty}>
+      <h3 className="display text-lg uppercase leading-none text-ink">{SETUP.difficulty}</h3>
+      <p className="mb-4 mt-1.5 max-w-xl text-sm leading-relaxed text-sub">{SETUP.subtitle}</p>
+      <div className="mb-10 space-y-2" role="radiogroup" aria-label={SETUP.difficulty}>
         {ORDER.map((id) => {
           const d = DIFFICULTY[id];
           const isLegacyLocked = Boolean(d.requiresLegacyUnlock) && !legacyUnlocked;
@@ -100,70 +104,57 @@ export function SetupScreen() {
                 setDifficulty(id);
               }}
               className={cx(
-                "panel relative p-4 text-left transition-all",
-                active && "panel-glow-orange !border-orange/60",
+                "panel flex w-full flex-col gap-2 p-4 text-left transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-6",
+                active && "panel-glow-orange",
                 !active && !isLocked && "hover:!border-line-strong",
                 isLocked && "cursor-not-allowed opacity-50",
               )}
             >
-              <div className="mb-1 flex items-center justify-between">
-                <span className="display flex items-center gap-2 text-lg font-bold uppercase tracking-wide text-ink">
+              <span className="min-w-0">
+                <span className="display flex items-center gap-2 text-lg font-bold uppercase leading-none text-ink">
                   {id === "legacy" ? (
-                    <LegacyEmblem className="h-6 w-6 shrink-0" gradientId="legacyGradSetup" />
+                    <LegacyEmblem className="h-5 w-5 shrink-0" gradientId="legacyGradSetup" />
                   ) : null}
                   {DIFFICULTY_LABELS[id].label}
                 </span>
-                {active ? <Badge tone="orange">{SETUP.selected}</Badge> : null}
-              </div>
-              <p className="mb-3 text-xs leading-relaxed text-sub">{DIFFICULTY_LABELS[id].tagline}</p>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge tone="blue">{SETUP.rerolls(d.rerolls)}</Badge>
-                {d.overallLockedHidden ? (
-                  <Badge tone="neutral">{SETUP.ovrHidden}</Badge>
-                ) : (
-                  <Badge tone="neutral">{SETUP.ovrOptional}</Badge>
-                )}
-                {id === "legacy" ? <Badge tone="gold">{SETUP.legacyBadge}</Badge> : null}
-              </div>
-              {isLocked ? (
-                <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-faint">
-                  <LockIcon /> {isHardLocked ? SETUP.hardLocked : SETUP.legacyLocked}
-                </p>
-              ) : null}
+                <span className="mt-1.5 block text-sm leading-snug text-sub">{DIFFICULTY_LABELS[id].tagline}</span>
+                {isLocked ? (
+                  <span className="mt-2 flex items-center gap-1.5 text-xs text-sub">
+                    <LockIcon className="h-4 w-4 shrink-0" /> {isHardLocked ? SETUP.hardLocked : SETUP.legacyLocked}
+                  </span>
+                ) : null}
+              </span>
+              {/* What the difficulty costs, as two quiet facts (was three tags). */}
+              <span className="shrink-0 text-xs leading-relaxed text-sub sm:text-right">
+                <span className="block">{SETUP.rerolls(d.rerolls)}</span>
+                <span className="block">{d.overallLockedHidden ? SETUP.ovrHidden : SETUP.ovrOptional}</span>
+              </span>
             </button>
           );
         })}
       </div>
 
-      <p className="kicker mb-2">{SETUP.region}</p>
-      <p className="mb-3 max-w-xl text-xs leading-relaxed text-sub">{SETUP.regionHint}</p>
-      <div className="mb-8 space-y-2.5" role="radiogroup" aria-label={SETUP.region}>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={regionLock === null}
-          onClick={() => setRegionLock(null)}
-          className={cx(
-            "panel flex w-full items-center justify-between gap-3 p-4 text-left transition-all",
-            regionLock === null ? "panel-glow-orange !border-orange/60" : "hover:!border-line-strong",
-          )}
-        >
-          <span className="flex items-center gap-3">
-            <GlobeIcon />
-            <span>
-              <span className="display block text-base font-bold uppercase tracking-wide text-ink">
-                {SETUP.regionWorldwide}
-              </span>
-              <span className="block text-xs text-sub">{SETUP.regionWorldwideHint}</span>
-            </span>
-          </span>
-          {regionLock === null ? <Badge tone="orange">{SETUP.selected}</Badge> : null}
-        </button>
-
-        {/* Region-specific picks: a 4-then-3 grid that fills the container, all
-            chips the same size. Tags reuse the difficulty-mode Badges — orange
-            "Selected" and the neutral grey "Coming soon". */}
+      <h3 className="display text-lg uppercase leading-none text-ink">{SETUP.region}</h3>
+      <p className="mb-4 mt-1.5 max-w-xl text-sm leading-relaxed text-sub">{SETUP.regionHint}</p>
+      {/* One set of eight options: Worldwide first, then the seven regions.
+          The line under the grid describes whichever one is chosen. */}
+      <div className="mb-10" role="radiogroup" aria-label={SETUP.region}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={regionLock === null}
+            onClick={() => setRegionLock(null)}
+            className={cx(
+              "panel flex min-h-[4.25rem] flex-col justify-center gap-1 px-3 py-2.5 text-left transition-colors",
+              regionLock === null ? "panel-glow-orange" : "hover:!border-line-strong",
+            )}
+          >
+            <span className="display flex items-center gap-1.5 text-base font-bold uppercase leading-none text-ink">
+              <GlobeIcon className="h-4 w-4 shrink-0 text-sub" />
+              {SETUP.regionWorldwide}
+            </span>
+          </button>
           {REGIONS.map(({ id, available }) => {
             const active = regionLock === id;
             return (
@@ -175,43 +166,38 @@ export function SetupScreen() {
                 disabled={!available}
                 onClick={() => available && setRegionLock(id)}
                 className={cx(
-                  "panel flex h-[4.75rem] flex-col items-center justify-center gap-1.5 px-1 text-center transition-all",
-                  active && "panel-glow-orange !border-orange/60",
+                  "panel flex min-h-[4.25rem] flex-col justify-center gap-1 px-3 py-2.5 text-left transition-colors",
+                  active && "panel-glow-orange",
                   !available && "cursor-not-allowed opacity-50",
                   available && !active && "hover:!border-line-strong",
                 )}
               >
-                <span
-                  className={cx(
-                    // Matches the Worldwide card's label size (was text-sm, which
-                    // read as squished against the chip height) — v1.2.1.
-                    "display text-base font-bold leading-none tracking-wide",
-                    active ? "text-orange-bright" : available ? "text-ink" : "text-faint",
-                  )}
-                >
+                <span className={cx("display text-base font-bold uppercase leading-none", available ? "text-ink" : "text-faint")}>
                   {id}
                 </span>
-                {active ? (
-                  <Badge tone="orange">{SETUP.selected}</Badge>
-                ) : !available ? (
-                  <Badge tone="neutral">{SETUP.regionComingSoon}</Badge>
-                ) : null}
+                {/* "Coming soon" is a real state, so it keeps its tag. */}
+                {available ? (
+                  <span className="truncate text-xs leading-tight text-sub">{SETUP.regionNames[id]}</span>
+                ) : (
+                  <Badge tone="neutral" className="w-fit">{SETUP.regionComingSoon}</Badge>
+                )}
               </button>
             );
           })}
         </div>
 
-        {regionLock ? (
-          <p className="max-w-xl text-xs leading-relaxed text-sub">
-            {SETUP.regionDescLocked(
-              SETUP.regionNames[regionLock],
-              REGIONS.find((r) => r.id === regionLock)?.rosters ?? 0,
-            )}
-          </p>
-        ) : null}
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-sub">
+          {regionLock
+            ? SETUP.regionDescLocked(
+                SETUP.regionNames[regionLock],
+                REGIONS.find((r) => r.id === regionLock)?.rosters ?? 0,
+              )
+            : SETUP.regionWorldwideHint}
+        </p>
       </div>
 
-      <Panel className="mb-8 p-4">
+      {/* A switch is one row, not a board. */}
+      <div className="mb-8 border-y border-line py-4">
         <Toggle
           checked={locked ? false : showOverall}
           onChange={setShowOverall}
@@ -219,7 +205,7 @@ export function SetupScreen() {
           label={SETUP.showOverall}
           hint={locked ? SETUP.overallLocked : SETUP.showOverallHint}
         />
-      </Panel>
+      </div>
 
       <div className="mobile-action-bar flex items-center gap-3 sm:flex-row">
         <Button
@@ -238,30 +224,5 @@ export function SetupScreen() {
         </AppLink>
       </div>
     </div>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </svg>
-  );
-}
-
-function GlobeIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-7 w-7 shrink-0 text-sub"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-6-3.5-9s1-6.5 3.5-9Z" />
-    </svg>
   );
 }

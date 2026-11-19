@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Claude Code session worktrees (full repo copies)
 .claude/worktrees/
+
+# Trial font files (personal-use licence): local preview only, never commit or deploy.
+/public/fonts-trial/

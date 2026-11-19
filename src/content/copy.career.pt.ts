@@ -28,7 +28,7 @@ const legacyNextBreachPt = (
     : next === "restructure"
       ? ""
       : Number(partner)
-        ? `Abaixo do piso numa segunda-feira, o Investidor de emergência entra — e um parceiro de resgate reforça a receita${partnerRunPt(partnerWeeks)}.`
+        ? `Abaixo do piso numa segunda-feira, o Investidor de emergência entra, e um parceiro de resgate reforça a receita${partnerRunPt(partnerWeeks)}.`
         : "Abaixo do piso numa segunda-feira, o Investidor de emergência entra.";
 
 /**
@@ -52,12 +52,12 @@ const nextBreachPt = (p: Record<string, string | number | undefined>): string =>
   if (p.next === "restructure") return "";
   if (Number(p.owing)) {
     const left = Number(p.topUpsLeft);
-    return `Abaixo do piso de novo antes de quitar, o banco soma ao empréstimo — o prazo continua o mesmo${left > 0 ? ` (ele faz isso mais ${left === 1 ? "uma vez" : `${left} vezes`})` : ""}.`;
+    return `Abaixo do piso de novo antes de quitar, o banco soma ao empréstimo: o prazo continua o mesmo${left > 0 ? ` (ele faz isso mais ${left === 1 ? "uma vez" : `${left} vezes`})` : ""}.`;
   }
   const term = Number(p.term) > 0 ? `, para quitar em até ${p.term} semanas` : "";
-  const last = Number(p.loansLeft) === 1 ? " — o último que ele abre nesta carreira" : "";
+  const last = Number(p.loansLeft) === 1 ? ": o último que ele abre nesta carreira" : "";
   return Number(p.nextPartner)
-    ? `Abaixo do piso numa segunda-feira, o banco abre um empréstimo emergencial${term}${last} — e um investidor reforça um pouco a receita${partnerRunPt(p.partnerRun)}.`
+    ? `Abaixo do piso numa segunda-feira, o banco abre um empréstimo emergencial${term}${last}, e um investidor reforça um pouco a receita${partnerRunPt(p.partnerRun)}.`
     : `Abaixo do piso numa segunda-feira, o banco abre um empréstimo emergencial${term}${last}.`;
 };
 
@@ -106,7 +106,7 @@ const gapWaysPt = (p: Record<string, string | number | undefined>): string =>
 /** rc.34 review: a projeção que os e-mails e avisos do prazo citam ("neste ritmo"). */
 const onPacePt = (p: Record<string, string | number | undefined>): string =>
   Number(p.covered)
-    ? `Neste ritmo (${p.net} por semana) as contas cobrem a dívida no dia — o saldo estaria em ${p.projected} na segunda do prazo. Mantenha assim, ou encerre agora com "Quitar tudo" em Finanças.`
+    ? `Neste ritmo (${p.net} por semana) as contas cobrem a dívida no dia: o saldo estaria em ${p.projected} na segunda do prazo. Mantenha assim, ou encerre agora com "Quitar tudo" em Finanças.`
     : `Neste ritmo (${p.net} por semana) as contas não cobrem a dívida: o saldo estaria em ${p.projected} na segunda do prazo, ${p.gap} abaixo do que o banco precisa.`;
 
 /** rc.34 review: uma contagem pequena por extenso para o tópico de dinheiro do assistente (dígitos depois de cinco). */
@@ -237,7 +237,7 @@ export const CAREER_PT: CareerCopy = {
     title: "Funde sua organização",
     step: (n: number, total: number) => `Etapa ${n} de ${total}`,
     quickStart: "Início rápido",
-    quickStartHint: "Aleatoriza tudo — dá para re-tintar as cores depois.",
+    quickStartHint: "Aleatoriza tudo: dá para re-tintar as cores depois.",
     identityTitle: "Identidade",
     identityKicker: "Toda dinastia começa com um nome na camisa.",
     orgName: "Nome da organização",
@@ -257,7 +257,7 @@ export const CAREER_PT: CareerCopy = {
     crestNone: "Nenhum",
     randomizeCrest: "Aleatorizar",
     kits: "Kits",
-    kitsHint: "Um toque preenche as duas cores — depois mude qualquer uma delas à vontade.",
+    kitsHint: "Um toque preenche as duas cores: depois mude qualquer uma delas à vontade.",
     primaryColor: "Cor primária",
     secondaryColor: "Detalhe",
     // rc.36 (UX-04, R88): layouts, a cor livre e o aviso de contraste.
@@ -284,16 +284,16 @@ export const CAREER_PT: CareerCopy = {
       indigo: "Índigo", "burnt-orange": "Laranja queimado", teal: "Verde-azulado", slate: "Ardósia",
     } as Record<string, string>,
     identityBuff: "Identidade da org",
-    identityBuffHint: "A especialidade da sua org — uma pequena vantagem coletiva.",
+    identityBuffHint: "A especialidade da sua org: uma pequena vantagem coletiva.",
     regionTitle: "Região-sede",
-    regionKicker: "Onde você joga define quem enfrenta — e quantas vagas de Worlds existem.",
+    regionKicker: "Onde você joga define quem enfrenta, e quantas vagas de Worlds existem.",
     regionStrength: "Força do campo",
     regionSlots: (n: number) => `${n} vagas no Worlds`,
     regionRivals: "Rivais da RLCS X",
     regionNote: "Mudar de região é desbloqueado mais adiante na carreira.",
-    strengthDeep: "Campo profundo — o caminho difícil",
+    strengthDeep: "Campo profundo: o caminho difícil",
     strengthStrong: "Campo forte",
-    strengthDeveloping: "Campo em formação — um caminho mais suave",
+    strengthDeveloping: "Campo em formação: um caminho mais suave",
     rosterTitle: "Primeiras contratações",
     rosterKicker: "Três jogadores sem org. Um deles diz sim para a sua.",
     rosterProspects: "Promessas",
@@ -332,8 +332,8 @@ export const CAREER_PT: CareerCopy = {
     // emergenciais da carreira (null = sem limite), as semanas para quitar cada um, ou sem prazo.
     presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
       const head = r.loans === null ? "O banco empresta" : r.loans === 1 ? "Um empréstimo do banco" : `Até ${countWordPt(r.loans)} empréstimos do banco`;
-      if (r.deadlineWeeks === null) return `Sem dinheiro? ${head} — sem prazo: prêmios e vendas pagam.`;
-      return `Sem dinheiro? ${head} — pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba.`;
+      if (r.deadlineWeeks === null) return `Sem dinheiro? ${head}, sem prazo: prêmios e vendas pagam.`;
+      return `Sem dinheiro? ${head}: pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba.`;
     },
     // CAREER_LOAN.breachesToEnd 1: a primeira segunda abaixo do piso encerra a carreira — sem empréstimo.
     presetMoneyNoLoan: "Sem dinheiro, a carreira acaba.",
@@ -350,7 +350,7 @@ export const CAREER_PT: CareerCopy = {
   hub: {
     title: "QG",
     continue: "Continuar",
-    continueTo: (label: string) => `Avançar — ${label}`,
+    continueTo: (label: string) => `Avançar: ${label}`,
     advanceDay: "Avançar um dia",
     nowNext: "A seguir",
     nowDecision: "Decisão pendente",
@@ -377,27 +377,27 @@ export const CAREER_PT: CareerCopy = {
     inboxTeaser: "Caixa de entrada",
     inboxAll: "Abrir caixa de entrada",
     sponsor: "Meta do patrocinador",
-    trainingWeek: "Semana de treino — o elenco ganha reps extras",
+    trainingWeek: "Semana de treino: o elenco ganha reps extras",
     thisWeek: "Esta semana",
     comingUp: "Vem por aí",
     quickActions: "Hoje no escritório",
     scrimCta: (opp: string) => `Scrim vs ${opp}`,
     scrimsLeft: (n: number) => (n === 1 ? "1 bloco de scrim restante na semana" : `${n} blocos de scrim restantes na semana`),
     scrimUnavailable: "Sem bloco de scrim disponível hoje",
-    restDay: "Dia de descanso — o elenco recarrega",
+    restDay: "Dia de descanso: o elenco recarrega",
     progression: "Próximo desbloqueio",
     emptyStateTitle: "Bem-vindo à bancada",
     emptyStateBody: "Seu primeiro torneio já está no calendário. Aperte Continuar quando estiver pronto.",
     // v0.3 avanço automático estilo FIFA
     play: "Avançar",
     pause: "Pausar",
-    playHint: (label: string) => `Avançando — a seguir: ${label}`,
+    playHint: (label: string) => `Avançando, a seguir: ${label}`,
     skipToNext: "Pular adiante",
     // v0.3 painel do plantão de transferências
     transfersTitle: "Janela de transferências",
     transfersWire: "Plantão de transferências",
     transfersAll: "Todas as regiões",
-    transfersEmpty: "Nenhuma troca registrada ainda — o plantão enche conforme a janela corre.",
+    transfersEmpty: "Nenhuma troca registrada ainda: o plantão enche conforme a janela corre.",
     transfersFa: "Agente livre",
     transfersUser: "Sua movimentação",
     transfersShowAll: (n: number) => `Ver todas as ${n} trocas`,
@@ -406,7 +406,7 @@ export const CAREER_PT: CareerCopy = {
     dayOf: (d: number, total: number) => `Dia ${d} de ${total}`,
     nextStop: (label: string, s: string) => `Próxima parada: ${label} · ${s}`,
     needsYou: "Precisa de você",
-    nothingNeeded: "Nada pede decisão hoje — avance quando quiser.",
+    nothingNeeded: "Nada pede decisão hoje: avance quando quiser.",
     canDo: "O que você pode fazer hoje",
     inviteTitle: (name: string) => `Convite: ${name}`,
     inviteBody: (day: string) => `Circuito comunitário, joga ${day}. Aceite para comprometer o elenco, ou passe e siga treinando.`,
@@ -427,28 +427,28 @@ export const CAREER_PT: CareerCopy = {
       `${event}: sem inscrição, sem pontos, sem prêmio. Contrate um reserva na próxima janela.`,
     squadShortMarket: "Ir ao Mercado",
     squadShortSquad: "Elenco",
-    contractsExpiring: (n: number) => (n === 1 ? "1 contrato termina nesta temporada — renove ou deixe vencer." : `${n} contratos terminam nesta temporada — renove ou deixe vencer.`),
+    contractsExpiring: (n: number) => (n === 1 ? "1 contrato termina nesta temporada, renove ou deixe vencer." : `${n} contratos terminam nesta temporada, renove ou deixe vencer.`),
     cashWarningCard: (weeks: number) => `O caixa acaba em cerca de ${weeks} semanas nesse ritmo.`,
     // ECO-02 (R46): o card cita a dívida que Finanças mostra.
     // rc.34: o empréstimo emergencial do banco e o prazo dele.
-    backerOpen: (owed: string) => `Empréstimo emergencial em aberto — ${owed} a devolver ao banco.`,
+    backerOpen: (owed: string) => `Empréstimo emergencial em aberto: ${owed} a devolver ao banco.`,
     loanDue: (date: string, weeks: number) =>
       weeks <= 0
         ? `Vence nesta segunda (${date}).`
         : weeks === 1
           ? `Vence na próxima segunda, ${date}.`
-          : `Vence em ${date} — faltam ${weeks} semanas. Premiações e vendas abatem parte dele no caminho.`,
+          : `Vence em ${date}: faltam ${weeks} semanas. Premiações e vendas abatem parte dele no caminho.`,
     loanDueRule: deadlineRulePt,
     // rc.32 (M4): a linha do QG abaixo dele — o que significa a próxima quebra (rc.34: nextBreachParamsOf do fluxo).
     backerNextBreach: (p: Record<string, string | number>) => nextBreachPt(p),
     cards: {
       training: "Treino",
       trainingOn: "Sessão hoje. De segunda a sexta o elenco evolui.",
-      trainingOff: "Sem sessão hoje — descanso ou preparação de jogo.",
+      trainingOff: "Sem sessão hoje: descanso ou preparação de jogo.",
       scrim: "Scrim",
       market: "Mercado",
-      marketOpen: (n: number) => (n === 1 ? "Janela aberta — fecha amanhã" : `Janela aberta — fecha em ${n} dias`),
-      marketClosed: (s: string) => `Janela fechada — abre ${s}`,
+      marketOpen: (n: number) => (n === 1 ? "Janela aberta, fecha amanhã" : `Janela aberta, fecha em ${n} dias`),
+      marketClosed: (s: string) => `Janela fechada: abre ${s}`,
       finances: "Finanças",
       bootcamp: "Bootcamp",
       bootcampReady: "Há uma vaga de bootcamp neste split.",
@@ -456,13 +456,13 @@ export const CAREER_PT: CareerCopy = {
       squadLine: (ovr: number, chem: number) => `Média ${ovr} OVR · química ${chem}%`,
     },
     edges: "Suas vantagens",
-    edgesEmpty: "Ainda sem vantagens — coaches, equipamentos e patrocínios abrem com reputação.",
+    edgesEmpty: "Ainda sem vantagens: coaches, equipamentos e patrocínios abrem com reputação.",
     edgeCoach: (name: string, pct: number) => `${name} · ${pct > 0 ? "+" : ""}${pct}% de treino`,
     edgeGear: (name: string, pct: number) => `${name} · +${pct}% de treino`,
     edgePsych: "Psicólogo · +5 Clutch, +5 Consistência",
     edgeSharp: "Bootcamp Sharp · armado para o próximo oficial",
     edgeSponsor: (tier: number) => `Vantagens do patrocínio tier ${tier}`,
-    autoplayOn: "Autoplay ligado — pausa na próxima parada",
+    autoplayOn: "Autoplay ligado: pausa na próxima parada",
     // rc.2 hub v3
     skipTo: (label: string) => `Pular até ${label}`,
     plusDay: "+1 dia",
@@ -470,7 +470,7 @@ export const CAREER_PT: CareerCopy = {
     squadManage: "Gerenciar elenco",
     squadSub: "Reserva",
     squadCoach: "Técnico",
-    squadNoCoach: "Sem técnico — contrate um no Mercado",
+    squadNoCoach: "Sem técnico: contrate um no Mercado",
     squadNoSub: "Sem reserva contratado",
     growthNext: (days: number) => (days === 1 ? "+1 OVR amanhã" : `+1 OVR em ${days} dias`),
     growthStalled: "Crescimento no limite",
@@ -489,7 +489,7 @@ export const CAREER_PT: CareerCopy = {
     trainingNoScrims: "Sem scrims no plano",
     trainingLast: (avg: string, name: string, gain: string, wear: string) => `Último período ${avg} em média · ${name} ${gain} · ${wear}`,
     trainingLastNone: "Nenhum período fechado ainda",
-    trainingCoachNone: "Sem coach — a base, ou o seu pacote pela metade",
+    trainingCoachNone: "Sem coach: a base, ou o seu pacote pela metade",
     trainingRisk: (pts: string) => `+${pts} pts de risco de ausência`,
     financesTitle: "Finanças",
     financesOpen: "Abrir finanças",
@@ -500,7 +500,7 @@ export const CAREER_PT: CareerCopy = {
     parked: "Para depois",
     dueBy: (date: string) => `até ${date}`,
     dueToday: "último dia",
-    lastDay: "Último dia — o relógio espera a sua resposta.",
+    lastDay: "Último dia: o relógio espera a sua resposta.",
     standsUntil: (date: string) => `Vale até ${date}; "Depois" guarda até lá.`,
     decisionKind: {
       event: "Dia de jogo",
@@ -518,7 +518,7 @@ export const CAREER_PT: CareerCopy = {
       follow: "Sem você",
     },
     noticeTitle: "Um aviso precisa de você",
-    noticeBody: "Leia e confirme o aviso — o relógio anda depois disso.",
+    noticeBody: "Leia e confirme o aviso: o relógio anda depois disso.",
     trainingDecisionTitle: "O técnico tem um plano",
     trainingDecisionBody: "A proposta de treino do técnico espera a sua resposta.",
     // rc.36 (front S2, Miguel sobre a rc.35): a escolha do patrocínio é um pop-up; o bloco só a chama, com "Decidir depois".
@@ -547,7 +547,7 @@ export const CAREER_PT: CareerCopy = {
     nextRegional: (ordinal: number, week: number) => `Próxima regional (R${ordinal}, semana ${week})`,
     seatDirect: "vaga direta",
     seatQualifier: "qualificatória de sábado",
-    seatPreview: "por enquanto — definida na segunda da semana",
+    seatPreview: "por enquanto: definida na segunda da semana",
     // rc.34 (UX-01e, HQ-CONTRACT H5): o dinheiro, só o lançado ou comprometido.
     financePerWeek: (amount: string) => `${amount} por semana`,
     financePayroll: "Próxima folha",
@@ -578,7 +578,8 @@ export const CAREER_PT: CareerCopy = {
     title: "Caixa de entrada",
     unread: (n: number) => `${n} não lidas`,
     markAllRead: "Marcar tudo como lido",
-    empty: "Nenhum e-mail. A mesa está quieta — por enquanto.",
+    empty: "Nenhum e-mail. A mesa está quieta, por enquanto.",
+    pickOne: "Escolha uma mensagem à esquerda para ler aqui.",
     emptyHint: "Propostas de transferência, patrocínios e avisos de contrato chegam aqui.",
     open: "Abrir",
     from: {
@@ -614,7 +615,7 @@ export const CAREER_PT: CareerCopy = {
       sponsorOffers: () => `Propostas de patrocínio na sua mesa`,
       objectiveHit: (p: Record<string, string | number>) => `${p.name}: meta entregue`,
       objectiveMissed: (p: Record<string, string | number>) => `${p.name}: meta perdida`,
-      contractExpiring: (p: Record<string, string | number>) => `${p.player} — contrato na última temporada`,
+      contractExpiring: (p: Record<string, string | number>) => `${p.player}: contrato na última temporada`,
       // rc.34 (UX-06b): os lembretes antes de um jogador poder sair.
       contractReminder: (p: Record<string, string | number>) => `Contratos: ${p.weeks} semanas para ${p.players}`,
       bankLoan: (p: Record<string, string | number>) => `Empréstimo aprovado: ${p.amount}`,
@@ -624,7 +625,7 @@ export const CAREER_PT: CareerCopy = {
       bankCleared: () => `Empréstimo bancário quitado`,
       cashWarning: (p: Record<string, string | number>) => `Alerta de caixa: ${p.weeks} semanas de fôlego`,
       qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
-      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória — ${p.event} acontece sem você`,
+      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória: ${p.event} acontece sem você`,
       // Histórico: o e-mail de resgate do Investidor (rc.31–rc.33; o rc.34 envia emergencyLoan).
       backerIn: () => `Aporte de emergência garantido`,
       // rc.34 (Miguel, 31/10): o empréstimo emergencial do banco, os acréscimos e o prazo.
@@ -644,7 +645,7 @@ export const CAREER_PT: CareerCopy = {
       noReserve: () => `Elenco sem reserva`,
       debtCleared: () => `Empréstimo emergencial quitado`,
       // DEV-02 (R48): o aposentado do próprio elenco — para onde ele foi.
-      retiredToCoach: (p: Record<string, string | number>) => `${p.player} se aposenta — e vira treinador`,
+      retiredToCoach: (p: Record<string, string | number>) => `${p.player} se aposenta, e vira treinador`,
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} se aposenta das competições`,
       // rc.32 (ECONOMY-CONTRACT M3 / M4 / M8, provisório).
       foundingPartner: () => `Um parceiro fundador apoia a org`,
@@ -669,7 +670,7 @@ export const CAREER_PT: CareerCopy = {
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
-        `${p.org} formalizaram uma proposta de ${p.fee} por ${p.player}. Ela expira quando a janela fechar — aceite ou recuse na aba de negociações do Mercado.`,
+        `${p.org} formalizaram uma proposta de ${p.fee} por ${p.player}. Ela expira quando a janela fechar: aceite ou recuse na aba de negociações do Mercado.`,
       listingNoBuyer: (p: Record<string, string | number>) =>
         `Nenhuma org da região dele respondeu à sua listagem de ${p.player} por ${p.ask}. Retire-o ou tente de novo na próxima janela.`,
       listingTooDear: (p: Record<string, string | number>) =>
@@ -697,9 +698,9 @@ export const CAREER_PT: CareerCopy = {
         `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas fechariam abaixo do piso (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p)} Agora é a hora barata de agir: aceite uma boa proposta por um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para a caixa de um save antigo.
       restructured: (p: Record<string, string | number>) =>
-        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${positive(p.garnished) ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${positive(p.owed) ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe; uma vaga vazia pede um agente livre antes do próximo evento. ${legacyNextBreachPt(p.next)}`,
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${positive(p.garnished) ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${positive(p.owed) ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando: o reserva sobe; uma vaga vazia pede um agente livre antes do próximo evento. ${legacyNextBreachPt(p.next)}`,
       sponsorOffers: () =>
-        `Marcas estão de olho na org. Avalie as propostas em Finanças — a base é garantida; o bônus depende da meta.`,
+        `Marcas estão de olho na org. Avalie as propostas em Finanças: a base é garantida; o bônus depende da meta.`,
       objectiveHit: (p: Record<string, string | number>) =>
         `A meta do split foi entregue. O bônus de ${p.bonus} cai junto com o pagamento. Bom negócio.`,
       objectiveMissed: (p: Record<string, string | number>) =>
@@ -707,7 +708,7 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (ECO-04): os e-mails dos contratos.
       // rc.36 (front S2): duas ou três marcas (o acesso da escada), com preço pelo risco (rc.35), e a regra do prazo.
       sponsorDecision: (p: Record<string, string | number>) =>
-        `${Number(p.n) === 2 ? "Duas marcas querem a organização no Tier " + p.tier + ": um contrato Estável e um Equilibrado" : "Três marcas querem a organização no Tier " + p.tier + ": um contrato Estável, um Equilibrado e um Ousado"}. Quanto mais ousado o contrato, mais ele paga — por uma meta mais difícil e uma multa maior. Compare no QG e assine um até o domingo da semana ${p.byWeek}${Number(p.auto) ? " — depois disso o mais seguro é assinado por você" : " — nesse dia o relógio espera a sua escolha"}.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um tier abaixo." : ""}`,
+        `${Number(p.n) === 2 ? "Duas marcas querem a organização no Tier " + p.tier + ": um contrato Estável e um Equilibrado" : "Três marcas querem a organização no Tier " + p.tier + ": um contrato Estável, um Equilibrado e um Ousado"}. Quanto mais ousado o contrato, mais ele paga: por uma meta mais difícil e uma multa maior. Compare no QG e assine um até o domingo da semana ${p.byWeek}${Number(p.auto) ? ", depois disso o mais seguro é assinado por você" : ", nesse dia o relógio espera a sua escolha"}.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um tier abaixo." : ""}`,
       sponsorLapsed: () =>
         `Ninguém assinou antes do prazo e as marcas seguiram em frente. As próximas propostas chegam na próxima virada de split.`,
       sponsorAutoSigned: (p: Record<string, string | number>) =>
@@ -719,19 +720,19 @@ export const CAREER_PT: CareerCopy = {
           positive(p.fine)
             ? `A multa é de ${p.fine}, em parcelas de ${p.perMonday} nas próximas ${p.mondays} segundas.`
             : Number(p.steady)
-              ? `Contrato Estável não tem multa — mas a paciência da marca cai: ${p.misses} de ${p.patience} metas perdidas; em ${p.patience}, a próxima proposta vem um tier abaixo.`
+              ? `Contrato Estável não tem multa, mas a paciência da marca cai: ${p.misses} de ${p.patience} metas perdidas; em ${p.patience}, a próxima proposta vem um tier abaixo.`
               : "Sem multa."
         }`,
       sponsorGoalSet: (p: Record<string, string | number>) =>
-        `A meta do novo split: ${goalOfParamsPt(p)} — ${SPONSOR_WORD_PT[String(p.word)] ?? p.word}. Bater paga ${p.bonus}${positive(p.fine) ? `; perder custa até ${p.fine}` : ""}.`,
+        `A meta do novo split: ${goalOfParamsPt(p)}, ${SPONSOR_WORD_PT[String(p.word)] ?? p.word}. Bater paga ${p.bonus}${positive(p.fine) ? `; perder custa até ${p.fine}` : ""}.`,
       sponsorEnded: (p: Record<string, string | number>) =>
         `O contrato chegou ao fim: ${p.hits} de ${p.goals} metas batidas. Novas propostas estão na sua mesa.${Number(p.demoted) ? " Depois de três metas perdidas num contrato Estável, elas vêm um tier abaixo." : ""}`,
       foundingHandover: (p: Record<string, string | number>) =>
         `Com um contrato próprio e as primeiras temporadas para trás, a organização não depende mais do parceiro fundador. Ele sai aos poucos: ${p.first}% do valor até ${stepWhenPt(p.stepWeek, p.stepNextSeason)}, depois ${p.second}% até ${stepWhenPt(p.endWeek, p.endNextSeason)}, e então encerra.`,
       contractExpiring: (p: Record<string, string | number>) =>
-        `${p.player} está na última temporada de contrato. Você tem janela exclusiva de renovação até o fim do Split 3 — depois disso, ele sai de graça.`,
+        `${p.player} está na última temporada de contrato. Você tem janela exclusiva de renovação até o fim do Split 3: depois disso, ele sai de graça.`,
       contractReminder: (p: Record<string, string | number>) =>
-        `${p.players} — ainda sem contrato depois desta temporada, com ${p.weeks} semanas pela frente. Renove no Elenco antes da virada, ou eles saem como agentes livres (a revisão antes da nova temporada lista todos).`,
+        `${p.players}: ainda sem contrato depois desta temporada, com ${p.weeks} semanas pela frente. Renove no Elenco antes da virada, ou eles saem como agentes livres (a revisão antes da nova temporada lista todos).`,
       bankLoan: (p: Record<string, string | number>) =>
         `O banco liberou ${p.amount}. Parcelas de ${p.weekly} caem toda segunda-feira até quitar ${p.total}. Gaste em algo que se pague.`,
       // rc.37 F2 (pacote 2): o empréstimo comum do banco, oferecido na segunda em que o fôlego chega ao nível de alerta.
@@ -748,14 +749,14 @@ export const CAREER_PT: CareerCopy = {
           ? `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que as contas rompam o piso.`
           : `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras; nesse ritmo as contas fecham abaixo do piso (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p)} Saídas: aceitar uma boa proposta por um jogador, ganhar premiação, enxugar a folha na renovação${Number(p.backer) ? "" : " ou pegar um empréstimo no banco"}.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
+        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo: os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `Três derrotas no Swiss de sábado — o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
+        `Três derrotas no Swiss de sábado: o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
       // HISTÓRICO (rc.32–rc.33): o e-mail de resgate do Investidor, como saiu (o rc.34 envia emergencyLoan).
       backerIn: (p: Record<string, string | number>) =>
         p.rescueTo === undefined
-          ? `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`
-          : `As contas fecharam uma segunda-feira abaixo do piso${Number(p.n) > 1 ? ` pela ${ordinalPt(Number(p.n))} vez` : ""} e o Investidor de emergência entrou: o saldo voltou a ${p.rescueTo}${Number(p.weeks) > 0 ? ` (cerca de ${p.weeks} semanas de salários)` : ""}. A dívida é de ${p.owed} — ${p.garnishPct}% de cada premiação e metade de qualquer venda vão para ela até quitar, ou abata em Finanças. Enquanto ela existir, taxas de transferência, equipamentos${Number(p.lock) ? " e novos compromissos que encurtam o fôlego" : ""} ficam suspensos.${positive(p.partnerWeekly) ? ` Um parceiro de resgate, o ${p.partnerName}, entra junto: ${p.partnerWeekly} por semana a partir da próxima segunda, por ${p.partnerWeeks} semanas — o último pagamento n${partnerUntilPt(p)}. É receita, nunca descontada; Finanças o mostra enquanto durar.` : ""} ${legacyNextBreachPt(p.next, p.nextPartner, p.partnerRun)}`,
+          ? `As contas romperam o piso e o Investidor de emergência entrou: uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`
+          : `As contas fecharam uma segunda-feira abaixo do piso${Number(p.n) > 1 ? ` pela ${ordinalPt(Number(p.n))} vez` : ""} e o Investidor de emergência entrou: o saldo voltou a ${p.rescueTo}${Number(p.weeks) > 0 ? ` (cerca de ${p.weeks} semanas de salários)` : ""}. A dívida é de ${p.owed}: ${p.garnishPct}% de cada premiação e metade de qualquer venda vão para ela até quitar, ou abata em Finanças. Enquanto ela existir, taxas de transferência, equipamentos${Number(p.lock) ? " e novos compromissos que encurtam o fôlego" : ""} ficam suspensos.${positive(p.partnerWeekly) ? ` Um parceiro de resgate, o ${p.partnerName}, entra junto: ${p.partnerWeekly} por semana a partir da próxima segunda, por ${p.partnerWeeks} semanas, o último pagamento n${partnerUntilPt(p)}. É receita, nunca descontada; Finanças o mostra enquanto durar.` : ""} ${legacyNextBreachPt(p.next, p.nextPartner, p.partnerRun)}`,
       // rc.34 (Miguel, 31/10): o empréstimo emergencial do banco — por quê, quanto, como se paga,
       // até quando, o investidor se veio junto, e o que encerra a carreira.
       emergencyLoan: (p: Record<string, string | number>) =>
@@ -770,24 +771,24 @@ export const CAREER_PT: CareerCopy = {
       loanSlipped: (p: Record<string, string | number>) =>
         `${Number(p.weeksLeft) === 1 ? "A uma semana" : `A ${p.weeksLeft} semanas`} do prazo do empréstimo emergencial, ${mondayWhenPt(p.dlWeek, p.dlAhead)}, as contas deixaram de cobri-lo: neste ritmo (${p.net} por semana) o saldo estaria em ${p.projected} nessa segunda, ${p.gap} abaixo do que o banco precisa para os ${p.owed} devidos. ${gapWaysPt(p)} ${deadlineRulePt}`,
       loanTakenOver: (p: Record<string, string | number>) =>
-        `O Investidor de emergência saiu de cena: o banco assumiu o que você devia a ele, ${p.owed}, como um empréstimo emergencial.${p.dlWeek !== undefined ? ` O prazo é ${mondayWhenPt(p.dlWeek, p.dlAhead)} — daqui a ${p.dlWeeks} semanas. ${deadlineRulePt}` : ""} ${p.garnishPct}% de cada premiação e ${p.salePct}% de qualquer venda continuam abatendo a dívida automaticamente, e Finanças aceita qualquer pagamento. ${Number(p.lock) ? "" : "Nada fica mais travado enquanto você deve: contratações, taxas e equipamentos estão liberados. "}${nextBreachPt(p)}`,
+        `O Investidor de emergência saiu de cena: o banco assumiu o que você devia a ele, ${p.owed}, como um empréstimo emergencial.${p.dlWeek !== undefined ? ` O prazo é ${mondayWhenPt(p.dlWeek, p.dlAhead)}: daqui a ${p.dlWeeks} semanas. ${deadlineRulePt}` : ""} ${p.garnishPct}% de cada premiação e ${p.salePct}% de qualquer venda continuam abatendo a dívida automaticamente, e Finanças aceita qualquer pagamento. ${Number(p.lock) ? "" : "Nada fica mais travado enquanto você deve: contratações, taxas e equipamentos estão liberados. "}${nextBreachPt(p)}`,
       unlock: (p: Record<string, string | number>) =>
-        `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no QG — o arsenal cresce com a reputação.`,
+        `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no QG: o arsenal cresce com a reputação.`,
       windowReport: (p: Record<string, string | number>) =>
-        `A janela fechou — ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
+        `A janela fechou: ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} não joga ${p.event} — o reserva assume a vaga com a química dele.`,
+        `${p.player} não joga ${p.event}: o reserva assume a vaga com a química dele.`,
       unavailableNoReserve: (p: Record<string, string | number>) =>
         `${p.player} não joga ${p.event}, e o elenco não tem reserva para a vaga. Reserva só assina na janela de transferências: se nenhuma abrir antes do evento, o time não joga.`,
       noReserve: () =>
         `A partir desta temporada um titular pode ficar fora de um evento oficial. Com um reserva, ele entra no lugar. Sem reserva, o time não joga o evento. Reserva só assina na janela de transferências.`,
       // rc.34 review: com o que a próxima quebra faz (o último empréstimo da carreira quitado: o fim) — um e-mail antigo lê como saiu.
       debtCleared: (p: Record<string, string | number> = {}) =>
-        `O empréstimo emergencial está quitado, e o prazo deixou de existir — a org volta a ser dona do próprio futuro. ${p.next === undefined ? "A porta do banco segue aberta." : nextBreachPt(p)}`,
+        `O empréstimo emergencial está quitado, e o prazo deixou de existir: a org volta a ser dona do próprio futuro. ${p.next === undefined ? "A porta do banco segue aberta." : nextBreachPt(p)}`,
       retiredToCoach: (p: Record<string, string | number>) =>
-        `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
+        `${p.player} jogou sua última temporada e deixa as competições: direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
       retiredLeaves: (p: Record<string, string | number>) =>
-        `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta — o mercado é onde começa o próximo capítulo.`,
+        `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta: o mercado é onde começa o próximo capítulo.`,
       // v2.0 (C1)
       sponsorBootcamp: (p: Record<string, string | number>) =>
         `Faz parte do contrato: a marca paga o bootcamp deste split. Ele já começou, sem custo, e a vantagem vale até o fim do split. ${
@@ -820,10 +821,10 @@ export const CAREER_PT: CareerCopy = {
     lost: (opp: string, a: number, b: number) => `Scrim D ${a}-${b} vs ${opp}`,
     usedUp: "Sem blocos de scrim restantes nesta semana",
     restDay: "As scrims acontecem na terça e na quarta",
-    squadShort: "Sem scrim com menos de três jogadores — contrate um terceiro antes.",
+    squadShort: "Sem scrim com menos de três jogadores: contrate um terceiro antes.",
     // v0.3 agendamento + resultados
     planTitle: "Parceiros de treino",
-    planDesc: "Escolha o adversário e o dia — scrims agendadas rodam sozinhas e aparecem no calendário.",
+    planDesc: "Escolha o adversário e o dia: scrims agendadas rodam sozinhas e aparecem no calendário.",
     chooseOpponent: "Adversário",
     pickDay: "Dia",
     bookCta: "Agendar scrim",
@@ -842,9 +843,9 @@ export const CAREER_PT: CareerCopy = {
     // v2.0 (R29): três níveis de sparring, depois a lista completa
     tiers: { easier: "Mais fácil", even: "Parelho", harder: "Mais difícil" } as Record<string, string>,
     tierHint: {
-      easier: "Reps de química e vitória provável — pouco XP.",
+      easier: "Reps de química e vitória provável: pouco XP.",
       even: "Um teste de verdade. XP padrão.",
-      harder: "Sparring mais forte desenvolve mais rápido — espere perder.",
+      harder: "Sparring mais forte desenvolve mais rápido: espere perder.",
     } as Record<string, string>,
     moreOpponents: "Mais adversários",
     fewerOpponents: "Menos adversários",
@@ -892,7 +893,7 @@ export const CAREER_PT: CareerCopy = {
     scrimDay: "Scrim",
     legend: "Legenda",
     advanceDay: "Avançar um dia",
-    advanceToStop: (label: string) => `Continuar — ${label}`,
+    advanceToStop: (label: string) => `Continuar: ${label}`,
     seasonEnd: "Fim da temporada",
     showWorld: "Mostrar outras regiões",
     hideWorld: "Só a minha agenda",
@@ -923,12 +924,12 @@ export const CAREER_PT: CareerCopy = {
     reviewTitle: "Antes da nova temporada: contratos",
     reviewBody: (n: number) =>
       n === 1
-        ? "1 contrato termina com esta temporada. Renove no Elenco, ou deixe acabar — ele sai na virada."
-        : `${n} contratos terminam com esta temporada. Renove no Elenco, ou deixe acabar — eles saem na virada.`,
+        ? "1 contrato termina com esta temporada. Renove no Elenco, ou deixe acabar: ele sai na virada."
+        : `${n} contratos terminam com esta temporada. Renove no Elenco, ou deixe acabar: eles saem na virada.`,
     reviewRenew: "Renovar no Elenco",
     reviewConfirm: (n: number) => (n === 1 ? "Deixar sair" : `Deixar os ${n} saírem`),
-    reviewDone: "Revisado — eles saem na virada.",
-    reviewHeld: "Uma decisão ainda espera no QG — responda antes da nova temporada.",
+    reviewDone: "Revisado: eles saem na virada.",
+    reviewHeld: "Uma decisão ainda espera no QG: responda antes da nova temporada.",
     renew: "Renovar",
     release: "Dispensar",
     releaseFee: (s: string) => `Rescisão: ${s}`,
@@ -952,10 +953,10 @@ export const CAREER_PT: CareerCopy = {
     renewalRuleFresh: "A renovação cobra o valor de mercado dele.",
     renewalMarketAsk: "Valor de mercado",
     renewalAsk: "Pedida na renovação",
-    renewalBoundFresh: "Abaixo do teto — ele renova pelo valor de mercado.",
+    renewalBoundFresh: "Abaixo do teto: ele renova pelo valor de mercado.",
     renewalBoundCap: (cap: string) => `No teto de ×${cap} o salário atual.`,
     renewalBoundFloor: (floorPct: number) => `Segurado em ${floorPct}% do valor de mercado.`,
-    renewalBoundJump: (jump: string) => `Segurado em ×${jump} o salário atual — o máximo que uma renovação sobe.`,
+    renewalBoundJump: (jump: string) => `Segurado em ×${jump} o salário atual: o máximo que uma renovação sobe.`,
     renewalTitles: (pct: number) => `+${pct}% pelos títulos que ele ganhou com você nas últimas temporadas.`,
     renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
@@ -1035,7 +1036,7 @@ export const CAREER_PT: CareerCopy = {
     balanced: "Equilibrado",
     auto: "Auto",
     coachEffect: (name: string, pct: number) => `Coach ${name}: ${pct > 0 ? "+" : ""}${pct}% de eficiência`,
-    noCoach: "Sem coach — o desenvolvimento roda abaixo do ritmo.",
+    noCoach: "Sem coach: o desenvolvimento roda abaixo do ritmo.",
     facilityEffect: (pct: number) => `Equipamentos: +${pct}% de eficiência`,
     projection: (v: string) => `+${v} OVR neste split`,
     matchXpHint: "Jogar contra campos fortes desenvolve mais que qualquer treino.",
@@ -1045,25 +1046,25 @@ export const CAREER_PT: CareerCopy = {
     weeklyPlanHint: "Sessões de segunda a sexta. Fim de semana é dia de jogo.",
     perWeekOverall: (v: string) => `+${v} OVR / semana`,
     perWeekOffset: (v: string, stat: string) => `+${v} ${stat} / semana`,
-    focusHintBalanced: "Crescimento puro de overall — nada afiado.",
+    focusHintBalanced: "Crescimento puro de overall: nada afiado.",
     focusHintAttr: "Troca uma fatia do crescimento de overall para afiar um atributo.",
-    focusHintAuto: "O coach escolhe a ênfase da semana — quase ótimo, sem esforço.",
+    focusHintAuto: "O coach escolhe a ênfase da semana: quase ótimo, sem esforço.",
     intensity: "Intensidade",
     intensityLight: "Leve",
     intensityNormal: "Normal",
     intensityHeavy: "Pesada",
     intensityLightHint: "-40% de desenvolvimento, zero risco de fadiga.",
     intensityNormalHint: "O bloco padrão.",
-    intensityHeavyHint: "+35% de desenvolvimento — adiciona um pequeno risco (avisado) de ausência antes de eventos.",
+    intensityHeavyHint: "+35% de desenvolvimento: adiciona um pequeno risco (avisado) de ausência antes de eventos.",
     fatigueWarning: "Sessões pesadas aumentam o risco de ausência pré-evento",
     sessionToday: "Sessão de hoje",
     noSessionToday: "Sem sessão hoje",
     // rc.34 (DEV-03 §4b): o motor treina a semana comprometida com meia carga (matchPrepShare) — o texto dizia que pausava.
-    matchPrepWeek: "Semana de jogo — sessões com meia carga; o evento paga XP de partida por cima",
+    matchPrepWeek: "Semana de jogo: sessões com meia carga; o evento paga XP de partida por cima",
     // v2.0 training rework (R27–R29)
     drillTitle: "Treino da semana",
     drillHint: "Um treino coletivo por semana: o elenco todo evolui no atributo escolhido.",
-    drillNone: "Sem treino definido — as sessões seguem o plano base.",
+    drillNone: "Sem treino definido, as sessões seguem o plano base.",
     drillByCoach: (name: string) => `Escolhido pelo coach ${name}`,
     drillEffect: (offset: string, stats: string, pct: number) => `+${offset} ${stats} / semana para o elenco inteiro · +${pct}% de overall`,
     drillClear: "Sem treino",
@@ -1075,22 +1076,22 @@ export const CAREER_PT: CareerCopy = {
       "clutch-sets": "Séries de clutch",
     } as Record<string, string>,
     drillsDesc: {
-      "mechanics-lab": "Controle aéreo, flip resets, velocidade — o atributo do high roll.",
-      rotations: "Disciplina no back-post e shadow — defesa.",
-      "set-plays": "Kickoffs, passes, pressão — ataque.",
-      "film-room": "Revisão de VOD e cenários — consistência e experiência.",
-      "clutch-sets": "Cenários de jogo 7 sob pressão — clutch.",
+      "mechanics-lab": "Controle aéreo, flip resets, velocidade: o atributo do high roll.",
+      rotations: "Disciplina no back-post e shadow: defesa.",
+      "set-plays": "Kickoffs, passes, pressão: ataque.",
+      "film-room": "Revisão de VOD e cenários: consistência e experiência.",
+      "clutch-sets": "Cenários de jogo 7 sob pressão: clutch.",
     } as Record<string, string>,
     growth: "Evolução",
     nextPoint: (ovr: number) => `Próximo: ${ovr} OVR`,
     etaDays: (days: number) => (days === 1 ? "≈ 1 dia de treino" : `≈ ${days} dias de treino`),
-    etaNone: "Parado — no teto do período ou no potencial",
-    etaAtPotential: "No potencial — não há mais o que aprender aqui",
+    etaNone: "Parado: no teto do período ou no potencial",
+    etaAtPotential: "No potencial, não há mais o que aprender aqui",
     capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
       `Neste split +${split} de ${splitMax} · temporada +${season} de ${seasonMax}`,
     // rc.32 (DEV-01): o contrato de evolução tem só o teto da temporada, um auge e um declínio.
     capLineSeason: (season: string, seasonMax: number) => `Nesta temporada +${season} de ${seasonMax}`,
-    etaAtPeak: "No auge — ele segura esse nível por enquanto",
+    etaAtPeak: "No auge: ele segura esse nível por enquanto",
     declineLine: (perWeek: string) => `Passou do auge: cerca de −${perWeek} OVR por semana`,
     effectsTitle: "O que seus atributos fazem",
     effectsHint: "Seu elenco atual e os momentos em que cada atributo faz a diferença.",
@@ -1260,7 +1261,7 @@ export const CAREER_PT: CareerCopy = {
       objectives: { development: "Desenvolvimento", preparation: "Preparação competitiva", recovery: "Recuperação" } as Record<string, string>,
       objectiveHint: {
         development: "Crescimento mais rápido rumo ao pico esperado de cada jogador, e os atributos do foco.",
-        preparation: "Química e scrims mais afiados para os eventos do período — pouco crescimento extra.",
+        preparation: "Química e scrims mais afiados para os eventos do período: pouco crescimento extra.",
         recovery: "Menos desgaste, e quem passou do pico segura o nível por mais tempo.",
       } as Record<string, string>,
       focus: "Foco do elenco",
@@ -1284,7 +1285,7 @@ export const CAREER_PT: CareerCopy = {
         auto: "O nível que o objetivo pede.",
       } as Record<string, string>,
       tweaks: "Ajustes por jogador",
-      tweaksHint: "Opcional — só os jogadores que fogem do plano do elenco.",
+      tweaksHint: "Opcional, só os jogadores que fogem do plano do elenco.",
       followSquad: "Segue o elenco",
       rest: "Descanso",
       restHint: "Treina na base, sem scrims, sem desgaste.",
@@ -1294,11 +1295,11 @@ export const CAREER_PT: CareerCopy = {
       ownLoad: "Carga própria",
       carryHint: "O seu antigo foco e intensidade por jogador entram como ajustes.",
       projection: "O que este pacote faz",
-      projectionHint: "Lido do motor que o executa — sessões e scrims até o fim do período. As séries oficiais vêm por cima.",
+      projectionHint: "Lido do motor que o executa: sessões e scrims até o fim do período. As séries oficiais vêm por cima.",
       perPlayer: (gain: string) => `+${gain}`,
       startersAvg: (gain: string) => `Titulares ≈ +${gain} OVR neste período`,
       wearLine: (wear: string, pts: string) => `Desgaste ${wear} · +${pts} pts de risco de ausência antes de cada evento`,
-      noWear: "Sem desgaste — sem risco extra de ausência",
+      noWear: "Sem desgaste: sem risco extra de ausência",
       daysLine: (sessions: number, scrims: number) =>
         `${sessions === 1 ? "1 sessão" : `${sessions} sessões`} · ${scrims === 1 ? "1 scrim" : `${scrims} scrims`}`,
       apply: "Aplicar",
@@ -1313,8 +1314,8 @@ export const CAREER_PT: CareerCopy = {
       proposalTitle: (name: string) => `O plano de ${name} para este período`,
       proposalReason: {
         default: "Desenvolvimento por padrão.",
-        event: "Um Major ou o Mundial cai neste período — preparação primeiro.",
-        wear: "O desgaste foi alto no último período — recuperação primeiro.",
+        event: "Um Major ou o Mundial cai neste período: preparação primeiro.",
+        wear: "O desgaste foi alto no último período: recuperação primeiro.",
       } as Record<string, string>,
       approve: "Aprovar",
       decisionLine: "O relógio espera a sua resposta.",
@@ -1325,7 +1326,7 @@ export const CAREER_PT: CareerCopy = {
       soFar: (sessions: string, scrims: string, series: string) => `Sessões +${sessions} · scrims +${scrims} · séries +${series}`,
       scrimRecord: (w: number, l: number) => `Scrims ${w}–${l}`,
       history: "Relatórios de período",
-      historyEmpty: "Nenhum período fechado ainda — o primeiro relatório chega quando o próximo período começar.",
+      historyEmpty: "Nenhum período fechado ainda: o primeiro relatório chega quando o próximo período começar.",
       summaryTitle: (n: number, season: string) => `Período ${n} · ${season}`,
       summaryAvg: (avg: string) => `Elenco ${avg} em média`,
       seriesPlayed: (n: number) => (n === 1 ? "1 série" : `${n} séries`),
@@ -1339,7 +1340,7 @@ export const CAREER_PT: CareerCopy = {
       notes: {
         joined: (p: Record<string, string | number>) => `${p.player} entrou no plano`,
         coachHired: (p: Record<string, string | number>) => `${p.coach} assumiu o plano`,
-        coachFired: (p: Record<string, string | number>) => `${p.coach} saiu — o plano seguiu no ritmo sem coach`,
+        coachFired: (p: Record<string, string | number>) => `${p.coach} saiu: o plano seguiu no ritmo sem coach`,
         objectiveChange: () => "O objetivo mudou no meio do período",
         // rc.36 (front T2): um ciclo interrompido antes do fim perde o ganho retido.
         cycleStopped: (p: Record<string, string | number>) => `O ciclo parou antes do fim: +${p.lost} retidos foram perdidos`,
@@ -1384,7 +1385,7 @@ export const CAREER_PT: CareerCopy = {
     starter: "Titular",
     sub: "Reserva",
     signCta: "Contratar",
-    offerSent: "Negócio registrado — resolve no próximo avanço.",
+    offerSent: "Negócio registrado: resolve no próximo avanço.",
     signed: (name: string) => `${name} assina com a org`,
     rejected: (name: string) => `${name} recusou os termos`,
     recommendedShelf: "Contratações recomendadas",
@@ -1423,14 +1424,14 @@ export const CAREER_PT: CareerCopy = {
     // ECO-03 (R47): a vaga é definida depois da contratação e nunca muda o preço.
     slotLabel: "Vaga no elenco",
     slotStarter: "Assume uma vaga aberta no trio titular.",
-    slotReserve: "Entra como reserva. Promova-o na tela de Elenco quando quiser — o contrato não muda.",
+    slotReserve: "Entra como reserva. Promova-o na tela de Elenco quando quiser: o contrato não muda.",
     samePrice: "Mesmo preço de um titular.",
     // rc.33 (UX-07): elenco cheio só avisa e leva ao Elenco; a contratação espera uma vaga livre.
     squadFullWarn: (cap: number) =>
       `Seu elenco está cheio (${cap} de ${cap}). Dispense ou venda um jogador na tela de Elenco e depois contrate.`,
     toSquad: "Ir para o Elenco",
     // DEV-02 (R48): uma contratação cuja temporada atual tem de ser a última.
-    finalSeasonDeal: "Última temporada: ele se aposenta ao fim desta temporada — só contrato de 1 temporada.",
+    finalSeasonDeal: "Última temporada: ele se aposenta ao fim desta temporada, só contrato de 1 temporada.",
     payrollWeek: (now: string, after: string) => `Folha: ${now} → ${after} / semana`,
     coachEffects: "O que este coach faz",
     // rc.34 (DEV-03 T4): o efeito dele chega pelo pacote do período — sem pacote = a base, com ou sem coach.
@@ -1453,8 +1454,8 @@ export const CAREER_PT: CareerCopy = {
     coachGrows: (ceiling: number) => `Evolui a cada temporada como coach (até ${ceiling})`,
     coachCompare: "Comparar",
     shopHim: "Colocar na vitrine",
-    shopHimHint: "Sinaliza disponibilidade — espere propostas na próxima janela.",
-    quickFlipWarning: "Contratado há pouco — vende com deságio.",
+    shopHimHint: "Sinaliza disponibilidade: espere propostas na próxima janela.",
+    quickFlipWarning: "Contratado há pouco: vende com deságio.",
     // v0.2 — mercado de coaches + ferramentas de busca
     coaches: "Coaches",
     coachRealTag: "Ex-pro",
@@ -1485,7 +1486,7 @@ export const CAREER_PT: CareerCopy = {
     dealsEmpty: "Nenhuma negociação ativa. Propostas chegam aqui com a janela aberta.",
     // v0.3 contratações travadas por reputação (cadeado visível)
     lockedAtRep: (rep: number) => `Assina com ${rep} de reputação`,
-    lockedHint: "Jogadores desse nível ainda não topam a org — a reputação abre essa porta.",
+    lockedHint: "Jogadores desse nível ainda não topam a org: a reputação abre essa porta.",
     coachLockedAt: (rep: number) => `Contratar coach desbloqueia com ${rep} de reputação`,
     exProLockedAt: (rep: number) => `Coaches ex-pro desbloqueiam com ${rep} de reputação`,
     // rc.33 (ECO-10 + ECO-11): a negociação do contrato — duas alavancas, a faixa à vista, uma resposta.
@@ -1546,14 +1547,14 @@ export const CAREER_PT: CareerCopy = {
       bootcampEventActive: "Conclua o evento em andamento antes de comprar um bootcamp. O time do evento já está congelado.",
       windowClosed: "A janela de transferências está fechada.",
       alreadySigned: "Já está no elenco.",
-      squadFull: "Elenco cheio — dispense ou venda antes.",
+      squadFull: "Elenco cheio: dispense ou venda antes.",
       unavailable: "Jogador indisponível.",
       funds: "Caixa insuficiente para este negócio.",
       // rc.36 (front S2, rc.35-(d)): sem dinheiro, a vaga vazia só é coberta com as luvas que ele pede.
-      fundsSeatBonus: "Sem dinheiro, a vaga vazia só é coberta com as luvas que ele pede — baixe as luvas.",
+      fundsSeatBonus: "Sem dinheiro, a vaga vazia só é coberta com as luvas que ele pede: baixe as luvas.",
       loanActive: "Sem transferências com taxa enquanto houver dívida do empréstimo emergencial.",
-      bankActive: "Um empréstimo bancário por vez — quite o atual primeiro.",
-      bankBacker: "O banco não faz outro empréstimo enquanto o emergencial estiver aberto — quite esse primeiro.",
+      bankActive: "Um empréstimo bancário por vez: quite o atual primeiro.",
+      bankBacker: "O banco não faz outro empréstimo enquanto o emergencial estiver aberto: quite esse primeiro.",
       bankNegative: "O caixa está negativo demais para um empréstimo comum. Resta só o empréstimo emergencial.",
       bankAmount: "Informe um valor válido.",
       bankLimit: "Acima do que o banco oferece para a sua reputação.",
@@ -1562,21 +1563,21 @@ export const CAREER_PT: CareerCopy = {
       maxed: "Já está no máximo.",
       used: "Já utilizado.",
       restDay: "Não em dia de descanso.",
-      squadShort: "Sem scrim com menos de três jogadores — contrate um terceiro antes.",
+      squadShort: "Sem scrim com menos de três jogadores: contrate um terceiro antes.",
       blocked: "Agora não.",
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
       contractedRep: "A contratação de jogadores sob contrato libera na reputação 20.",
       repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
       /** rc.35 (front C): uma org o contratou nesta janela. */
-      justSigned: "Ele acabou de assinar com outra org nesta janela — tente na próxima.",
-      exProGate: "Coaches ex-pro e profissionais pedem mais reputação — a escada de progressão mostra quando.",
+      justSigned: "Ele acabou de assinar com outra org nesta janela: tente na próxima.",
+      exProGate: "Coaches ex-pro e profissionais pedem mais reputação: a escada de progressão mostra quando.",
       // rc.33 (ECO-11): uma oferta abaixo do piso dele — a ficha mostra a contraproposta.
-      negotiationCounter: "Isso está abaixo do piso dele — aceite a contraproposta ou suba a oferta.",
+      negotiationCounter: "Isso está abaixo do piso dele: aceite a contraproposta ou suba a oferta.",
       sameDay: "Vocês já treinaram contra esse time hoje.",
       rosterLocked: "Mudanças no elenco só depois do fim do evento.",
       /** DEV-02 (R48): a idade mínima para competir. */
-      tooYoung: "Jovem demais para competir — jogadores assinam a partir dos 13 anos.",
+      tooYoung: "Jovem demais para competir: jogadores assinam a partir dos 13 anos.",
       /** rc.32 (M4, provisório): a trava do Investidor sobre compromissos que encurtam o fôlego. */
       loanRunway: "Bloqueado enquanto houver dívida emergencial. Quite o empréstimo ou libere salários antes.",
       /** R135 (ECO-06): lista de transferências e trocas de jogador por jogador. */
@@ -1680,7 +1681,7 @@ export const CAREER_PT: CareerCopy = {
     chartTitle: "Histórico do saldo",
     chartRange: (n: number, from: string, to: string) =>
       n === 1 ? `Um saldo registrado: ${from}.` : `${n} saldos registrados, de ${from} a ${to}.`,
-    chartEmpty: "O gráfico se preenche de segunda em segunda — volte depois do próximo pagamento.",
+    chartEmpty: "O gráfico se preenche de segunda em segunda: volte depois do próximo pagamento.",
     chartLegendBalance: "Saldo, incluindo o caixa atual",
     chartLegendFloor: "O piso (uma segunda abaixo dele é uma quebra)",
     chartLegendSeason: "Início de temporada",
@@ -1726,7 +1727,7 @@ export const CAREER_PT: CareerCopy = {
     bankRemaining: (s: string) => `Banco: ${s} a pagar`,
     bankWeekly: (s: string) => `Parcela de ${s} / semana`,
     bankPayEarly: "Antecipar o banco",
-    bankBlockedActive: "Um empréstimo por vez — quite este primeiro.",
+    bankBlockedActive: "Um empréstimo por vez: quite este primeiro.",
     bankLockedRep: "O banco abre as portas quando a org tiver um pouco de reputação.",
     // ECO-02 (R46): o cronograma do banco, como a folha de segunda lança.
     bankNext: (amount: string, date: string) => `Próxima parcela de ${amount} em ${date}`,
@@ -1847,8 +1848,8 @@ export const CAREER_PT: CareerCopy = {
       laterGoals: "Depois, uma meta nova a cada split, na mesma dificuldade",
       sign: "Assinar",
       // rc.36 (front S2): CAREER_SPONSOR.deadlineRule — "hold" (no último dia o relógio espera) ou "signSafest".
-      decideBy: (date: string) => `Escolha uma até ${date} — nesse dia o relógio espera a sua escolha.`,
-      decideBySafest: (date: string) => `Escolha uma até ${date} — depois disso a oferta mais segura é assinada por você.`,
+      decideBy: (date: string) => `Escolha uma até ${date}: nesse dia o relógio espera a sua escolha.`,
+      decideBySafest: (date: string) => `Escolha uma até ${date}: depois disso a oferta mais segura é assinada por você.`,
       compareHint:
         "As três valem parecido em média. Muda o quanto é garantido, a duração e a meta.",
       // rc.34: uma marca de Tier 3 / 4 paga menos a um time abaixo do nível dela (sponsorDeals.levelValueShareOf).
@@ -1890,14 +1891,14 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 (Miguel, 31/10): o empréstimo emergencial do banco (rc.31–rc.33: o Investidor de emergência).
     backer: "Empréstimo emergencial",
     backerRemaining: (s: string) => `Empréstimo emergencial: ${s} a devolver`,
-    backerLine: (pct: number) => `Abatido da premiação (${pct}%) e das vendas — ou amortize abaixo`,
+    backerLine: (pct: number) => `Abatido da premiação (${pct}%) e das vendas, ou amortize abaixo`,
     // v0.3 quitação da dívida
     backerSaleLine: (pct: number) => `Vendas de jogadores abatem ${pct}% automaticamente`,
     payDebt: "Pagar o empréstimo",
     payDebtAll: (s: string) => `Quitar tudo (${s})`,
     payDebtAmount: "Valor",
     payDebtHint: "Quitado antes do prazo, o empréstimo se encerra e o prazo deixa de existir.",
-    debtCleared: "Empréstimo quitado — o prazo deixou de existir.",
+    debtCleared: "Empréstimo quitado: o prazo deixou de existir.",
     // rc.34: a regra quando nada é devido — o piso, o empréstimo até o alvo, o prazo (null = sem prazo).
     backerIdle: (floor: string, rescueTo: string, term: number | null) =>
       `Sem uso. Se uma segunda-feira fechar abaixo de ${floor}, o banco empresta até o saldo voltar a ${rescueTo}${term !== null ? `, com ${term} semanas para quitar` : ""}.`,
@@ -1919,10 +1920,10 @@ export const CAREER_PT: CareerCopy = {
       debtNone: "Nada a pagar.",
       debtEmergency: (s: string) => `Empréstimo emergencial: ${s}`,
       debtBank: (s: string, n: number) => `Empréstimo bancário: ${s} (${n === 1 ? "falta 1 parcela" : `faltam ${n} parcelas`} de segunda)`,
-      deadline: (date: string, weeks: number) => `O empréstimo emergencial vence ${date} — daqui a ${weeks === 1 ? "1 semana" : `${weeks} semanas`}.`,
+      deadline: (date: string, weeks: number) => `O empréstimo emergencial vence ${date}: daqui a ${weeks === 1 ? "1 semana" : `${weeks} semanas`}.`,
       cash: "Até o primeiro regional",
       cashLine: (balance: string, week: number, mondays: number, net: string) =>
-        `${balance} no saldo até a semana ${week} — ${mondays} segundas a ${net} por semana, sem contar premiação.`,
+        `${balance} no saldo até a semana ${week}: ${mondays} segundas a ${net} por semana, sem contar premiação.`,
       sponsorEnds: "O patrocínio acaba nesta temporada: a projeção fica sem a base dele até você assinar outro.",
       retirements: "Aposentadorias",
       retireNone: "Ninguém está perto do fim da carreira.",
@@ -1931,7 +1932,7 @@ export const CAREER_PT: CareerCopy = {
       retirePossible: (name: string) => `${name} pode anunciar a próxima temporada como a última.`,
     },
     backerRescued: "O último empréstimo emergencial está quitado.",
-    insolvencyWarning: "As contas estão ruindo — a próxima quebra do piso encerra a carreira.",
+    insolvencyWarning: "As contas estão ruindo: a próxima quebra do piso encerra a carreira.",
     // rc.32 (M4): a linha em semanas de salário.
     backerWeeksLine: (floorWeeks: number, rescueWeeks: number) =>
       `O piso fica ${floorWeeks} semanas de salário abaixo de zero. O empréstimo emergencial devolve o saldo a ${rescueWeeks} semanas acima.`,
@@ -1956,14 +1957,14 @@ export const CAREER_PT: CareerCopy = {
       end === null
         ? `Quebras até aqui: ${n}`
         : n + 1 >= end
-          ? `Quebras até aqui: ${n} — a próxima encerra a carreira`
-          : `Quebras até aqui: ${n} — a carreira acaba na quebra ${end}`,
+          ? `Quebras até aqui: ${n}, a próxima encerra a carreira`
+          : `Quebras até aqui: ${n}, a carreira acaba na quebra ${end}`,
     backerLock: "Enquanto houver dívida: sem taxas de transferência, sem equipamento, nada que encurte o fôlego.",
     // rc.34: nada fica travado enquanto há dívida (CAREER_LOAN.lockCommitments false).
     loanNoLock: "Nada fica travado enquanto você deve: contratações, taxas e equipamentos seguem liberados.",
     // rc.34: o prazo e o estado do empréstimo, como Finanças e o QG mostram.
     loanDeadline: (date: string, weeks: number) =>
-      weeks <= 0 ? `Vence nesta segunda (${date})` : weeks === 1 ? `Vence na próxima segunda, ${date}` : `Vence em ${date} — faltam ${weeks} semanas`,
+      weeks <= 0 ? `Vence nesta segunda (${date})` : weeks === 1 ? `Vence na próxima segunda, ${date}` : `Vence em ${date}: faltam ${weeks} semanas`,
     loanDeadlineRule: deadlineRulePt,
     // rc.34 review: as contas projetadas até a segunda do prazo (com o gasto semanal), o teste do próprio banco.
     loanCovered: (covered: boolean) =>
@@ -1973,21 +1974,21 @@ export const CAREER_PT: CareerCopy = {
       max === null
         ? `Acréscimos até aqui: ${n}`
         : n >= max
-          ? `Acréscimos: ${n} de ${max} — a próxima quebra encerra a carreira`
+          ? `Acréscimos: ${n} de ${max}, a próxima quebra encerra a carreira`
           : `Acréscimos: ${n} de ${max}`,
     // rc.33 (ECO-07): o card do parceiro de resgate — rc.34: o investidor que entra com o primeiro empréstimo emergencial.
     rescueTitle: "Investidor",
     rescueTerms: (weeks: number) => `Veio com o primeiro empréstimo emergencial · ${weeks} semanas de receita extra`,
     rescueUntil: (date: string, left: number) =>
-      left === 1 ? `Último pagamento ${date}.` : `Faltam ${left} pagamentos — o último em ${date}.`,
+      left === 1 ? `Último pagamento ${date}.` : `Faltam ${left} pagamentos: o último em ${date}.`,
     // rc.32 (M3, provisório): o card do parceiro fundador.
     foundingTitle: "Parceiro fundador",
     foundingTerms: (pct: number) => `${pct}% da folha de fundação · meta: disputar eventos · sem luvas`,
-    foundingEnds: (through: string) => `Termina no seu primeiro contrato de patrocínio — não antes do fim de ${through}.`,
+    foundingEnds: (through: string) => `Termina no seu primeiro contrato de patrocínio, não antes do fim de ${through}.`,
     foundingEnded: "Saiu de cena quando a org assinou o próprio patrocínio.",
     // rc.34 (S6): a transição — uma parte do valor, um split por passo.
     foundingTapering: (pct: number, last: boolean) =>
-      last ? `Passando o bastão: ${pct}% do valor neste split — o último.` : `Passando o bastão: ${pct}% do valor neste split, menos no próximo, e então encerra.`,
+      last ? `Passando o bastão: ${pct}% do valor neste split, o último.` : `Passando o bastão: ${pct}% do valor neste split, menos no próximo, e então encerra.`,
     // rc.32 (M6, provisório): a parte dos jogadores nos prêmios de pódio.
     // rc.33 (ECO-10): cada contrato tem a própria parte (o Elenco e a oferta mostram).
     playerShareRule:
@@ -2014,7 +2015,7 @@ export const CAREER_PT: CareerCopy = {
     buy: "Comprar",
     // Escada de equipamentos & staff (v0.2)
     gearLadder: "O arsenal da org",
-    gearLadderHint: "Comprado em ordem, desbloqueado por reputação — uma org de garagem vira potência.",
+    gearLadderHint: "Comprado em ordem, desbloqueado por reputação: uma org de garagem vira potência.",
     gear: {
       peripherals: "Periféricos pro",
       monitors: "Monitores 240Hz",
@@ -2050,7 +2051,7 @@ export const CAREER_PT: CareerCopy = {
     active: "Ativo",
     owned: "Seus",
     next: "Para comprar",
-    none: "Nada para comprar ainda — a reputação abre a caixa de ferramentas.",
+    none: "Nada para comprar ainda: a reputação abre a caixa de ferramentas.",
     lockedRep: (rep: number) => `Reputação ${rep}`,
     after: (name: string) => `Depois de ${name}`,
     used: "Já usado neste split",
@@ -2070,7 +2071,7 @@ export const CAREER_PT: CareerCopy = {
     durationLabel: "Duração",
     afterLabel: "Depois",
     afterLine: (balance: string, runway: string) => `Saldo ${balance} · ${runway}`,
-    free: "Grátis — vantagem do patrocínio",
+    free: "Grátis: vantagem do patrocínio",
     discount: (pct: number) => `−${pct}% de desconto do patrocínio`,
     buy: "Comprar",
     hire: "Contratar",
@@ -2088,7 +2089,7 @@ export const CAREER_PT: CareerCopy = {
     unlockTitle: "Novo na caixa de ferramentas",
     bootcampHint: "Reúna o elenco por alguns dias: fortaleça o entrosamento e leve uma vantagem temporária para as competições.",
     available: "Melhorias disponíveis",
-    unlockBody: (name: string) => `${name} foi desbloqueado — pronto para comprar, ainda não comprado.`,
+    unlockBody: (name: string) => `${name} foi desbloqueado: pronto para comprar, ainda não comprado.`,
     unlockSee: "Ver",
     unlockLater: "Depois",
     newTag: "Novo",
@@ -2213,7 +2214,7 @@ export const CAREER_PT: CareerCopy = {
       name: "Central de notícias",
       lead: "Manchete",
       archive: "Do arquivo",
-      archiveNote: "História real da RLCS — esta linha do tempo segue o próprio rumo.",
+      archiveNote: "História real da RLCS: esta linha do tempo segue o próprio rumo.",
       subject: {
         result: "Resultado",
         transfer: "Transferência",
@@ -2268,14 +2269,14 @@ export const CAREER_PT: CareerCopy = {
       resultUserQualified: (p: Record<string, string | number>) => `${p.event}: classificado para domingo`,
       resultUserEliminated: (p: Record<string, string | number>) => `${p.event}: eliminado no Swiss`,
       qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
-      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória — ${p.event} acontece sem você`,
+      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória: ${p.event} acontece sem você`,
       qualifiedMajor: () => `Está dentro. O Major espera.`,
       missedMajor: () => `O Major acontece sem você neste split.`,
       qualifiedWorlds: () => `WORLDS. A org chegou lá.`,
       missedWorlds: () => `A corrida pelo Worlds termina aqui nesta temporada.`,
       stability: (p: Record<string, string | number>) => `Reformulação do elenco custa ${p.points} Pontos da Temporada`,
       contractExpiring: (p: Record<string, string | number>) => `O contrato de ${p.player} entra na janela final`,
-      contractReminder: (p: Record<string, string | number>) => `Relógio dos contratos: ${p.players} — ${p.weeks} semanas`,
+      contractReminder: (p: Record<string, string | number>) => `Relógio dos contratos: ${p.players}, ${p.weeks} semanas`,
       // rc.34 (Miguel, 31/10): um elenco incompleto ficou fora de uma regional.
       regionalSkipped: (p: Record<string, string | number>) => `${p.org} fica fora da ${p.event}`,
       eventMissedNoReserve: (p: Record<string, string | number>) => `${p.org} perde ${p.event}: sem reserva`,
@@ -2289,7 +2290,7 @@ export const CAREER_PT: CareerCopy = {
       orgEnters: (p: Record<string, string | number>) => `${p.org} entra na cena de ${p.region}`,
       // rc.33 (RTW-03): uma org cuja história acabou cede a vaga a quem entra.
       orgLeaves: (p: Record<string, string | number>) => `${p.org} deixa a cena de ${p.region}`,
-      rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region} — ${p.name} é o destaque`,
+      rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
       trainingReport: (p: Record<string, string | number>) => `Relatório de treinos: elenco ${p.n} OVR`,
@@ -2302,10 +2303,10 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (T3): uma linha por semana para os scrims do pacote (só treino).
       scrimWeek: (p: Record<string, string | number>) =>
         `Semana de scrims (${({ easy: "fácil", even: "equilibrado", hard: "difícil" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,
-      windowOpen: () => `Janela de transferências aberta — os telefones ligados`,
+      windowOpen: () => `Janela de transferências aberta: os telefones ligados`,
       windowClose: () => `Janela fechada. Os elencos são o que são.`,
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas pelas regiões`,
-      debtCleared: () => `Empréstimo emergencial quitado — a org anda livre`,
+      debtCleared: () => `Empréstimo emergencial quitado: a org anda livre`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} anuncia parceria com ${p.name}`,
       // rc.34 (ECO-04): um contrato que chegou ao fim (termina numa virada de split).
       sponsorEnded: (p: Record<string, string | number>) => `${p.name}: contrato de patrocínio concluído`,
@@ -2343,9 +2344,9 @@ export const CAREER_PT: CareerCopy = {
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para o feed de um save antigo.
       restructured: (p: Record<string, string | number>) =>
         p.player ? `Reestruturação: ${p.player} vendido para equilibrar as contas` : `Reestruturação: o Investidor entra de novo`,
-      listed: (p: Record<string, string | number>) => `${p.player} está no mercado — a org o anunciou`,
+      listed: (p: Record<string, string | number>) => `${p.player} está no mercado: a org o anunciou`,
       flavor1: () => `Notas da bancada: disciplina de rotação é o novo jargão do meta`,
-      flavor2: () => `Servidores de scrim lotados — a região inteira está no grind`,
+      flavor2: () => `Servidores de scrim lotados: a região inteira está no grind`,
       flavor3: () => `O microfone de um caster pegou uma análise bem sincera no intervalo`,
       flavor4: () => `Reclamações de ping registradas. Reclamações de ping arquivadas.`,
       flavor5: () => `Uma montage da comunidade está bombando esta semana`,
@@ -2405,21 +2406,21 @@ export const CAREER_PT: CareerCopy = {
       resultUser: (p: Record<string, string | number>) =>
         `${p.org ?? "A equipe"} encerrou sua participação no ${p.event} em ${p.placement}. O resultado marca mais um capítulo da temporada, enquanto o circuito segue para o próximo compromisso.`,
       resultUserQualified: (p: Record<string, string | number>) =>
-        `Três vitórias no Swiss do ${p.event} e a org garantiu a vaga no regional. A qualificatória paga premiação e reputação — os Pontos da Temporada estão em jogo no domingo.`,
+        `Três vitórias no Swiss do ${p.event} e a org garantiu a vaga no regional. A qualificatória paga premiação e reputação: os Pontos da Temporada estão em jogo no domingo.`,
       resultUserEliminated: (p: Record<string, string | number>) =>
-        `Três derrotas encerraram o ${p.event} da org no Swiss. A premiação entra mesmo assim — e a próxima semana de regional é outra chance.`,
+        `Três derrotas encerraram o ${p.event} da org no Swiss. A premiação entra mesmo assim, e a próxima semana de regional é outra chance.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
+        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo: os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `Três derrotas no Swiss de sábado — o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
+        `Três derrotas no Swiss de sábado: o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
       qualifiedMajor: () =>
-        `A classificação do split travou e o seu nome está acima da linha. Chave inter-regional, pontos em dobro — o teste de verdade.`,
+        `A classificação do split travou e o seu nome está acima da linha. Chave inter-regional, pontos em dobro: o teste de verdade.`,
       missedMajor: () =>
-        `Abaixo da linha quando ela travou. O próximo split zera a corrida — os pontos de Worlds já garantidos continuam valendo.`,
+        `Abaixo da linha quando ela travou. O próximo split zera a corrida: os pontos de Worlds já garantidos continuam valendo.`,
       qualifiedWorlds: () =>
-        `Uma temporada inteira de pontos garantiu. A maior chave do jogo espera — um bracket para tudo.`,
+        `Uma temporada inteira de pontos garantiu. A maior chave do jogo espera: um bracket para tudo.`,
       missedWorlds: () =>
-        `Os pontos da temporada não bastaram. A org assiste ao Worlds de casa — e planeja a volta.`,
+        `Os pontos da temporada não bastaram. A org assiste ao Worlds de casa, e planeja a volta.`,
       stability: (p: Record<string, string | number>) =>
         `Escalar mais uma cara nova no meio do split custou ${p.points} Pontos da Temporada. Reformulação é coisa de pré-temporada.`,
       contractExpiring: (p: Record<string, string | number>) =>
@@ -2431,27 +2432,27 @@ export const CAREER_PT: CareerCopy = {
       eventMissedNoReserve: (p: Record<string, string | number>) =>
         `Um titular ficou indisponível e não havia ninguém no banco, então o elenco não joga ${p.event}: sem pontos, sem prêmio. Um reserva assina na próxima janela de transferências.`,
       playerLeft: (p: Record<string, string | number>) =>
-        `A renovação não veio e ${p.player} saiu de graça. Agentes conversam — a próxima negociação começa daí.`,
+        `A renovação não veio e ${p.player} saiu de graça. Agentes conversam: a próxima negociação começa daí.`,
       retirementAnnounce: (p: Record<string, string | number>) =>
-        `${p.player} vai se aposentar no fim da temporada. Uma última campanha juntos — faça valer.`,
+        `${p.player} vai se aposentar no fim da temporada. Uma última campanha juntos: faça valer.`,
       retired: (p: Record<string, string | number>) =>
-        `${p.player} deixa o jogo. A cena fica mais jovem — e um pouco mais pobre — hoje.`,
+        `${p.player} deixa o jogo. A cena fica mais jovem, e um pouco mais pobre, hoje.`,
       retiredToCoach: (p: Record<string, string | number>) =>
-        `${p.player} se aposenta das competições e vira treinador. O mercado de técnicos ganha um nome novo — que você conhece bem.`,
+        `${p.player} se aposenta das competições e vira treinador. O mercado de técnicos ganha um nome novo, que você conhece bem.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} se aposenta e deixa a cena. A org agradece cada temporada com as nossas cores.`,
       orgEnters: (p: Record<string, string | number>) =>
-        `Um escudo novo no circuito de ${p.region}: ${p.org} coloca uma line nesta temporada. A história chega no horário — e a tabela fica mais dura.`,
+        `Um escudo novo no circuito de ${p.region}: ${p.org} coloca uma line nesta temporada. A história chega no horário, e a tabela fica mais dura.`,
       orgLeaves: (p: Record<string, string | number>) =>
         `${p.org} não monta line nesta temporada e deixa o circuito de ${p.region}. A vaga fica com um nome novo; os jogadores procuram outra casa.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
-        `A idade cobra a mecânica primeiro. ${p.player} está adaptando o próprio jogo — a experiência segue pagando.`,
+        `A idade cobra a mecânica primeiro. ${p.player} está adaptando o próprio jogo: a experiência segue pagando.`,
       windowOpen: () =>
         `Agentes atendendo, taxas circulando, elencos destravados. Negócios resolvem com o passar dos dias; a janela não espera.`,
       windowReport: (p: Record<string, string | number>) =>
-        `${p.n} trocas registradas antes da janela fechar. O plantão completo — taxas, agentes livres, todas as regiões — está no QG.`,
+        `${p.n} trocas registradas antes da janela fechar. O plantão completo, taxas, agentes livres, todas as regiões, está no QG.`,
       debtCleared: () =>
         `O último pagamento quitou o empréstimo emergencial do banco. Nenhum prazo pesa mais sobre a org.`,
       // rc.34 (ECO-04): um contrato agora dura um split, uma temporada ou duas, com uma meta por split.
@@ -2462,11 +2463,11 @@ export const CAREER_PT: CareerCopy = {
       registryRepair: () =>
         `Jogadores listados por duas orgs agora ficam em um só elenco, e gamertags repetidas foram renomeadas. Seu elenco, seus contratos e seus resultados não mudaram.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} está fora de ${p.event} — visto, saúde, vida. O sub entra com a química dele.`,
+        `${p.player} está fora de ${p.event}: visto, saúde, vida. O sub entra com a química dele.`,
       standIn: (p: Record<string, string | number>) =>
-        `Um substituto contratado mantém a org no ${p.event}. Escalação completa, química zero — e dá para notar.`,
+        `Um substituto contratado mantém a org no ${p.event}. Escalação completa, química zero, e dá para notar.`,
       bankLoan: (p: Record<string, string | number>) =>
-        `Crédito novo no balanço — ${p.amount}, pago semanalmente. Ambição com dinheiro emprestado ainda é ambição.`,
+        `Crédito novo no balanço: ${p.amount}, pago semanalmente. Ambição com dinheiro emprestado ainda é ambição.`,
       emergencyBid: (p: Record<string, string | number>) =>
         `Com as contas da org no vermelho, ${p.org} vão atrás de ${p.player} com desconto. Venda rápida ou briga para segurar: a decisão é do manager.`,
       bankCleared: () =>
@@ -2474,31 +2475,31 @@ export const CAREER_PT: CareerCopy = {
       cashWarning: (p: Record<string, string | number>) =>
         `Os custos semanais passam a receita e a reserva está em ${p.weeks} semanas. Quem ignora isso acaba no balcão de emergência do banco.`,
       backerIn: () =>
-        `O piso rompeu e o aporte do investidor caiu. O reembolso sai descontado da premiação e das vendas até quitar — a caixa de entrada diz o que a próxima quebra significaria.`,
+        `O piso rompeu e o aporte do investidor caiu. O reembolso sai descontado da premiação e das vendas até quitar: a caixa de entrada diz o que a próxima quebra significaria.`,
       emergencyLoan: () =>
-        `O piso rompeu e o banco depositou um empréstimo emergencial. Premiações e vendas abatem parte dele — e ele tem prazo. A caixa de entrada traz as condições.`,
+        `O piso rompeu e o banco depositou um empréstimo emergencial. Premiações e vendas abatem parte dele, e ele tem prazo. A caixa de entrada traz as condições.`,
       emergencyTopUp: () =>
         `Abaixo do piso de novo antes de quitar: o banco somou ao empréstimo. O prazo não mudou.`,
       loanCollected: () =>
         `Dia do prazo, e o saldo cobriu a dívida: o banco cobrou o que era devido. A org segue em frente.`,
       insolvency: () =>
-        `O colapso final. Salários sem pagar, cadeiras vazias, servidores no escuro — a história da org termina no livro-caixa.`,
+        `O colapso final. Salários sem pagar, cadeiras vazias, servidores no escuro: a história da org termina no livro-caixa.`,
       seasonChampion: (p: Record<string, string | number>) =>
         `${p.org} levantam o troféu do ${p.event}. A régua de todo mundo acabou de subir.`,
       incomingBid: (p: Record<string, string | number>) =>
-        `${p.org} querem ${p.player} e puseram dinheiro na mesa. A decisão — e as consequências — são suas.`,
+        `${p.org} querem ${p.player} e puseram dinheiro na mesa. A decisão, e as consequências, são suas.`,
       gearBought: (p: Record<string, string | number>) =>
-        `O upgrade de ${p.name} chegou. A eficiência de treino sobe — os jogadores notaram na hora.`,
+        `O upgrade de ${p.name} chegou. A eficiência de treino sobe: os jogadores notaram na hora.`,
       bootcampRun: () =>
         `Uma semana sob o mesmo teto faz o que agenda nenhuma faz: o elenco joga como se dividisse um cérebro. Próximo oficial mais afiado, e mais entrosados para sempre.`,
       coachHired: (p: Record<string, string | number>) =>
         `${p.coach} assume o quadro branco de ${p.org}. Ritmo de desenvolvimento e preparação de jogo agora respondem ao banco.`,
       scrimWin: (p: Record<string, string | number>) =>
-        `Um set limpo de portas fechadas contra ${p.opponent}. Reps no bolso, química em alta, nada vazou para o plantão — quase.`,
+        `Um set limpo de portas fechadas contra ${p.opponent}. Reps no bolso, química em alta, nada vazou para o plantão: quase.`,
       scrimLoss: (p: Record<string, string | number>) =>
         `${p.opponent} levou o set de scrim. Derrota de portas fechadas é a lição mais barata dos esports.`,
       blockbusterBid: (p: Record<string, string | number>) =>
-        `${p.org} vieram com intenção real por ${p.player}. A história quer essa transferência — você decide se ela acontece.`,
+        `${p.org} vieram com intenção real por ${p.player}. A história quer essa transferência: você decide se ela acontece.`,
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para o feed de um save antigo.
       restructured: (p: Record<string, string | number>) =>
         `A org fechou de novo abaixo do piso e o Investidor forçou a mão${p.player ? `: ${p.player} vai para ${p.org}` : ""}. A reputação sente; ${Number(p.granted) > 0 ? "as contas voltam a ter fôlego" : "a venda cobre as contas"}. ${legacyNextBreachPt(p.next)}`,
@@ -2566,7 +2567,7 @@ export const CAREER_PT: CareerCopy = {
 
   inserts: {
     kinds: { random: "Missão paralela", sponsor: "Pedido do patrocinador", training: "Decisão de treino" } as Record<string, string>,
-    expires: "Decida hoje — o momento passa com o dia.",
+    expires: "Decida hoje: o momento passa com o dia.",
     fx: {
       rep: (n: number) => `${n > 0 ? "+" : ""}${n} rep`,
       chemistry: "+ química",
@@ -2587,11 +2588,11 @@ export const CAREER_PT: CareerCopy = {
       "ins-pc-dies": { title: "Um PC morre no meio da semana", body: "Uma das máquinas de torneio pifou. Troque agora ou empreste uma reserva e perca tempo de treino.", a: "Trocar", b: "Emprestar uma reserva" },
       "ins-fan-meetup": { title: "A torcida pede um encontro", body: "A torcida quer um encontro depois do treino. Um custo pequeno, um pouco de prestígio.", a: "Organizar", b: "Não esta semana" },
       "ins-media-day": { title: "Pedido de media day", body: "A imprensa quer um dia inteiro com o elenco. Bom para a marca, uma sessão mais curta.", a: "Media day completo", b: "Manter o mínimo" },
-      "ins-sponsor-content": { title: "Seu patrocinador quer um dia de conteúdo", body: "O patrocinador pede um dia de conteúdo com os jogadores. Paga — e o treino paga por isso.", a: "Gravar o conteúdo", b: "Recusar com educação" },
+      "ins-sponsor-content": { title: "Seu patrocinador quer um dia de conteúdo", body: "O patrocinador pede um dia de conteúdo com os jogadores. Paga, e o treino paga por isso.", a: "Gravar o conteúdo", b: "Recusar com educação" },
       "ins-sponsor-jersey": { title: "Foto de lançamento da camisa", body: "O patrocinador quer revelar a camisa nova no próximo evento com uma sessão de fotos. Dinheiro rápido e um pouco de prestígio.", a: "Fazer o lançamento", b: "Pular" },
       "ins-rest-request": { title: "Um titular pede uma semana mais leve", body: "O elenco está cansado. Sessões mais leves mantêm o clima; insistir mantém o ritmo.", a: "Aliviar a semana", b: "Insistir" },
       "ins-lan-bootcamp": { title: "Uma LAN house oferece um bootcamp barato", body: "Uma LAN house local oferece ao elenco um fim de semana sob o mesmo teto por um valor fixo.", a: "Reservar", b: "Passar" },
-      "ins-coach-clinic": { title: "O coach propõe uma clínica", body: "O coach quer rodar uma clínica focada nesta semana — um custo pequeno, um passo real.", a: "Rodar a clínica", b: "Agora não" },
+      "ins-coach-clinic": { title: "O coach propõe uma clínica", body: "O coach quer rodar uma clínica focada nesta semana: um custo pequeno, um passo real.", a: "Rodar a clínica", b: "Agora não" },
     } as Record<string, { title: string; body: string; a: string; b: string }>,
   },
 
@@ -2705,10 +2706,10 @@ export const CAREER_PT: CareerCopy = {
     reverseSweep: "REVERSE SWEEP",
     eliminated: "Sua campanha termina aqui",
     advancing: "Avança para a próxima rodada",
-    champion: (name: string) => `${name} — CAMPEÕES`,
+    champion: (name: string) => `${name}: CAMPEÕES`,
     yourResult: (placement: string) => `Colocação final: ${placement}`,
     earned: "Conquistado",
-    unavailableNotice: (player: string) => `${player} está fora desta — próximo da fila.`,
+    unavailableNotice: (player: string) => `${player} está fora desta: próximo da fila.`,
     aiTicker: "Pelo chaveamento",
     speed: "Velocidade",
     // Reconstrução v0.2 — classificação ao vivo, chaveamento, match center
@@ -2779,8 +2780,8 @@ export const CAREER_PT: CareerCopy = {
     sundaySub: (playoffTeams: number, bestOf: number) =>
       `Top ${playoffTeams} · eliminação dupla · melhor de ${bestOf}`,
     sundayOpener: (opp: string, seed: number, oppSeed: number) =>
-      `Seed nº ${seed} — sua estreia é contra ${opp} (nº ${oppSeed})`,
-    sundaySpectating: "Fora no Swiss — hoje a taça é decidida sem você",
+      `Seed nº ${seed}: sua estreia é contra ${opp} (nº ${oppSeed})`,
+    sundaySpectating: "Fora no Swiss: hoje a taça é decidida sem você",
     startNow: "Começar agora",
     startPlayoffs: "Começar os playoffs",
     tapToSkip: "Toque em qualquer lugar para pular",
@@ -2837,9 +2838,9 @@ export const CAREER_PT: CareerCopy = {
     watch: "Assistir ao domingo",
     results: "Só os resultados",
     skip: "Pular",
-    outHint: "Assista ao chaveamento, leia os resultados ou siga em frente — o resultado é o mesmo.",
+    outHint: "Assista ao chaveamento, leia os resultados ou siga em frente: o resultado é o mesmo.",
     withoutYouTitle: (event: string) => `${event} sem você`,
-    withoutYouLine: "Fora na qualificatória de sábado. O regional de domingo segue — acompanhe ou siga em frente.",
+    withoutYouLine: "Fora na qualificatória de sábado. O regional de domingo segue: acompanhe ou siga em frente.",
     whoQualified: "Classificados na qualificatória de sábado",
     resultsInTitle: (event: string) => `${event}: saíram os resultados`,
     resultsInLine: "Você não estava nele. Reveja rodada a rodada ou leia os resultados.",
@@ -2868,7 +2869,7 @@ export const CAREER_PT: CareerCopy = {
     play: "Continuar",
     skipToResults: "Pular para os resultados",
     backToHq: "Voltar ao QG",
-    nothing: "Nenhum evento para acompanhar agora — ele aparece aqui quando um evento segue sem você.",
+    nothing: "Nenhum evento para acompanhar agora: ele aparece aqui quando um evento segue sem você.",
     progress: (n: number, total: number) => `Rodada ${n} de ${total}`,
     upcoming: "Ainda por jogar",
     teams: (n: number) => `${n} times`,
@@ -2894,23 +2895,23 @@ export const CAREER_PT: CareerCopy = {
     bizRecap: "Negócios",
     rolloverTitle: (label: string) => `Começa a ${label}`,
     rolloverCta: "Iniciar a temporada",
-    worldsChampion: (name: string) => `${name} — CAMPEÕES MUNDIAIS`,
+    worldsChampion: (name: string) => `${name}: CAMPEÕES MUNDIAIS`,
     yourTitle: "CAMPEÕES MUNDIAIS",
     creditsJourney: "A estrada até aqui",
     creditsRoster: "O elenco que conseguiu",
     finalWhistle: "Apito final",
-    finalWhistleBody: "A temporada 2026 fecha o livro — mas não a história da org.",
+    finalWhistleBody: "A temporada 2026 fecha o livro, mas não a história da org.",
     insolvencyTitle: "Insolvência",
     insolvencyBody: "As contas fecharam abaixo do piso uma vez a mais do que esta dificuldade tolera. A história da org termina aqui.",
     // rc.34 (end.moneyCause "deadline"): o empréstimo emergencial sem pagar no prazo.
     insolvencyBodyDeadline:
-      "O empréstimo emergencial venceu e o saldo não cobria a dívida. O banco cobrou o empréstimo — a história da org termina aqui.",
+      "O empréstimo emergencial venceu e o saldo não cobria a dívida. O banco cobrou o empréstimo: a história da org termina aqui.",
     legacyTitle: "Legado da carreira",
     legacyGrade: { legend: "Lenda", contender: "Contendor", challenger: "Desafiante", journeyman: "Batalhador" },
     retire: "Aposentar",
-    retireDesc: "A carreira é arquivada — troféus e histórico continuam visíveis.",
+    retireDesc: "A carreira é arquivada: troféus e histórico continuam visíveis.",
     infinite: "Era infinita",
-    infiniteDesc: "A linha do tempo agora é sua. Sem roteiro — só a simulação.",
+    infiniteDesc: "A linha do tempo agora é sua. Sem roteiro, só a simulação.",
     infiniteExplainer:
       "A partir de 2027 o mundo é totalmente procedural: novatos são gerados, veteranos se aposentam, a história é a que você fizer.",
     defendTitle: "Defender o título",
@@ -2978,6 +2979,15 @@ export const CAREER_PT: CareerCopy = {
     lastPlayed: "Jogado por último",
     newCareer: "Nova carreira",
     slotsFull: "Os três espaços estão ocupados.",
+  },
+
+  // v2.0.31: o convite da pesquisa com jogadores na revisão da temporada.
+  research: {
+    title: "Ajude a moldar o Road to Worlds",
+    body: "Uma temporada fechada. A sua leitura da carreira e do draft ajuda a decidir o que vem a seguir. Um formulário curto sobre o que funciona, o que não funciona e o que falta.",
+    note: "Abre em uma nova aba. Só perguntamos uma vez.",
+    open: "Abrir o formulário",
+    dismiss: "Agora não, obrigado",
   },
 
   goals: {
@@ -3078,11 +3088,11 @@ export const CAREER_PT: CareerCopy = {
     },
     training: {
       title: "Treinos",
-      body: "Os jogadores evoluem rumo ao potencial toda semana. O coach pode cuidar disso por você — assuma quando quiser.",
+      body: "Os jogadores evoluem rumo ao potencial toda semana. O coach pode cuidar disso por você: assuma quando quiser.",
     },
     market: {
       title: "O mercado",
-      body: "Contrate agentes livres ou compre contratos — só com a janela aberta. Todo preço mostra sua conta.",
+      body: "Contrate agentes livres ou compre contratos, só com a janela aberta. Todo preço mostra sua conta.",
     },
     window: {
       title: "Janela de transferências",
@@ -3111,7 +3121,7 @@ export const CAREER_PT: CareerCopy = {
     },
     rollover: {
       title: "Virada de temporada",
-      body: "As idades avançam, os contratos contam, o mundo se reorganiza rumo à própria história — a menos que você já a tenha mudado.",
+      body: "As idades avançam, os contratos contam, o mundo se reorganiza rumo à própria história: a menos que você já a tenha mudado.",
     },
   },
 
@@ -3128,7 +3138,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.29: desde a R30 a cena local também completa as qualificatórias de sábado.
     // rc.31 (R49): seus pontos de regional contam na corrida do Major e do Worlds.
     localHint:
-      "Um time amador da cena regional — joga as community cups e as qualificatórias de sábado, e seus pontos de regional contam na corrida do Major e do Worlds.",
+      "Um time amador da cena regional: joga as community cups e as qualificatórias de sábado, e seus pontos de regional contam na corrida do Major e do Worlds.",
   },
 
   // rc.34 (Miguel, 31/10: "comunicar melhor com um modal que diga o que está acontecendo"): o aviso
@@ -3147,11 +3157,11 @@ export const CAREER_PT: CareerCopy = {
       lead: `Nesta segunda as contas fecharam abaixo do piso (${p.floor}), então o banco emprestou ${p.lent} e o saldo voltou a ${p.rescueTo}.`,
       rows: noticeRows(
         ["Dívida", `${p.owed}, com ${p.repayPct}% de juros incluídos`],
-        p.dlDate !== undefined && ["Quitar até", `${p.dlDate} — ${p.dlWeeks} semanas`],
+        p.dlDate !== undefined && ["Quitar até", `${p.dlDate}: ${p.dlWeeks} semanas`],
         ["Como se paga", `${p.garnishPct}% de cada premiação e ${p.salePct}% de cada venda abatem a dívida; o resto você paga em Finanças.`],
         positive(p.partnerWeekly) && [
           "Investidor",
-          `O ${p.partnerName} entra junto com este primeiro empréstimo: ${p.partnerWeekly} por semana durante ${p.partnerWeeks} semanas (${p.partnerPct}% da folha) — receita, nunca descontada.`,
+          `O ${p.partnerName} entra junto com este primeiro empréstimo: ${p.partnerWeekly} por semana durante ${p.partnerWeeks} semanas (${p.partnerPct}% da folha), receita, nunca descontada.`,
         ],
         ["Abaixo do piso de novo", nextBreachPt(p)],
         loansLeftPt(p) !== "" && ["Depois deste empréstimo", loansLeftPt(p)],
@@ -3166,7 +3176,7 @@ export const CAREER_PT: CareerCopy = {
       lead: `As contas fecharam abaixo do piso de novo antes de o empréstimo ser quitado, então o banco emprestou mais ${p.lent}. O saldo voltou a ${p.rescueTo}.`,
       rows: noticeRows(
         ["Dívida", `${p.owed} no total`],
-        p.dlDate !== undefined && ["Quitar até", `${p.dlDate} — o prazo não muda`],
+        p.dlDate !== undefined && ["Quitar até", `${p.dlDate}: o prazo não muda`],
         ["Abaixo do piso de novo", nextBreachPt(p)],
         p.dlDate !== undefined && ["O que encerra a carreira", `Em ${p.dlDate} o banco cobra o que é devido. Se pagar deixar as contas abaixo do piso, a carreira acaba.`],
       ),
@@ -3212,7 +3222,7 @@ export const CAREER_PT: CareerCopy = {
       title: "O banco assumiu a sua dívida",
       lead: `Os resgates mudaram: o Investidor de emergência saiu de cena, e os ${p.owed} que você devia a ele agora estão com o banco, como um empréstimo emergencial.`,
       rows: noticeRows(
-        p.dlDate !== undefined && ["Quitar até", `${p.dlDate} — daqui a ${p.dlWeeks} semanas`],
+        p.dlDate !== undefined && ["Quitar até", `${p.dlDate}: daqui a ${p.dlWeeks} semanas`],
         ["Como se paga", `${p.garnishPct}% de cada premiação e ${p.salePct}% de cada venda abatem a dívida; o resto você paga em Finanças.`],
         ["Abaixo do piso de novo", nextBreachPt(p)],
         p.dlDate !== undefined && ["O que encerra a carreira", `Em ${p.dlDate} o banco cobra o que é devido. Se pagar deixar as contas abaixo do piso, a carreira acaba.`],

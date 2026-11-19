@@ -6,7 +6,31 @@
 
 ## Current builds
 
-- **Production is v2.0.28 (18/11/2026, main = staging): the career cloud save
+- **Production is v2.0.33 (18/11/2026): search pass on the career landing**
+  (DESIGN-DECISIONS #172, R136). `/rocket-league-manager` is the first organic
+  landing page; its title and H1 lead with "Rocket League Career Mode & Manager
+  Game", a new first section answers "does Rocket League have a career mode?",
+  the guide stops competing for that query, own share image and VideoGame node.
+  Two buttons: "Found your club" (wizard) and "Start with a random club"
+  (`/career?start=quick`); the guides' button opens `/career` (it linked to
+  `/`). Active teams' titles name the current roster; `llms.txt`. Watch which
+  start founds more careers (PostHog: `/career/new` with or without the flag).
+  Baseline and rivals: memory `seo-search-landscape`. Not done: video, Reddit,
+  DE/FR pages, new landing pages.
+- **v2.0.32 (18/11/2026): a page whose build files failed to load repairs
+  itself** (DESIGN-DECISIONS #171). The zone rule for Miguel
+  (DEPLOY-CLOUDFLARE §9) is not applied yet.
+- **v2.0.31 (18/11/2026): an invitation to Miguel's research form for
+  returning players** (`config/research.ts`, event `research_invite`).
+- **v2.0.30 (18/11/2026): the career top bar links to the saves
+  picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
+  saved profile.** Cross-device career saves still unverified on two devices.
+- **v2.0.29 (18/11/2026): the device's saves belong to one
+  account at a time** (DESIGN-DECISIONS #170, `lib/localOwner.ts`). Signing out
+  leaves a fresh guest with no careers; another account never inherits the
+  profile, grants or career slots; the owner's next sign-in brings them back.
+  Not verified on a phone or against production accounts (tests only).
+- **v2.0.28 (18/11/2026): the career cloud save
   is open to every signed-in account and sell / trade is live** (Miguel's
   go-ahead 18/11). `CAREER_CLOUD_AUDIENCE` is "all" (`lib/careerCloudGate.ts`);
   "staff" or "off" plus a deploy is the way back.

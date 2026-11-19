@@ -33,6 +33,18 @@ export function recoveryFor(error: ErrorLike | null | undefined): ErrorRecovery 
   return isChunkLoadError(error) || isDomMismatchError(error) ? "reload" : "retry";
 }
 
+/**
+ * v2.0.32 (DESIGN-DECISIONS #171): the build file a failed chunk names
+ * ("Failed to load chunk /_next/static/chunks/x.js from module 12"), as a path
+ * under `/_next/static/`, or null. The error screen fetches it again before its
+ * reload, so a 404 the browser cached for a year does not come straight back.
+ */
+export function chunkUrlOf(error: ErrorLike | null | undefined): string | null {
+  if (!isChunkLoadError(error)) return null;
+  const found = /\/_next\/static\/[\w\-./~%]+?\.(?:js|css)\b/.exec(text(error?.message));
+  return found ? found[0] : null;
+}
+
 /** sessionStorage key of the last automatic reload (a timestamp; not a save). */
 export const AUTO_RELOAD_KEY = "rocket-draft:error-auto-reload";
 /** One automatic reload per this window: a chunk that still fails after it shows the screen. */

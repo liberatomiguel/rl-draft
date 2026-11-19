@@ -126,7 +126,7 @@ export function WeekendPlan({
 
   const body = (
     <>
-      <p className={cx("kicker mb-2.5 text-[10px]", bare && "text-center")}>{C.event.weekendTitle}</p>
+      <p className={cx("kicker mb-2.5", bare && "text-center")}>{C.event.weekendTitle}</p>
       <ol className="relative grid grid-cols-2 gap-2.5">
         {plan.map((d, i) => (
           <WeekendDayCell
@@ -150,7 +150,7 @@ export function WeekendPlan({
     );
   }
   return (
-    <Panel className={cx("rise-in p-4", className)} style={style}>
+    <Panel className={cx("rise-in p-4 sm:p-5", className)} style={style}>
       {body}
     </Panel>
   );
@@ -178,22 +178,22 @@ function WeekendDayCell({
       className={cx(
         "relative min-w-0 rounded-xl border p-3 text-left sm:p-4",
         d.state === "today"
-          ? "border-orange/60 bg-orange/10 shadow-[0_0_18px_rgba(249,115,22,0.14)]"
+          ? "border-orange/60 bg-orange/10"
           : d.state === "done"
             ? "border-line bg-white/[0.02]"
             : "border-line bg-white/[0.04]",
       )}
     >
-      <span className={cx("mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-current/20 bg-white/5", TIER_ICON_TONE[d.def.tier])}>
+      <span className={cx("mb-3 inline-flex h-9 w-9 items-center justify-center", TIER_ICON_TONE[d.def.tier])}>
         <EventTierIcon tier={d.def.tier} className="h-5 w-5" />
       </span>
       <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-1">
-        <span className={cx("kicker !text-[9px]", d.state === "today" && "text-orange-bright")}>
+        <span className={cx("kicker", d.state === "today" && "text-orange-bright")}>
           {date}
         </span>
         <span
           className={cx(
-            "display shrink-0 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider",
+            "display shrink-0 rounded px-1.5 py-px text-[10px] font-bold uppercase tracking-wider",
             d.state === "today"
               ? "bg-orange/20 text-orange-bright"
               : d.state === "done"

@@ -3,10 +3,11 @@
 /**
  * Road to Worlds — the career player card tile.
  *
- * Token-built (NOT GameCard, which is dataset-coupled): a compact broadcast
- * card with a rarity-like border keyed off overall, OVR block, AGE · POT band,
- * archetype tag + flag, and an optional footer (wage / contract). Used by the
- * squad, training and market screens.
+ * Token-built (NOT GameCard, which is dataset-coupled): a compact tile in the
+ * trading card's language (its stock, a hairline frame keyed off overall, no
+ * glow): name, one line of who he is (flag, age, role), the overall as the
+ * figure, the potential band and phase, and an optional footer (wage /
+ * contract). Used by the squad, training and market screens.
  */
 
 import { cx } from "@/lib/util";
@@ -18,27 +19,10 @@ import type { ArchetypeId } from "@/engine/career/types";
 import { PhaseChip } from "@/components/career/PhaseChip";
 import type { PhaseLabel } from "@/components/career/careerUi";
 
-/** Rarity-like frame keyed off overall: 90+ cyan glow · 80+ amber · base. */
-function ovrFrame(overall: number): {
-  border: string;
-  ovr: string;
-  glow?: string;
-  wash?: string;
-} {
-  if (overall >= 90)
-    return {
-      border: "border-blue/60",
-      ovr: "text-cyan",
-      glow: "shadow-[0_0_20px_-6px_rgba(59,130,246,0.6)]",
-      wash: "from-blue/[0.08]",
-    };
-  if (overall >= 80)
-    return {
-      border: "border-amber-400/50",
-      ovr: "text-amber-300",
-      glow: "shadow-[0_0_16px_-9px_rgba(251,191,36,0.5)]",
-      wash: "from-amber-400/[0.05]",
-    };
+/** A rarity-like hairline keyed off overall (the card tiers: 90+ blue, 80+ gold, base grey). */
+function ovrFrame(overall: number): { border: string; ovr: string } {
+  if (overall >= 90) return { border: "border-blue/60", ovr: "text-blue-bright" };
+  if (overall >= 80) return { border: "border-amber-400/50", ovr: "text-amber-300" };
   return { border: "border-line-strong", ovr: "text-ink" };
 }
 
@@ -89,53 +73,51 @@ export function PlayerCardTile({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        "group relative flex w-full flex-col rounded-xl border bg-gradient-to-b to-transparent text-left transition-all",
-        rarityFrame ? `card-frame card-${baseRarityOf(Math.round(overall))}` : frame.wash ?? "from-white/[0.04]",
-        !rarityFrame && frame.border,
-        !rarityFrame && frame.glow,
-        size === "sm" ? "p-2.5" : "p-3.5",
-        onClick &&
-          !disabled &&
-          "cursor-pointer hover:-translate-y-0.5 hover:border-orange/60 hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60",
-        selected &&
-          "!border-orange bg-orange/[0.04] ring-1 ring-orange/40 shadow-[0_0_18px_-8px_rgba(249,115,22,0.5)]",
+        // Cut from the trading card's stock: its body, a hairline frame, no
+        // glow. State (hover, selected) only colours the hairline.
+        "group relative flex w-full flex-col text-left transition-[border-color,transform]",
+        rarityFrame ? `card-frame card-${baseRarityOf(Math.round(overall))}` : cx("rounded-xl border bg-surface", frame.border),
+        size === "sm" ? "p-3" : "p-4",
+        onClick && !disabled && "cursor-pointer hover:-translate-y-0.5 hover:!border-orange/60",
+        selected && "!border-orange",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
     >
-      <div className="relative flex items-start justify-between gap-2">
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className={cx("display truncate font-bold text-ink", size === "sm" ? "text-sm" : "text-base")}>
+          <div className={cx("display truncate font-bold leading-tight text-ink", size === "sm" ? "text-base" : "text-lg")}>
             {name}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-faint">
+          {/* Who he is, as one quiet line: flag, age, role. */}
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-sub">
             {country ? <CountryChip code={country} /> : region ? <span>{region}</span> : null}
-            {age !== undefined ? <span>· {C.player.age(age)}</span> : null}
+            {age !== undefined ? <span>{C.player.age(age)}</span> : null}
+            {archetype ? (
+              <>
+                {country || region || age !== undefined ? <span aria-hidden>·</span> : null}
+                <span>{C.player.archetype[archetype]}</span>
+              </>
+            ) : null}
           </div>
         </div>
+        {/* The deciding figure: the overall, set as a number with its label under it. */}
         <div className="shrink-0 text-right leading-none">
-          <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-xl" : "text-2xl")}>
+          <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-2xl" : "text-3xl")}>
             {Math.round(overall)}
           </div>
-          <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
+          <div className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</div>
         </div>
       </div>
 
-      <div className="relative mt-2 flex flex-wrap items-center gap-1.5">
-        {potText ? (
-          <span className="rounded bg-blue/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan">
-            {potText}
-          </span>
-        ) : null}
-        {phase ? <PhaseChip phase={phase} /> : null}
-        {archetype ? (
-          <span className="rounded bg-white/6 px-1.5 py-0.5 text-[10px] font-semibold text-sub">
-            {C.player.archetype[archetype]}
-          </span>
-        ) : null}
-      </div>
+      {potText || phase ? (
+        <div className="relative mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {potText ? <span className="display text-xs font-semibold text-blue-bright">{potText}</span> : null}
+          {phase ? <PhaseChip phase={phase} /> : null}
+        </div>
+      ) : null}
 
-      {footer ? <div className="relative mt-2 border-t border-line/60 pt-2 text-xs text-sub">{footer}</div> : null}
+      {footer ? <div className="relative mt-2.5 border-t border-line pt-2.5 text-xs text-sub">{footer}</div> : null}
     </Wrapper>
   );
 }

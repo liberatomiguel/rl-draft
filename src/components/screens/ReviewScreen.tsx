@@ -63,6 +63,10 @@ export function ReviewScreen({ run }: { run: RunState }) {
     return lines;
   }, [team, org, specials, run.showOverall, REVIEW, STAT_LABELS, CHEM_TIERS]);
 
+  // Job: one last look at the team, then start the tournament. The team
+  // overall is the figure of the screen and Start Tournament the one action;
+  // the build-up, chemistry and special effects are one board under it, and
+  // the analyst's lines are plain text beside the pitch.
   return (
     <div className="mobile-action-space rise-in">
       <RunStepper run={run} />
@@ -71,36 +75,35 @@ export function ReviewScreen({ run }: { run: RunState }) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* Field + readout */}
-        <div className="space-y-4">
+        <div>
           <FieldView
             roster={run.draft.roster}
             showOverall={run.showOverall}
             showBench={!isQuick}
             className="mx-auto w-full max-w-md lg:max-w-none"
           />
-          <Panel className="p-5">
-            <p className="kicker mb-3">{REVIEW.readout}</p>
-            <ul className="space-y-2">
-              {readout.map((line, i) => (
-                <li key={i} className="flex gap-2 text-xs leading-relaxed text-sub">
-                  <span className="mt-1 h-1 w-3 shrink-0 -skew-x-12 bg-blue" aria-hidden />
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </Panel>
+          <h3 className="display mt-6 text-lg uppercase leading-none text-ink">{REVIEW.readout}</h3>
+          <ul className="mt-3 border-t border-line">
+            {readout.map((line, i) => (
+              <li key={i} className="border-b border-line py-2.5 text-sm leading-relaxed text-sub">
+                {line}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* Numbers column */}
+        {/* Numbers column: one board, three parts divided by hairlines. */}
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Panel strong glow="blue" className="p-5">
-              <p className="kicker mb-1">{REVIEW.teamOverall}</p>
-              <p className="display text-5xl font-bold leading-none text-ink">
-                {run.showOverall ? displayTeamOverall(team.rating) : "??"}
-              </p>
+          <Panel strong className="divide-y divide-line">
+            <div className="grid grid-cols-1 gap-x-10 gap-y-4 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+              <div>
+                <p className="display text-7xl font-bold leading-[0.9] text-ink">
+                  {run.showOverall ? displayTeamOverall(team.rating) : "??"}
+                </p>
+                <p className="mt-2 text-xs text-sub">{REVIEW.teamOverall}</p>
+              </div>
               {run.showOverall ? (
-                <dl className="mt-4 space-y-1 text-xs text-sub">
+                <dl className="text-sm text-sub">
                   <Row label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
                   {!isQuick ? (
                     <>
@@ -113,49 +116,49 @@ export function ReviewScreen({ run }: { run: RunState }) {
                   <Row label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
                 </dl>
               ) : (
-                <p className="mt-3 text-xs text-faint">{REVIEW.hiddenNote}</p>
+                <p className="text-sm leading-relaxed text-sub">{REVIEW.hiddenNote}</p>
               )}
-            </Panel>
+            </div>
 
-            <Panel className="p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="kicker">{REVIEW.chemistry}</p>
+            <div className="p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="display text-lg uppercase leading-none text-ink">{REVIEW.chemistry}</h3>
                 <Badge tone={team.chemistry.percent >= 62 ? "good" : team.chemistry.percent >= 40 ? "blue" : "neutral"}>
                   {CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier}
                 </Badge>
               </div>
               <ProgressBar value={team.chemistry.percent / 100} tone="good" label={REVIEW.chemistry} />
               {team.chemistry.items.length > 0 ? (
-                <ul className="mt-3 space-y-1.5">
+                <ul className="mt-3 grid grid-cols-1 gap-x-10 sm:grid-cols-2">
                   {team.chemistry.items.slice(0, 6).map((item, i) => (
-                    <li key={i} className="flex items-center justify-between gap-3 text-xs text-sub">
+                    <li key={i} className="flex items-center justify-between gap-3 py-1 text-sm text-sub">
                       <span className="truncate">{item.label}</span>
                       <span className="display shrink-0 font-bold text-good">+{item.points}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-xs text-faint">{REVIEW.noChemistry}</p>
+                <p className="mt-3 text-sm leading-relaxed text-sub">{REVIEW.noChemistry}</p>
               )}
-            </Panel>
-          </div>
+            </div>
 
-          {specials.length > 0 ? (
-            <Panel className="p-5">
-              <p className="kicker mb-3">{REVIEW.specialEffects}</p>
-              <ul className="space-y-2.5">
-                {specials.map((sp) => (
-                  <li key={sp.id} className="text-xs">
-                    <span className="display block font-bold uppercase tracking-wide text-orange-bright">
-                      {/* Hidden runs show the EFFECT, never which card it is */}
-                      {run.showOverall ? sp.title : "???"}
-                    </span>
-                    <span className="text-sub">{sp.effect.description}</span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          ) : null}
+            {specials.length > 0 ? (
+              <div className="p-5">
+                <h3 className="display text-lg uppercase leading-none text-ink">{REVIEW.specialEffects}</h3>
+                <ul className="mt-3 space-y-3">
+                  {specials.map((sp) => (
+                    <li key={sp.id} className="text-sm leading-relaxed">
+                      <span className="display block font-semibold uppercase leading-tight text-ink">
+                        {/* Hidden runs show the EFFECT, never which card it is */}
+                        {run.showOverall ? sp.title : "???"}
+                      </span>
+                      <span className="text-sub">{sp.effect.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </Panel>
 
           <Button
             variant="primary"
@@ -201,7 +204,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3 border-b border-line py-1.5 last:border-b-0">
       <dt>{label}</dt>
       <dd className="display font-bold text-ink">{value}</dd>
     </div>

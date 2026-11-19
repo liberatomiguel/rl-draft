@@ -801,6 +801,32 @@ export function reportScreenError(source: "boundary" | "window" | "promise", err
   }
 }
 
+/**
+ * v2.0.32 (DESIGN-DECISIONS #171): the inline repair (`lib/assetHeal`) fetched
+ * build files that had failed (`status`: a 400+ answer, usually a 404 the
+ * browser had cached; `stalled`: the app never mounted, browsers without
+ * `responseStatus`) and reloaded the tab. Reported once, on the load after it,
+ * as a `quality_error` with source "heal". `note` is "<reason> <files>".
+ */
+export function reportAssetHeal(note: string): void {
+  try {
+    if (!ready()) return;
+    const space = note.indexOf(" ");
+    const reason = (space > 0 ? note.slice(0, space) : note).slice(0, 20) || "status";
+    const files = space > 0 ? note.slice(space + 1) : "";
+    const route = currentPath();
+    trackEvent("quality_error", {
+      actionId: `heal:${reason}:${route}`,
+      source: "heal",
+      name: "AssetHeal",
+      route,
+      message: sanitizeErrorMessage(`${reason} ${files}`),
+    });
+  } catch {
+    // an error reporter must not throw
+  }
+}
+
 // ---------------------------------------------------------------------------
 // The SDK hand-over and the budget file
 // ---------------------------------------------------------------------------

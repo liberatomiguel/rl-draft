@@ -416,7 +416,12 @@ export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
     const grantRows = (data.profile_grants as { grant_id: string }[] | null) ?? [];
     return {
       status: "ok",
-      durable: (data.durable as DurableProfile) ?? null,
+      // v2.0.30: an emptied row (`durable = '{}'`, the column is NOT NULL) reads as
+      // "no saved profile": the next push writes the device's profile over it.
+      durable:
+        data.durable && typeof data.durable === "object" && Object.keys(data.durable).length > 0
+          ? (data.durable as DurableProfile)
+          : null,
       username: data.username ?? null,
       grants: grantRows.map((g) => g.grant_id).filter((g) => typeof g === "string"),
       preseasonPosition:

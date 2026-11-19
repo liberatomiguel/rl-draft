@@ -6,13 +6,15 @@ import { cx } from "@/lib/util";
 
 type Tone = "neutral" | "blue" | "orange" | "good" | "bad" | "gold";
 
+// A flat tag: a tinted block with no outline. The border stays in the box
+// model (transparent) so a caller's own `border-*` override still works.
 const TONES: Record<Tone, string> = {
-  neutral: "border-line-strong bg-white/5 text-sub",
-  blue: "border-blue/40 bg-blue/10 text-blue-bright",
-  orange: "border-orange/40 bg-orange/10 text-orange-bright",
-  good: "border-good/40 bg-good/10 text-good",
-  bad: "border-bad/40 bg-bad/10 text-bad",
-  gold: "border-amber-400/40 bg-amber-400/10 text-amber-300",
+  neutral: "border-transparent bg-white/[0.07] text-sub",
+  blue: "border-transparent bg-blue/15 text-blue-bright",
+  orange: "border-transparent bg-orange/15 text-orange-bright",
+  good: "border-transparent bg-good/15 text-good",
+  bad: "border-transparent bg-bad/15 text-bad",
+  gold: "border-transparent bg-amber-400/15 text-amber-300",
 };
 
 export function Badge({
@@ -27,7 +29,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "display inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em]",
+        "display inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase leading-tight tracking-[0.05em]",
         TONES[tone],
         className,
       )}

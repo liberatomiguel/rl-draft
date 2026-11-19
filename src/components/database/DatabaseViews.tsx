@@ -266,13 +266,14 @@ export function SeasonView({
 
 // ───────────────────────────── Team ─────────────────────────────
 
-export function TeamView({ team }: { team: DbTeam }) {
+/** `current` (v2.0.33): the newest season's label when the team plays it. */
+export function TeamView({ team, current }: { team: DbTeam; current?: string }) {
   const { DATABASE_UI: D, SETUP } = useCopy();
   const first = team.lineups[0].season.label;
   const last = team.lineups[team.lineups.length - 1].season.label;
   return (
     <Shell
-      title={D.teamTitle(team.name)}
+      title={D.teamTitle(team.name, current)}
       intro={D.teamIntro(team.name, SETUP.regionNames[team.region] ?? team.region, team.lineups.length, first, last)}
       backHref="/rlcs/teams"
       backLabel={D.allTeams}

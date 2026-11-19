@@ -74,7 +74,7 @@ export function RungBadge({
         rung.status === "owned" && "border-orange bg-orange/20 text-orange-bright",
         rung.status === "open" && "border-blue-bright bg-blue/15 text-blue-bright",
         rung.status === "locked" && "border-line-strong bg-white/5 text-faint",
-        highlight && "shadow-[0_0_18px_-4px_rgba(249,115,22,0.7)] ring-2 ring-orange/50 ring-offset-2 ring-offset-transparent",
+        highlight && " ring-2 ring-orange/50 ring-offset-2 ring-offset-transparent",
       )}
     >
       <RungIcon id={rung.id} className={icon} />
@@ -117,13 +117,13 @@ export function LadderStrip({ rungs, C, size = 5 }: { rungs: LadderRungState[]; 
           <RungBadge rung={r} highlight={r.id === nextId} />
           <span
             className={cx(
-              "line-clamp-2 max-w-full text-[10px] font-semibold leading-tight hyphens-auto [overflow-wrap:anywhere]",
+              "line-clamp-2 max-w-full text-[11px] font-semibold leading-tight hyphens-auto [overflow-wrap:anywhere]",
               r.status === "locked" ? "text-faint" : "text-ink",
             )}
           >
             {L.rung[r.id]}
           </span>
-          {r.status === "locked" ? <span className="text-[9px] text-faint">{L.gate(r.gate)}</span> : null}
+          {r.status === "locked" ? <span className="text-[10px] text-faint">{L.gate(r.gate)}</span> : null}
         </li>
       ))}
     </ol>
@@ -150,9 +150,9 @@ export function LadderGrid({ rungs, C }: { rungs: LadderRungState[]; C: CareerCo
           <RungBadge rung={r} />
           <span className="min-w-0 flex-1">
             <span className={cx("block break-words text-xs font-semibold", r.status === "locked" ? "text-sub" : "text-ink")}>{L.rung[r.id]}</span>
-            <span className="block text-[10px] leading-relaxed text-faint">{L.hint[r.id]}</span>
+            <span className="block text-[11px] leading-relaxed text-faint">{L.hint[r.id]}</span>
           </span>
-          <span className="shrink-0 text-[10px] font-semibold text-faint">
+          <span className="shrink-0 text-[11px] font-semibold text-faint">
             {r.status === "locked" ? L.gate(r.gate) : r.status === "owned" ? L.owned : L.open}
           </span>
         </li>

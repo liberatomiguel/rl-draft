@@ -173,7 +173,7 @@ export function CareerMatchCenter({
     <Panel strong glow={live ? "orange" : undefined} className="p-4 sm:p-5">
       {/* header */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="kicker !text-[10px]">
+        <p className="kicker">
           {label} · {T.bestOf(bestOf)}
         </p>
         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function CareerMatchCenter({
         <div className="px-1 text-center">
           {currentGame ? (
             <>
-              <p className="kicker !text-[10px] text-faint">{C.event.game(currentGame.index)}</p>
+              <p className="kicker text-faint">{C.event.game(currentGame.index)}</p>
               {/* RL broadcast board: goals · clock · goals. The goal feed is the
                   live region; the numbers re-key so each goal pops its side. */}
               <div className="flex items-center justify-center gap-2 sm:gap-3">
@@ -239,13 +239,13 @@ export function CareerMatchCenter({
                 </span>
               </div>
               <p className="display mt-0.5 flex items-baseline justify-center gap-1.5 text-sm font-bold text-sub">
-                <span className="kicker !text-[9px] text-faint">{C.event.seriesTag}</span>
-                {winsA} – {winsB}
+                <span className="kicker text-faint">{C.event.seriesTag}</span>
+                {winsA}-{winsB}
               </p>
             </>
           ) : (
             <>
-              <p className="kicker !text-[10px] text-faint">{C.event.matchCenter}</p>
+              <p className="kicker text-faint">{C.event.matchCenter}</p>
               <p className="display text-4xl font-bold leading-tight sm:text-5xl">
                 <span className={cx(done && winsA > winsB ? "text-good" : "text-ink")}>{winsA}</span>
                 <span className="mx-1.5 text-faint sm:mx-2">–</span>
@@ -255,12 +255,12 @@ export function CareerMatchCenter({
           )}
           <div className="mt-1 flex min-h-5 flex-wrap items-center justify-center gap-1">
             {overtimeReached ? (
-              <Badge tone="orange" className="pop-in !text-[9px]">{C.event.overtime}</Badge>
+              <Badge tone="orange" className="pop-in !text-[10px]">{C.event.overtime}</Badge>
             ) : null}
             {currentGame?.deciding ? (
-              <Badge tone="blue" className="!text-[9px]">{C.event.deciding}</Badge>
+              <Badge tone="blue" className="!text-[10px]">{C.event.deciding}</Badge>
             ) : matchPoint ? (
-              <Badge className="!text-[9px]">{C.event.matchPoint}</Badge>
+              <Badge className="!text-[10px]">{C.event.matchPoint}</Badge>
             ) : null}
           </div>
         </div>
@@ -282,7 +282,7 @@ export function CareerMatchCenter({
               <span
                 key={i}
                 className={cx(
-                  "pop-in display inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold",
+                  "pop-in display inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-bold",
                   wonByUser
                     ? "border-good/50 bg-good/10 text-good"
                     : lostByUser
@@ -305,7 +305,7 @@ export function CareerMatchCenter({
             <span
               key={i}
               className={cx(
-                "inline-flex h-[21px] w-8 items-center justify-center rounded-md border text-[9px]",
+                "inline-flex h-[21px] w-8 items-center justify-center rounded-md border text-[10px]",
                 isCurrent
                   ? "pulse-soft border-orange/70 bg-orange/15 text-orange-bright"
                   : "border-line bg-white/[0.03] text-faint",
@@ -338,13 +338,13 @@ export function CareerMatchCenter({
                     newest ? "pop-in" : "opacity-70",
                   )}
                 >
-                  <span className="kicker !text-[9px] !tracking-[0.16em] text-orange-bright">
+                  <span className="kicker !tracking-[0.16em] text-orange-bright">
                     {C.event.endOfRegulation}
                   </span>
                   <span className="display shrink-0 text-xs font-bold text-ink">
                     {beat.scoreAfter[0]}–{beat.scoreAfter[1]}
                   </span>
-                  <Badge tone="orange" className="!px-1.5 !text-[8px]">{C.event.overtime}</Badge>
+                  <Badge tone="orange" className="!px-1.5 !text-[10px]">{C.event.overtime}</Badge>
                 </li>
               );
             }
@@ -370,9 +370,9 @@ export function CareerMatchCenter({
                 />
                 <span
                   className={cx(
-                    "display shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider",
+                    "display shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider",
                     beat.golden
-                      ? "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]"
+                      ? "bg-orange text-paper-ink"
                       : newest
                         ? "bg-orange/25 text-orange-bright"
                         : "bg-white/8 text-sub",
@@ -402,11 +402,11 @@ export function CareerMatchCenter({
             >
               {C.event.seriesWin(t.teams[series.winnerTeamId]?.name ?? "?")}
             </p>
-            {series.upset ? <Badge tone="gold" className="!text-[9px]">{C.event.upset}</Badge> : null}
+            {series.upset ? <Badge tone="gold" className="!text-[10px]">{C.event.upset}</Badge> : null}
             {shape.reverseSweep ? (
-              <Badge tone="orange" className="!text-[9px]">{C.event.reverseSweep}</Badge>
+              <Badge tone="orange" className="!text-[10px]">{C.event.reverseSweep}</Badge>
             ) : shape.sweep ? (
-              <Badge tone="blue" className="!text-[9px]">{C.event.sweep}</Badge>
+              <Badge tone="blue" className="!text-[10px]">{C.event.sweep}</Badge>
             ) : null}
           </div>
           {narration?.map((line, i) => (
@@ -473,7 +473,7 @@ function TeamSide({
         >
           {name}
         </p>
-        <p className="hidden truncate text-[10px] text-faint sm:block">{players.join(" · ")}</p>
+        <p className="hidden truncate text-[11px] text-faint sm:block">{players.join(" · ")}</p>
       </div>
       </EventTeamButton>
     </div>

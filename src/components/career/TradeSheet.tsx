@@ -112,9 +112,9 @@ export function TradeSheet({
         ) : null}
 
         <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3">
-          <p className="kicker mb-1 text-[10px]">{T.target}</p>
+          <p className="kicker mb-1">{T.target}</p>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="display text-lg font-bold text-ink">{target.name}</span>
+            <span className="card-title">{target.name}</span>
             <span className="text-xs text-sub">
               {C.common.ovr} <strong className="text-ink">{Math.round(target.overall)}</strong> · {nameOfRef(save, target.orgRef)}
             </span>
@@ -122,7 +122,7 @@ export function TradeSheet({
         </div>
 
         <div>
-          <p className="kicker mb-1 text-[10px]">{T.pickGive}</p>
+          <p className="kicker mb-1">{T.pickGive}</p>
           <div className="space-y-1.5">
             {plans.map(({ p, res }) => {
               const err = "error" in res ? res.error : null;
@@ -155,7 +155,7 @@ export function TradeSheet({
         </div>
 
         <div>
-          <p className="kicker mb-1 text-[10px]">{T.length}</p>
+          <p className="kicker mb-1">{T.length}</p>
           <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${finalSeason ? 1 : 3}, minmax(0, 1fr))` }}>
             {(finalSeason ? ([1] as const) : ([1, 2, 3] as const)).map((l) => (
               <button
@@ -175,7 +175,7 @@ export function TradeSheet({
         </div>
 
         <div>
-          <label htmlFor={cashId} className="kicker mb-1 block text-[10px]">
+          <label htmlFor={cashId} className="kicker mb-1 block">
             {T.cashLabel}
           </label>
           <input
@@ -197,7 +197,7 @@ export function TradeSheet({
 
         {plan && talk ? (
           <div className="rounded-lg border border-line bg-white/[0.02] p-3 text-sm">
-            <p className="kicker mb-2 text-[10px]">{T.summary}</p>
+            <p className="kicker mb-2">{T.summary}</p>
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sub">{T.wage}</span>

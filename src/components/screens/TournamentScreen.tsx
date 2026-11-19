@@ -330,7 +330,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
             />
           ) : (
             <Panel className="p-6 text-center text-sm text-sub">
-              {T.matchCenter} — {queue.length === 0 ? T.start : T.upcoming}
+              {T.matchCenter}: {queue.length === 0 ? T.start : T.upcoming}
             </Panel>
           )}
 
@@ -719,7 +719,7 @@ function SwissPath({
   return (
     <Panel className="p-4">
       <h3 className="display mb-3 text-sm font-bold uppercase tracking-[0.16em] text-ink">
-        {T.yourPath} — {T.swiss}
+        {T.yourPath}: {T.swiss}
       </h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
         {cells.map((cell, i) => {
@@ -912,11 +912,11 @@ function PlayoffBracketView({
         ) : (
           <>
             <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">{T.upperBracket}</p>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-cyan">{T.upperBracket}</p>
               <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{UPPER_COLUMNS.map(renderColumn)}</div>
             </div>
             <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">{T.lowerBracket}</p>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-orange-bright">{T.lowerBracket}</p>
               <div className="mobile-bracket flex gap-3 sm:min-w-[640px]">{LOWER_COLUMNS.map(renderColumn)}</div>
             </div>
           </>
@@ -953,8 +953,8 @@ function BracketCell({
 
   const outline = revealed && userIn
     ? userWon
-      ? "border-good/70 shadow-[0_0_14px_rgba(52,211,153,0.15)]"
-      : "border-bad/70 shadow-[0_0_14px_rgba(248,113,113,0.15)]"
+      ? "border-good/70"
+      : "border-bad/70"
     : live
       ? "border-orange"
       : userIn
@@ -1044,7 +1044,7 @@ function SwissStandings({
       <Panel className="p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-            {T.standings} — {T.swiss}
+            {T.standings}: {T.swiss}
           </h3>
           {throughRound > 0 ? (
             <span className="shrink-0 text-[10px] uppercase tracking-wider text-faint">

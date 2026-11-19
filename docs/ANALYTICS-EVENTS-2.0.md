@@ -159,6 +159,12 @@ properties of `session_started`, not events.
 - `potentialBandMid` is the midpoint of the band the screens show, never the
   hidden potential.
 
+### Player research
+
+| Event | Priority | Fires | Properties |
+|---|---|---|---|
+| `research_invite` | critical | The research-form card opens, its link is clicked, or it is dismissed (`components/ResearchInvite.tsx`; a few per device per campaign) | `action` (`shown`, `opened`, `dismissed`), `surface` (`draft`, `career`; also `gameMode`), `campaign`, `activeDays`, `runsCompleted`, `careerSeasons` |
+
 ### Accounts and health
 
 | Event | Priority | Fires | Properties |
@@ -177,6 +183,14 @@ properties of `session_started`, not events.
 `quality_error.message` is the error's own message with quoted text, URLs and
 long numbers removed (a JSON parse error quotes the data it choked on, which
 could be a name the player typed), cut to 120 characters.
+
+Since 2.0.32, `source` = `heal` (name `AssetHeal`) means the page had build
+files fail to load and the inline repair (`lib/assetHeal.ts`, DESIGN-DECISIONS
+#171) fetched them again and reloaded the tab. It is sent once, on the load
+after the repair; `message` is the reason (`status`: a 400+ answer, usually a
+404 the browser had cached; `stalled`: the app never mounted, browsers without
+`responseStatus`) and up to three chunk file names. Before 2.0.32 these players
+sent nothing: the page hung before analytics loaded.
 
 ## What left the catalogue
 

@@ -23,7 +23,7 @@ import { partnerLogoSrc } from "@/lib/assets";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { AppLink } from "@/components/ui/AppLink";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { OrgMark } from "@/components/career/OrgMark";
 import { dateOfDay, seasonLabelFor } from "@/components/career/careerUi";
@@ -238,22 +238,25 @@ function SubjectChips({
   wire: boolean;
 }) {
   const region = newsRegionOf(item);
-  return <span className="flex flex-wrap items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-faint">
+  return <span className="flex flex-wrap items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-faint">
     <span>{archive ? C.news.feed.archive + " · " + seasonLabelFor(item.seasonIndex) : wire ? brandKicker : C.news.feed.subject[item.type]}</span>
     {region ? <span>· {region}</span> : null}
   </span>;
 }
 
-function ActionLink({ item, C }: { item: NewsItem; C: CareerCopy }) {
+function ActionLink({ item, C, lead }: { item: NewsItem; C: CareerCopy; lead?: boolean }) {
   const a = newsActionOf(item);
   if (!a) return null;
+  // The headline's action is a button; a row's is a quiet link that leaves the HQ.
+  if (lead) {
+    return <AppLink href={a.href} className={buttonClass("secondary", "sm")}>{C.news.feed.action[a.action]}</AppLink>;
+  }
   return (
     <AppLink
       href={a.href}
-      className="inline-flex min-h-7 items-center gap-1 text-[10px] font-semibold text-blue-bright hover:text-blue-bright/80"
+      className="inline-flex min-h-7 items-center text-xs font-semibold text-blue-bright underline-offset-4 hover:underline"
     >
       {C.news.feed.action[a.action]}
-      <span aria-hidden>→</span>
     </AppLink>
   );
 }
@@ -268,22 +271,29 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
-    <article className="relative mb-2 overflow-hidden rounded-xl border border-blue/25 bg-blue/[0.045] p-4 sm:p-5">
-      <div aria-hidden className="absolute inset-y-4 left-0 w-0.5 rounded-full bg-blue" />
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="kicker !text-[9px] text-blue-bright">{C.news.feed.lead}</p>
-        <span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span>
+    // The headline is a band across the feed, edge to edge: the front page of the desk.
+    // The crests of the orgs it is about stand large on the right, like a lower-third.
+    // The open story is marked in the desk's blue: a tinted band between two blue rules.
+    <article className="border-y border-blue-bright/55 bg-blue/[0.09] px-4 py-5 first:border-t-0 sm:px-6 sm:py-6">
+      <div className="flex items-center justify-between gap-3">
+        <p className="display flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.05em] text-blue-bright">
+          {C.news.feed.lead}
+          <span className="font-sans text-[11px] font-normal normal-case tracking-normal text-faint">{stampOf(item, save, C, C.dates)}</span>
+        </p>
+        <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} />
       </div>
-      <div className="flex items-start gap-3">
+      <div className="mt-4 flex items-center gap-5">
         <div className="min-w-0 flex-1">
-          <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} />
-          <h3 className="mt-2 text-lg font-semibold leading-snug text-ink sm:text-xl">{r.title}</h3>
+          <h3 className="display text-2xl font-bold uppercase leading-[1.05] text-ink sm:text-[2rem]">{r.title}</h3>
+          {r.body ? <p className="mt-3 max-w-prose text-sm leading-relaxed text-sub">{r.body}</p> : null}
+          {archive ? <p className="mt-2 text-xs text-faint">{C.news.feed.archiveNote}</p> : null}
         </div>
-        <Crests item={item} refs={refs.slice(0, 1)} save={save} size="md" type={item.type} archive={archive} />
+        {/* The mark has its own cell: a fixed square on the right, the art centred in it. */}
+        <div className="hidden h-24 w-32 shrink-0 items-center justify-center sm:flex [&_img]:!h-16 [&_img]:!w-auto [&_img]:!max-w-28 [&_svg]:!h-16 [&_svg]:!w-16">
+          <Crests item={item} refs={refs.slice(0, 2)} save={save} size="md" type={item.type} archive={archive} />
+        </div>
       </div>
-      {r.body ? <p className="mt-2 max-w-prose text-xs leading-relaxed text-sub">{r.body}</p> : null}
-      {archive ? <p className="mt-2 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
-      <div className="mt-3"><ActionLink item={item} C={C} /></div>
+      <div className="mt-4"><ActionLink item={item} C={C} lead /></div>
     </article>
   );
 }
@@ -293,17 +303,20 @@ function StoryRow({ item, save, C, lang, brandKicker, compact, onSelect }: { ite
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
-    <article className="flex items-start gap-2.5 border-b border-line/60 py-2.5 last:border-0">
-      <Crests item={item} refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
+    // Every story is a ruled row; its mark sits in a fixed column so the marks and the text line up down the feed.
+    <article className="flex items-center gap-4 border-b border-line-strong px-4 py-4 last:border-0 sm:px-6">
+      <span className="flex h-10 w-12 shrink-0 items-center justify-center [&_img]:!max-w-12">
+        <Crests item={item} refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
+      </span>
       <div className="min-w-0 flex-1">
         <button type="button" onClick={onSelect} className="block w-full cursor-pointer rounded text-left hover:text-blue-bright focus-visible:outline-2 focus-visible:outline-blue">
         {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} /> : null}
-        <p className={cx("text-xs leading-relaxed", item.read ? "text-sub" : "font-medium text-ink")}>{r.title}</p>
+        <p className={cx("text-sm leading-snug", item.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
         {!compact && r.body ? <p className="mt-0.5 text-xs leading-relaxed text-sub">{r.body}</p> : null}
         </button>
-        <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span><ActionLink item={item} C={C} /></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[11px] text-faint">{stampOf(item, save, C, C.dates)}</span><ActionLink item={item} C={C} /></div>
       </div>
-      {!item.read ? <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-blue-bright" aria-label={C.news.unread(1)} /> : null}
+      {!item.read ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-bright" aria-label={C.news.unread(1)} /> : null}
     </article>
   );
 }
@@ -312,9 +325,10 @@ function StoryRow({ item, save, C, lang, brandKicker, compact, onSelect }: { ite
 // The feed
 // ---------------------------------------------------------------------------
 
-export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; lang: "en" | "pt" }) {
+/** `full`: the whole feed with its filters (the desk's News view); otherwise the HQ's preview, which links there. */
+export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C: CareerCopy; lang: "en" | "pt"; full?: boolean }) {
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
-  const [open, setOpen] = useState(false);
+  const open = full;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [limit, setLimit] = useState(WIRE_BATCH);
@@ -351,14 +365,23 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
     : news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
 
   return (
-    <Panel id="career-news" className="rise-in scroll-mt-36 p-4" style={{ animationDelay: "120ms" }}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <BrandMark brand={brand} name={B.name} />
-          <span className="display text-xs font-bold uppercase tracking-wider text-ink sm:text-sm">{C.news.feed.name}</span>
-          {unread > 0 ? (
-            <span className="rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] text-orange-bright">{unread}</span>
-          ) : null}
+    <Panel id="career-news" className="rise-in scroll-mt-36 overflow-hidden" style={{ animationDelay: "120ms" }}>
+      {/* Masthead: the desk's mark and name, ruled off from the stories. */}
+      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3.5">
+          {/* The partner's mark, with its credit line right under it. */}
+          <span className="flex shrink-0 flex-col items-start gap-1">
+            <BrandMark brand={brand} name={B.name} />
+          </span>
+          <span className="min-w-0">
+            <span className="flex items-center gap-2">
+              <span className="card-title">{C.news.feed.name}</span>
+              {unread > 0 ? (
+                <span className="rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] text-orange-bright">{unread}</span>
+              ) : null}
+            </span>
+            {B.credit ? <span className="mt-1.5 block text-xs text-sub">{B.credit}</span> : null}
+          </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {open && unread > 0 ? (
@@ -366,22 +389,22 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
               {C.news.markAllRead}
             </Button>
           ) : null}
-          <Button size="sm" variant="ghost" className="text-blue-bright" onClick={() => setOpen((v) => !v)}>
-            {open ? C.common.close : C.hub.newsAll}
-          </Button>
+          {full ? null : (
+            <AppLink href="/career/news#news" className={buttonClass("secondary", "sm")}>
+              {C.hub.newsAll}
+            </AppLink>
+          )}
         </div>
       </div>
-      {B.credit ? <p className="-mt-1.5 mb-3 text-[10px] text-faint">{B.credit}</p> : null}
-
       {open ? (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 border-b border-line px-4 py-3 sm:px-6">
           {FILTERS.map((key) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
               aria-pressed={filter === key}
               className={cx(
-                "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
+                "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
                 filter === key ? "border-blue/50 bg-blue/15 text-blue-bright" : "border-line-strong bg-white/5 text-sub hover:text-ink",
               )}
             >
@@ -394,7 +417,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
       {lead ? expandedId === lead.id ? <LeadStory item={lead} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={lead} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(lead.id)} /> : null}
 
       {rows.length === 0 && !lead ? (
-        <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
+        <p className="px-4 py-8 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
       ) : (
         <div>
           {rows.map((item) => (
@@ -404,6 +427,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
       )}
 
       {hasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
+
     </Panel>
   );
 }

@@ -7,6 +7,7 @@ import { COSMETICS } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
 import { cx } from "@/lib/util";
+import { CheckIcon } from "@/components/ui/icons";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { BannerSurface, TitleTag, useCosmeticCopy } from "./CosmeticViews";
 
@@ -33,7 +34,7 @@ export function SeasonRankTrack({ xp, peakRankId }: { xp: number; peakRankId: st
         <ol className="grid grid-cols-2 gap-2 sm:grid-cols-8 sm:gap-0.5" aria-label={P.seasonTrack}>
           {ranks.map((rank, i) => <li key={rank.id}>
             <button type="button" aria-pressed={selected.id === rank.id} onClick={() => setSelectedId(rank.id)}
-              className={cx("flex min-h-16 w-full cursor-pointer flex-col items-center justify-start rounded-lg border py-1 transition-colors", selected.id === rank.id ? "border-orange/60 bg-orange/10" : "border-transparent hover:bg-white/[0.04]")}>
+              className={cx("flex min-h-16 w-full cursor-pointer flex-col items-center justify-start rounded-lg border py-1 transition-colors", selected.id === rank.id ? "border-orange/60 bg-white/[0.04]" : "border-transparent hover:bg-white/[0.04]")}>
               <RankBadge rank={rank} variant="menu" size="sm" className="!h-9 !w-9" />
               <span className={cx("display flex min-h-7 items-center justify-center text-[10px] font-bold leading-tight", i <= peakIdx ? "text-ink" : "text-sub")}>{rank.label}</span>
               <span className="mt-2 flex w-full flex-col gap-1 px-1 sm:mt-5">{COSMETICS.filter(c => c.source.type === "season-rank" && c.source.seasonId === SEASON.id && c.source.rankId === rank.id).map(c => <span key={c.id} className="flex min-h-6 items-center justify-center" title={copy.name(c.id)}>
@@ -48,20 +49,24 @@ export function SeasonRankTrack({ xp, peakRankId }: { xp: number; peakRankId: st
         </div>
       </div>
     </div>
-    <section className="mt-3 rounded-xl border border-line-strong bg-bg p-4" aria-live="polite" aria-label={P.rankRewardPreview(selected.label)}>
-      <div className="mb-4 flex items-center justify-between gap-3 border-b border-line pb-3">
-        <p className="kicker text-[10px]">{P.rewardPreviewTitle}</p>
-        <p className={cx("text-xs font-semibold", reached ? "text-good" : "text-sub")}>{reached ? `✓ ${P.rankRewardReached}` : P.rankRewardRequired(selected.label, selected.minXp)}</p>
+    {/* The preview is part of the same board: a hairline, not a box in a box. */}
+    <section className="mt-3 border-t border-line pt-4" aria-live="polite" aria-label={P.rankRewardPreview(selected.label)}>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h4 className="display text-sm font-bold uppercase leading-none text-ink">{P.rewardPreviewTitle}</h4>
+        <p className={cx("inline-flex items-center gap-1.5 text-xs font-semibold", reached ? "text-good" : "text-sub")}>
+          {reached ? <CheckIcon className="h-4 w-4" /> : null}
+          {reached ? P.rankRewardReached : P.rankRewardRequired(selected.label, selected.minXp)}
+        </p>
       </div>
       <div className={cx("grid items-start gap-4", rewards.some(c => c.kind === "banner") && "sm:grid-cols-[minmax(0,1fr)_minmax(10rem,0.65fr)]")}>
         {rewards.some(c => c.kind === "banner") ? <div className="min-w-0">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.kindsPlural.banner}</p>
+          <p className="display mb-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-faint">{C.kindsPlural.banner}</p>
           <div className="w-full max-w-[480px]">
             {rewards.filter(c => c.kind === "banner").map(c => <BannerSurface key={c.id} banner={c} displayPx={480} className="h-20 w-full rounded-lg"><span className="sr-only">{copy.name(c.id)}</span></BannerSurface>)}
           </div>
         </div> : null}
         <div className="min-h-14 min-w-0">
-          {rewards.some(c => c.kind === "title") ? <><p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.kindsPlural.title}</p>{rewards.filter(c => c.kind === "title").map(c => <TitleTag key={c.id} title={c} size="sm" />)}</> : null}
+          {rewards.some(c => c.kind === "title") ? <><p className="display mb-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-faint">{C.kindsPlural.title}</p>{rewards.filter(c => c.kind === "title").map(c => <TitleTag key={c.id} title={c} size="sm" />)}</> : null}
         </div>
       </div>
     </section>

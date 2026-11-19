@@ -64,6 +64,7 @@ describe("the catalogue", () => {
         "quality_slow_advance",
         "quiz_played",
         "rank_up",
+        "research_invite",
         "run_abandoned",
         "run_completed",
         "session_started",

@@ -52,13 +52,13 @@ export function CareerSwissStandings({
   });
 
   return (
-    <Panel className="p-4">
+    <Panel className="p-4 sm:p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
           {title ?? C.event.standings}
         </h3>
         {throughRound > 0 ? (
-          <span className="shrink-0 text-[10px] uppercase tracking-wider text-faint">
+          <span className="shrink-0 text-[11px] uppercase tracking-wider text-faint">
             {C.event.throughRound(throughRound)}
           </span>
         ) : null}
@@ -68,7 +68,7 @@ export function CareerSwissStandings({
           W-L / GD and cut team names to a few letters on the 1280 px rail. */}
       <table className="w-full table-fixed text-left text-xs">
         <thead>
-          <tr className="text-[10px] uppercase tracking-wider text-faint">
+          <tr className="text-[11px] uppercase tracking-wider text-faint">
             <th className="pb-2 font-semibold" scope="col">
               {T.team}
             </th>
@@ -111,11 +111,11 @@ export function CareerSwissStandings({
                     </span>
                     {/* rc.29 (CAR-05): short tags (PT "Classificado" cut the name at 1280 px). */}
                     {through ? (
-                      <span className="display shrink-0 rounded bg-good/15 px-1 text-[8px] font-bold uppercase tracking-wider text-good">
+                      <span className="display shrink-0 rounded bg-good/15 px-1 text-[10px] font-bold uppercase tracking-wider text-good">
                         {C.event.advancedTag}
                       </span>
                     ) : out ? (
-                      <span className="display shrink-0 rounded bg-bad/15 px-1 text-[8px] font-bold uppercase tracking-wider text-bad">
+                      <span className="display shrink-0 rounded bg-bad/15 px-1 text-[10px] font-bold uppercase tracking-wider text-bad">
                         {C.event.eliminatedTag}
                       </span>
                     ) : null}
@@ -140,7 +140,7 @@ export function CareerSwissStandings({
 
       {nextUpRef ? (
         <div className="pop-in mt-3 flex items-center gap-2 rounded-lg border border-blue/35 bg-blue/5 px-2.5 py-2">
-          <span className="kicker shrink-0 !text-[9px] text-blue-bright">{C.event.nextUp}</span>
+          <span className="kicker shrink-0 text-blue-bright">{C.event.nextUp}</span>
           <EventTeamButton teamId={nextUpRef} name={t.teams[nextUpRef]?.name ?? nextUpRef}>
           <OrgMark save={save} orgRef={nextUpRef} size="xs" />
           <span className="display min-w-0 truncate text-xs font-bold uppercase text-ink">

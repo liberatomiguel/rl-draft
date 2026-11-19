@@ -112,7 +112,7 @@ export function ListPlayerSheet({
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="display text-lg font-bold text-ink">{player.name}</span>
+          <span className="card-title">{player.name}</span>
           <span className="text-xs text-sub">
             {C.common.ovr} <strong className="text-ink">{Math.round(player.overall)}</strong>
           </span>
@@ -123,7 +123,7 @@ export function ListPlayerSheet({
         </div>
         {plan.shortTenure ? <p className="text-xs font-semibold text-orange-bright">{L.shortTenure(shortPct)}</p> : null}
         <div>
-          <label htmlFor={rangeId} className="kicker mb-1 block text-[10px]">
+          <label htmlFor={rangeId} className="kicker mb-1 block">
             {L.askLabel}
           </label>
           <input

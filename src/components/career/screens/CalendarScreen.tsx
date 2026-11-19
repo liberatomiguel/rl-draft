@@ -245,10 +245,10 @@ export function CalendarScreen() {
 
     return (
       <div ref={detailRef} className="scroll-mt-28">
-        <Panel className="rise-in mt-2 p-4">
+        <Panel className="rise-in mt-2 p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="kicker mb-1 text-[11px]">
+              <p className="kicker mb-1">
                 {formatDateShort(D, day.date)}
                 {day.isToday ? ` · ${C.calendar.today}` : ""}
               </p>
@@ -413,7 +413,7 @@ export function CalendarScreen() {
       {/* 1 — header: date chip + season/split badges ------------------------ */}
       <div className="rise-in">
         <SectionTitle
-          kicker={C.meta.title}
+          
           title={C.calendar.title}
           right={
             <Badge tone="orange">
@@ -459,7 +459,7 @@ export function CalendarScreen() {
                     .map((r) => (
                       <span
                         key={r.start}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-blue/40 bg-blue/15 px-2 py-0.5 text-[10px] font-semibold text-blue-bright"
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-blue/40 bg-blue/15 px-2 py-0.5 text-[11px] font-semibold text-blue-bright"
                       >
                         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-blue-bright" />
                         {C.calendar.windowUntil(formatDateTiny(D, dateOfDay(save.clock.seasonIndex, r.end)))}
@@ -470,7 +470,7 @@ export function CalendarScreen() {
                   {D.weekdays.map((w) => (
                     <div
                       key={w}
-                      className="pb-0.5 text-center text-[9px] font-semibold uppercase tracking-wider text-faint"
+                      className="pb-0.5 text-center text-[10px] font-semibold uppercase tracking-wider text-faint"
                     >
                       {w}
                     </div>
@@ -497,7 +497,7 @@ export function CalendarScreen() {
                         aria-pressed={isSelected}
                         aria-label={
                           formatDateShort(D, d.date) +
-                          (cellLabel ? ` — ${cellLabel}` : "") +
+                          (cellLabel ? `: ${cellLabel}` : "") +
                           (spectating ? ` · ${C.calendar.notQualified}` : "") +
                           (d.windowOpen ? ` · ${C.calendar.window}` : "")
                         }
@@ -552,9 +552,9 @@ export function CalendarScreen() {
         {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
             (payroll stays in Finances) */}
         <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-faint">{C.launch.calendarLegend}</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">{C.launch.calendarLegend}</p>
         <div
-          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
+          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-faint"
           aria-label={C.calendar.legend}
         >
           <span className="inline-flex items-center gap-1">
@@ -584,7 +584,7 @@ export function CalendarScreen() {
       {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
           half of this bar — it now sits above it. */}
       <div className="mt-3">
-        <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3 [&_button]:min-h-11 [&_button]:max-w-full [&_button]:whitespace-normal">
+        <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-4 sm:p-5 [&_button]:min-h-11 [&_button]:max-w-full [&_button]:whitespace-normal">
           {continueState === "decision" ? (
             <Button variant="primary" onClick={() => router.push("/career")}>
               {C.hub.nowDecision}
@@ -612,8 +612,8 @@ export function CalendarScreen() {
               href="/career/event"
               className={cx(
                 "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
-                "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]",
-                "shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all hover:brightness-110",
+                "bg-orange text-paper-ink",
+                "transition-colors hover:bg-orange-bright",
               )}
             >
               {C.calendar.advanceToStop(eventDue.name)}
@@ -640,7 +640,7 @@ export function CalendarScreen() {
       </div>
 </div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
       <section data-tour="calendar-next" className="rise-in">
-        <p className="kicker mb-2 text-[11px]">{C.calendar.nextForYou}</p>
+        <p className="card-title mb-3">{C.calendar.nextForYou}</p>
         <div className="grid grid-cols-1 gap-2">
           {stops.map((stop, i) => {
             const title = stop.event
@@ -670,9 +670,9 @@ export function CalendarScreen() {
                     <span className="display text-xs font-bold text-ink">{title}</span>
                   </span>
                   {stop.event ? (
-                    <TierChip tier={stop.event.tier} className="!px-1.5 !text-[9px]" />
+                    <TierChip tier={stop.event.tier} className="!px-1.5 !text-[10px]" />
                   ) : stop.kind === "window" ? (
-                    <Badge tone="blue" className="!px-1.5 !text-[9px]">
+                    <Badge tone="blue" className="!px-1.5 !text-[10px]">
                       {C.calendar.windowOpen}
                     </Badge>
                   ) : null}
@@ -689,8 +689,8 @@ export function CalendarScreen() {
 
       {/* 4 — unofficial invite ------------------------------------------------ */}
       {save.unofficialOffer && !save.pendingEventDef ? (
-        <Panel glow="blue" className="rise-in p-4">
-          <p className="kicker mb-1 text-[11px]">{C.calendar.offerTitle}</p>
+        <Panel glow="blue" className="rise-in p-4 sm:p-5">
+          <p className="kicker mb-1">{C.calendar.offerTitle}</p>
           <div className="flex flex-wrap items-center gap-2">
             <span className="display text-base font-bold text-ink">
               {save.unofficialOffer.name}
@@ -717,14 +717,14 @@ export function CalendarScreen() {
       ) : null}
 
       {/* 5 — season overview strip -------------------------------------------- */}
-      <Panel className="p-4">
-        <p className="kicker mb-3 text-[11px]">{C.launch.calendarOverview}</p>
+      <Panel className="p-4 sm:p-5">
+        <div className="card-head"><h3 className="card-title">{C.launch.calendarOverview}</h3></div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {splits.map((sp) => (
             <div key={sp} className="flex items-center gap-1.5">
               <span
                 className={cx(
-                  "text-[10px] font-semibold",
+                  "text-[11px] font-semibold",
                   clk.split === sp ? "text-orange-bright" : "text-faint",
                 )}
               >

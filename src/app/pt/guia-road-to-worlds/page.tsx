@@ -23,7 +23,7 @@ export default function PtCareerGuidePage() {
       initialLocale="pt"
       path={R.pt}
       backHref="/pt"
-      ctaHref="/"
+      ctaHref="/career"
     />
   );
 }

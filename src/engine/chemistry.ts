@@ -127,7 +127,7 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
   }
   for (const g of groups.values()) {
     items.push({
-      label: `${g.label}${g.suffix} — ${[...g.names].join(" · ")}`,
+      label: `${g.label}${g.suffix}: ${[...g.names].join(" · ")}`,
       points: g.points,
     });
   }
@@ -139,7 +139,7 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
       const points = loyal.length * w.orgLinkPerPlayer;
       raw += points;
       items.push({
-        label: `Org loyalty${input.orgName ? ` (${input.orgName})` : ""} — ${loyal
+        label: `Org loyalty${input.orgName ? ` (${input.orgName})` : ""}: ${loyal
           .map((p) => p.name)
           .join(" · ")}`,
         points,
@@ -175,7 +175,7 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
     points = Math.min(points, capW);
     if (points > 0) {
       raw += points;
-      items.push({ label: `${staff.name} (${role}) — ${reasons[0]}`, points });
+      items.push({ label: `${staff.name} (${role}): ${reasons[0]}`, points });
     }
   };
   if (input.coach) staffLink(input.coach, w.coachLink, w.coachLinkMax, "coach");

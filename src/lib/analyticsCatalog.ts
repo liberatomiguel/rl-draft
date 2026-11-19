@@ -398,6 +398,25 @@ export const EVENT_CATALOG = {
   }),
 
   // -------------------------------------------------------------------------
+  // Player research (2.0.31; `gameMode` = where the card opened)
+  // -------------------------------------------------------------------------
+
+  /**
+   * The research-form invitation (`lib/researchInvite.ts`): `action` shown /
+   * opened (the link clicked) / dismissed. At most a few per device per
+   * campaign, so critical (never sampled). `surface` = draft | career.
+   */
+  research_invite: spec("shared", "critical", {
+    gameMode: "string",
+    action: "string",
+    surface: "string",
+    campaign: "string",
+    activeDays: "number",
+    runsCompleted: "number",
+    careerSeasons: "number",
+  }),
+
+  // -------------------------------------------------------------------------
   // Accounts and sync (`gameMode: "app"`)
   // -------------------------------------------------------------------------
 

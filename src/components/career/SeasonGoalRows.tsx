@@ -39,10 +39,10 @@ function familyOf(label: SeasonGoalLabel): Family {
 }
 
 const FAMILY_TONE: Record<Family, string> = {
-  cup: "bg-cyan/12 text-cyan",
-  regional: "bg-blue/15 text-blue-bright",
-  major: "bg-orange/15 text-orange-bright",
-  worlds: "bg-amber-400/15 text-amber-300",
+  cup: "text-cyan",
+  regional: "text-blue-bright",
+  major: "text-orange-bright",
+  worlds: "text-amber-300",
 };
 
 /** One glyph per goal family — 24×24 currentColor, round caps (the house style). */
@@ -164,8 +164,8 @@ function GoalRow({
     <div className={cx("flex gap-3", !primary && "opacity-90")}>
       <span
         className={cx(
-          "flex shrink-0 items-center justify-center rounded-lg",
-          primary ? "h-10 w-10" : "h-8 w-8",
+          "flex shrink-0 items-center justify-center",
+          primary ? "mt-0.5 h-6 w-6" : "mt-0.5 h-5 w-5",
           FAMILY_TONE[family],
         )}
       >
@@ -173,11 +173,11 @@ function GoalRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="kicker !text-[9px]">{C.goals.role[row.role]} <span className="ml-1.5 normal-case tracking-normal text-orange-bright">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span></span>
+          <span className="kicker">{C.goals.role[row.role]} <span className="ml-1.5 normal-case tracking-normal text-orange-bright">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span></span>
           {status && showStatus ? (
             <span
               className={cx(
-                "display shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em]",
+                "display shrink-0 rounded border px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.12em]",
                 STATUS_TONE[status],
               )}
             >
@@ -203,7 +203,7 @@ function GoalRow({
           </div>
         ) : null}
         {deadline && row.met === null && primary ? (
-          <p className="mt-1 flex items-start gap-1 text-[10px] leading-snug text-faint">
+          <p className="mt-1 flex items-start gap-1 text-[11px] leading-snug text-faint">
             <svg viewBox="0 0 24 24" className="mt-px h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
               <circle cx="12" cy="13" r="7" />
               <path d="M12 9.5V13l2.5 1.5M10 3h4" strokeLinecap="round" />
@@ -252,13 +252,13 @@ export function SeasonGoalRows({
           {chips.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {chips.map((c) => (
-                <span key={c} className="rounded border border-line bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-sub">
+                <span key={c} className="rounded border border-line bg-white/[0.03] px-1.5 py-0.5 text-[11px] text-sub">
                   {c}
                 </span>
               ))}
             </div>
           ) : null}
-          <p className="text-[10px] leading-snug text-faint">
+          <p className="text-[11px] leading-snug text-faint">
             <span className={cx("font-semibold", view.repRisk > 0 ? "text-bad/90" : "text-sub")}>
               {view.repRisk > 0 ? C.goals.missCost(view.repRisk) : C.goals.noCost}
             </span>

@@ -9,9 +9,10 @@
  * sides score like any team since R49 and are marked as such.
  *
  * Design §11: the dashed cut-line is THE measuring stick — always visible,
- * always labeled. Blue = structure (tabs, tables, cut-lines); the user row
- * carries the org's own colors. v0.2: shared OrgMark, FORM chips (last
- * placements this season), expandable user row, crest-led hero.
+ * always labeled. Blue = structure (tabs, cut-lines); the user row is a
+ * fill. v0.2: shared OrgMark, FORM chips (last placements this season),
+ * expandable user row, crest-led hero. The points column is the deciding
+ * one and is set largest (DESIGN.md).
  */
 
 import { useId, useMemo, useState } from "react";
@@ -23,6 +24,7 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { CareerHonorsTable } from "../CareerHonorsTable";
@@ -74,14 +76,14 @@ function formMap(save: CareerSave, keep: number): Map<string, Placement[]> {
 // ---------------------------------------------------------------------------
 
 const FORM_CHIP: Record<Placement, { label: string; cls: string }> = {
-  champion: { label: "1", cls: "border-amber-400/50 bg-amber-400/15 text-amber-300" },
-  runner_up: { label: "2", cls: "border-good/40 bg-good/10 text-good" },
-  third: { label: "3", cls: "border-good/30 bg-good/5 text-good" },
-  fourth: { label: "4", cls: "border-blue/40 bg-blue/10 text-blue-bright" },
-  top4: { label: "4", cls: "border-blue/40 bg-blue/10 text-blue-bright" },
-  top6: { label: "6", cls: "border-line-strong bg-white/5 text-sub" },
-  top8: { label: "8", cls: "border-line-strong bg-white/5 text-sub" },
-  swiss_exit: { label: "9+", cls: "border-bad/30 bg-bad/10 text-bad/80" },
+  champion: { label: "1", cls: "bg-amber-400/15 text-amber-300" },
+  runner_up: { label: "2", cls: "bg-good/15 text-good" },
+  third: { label: "3", cls: "bg-good/10 text-good" },
+  fourth: { label: "4", cls: "bg-blue/15 text-blue-bright" },
+  top4: { label: "4", cls: "bg-blue/15 text-blue-bright" },
+  top6: { label: "6", cls: "bg-white/[0.07] text-sub" },
+  top8: { label: "8", cls: "bg-white/[0.07] text-sub" },
+  swiss_exit: { label: "9+", cls: "bg-bad/15 text-bad" },
 };
 
 function FormChips({
@@ -92,7 +94,7 @@ function FormChips({
   labels: Record<string, string>;
 }) {
   if (!placements || placements.length === 0) {
-    return <span className="text-[10px] text-faint">—</span>;
+    return <span className="text-xs text-faint">–</span>;
   }
   return (
     <span className="inline-flex items-center gap-1">
@@ -101,7 +103,7 @@ function FormChips({
           key={i}
           title={labels[p] ?? p}
           className={cx(
-            "display inline-flex h-5 min-w-5 items-center justify-center rounded border px-0.5 text-[9px] font-bold",
+            "display inline-flex h-5 min-w-5 items-center justify-center rounded-sm px-1 text-[11px] font-semibold leading-none",
             FORM_CHIP[p].cls,
           )}
         >
@@ -115,9 +117,19 @@ function FormChips({
 /** The org's stars, or the Local chip for an amateur side (it has no star rating). */
 function RowMarks({ row, stars, localTag }: { row: RaceRow; stars: number; localTag: string }) {
   if (row.side === "local") {
-    return <Badge className="shrink-0 !px-1.5 !text-[9px]">{localTag}</Badge>;
+    return <Badge className="shrink-0">{localTag}</Badge>;
   }
   return <TeamStars stars={stars} size="xs" className="shrink-0" />;
+}
+
+/** A figure of the user's race: the value first, its label quiet under it. */
+function RaceFigure({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cx("flex min-w-0 flex-col-reverse justify-end", className)}>
+      <dt className="mt-1.5 text-xs leading-snug text-sub">{label}</dt>
+      <dd className="min-w-0">{children}</dd>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -165,51 +177,53 @@ function StandingsTable({
           }
         }}
         className={cx(
-          "cursor-pointer border-b border-line transition-colors focus-visible:outline-none focus-visible:bg-white/6",
-          isUser ? "bg-white/4 hover:bg-white/6" : "hover:bg-white/3",
-          expanded && "!border-b-0 bg-white/5",
+          "cursor-pointer border-b border-line transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
+          // The player's own row is a fill (DESIGN.md: a state is a fill or a hairline, never a glow or an edge bar).
+          isUser ? "bg-white/[0.07] hover:bg-white/[0.1]" : "hover:bg-white/[0.04]",
+          expanded && "!border-b-0",
         )}
       >
-        <td
-          className="w-10 px-2 py-2 text-center"
-          style={{ borderLeft: `3px solid ${isUser ? save.identity.colors.primary : "transparent"}` }}
-        >
+        <td className="w-10 px-2 py-2.5 text-center">
           <span
             className={cx(
-              "display text-sm font-bold",
+              "display text-base font-bold leading-none",
               row.qualified ? "text-good" : isUser ? "text-ink" : row.inCut ? "text-sub" : "text-faint",
             )}
           >
             {table.started ? row.rank : "–"}
           </span>
         </td>
-        <td className="px-2 py-2">
+        <td className="px-2 py-2.5">
           <span className="flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-2.5">
             <OrgMark save={save} orgRef={row.ref} />
-            <span className={cx("min-w-0 basis-[calc(100%-3rem)] break-words text-sm sm:basis-auto sm:truncate", isUser ? "font-semibold text-ink" : "text-sub")}>
+            <span
+              className={cx(
+                "min-w-0 basis-[calc(100%-3rem)] break-words text-sm sm:basis-auto sm:truncate",
+                isUser ? "font-semibold text-ink" : row.inCut ? "text-ink" : "text-sub",
+              )}
+            >
               {row.name}
             </span>
             <RowMarks row={row} stars={stars} localTag={copy.race.localTag} />
             {isUser ? (
-              <Badge tone="orange" className="shrink-0 !px-1.5 !text-[9px]">
+              <Badge tone="orange" className="shrink-0">
                 {copy.standings.userChip}
               </Badge>
             ) : null}
             {row.qualified ? (
-              <Badge tone="good" className="hidden shrink-0 !px-1.5 !text-[9px] sm:inline-flex">
+              <Badge tone="good" className="hidden shrink-0 sm:inline-flex">
                 {copy.race.qualifiedTag}
               </Badge>
             ) : null}
           </span>
         </td>
-        <td className="hidden px-2 py-2 text-right sm:table-cell">
+        <td className="hidden px-2 py-2.5 text-right sm:table-cell">
           <FormChips placements={form.get(row.ref)} labels={placementLabels} />
         </td>
-        <td className="px-3 py-2 text-right">
-          <span className={cx("display text-sm font-bold", isUser ? "text-orange-bright" : "text-ink")}>
-            {row.points}
-          </span>
-          <span className="ml-1 text-[10px] text-faint">{copy.standings.ptsShort}</span>
+        {/* The deciding column: the points, set larger than anything else in the row. */}
+        <td className="whitespace-nowrap px-3 py-2.5 text-right">
+          <span className="display text-xl font-bold leading-none text-ink">{row.points}</span>
+          <span className="ml-1 text-xs text-faint">{copy.standings.ptsShort}</span>
         </td>
       </tr>,
     );
@@ -217,32 +231,24 @@ function StandingsTable({
       const splitPts = save.competition.splitPoints[region]?.[row.ref] ?? 0;
       const seasonPts = save.competition.seasonPoints[region]?.[row.ref] ?? 0;
       trs.push(
-        <tr key={`x:${row.ref}`} className="border-b border-line">
+        <tr key={`x:${row.ref}`} className="border-b border-line bg-white/[0.07]">
           <td colSpan={4} className="px-3 pb-3 pt-0">
-            <div className="rise-in flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-line bg-black/20 px-3 py-2.5">
-              <span className="min-w-0">
-                <span className="kicker block !text-[9px]">{copy.race.majorTab}</span>
-                <span className="display text-sm font-bold text-ink">
-                  {splitPts}
-                  <span className="ml-1 text-[10px] font-normal text-faint">{copy.standings.ptsShort}</span>
-                </span>
-              </span>
-              <span className="min-w-0">
-                <span className="kicker block !text-[9px]">{copy.race.worldsTab}</span>
-                <span className="display text-sm font-bold text-ink">
-                  {seasonPts}
-                  <span className="ml-1 text-[10px] font-normal text-faint">{copy.standings.ptsShort}</span>
-                </span>
-              </span>
-              <span className="min-w-0">
-                <span className="kicker block !text-[9px]">{copy.club.stars}</span>
+            <dl className="rise-in flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-line pt-3">
+              <RaceFigure label={copy.race.majorTab}>
+                <span className="display text-xl font-bold leading-none text-ink">{splitPts}</span>
+                <span className="ml-1 text-xs text-faint">{copy.standings.ptsShort}</span>
+              </RaceFigure>
+              <RaceFigure label={copy.race.worldsTab}>
+                <span className="display text-xl font-bold leading-none text-ink">{seasonPts}</span>
+                <span className="ml-1 text-xs text-faint">{copy.standings.ptsShort}</span>
+              </RaceFigure>
+              <RaceFigure label={copy.club.stars}>
                 <TeamStars stars={userStarCount} size="sm" />
-              </span>
-              <span className="min-w-0 sm:hidden">
-                <span className="kicker block !text-[9px]">{copy.hub.form}</span>
+              </RaceFigure>
+              <RaceFigure label={copy.hub.form} className="sm:hidden">
                 <FormChips placements={form.get(row.ref)} labels={placementLabels} />
-              </span>
-            </div>
+              </RaceFigure>
+            </dl>
           </td>
         </tr>,
       );
@@ -250,10 +256,8 @@ function StandingsTable({
     if (row.rank === cut && rows.length > cut) {
       trs.push(
         <tr key={`cut:${row.ref}`}>
-          <td colSpan={4} className="border-b-2 border-dashed border-blue/60 px-3 pb-1 pt-0.5">
-            <span className="kicker block text-right !text-[9px] !tracking-[0.2em] text-blue-bright">
-              {cutLabel}
-            </span>
+          <td colSpan={4} className="border-b-2 border-dashed border-blue/60 px-3 pb-1 pt-1">
+            <span className="kicker block text-right text-blue-bright">{cutLabel}</span>
           </td>
         </tr>,
       );
@@ -265,10 +269,10 @@ function StandingsTable({
       <table className="mobile-list-table w-full border-collapse">
         <thead>
           <tr className="border-b border-line-strong">
-            <th className="kicker w-10 px-2 pb-2 text-center !text-[9px]">#</th>
+            <th className="kicker w-10 px-2 pb-2 text-center">#</th>
             <th aria-label={copy.standings.title} className="px-2 pb-2" />
-            <th className="kicker hidden px-2 pb-2 text-right !text-[9px] sm:table-cell">{copy.hub.form}</th>
-            <th className="kicker px-3 pb-2 text-right !text-[9px]">{copy.standings.ptsShort}</th>
+            <th className="kicker hidden px-2 pb-2 text-right sm:table-cell">{copy.hub.form}</th>
+            <th className="kicker px-3 pb-2 text-right">{copy.standings.ptsShort}</th>
           </tr>
         </thead>
         <tbody>{trs}</tbody>
@@ -277,8 +281,8 @@ function StandingsTable({
   );
 }
 
-/** An announced Major / Worlds field: one card per team, any non-user card opens its sheet. */
-function FieldGrid({
+/** An announced Major / Worlds field: a list of the teams in columns, any non-user row opens its sheet. */
+function FieldList({
   save,
   refs,
   title,
@@ -292,52 +296,54 @@ function FieldGrid({
   onOpenOrg: (ref: string) => void;
 }) {
   const copy = useCareerCopy();
+  const rowClass = "flex min-h-11 w-full min-w-0 items-center gap-2.5 px-2 py-2 text-left";
   return (
-    <div className="rise-in mt-6" style={{ animationDelay: "180ms" }}>
-      <p className="kicker mb-3">{title}</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {refs.map((ref, i) => {
+    <section className="mt-8">
+      <h3 className="card-title">{title}</h3>
+      <ul className="mt-3 grid grid-cols-1 gap-x-6 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
+        {refs.map((ref) => {
           const isUser = ref === "user";
-          const isLocal = isLocalRef(ref);
-          return (
-            <Panel
-              key={ref}
-              role={isUser ? undefined : "button"}
-              tabIndex={isUser ? undefined : 0}
-              title={isUser ? undefined : copy.orgSheet.viewTeam}
-              onClick={isUser ? undefined : () => onOpenOrg(ref)}
-              onKeyDown={
-                isUser
-                  ? undefined
-                  : (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onOpenOrg(ref);
-                      }
-                    }
-              }
-              className={cx(
-                "rise-in flex flex-col items-center gap-1.5 p-3 text-center",
-                isUser
-                  ? "panel-glow-orange border-orange/40"
-                  : "cursor-pointer transition-colors hover:bg-white/4 focus-visible:bg-white/6 focus-visible:outline-none",
-              )}
-              style={{ animationDelay: `${200 + i * 30}ms` }}
-            >
-              <OrgMark save={save} orgRef={ref} size="md" />
-              <span className={cx("w-full truncate text-xs", isUser ? "font-semibold text-ink" : "text-sub")}>
+          const inner = (
+            <>
+              <OrgMark save={save} orgRef={ref} />
+              <span className={cx("min-w-0 flex-1 truncate text-sm", isUser ? "font-semibold text-ink" : "text-ink")}>
                 {nameOfRef(save, ref)}
               </span>
-              {isLocal ? (
-                <Badge className="!px-1.5 !text-[9px]">{copy.race.localTag}</Badge>
+              {isUser ? (
+                <Badge tone="orange" className="shrink-0">
+                  {copy.standings.userChip}
+                </Badge>
+              ) : null}
+              {isLocalRef(ref) ? (
+                <Badge className="shrink-0">{copy.race.localTag}</Badge>
               ) : (
-                <TeamStars stars={isUser ? userStarCount : (save.world.orgs[ref]?.stars ?? 0)} size="xs" />
+                <TeamStars
+                  stars={isUser ? userStarCount : (save.world.orgs[ref]?.stars ?? 0)}
+                  size="xs"
+                  className="shrink-0"
+                />
               )}
-            </Panel>
+            </>
+          );
+          return (
+            <li key={ref} className="border-b border-line">
+              {isUser ? (
+                <div className={cx(rowClass, "bg-white/[0.07]")}>{inner}</div>
+              ) : (
+                <button
+                  type="button"
+                  title={copy.orgSheet.viewTeam}
+                  onClick={() => onOpenOrg(ref)}
+                  className={cx(rowClass, "transition-colors hover:bg-white/[0.04]")}
+                >
+                  {inner}
+                </button>
+              )}
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
 
@@ -355,7 +361,13 @@ const LINE_TONE: Record<RaceLine, string> = {
   behind: "text-bad",
 };
 
+/** A filter or tab chip: the shared button, its selected state a coloured hairline and tint. */
+function chipClass(selected: boolean, on = "!border-blue-bright/60 !bg-blue/15 !text-blue-bright"): string {
+  return cx(buttonClass("secondary", "sm"), selected ? on : "!text-sub hover:!text-ink");
+}
+
 export function StandingsScreen() {
+  // Job: where the club stands in the points race against the cut line. The one decision: which race to read (this split's Major, or the season's Worlds).
   const copy = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
@@ -385,7 +397,7 @@ export function StandingsScreen() {
         <div className="space-y-4" aria-busy>
           <div className="h-10 w-56 animate-pulse rounded-lg bg-white/5" />
           <div className="h-11 w-80 max-w-full animate-pulse rounded-lg bg-white/5" />
-          <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+          <div className="h-96 animate-pulse rounded-xl bg-white/5" />
         </div>
       </div>
     );
@@ -408,8 +420,6 @@ export function StandingsScreen() {
   const field = isMajor ? save.competition.majorFieldRefs : save.competition.worldsFieldRefs;
   const hasLocals = table.rows.some((r) => r.side === "local");
 
-  const chipBase =
-    "display inline-flex min-h-11 items-center rounded-md border px-3 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors";
   const lineText = (l: RaceLine | null, gap: number): string =>
     l === "clinched"
       ? copy.race.status.clinched
@@ -425,146 +435,131 @@ export function StandingsScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle kicker={copy.meta.title} title={copy.standings.title} className="mb-5" />
+      <SectionTitle title={copy.standings.title} className="mb-5" />
 
-      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-      {/* Region selector */}
-      <div className="flex flex-wrap gap-1.5" aria-label={copy.standings.regionLabel}>
-        {REGIONS.map((r) => (
-          <button
-            key={r}
-            type="button"
-            onClick={() => setPickedRegion(r)}
-            aria-pressed={region === r}
-            className={cx(
-              chipBase,
-              region === r ? REGION_BADGE[r] : "border-line-strong bg-white/5 text-sub hover:text-ink",
-            )}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
-
-      {/* Tabs — the two race tables (blue = structure) */}
-      <div data-tour="standings-tabs" className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
-        {(
-          [
-            ["major", copy.race.majorTab],
-            ["worlds", copy.race.worldsTab],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            id={`${tabIds}-tab-${key}`}
-            type="button"
-            role="tab"
-            aria-selected={kind === key}
-            aria-controls={`${tabIds}-panel`}
-            onClick={() => setTab(key)}
-            className={cx(
-              chipBase,
-              kind === key
-                ? "border-blue/50 bg-blue/15 text-blue-bright"
-                : "border-line-strong bg-white/5 text-sub hover:text-ink",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      </div>
-      <div id={`${tabIds}-panel`} role="tabpanel" aria-labelledby={`${tabIds}-tab-${kind}`}>
-      <p className="mb-4 text-xs text-sub">{scope}</p>
-
-      {/* Hero: the user's own race (home region) in the selected table */}
-      {user ? (
-        <Panel
-          strong
-          glow="blue"
-          className="rise-in relative mb-4 overflow-hidden p-4"
-          style={{ animationDelay: "60ms" }}
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-12 -top-12 h-44 w-44 rounded-full opacity-15 blur-2xl"
-            style={{ background: `radial-gradient(circle, ${save.identity.colors.primary}, transparent 70%)` }}
-          />
-          <div className="relative grid items-center gap-4 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
-            <div className="flex min-w-0 items-center gap-3">
-              <OrgMark save={save} orgRef="user" size="lg" />
-              <div className="min-w-0">
-                <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                  {save.identity.orgName}
-                </p>
-                <TeamStars stars={userStarCount} size="sm" />
-              </div>
-            </div>
-            <div className="grid min-w-0 grid-cols-2 items-start gap-x-4 gap-y-3 sm:grid-cols-3">
-              <div>
-                <p className="kicker mb-1">{isMajor ? copy.race.majorTab : copy.race.worldsTab}</p>
-                <p className="display whitespace-nowrap text-xl font-bold text-ink">
-                  {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
-                </p>
-              </div>
-              <div>
-                <p className="kicker mb-1">{cutLabel}</p>
-                <p className={cx("display text-lg font-bold leading-snug", LINE_TONE[line ?? "unscored"])}>
-                  {lineText(line, homeTable.userGap)}
-                </p>
-              </div>
-              <div>
-                <p className="kicker mb-1">{copy.race.fixturesLabel}</p>
-                <p className="display text-sm font-semibold leading-snug text-ink">
-                  {isMajor
-                    ? copy.race.fixturesMajor(homeTable.fixturesLeft.regionals)
-                    : copy.race.fixturesWorlds(homeTable.fixturesLeft.regionals, homeTable.fixturesLeft.majors)}
-                </p>
-                {homeTable.maxPointsLeft > 0 ? (
-                  <p className="mt-0.5 text-xs text-sub">{copy.standings.maxAvailable(homeTable.maxPointsLeft)}</p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </Panel>
-      ) : null}
-
-
-      <Panel data-tour="standings-table" className="rise-in p-2 sm:p-4" style={{ animationDelay: "120ms" }}>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
-          <Badge className={REGION_BADGE[region]}>{region}</Badge>
-          <span className="text-[11px] text-faint">{fixtures}</span>
+      <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+        {/* Tabs: the two race tables */}
+        <div data-tour="standings-tabs" className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
+          {(
+            [
+              ["major", copy.race.majorTab],
+              ["worlds", copy.race.worldsTab],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              id={`${tabIds}-tab-${key}`}
+              type="button"
+              role="tab"
+              aria-selected={kind === key}
+              aria-controls={`${tabIds}-panel`}
+              onClick={() => setTab(key)}
+              className={chipClass(kind === key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <StandingsTable
-          // A new table (tab or region) closes the user row's detail.
-          key={`${kind}:${region}`}
-          save={save}
-          table={table}
-          cutLabel={cutLabel}
-          userStarCount={userStarCount}
-          form={form}
-          onOpenOrg={setSheetRef}
-        />
-        {hasLocals ? <p className="mt-3 px-1 text-[11px] text-faint">{copy.race.localLegend}</p> : null}
-      </Panel>
 
-      {/* The field this table decides — announced on the Major week's / Worlds window's Monday */}
-      {field ? (
-        <FieldGrid
-          save={save}
-          refs={field}
-          title={isMajor ? copy.race.majorField : copy.standings.worldsField}
-          userStarCount={userStarCount}
-          onOpenOrg={setSheetRef}
-        />
-      ) : (
-        <p className="mt-4 text-center text-xs text-faint">
-          {isMajor ? copy.race.majorFieldPending : copy.standings.fieldRevealPending}
-        </p>
-      )}
+        {/* Region selector */}
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={copy.standings.regionLabel}>
+          {REGIONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setPickedRegion(r)}
+              aria-pressed={region === r}
+              className={chipClass(region === r, REGION_BADGE[r])}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-6"><CareerHonorsTable save={save} C={copy} /></div>
+      <div id={`${tabIds}-panel`} role="tabpanel" aria-labelledby={`${tabIds}-tab-${kind}`}>
+        <p className="mb-4 text-sm text-sub">{scope}</p>
+
+        {/* The user's own race (home region) in the selected table: the focal
+            point of the screen, three figures on one board. */}
+        {user ? (
+          <Panel strong className="mb-4 p-4 sm:p-5">
+            <div className="grid items-center gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <div className="flex min-w-0 items-center gap-3">
+                <OrgMark save={save} orgRef="user" size="lg" />
+                <div className="min-w-0">
+                  <h3 className="display truncate text-xl uppercase leading-none text-ink">
+                    {save.identity.orgName}
+                  </h3>
+                  <TeamStars stars={userStarCount} size="sm" className="mt-1.5" />
+                </div>
+              </div>
+              <dl className="grid min-w-0 grid-cols-2 items-start gap-x-6 gap-y-4 border-t border-line pt-4 sm:grid-cols-3 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                <RaceFigure label={isMajor ? copy.race.majorTab : copy.race.worldsTab}>
+                  <span className="display block whitespace-nowrap text-3xl font-extrabold leading-none text-ink">
+                    {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
+                  </span>
+                </RaceFigure>
+                <RaceFigure label={cutLabel}>
+                  <span className={cx("display block text-xl font-bold leading-tight", LINE_TONE[line ?? "unscored"])}>
+                    {lineText(line, homeTable.userGap)}
+                  </span>
+                </RaceFigure>
+                <RaceFigure label={copy.race.fixturesLabel}>
+                  <span className="block text-sm leading-snug text-ink">
+                    {isMajor
+                      ? copy.race.fixturesMajor(homeTable.fixturesLeft.regionals)
+                      : copy.race.fixturesWorlds(homeTable.fixturesLeft.regionals, homeTable.fixturesLeft.majors)}
+                  </span>
+                  {homeTable.maxPointsLeft > 0 ? (
+                    <span className="mt-0.5 block text-xs text-sub">
+                      {copy.standings.maxAvailable(homeTable.maxPointsLeft)}
+                    </span>
+                  ) : null}
+                </RaceFigure>
+              </dl>
+            </div>
+          </Panel>
+        ) : null}
+
+        <Panel data-tour="standings-table" className="p-2 sm:p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+            <Badge className={REGION_BADGE[region]}>{region}</Badge>
+            <span className="text-xs text-sub">{fixtures}</span>
+          </div>
+          <StandingsTable
+            // A new table (tab or region) closes the user row's detail.
+            key={`${kind}:${region}`}
+            save={save}
+            table={table}
+            cutLabel={cutLabel}
+            userStarCount={userStarCount}
+            form={form}
+            onOpenOrg={setSheetRef}
+          />
+          {hasLocals ? <p className="mt-3 px-1 text-xs text-faint">{copy.race.localLegend}</p> : null}
+        </Panel>
+
+        {/* The field this table decides — announced on the Major week's / Worlds window's Monday */}
+        {field ? (
+          <FieldList
+            save={save}
+            refs={field}
+            title={isMajor ? copy.race.majorField : copy.standings.worldsField}
+            userStarCount={userStarCount}
+            onOpenOrg={setSheetRef}
+          />
+        ) : (
+          <p className="mt-4 text-sm text-sub">
+            <span className="font-semibold text-ink">{isMajor ? copy.race.majorField : copy.standings.worldsField}.</span>{" "}
+            {isMajor ? copy.race.majorFieldPending : copy.standings.fieldRevealPending}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-8">
+        <CareerHonorsTable save={save} C={copy} />
+      </div>
 
       <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>

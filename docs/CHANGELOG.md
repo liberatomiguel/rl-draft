@@ -10,6 +10,161 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot`, not approved, not committed)
+
+Source: Miguel's request of 17/11 to remove the generated look from the game, audited against the anti-slop rulebook (github.com/miqdadbadjuber/anti-slop). Direction chosen by Miguel: RLCS broadcast package. Scope of this pilot: the shared primitives, the Home and the Classic Draft flow. Career screens only inherit the primitives.
+
+### Fifth pass (18/11, the deep review: "a identidade geral ficou boa", now every screen, the career first). Published to staging.
+Current state (decision #177). Where it disagrees with the passes below, this one wins. The branch now carries v2.0.33 (main was merged in; the pilot's decisions were renumbered #173 to #176).
+- **Career shell.** The top bar shows the club's name, the date, balance and reputation as figures in the display face. The tabs are set in display caps, grouped by subject (clock, team, books and table, desk) with a hairline between groups, Careers apart on the right; the current tab is marked by weight and the orange rule.
+- **Career HQ.** The day card is the stage: the date is the largest thing on the screen and holds the only filled button. The squad and training share one board with real titles and the team rating as its figure. The side rail is flat: race, finances, progression, season goal, inbox and transfers are sections on the floor with a hairline between them (they were boards inside boards). Progression rungs, the bootcamp and the week's scrims are hairline rows.
+- **No box inside a box, no icon in a tile.** Tinted tiles around list icons are gone (goals, training options, coach card, toolbox, weekend plan). The news lead story and two notices lost their coloured left bar.
+- **Market.** The reputation gate reads inside the card it locks, as its last line (it used to hang under the card as a chip).
+- **Training.** "Recommended" is a flat tag inside the option, not a badge riding the border.
+- **Founding wizard.** The recap figures no longer truncate ("QUARTER PI...").
+- **Shape and type.** No pill is left on a tag or counter (radius 3); career labels have an 11px floor (10px for the two tightest); figures are set in the text or display face with tabular numerals (mono stays for seeds, codes and hex values).
+- **Copy.** No em dash in any player-facing string, EN and PT (463 lines: career, base, pages, daily plans, components). Scores read `3-1`. Decorative arrows are off links and buttons; an arrow stays where it shows a direction (a transfer, a before and after).
+- The repeated "Road to Worlds" line under every career title is gone (it said what the tab bar already says).
+
+Second round the same day, on Miguel's review of the preview (not published yet):
+- **HQ rail: the boards are back.** A flat rail read as one undivided list. Each rail section is a board again with its title ruled off in a head row (`RAIL_SECTION`, `RAIL_HEAD`); nothing inside a board is boxed.
+- **News desk.** The feed has a masthead (the desk's mark and name, ruled off), the headline is a band across the feed in the display face with the crests large beside it and a button for its action, and the stories are ruled rows.
+- **Training rebuilt to the standard of the other tabs.** Two columns: the plan and the squad's growth on the left; coach, the week's scrims and the report switch in a rail. The plan's head is a large title, the steps are ruled rows with their number as a figure, the picked option is the orange hairline (it used to take one of three tones), "Recommended" sits under the option's text, the promise and Start close the board instead of sitting in a box. The attribute reference is a ruled table at the foot, not six boxes.
+- **Squad redistributed.** Starters, stability and contracts in the main column; bench and coach in a rail. The pitch decoration behind the starters (radial tint, stripes, centre circle) is gone; contracts are ruled rows.
+- **Home.** TODAY's rows share the height of the missions board. Challenges left the TODAY list for a board of their own at mode scale, with the count of cleared challenges as its figure. Road to Worlds reads like the draft card (title, one line, the action); BETA moved to the foot with its note. The scorebug leads with the season rating on paper, then the rank; "Presented by" with the 50/50 mark sits over it.
+
+Third round (19/11, Miguel's second review of the preview; where it disagrees with the second round, this one wins):
+- **One board standard.** `.card-title` is the title of every board in the career (same face, size and weight in a main column and in a rail), `.card-head` its ruled head, boards pad 16px (20px from `sm`), and columns and boards share one 16px gap (the HQ's columns stood 32px apart over boards 16px apart). Small labels lost their per-place sizes (10 and 11px overrides on `.kicker`).
+- **The desk.** The Inbox tab is as wide as the other tabs, with its title in the same place, and has three views: the inbox (list on the left, the open message on the right with sender, date, subject as a title, body and action), the News desk and the Transfer wire. The HQ's "Full feed" and "See all moves" open those views (`/career/news#news`, `#transfers`) instead of growing the HQ.
+- **News.** The partner's credit sits under its mark in the masthead; the open story is a blue band between two blue rules. A news flash (toast) is a small front page (blue masthead, headline in the display face, crests), unlike a notification; the full-screen breaking story has a blue masthead, a paper "Breaking" tag and a larger headline.
+- **Squad.** Bench and coach are back inside the starters' board; contracts moved to the right column.
+- **Training.** The attribute reference moved to the right column.
+- **Finances.** Loans and debt moved to the right column, above the ledger; the progression board's title lines up with its top.
+- **Home.** Challenges are a row of TODAY again (the board of the second round is gone); Road to Worlds has its title on one line, BETA under the text and its button on the draft card's line; the 50/50 mark is a step larger.
+- **Profile.** The season rating stands on the banner again, under the rank's name (no paper box).
+- **Header logo.** Two weights (a medium "Rocket", a bold "Draft"), set a little open.
+
+Fourth round (19/11, Miguel's third review; published to staging with it):
+- **Capitals sit in the middle of their line.** Industry's own metrics set its capitals 0.075em low, so titles in paper slabs, tags and buttons looked dropped. The font is declared with `ascent-override` 100.5% and `descent-override` 30.5% (same line height, caps centred); the title slab's padding is symmetric again.
+- **Every board in the career rules its title off** (`.card-head`): the HQ's squad and training, Squad, Training, Finances, Market, Calendar's season overview, Club, the honours table. A script listed each board title and converted the ones that open a padded board; the rest were done by hand.
+- **Loans are two boards** (bank loan, emergency loan), each with its own head. They were two boxes inside a board whose title repeated theirs.
+- **News.** A story's mark sits in a fixed column (rows) or a fixed square (headline), centred, so marks and text line up down the feed; rows are ruled with the strong hairline.
+- **Home.** The scorebug has the rank on the left and the rating on the right; a long rank name wraps to two lines and a rating of five digits or more steps down a size. Challenges are the first row of TODAY. Road to Worlds: lighter pitch text (Medium, which matches the draft card's weight on a light-on-blue field), BETA as a framed strip under the pitch. A partner card for 50/50 sits beside the Discord card: it is not a link until `SITE.partnerUrl` is set and says "Link soon" until then.
+- **Header logo.** Bold "Rocket", black "Draft", one size smaller.
+- **Profile.** The last rating change reads before the total.
+
+Not done in this pass: mobile (its own session), the event weekend and season review screens beyond the shared changes, the rhythm pass on career copy (staccato lines, aphorisms), the first-visit flow (tour, What's New and login calendar stacking). Calendar, Market, Standings, Club and Saves kept their distribution.
+
+### Fourth pass (17/11, after Miguel's review: "too light now; bring back the solids and the title highlight, heavier weights, on to the career")
+Superseded where the fifth pass says otherwise (decision #176).
+- **Home modes are solids again**, with a card finish: `.solid` (14px corner, the card's top sheen and diagonal texture, a slow tone shift) in `.solid-orange` (Classic Draft) and `.solid-blue` (Road to Worlds). Upright Bold titles; the action on each is inverted (dark on orange, paper on blue).
+- **Title highlight is back**: `.title-slab`, dark upright Bold on a paper slab with a slanted end and the orange chip. `SectionTitle` uses it, so every screen gets it.
+- **Weights up one step**: Bold for titles, buttons and key figures (`font-bold` resolves to Bold again), Demi for labels, tags and nav, text 400 / 600. Black and Ultra are still not loaded; synthetic bold is still off.
+- **Home**: about 40px less air above the wordmark; the season rating sits on a paper cell beside the rank; the header logo is upright.
+- **Career**: 7 blurred colour orbs removed (Club, Saves, Standings, crest step, founding splash); glow removed from states (bracket cells, Swiss verdict, weekend plan, ladder highlight, player tiles, finance and wizard selections, the announcement dot); the two leftover gradient-plus-halo buttons (Calendar, match centre) are the flat primary; the career tab bar is solid and marks the current tab with ink text and an orange rule; wide-tracked labels tightened. Gold glow stays on trophies, the S grade, champion saves and Championship Sunday (reward). No career layout was changed.
+- Checked in a desktop browser at 1366 px on this pass: Home, career HQ, career Finances. Not checked: mobile, PT, the other career screens, tournament, results.
+
+### Third pass (17/11, after Miguel's review: "on the right road, overdone; more minimal and premium")
+Current state. Where it disagrees with the two passes below, this one wins (decision #175, `DESIGN.md` rewritten).
+- **The card is the reference object.** Floor and boards went back to the cards' night blue (`--bg #070a11`, boards in the two tones of a common card's body); `.panel` is that body inside a hairline with a 12px corner. The radius scale steps up to the card: tag 3, button 7, board 12, card 14.
+- **Weight**: nothing heavier than Demi, text never heavier than Medium. Enforced in the font files (display 500 / 600, text 400 / 500, no heavier upright file) plus `font-synthesis-weight: none`, so every `font-bold` in the app resolves down with no code change.
+- **Italic** only on the wordmark (header logo, Home title). The global italic rule for headings is gone.
+- **Removed from the second pass**: paper title slabs (`.slab`), the slanted primary button (`.btn-cut`), stripe fills (`.stripes`), the solid orange and blue mode fields, the paper and orange scorebug, the paper active tab.
+- **Top bar on panels removed.** `panel-glow-blue` / `panel-glow-orange` and the `glow` prop now only colour the panel's hairline.
+- **Section titles**: the small slanted orange tick, then the title in upright Demi (`.title-tick`); the kicker still reads under the title as a sentence.
+- **Buttons**: primary is flat orange with dark text; sizes back one step. **Badge**: Medium, 11px. **Header**: the current section is ink text over a 2px orange rule.
+- **Home**: italic wordmark at a calmer size; rank art, rating and season on one quiet board; the two modes use the gold and blue card frames with the card texture (they are the two largest cards in the game); TODAY list and YOUR PROGRESS strip kept, in lighter type.
+- Checked in a desktop browser at 1366 px: Home, draft (cards beside the team board), review. Not checked in this pass: mobile, PT, tournament, results, career.
+
+### Second pass (17/11, after Miguel's review: "not close, bolder")
+The first pass below only removed things and left dark boxes with thin lines, the "sterile default" the rulebook warns about. This pass adds the direction, written first in `DESIGN.md` (decision #165). Where the two passes disagree, this one is current.
+- **Direction file**: `DESIGN.md` at the repo root (design read, palette, type, the motif, composition, motion, copy, a "never" list).
+- **Type**: Rajdhani and Geist Sans are out of the interface. Text is Barlow (400, 600). The display face Miguel chose is **Industry**; the only files in hand are the trial set (personal-use licence, 66 characters), so it is wired for LOCAL PREVIEW ONLY from the git-ignored `public/fonts-trial/`, in a marked block of `globals.css` that must go before anything ships. Barlow Condensed (600, 700, 800 italic; OFL, committed) is the live stand-in and the fallback for every character the trial files lack.
+- **Palette**: floor `#0b0d12` (neutral ink, was navy `#05080f`; theme colour, manifest and error screen follow), orange `#ff6a1a`, blue `#2463ff`, paper `#f3efe6`. Cyan became the lightest blue. Text greys re-solved for contrast.
+- **The cut**: one 12 degree slant in three places. Section titles are a paper slab with an orange chip (`.slab`, used by `SectionTitle`, whose kicker now reads under the title as a sentence); the primary button is an orange slab cut on both ends (`.btn-cut`); the active nav item is a paper slab. Plus `.stripes` as texture for an empty field.
+- **Headings** in the display face are heavy italic everywhere (one CSS rule on `h1`-`h3.display`).
+- **Panels** are fills with no outline (transparent border kept for callers' state colours); a panel inside a panel steps up one fill.
+- **Header**: solid bar, no blur.
+- **Home recomposed**: wordmark as a title card with a three-cell scorebug (rank art, season rating on paper, rank on orange); the two modes as solid orange and blue fields facing each other; TODAY as a rundown list beside the missions board; YOUR PROGRESS as one four-cell stat strip.
+- **Base**: `cursor: pointer` on every enabled control, `not-allowed` on disabled ones (in `@layer base`).
+
+### Changed
+- **Surfaces are solid.** `.panel` and `.panel-strong` lost the gradient and the backdrop blur and use two flat fills (`--surface`, `--surface-strong`). The lite-effects fallback for panels is gone: there is nothing left to fall back from.
+- **Corners are hard.** The Tailwind radius scale is cut in `@theme` (sm 2, md 3, lg 4, xl 6, 2xl 8, 3xl 10 px), so every `rounded-*` in the app follows. Trading cards keep their own 14 px (`.card-frame`).
+- **No ambient glow.** The three radial glows behind every page (`body::before`) were removed; the canvas is flat `--bg`.
+- **The `glow` of a panel is a team bar.** `panel-glow-blue` / `panel-glow-orange` (and the `glow` prop of `<Panel>`) draw a 3 px bar on the panel's top edge instead of a halo. Class names unchanged, the 34 call sites untouched.
+- **Primary button**: flat orange, no gradient, no halo. **Secondary button**: neutral outline with ink text; blue only on hover.
+- **Badge**: a flat tinted tag with no outline, tighter tracking.
+- **`.kicker`**: letter-spacing 0.22em → 0.06em, so it reads as a scoreboard column head.
+- **Header**: the current section is marked by an orange bar on the header's bottom edge, not by a tinted pill.
+- **Home**: the centred hero (season eyebrow, tagline, gradient wordmark, rank chips) became a left-aligned wordmark and pitch with the player's line (season, rank, rating, runs, titles) set as a scorebug on the right. The two mode blocks lost their blurred orbs. The "Live" tags on Classic Draft, Daily Challenge and Daily Quiz are gone (nothing was live; a streak still shows). Road to Worlds keeps one tag (Beta); "New" stays on the nav item only. Its button now says "Play career" and the slogan became a line of text. The arrows left "Play now" and "Quick Draft" (EN and PT).
+- **Tournament**: finished bracket cells no longer glow (the green / red border already says win or loss); bracket labels use the tight tracking.
+
+### Not changed, on purpose
+- Card rarity frames, sheens and halos, cosmetics, rank art, the rank-up and reward ceremonies: glow and motion stay where they mean rarity or reward.
+- The colour values. The audit named the stock hues; the pilot fixes how colour is used and leaves the hexes, which appear as literals in over a hundred places.
+
+### Not verified
+- Mobile widths, PT screens, lite-effects mode, and every career screen except the HQ. Checked in a desktop browser at 1366 px: Home, setup, draft, review, tournament, results, career HQ.
+
+---
+## [2.0.33] — 2026-11-18 · The career landing answers "career mode" searches, with a one-tap start beside the usual one
+
+Search pass from Miguel's Search Console export (17/08–16/11) and PostHog (12–18/11): `/rocket-league-manager` became the first organic landing page on 17–18/11 (145 search visitors in two days, the home 96); of its visitors 51 % opened the career and 30 % founded one, and 42 % of those who reached the founding wizard left it. Google showed the guide, not the landing, for "rocket league career mode". DESIGN-DECISIONS #172, ROAD-TO-WORLDS-DECISIONS R136.
+
+#### Added
+- **Two buttons on the career landing (EN/PT):** "Found your club" / "Fundar o seu clube" opens the founding wizard as before, and beside it "Start with a random club" / "Começar com clube sorteado" opens **`/career?start=quick`** (`lib/careerEntry.ts`, `LandingConfig.secondaryCta`, copy `ctaAltLabel`). With the flag, a player who has a career lands on it as before; a newcomer goes to the founding wizard with the flag kept (`CareerShell`), and the wizard runs its own Quick start (a random club, straight to the last step: pick the difficulty, found it). Which start works better is measurable in PostHog: the `$pageview` of `/career/new` carries `?start=quick` or not.
+- **An active team's page names its current roster:** "Gentle Mates Rocket League Roster — RLCS 2027 & Past Seasons" (title and H1, `currentSeasonOf` in `lib/database`), for a team with a roster in the newest season; the others keep "… Roster by Season". The roster searches in Search Console carry the year ("… rocket league roster 2027", positions 5–11).
+- **`public/llms.txt`**: a short map of the site for answer engines (the two modes, the career landing and guides, the draft guides, the RLCS database). robots.txt already allows every crawler.
+- **Career landing (EN/PT):** a first section answering "Does Rocket League have a career mode?" (not in the game; fan-made mods on PC, downloadable manager games and browser games; Road to Worlds is the browser club-manager kind) and two FAQs, "Do I need a mod, a download or a PC?" and "Do I play as a player or as the manager?". The section captures shift by one (`ContentPage`).
+- **The landing's own share image**, Open Graph and X card, EN and PT (`public/landing/career-share-{en,pt}.jpg`, 66 KB, `careerShareSrc`), passed to the page metadata through `pageMetadata`'s new `image` option with the H1 as its alt text. `scripts/build-og-career.mjs` renders them with Chrome's headless screenshot, the site font and the HQ capture, and fails when a title overflows. Before, every page shared the site image. Not the `opengraph-image` file convention: Next ignores a route's image file when the page's metadata sets `images` (every content page does), and Turbopack drops its `.alt.txt` in a nested route (both checked on the export).
+- **A `VideoGame` node for Road to Worlds** on the landing (`careerGameJsonLd`: free, browser, part of Rocket Draft, the five landing screenshots); its Article node points at the page's own image.
+
+#### Changed
+- **Titles and the H1.** Landing: "Rocket League Career Mode & Manager Game — Free" (was "… — Free RLCS Manager Game"), H1 "Rocket League Career Mode & Manager Game — Road to Worlds" (also the anchor text every content page uses for it), description "…in your browser, no mod or download…". Guide: "Road to Worlds Guide: Rocket League Career Tips" / "Road to Worlds: Guia da Carreira de Rocket League", so it stops competing with the landing for the head query.
+- `CONTENT_DATE` 2026-11-18 (sitemap `lastmod`, Article `dateModified`).
+- `scripts/link-audit.mjs` drops a link's query and hash before matching it.
+
+#### Fixed
+- **The eight Road to Worlds guide pages sent "Start a Road to Worlds career" to the home page.** Root cause: the guides (v2.0.19–2.0.20) copied the route shell of the plain content pages, whose button ("Play Rocket Draft now") goes to `/`; only the landing pointed at `/career`. Their visitors who pressed it met the main menu and had to find the career again. They now open `/career`.
+
+## [2.0.32] — 2026-11-18 · A page whose build files failed to load repairs itself
+
+#### Fixed
+- **A player's Road to Worlds stayed on the loading placeholder in one browser, reloads included** (reported on Discord 18/11). His save was intact and opens normally in the current code; another browser played an older copy. Root cause: version skew during the v2.0.31 deploy (new sessions switched between 17:45 and 17:50 UTC; his last career action was at 17:49:02). A page from the new version asked a Cloudflare location still on the old one for a new career chunk and got a 404. `public/_headers` gives `/_next/static/*` `public, max-age=31536000, immutable`, and Cloudflare sends that header on the 404 too (checked with curl on production), so Chrome kept the 404 for a year and served it on every load, a normal reload included (checked: `only-if-cached` returns it). Turbopack's runtime, for a chunk whose `<script>` tag is already in the HTML, only listens for that tag's `error` event; a tag that failed before it looked never settles the chunk's promise, so hydration waits forever: the server-rendered skeleton, no error screen, no analytics event (PostHog has nothing from him). When the race goes the other way the same 404 shows "Something went wrong", and its reload brought the cached 404 straight back. Only career chunks were hit, so the other modes played. A player stuck before this release fixes it with Ctrl+Shift+R on the career page; the save is not touched.
+- **The repair (DESIGN-DECISIONS #171):** an inline script in the root layout (`lib/assetHeal.ts`, production builds only) watches the page's resource entries. A `/_next/static/` script, or a stylesheet the page applies, answered 400+ is fetched again with `cache: "reload"`, which replaces the cached copy, and the tab reloads once. Browsers without `responseStatus` (Safari) get a watchdog instead: the app not mounted 20 s after `load`. One repair per tab per minute, none without sessionStorage, none for a network failure or a prefetch. A browser that already holds such a 404 heals on its next visit, with nothing for the player to do. The error screen's reload (automatic and the button) now fetches the failed chunk again first (`errorRecovery.chunkUrlOf`, `assetHeal.refetchThenReload`).
+- Analytics: the load after a repair sends one `quality_error` with source `heal`, name `AssetHeal` (`AssetHealReport`, `analytics.reportAssetHeal`).
+- Checked: unit tests (`assetHeal.test.ts`, `errorRecovery.test.ts`, full suite); in Chromium against a local server that answers a chunk with a one-year immutable 404 first (without the script the 404 is reused on reload; with it the page heals, also when the 404 was cached before the script existed); and on a local production export served by `wrangler dev` (it answers a missing chunk exactly like production) with the player's own save: career chunk `0sym80-l3ozyx.js` cached as a 404, the career broken; once served again, the repair refetched it, reloaded once and the career opened intact. Not checked: the watchdog in a real Safari, the zone rule (Miguel's dashboard step).
+
+#### Changed
+- `docs/DEPLOY-CLOUDFLARE.md` §9: a zone Response Header Transform Rule sets `Cache-Control: no-store` on a 404 under `/_next/static/`; §10 checks it after each deploy. `public/_headers` explains why.
+
+## [2.0.31] — 2026-11-18 · An invitation to the player-research form
+
+#### Added
+- **An invitation to Miguel's player-research form, for returning players only.** It never opens when the game loads: it waits for a natural pause, the draft results screen (after the ceremonies, the login calendar, the unlock pop-ups and the XP count-up, plus 2.5 s) or the Road to Worlds season review (not on an insolvency). From the **second distinct day** with the game open (`login.total`), a player qualifies with **10 completed runs** or **1 completed season** in the career on screen; on the first day only a heavy session does (**25 runs** or **2 seasons**). Miguel, 18/11: a one-day heavy player may see it, the second day is preferred. Thresholds, the form URL and a campaign id live in `src/config/research.ts` (not gameplay, so BALANCE_VERSION does not move); logic in `src/lib/researchInvite.ts`; the card is `components/ResearchInvite.tsx` on the portal Modal, the link opens in a new tab (`noopener noreferrer`).
+- Once per device and campaign: a click on the link or a dismiss ends it for good; a card left unanswered (tab closed) may open once more (`maxShows` 2), never twice in one page load. Stored in its own key `rocket-draft:research-invite:v1` (plain localStorage, not a persisted store: the persist contract is unchanged). Per device rather than per account owner: since 2.0.29 a sign-out leaves a fresh guest who does not qualify, and two accounts on one device are not asked twice. A new `campaign` id asks everyone again.
+- Analytics: `research_invite` (critical, shared mode) with `action` = `shown` / `opened` / `dismissed`, `surface`, `campaign`, `activeDays`, `runsCompleted`, `careerSeasons`. A few per device ever, so no budget pressure.
+- Copy in EN/PT (`RESEARCH_UI`; career `research` in `copy.career.*`).
+
+## [2.0.30] — 2026-11-18 · A way back to the career picker
+
+#### Fixed
+- **Road to Worlds had no way back to the career picker once a career was active** (Miguel, 18/11: "ao clicar na carreira já entra direto no save"). Root cause: `/career/saves` was reached only when no slot was active, after retiring, or from the wizard; the top bar had no link to it, so a second or third career (or one the account brought from another device) could not be opened. The top bar (desktop tabs and the mobile menu) now ends with **Careers / Carreiras**, using the `nav.saves` label that already existed in both languages.
+- **A profile row could not be emptied by hand** (Miguel, cleaning the account mixed by the 2.0.29 bug: `durable` is NOT NULL, so `set durable = null` fails). A row whose `durable` is `{}` now reads as "no saved profile": the next sign-in pushes the device's profile over it, name, grants and frozen pre-season columns untouched.
+
+## [2.0.29] — 2026-11-18 · Signing out leaves a fresh guest; one account's progress and careers never reach another
+
+#### Fixed
+- **Signing out kept the whole profile on the device, and the next account to sign in received it, exclusive grants included** (Miguel, 18/11, on mobile: signed out of his main account, the progress stayed; signed into a second account, all of the first one's progress and grants went into it). Root cause: the local profile had no owner. There is one per device, signing out never touched it, and every sign-in merged it into the account that signed in as if it were a guest's progress (the guest → account migration). Now the device's saves belong to one account at a time (`rocket-draft:profile-owner:v1`, `lib/localOwner.ts`):
+  - a guest's progress is still claimed by the first sign-in;
+  - signing out (here, in another tab, or an expired session) pushes unsynced progress once (up to 4 s), stashes the profile under that account (`rocket-draft:account-stash:v1:<id>`) and resets the device to a fresh guest;
+  - a sign-in as another account than the owner stashes the owner's saves and starts clean; the account's next sign-in folds its stash back in;
+  - a sync whose account signed out while its cloud read was in flight aborts instead of merging into the guest.
+- **The Road to Worlds slots had the same hole since the career cloud save (2.0.26–2.0.28).** The three slots are the device's, so the second account's first sync uploaded the first account's careers into its own account (an empty account slot + a local career = "a new career, upload"). The slots now go with their owner: signing out moves them aside (`rocket-draft:career-stash:v1:<id>`, a move, not a copy, since three slots can pass 1 MB) and the device shows no careers; that account's next sign-in puts them back, a guest's careers keep their slots and the account's fill the empty ones. The career cloud store ignores the slot change a switch causes, so moving a career aside is never read as the player deleting it (it would have deleted the account copy at the next sign-in). The account's three cloud slots download to any device as before.
+- Deleting the account still keeps the local progress and careers, as its dialog says, now as the guest's.
+- Accounts already mixed by this bug are not separated by the fix: the second account's row has to be restored by hand (the merged progress is in its blob; career rows in `career_saves` for that account, if any went up).
+
 ## [2.0.28] — 2026-11-18 · Career cloud save for every account; sell and trade reach production
 
 #### Changed

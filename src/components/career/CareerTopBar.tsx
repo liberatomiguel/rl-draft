@@ -49,16 +49,21 @@ const PauseGlyph = () => (
   </svg>
 );
 
-const TABS: { key: string; href: string }[] = [
-  { key: "hub", href: "/career" },
-  { key: "calendar", href: "/career/calendar" },
-  { key: "squad", href: "/career/squad" },
-  { key: "training", href: "/career/training" },
-  { key: "market", href: "/career/market" },
-  { key: "finances", href: "/career/finances" },
-  { key: "standings", href: "/career/standings" },
-  { key: "news", href: "/career/news" },
-  { key: "club", href: "/career/club" },
+// Grouped by what the tab is about: the season's clock, the team, the books and the table, the club's desk.
+const TABS: { key: string; href: string; group: number }[] = [
+  { key: "hub", href: "/career", group: 0 },
+  { key: "calendar", href: "/career/calendar", group: 0 },
+  { key: "squad", href: "/career/squad", group: 1 },
+  { key: "training", href: "/career/training", group: 1 },
+  { key: "market", href: "/career/market", group: 1 },
+  { key: "finances", href: "/career/finances", group: 2 },
+  { key: "standings", href: "/career/standings", group: 2 },
+  { key: "news", href: "/career/news", group: 3 },
+  { key: "club", href: "/career/club", group: 3 },
+  // v2.0.30: the way back to the three slots (switch career, or pick one the
+  // account brought from another device). Before, the picker only showed when
+  // no career was active.
+  { key: "saves", href: "/career/saves", group: 4 },
 ];
 
 export function CareerTopBar() {
@@ -158,7 +163,7 @@ export function CareerTopBar() {
     (key === "market" && marketDot) || (key === "hub" && hubDot);
 
   return (
-    <div className="sticky top-14 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
+    <div className="sticky top-14 z-30 border-b border-line bg-bg">
       <div className="mx-auto flex min-h-14 max-w-6xl items-center gap-2 px-3 py-1 sm:gap-3 sm:px-4">
         <AppLink href="/career/club" className="flex shrink-0 items-center gap-2">
           <UserCrest
@@ -167,9 +172,10 @@ export function CareerTopBar() {
             abbrev={save.identity.abbrev}
             size="sm"
           />
-          <span className="hidden flex-col items-start gap-0.5 sm:flex">
-            <span className="text-sm font-semibold leading-none text-ink">
-              {save.identity.abbrev}
+          <span className="hidden flex-col items-start gap-1 sm:flex">
+            <span className="display max-w-44 truncate text-base font-bold uppercase leading-none text-ink">
+              <span className="lg:hidden">{save.identity.abbrev}</span>
+              <span className="hidden lg:inline">{save.identity.orgName}</span>
             </span>
             <TeamStars stars={stars} size="xs" />
           </span>
@@ -177,12 +183,12 @@ export function CareerTopBar() {
 
         {/* Center clock — the date is the game's heartbeat now. */}
         <div data-tour="career-clock" className="min-w-0 flex-1 text-center">
-          <div className="kicker text-[9px] leading-none text-faint">{clock.season}</div>
-          <div className="display truncate text-sm font-bold uppercase leading-tight tracking-wide text-ink">
+          <div className="kicker leading-none text-faint">{clock.season}</div>
+          <div className="display truncate text-base font-bold uppercase leading-tight tracking-[0.03em] text-ink">
             {formatDateShort(copy.dates, clock.date)}
           </div>
           {clock.split ? (
-            <div className="truncate text-[10px] leading-none text-faint">
+            <div className="truncate text-[11px] leading-none text-faint">
               {copy.calendar.split(clock.split)} · {copy.hub.week(clock.week)}
             </div>
           ) : null}
@@ -190,10 +196,10 @@ export function CareerTopBar() {
 
         <div className="hidden shrink-0 items-center gap-3 text-right md:flex">
           <div>
-            <div className="kicker text-[10px] leading-none text-faint">{copy.hub.budget}</div>
+            <div className="kicker leading-none text-faint">{copy.hub.budget}</div>
             <div
               className={cx(
-                "text-sm font-semibold",
+                "display text-base font-bold leading-tight tabular-nums",
                 save.finances.balance < 0 ? "text-bad" : "text-ink",
               )}
             >
@@ -201,8 +207,8 @@ export function CareerTopBar() {
             </div>
           </div>
           <div>
-            <div className="kicker text-[10px] leading-none text-faint">{copy.common.rep}</div>
-            <div className="text-sm font-semibold text-cyan">{Math.round(save.reputation)}</div>
+            <div className="kicker leading-none text-faint">{copy.common.rep}</div>
+            <div className="display text-base font-bold leading-tight tabular-nums text-ink">{Math.round(save.reputation)}</div>
           </div>
         </div>
 
@@ -259,20 +265,24 @@ export function CareerTopBar() {
           ))}
         </select>
       </div>
-      <nav data-tour="career-nav" className="mx-auto hidden max-w-6xl flex-wrap items-center gap-1 px-3 pb-1.5 sm:flex sm:px-4">
-        {TABS.map((tab) => {
+      <nav data-tour="career-nav" className="mx-auto hidden max-w-6xl flex-wrap items-stretch px-3 sm:flex sm:px-4">
+        {TABS.map((tab, i) => {
           const active =
             tab.href === "/career" ? pathname === "/career" : pathname.startsWith(tab.href);
+          const startsGroup = i > 0 && TABS[i - 1].group !== tab.group;
           return (
             <AppLink
               key={tab.key}
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                // The current tab is marked by weight and the orange rule, not by colour alone.
+                "display relative flex min-h-10 items-center whitespace-nowrap px-3 text-[13px] uppercase tracking-[0.04em] transition-colors",
+                startsGroup && tab.group < 4 && "ml-3 before:absolute before:-left-1.5 before:top-1/2 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-line-strong",
+                tab.group === 4 && "ml-auto",
                 active
-                  ? "bg-blue/15 text-blue-bright shadow-[inset_0_-2px_0_var(--blue)]"
-                  : "text-sub hover:bg-white/5 hover:text-ink",
+                  ? "font-bold text-ink shadow-[inset_0_-2px_0_var(--orange)]"
+                  : "font-semibold text-sub hover:text-ink hover:shadow-[inset_0_-2px_0_var(--line-strong)]",
               )}
             >
               {copy.nav[tab.key as keyof typeof copy.nav]}
@@ -280,7 +290,7 @@ export function CareerTopBar() {
                 <NewDot className="ml-1 inline-block align-middle" label={copy.toolbox.newTag} />
               ) : null}
               {tab.key === "news" && unreadMail > 0 ? (
-                <span className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-orange/20 px-1 font-mono text-[10px] leading-4 text-orange-bright">
+                <span className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-sm bg-orange/20 px-1 tabular-nums text-[11px] leading-4 text-orange-bright">
                   {unreadMail}
                 </span>
               ) : null}

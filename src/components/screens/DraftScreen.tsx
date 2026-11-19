@@ -36,7 +36,6 @@ import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { LineupSeasonBadge } from "@/components/cards/LineupSeasonBadge";
@@ -125,6 +124,9 @@ export function DraftScreen({ run }: { run: RunState }) {
     setActed(true);
   };
 
+  // Job: pick one card from the lineup on screen. The lineup (its name, then
+  // its six cards) is the focal point; the team board beside it is the quiet
+  // record of what has been picked. Rerolling is the only other action.
   return (
     // Static under the tour (no entrance animation for the spotlight to chase);
     // the real board rises in when the tour closes.
@@ -162,15 +164,15 @@ export function DraftScreen({ run }: { run: RunState }) {
         {/* ------------------------------------------------ Your team (field) */}
         <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster}>
           <Panel className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-                {DRAFT_UI.yourRoster}
-              </h3>
-              <span className="display text-sm font-bold text-orange-bright">
-                {filled}/{slotTotal}
+            {/* The count is the figure; the pitch under it shows the same
+                thing slot by slot, so no progress bar repeats it. */}
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h3 className="display text-lg uppercase leading-none text-ink">{DRAFT_UI.yourRoster}</h3>
+              <span className="display text-2xl font-bold leading-none text-ink">
+                {filled}
+                <span className="text-sm text-faint">/{slotTotal}</span>
               </span>
             </div>
-            <ProgressBar value={filled / slotTotal} tone="orange" className="mb-4" label={DRAFT_UI.yourRoster} />
 
             <FieldView
               roster={view.draft.roster}
@@ -179,16 +181,15 @@ export function DraftScreen({ run }: { run: RunState }) {
               className="mx-auto w-full max-w-md lg:max-w-none"
             />
 
-            <p className="mt-3 text-center text-xs text-faint" aria-live="polite">
-              {DRAFT_UI.selectHint}
-            </p>
-
             {needed.length > 0 ? (
-              <p className="mt-2 text-[11px] uppercase tracking-wider text-faint">
+              <p className="mt-3 text-xs leading-relaxed text-sub">
                 {DRAFT_UI.stillNeeded}:{" "}
-                <span className="text-sub">{needed.map((k) => KIND_LABEL[k]).join(" · ")}</span>
+                <span className="text-ink">{needed.map((k) => KIND_LABEL[k]).join(" · ")}</span>
               </p>
             ) : null}
+            <p className="mt-1.5 text-xs leading-relaxed text-faint" aria-live="polite">
+              {DRAFT_UI.selectHint}
+            </p>
           </Panel>
         </aside>
       </div>
@@ -322,9 +323,10 @@ function OfferReveal({
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 w-full sm:w-auto sm:flex-1">
+          {/* A real column head: which lineup this is and which pick it serves. */}
           <p className="kicker mb-1">
             {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, slotTotal)}
-            {run.daily ? <span className="text-orange-bright"> · {dailyLabel(run.daily, DAILY_TEXT)}</span> : null}
+            {run.daily ? <span className="text-ink"> · {dailyLabel(run.daily, DAILY_TEXT)}</span> : null}
           </p>
           {rolling ? (
             <div
@@ -336,7 +338,7 @@ function OfferReveal({
                 {reel!.map((name, i) => (
                   <p
                     key={i}
-                    className="display flex h-8 items-center truncate text-2xl font-bold uppercase tracking-wide text-ink md:h-9 md:text-3xl"
+                    className="display flex h-8 items-center truncate text-2xl font-extrabold uppercase tracking-[0.015em] text-ink md:h-9 md:text-3xl"
                   >
                     {name}
                   </p>
@@ -347,7 +349,7 @@ function OfferReveal({
             <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
               <h2
                 className={cx(
-                  "display pop-in min-w-0 break-words text-2xl font-bold uppercase tracking-wide sm:truncate md:text-3xl",
+                  "display pop-in min-w-0 break-words text-2xl uppercase sm:truncate md:text-3xl",
                   national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
                 )}
               >
@@ -385,8 +387,9 @@ function OfferReveal({
               : DRAFT_UI.noRerolls}
           </Button>
         ) : (
+          // Outlined here: the filled one sits with the explanation under the cards.
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
             onClick={onFreeReroll}
             disabled={rolling}
@@ -403,8 +406,9 @@ function OfferReveal({
         {/* National team (v2.0): the rare draw announces itself. rc.33: seeing it
             opens its album page; a drafted card is collected when the run ends. */}
         {national && nationalProgress ? (
-          <div className="mb-4 flex items-center gap-3 rounded-xl border border-yellow-300/40 bg-yellow-300/[0.06] px-3 py-2 shadow-[0_0_24px_rgba(234,179,8,0.12)]">
-            <span className="display shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200">
+          // Rarity keeps its gold (a national team is a rare draw), on a flat tint.
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-yellow-300/40 bg-yellow-300/[0.06] px-3 py-2">
+            <span className="display shrink-0 text-[11px] font-bold uppercase leading-tight tracking-[0.05em] text-yellow-200">
               {NATIONAL_UI.drawKicker}
             </span>
             <span className="min-w-0 text-xs leading-snug text-yellow-50/85">
@@ -426,9 +430,9 @@ function OfferReveal({
         ) : null}
 
         {!offer.hasPickableCard ? (
-          <Panel className="mt-6 flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-sm text-sub">{DRAFT_UI.freeRerollHint}</p>
-            <Button variant="primary" onClick={onFreeReroll} className="pulse-soft shrink-0">
+          <Panel glow="orange" className="mt-6 flex flex-col items-center gap-3 p-4 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-sm leading-relaxed text-sub">{DRAFT_UI.freeRerollHint}</p>
+            <Button variant="primary" onClick={onFreeReroll} className="shrink-0">
               <RerollIcon />
               {DRAFT_UI.freeReroll}
             </Button>
@@ -441,7 +445,7 @@ function OfferReveal({
 
 function RerollIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M20 11a8 8 0 1 0-2.34 6.34" strokeLinecap="round" />
       <path d="M20 5v6h-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

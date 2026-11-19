@@ -20,7 +20,7 @@ import { OrgMark } from "@/components/career/OrgMark";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
-import { Panel } from "@/components/ui/Panel";
+import { RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
 
 /**
  * The Major race through the preseason and every split week (its Major
@@ -82,16 +82,16 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       : C.race.fixturesWorlds(table.fixturesLeft.regionals, table.fixturesLeft.majors);
 
   return (
-    <Panel className="rise-in p-4" style={{ animationDelay: "90ms" }}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="kicker text-[10px]">{C.hub.pointsRace}</p>
+    <div>
+      <div className={RAIL_HEAD}>
+        <h3 className={RAIL_TITLE}>{C.hub.pointsRace}</h3>
         <Badge className={REGION_BADGE[region]}>{region}</Badge>
       </div>
 
 <div
         role="tablist"
         aria-label={C.race.toggleLabel}
-        className="mb-2 grid grid-cols-2 gap-1 rounded-lg border border-line bg-black/20 p-1"
+        className="mb-3 flex gap-5 border-b border-line"
       >
         {(["major", "worlds"] as const).map((k) => (
           <button
@@ -103,9 +103,9 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
             aria-controls={`${ids}-panel`}
             onClick={() => setPicked(k)}
             className={cx(
-              "display min-h-8 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
+              "display -mb-px min-h-9 border-b-2 text-xs font-semibold uppercase tracking-[0.04em] transition-colors",
               kind === k
-                ? "border-blue/50 bg-blue/15 text-blue-bright"
+                ? "border-orange text-ink"
                 : "border-transparent text-sub hover:text-ink",
             )}
           >
@@ -136,11 +136,11 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
               {prev && prev.rank <= table.cut && r.rank > table.cut ? (
                 <div className="my-1.5 flex items-center gap-2" aria-hidden>
                   <span className="flex-1 border-t border-dashed border-blue/60" />
-                  <span className="kicker text-[9px] text-blue-bright">{lineLabel}</span>
+                  <span className="kicker text-blue-bright">{lineLabel}</span>
                   <span className="flex-1 border-t border-dashed border-blue/60" />
                 </div>
               ) : prev && r.rank > prev.rank + 1 ? (
-                <p className="text-center text-[10px] leading-3 text-faint" aria-hidden>
+                <p className="text-center text-[11px] leading-3 text-faint" aria-hidden>
                   ···
                 </p>
               ) : null}
@@ -163,7 +163,7 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                   {r.name}
                 </span>
                 {r.side === "local" ? (
-                  <Badge className="shrink-0 !px-1 !py-0 !text-[9px]">{C.race.localTag}</Badge>
+                  <Badge className="shrink-0 !px-1 !py-0 !text-[10px]">{C.race.localTag}</Badge>
                 ) : null}
                 <span className="display shrink-0 text-xs font-bold text-ink">{r.points}</span>
               </div>
@@ -175,10 +175,10 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] text-faint">{fixtures}</p>
         <AppLink href="/career/standings" className="text-xs font-semibold text-blue-bright hover:underline">
-          {C.race.open} →
+          {C.race.open}
         </AppLink>
       </div>
       </div>
-    </Panel>
+    </div>
   );
 }

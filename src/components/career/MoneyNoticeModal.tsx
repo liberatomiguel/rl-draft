@@ -129,7 +129,7 @@ export function MoneyNoticeModal() {
         <dl className="mt-3 grid gap-3 border-t border-line pt-3 sm:grid-cols-2">
           {mainRows.map(([label, value], i) => (
             <div key={label} className={cx("rounded-lg border border-line bg-white/[0.03] p-3", numerical && i === mainRows.length - 1 && "border-bad/30 bg-bad/5 sm:col-span-2")}>
-              <dt className="kicker text-[10px] text-faint">{label}</dt>
+              <dt className="kicker text-faint">{label}</dt>
               <dd className="mt-0.5 text-sm leading-snug text-sub">{value}</dd>
             </div>
           ))}

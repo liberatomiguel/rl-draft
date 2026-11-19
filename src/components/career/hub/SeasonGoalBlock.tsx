@@ -11,7 +11,7 @@ import { useMemo } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { seasonGoalsViewOf } from "@/engine/career/seasonGoals";
-import { Panel } from "@/components/ui/Panel";
+import { RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
 import { seasonLabelFor } from "@/components/career/careerUi";
 import { SeasonGoalRows } from "@/components/career/SeasonGoalRows";
 
@@ -19,12 +19,12 @@ export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }
   const view = useMemo(() => seasonGoalsViewOf(save), [save]);
   if (!view) return null;
   return (
-    <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <p className="kicker text-[10px]">{C.hub.seasonGoal}</p>
-        <span className="text-[10px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
+    <div>
+      <div className={RAIL_HEAD}>
+        <h3 className={RAIL_TITLE}>{C.hub.seasonGoal}</h3>
+        <span className="text-[11px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
       </div>
       <SeasonGoalRows view={view} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} showStatus={false} />
-    </Panel>
+    </div>
   );
 }

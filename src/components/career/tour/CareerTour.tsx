@@ -28,7 +28,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useCareerSave } from "@/components/career/careerUi";
 import { useCareerNavigation } from "@/components/career/careerNavigation";
 import { careerTourChapter, careerTourRoute, type CareerTourChapter } from "@/components/career/tour/careerTourChapters";
-import { GuidedTour, type TourStep, type TourTone } from "@/components/tour/GuidedTour";
+import { GuidedTour, type TourStep } from "@/components/tour/GuidedTour";
 import {
   BankIcon,
   CalendarIcon,
@@ -39,17 +39,16 @@ import {
   PeakIcon,
   QuestionIcon,
   ShieldIcon,
-  StarIcon,
+  GaugeIcon,
   TargetIcon,
   TrendUpIcon,
   TrophyIcon,
   WalletIcon,
   HourglassIcon,
-  BoltIcon,
   HeartPulseIcon,
 } from "@/components/ui/icons";
 import { type CareerCopy, useCareerCopy } from "@/content/careerCopy";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { DiscordIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 import { SITE } from "@/config/site";
@@ -66,16 +65,15 @@ type Chapter = CareerTourChapter;
 const flagOf = (chapter: Chapter): string => `tour.${chapter}`;
 
 const BIG = "h-5 w-5";
-const SMALL = "h-3.5 w-3.5";
+const SMALL = "h-4 w-4";
 
 type Words = { title: string; body: string; points?: { label: string; text: string }[] };
 
-/** A step from its words: the element, the accent, the chip icon and one icon per point. */
-function step(id: string, words: Words, target: string | undefined, tone: TourTone, icon: ReactNode, pointIcons: ReactNode[] = []): TourStep {
+/** A step from its words: the element, its icon and one icon per point. */
+function step(id: string, words: Words, target: string | undefined, icon: ReactNode, pointIcons: ReactNode[] = []): TourStep {
   return {
     id,
     target,
-    tone,
     icon,
     title: words.title,
     body: words.body,
@@ -99,7 +97,7 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         club: <TrophyIcon className={SMALL} />,
       };
       return [
-        step("welcome", T.hub.welcome, undefined, "orange", <TrophyIcon className={BIG} />, [
+        step("welcome", T.hub.welcome, undefined, <TrophyIcon className={BIG} />, [
           <ShieldIcon key="s" className={SMALL} />,
           <WalletIcon key="w" className={SMALL} />,
           <TargetIcon key="t" className={SMALL} />,
@@ -107,7 +105,6 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         {
           id: "tabs",
           target: "career-nav",
-          tone: "blue",
           icon: <HqIcon className={BIG} />,
           title: T.hub.tabs.title,
           body: T.hub.tabs.body,
@@ -118,39 +115,39 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
             text: T.hub.tabs.items[key],
           })),
         },
-        step("advance", T.hub.advance, "career-advance", "orange", <HourglassIcon className={BIG} />, [
-          <BoltIcon key="p" className={SMALL} />,
+        step("advance", T.hub.advance, "career-advance", <HourglassIcon className={BIG} />, [
+          <HourglassIcon key="p" className={SMALL} />,
           <CalendarIcon key="s" className={SMALL} />,
         ]),
-        step("day", T.hub.day, "hub-day", "orange", <TargetIcon className={BIG} />),
-        step("finances", T.hub.finances, "hub-finances", "good", <WalletIcon className={BIG} />),
-        step("progress", T.hub.progress, "hub-progress", "cyan", <StarIcon className={BIG} />),
-        step("inbox", T.hub.inbox, "hub-inbox", "blue", <ClipboardIcon className={BIG} />),
-        step("help", T.hub.help, "career-help", "blue", <QuestionIcon className={BIG} />),
+        step("day", T.hub.day, "hub-day", <TargetIcon className={BIG} />),
+        step("finances", T.hub.finances, "hub-finances", <WalletIcon className={BIG} />),
+        step("progress", T.hub.progress, "hub-progress", <GaugeIcon className={BIG} />),
+        step("inbox", T.hub.inbox, "hub-inbox", <ClipboardIcon className={BIG} />),
+        step("help", T.hub.help, "career-help", <QuestionIcon className={BIG} />),
       ];
     }
     case "training":
       return [
-        step("cycle", T.training.cycle, "training-cycle", "good", <TrendUpIcon className={BIG} />, [
+        step("cycle", T.training.cycle, "training-cycle", <TrendUpIcon className={BIG} />, [
           <TrendUpIcon key="e" className={SMALL} />,
           <HandshakeIcon key="g" className={SMALL} />,
           <HeartPulseIcon key="r" className={SMALL} />,
         ]),
-        step("coach", T.training.coach, "training-coach", "blue", <CoachIcon className={BIG} />),
-        step("growth", T.training.growth, "training-growth", "cyan", <PeakIcon className={BIG} />),
+        step("coach", T.training.coach, "training-coach", <CoachIcon className={BIG} />),
+        step("growth", T.training.growth, "training-growth", <PeakIcon className={BIG} />),
       ];
     case "finances":
       return [
-        step("overview", T.finances.overview, "finances-overview", "good", <WalletIcon className={BIG} />),
-        step("progress", T.finances.progress, "finances-progress", "cyan", <StarIcon className={BIG} />),
-        step("loans", T.finances.loans, "finances-loans", "blue", <BankIcon className={BIG} />),
-        step("sponsor", T.finances.sponsor, "finances-sponsor", "orange", <HandshakeIcon className={BIG} />),
+        step("overview", T.finances.overview, "finances-overview", <WalletIcon className={BIG} />),
+        step("progress", T.finances.progress, "finances-progress", <GaugeIcon className={BIG} />),
+        step("loans", T.finances.loans, "finances-loans", <BankIcon className={BIG} />),
+        step("sponsor", T.finances.sponsor, "finances-sponsor", <HandshakeIcon className={BIG} />),
       ];
     case "squad":
       return [
-        step("starters", T.squad.starters, "squad-starters", "blue", <ShieldIcon className={BIG} />),
-        step("bench", T.squad.bench, "squad-bench", "cyan", <CoachIcon className={BIG} />),
-        step("contracts", T.squad.contracts, "squad-contracts", "orange", <ClipboardIcon className={BIG} />),
+        step("starters", T.squad.starters, "squad-starters", <ShieldIcon className={BIG} />),
+        step("bench", T.squad.bench, "squad-bench", <CoachIcon className={BIG} />),
+        step("contracts", T.squad.contracts, "squad-contracts", <ClipboardIcon className={BIG} />),
       ];
   }
 }
@@ -226,7 +223,7 @@ export function CareerTour() {
         onClick={() => setOpened({ chapter, route })}
         aria-label={C.tour.help}
         title={C.tour.help}
-        className="fixed bottom-[4.5rem] right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-line-strong bg-raised/95 text-sub shadow-[0_6px_20px_rgba(0,0,0,0.45)] transition-colors hover:border-blue/60 hover:text-blue-bright md:bottom-5 md:right-5"
+        className="fixed bottom-[4.5rem] right-3 z-30 flex h-10 w-10 items-center justify-center rounded-lg border border-line-strong bg-raised text-sub transition-colors hover:border-blue/60 hover:text-ink md:bottom-5 md:right-5"
       >
         <QuestionIcon className="h-5 w-5" />
       </button>
@@ -252,7 +249,7 @@ export function CareerTour() {
                 href={SITE.discordUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
+                className={buttonClass("secondary", "md")}
               >
                 <DiscordIcon className="h-4 w-4" /> {C.tour.beta.discord}
               </a>

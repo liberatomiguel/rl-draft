@@ -73,7 +73,7 @@ export function SavesScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle kicker={C.meta.title} title={C.saves.title} className="mb-6" />
+      <SectionTitle title={C.saves.title} className="mb-6" />
 
       <div className="grid gap-4 md:grid-cols-3">
         {metas.map((meta, slot) =>
@@ -170,16 +170,6 @@ function SlotCard({
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Org-colored glow — each slot card wears its own identity */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full opacity-20 blur-2xl"
-        style={{ background: `radial-gradient(circle, ${meta.colors.primary}, transparent 70%)` }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-12 -left-12 h-36 w-36 rounded-full opacity-10 blur-2xl"
-        style={{ background: `radial-gradient(circle, ${meta.colors.secondary}, transparent 70%)` }}
-      />
 
       <div className="relative mb-3 flex items-start gap-3">
         <UserCrest crestId={meta.crestId} colors={meta.colors} abbrev={meta.abbrev} size="lg" />
@@ -214,7 +204,7 @@ function SlotCard({
         <MetaRow label={copy.SETUP.difficulty} value={copy.DIFFICULTY_LABELS[meta.difficulty].label} />
         <MetaRow
           label={C.saves.lastPlayed}
-          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "—"}
+          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "-"}
         />
       </div>
 
@@ -254,7 +244,7 @@ function MetaRow({
 }) {
   return (
     <div className={cx("min-w-0", wide && "col-span-2")}>
-      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
+      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
       <p
         className={cx(
           "display truncate text-sm font-bold",

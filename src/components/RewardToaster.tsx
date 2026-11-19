@@ -31,12 +31,14 @@ export function RewardToaster() {
   );
 }
 
+// The kind of reward is a coloured hairline, nothing more (DESIGN.md: a state
+// colours the border, it does not glow).
 const TONE: Record<RewardToast["kind"], string> = {
-  mission: "!border-good/50 shadow-[0_0_18px_rgba(52,211,153,0.18)]",
-  missionBonus: "!border-amber-400/60 shadow-[0_0_22px_rgba(251,191,36,0.22)]",
-  login: "!border-orange/50 shadow-[0_0_18px_rgba(249,115,22,0.2)]",
-  quiz: "!border-violet-400/50 shadow-[0_0_18px_rgba(167,139,250,0.2)]",
-  nationalTeam: "!border-amber-300/60 shadow-[0_0_22px_rgba(252,211,77,0.25)]",
+  mission: "!border-good/50",
+  missionBonus: "!border-amber-400/60",
+  login: "!border-orange/50",
+  quiz: "!border-violet-400/50",
+  nationalTeam: "!border-amber-300/60",
 };
 
 function Toast({ toast }: { toast: RewardToast }) {
@@ -73,7 +75,7 @@ function Toast({ toast }: { toast: RewardToast }) {
       className={cx("panel-strong pop-in pointer-events-auto flex w-full items-center gap-3 p-3 text-left", TONE[toast.kind])}
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-sub">{kicker}</span>
+        <span className="display block text-[11px] font-semibold uppercase leading-tight tracking-[0.05em] text-sub">{kicker}</span>
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">{title}</span>
       </span>
       {toast.kind === "nationalTeam" ? (
@@ -81,7 +83,7 @@ function Toast({ toast }: { toast: RewardToast }) {
           {N.toastPage}
         </span>
       ) : toast.xp ? (
-        <span className="display shrink-0 text-sm font-bold text-orange-bright">+{toast.xp} XP</span>
+        <span className="display shrink-0 text-base font-bold text-ink">+{toast.xp} XP</span>
       ) : null}
     </button>
   );
