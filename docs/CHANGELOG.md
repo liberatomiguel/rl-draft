@@ -10,6 +10,12 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
+
+### Changed
+- **The next collection reward is a small faint line under the unlock count** ("Next: Collector · 12/15", specials album only, nothing once every milestone is reached). v2.0.34 had put it, with the XP, in a full-width row between the title and the album tabs, which broke the page's original layout (Miguel's review).
+- **The RLCS database link is a small centred line at the end of the page** (it shared that row, in bold blue).
+
 ## [2.0.34] — 2026-11-19 · We heard you: fixes from the player survey (BALANCE_VERSION 37)
 
 Source: Miguel's player survey of 18/11 (28 answers). Plan and competitor study: docs/PLANO-PROXIMO-NIVEL-2026-11-19.md, docs/CONCORRENTES-2026-11-19.md. The mobile career tab bar (A7) is Miguel's, separately.

@@ -892,8 +892,7 @@ export const PT: Copy = {
     subtitle:
       "Cartas especiais são desbloqueadas ao draftá-las e terminar a run — vencendo ou perdendo.",
     progress: (n: number, total: number) => `${n}/${total} desbloqueadas`,
-    nextMilestone: (name: string, n: number, at: number, xp: number) => `Próxima recompensa: ${name} com ${at} especia${at === 1 ? "l" : "is"} (${n}/${at}) · +${xp} XP`,
-    milestonesDone: "Todas as recompensas da coleção conquistadas",
+    nextMilestone: (name: string, n: number, at: number) => `Próxima: ${name} · ${n}/${at}`,
     databaseLink: "Todos os times e jogadores do RLCS",
     filters: { all: "Todas", locked: "Bloqueadas", unlocked: "Desbloqueadas" },
     rarity: "Raridade",

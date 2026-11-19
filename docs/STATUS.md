@@ -9,7 +9,9 @@
 
 ## Current builds
 
-- **Production is v2.0.34 (19/11/2026): fixes from the player survey**, in
+- **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
+  and database link made quiet (Miguel's review of 2.0.34).
+- **v2.0.34 (19/11/2026): fixes from the player survey**, in
   the current identity. A sponsor goal keeps its first season's results
   across the rollover; career mismatches no longer read 7-0 every game (the
   Draft keeps its scorelines); new careers read name bank 4 (no "Kimchi II",

@@ -246,17 +246,18 @@ export function CollectionView() {
                 {C.progress(nationalGot, NATIONAL_CARD_IDS.length)}
               </Badge>
             ) : (
-              <Badge tone="orange" className="!text-sm">
-                {C.progress(unlockedCount, collectibleCards.length)}
-              </Badge>
+              <div className="flex flex-col items-end">
+                <Badge tone="orange" className="!text-sm">
+                  {C.progress(unlockedCount, collectibleCards.length)}
+                </Badge>
+                {/* v2.0.35: the next collection reward, a quiet line under the count (player survey). */}
+                <NextMilestone owned={mounted ? Object.keys(unlockedMap ?? {}).filter((id) => !isNationalSpecialId(id)).length : null} />
+              </div>
             )}
           </div>
         }
         className="mb-6"
       />
-
-      {/* v2.0.34 (player survey): the next collection reward, and the way to the RLCS database. */}
-      <CollectionMilestone owned={mounted ? Object.keys(unlockedMap ?? {}).filter((id) => !isNationalSpecialId(id)).length : null} />
 
       {/* Album switch (v2.0): special cards · national teams. Each tab carries
           its own count, so the second album reads as a place with content. */}
@@ -369,6 +370,13 @@ export function CollectionView() {
       )}
 
       {/* Detail modal */}
+      {/* v2.0.35: the RLCS database, a quiet link at the end of the page (player survey: "an index of every team"). */}
+      <p className="mt-10 text-center text-xs">
+        <AppLink href="/rlcs" className="text-faint underline-offset-2 hover:text-sub hover:underline">
+          {C.databaseLink}
+        </AppLink>
+      </p>
+
       <Modal
         open={Boolean(detail)}
         title={
@@ -403,20 +411,12 @@ export function CollectionView() {
  * `lite` mode. Card internals are untouched; lives only in the collection.
  */
 /** v2.0.34: the next collection achievement (same count as the achievements: national cards excluded) and the database link. */
-function CollectionMilestone({ owned }: { owned: number | null }) {
+function NextMilestone({ owned }: { owned: number | null }) {
   const { COLLECTION_UI: C, ACH_UI } = useCopy();
   const next = owned === null ? null : nextSpecialsMilestone(owned);
   const def = next ? achievementById.get(next.id) : undefined;
-  return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
-      <p className="min-w-0 text-sub">
-        {owned === null ? " " : next && def ? C.nextMilestone(ACH_UI.items[def.id]?.name ?? def.title, owned, next.at, def.xp) : C.milestonesDone}
-      </p>
-      <AppLink href="/rlcs" className="shrink-0 font-semibold text-blue-bright hover:underline">
-        {C.databaseLink}
-      </AppLink>
-    </div>
-  );
+  if (owned === null || !next || !def) return null;
+  return <p className="mt-1 text-[11px] text-faint">{C.nextMilestone(ACH_UI.items[def.id]?.name ?? def.title, owned, next.at)}</p>;
 }
 
 function FxCard({ children }: { children: React.ReactNode }) {
