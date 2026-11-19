@@ -5,6 +5,10 @@
 > concorrentes do mesmo dia. Versões e ordem são sugestões. Cada etapa termina
 > num gate: rc em `staging`, lista do que jogar e decidir, e espera pela
 > aprovação. Tamanhos: P (dias), M (uma a duas semanas), G (várias semanas).
+>
+> **19/11:** PLANO-PROXIMO-NIVEL-2026-11-19.md propõe uma nova ordem a partir
+> da pesquisa com jogadores (Pro antes de Broadcast e Diretoria, frente "Mundo
+> vivo" na Etapa 1, online por degraus). Até o Miguel decidir, vale esta.
 
 ## Ponto de partida (conferido no código em 17/11)
 
