@@ -70,10 +70,11 @@ export function localOverflowRefs(region: Region, seasonIndex: number, count: nu
 }
 
 /** Team name — regional bank pick by hash; two teams in one pool never share a name. */
-export function localTeamName(ref: string, careerSeed: number): string {
+export function localTeamName(ref: string, careerSeed: number, nameBankVersion?: number): string {
   const parsed = parseLocalRef(ref);
   if (!parsed) return ref;
-  const bank = orgNamePoolFor(parsed.region, careerSeed, "local");
+  // v2.0.34: the save's name bank (4: org shapes); an older save keeps its names.
+  const bank = orgNamePoolFor(parsed.region, careerSeed, "local", nameBankVersion ?? 3);
   const base = Math.floor(
     derivedFloat(careerSeed, streams.gen("localName", `${parsed.region}:${parsed.seasonIndex}`)) *
       bank.length,
@@ -124,10 +125,11 @@ export function localTeamOffset(ref: string, careerSeed: number): number {
  *  bank (LOCAL_PLAYER_NAME_BANK) — it drew from PLAYER_NAME_BANK, the bank of
  *  the wizard starters, the filler pros and the rookies, so a local side could
  *  field the same gamertag as the team across the fixture. */
-export function localPlayerNames(ref: string, careerSeed: number): [string, string, string] {
+export function localPlayerNames(ref: string, careerSeed: number, nameBankVersion?: number): [string, string, string] {
   const parsed = parseLocalRef(ref);
   const region = parsed?.region ?? "NA";
-  const bank = playerNamePoolFor(region, careerSeed, "local");
+  const version = nameBankVersion ?? 3;
+  const bank = playerNamePoolFor(region, careerSeed, "local", version);
   const order = createRng(
     deriveSeed(careerSeed, streams.gen("localPlayers", `${region}:${parsed?.seasonIndex ?? 0}`)),
   ).shuffle(bank);
@@ -135,7 +137,7 @@ export function localPlayerNames(ref: string, careerSeed: number): [string, stri
   if (at + 2 < order.length) return [0, 1, 2].map((i) => order[at + i]) as [string, string, string];
   // v2.0 (P1): a side past the pool (the bank holds the pool's names exactly) reads the
   // region's general bank from its end, so it never repeats a pool side's gamertags.
-  const general = playerNamePoolFor(region, careerSeed, "player");
+  const general = playerNamePoolFor(region, careerSeed, "player", version);
   const from = at - order.length;
   return [0, 1, 2].map((i) => general[(general.length * 4 - 1 - from - i) % general.length]) as [string, string, string];
 }

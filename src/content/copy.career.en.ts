@@ -3004,6 +3004,14 @@ export const CAREER_EN = {
     slotsFull: "All three slots are taken.",
   },
 
+  /** v2.0.34: the one-off HQ card about several careers and the account copy (lib/careerSavesNotice.ts). */
+  savesNotice: {
+    title: "Your careers, on every device",
+    body: "You can run up to three careers at once: Careers, in the top bar, lists them. Signed in, each one is also kept in your account, so the same career opens on your phone and on your computer.",
+    open: "See my careers",
+    dismiss: "Got it",
+  },
+
   /** v2.0.31: the player-research invitation on the season review (lib/researchInvite.ts). */
   research: {
     title: "Help shape Road to Worlds",

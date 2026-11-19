@@ -666,6 +666,10 @@ export const COLLECTION_UI = {
   subtitle:
     "Special cards are unlocked by drafting them and finishing the run — win or lose.",
   progress: (n: number, total: number) => `${n}/${total} unlocked`,
+  /** v2.0.34: the next collection achievement (name, owned, target, XP). */
+  nextMilestone: (name: string, n: number, at: number, xp: number) => `Next reward: ${name} at ${at} special${at === 1 ? "" : "s"} (${n}/${at}) · +${xp} XP`,
+  milestonesDone: "Every collection reward earned",
+  databaseLink: "Every RLCS team and player",
   filters: { all: "All", locked: "Locked", unlocked: "Unlocked" },
   rarity: "Rarity",
   type: "Type",

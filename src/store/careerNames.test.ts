@@ -10,8 +10,11 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { CAREER_NAMES } from "@/config/balance";
 import { STARTER_NAME_BANK } from "@/data/career/names";
-import { playerNameBankFor } from "@/engine/career/names";
+import { NAME_CATALOG } from "@/data/career/nameCatalog";
+import { catalogPlayerName, gamertagVariant, orgNamePoolFor, playerNameBankFor, playerNamePoolFor, shapedOrgNames } from "@/engine/career/names";
+import { localTeamName } from "@/engine/career/localScene";
 import { officialEventDefsForWeek, qualifierDefsForWeek, seasonSchedule } from "@/engine/career/calendar";
 import { playerViewById } from "@/engine/career/development";
 import { isLocalRef } from "@/engine/career/localScene";
@@ -146,7 +149,7 @@ describe("no gamertag on two teams of one field (rc.29 CAR-01)", { timeout: 60_0
     expect(built.orgs["fc-barcelona"].playerIds).toContain("itachi");
     expect(built.orgs["vodafone-giants"].playerIds).not.toContain("itachi");
     expect(built.orgs["vodafone-giants"].playerIds).toHaveLength(3);
-    expect(built.nameBankVersion).toBe(3);
+    expect(built.nameBankVersion).toBe(CAREER_NAMES.bankVersion);
     for (const world of [built, createCareerSave(input("SAM"), SEEDS[0]).world]) {
       const ids = rosteredIds(world);
       expect(new Set(ids).size).toBe(ids.length);
@@ -168,12 +171,71 @@ describe("no gamertag on two teams of one field (rc.29 CAR-01)", { timeout: 60_0
       );
       const names = starterRosterOffers(region, save.careerSeed).flatMap((o) => o.players.map((p) => p.name));
       expect(new Set(names).size, region).toBe(9);
+      // v2.0.34: a new career reads name bank 4 (the catalogue with its gamertag variants).
+      const bank4 = NAME_CATALOG.players[region].map((n) => catalogPlayerName(n, region, 4));
       for (const name of names) {
-        expect(STARTER_NAME_BANK[region], region).toContain(name);
+        expect(bank4, region).toContain(name);
         expect(worldNames.has(key(name)), `${region} ${name}`).toBe(false);
       }
-      for (const p of save.squad) expect(STARTER_NAME_BANK[region]).toContain(p.name);
+      for (const p of save.squad) expect(bank4).toContain(p.name);
     }
+  });
+});
+
+describe("v2.0.34 — name bank 4 (player survey: 'Kimchi II', 'always Noun Nouns')", () => {
+  const seed = SEEDS[0];
+  it("no name of a new career's bank carries a Roman numeral or a region tag", () => {
+    for (const region of REGIONS) {
+      const bank = playerNamePoolFor(region, seed, "player", 4);
+      for (const name of bank) {
+        expect(name, region).not.toMatch(/ (II|III|IV|V|VI)$/);
+        expect(name, region).not.toMatch(new RegExp(` (${REGIONS.join("|")})$`));
+      }
+    }
+  });
+
+  it("a wrapped name is a gamertag variant, the same every time", () => {
+    expect(gamertagVariant("Kimchi", 1)).toMatch(/^Kimchi[2-9]$/);
+    expect(gamertagVariant("Kimchi", 2)).toMatch(/^Kimchi\d{2}$/);
+    expect(gamertagVariant("Kimchi", 1)).toBe(gamertagVariant("Kimchi", 1));
+  });
+
+  it("the banks are one-to-one in place: every slice holds the same count, and a name keeps its position", () => {
+    for (const region of REGIONS) {
+      for (const group of ["starter", "local", "player"] as const) {
+        expect(playerNamePoolFor(region, seed, group, 4).length).toBe(playerNamePoolFor(region, seed, group, 3).length);
+      }
+      const v3 = orgNamePoolFor(region, seed, "local", 3);
+      const v4 = orgNamePoolFor(region, seed, "local", 4);
+      expect(v4.length).toBe(v3.length);
+      v3.forEach((name, i) => {
+        if (v4[i] !== name) expect(v4[i].includes(name.split(" ")[0]), `${region} ${name} → ${v4[i]}`).toBe(true);
+      });
+    }
+  });
+
+  it("org names gain real-scene shapes, at about the configured share, and stay unique in a region", () => {
+    const s = CAREER_NAMES.orgShapes;
+    const share = s.team + s.gaming + s.esports + s.single;
+    let shaped = 0;
+    let total = 0;
+    for (const region of REGIONS) {
+      const names = shapedOrgNames(region, seed);
+      expect(new Set(names).size, region).toBe(names.length);
+      names.forEach((n, i) => {
+        total += 1;
+        if (n !== NAME_CATALOG.orgs[region][i]) shaped += 1;
+      });
+    }
+    expect(shaped / total).toBeGreaterThan(share * 0.5);
+    expect(shaped / total).toBeLessThan(share * 1.5);
+  });
+
+  it("an older career keeps every name: bank 3 reads as before", () => {
+    const ref = "local:SAM:0:0";
+    expect(localTeamName(ref, seed)).toBe(localTeamName(ref, seed, 3));
+    expect(playerNameBankFor("SAM", 3, seed)).toEqual(playerNamePoolFor("SAM", seed, "player", 3));
+    expect(STARTER_NAME_BANK.SAM.some((n) => / SAM$| II$/.test(n))).toBe(true);
   });
 });
 

@@ -437,6 +437,12 @@ export interface TournamentTeam {
    * reads DIFFICULTY, unchanged — locked by regression.golden.test.ts).
    */
   rollRange?: readonly [number, number];
+  /**
+   * v2.0.34: a Road to Worlds side — its games read the career scoreline
+   * (SIMULATION.goals.career). Absent on every Draft team (the Draft's
+   * scorelines and challenge goal stars stay as they are).
+   */
+  careerScoreline?: true;
 }
 
 export interface GameResult {

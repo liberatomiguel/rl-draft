@@ -824,6 +824,7 @@ export function simulateScrimSeries(
     isLocalRef(oppRef) && localAnchor !== undefined
       ? localTeamFor(oppRef, {
           careerSeed: save.careerSeed,
+          nameBankVersion: save.world.nameBankVersion,
           seasonIndex: save.clock.seasonIndex,
           difficulty: save.difficulty,
           anchor: localAnchor,
@@ -908,7 +909,7 @@ function packageScrimOpponent(
 
 /** A sparring partner's name (an org, or a side of the local scene). */
 function opponentNameOf(save: CareerSave, ref: string): string {
-  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed) : ref);
+  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed, save.world.nameBankVersion) : ref);
 }
 
 /** The squad players a package scrim counts for: the starters, minus a rested one. */

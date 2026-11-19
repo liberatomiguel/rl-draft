@@ -261,7 +261,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           // R49: the rating the engine fields this side at in THIS event.
           return {
             ref,
-            name: localTeamName(ref, save.careerSeed),
+            name: localTeamName(ref, save.careerSeed, save.world.nameBankVersion),
             stars: 0,
             rating: Math.round(localSideRatingOf(save, ref, { def, userRating: preview.rating.total })),
           };
@@ -448,7 +448,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-4"><EventRewardsTable save={save} def={def} C={C} />
-      {isQualifier ? <Panel className="rise-in flex flex-1 flex-col p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="flex flex-1 flex-col justify-between gap-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
+      {isQualifier ? <Panel className="rise-in flex flex-1 flex-col p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="flex flex-1 flex-col justify-between gap-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed, save.world.nameBankVersion)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
       </div>
       </div>
 

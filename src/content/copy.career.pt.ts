@@ -2981,6 +2981,13 @@ export const CAREER_PT: CareerCopy = {
   },
 
   // v2.0.31: o convite da pesquisa com jogadores na revisão da temporada.
+  savesNotice: {
+    title: "Suas carreiras em qualquer aparelho",
+    body: "Você pode ter até três carreiras ao mesmo tempo: Carreiras, na barra do topo, lista todas. Com a conta conectada, cada uma também fica guardada nela, e a mesma carreira abre no celular e no computador.",
+    open: "Ver minhas carreiras",
+    dismiss: "Entendi",
+  },
+
   research: {
     title: "Ajude a moldar o Road to Worlds",
     body: "Uma temporada fechada. A sua leitura da carreira e do draft ajuda a decidir o que vem a seguir. Um formulário curto sobre o que funciona, o que não funciona e o que falta.",

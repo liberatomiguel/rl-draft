@@ -857,6 +857,32 @@ describe("v2.0 (C1) — the sponsor goal runs for the whole deal", () => {
     expect(CAREER_PT.mail.body.sponsorGoalMissed(p)).toContain("durante o contrato");
   });
 
+  it("v2.0.34: a deal that runs into the next season keeps the results of its first season (the rollover no longer resets it)", () => {
+    let save = sign(decisionAtW11(20_104), "balanced");
+    const s = save.clock.seasonIndex;
+    // A deal signed in split 2 that ends in split 1 of the next season (the survey's case).
+    const terms = save.sponsor!.terms!;
+    terms.lengthSplits = 3;
+    terms.endsOn = { seasonIndex: s + 1, day: firstDayOfWeek(12) };
+    save = contractGoal(save, { kind: "regionalFinish", count: 3, place: 8, span: 3 });
+    const goal = save.sponsor!.terms!.goals[0];
+    save.eventResults = [
+      ...save.eventResults,
+      userResult(s, 2, 14, "regional", "top8"),
+      userResult(s, 3, 24, "regional", "top4"),
+      { ...userResult(s, 3, 26, "regional", "swiss_exit"), rows: [{ ref: "user", name: "DEA", placement: "swiss_exit", points: 0, prize: 0 }] },
+    ];
+    expect(sponsorGoalProgressOf(save, goal).done).toBe(2);
+    let next = rolloverToNextSeason(atReview(save));
+    expect(next.eventResults).toHaveLength(0);
+    expect(next.sponsor!.terms!.carriedResults!.every((r) => r.rows.length === 0)).toBe(true);
+    expect(sponsorGoalProgressOf(next, next.sponsor!.terms!.goals[0])).toEqual({ done: 2, target: 3, hit: false });
+    // The third top 8, in the new season's first split, reaches it.
+    next = structuredClone(next);
+    next.eventResults = [userResult(s + 1, 1, 4, "regional", "top8")];
+    expect(sponsorGoalProgressOf(next, next.sponsor!.terms!.goals[0]).hit).toBe(true);
+  });
+
   it("results from any split after the signing reach it — the bonus is paid that day, once", () => {
     let save = sign(decisionAtW11(20_102), "balanced");
     save = contractGoal(save, { kind: "regionalFinish", count: 2, place: 8 });

@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 36;
+export const BALANCE_VERSION = 37;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -591,6 +591,24 @@ export const SIMULATION = {
     loserPerMargin: 0.3,
     loserSpread: 1.3,
     max: 7,
+    /**
+     * v2.0.34 (player survey, 18/11): Road to Worlds sides only (a team with
+     * `careerScoreline`). The linear curve above saturates on a career's wide
+     * gaps (a 100+ side vs a 75 one): every game read 7–0 or 7–1. Here the
+     * margin's effect levels off (`cap × (1 − e^(−margin / marginScale))`):
+     * close games score as above, a mismatch reads 4–0, 5–1, 6–2 or 5–0.
+     * Same two draws per game, so results and seeds are unchanged. The Draft
+     * keeps the curve above: challenge goal stars are tuned on it.
+     */
+    career: {
+      winnerBase: 1.3,
+      winnerCap: 2.6,
+      marginScale: 7,
+      winnerSpread: 2.2,
+      loserCap: 2.6,
+      loserSpread: 1.3,
+      max: 7,
+    },
   },
 } as const;
 
@@ -1262,6 +1280,31 @@ export const CAREER_PRIZES = {
 } as const;
 
 /** Unofficial tournaments (t3 Community Cup · t2 Invitational; t1 LAN = v1.1). */
+/**
+ * v2.0.34 (player survey, 18/11: "Kimchi II", "always Noun Nouns"): the name
+ * bank a NEW career reads (world.nameBankVersion 4). Every change maps a name
+ * one-to-one in place, so no bank slice shifts. Older careers keep version 3.
+ */
+export const CAREER_NAMES = {
+  /** The version a new world is created with. */
+  bankVersion: 4,
+  /**
+   * The share of a region's approved org names (two words, "Waffle Mafia")
+   * shown in another real-scene shape, from the first word: "Team Waffle",
+   * "Waffle Gaming", "Waffle Esports", "Waffle". Seeded per career; a shape
+   * that would repeat a name keeps the approved one.
+   */
+  orgShapes: { team: 0.12, gaming: 0.12, esports: 0.12, single: 0.08 },
+  /** Approved names that already read like a real org keep their shape. */
+  orgShapeKeepWords: ["Gaming", "Esports", "Club", "Racing", "United", "Team", "FC"],
+} as const;
+
+/** v2.0.34: the one-off HQ card about several careers and the account copy (lib/careerSavesNotice). */
+export const CAREER_SAVES_NOTICE = {
+  /** A season-0 career shows it from this calendar day (week 4): the opening weeks keep the tour alone. */
+  minDay: 22,
+} as const;
+
 export const CAREER_UNOFFICIAL = {
   smallTeamChance: 0.16,
   smallTeamSizes: [1, 2] as const,

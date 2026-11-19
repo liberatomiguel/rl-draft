@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.34] — 2026-11-19 · We heard you: fixes from the player survey (BALANCE_VERSION 37)
+
+Source: Miguel's player survey of 18/11 (28 answers). Plan and competitor study: docs/PLANO-PROXIMO-NIVEL-2026-11-19.md, docs/CONCORRENTES-2026-11-19.md. The mobile career tab bar (A7) is Miguel's, separately.
+
+### Fixed
+- **A sponsor goal signed mid-season no longer resets at the rollover.** Root cause: a contract goal (v2.0, C1) counts every event from its signing day to the deal's end, but it read its progress off `save.eventResults`, which `rolloverToNextSeason` empties every season. A deal signed in split 2 that ran into the next season lost its first season's results, so its count (sized for the whole deal) read as reset and could become out of reach ("win 8 regionals"). The user's own results now go with the deal at the rollover (`SponsorTerms.carriedResults`, additive, without their placement tables; `careerFlow.carrySponsorResults`). Test: careerSponsors.test.ts.
+- **A mismatch in the career no longer reads 7-0 every game.** Root cause: the scoreline (narrative only) grows linearly with the game's margin up to the 7-goal cap, and a career's wide gaps (a 100+ side against a 75 one) sat on the cap. Road to Worlds sides (`careerScoreline`, set by `assembleTournamentTeam` with the career's own form roll) read `SIMULATION.goals.career`, whose margin effect levels off: close games score as before, a mismatch reads 4-0, 5-1, 6-2 or 5-0. Same draws per game, so no result, seed or battery moves. The Draft keeps its curve: 7 challenge stars are tuned on its goals. Test: match.scoreline.test.ts.
+- **No more "Kimchi II".** Root cause: a long career runs past a region's name bank (about 100 to 170 names) and the next fillers and rookies reused it with a Roman numeral; the five names that clash with a real pro carried " II" from the start, cross-region homonyms a region tag. A new career reads **name bank 4** (`CAREER_NAMES`, `world.nameBankVersion` 4): a wrapped name or a clash is a gamertag variant ("Kimchi7"), the first region keeps a homonym plain, and a seeded share of the approved org names takes a real-scene shape from its first word ("Team Waffle", "Waffle Gaming", "Waffle Esports", "Waffle"). Every change maps a name one-to-one in place, so no bank slice shifts; a career started before keeps bank 3 and every name it has. Tests: careerNames.test.ts.
+
+### Added
+- **The Collection shows the next collection reward** ("Next reward: Collector at 15 specials (12/15) · +250 XP"), read from the same milestones the achievements use (`SPECIALS_MILESTONES`), and links to the RLCS database (`/rlcs`), which only the footer linked before (players asked for "an index of every team").
+- **A one-off HQ card about several careers and the account copy** (`SavesNotice`, `lib/careerSavesNotice.ts`): players asked for both, which exist since v2.0.26 and v2.0.30. It shows once per device, after a career's opening weeks, and lives in its own localStorage key (not in the save, so the account copy never differs over it).
+
+### Not changed (reported to Miguel)
+- **Org-less stacks** (the current Ikkaku) still ask a buyout like an org: the dataset has no "stack" marker, so this needs a field in `teams.md` and Miguel's list of stacks.
+- **"Mate y Tapa has no Worlds bonus"** is not a bug: the org bonus is the curated prestige per lineup (`org: Mate y Tapa ~`), not a result; 23 of 44 2026 lineups have `~`.
+
 ## [2.0.33] — 2026-11-18 · The career landing answers "career mode" searches, with a one-tap start beside the usual one
 
 Search pass from Miguel's Search Console export (17/08–16/11) and PostHog (12–18/11): `/rocket-league-manager` became the first organic landing page on 17–18/11 (145 search visitors in two days, the home 96); of its visitors 51 % opened the career and 30 % founded one, and 42 % of those who reached the founding wizard left it. Google showed the guide, not the landing, for "rocket league career mode". DESIGN-DECISIONS #172, ROAD-TO-WORLDS-DECISIONS R136.

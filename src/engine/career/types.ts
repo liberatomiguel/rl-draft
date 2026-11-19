@@ -1022,6 +1022,13 @@ export interface SponsorTerms {
   global?: boolean;
   /** rc.35 (front S): the fines booked this season (the per-season cap, fines.seasonCapWeeks). */
   finedSeason?: { s: number; amount: number };
+  /**
+   * v2.0.34: the user's own results of earlier seasons that the deal's
+   * contract goal still counts (`eventResults` is emptied at every rollover,
+   * a contract goal runs from its signing day to the deal's end). Copied at
+   * the rollover without their placement tables. Absent = nothing carried.
+   */
+  carriedResults?: CompactEventResult[];
 }
 
 export interface CoachState {

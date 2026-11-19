@@ -399,7 +399,7 @@ function clone(save: CareerSave): CareerSave {
 export function nameOfRef(save: CareerSave, ref: string): string {
   if (ref === "user") return save.identity.orgName;
   // rc.33 (RTW-03): an org that left the world keeps its name in old results and the wire.
-  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed) : (datasetOrgName(ref) ?? ref));
+  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed, save.world.nameBankVersion) : (datasetOrgName(ref) ?? ref));
 }
 
 /**
@@ -2084,11 +2084,32 @@ function lapseSponsorOffers(save: CareerSave): void {
  * Major field).
  */
 export function sponsorGoalProgressOf(save: CareerSave, goal: SponsorGoal): GoalProgress {
+  const carried = isContractGoal(goal) ? save.sponsor?.terms?.carriedResults : undefined;
   return goalProgressOf(goal, {
-    results: save.eventResults,
+    results: carried?.length ? [...carried, ...save.eventResults] : save.eventResults,
     inMajorField: inMajorFieldOf(save, goal.slot),
     fieldSlot: majorFieldSlotOf(save),
   });
+}
+
+/**
+ * v2.0.34 (player survey, 18/11): the rollover empties `eventResults`, and a
+ * contract goal signed mid-season lost every result of its first season, so
+ * its progress read as reset and its count (sized for the whole deal) could
+ * no longer be reached. The user's own results go with the deal instead,
+ * without their placement tables; `goalProgressOf` keeps only those inside
+ * the goal's window.
+ */
+function carrySponsorResults(save: CareerSave): void {
+  const terms = save.sponsor?.terms;
+  if (!terms) return;
+  // A reached goal keeps its rows too: the deal card still reads its progress.
+  if (!terms.goals.some((g) => isContractGoal(g))) {
+    delete terms.carriedResults;
+    return;
+  }
+  const own = save.eventResults.filter((r) => r.userPlacement !== undefined).map((r) => ({ ...r, rows: [] }));
+  terms.carriedResults = [...(terms.carriedResults ?? []), ...own];
 }
 
 /** v2.0 (C1): the split whose announced Major field the user is in right now (a contract goal counts it). */
@@ -2255,7 +2276,7 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
   if (result.tier === "major" || result.tier === "worlds") {
     const ids = result.championRef === "user" ? save.activeEvent?.fieldedIds ?? save.starterIds : save.world.orgs[result.championRef]?.playerIds ?? [];
     const players = isLocalRef(result.championRef)
-      ? localPlayerNames(result.championRef, save.careerSeed).map((name, i) => ({ id: `${result.championRef}:${i}`, name }))
+      ? localPlayerNames(result.championRef, save.careerSeed, save.world.nameBankVersion).map((name, i) => ({ id: `${result.championRef}:${i}`, name }))
       : ids.map(id => { const p = save.squad.find(p => p.id === id) ?? playerViewById(id, { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world }); return { id, name: p?.name ?? id }; });
     recordHonor(save, result, players);
   }
@@ -4408,6 +4429,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
   // rc.37 (F1): the title counts outlive the results (the renewal title raise's window).
   rollTitleCounts(save, nextSeason);
+  carrySponsorResults(save);
   save.eventResults = [];
   // v0.3 season-scoped bookkeeping resets.
   save.scheduledScrims = [];

@@ -29,6 +29,10 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbum";
+import { AppLink } from "@/components/ui/AppLink";
+import { achievementById } from "@/data/catalog";
+import { isNationalSpecialId } from "@/data/counts";
+import { nextSpecialsMilestone } from "@/engine/counterAchievements";
 
 // Official catalogue groups, followed by discovered special-person families. The
 // special-person rarities (community/wings/creator) are intentionally absent:
@@ -251,6 +255,9 @@ export function CollectionView() {
         className="mb-6"
       />
 
+      {/* v2.0.34 (player survey): the next collection reward, and the way to the RLCS database. */}
+      <CollectionMilestone owned={mounted ? Object.keys(unlockedMap ?? {}).filter((id) => !isNationalSpecialId(id)).length : null} />
+
       {/* Album switch (v2.0): special cards · national teams. Each tab carries
           its own count, so the second album reads as a place with content. */}
       <div className="mb-6 inline-flex max-w-full rounded-xl border border-line bg-white/3 p-1" role="tablist">
@@ -395,6 +402,23 @@ export function CollectionView() {
  * always-on layers (blend modes, backdrop-blur, forced tilt layers) are gone in
  * `lite` mode. Card internals are untouched; lives only in the collection.
  */
+/** v2.0.34: the next collection achievement (same count as the achievements: national cards excluded) and the database link. */
+function CollectionMilestone({ owned }: { owned: number | null }) {
+  const { COLLECTION_UI: C, ACH_UI } = useCopy();
+  const next = owned === null ? null : nextSpecialsMilestone(owned);
+  const def = next ? achievementById.get(next.id) : undefined;
+  return (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+      <p className="min-w-0 text-sub">
+        {owned === null ? " " : next && def ? C.nextMilestone(ACH_UI.items[def.id]?.name ?? def.title, owned, next.at, def.xp) : C.milestonesDone}
+      </p>
+      <AppLink href="/rlcs" className="shrink-0 font-semibold text-blue-bright hover:underline">
+        {C.databaseLink}
+      </AppLink>
+    </div>
+  );
+}
+
 function FxCard({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);

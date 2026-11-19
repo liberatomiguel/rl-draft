@@ -1,12 +1,24 @@
 # Project Status — current state only
 
-> Updated: **2026-11-18**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-19**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
 > (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
+> Proposal of 19/11 (player survey + competitors; reorders that roadmap, not
+> approved): PLANO-PROXIMO-NIVEL-2026-11-19.md; competitor study:
+> CONCORRENTES-2026-11-19.md.
 
 ## Current builds
 
-- **Production is v2.0.33 (18/11/2026): search pass on the career landing**
+- **Production is v2.0.34 (19/11/2026): fixes from the player survey**, in
+  the current identity. A sponsor goal keeps its first season's results
+  across the rollover; career mismatches no longer read 7-0 every game (the
+  Draft keeps its scorelines); new careers read name bank 4 (no "Kimchi II",
+  real-scene org shapes; older careers keep their names); the Collection shows
+  the next collection reward and links the RLCS database; a one-off HQ card
+  tells returning players about several careers and the account copy.
+  BALANCE_VERSION 37. Open from the survey: org-less stacks (A4, needs
+  Miguel's list). The broadcast pilot gets 2.0.34 when it merges main.
+- **v2.0.33 (18/11/2026): search pass on the career landing**
   (DESIGN-DECISIONS #172, R136). `/rocket-league-manager` is the first organic
   landing page; its title and H1 lead with "Rocket League Career Mode & Manager
   Game", a new first section answers "does Rocket League have a career mode?",
