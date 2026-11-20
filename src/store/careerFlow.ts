@@ -339,6 +339,7 @@ import {
   localCapsFor,
   orgLifecycle,
   promoteReserves,
+  eliteRenewalPass,
   scoutingPass,
   stackCandidatesFrom,
   userCoachRollover,
@@ -4311,6 +4312,12 @@ function worldLifeRollover(save: CareerSave, nextSeason: number, retiredNow: str
   save.world = promoteReserves(scout.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason }).world;
   for (const sg of scout.signings.filter((x) => x.region === save.identity.region).slice(0, 2)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prospectScouted", params: { org: sg.orgName, player: sg.playerName } });
+  }
+  // v2.1 M2.1 (R141): the world grows — a region short of its S6 elite promotes young AI prodigies.
+  const elite = eliteRenewalPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds });
+  save.world = elite.world;
+  for (const p of elite.lifted.filter((x) => x.region === save.identity.region).slice(0, 2)) {
+    pushNews(save, { type: "milestone", priority: 1, titleKey: "prodigyRises", params: { player: p.playerName, region: p.region } });
   }
   if (save.coach) {
     const c = userCoachRollover(save.coach, nextSeason, save.careerSeed);

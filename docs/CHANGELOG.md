@@ -10,6 +10,20 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.7] — 2026-11-20 · Mundo vivo M2.1: elite renewal, champions from other regions (flag off, BALANCE_VERSION 39)
+
+Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off nothing changes. Infinite seasons only (R141, docs/MUNDO-VIVO-M2-SPEC.md).
+
+### Added
+- Elite renewal: each region keeps its S6 count of active AI elite. A region under it promotes up to 2 young AI players a season to a potential of 94–98 (peak age fixed at the promotion); the news reports "X breaks out as a prodigy". Optional save fields `world.eliteBaseline` and `world.potentialLift`.
+- The opt-in probe `careerWorldTop.probe.test.ts` (`WORLDTOP=1`): the world's top 30, the elite pipeline, Worlds replays at fixed ratings and the AI Worlds champion's region.
+
+### Balance
+- `CAREER_WORLD_LIFE.eliteRenewal` (new). With the flag on, in S10–S15 the Worlds field's best side holds at 97.2–97.3 (95.3–97.0 off); a 97 team wins the Worlds 19 % of the time (39 % off), a 99 team 55 % (74 %), a 101 team 84 % (92 %). AI champions: EU 59 %, the rest 41 % (history 38 %). BALANCE_VERSION 38 → 39.
+
+### Fixed
+- The top of the AI field decayed ~3 points over the infinite seasons. Root cause: the dataset-era rookies are capped at potential 88 (`CAREER_WORLD.datasetEraPotentialCeiling`), so the 2027 stars had no successors of their level until the infinite-era rookies matured after S12.
+
 ## [2.1.0-dev.2] — 2026-11-20 · Mundo vivo M1: orgs renew, coaches retire (flag off, BALANCE_VERSION 38)
 
 Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off a career plays exactly as v2.0.35. Infinite seasons only (R137, docs/MUNDO-VIVO-M1.md).

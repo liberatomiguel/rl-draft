@@ -79,17 +79,53 @@ Referência: no S6 de hoje, o time 97 ganha 2,8 % e o time 99 ganha 26,9 %.
   - **Zebras:** o campo mantém o formato do S6 (4,5 pontos do 1º ao 8º), e o time 101 ainda perde 1 Worlds em 4.
   - **S0–S5 e Draft:** tudo começa na virada para o S6 (S4–S6 iguais em todas as colunas); nada fora da carreira.
 
-## 4. Ordem e primeira versão
+## 4. Decisões do Miguel (20/11, R141)
 
-1. **M2.1: só (a)**, atrás do `FEATURES.worldLife` (`BALANCE_VERSION` 38 → 39). Passa se o 1º, 4º e 8º do Worlds em S8–S12 ficarem a ≤ 0,5 do S6 e as travas não mudarem. Depois, rc no staging para as metas 3 e 6.
-2. **M2.2: (b) + (c)** (mesmo gatilho), se a meta 6 seguir fácil ou faltar história.
-3. **M2.3: (d)**, depois da fatia 3.
+1. **Dose:** cheia, a elite do S6 mantida. O número fica no `balance.ts` (`eliteRenewal.baselineShare`) para ajustar depois do staging.
+2. **Mecanismo:** renovação controlada por região.
+3. **Prodígios:** o usuário pode contratar os promovidos; a região repõe a base na virada seguinte.
+4. **Supertimes (b):** M2.2, só se o endgame seguir fácil no staging.
+5. **Recusa:** só salário (×1,25) no M2.2; moral fica para a Etapa 3.
+6. **Contra-estilo (d):** M2.3, depois da fatia 3.
 
-## 5. Perguntas para o Miguel
+**Meta nova:** nas temporadas infinitas, o Worlds deve ir de vez em quando para um supertime de fora da Europa (NRG, Spacestation, FURIA, Falcons), como na história. A EU continua em primeiro na média.
 
-1. **Dose:** segurar o topo no nível do S6 (time 97 ganha ~7 %, time 99 ~35 %) ou só na metade (~25 % e ~65 %)?
-2. **Mecanismo:** renovação controlada por região (recomendada) ou tirar o teto 88 dos novatos de S0–S5 quando chega o S6 (mais simples, menos previsível)?
-3. **Prodígios:** o usuário pode comprar os prodígios promovidos?
-4. **Supertimes:** valem só pela história? O gatilho de 2 Worlds em 3 temporadas está bom?
-5. **Recusa:** o custo de recusar é só o salário (×1,25) ou um sistema de moral novo, em outra etapa?
-6. **Contra-estilo:** fica para depois da fatia 3?
+## 5. M2.1 implementado (v2.1.0-dev.7, atrás do `FEATURES.worldLife`)
+
+Regra da seção 2 (a), com `maxAge` 21 e potencial sorteado entre 94 e 98. Bateria: 10 carreiras, 16 temporadas, flag OFF contra ON.
+
+**Campo do Worlds: o melhor time**
+
+| | S6 | S9 | S12 | S15 |
+|---|---|---|---|---|
+| OFF | 98,4 | 96,6 | 95,3 | 97,0 |
+| ON | 98,4 | 97,0 | 97,2 | 97,2 |
+
+**% de título no Worlds, Normal, média de S10 a S15**
+
+| Time do usuário | OFF | ON | Campo travado no S6 |
+|---|---|---|---|
+| 95 | 8,2 | 2,0 | 0,1 |
+| 97 | 38,8 | 19,2 | 4,0 |
+| 99 | 73,8 | 54,6 | 31,4 |
+| 101 | 92,4 | 84,0 | 69,8 |
+
+Meta 5 cumprida para um time forte realista (97–98). Os times de 99 e 101 continuam ganhando com frequência. O topo fica cerca de 1 ponto abaixo do S6, porque os promovidos se espalham por várias orgs. Segurar o S6 exato endureceria demais (99 → 31 %).
+
+**Região do campeão de IA no Worlds, S6–S15**
+
+| | EU | NA | MENA | SAM | Outras |
+|---|---|---|---|---|---|
+| OFF | 40 % | 16 % | 28 % | 13 % | 3 % |
+| ON | 59 % | 21 % | 13 % | 6 % | 1 % |
+| História (13 Worlds) | 62 % | 31 % | 8 % | 0 % | 0 % |
+
+Os campeões vieram de replays só com a IA, 100 por temporada; os Worlds reais das carreiras dão o mesmo resultado (ON: EU 60 de 100).
+
+Com o M2.1, 41 % dos títulos vão para fora da Europa, contra 38 % na história. Por isso não entrou uma alavanca extra para as outras regiões. Os 60 % de fora da Europa com a flag OFF eram efeito da decadência: as estrelas antigas da EU caem primeiro.
+
+**Travas:**
+
+- S0–S5 idênticas em OFF e ON.
+- 0 soft locks em 20 carreiras.
+- Nada mudou no Draft nem na matemática da série.

@@ -917,6 +917,14 @@ const REGION_SET = new Set<string>(Object.keys(PLAYER_NAME_BANK));
  * players (real pre-debut, rookies before their intake season).
  */
 export function playerViewById(id: string, ctx: ViewCtx): CareerPlayerView | null {
+  const view = baseViewById(id, ctx);
+  // v2.1 M2.1 (R141): a prodigy the elite renewal promoted — his new ceiling and fixed peak.
+  const lift = view ? ctx.world.potentialLift?.[id] : undefined;
+  if (!view || !lift) return view;
+  return { ...view, potential: Math.max(view.potential, lift.potential), peakAge: Math.max(view.peakAge, lift.peakAge) };
+}
+
+function baseViewById(id: string, ctx: ViewCtx): CareerPlayerView | null {
   if (ctx.world.retiredIds.includes(id)) return null;
 
   if (id.startsWith("fic:")) {

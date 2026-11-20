@@ -17,10 +17,19 @@
 import { CAREER_COACH_MARKET, CAREER_NAMES, CAREER_SEASONS, CAREER_WORLD_LIFE as L, FEATURES } from "@/config/balance";
 import { playerById } from "@/data";
 import type { Region } from "../types";
-import { bestCardOverall, becomesCoachOnRetirement, playerViewById, rookieView, growthModelOf } from "./development";
+import {
+  bestCardOverall,
+  becomesCoachOnRetirement,
+  developmentPhaseOf,
+  developmentProfileOf,
+  growthModelOf,
+  peakAgeWithRoom,
+  playerViewById,
+  rookieView,
+} from "./development";
 import { exProCoachQuality } from "./market";
 import { derivedFloat, streams } from "./seeds";
-import type { CoachState, CompactEventResult, WorldOrgState, WorldState } from "./types";
+import type { CareerPlayerView, CoachState, CompactEventResult, WorldOrgState, WorldState } from "./types";
 import { fillerOrgName, regionMedianRating } from "./worldSim";
 
 const REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
@@ -134,6 +143,79 @@ export function scoutingPass(
   if (signings.length === 0) return { world, signings };
   next.version += 1;
   return { world: next, signings };
+}
+
+/** M2.1: active elite — a ceiling at the elite bar and not yet declining. */
+function isActiveElite(v: CareerPlayerView, careerSeed: number): boolean {
+  if (v.potential < L.eliteRenewal.potentialMin) return false;
+  const { plateauYears } = developmentProfileOf(v.id, careerSeed);
+  return developmentPhaseOf(v.age, { peakAge: v.peakAge, plateauYears }) !== "declining";
+}
+
+function liftedPotential(id: string, careerSeed: number): number {
+  const w = L.eliteRenewal.liftWeights;
+  const pots = Object.keys(w).map(Number).sort((a, b) => a - b);
+  const total = pots.reduce((s, p) => s + (w[p] ?? 0), 0);
+  let f = derivedFloat(careerSeed, streams.gen("wlElite", id)) * total;
+  for (const p of pots) {
+    f -= w[p] ?? 0;
+    if (f < 0) return p;
+  }
+  return pots[pots.length - 1];
+}
+
+/**
+ * v2.1 Mundo vivo M2.1 (R141): the world grows. The first time it runs, each
+ * region's active AI elite is counted into `world.eliteBaseline` (× the dose,
+ * `baselineShare`); afterwards, a region under its baseline promotes up to
+ * `perRegionPerSeason` young AI players to an elite ceiling
+ * (`world.potentialLift`, peak age fixed now). The user's squad never counts
+ * and is never promoted.
+ */
+export function eliteRenewalPass(
+  world: WorldState,
+  ctx: Ctx & { userSquadIds: readonly string[] },
+): { world: WorldState; lifted: { playerId: string; playerName: string; region: Region; orgName: string | null; potential: number }[] } {
+  const E = L.eliteRenewal;
+  const lifted: { playerId: string; playerName: string; region: Region; orgName: string | null; potential: number }[] = [];
+  if (E.perRegionPerSeason <= 0) return { world, lifted };
+  const view = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, world };
+  const user = new Set(ctx.userSquadIds);
+  const orgOf = new Map<string, WorldOrgState>();
+  for (const o of Object.values(world.orgs)) for (const id of [...o.playerIds, ...(o.reserveIds ?? [])]) orgOf.set(id, o);
+  const pool = [...orgOf.keys(), ...world.freeAgentIds]
+    .filter((id) => !user.has(id))
+    .map((id) => playerViewById(id, view))
+    .filter((v): v is CareerPlayerView => v !== null);
+  const counting = world.eliteBaseline === undefined;
+  const baseline: Partial<Record<Region, number>> = { ...(world.eliteBaseline ?? {}) };
+  const lifts = { ...(world.potentialLift ?? {}) };
+  const delta = { ...world.overallDelta };
+  for (const region of REGIONS) {
+    const mine = pool.filter((v) => v.region === region);
+    const active = mine.filter((v) => isActiveElite(v, ctx.careerSeed)).length;
+    if (counting) {
+      baseline[region] = Math.round(active * E.baselineShare);
+      continue;
+    }
+    const need = Math.min(E.perRegionPerSeason, (baseline[region] ?? 0) - active);
+    if (need <= 0) continue;
+    const picks = mine
+      .filter((v) => !lifts[v.id] && v.age <= E.maxAge && v.potential >= E.candidateMinPotential && v.potential < E.potentialMin)
+      .sort((a, b) => Number(orgOf.has(b.id)) - Number(orgOf.has(a.id)) || b.overall - a.overall || b.potential - a.potential || a.id.localeCompare(b.id))
+      .slice(0, need);
+    for (const v of picks) {
+      const potential = liftedPotential(v.id, ctx.careerSeed);
+      lifts[v.id] = { potential, peakAge: peakAgeWithRoom(v.peakAge, v.age, potential - v.overall) };
+      if (!(v.id in delta)) delta[v.id] = 0; // off-script: the weekly world growth moves him from here
+      lifted.push({ playerId: v.id, playerName: v.name, region, orgName: orgOf.get(v.id)?.name ?? null, potential });
+    }
+  }
+  if (!counting && lifted.length === 0) return { world, lifted };
+  return {
+    world: { ...world, eliteBaseline: baseline, overallDelta: delta, ...(Object.keys(lifts).length ? { potentialLift: lifts } : {}), version: world.version + 1 },
+    lifted,
+  };
 }
 
 /** A Local side that played the season's Major or Worlds, read from the season's results. */

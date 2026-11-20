@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { CAREER_SEASONS, CAREER_WORLD_LIFE, FEATURES } from "@/config/balance";
-import { playerViewById } from "./development";
+import { developmentPhaseOf, developmentProfileOf, playerViewById } from "./development";
 import type { CoachState, CompetitionState, WorldState } from "./types";
 import {
   coachRetireChance,
+  eliteRenewalPass,
   localCapsFor,
   orgLifecycle,
   promoteReserves,
@@ -115,5 +116,75 @@ describe("v2.1 Mundo vivo M1 (R137)", () => {
     const young = userCoachRollover({ ...coach, age: 33 }, SEASON, SEED);
     expect(young.coach!.age).toBe(34);
     expect(young.announced).toBe(false);
+  });
+});
+
+describe("v2.1 Mundo vivo M2.1 (R141): elite renewal", () => {
+  const E = CAREER_WORLD_LIFE.eliteRenewal;
+  const viewIn = (w: WorldState, id: string) => playerViewById(id, { ...ctx, world: w });
+  const activeElite = (w: WorldState, region: string, user: Set<string> = new Set()) => {
+    const ids = [...Object.values(w.orgs).flatMap((o) => [...o.playerIds, ...(o.reserveIds ?? [])]), ...w.freeAgentIds];
+    return ids.filter((id) => {
+      if (user.has(id)) return false;
+      const v = viewIn(w, id);
+      if (!v || v.region !== region || v.potential < E.potentialMin) return false;
+      const { plateauYears } = developmentProfileOf(id, SEED);
+      return developmentPhaseOf(v.age, { peakAge: v.peakAge, plateauYears }) !== "declining";
+    }).length;
+  };
+
+  it("the first pass only counts each region's baseline (nothing is promoted)", () => {
+    const w = world();
+    const r = eliteRenewalPass(w, { ...ctx, userSquadIds: [] });
+    expect(r.lifted).toEqual([]);
+    expect(r.world.potentialLift).toBeUndefined();
+    for (const region of ["EU", "NA", "SAM"] as const) expect(r.world.eliteBaseline?.[region]).toBe(Math.round(activeElite(w, region) * E.baselineShare));
+  });
+
+  it("a region under its baseline promotes at most perRegionPerSeason young AI players, deterministically", () => {
+    const w = world();
+    w.eliteBaseline = { NA: 99, EU: 99, SAM: 99, MENA: 99, OCE: 99, APAC: 99, SSA: 99 };
+    const a = eliteRenewalPass(w, { ...ctx, userSquadIds: [] });
+    const b = eliteRenewalPass(w, { ...ctx, userSquadIds: [] });
+    expect(a.lifted).toEqual(b.lifted);
+    expect(a.lifted.length).toBeGreaterThan(0);
+    for (const g of new Set(a.lifted.map((p) => p.region))) expect(a.lifted.filter((p) => p.region === g).length).toBeLessThanOrEqual(E.perRegionPerSeason);
+    for (const p of a.lifted) {
+      const before = viewIn(w, p.playerId)!;
+      const after = viewIn(a.world, p.playerId)!;
+      expect(before.age).toBeLessThanOrEqual(E.maxAge);
+      expect(before.potential).toBeGreaterThanOrEqual(E.candidateMinPotential);
+      expect(after.potential).toBe(p.potential);
+      expect(after.potential).toBeGreaterThanOrEqual(E.potentialMin);
+      // His peak leaves room to grow, and it is FIXED (a later season reads the same).
+      expect(after.peakAge).toBeGreaterThan(before.age);
+      expect(playerViewById(p.playerId, { careerSeed: SEED, seasonIndex: SEASON + 3, world: a.world })!.peakAge).toBe(after.peakAge);
+      expect(p.playerId in a.world.overallDelta).toBe(true);
+      // The overall itself never moves at the promotion.
+      expect(after.overall).toBe(before.overall);
+    }
+    // The baseline is never counted again.
+    expect(a.world.eliteBaseline).toEqual(w.eliteBaseline);
+  });
+
+  it("never touches the user's players, and a region at its baseline returns the same world", () => {
+    const w = world();
+    const first = eliteRenewalPass(w, { ...ctx, userSquadIds: [] }).world;
+    expect(eliteRenewalPass(first, { ...ctx, userSquadIds: [] }).world).toBe(first);
+    first.eliteBaseline = { ...first.eliteBaseline, EU: 99 };
+    const all = [...Object.values(first.orgs).flatMap((o) => [...o.playerIds, ...(o.reserveIds ?? [])]), ...first.freeAgentIds];
+    const r = eliteRenewalPass(first, { ...ctx, userSquadIds: all });
+    expect(r.lifted).toEqual([]);
+  });
+
+  it("is off with perRegionPerSeason 0", () => {
+    const w = world();
+    const saved = E.perRegionPerSeason;
+    (E as { perRegionPerSeason: number }).perRegionPerSeason = 0;
+    try {
+      expect(eliteRenewalPass(w, { ...ctx, userSquadIds: [] }).world).toBe(w);
+    } finally {
+      (E as { perRegionPerSeason: number }).perRegionPerSeason = saved;
+    }
   });
 });

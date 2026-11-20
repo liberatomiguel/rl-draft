@@ -1814,6 +1814,9 @@ export function agePassAndIntake(
     ...(world.rookieNames ? { rookieNames: { ...world.rookieNames } } : {}),
     ...(world.nameBankVersion !== undefined ? { nameBankVersion: world.nameBankVersion } : {}),
     ...(world.growthModel !== undefined ? { growthModel: world.growthModel } : {}),
+    // v2.1 M2.1 (R141): the elite renewal's baseline and promoted prodigies outlive the rollover.
+    ...(world.eliteBaseline ? { eliteBaseline: { ...world.eliteBaseline } } : {}),
+    ...(world.potentialLift ? { potentialLift: { ...world.potentialLift } } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {

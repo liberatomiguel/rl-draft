@@ -455,6 +455,19 @@ export interface WorldState {
    * Optional and additive: absent = none.
    */
   formerSquad?: Record<string, FormerSquadPlayer>;
+  /**
+   * v2.1 Mundo vivo M2.1 (R141): the region's count of active AI elite
+   * (potential ≥ CAREER_WORLD_LIFE.eliteRenewal.potentialMin, not declining),
+   * fixed at the first infinite rollover. Optional and additive: absent = not
+   * counted yet (or FEATURES.worldLife off).
+   */
+  eliteBaseline?: Partial<Record<Region, number>>;
+  /**
+   * v2.1 M2.1 (R141): AI prodigies the elite renewal promoted — their new
+   * potential and the peak age fixed when it happened (it never moves again,
+   * so they still decline in their time). Read by `playerViewById`.
+   */
+  potentialLift?: Record<string, { potential: number; peakAge: number }>;
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */

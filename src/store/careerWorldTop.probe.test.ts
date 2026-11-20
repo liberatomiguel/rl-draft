@@ -23,7 +23,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { it } from "vitest";
-import { FEATURES } from "@/config/balance";
+import { CAREER_WORLD_LIFE, FEATURES } from "@/config/balance";
 import { developmentProfileOf, developmentPhaseOf, peakTargetOf, playerViewById } from "@/engine/career/development";
 import { localRegionOf } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
@@ -39,8 +39,8 @@ const list = <T extends string>(v: string | undefined, d: T[]): T[] => (v ? (v.s
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const TARGETS = (env.WORLDTOP_TARGETS ?? "95,97,99,101").split(",").map(Number);
 const REPS = Number(env.WORLDTOP_REPS ?? 100);
-const VARIANTS = ["base", "lift25", "lift50", "held", "super", "held+super"] as const;
-type Variant = (typeof VARIANTS)[number];
+const VARIANTS = (env.WORLDTOP_VARIANTS ?? "base,held").split(",") as Variant[];
+type Variant = "base" | "lift25" | "lift50" | "held" | "super" | "held+super";
 
 interface Row {
   season: number;
@@ -49,8 +49,31 @@ interface Row {
   maxInOneOrg: number; topFa: number;
   field: number[]; superRating: number;
   replay: Record<string, number>; // `${variant}:${target}` → titles of REPS
+  /** M2.1: the season's real Worlds — the best-placed AI side's region (the user's title skipped). */
+  champRegion: string | null;
+  userChampion: boolean;
+  /** M2.1: the AI-only Worlds (the 15 AI sides + a stand-in at the 15th's rating), REPS times: champion regions. */
+  aiChamp: Record<string, number>;
 }
-interface Career { career: string; rows: Row[] }
+interface Career { career: string; softlock: boolean; rows: Row[] }
+
+function regionOfRef(save: CareerSave, ref: string): string | null {
+  return save.world.orgs[ref]?.region ?? localRegionOf(ref) ?? null;
+}
+
+function aiChampions(ai: TournamentTeam[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  const standIn: TournamentTeam = { ...ai[14], id: "user", isUser: true, name: "Stand-in" };
+  for (let k = 0; k < REPS; k++) {
+    const rng = createRng(91000 + k);
+    const t = fastForward(initFieldTournament([...ai, standIn], "swiss", rng), "normal", rng);
+    const champ = t.playoffs?.championTeamId;
+    const team = champ && champ !== "user" ? ai.find((x) => x.id === champ) : null;
+    const key = team ? team.region : "stand-in";
+    out[key] = (out[key] ?? 0) + 1;
+  }
+  return out;
+}
 
 function worldsTeams(save: CareerSave): TournamentTeam[] {
   const refs = (save.competition.worldsFieldRefs ?? []).filter((r) => r !== "user");
@@ -124,11 +147,11 @@ function snapshot(save: CareerSave, s6: number[] | null): Row | null {
   // Each rank lifted by `share` of its drop below the career's S6 field (never lowered).
   const lift = (field: TournamentTeam[], share = 1) =>
     s6 ? field.map((t, k) => ({ ...t, rating: { ...t.rating, total: t.rating.total + share * Math.max(0, (s6[k] ?? 0) - t.rating.total) } })) : field;
-  const fields: Record<Variant, TournamentTeam[]> = {
+  const fields: Partial<Record<Variant, TournamentTeam[]>> = {
     base: ai, lift25: lift(ai, 0.25), lift50: lift(ai, 0.5), held: lift(ai), super: superAi, "held+super": lift(superAi),
   };
   const out: Record<string, number> = {};
-  for (const variant of VARIANTS) for (const target of TARGETS) out[`${variant}:${target}`] = replay(fields[variant], target);
+  for (const variant of VARIANTS) for (const target of TARGETS) out[`${variant}:${target}`] = replay(fields[variant]!, target);
   return {
     season,
     top30Ovr: avg(top.map((v) => v.overall)), top30Age: avg(top.map((v) => v.age)),
@@ -139,22 +162,32 @@ function snapshot(save: CareerSave, s6: number[] | null): Row | null {
     eliteFicPot: eliteFic.length, eliteFicPotAge: avg(eliteFic.map((v) => v.age)), eliteFicReached: eliteFic.filter((v) => v.overall >= 94).length,
     maxInOneOrg: maxInOneOrg / ALL.length, topFa: topFa / ALL.length,
     field: ai.map((t) => Math.round(t.rating.total * 10) / 10), superRating, replay: out,
+    ...worldsChampion(save), aiChamp: aiChampions(ai),
   };
+}
+
+function worldsChampion(save: CareerSave): { champRegion: string | null; userChampion: boolean } {
+  const r = save.eventResults.find((e) => e.seasonIndex === save.clock.seasonIndex && e.tier === "worlds");
+  if (!r) return { champRegion: null, userChampion: false };
+  const best = r.rows.find((x) => x.ref !== "user");
+  return { champRegion: best ? regionOfRef(save, best.ref) : null, userChampion: r.rows[0]?.ref === "user" };
 }
 
 it.skipIf(!env.WORLDTOP)("Mundo vivo M2: why the top of the AI field decays", () => {
   const regions = list<Region>(env.WORLDTOP_REGIONS, ["NA", "EU", "SAM", "MENA", "APAC"]);
   const policy = (env.WORLDTOP_POLICY ?? "tuned") as ArcPolicyId;
   const seeds = Number(env.WORLDTOP_SEEDS ?? 1);
-  const seasons = Number(env.WORLDTOP_SEASONS ?? 13);
+  const seasons = Number(env.WORLDTOP_SEASONS ?? 16);
+  // M2.1 off (M1 only): WORLDTOP_NO_RENEWAL=1.
+  if (env.WORLDTOP_NO_RENEWAL) (CAREER_WORLD_LIFE.eliteRenewal as { perRegionPerSeason: number }).perRegionPerSeason = 0;
   const [slice, slices] = (env.WORLDTOP_SLICE ?? "0/1").split("/").map(Number);
   const cells = regions.flatMap((region) => Array.from({ length: seeds }, (_, k) => ({ region, seed: 9100 + 7919 * k })));
   const careers: Career[] = [];
   for (const [i, cell] of cells.entries()) {
     if (i % slices !== slice) continue;
-    const c: Career = { career: `${cell.region}/${cell.seed}`, rows: [] };
+    const c: Career = { career: `${cell.region}/${cell.seed}`, softlock: false, rows: [] };
     let s6: number[] | null = null;
-    playArcCareer({
+    const res = playArcCareer({
       region: cell.region, seed: cell.seed, difficulty: "normal", policy, seasons, budgetMs: 1_800_000,
       onSeason(moment, save) {
         if (moment !== "end" || save.clock.seasonIndex < 4) return;
@@ -164,6 +197,7 @@ it.skipIf(!env.WORLDTOP)("Mundo vivo M2: why the top of the AI field decays", ()
         c.rows.push(row);
       },
     });
+    c.softlock = Boolean(res.softlock);
     careers.push(c);
     if (env.WORLDTOP_OUT) writeFileSync(env.WORLDTOP_OUT, JSON.stringify({ worldLife: FEATURES.worldLife, careers }));
   }
@@ -192,5 +226,22 @@ export function summarize(careers: Career[]): string {
     const pct = (key: string) => f1((100 * rs.reduce((n, r) => n + (r.replay[key] ?? 0), 0)) / (REPS * rs.length));
     lines.push(`S${s} | ${VARIANTS.map((v) => TARGETS.map((t) => pct(`${v}:${t}`)).join(" / ")).join(" | ")}`);
   }
+  lines.push("", `soft locks: ${careers.filter((c) => c.softlock).length} of ${careers.length}`);
+  const regions = ["EU", "NA", "SAM", "MENA", "OCE", "APAC", "SSA"];
+  lines.push("", `Worlds champion region — AI-only replay (${REPS} a season, % of AI titles) | the career's real Worlds: best AI side's region (user titles)`);
+  const champLine = (label: string, rs: Row[]) => {
+    const tally: Record<string, number> = {};
+    for (const r of rs) for (const [k, n] of Object.entries(r.aiChamp ?? {})) if (k !== "stand-in") tally[k] = (tally[k] ?? 0) + n;
+    const n = Object.values(tally).reduce((x, y) => x + y, 0) || 1;
+    const real: Record<string, number> = {};
+    for (const r of rs) if (r.champRegion) real[r.champRegion] = (real[r.champRegion] ?? 0) + 1;
+    const user = rs.filter((r) => r.userChampion).length;
+    const pctOf = regions.map((g) => `${g} ${f1((100 * (tally[g] ?? 0)) / n)}`).join(" ");
+    const realOf = regions.filter((g) => real[g]).map((g) => `${g} ${real[g]}`).join(" ");
+    return `${label} | ${pctOf} | real: ${realOf} (user ${user} of ${rs.length})`;
+  };
+  for (const s of seasons.filter((x) => x >= 6)) lines.push(champLine(`S${s}`, rows.filter((r) => r.season === s)));
+  lines.push(champLine("S6–S15", rows.filter((r) => r.season >= 6)));
+  lines.push(champLine("S10–S15", rows.filter((r) => r.season >= 10)));
   return lines.join("\n");
 }

@@ -13,7 +13,7 @@ const PUBLIC_KEYS = new Set([
   "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
   "worldsCancelled", "orgRelocates",
   // v2.1 M1 (R137): the world renewing itself is public reporting.
-  "orgNewcomer", "stackSigned", "prospectScouted",
+  "orgNewcomer", "stackSigned", "prospectScouted", "prodigyRises",
   // R133: the regional partner desk's stories are public reporting too.
   ...ROCKET_STREET_KEYS,
 ]);
