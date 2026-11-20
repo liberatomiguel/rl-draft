@@ -220,7 +220,8 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     specialIds: input.specialIds,
     playerNames: input.players.map((p) => p.name),
     orgId: input.orgId ?? "",
-    ...(input.rollRange ? { rollRange: input.rollRange } : {}),
+    // v2.0.34: only Road to Worlds passes its own form roll, so its sides also read the career scoreline.
+    ...(input.rollRange ? { rollRange: input.rollRange, careerScoreline: true as const } : {}),
   };
 }
 

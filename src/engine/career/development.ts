@@ -26,7 +26,7 @@ import {
 } from "@/config/balance";
 import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/legacyNames";
-import { playerNameBankFor } from "./names";
+import { gamertagVariant, playerNameBankFor } from "./names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
@@ -720,8 +720,10 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
   // rc.30: a name the legacy repair stored for this filler comes first.
   const bank = playerNameBankFor(region, ctx.world.nameBankVersion, ctx.careerSeed);
   const wrap = Math.floor(n / bank.length);
-  const name =
-    ctx.world.rookieNames?.[id] ?? bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");
+  // v2.0.34: from name bank 4 a wrapped name is a gamertag variant ("Kimchi7"), not "Kimchi II".
+  const base = bank[n % bank.length];
+  const wrapped = wrap === 0 ? base : (ctx.world.nameBankVersion ?? 0) >= 4 ? gamertagVariant(base, wrap) : `${base} ${roman(wrap + 1)}`;
+  const name = ctx.world.rookieNames?.[id] ?? wrapped;
 
   // v0.3 headliner: the first slot of each filler-org triplet (n % 3 === 0)
   // may roll a stronger base — one visible name per filler org, chance-gated,

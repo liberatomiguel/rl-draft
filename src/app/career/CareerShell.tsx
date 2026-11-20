@@ -21,6 +21,7 @@ import { pendingDecisionsOf } from "@/store/careerDecisions";
 import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
+import { newCareerHref } from "@/lib/careerEntry";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
 import { SponsorAutoBootcamp } from "@/components/career/sponsors/SponsorAutoBootcamp";
 import { CareerAnnouncement } from "@/components/career/news/CareerAnnouncement";
@@ -30,6 +31,9 @@ import { CareerTour } from "@/components/career/tour/CareerTour";
 import { ScrimBroadcast } from "@/components/career/ScrimBroadcast";
 import { MoneyNoticeModal } from "@/components/career/MoneyNoticeModal";
 import { TrainingReportModal } from "@/components/career/training/TrainingReportModal";
+import { CareerCloudSync } from "@/components/career/cloud/CareerCloudSync";
+import { CareerCloudConflict } from "@/components/career/cloud/CareerCloudConflict";
+import { CareerCloudToast } from "@/components/career/cloud/CareerCloudToast";
 
 // Full-screen routes without the career top bar. EXACT match — "/career/news"
 // must NOT be caught by a "/career/new" prefix (that hid the nav in the inbox).
@@ -101,7 +105,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
     if (bare) return;
     if (!hasAnySave) {
-      router.replace("/career/new");
+      // v2.0.33: a newcomer from the search pages keeps their ?start=quick.
+      router.replace(newCareerHref(window.location.search));
       return;
     }
     if (!hasActive) {
@@ -136,6 +141,10 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="pb-20 md:pb-8">
+      {/* v2.0.26: the cloud save. The sync and its notices run on every career route, the picker included. */}
+      <CareerCloudSync />
+      <CareerCloudConflict />
+      <CareerCloudToast />
       {!bare && hasActive ? (
         <>
           <CareerTopBar />

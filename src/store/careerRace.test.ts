@@ -183,7 +183,7 @@ function playSeasonChecked(input: CareerSave): { save: CareerSave; localRows: nu
         if (isLocalRef(row.ref)) {
           localRows += 1;
           expect(localRegionOf(row.ref)).toBe(region);
-          expect(row.name).toBe(localTeamName(row.ref, s.careerSeed));
+          expect(row.name).toBe(localTeamName(row.ref, s.careerSeed, s.world.nameBankVersion));
         }
       }
       for (const ref of Object.keys(after)) if (!rRefs.includes(ref)) expect(after[ref]).toBe(before[ref]);

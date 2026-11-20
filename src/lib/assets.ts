@@ -32,6 +32,30 @@ export const LAUNCH_NOTICE_IMAGES = {
 } as const;
 export type LaunchNoticeTab = keyof typeof LAUNCH_NOTICE_IMAGES;
 
+/**
+ * Captures of Road to Worlds for its landing page (v2.0.21): 1600 × 1000 WebP
+ * plus a 900 px variant, in public/landing/. Taken at 2x from a static export
+ * with a generated save (careerPerfFixtures.probe.test.ts).
+ */
+export type CareerShotId = "hq" | "calendar" | "market" | "finances" | "standings";
+export const CAREER_SHOT_SIZE = { width: 1600, height: 1000 } as const;
+export function careerShotSrc(id: CareerShotId): { src: string; srcSet: string } {
+  return {
+    src: `/landing/career-${id}.webp`,
+    srcSet: `/landing/career-${id}-900.webp 900w, /landing/career-${id}.webp 1600w`,
+  };
+}
+
+/**
+ * The career landing's share image (v2.0.33), Open Graph and X card, one per
+ * language: 1200 × 630 JPEG in public/landing/, made by
+ * scripts/build-og-career.mjs from the HQ capture.
+ */
+export const CAREER_SHARE_SIZE = { width: 1200, height: 630 } as const;
+export function careerShareSrc(locale: "en" | "pt"): string {
+  return `/landing/career-share-${locale}.jpg`;
+}
+
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };

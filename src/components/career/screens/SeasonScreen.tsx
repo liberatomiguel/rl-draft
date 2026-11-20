@@ -17,6 +17,8 @@ import type { CareerSave } from "@/engine/career/types";
 import { useCareerCopy } from "@/content/careerCopy";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
+import { useProfileStore } from "@/store/profileStore";
+import { ResearchInvite } from "@/components/ResearchInvite";
 import { CAREER_SEASONS } from "@/config/balance";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -62,6 +64,8 @@ export function SeasonScreen() {
   const continueInfinite = useCareerStore((s) => s.continueInfinite);
   const retireCareer = useCareerStore((s) => s.retireCareer);
   const [infoOpen, setInfoOpen] = useState(false);
+  const activeDays = useProfileStore((s) => s.login.total);
+  const runsCompleted = useProfileStore((s) => s.runsCompleted);
 
   if (!mounted) {
     return (
@@ -441,6 +445,15 @@ export function SeasonScreen() {
         <p className="text-sm font-semibold text-ink">{C.ceremonies.infiniteDesc}</p>
         <p className="mt-2 text-sm text-sub">{C.ceremonies.infiniteExplainer}</p>
       </Modal>
+
+      {/* v2.0.31: the research form, for returning players, at the season's close
+          (not on an insolvency, not while the explainer is open). */}
+      <ResearchInvite
+        surface="career"
+        ready={(save.phase === "seasonReview" || ended) && !isInsolvent && !infoOpen}
+        signals={{ activeDays, runsCompleted, careerSeasons: save.history.length }}
+        text={C.research}
+      />
     </div>
   );
 }

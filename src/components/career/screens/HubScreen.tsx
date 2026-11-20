@@ -29,6 +29,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
+import { SavesNotice } from "@/components/career/hub/SavesNotice";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -110,6 +111,7 @@ export function HubScreen() {
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
       <ErrorBanner />
+      <SavesNotice clock={save.clock} />
 
       {/*
         rc.34 (HQ-CONTRACT H7): one column on a phone in the contract's order —

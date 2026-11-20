@@ -59,6 +59,10 @@ const TABS: { key: string; href: string }[] = [
   { key: "standings", href: "/career/standings" },
   { key: "news", href: "/career/news" },
   { key: "club", href: "/career/club" },
+  // v2.0.30: the way back to the three slots (switch career, or pick one the
+  // account brought from another device). Before, the picker only showed when
+  // no career was active.
+  { key: "saves", href: "/career/saves" },
 ];
 
 export function CareerTopBar() {

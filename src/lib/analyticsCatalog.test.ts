@@ -42,6 +42,8 @@ describe("the catalogue", () => {
         "account_signed_in",
         "account_sync_failed",
         "achievement_unlocked",
+        "career_cloud_conflict",
+        "career_cloud_failed",
         "career_created",
         "career_ended",
         "career_event_completed",
@@ -62,6 +64,7 @@ describe("the catalogue", () => {
         "quality_slow_advance",
         "quiz_played",
         "rank_up",
+        "research_invite",
         "run_abandoned",
         "run_completed",
         "session_started",
@@ -88,7 +91,8 @@ describe("the catalogue", () => {
 
   it("career events carry careerId and actionId; the tab counters match the tab list", () => {
     for (const [event, spec] of Object.entries(EVENT_CATALOG)) {
-      if (!event.startsWith("career_")) continue;
+      // v2.0.26: the cloud-save events are app events (no career run, no careerId).
+      if (!event.startsWith("career_") || event.startsWith("career_cloud_")) continue;
       expect(spec.mode, event).toBe("career");
       expect(spec.props, event).toMatchObject({ careerId: "string", actionId: "string" });
     }

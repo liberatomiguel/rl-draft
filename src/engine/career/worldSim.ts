@@ -41,6 +41,7 @@ import {
   CAREER_SEASONS,
   CAREER_TITLE_DEFENSE,
   CAREER_DYNASTY,
+  CAREER_NAMES,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
@@ -63,7 +64,7 @@ import {
   PLAYER_NAME_BANK,
   playerNameBankFor,
 } from "@/data/career/names";
-import { orgNamePoolFor, playerNamePoolFor } from "./names";
+import { gamertagVariant, orgNamePoolFor, playerNamePoolFor } from "./names";
 import { communityTeamFor } from "./community";
 import {
   isLocalRef,
@@ -223,8 +224,8 @@ function pickStat(f: number): StatKey {
 }
 
 const ROMAN = ["", "II", "III", "IV", "V", "VI"];
-function fillerOrgName(region: Region, i: number, careerSeed: number): string {
-  const bank = orgNamePoolFor(region, careerSeed, "pro");
+function fillerOrgName(region: Region, i: number, careerSeed: number, nameBankVersion: number): string {
+  const bank = orgNamePoolFor(region, careerSeed, "pro", nameBankVersion);
   const wrap = Math.floor(i / bank.length);
   const base = bank[i % bank.length];
   return wrap === 0 ? base : `${base} ${ROMAN[wrap] ?? String(wrap + 1)}`;
@@ -300,7 +301,7 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
       ficNext[region] += 3;
       orgs[ref] = {
         ref,
-        name: fillerOrgName(region, i, careerSeed),
+        name: fillerOrgName(region, i, careerSeed, CAREER_NAMES.bankVersion),
         region,
         prestige,
         playerIds: [
@@ -375,7 +376,8 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     retiredIds: [],
     version: 0,
     // rc.29 (CAR-01): this world's fillers never wear a real nickname.
-    nameBankVersion: 3,
+    // v2.0.34: bank 4 (gamertag variants, org shapes) — CAREER_NAMES.
+    nameBankVersion: CAREER_NAMES.bankVersion,
     // rc.32 (DEV-01, R55): a new career runs CAREER_DEV.growthModel for life.
     ...(isGrowthContract(CAREER_DEV.growthModel) ? { growthModel: CAREER_DEV.growthModel } : {}),
   };
@@ -443,9 +445,11 @@ export function starterRosterOffers(
   careerSeed: number,
   /** rc.32 (DEV-01): the model the new career runs (a founding roster is always new). */
   model: number = CAREER_DEV.growthModel,
+  /** v2.0.34: the name bank of the new career (founders' names are stored in the save once signed). */
+  nameBankVersion: number = CAREER_NAMES.bankVersion,
 ): StarterOffer[] {
   // Nine distinct names: rank the bank deterministically, take the first nine.
-  const bank = playerNamePoolFor(region, careerSeed, "starter");
+  const bank = playerNamePoolFor(region, careerSeed, "starter", nameBankVersion);
   const names = bank
     .map((name, i) => ({
       name,
@@ -1175,12 +1179,12 @@ export function localSeedRowsFor(input: {
  */
 export function localTeamFor(
   ref: string,
-  ctx: { careerSeed: number; seasonIndex: number; difficulty: CareerDifficulty; anchor: number; region?: Region },
+  ctx: { careerSeed: number; seasonIndex: number; difficulty: CareerDifficulty; anchor: number; region?: Region; nameBankVersion?: number },
 ): TournamentTeam {
   const region = localRegionOf(ref) ?? ctx.region ?? REGIONS[0];
-  const name = localTeamName(ref, ctx.careerSeed);
+  const name = localTeamName(ref, ctx.careerSeed, ctx.nameBankVersion);
   const target = localTeamTarget(ref, ctx.anchor, ctx.careerSeed);
-  const names = localPlayerNames(ref, ctx.careerSeed);
+  const names = localPlayerNames(ref, ctx.careerSeed, ctx.nameBankVersion);
   const assemble = (shift: number): TournamentTeam => {
     const players: MemberView[] = names.map((n, i) => {
       const id = `${ref}:${i}`;
@@ -1456,6 +1460,7 @@ export function fieldForEvent(
     const region = localRegionOf(ref) ?? def.region ?? ctx.userRegion;
     return localTeamFor(ref, {
       careerSeed: ctx.careerSeed,
+      nameBankVersion: ctx.world.nameBankVersion,
       seasonIndex: def.seasonIndex,
       difficulty: ctx.difficulty,
       anchor: localAnchorForEvent(def, region, {
@@ -1951,6 +1956,7 @@ export function agePassAndIntake(
       view.name,
       held.get(region)!,
       playerNameBankFor(region, next.nameBankVersion, careerSeed),
+      next.nameBankVersion,
     );
     held.get(region)!.add(nameKey(name));
     rookieNames[view.id] = name;
@@ -2127,6 +2133,8 @@ export function pickRookieName(
   derived: string,
   held: ReadonlySet<string>,
   bank: readonly string[] = playerNameBankFor(region, 2),
+  /** v2.0.34: from name bank 4 a wrapped name is a gamertag variant ("Kimchi7"), not "Kimchi II". */
+  nameBankVersion = 2,
 ): string {
   const real = realNicknameKeys();
   const free = (name: string) => !held.has(nameKey(name)) && !real.has(nameKey(name));
@@ -2137,7 +2145,8 @@ export function pickRookieName(
   }
   for (let wrap = 1; ; wrap++) {
     for (let k = 0; k < bank.length; k++) {
-      const name = `${bank[(start + k) % bank.length]} ${ROMAN[wrap] ?? String(wrap + 1)}`;
+      const base = bank[(start + k) % bank.length];
+      const name = nameBankVersion >= 4 ? gamertagVariant(base, wrap) : `${base} ${ROMAN[wrap] ?? String(wrap + 1)}`;
       if (free(name)) return name;
     }
   }

@@ -5,7 +5,9 @@ import { SITE } from "@/config/site";
 import { webSiteJsonLd } from "@/lib/jsonld";
 import { AppShell } from "@/components/layout/AppShell";
 import { LocaleRoot } from "@/components/layout/LocaleRoot";
+import { AssetHealReport } from "@/components/AssetHealReport";
 import { PostHogProvider } from "@/components/PostHogProvider";
+import { assetHealInlineScript } from "@/lib/assetHeal";
 import "./globals.css";
 
 // Self-hosted fonts (v1.4 "World Stage"). Previously fetched from
@@ -201,6 +203,14 @@ const JSON_LD = {
 /** The site's name in search results (and its one-word spelling). */
 const SITE_JSON_LD = webSiteJsonLd();
 
+/**
+ * v2.0.32 (DESIGN-DECISIONS #171): repairs build files the browser holds as a
+ * failed answer (a version-skew 404 cached for a year by the `/_next/static/*`
+ * rule) before React needs them. Production builds only: the dev server's files
+ * are never cached that way, and a repair reload would fight hot reloading.
+ */
+const ASSET_HEAL_SCRIPT = process.env.NODE_ENV === "production" ? assetHealInlineScript() : null;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -213,6 +223,7 @@ export default function RootLayout({
       className={`${barlow.variable} ${barlowCondensed.variable} ${industry.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {ASSET_HEAL_SCRIPT ? <script dangerouslySetInnerHTML={{ __html: ASSET_HEAL_SCRIPT }} /> : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
@@ -222,6 +233,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
         />
         <PostHogProvider>
+          <AssetHealReport />
           <AppShell>{children}</AppShell>
         </PostHogProvider>
       </body>

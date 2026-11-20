@@ -383,6 +383,12 @@ describe("collection, progression, quiz, duplicate grants", () => {
       existing: false,
       doneSteps: [],
     });
+    // v2.0.23: the first login's XP is not history (it is paid before the first session).
+    const blank = { mmr: 400, runsCompleted: 0, achievements: {}, unlockedSpecials: {}, challengesCompleted: {} };
+    expect(profileHistory({ ...blank, xp: 25, lifetime: { xp: 25 }, login: { streak: 1 } }).existing).toBe(false);
+    expect(profileHistory({ ...blank, xp: 26 }).existing).toBe(true);
+    expect(profileHistory({ ...blank, xp: 0, lifetime: { xp: 5000 } }).existing).toBe(true);
+    expect(profileHistory({ ...blank, xp: 25, achievements: { a: "2026-11-01" } }).existing).toBe(true);
   });
 
   it("quality_duplicate_reward: a second clear, or XP offered for stars already held", () => {

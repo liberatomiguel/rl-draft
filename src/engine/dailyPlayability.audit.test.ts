@@ -107,7 +107,7 @@ it.skipIf(!process.env.DAILY_REFRESH)("refreshes win+bonus replay paths, retaini
     const date=new Date(Date.parse(`${DAILY_ROTATION_START}T00:00:00Z`)+day*86400000).toISOString().slice(0,10);
     const seed=dailySeedForDate(date);
     let found=false;
-    for(let policy=1;policy<=200;policy++) {
+    for(let policy=1;policy<=(futureAfter&&date>futureAfter?200:Number(process.env.DAILY_POLICIES??200));policy++) {
       const a=attempt(date,policy,seed);
       if(!a?.win||!a.bonus)continue;
       solutions[date]={seed,actions:a.actions};found=true;break;

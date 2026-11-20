@@ -128,7 +128,8 @@ function distributeGoals(n: number, total: number, seed: number): number[] {
 
 /** Narrative scoreline for one game (v2.0 re-tune, SIMULATION.goals). Same two
  *  RNG draws as before, so the seeded draw sequence is unchanged. */
-function flavorGoals(margin: number, overtime: boolean, rng: Rng): [number, number] {
+function flavorGoals(margin: number, overtime: boolean, rng: Rng, career: boolean): [number, number] {
+  if (career) return careerFlavorGoals(margin, overtime, rng);
   const g = SIM.goals;
   const winnerGoals = clamp(
     Math.round(g.winnerBase + margin * g.winnerPerMargin + rng.range(0, g.winnerSpread)),
@@ -144,6 +145,20 @@ function flavorGoals(margin: number, overtime: boolean, rng: Rng): [number, numb
   return [winnerGoals, loserGoals];
 }
 
+/** v2.0.34: the career's scoreline (SIMULATION.goals.career) — the margin levels off; the same draws as `flavorGoals`. */
+function careerFlavorGoals(margin: number, overtime: boolean, rng: Rng): [number, number] {
+  const g = SIM.goals.career;
+  const level = 1 - Math.exp(-margin / g.marginScale);
+  const winnerGoals = clamp(Math.round(g.winnerBase + g.winnerCap * level + rng.range(0, g.winnerSpread)), 1, g.max);
+  if (overtime) return [winnerGoals, winnerGoals - 1];
+  const loserGoals = clamp(
+    winnerGoals - 1 - Math.round(g.loserCap * level + rng.range(0, g.loserSpread)),
+    0,
+    winnerGoals - 1,
+  );
+  return [winnerGoals, loserGoals];
+}
+
 export function simulateSeries(
   teamA: TournamentTeam,
   teamB: TournamentTeam,
@@ -153,6 +168,7 @@ export function simulateSeries(
   const target = Math.ceil(options.bestOf / 2);
   const effectsA = effectTotals(teamA);
   const effectsB = effectTotals(teamB);
+  const careerScoreline = teamA.careerScoreline === true || teamB.careerScoreline === true;
 
   // Series form: one roll per team per series — the main upset source.
   const formA = dampenIfNegative(
@@ -213,7 +229,7 @@ export function simulateSeries(
     const starName =
       winnerTeam.playerNames.length > 0 ? rng.pick(winnerTeam.playerNames) : undefined;
 
-    const score = flavorGoals(margin, overtime, rng);
+    const score = flavorGoals(margin, overtime, rng, careerScoreline);
     // Per-player goals — deterministic from the cursor + game index, no RNG draw.
     const gi = games.length + 1;
     const seed = (rng.state ^ (gi * 0x9e3779b1)) >>> 0;

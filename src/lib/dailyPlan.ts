@@ -108,7 +108,7 @@ const AUTHORED_DAILIES: Record<string, (date: string) => DailyPlan> = {
       label: "Loaded Draft",
       templateId: "loadedDraft",
       description:
-        "Two special cards are guaranteed to show up in your draft — but the bracket bites back with a stronger, sharper field. Make the star power count.",
+        "Two special cards are guaranteed to show up in your draft, but the bracket bites back with a stronger, sharper field. Make the star power count.",
       objective: { type: "win_title", label: "Win the whole thing", bonusXp: 100 },
     },
     difficulty: "hard",
@@ -224,7 +224,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
     () => ({
       templateId: "specialsSurge",
       label: "Specials Surge",
-      description: "Special cards appear far more often — collectors' day.",
+      description: "Special cards appear far more often: collectors' day.",
       difficulty: "normal",
       hiddenOverall: false,
       // v0.5: base chance went 0.07 → 0.16, so the surge multiplier came down
@@ -236,7 +236,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       templateId: "legacyDay",
       label: "Legacy Day",
       description:
-        "The all-time gauntlet — championship rosters, hidden overalls, no rerolls. No unlock needed today.",
+        "The all-time gauntlet: championship rosters, hidden overalls, no rerolls. No unlock needed today.",
       difficulty: "legacy",
       hiddenOverall: true,
     }),

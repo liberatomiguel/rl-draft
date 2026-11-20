@@ -21,11 +21,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CAREER_PAYROLL } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import type { CareerSave, TransferOffer } from "@/engine/career/types";
+import type { CareerSave, TradeProposal, TransferOffer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
-import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
+import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, tradeAcceptPlanFor, tradeCashOf, tradeProposalsOf, weeklyStatementOf } from "@/store/careerFlow";
 import { pendingDecisionsOf, type PendingDecision } from "@/store/careerDecisions";
 import { followCardOf, sundayAheadOf, sundayWithoutYouOf } from "@/store/careerSunday";
 import { trainingDecisionOf } from "@/store/careerTraining";
@@ -36,6 +36,8 @@ import {
   dateOfDay,
   eventDayPhaseOf,
   nameOfRef,
+  prizeShareLabelOf,
+  wageLabel,
   useRevealHeldEventId,
 } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
@@ -51,6 +53,7 @@ import {
   NowInvite,
   NowSeason,
   NowSquadShort,
+  NowTrade,
 } from "@/components/career/hub/NowCards";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
 import { AppLink } from "@/components/ui/AppLink";
@@ -61,6 +64,11 @@ import { Modal } from "@/components/ui/Modal";
 function decisionLabelOf(C: CareerCopy, save: CareerSave, d: PendingDecision): string {
   if (d.kind === "bid") {
     const offer = save.pendingOffers.find((o) => o.id === d.id);
+    if (!offer) {
+      // R135: an agreed or countered trade rides the same decision kind.
+      const trade = tradeProposalsOf(save).find((p) => p.id === d.id);
+      if (trade) return C.hub.decisionKind.trade(trade.takeName);
+    }
     return C.hub.decisionKind.bid(offer?.playerName ?? "?");
   }
   return C.hub.decisionKind[d.kind];
@@ -106,6 +114,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
   const [focusId, setFocusId] = useState<string | null>(null);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
+  const [confirmTrade, setConfirmTrade] = useState<TradeProposal | null>(null);
 
   const queue = useMemo(() => {
     const pending = pendingDecisionsOf(save);
@@ -248,7 +257,26 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       }
       case "bid": {
         const offer = save.pendingOffers.find((o) => o.id === d.id);
-        if (!offer) return null;
+        if (!offer) {
+          // R135 (ECO-06): no bid by this id, so it is a trade the org agreed to or countered.
+          const trade = tradeProposalsOf(save).find((p) => p.id === d.id);
+          if (!trade) return null;
+          return (
+            <>
+              <NowTrade
+                save={save}
+                C={C}
+                proposal={trade}
+                onAccept={() => setConfirmTrade(trade)}
+                onDecline={() => {
+                  declineBid(trade.id);
+                  setFocusId(null);
+                }}
+              />
+              <LaterRow C={C} d={d} onLater={() => later(d)} />
+            </>
+          );
+        }
         return (
           <>
             <NowBid
@@ -390,6 +418,67 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           </div>
         ) : null}
       </Modal>
+
+      {/* R135 (ECO-06): accept-trade confirm, the Market's own wording. */}
+      {(() => {
+        const p = confirmTrade;
+        const res = p ? tradeAcceptPlanFor(save, p.id) : null;
+        const tplan = res && "plan" in res ? res.plan : null;
+        const terr = res && "error" in res ? res.error : null;
+        const tcash = p ? tradeCashOf(p) : 0;
+        return (
+          <Modal
+            open={Boolean(p)}
+            title={C.market.trade.confirmTitle}
+            onClose={() => setConfirmTrade(null)}
+            actions={
+              <>
+                <Button variant="ghost" onClick={() => setConfirmTrade(null)}>
+                  {C.common.cancel}
+                </Button>
+                {tplan && p ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      acceptBid(p.id);
+                      setConfirmTrade(null);
+                      setFocusId(null);
+                    }}
+                  >
+                    {C.common.confirm}
+                  </Button>
+                ) : null}
+              </>
+            }
+          >
+            {p ? (
+              <div className="space-y-2 text-sm">
+                <p className="text-ink">{C.market.trade.row(p.giveName, p.takeName, nameOfRef(save, p.orgRef))}</p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.leaves}</span><span className="display font-bold text-ink">{p.giveName}</span></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.arrives}</span><span className="display font-bold text-ink">{p.takeName}</span></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.cash}</span><span className="display font-bold text-ink">{tcash > 0 ? formatMoney(tcash) : C.market.trade.noCash}</span></div>
+                  {tplan ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sub">{C.squad.wage}</span>
+                      <span className="text-right font-bold text-ink">
+                        {C.market.trade.wageLine(wageLabel(C, tplan.signing.talk.offered.wagePerSplit), prizeShareLabelOf(C, { prizeSharePct: tplan.signing.talk.offered.sharePct }))}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.length}</span><span className="font-bold text-ink">{C.market.trade.lengthLine(p.lengthSeasons)}</span></div>
+                </div>
+                {terr ? (
+                  <p className="rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad">
+                    {(C.market.errors as Record<string, string>)[terr] ?? C.market.errors.unknown}
+                  </p>
+                ) : null}
+                <p className="text-xs text-faint">{C.market.trade.irreversible}</p>
+              </div>
+            ) : null}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

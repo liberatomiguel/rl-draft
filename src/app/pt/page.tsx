@@ -20,7 +20,7 @@ export const metadata: Metadata = pageMetadata({
     ? `${SITE.name} — Jogo de Draft da RLCS e Manager de Rocket League`
     : `${SITE.name} — Jogo de Draft da RLCS Grátis`,
   description: FEATURES.careerMode
-    ? "Jogue o Rocket Draft, um jogo de draft da RLCS gratuito. Monte um elenco com lineups reais do Rocket League esports e vença o torneio, ou comande um clube no modo carreira Road to Worlds."
+    ? "Rocket Draft é um jogo de draft da RLCS e um modo carreira de Rocket League, grátis. Monte um roster com lineups reais e vença o torneio, ou comande um clube no Road to Worlds."
     : PT.APP.description,
   path: "/pt",
   locale: "pt",
@@ -39,7 +39,12 @@ const SEO_LINKS = [
   { label: PT.HOME_SEO.links.simulator, href: PAGE_ROUTES.simulator.pt },
   { label: PT.HOME_SEO.links.fantasy, href: PAGE_ROUTES.fantasy.pt },
   { label: PT.HOME_SEO.links.database, href: "/rlcs" },
-  ...(isPageLive("manager") ? [{ label: PT.HOME_SEO.links.manager, href: PAGE_ROUTES.manager.pt }] : []),
+  ...(isPageLive("manager")
+    ? [
+        { label: PT.HOME_SEO.links.manager, href: PAGE_ROUTES.manager.pt },
+        { label: PT.HOME_SEO.links.careerGuide, href: PAGE_ROUTES["career-guide"].pt },
+      ]
+    : []),
   { label: PT.HOME_SEO.links.faq, href: "/pt/faq" },
   { label: PT.HOME_SEO.links.about, href: "/pt/sobre" },
 ];

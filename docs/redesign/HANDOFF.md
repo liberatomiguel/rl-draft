@@ -12,7 +12,7 @@ here: it gets its own session.
 ## Where the direction lives
 
 - `DESIGN.md` (repo root): the approved direction. Read it first.
-- `docs/DESIGN-DECISIONS.md` #164 to #167: how the direction was reached, pass
+- `docs/DESIGN-DECISIONS.md` #173 to #176: how the direction was reached, pass
   by pass, with Miguel's feedback on each.
 - `docs/CHANGELOG.md`, entry "[Unreleased] broadcast package pilot": what
   changed in each of the four passes.

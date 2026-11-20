@@ -2,10 +2,10 @@
   "version": 1,
   "seasonId": "rlcs-2027",
   "snapshotDate": "2026-11-05",
-  "source": "rocket-draft-expansao-2027.json — reviewed by Miguel before implementation",
+  "source": "rocket-draft-expansao-2027.json — reviewed by Miguel before implementation; Kick-Off 2027 package of 2026-11-16 (elencos e logos) applied on top",
   "selection": {
-    "general": 24,
-    "regionalOnly": 22
+    "general": 26,
+    "regionalOnly": 45
   },
   "sources": {
     "blast-kickoff": {
@@ -334,6 +334,15 @@
       "type": "event_report",
       "publishedAt": "2026-11-01",
       "accessedAt": "2026-11-05"
+    },
+    "kickoff-package": {
+      "id": "kickoff-package",
+      "title": "Kick-Off 2027 rosters and logos package (91 lineups: general, regional, archive)",
+      "url": null,
+      "publisher": "Rocket Draft research",
+      "type": "compiled",
+      "publishedAt": "2026-11-16",
+      "accessedAt": "2026-11-16"
     }
   },
   "persons": [
@@ -1526,6 +1535,478 @@
       "nickname": "Royales",
       "existingInGame": true,
       "country": "BR"
+    },
+    {
+      "sourceId": "pisky",
+      "id": "pisky",
+      "nickname": "Pisky",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "mat",
+      "id": "mat",
+      "nickname": "Mat.",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "giuk",
+      "id": "giuk",
+      "nickname": "GiuK",
+      "existingInGame": true,
+      "country": "FR"
+    },
+    {
+      "sourceId": "nxlly",
+      "id": "nxlly",
+      "nickname": "Nxlly",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "kadely",
+      "id": "kadely",
+      "nickname": "kadely",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "cofam",
+      "id": "cofam",
+      "nickname": "Cofam",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "shila",
+      "id": "shila",
+      "nickname": "shila",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "nuqqet",
+      "id": "nuqqet",
+      "nickname": "Nuqqet",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "brainiac",
+      "id": "brainiac",
+      "nickname": "Brainiac",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "jweyts",
+      "id": "jweyts",
+      "nickname": "JWeyts",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "wozyen",
+      "id": "wozyen",
+      "nickname": "Wozyen",
+      "existingInGame": true,
+      "country": "NO"
+    },
+    {
+      "sourceId": "kiroxsinho",
+      "id": "kiroxsinho",
+      "nickname": "Kiroxsinho",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "aztral",
+      "id": "aztral",
+      "nickname": "AztraL",
+      "existingInGame": true,
+      "country": "BE"
+    },
+    {
+      "sourceId": "rebmob",
+      "id": "rebmob",
+      "nickname": "rebmob",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "vorce",
+      "id": "vorce",
+      "nickname": "vorce",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "energizer",
+      "id": "energizer",
+      "nickname": "Energizer",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "sml",
+      "id": "sml",
+      "nickname": "sml.",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "dj",
+      "id": "dj",
+      "nickname": "dj.",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "zamberg",
+      "id": "zamberg",
+      "nickname": "Zamberg",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "flexx",
+      "id": "flexx",
+      "nickname": "flexx",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "viktor",
+      "id": "viktor",
+      "nickname": "Viktor",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "nolta",
+      "id": "nolta",
+      "nickname": "Nolta",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "tomio",
+      "id": "tomio",
+      "nickname": "Tomio",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "encore",
+      "id": "encore",
+      "nickname": "Encore",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "ejby",
+      "id": "ejby",
+      "nickname": "ejby",
+      "existingInGame": true,
+      "country": "DK"
+    },
+    {
+      "sourceId": "radosin",
+      "id": "radosin",
+      "nickname": "Radosin",
+      "existingInGame": true,
+      "country": "FR"
+    },
+    {
+      "sourceId": "mozzarella",
+      "id": "mozzarella",
+      "nickname": "Mozzarella",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "chippy",
+      "id": "chippy",
+      "nickname": "Chippy",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "mimillo-sama",
+      "id": "mimillosama",
+      "nickname": "Mimillo Sama",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "noahsaki",
+      "id": "noahsaki",
+      "nickname": "noahsaki",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "reeho",
+      "id": "reeho",
+      "nickname": "reeho!",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "pukis",
+      "id": "pukis",
+      "nickname": "pukis",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "prysm",
+      "id": "prysm",
+      "nickname": "prysm!",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "dvo",
+      "id": "dvo",
+      "nickname": "dvo",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "sosa",
+      "id": "sosa",
+      "nickname": "sosa",
+      "existingInGame": true,
+      "country": "CA"
+    },
+    {
+      "sourceId": "tms",
+      "id": "tms",
+      "nickname": "tms",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "aris",
+      "id": "aris",
+      "nickname": "aris",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "eris",
+      "id": "eris",
+      "nickname": "Eris",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "impoh",
+      "id": "impoh",
+      "nickname": "Impoh",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "ahduhm",
+      "id": "ahduhm",
+      "nickname": "Ahduhm",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "ivan",
+      "id": "ivan",
+      "nickname": "ivan",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "oath",
+      "id": "oath",
+      "nickname": "oath",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "aqua",
+      "id": "aqua",
+      "nickname": "Aqua",
+      "existingInGame": true,
+      "country": "US"
+    },
+    {
+      "sourceId": "hazo",
+      "id": "hazo",
+      "nickname": "hazo",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "speed",
+      "id": "speed",
+      "nickname": "Speed",
+      "existingInGame": true,
+      "country": "GB"
+    },
+    {
+      "sourceId": "alxx",
+      "id": "alxx",
+      "nickname": "Alxx",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "scythe",
+      "id": "scythe",
+      "nickname": "scythe",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "xpurt",
+      "id": "xpurt",
+      "nickname": "xpurt",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "courtz",
+      "id": "courtz",
+      "nickname": "courtz",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "maathzudo",
+      "id": "maathzudo",
+      "nickname": "Maathzudo",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "nahuz",
+      "id": "nahuz",
+      "nickname": "nahuz",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "ferraz",
+      "id": "ferraz",
+      "nickname": "Ferraz",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "iguinn",
+      "id": "iguinn",
+      "nickname": "Iguinn",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "zeeph",
+      "id": "zeeph",
+      "nickname": "zeeph",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "misery",
+      "id": "misery",
+      "nickname": "misery",
+      "existingInGame": true,
+      "country": "AR"
+    },
+    {
+      "sourceId": "umbroken",
+      "id": "umbroken",
+      "nickname": "UmBroken",
+      "existingInGame": true,
+      "country": "AR"
+    },
+    {
+      "sourceId": "viitin",
+      "id": "viitin",
+      "nickname": "ViitiN",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "willie",
+      "id": "willie",
+      "nickname": "Willie",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "vfbi",
+      "id": "vfbi",
+      "nickname": "vFbi",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "shadi",
+      "id": "shadi",
+      "nickname": "shadi",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "glowz",
+      "id": "glowz",
+      "nickname": "Glowz",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "jsm",
+      "id": "jsm",
+      "nickname": "JSM",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "m6r",
+      "id": "m6r",
+      "nickname": "M6R",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "hmod",
+      "id": "hmod",
+      "nickname": "Hmod",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "isl6nii",
+      "id": "isl6nii",
+      "nickname": "iSL6Nii",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "sqqp",
+      "id": "sqqp",
+      "nickname": "SQQP",
+      "existingInGame": true,
+      "country": "SA"
+    },
+    {
+      "sourceId": "b2sel",
+      "id": "b2sel",
+      "nickname": "B2seL",
+      "existingInGame": true,
+      "country": "SA"
+    },
+    {
+      "sourceId": "nadr",
+      "id": "nadr",
+      "nickname": "Nadr",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "o0vvl",
+      "id": "o0vvl",
+      "nickname": "o0vvl",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "suspect",
+      "id": "suspect",
+      "nickname": "Suspect",
+      "existingInGame": true,
+      "country": "SA"
+    },
+    {
+      "sourceId": "t7lm",
+      "id": "t7lm",
+      "nickname": "T7LM",
+      "existingInGame": true,
+      "country": "SA"
+    },
+    {
+      "sourceId": "twiz",
+      "id": "twiz",
+      "nickname": "Twiz",
+      "existingInGame": true,
+      "country": "SA"
+    },
+    {
+      "sourceId": "bang",
+      "id": "bang",
+      "nickname": "Bang",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "israkan",
+      "id": "israkan",
+      "nickname": "isRakan",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "nmj",
+      "id": "nmj",
+      "nickname": "nmj",
+      "existingInGame": false
+    },
+    {
+      "sourceId": "kaoshi",
+      "id": "kaoshi",
+      "nickname": "Kaoshi",
+      "existingInGame": true,
+      "country": "BR"
     }
   ],
   "lineups": [
@@ -2489,29 +2970,30 @@
       "rosterStatus": "confirmado",
       "organizationStatus": "confirmado",
       "sources": [
-        "m80"
+        "m80",
+        "kickoff-package"
       ],
       "players": [
         {
           "personId": "joreuz",
           "nickname": "Joreuz",
-          "overall": 88
+          "overall": 89
         },
         {
           "personId": "drufinho",
           "nickname": "drufinho",
-          "overall": 87
+          "overall": 88
         },
         {
           "personId": "motta",
           "nickname": "Motta",
-          "overall": 85
+          "overall": 86
         }
       ],
       "coach": {
         "personId": "nick",
         "nickname": "Nick",
-        "overall": 76
+        "overall": 85
       },
       "sub": null
     },
@@ -2626,23 +3108,24 @@
       "rosterStatus": "reportado",
       "organizationStatus": "sem_org_verificada",
       "sources": [
-        "hub-na"
+        "hub-na",
+        "kickoff-package"
       ],
       "players": [
         {
           "personId": "crispy",
           "nickname": "Crispy",
-          "overall": 81
+          "overall": 82
         },
         {
           "personId": "fiv3up",
           "nickname": "Fiv3Up",
-          "overall": 83
+          "overall": 84
         },
         {
           "personId": "rehzzy",
           "nickname": "rehzzy",
-          "overall": 83
+          "overall": 84
         }
       ],
       "coach": null,
@@ -2792,34 +3275,35 @@
       "name": "Project Conquerors",
       "orgId": "pcs-stride",
       "region": "SAM",
-      "regionalOnly": true,
+      "regionalOnly": false,
       "rosterStatus": "confirmado",
       "organizationStatus": "rumor_forte",
       "sources": [
         "week44",
-        "hub-sam"
+        "hub-sam",
+        "kickoff-package"
       ],
       "players": [
         {
           "personId": "droppz",
           "nickname": "droppz",
-          "overall": 82
+          "overall": 84
         },
         {
           "personId": "suco",
           "nickname": "sucoo",
-          "overall": 83
+          "overall": 85
         },
         {
           "personId": "wisty",
           "nickname": "wistyy",
-          "overall": 86
+          "overall": 87
         }
       ],
       "coach": {
         "personId": "stl",
         "nickname": "STL",
-        "overall": 81
+        "overall": 84
       },
       "sub": null
     },
@@ -2839,20 +3323,24 @@
         {
           "personId": "klaus",
           "nickname": "klaus",
-          "overall": 81
+          "overall": 83
         },
         {
           "personId": "leodkn",
           "nickname": "LeoDkn",
-          "overall": 80
+          "overall": 81
         },
         {
           "personId": "pan",
           "nickname": "pan",
-          "overall": 81
+          "overall": 82
         }
       ],
-      "coach": null,
+      "coach": {
+        "personId": "kaoshi",
+        "nickname": "Kaoshi",
+        "overall": 80
+      },
       "sub": null
     },
     {
@@ -2966,23 +3454,24 @@
       "rosterStatus": "reportado",
       "organizationStatus": "rumor_forte",
       "sources": [
-        "hub-sam"
+        "hub-sam",
+        "kickoff-package"
       ],
       "players": [
         {
           "personId": "kns",
           "nickname": "KnS",
-          "overall": 82
+          "overall": 84
         },
         {
           "personId": "kevinacho",
           "nickname": "Kevinacho",
-          "overall": 79
+          "overall": 82
         },
         {
           "personId": "rmn",
           "nickname": "Rmn",
-          "overall": 79
+          "overall": 82
         }
       ],
       "coach": null,
@@ -2994,28 +3483,29 @@
       "name": "NOT",
       "orgId": "not",
       "region": "MENA",
-      "regionalOnly": true,
+      "regionalOnly": false,
       "rosterStatus": "confirmado",
       "organizationStatus": "sem_org_verificada",
       "sources": [
         "not",
-        "hub-mena"
+        "hub-mena",
+        "kickoff-package"
       ],
       "players": [
         {
           "personId": "nush",
           "nickname": "Nush",
-          "overall": 85
+          "overall": 86
         },
         {
           "personId": "trook",
           "nickname": "Trook",
-          "overall": 85
+          "overall": 86
         },
         {
           "personId": "ops",
           "nickname": "ops",
-          "overall": 82
+          "overall": 84
         }
       ],
       "coach": null,
@@ -3152,6 +3642,831 @@
         "overall": 77
       },
       "sub": null
+    },
+    {
+      "sourceId": "blg-doran-eu-2027",
+      "id": "blg-doran-2027",
+      "name": "BLG Doran",
+      "orgId": "blg-doran",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "pisky",
+          "nickname": "Pisky",
+          "overall": 79
+        },
+        {
+          "personId": "mat",
+          "nickname": "Mat.",
+          "overall": 79
+        },
+        {
+          "personId": "giuk",
+          "nickname": "GiuK",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "cka-eu-2027",
+      "id": "cka-2027",
+      "name": "CKA",
+      "orgId": "cka",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "nxlly",
+          "nickname": "Nxlly",
+          "overall": 78
+        },
+        {
+          "personId": "kadely",
+          "nickname": "kadely",
+          "overall": 78
+        },
+        {
+          "personId": "cofam",
+          "nickname": "Cofam",
+          "overall": 78
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "detect-esports-eu-2027",
+      "id": "detect-esports-2027",
+      "name": "Detect Esports",
+      "orgId": "detect-esports",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "shila",
+          "nickname": "shila",
+          "overall": 79
+        },
+        {
+          "personId": "nuqqet",
+          "nickname": "Nuqqet",
+          "overall": 79
+        },
+        {
+          "personId": "brainiac",
+          "nickname": "Brainiac",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "frites-esports-club-eu-2027",
+      "id": "frites-esports-club-2027",
+      "name": "Frites Esports Club",
+      "orgId": "frites-esports-club",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "jweyts",
+          "nickname": "JWeyts",
+          "overall": 81
+        },
+        {
+          "personId": "wozyen",
+          "nickname": "Wozyen",
+          "overall": 80
+        },
+        {
+          "personId": "kiroxsinho",
+          "nickname": "Kiroxsinho",
+          "overall": 80
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "hey-its-me-its-joshyv-eu-2027",
+      "id": "hey-its-me-its-joshyv-2027",
+      "name": "Hey, its me, its joshyv.",
+      "orgId": "hey-its-me-its-joshyv",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "aztral",
+          "nickname": "AztraL",
+          "overall": 83
+        },
+        {
+          "personId": "rebmob",
+          "nickname": "rebmob",
+          "overall": 80
+        },
+        {
+          "personId": "vorce",
+          "nickname": "vorce",
+          "overall": 80
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "joseadores-eu-2027",
+      "id": "joseadores-2027",
+      "name": "joseadores",
+      "orgId": "joseadores",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "energizer",
+          "nickname": "Energizer",
+          "overall": 78
+        },
+        {
+          "personId": "sml",
+          "nickname": "sml.",
+          "overall": 78
+        },
+        {
+          "personId": "dj",
+          "nickname": "dj.",
+          "overall": 78
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "ogc-fc-eu-2027",
+      "id": "ogc-fc-2027",
+      "name": "OGC FC",
+      "orgId": "ogc-fc",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "zamberg",
+          "nickname": "Zamberg",
+          "overall": 80
+        },
+        {
+          "personId": "flexx",
+          "nickname": "flexx",
+          "overall": 80
+        },
+        {
+          "personId": "viktor",
+          "nickname": "Viktor",
+          "overall": 80
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "oxalys-bunch-eu-2027",
+      "id": "oxalys-bunch-2027",
+      "name": "Oxalys Bunch",
+      "orgId": "oxalys-bunch",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "nolta",
+          "nickname": "Nolta",
+          "overall": 78
+        },
+        {
+          "personId": "tomio",
+          "nickname": "Tomio",
+          "overall": 78
+        },
+        {
+          "personId": "encore",
+          "nickname": "Encore",
+          "overall": 78
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "radosin-corp-eu-2027",
+      "id": "radosin-corp-2027",
+      "name": "Radosin Corp",
+      "orgId": "radosin-corp",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "ejby",
+          "nickname": "ejby",
+          "overall": 82
+        },
+        {
+          "personId": "radosin",
+          "nickname": "Radosin",
+          "overall": 86
+        },
+        {
+          "personId": "mozzarella",
+          "nickname": "Mozzarella",
+          "overall": 80
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "rotation-station-eu-2027",
+      "id": "rotation-station-2027",
+      "name": "Rotation Station",
+      "orgId": "rotation-station",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "chippy",
+          "nickname": "Chippy",
+          "overall": 79
+        },
+        {
+          "personId": "mimillosama",
+          "nickname": "Mimillo Sama",
+          "overall": 79
+        },
+        {
+          "personId": "noahsaki",
+          "nickname": "noahsaki",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "wlt-gaming-eu-2027",
+      "id": "wlt-gaming-2027",
+      "name": "WLT Gaming",
+      "orgId": "wlt-gaming",
+      "region": "EU",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-eu"
+      ],
+      "players": [
+        {
+          "personId": "reeho",
+          "nickname": "reeho!",
+          "overall": 79
+        },
+        {
+          "personId": "pukis",
+          "nickname": "pukis",
+          "overall": 79
+        },
+        {
+          "personId": "prysm",
+          "nickname": "prysm!",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "arancini-na-2027",
+      "id": "arancini-2027",
+      "name": "arancini",
+      "orgId": "arancini",
+      "region": "NA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-na"
+      ],
+      "players": [
+        {
+          "personId": "dvo",
+          "nickname": "dvo",
+          "overall": 81
+        },
+        {
+          "personId": "sosa",
+          "nickname": "sosa",
+          "overall": 83
+        },
+        {
+          "personId": "tms",
+          "nickname": "tms",
+          "overall": 81
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "gulp-na-2027",
+      "id": "gulp-2027",
+      "name": "Gulp",
+      "orgId": "gulp",
+      "region": "NA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-na"
+      ],
+      "players": [
+        {
+          "personId": "aris",
+          "nickname": "aris",
+          "overall": 80
+        },
+        {
+          "personId": "eris",
+          "nickname": "Eris",
+          "overall": 79
+        },
+        {
+          "personId": "impoh",
+          "nickname": "Impoh",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "legion-of-boom-na-2027",
+      "id": "legion-of-boom-2027",
+      "name": "Legion of Boom",
+      "orgId": "legion-of-boom",
+      "region": "NA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-na"
+      ],
+      "players": [
+        {
+          "personId": "ahduhm",
+          "nickname": "Ahduhm",
+          "overall": 81
+        },
+        {
+          "personId": "ivan",
+          "nickname": "ivan",
+          "overall": 82
+        },
+        {
+          "personId": "oath",
+          "nickname": "oath",
+          "overall": 82
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "lsf-na-2027",
+      "id": "lsf-2027",
+      "name": "lsf",
+      "orgId": "lsf",
+      "region": "NA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-na"
+      ],
+      "players": [
+        {
+          "personId": "aqua",
+          "nickname": "Aqua",
+          "overall": 85
+        },
+        {
+          "personId": "hazo",
+          "nickname": "hazo",
+          "overall": 82
+        },
+        {
+          "personId": "speed",
+          "nickname": "Speed",
+          "overall": 83
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "wassup-na-2027",
+      "id": "wassup-2027",
+      "name": "WASSUP",
+      "orgId": "wassup",
+      "region": "NA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-na"
+      ],
+      "players": [
+        {
+          "personId": "alxx",
+          "nickname": "Alxx",
+          "overall": 82
+        },
+        {
+          "personId": "scythe",
+          "nickname": "scythe",
+          "overall": 82
+        },
+        {
+          "personId": "xpurt",
+          "nickname": "xpurt",
+          "overall": 82
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "arrogantchi-sam-2027",
+      "id": "arrogantchi-2027",
+      "name": "Arrogantchi",
+      "orgId": "arrogantchi",
+      "region": "SAM",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-sam"
+      ],
+      "players": [
+        {
+          "personId": "courtz",
+          "nickname": "courtz",
+          "overall": 80
+        },
+        {
+          "personId": "maathzudo",
+          "nickname": "Maathzudo",
+          "overall": 80
+        },
+        {
+          "personId": "nahuz",
+          "nickname": "nahuz",
+          "overall": 80
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "dynasty-sam-2027",
+      "id": "dynasty-2027",
+      "name": "Dynasty",
+      "orgId": "dynasty",
+      "region": "SAM",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-sam"
+      ],
+      "players": [
+        {
+          "personId": "ferraz",
+          "nickname": "Ferraz",
+          "overall": 79
+        },
+        {
+          "personId": "iguinn",
+          "nickname": "Iguinn",
+          "overall": 79
+        },
+        {
+          "personId": "zeeph",
+          "nickname": "zeeph",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "t18-esports-sam-2027",
+      "id": "t18-esports-2027",
+      "name": "T18 Esports",
+      "orgId": "t18-esports",
+      "region": "SAM",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-sam"
+      ],
+      "players": [
+        {
+          "personId": "misery",
+          "nickname": "misery",
+          "overall": 80
+        },
+        {
+          "personId": "umbroken",
+          "nickname": "UmBroken",
+          "overall": 82
+        },
+        {
+          "personId": "viitin",
+          "nickname": "ViitiN",
+          "overall": 82
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "1v1-mena-2027",
+      "id": "1v1-2027",
+      "name": "1v1",
+      "orgId": "1v1",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "willie",
+          "nickname": "Willie",
+          "overall": 78
+        },
+        {
+          "personId": "vfbi",
+          "nickname": "vFbi",
+          "overall": 78
+        },
+        {
+          "personId": "shadi",
+          "nickname": "shadi",
+          "overall": 78
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "b3den-nsme-mena-2027",
+      "id": "b3den-nsme-2027",
+      "name": "b3den nsme",
+      "orgId": "b3den-nsme",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "glowz",
+          "nickname": "Glowz",
+          "overall": 81
+        },
+        {
+          "personId": "jsm",
+          "nickname": "JSM",
+          "overall": 81
+        },
+        {
+          "personId": "m6r",
+          "nickname": "M6R",
+          "overall": 81
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "room-mate-london-mena-2027",
+      "id": "room-mate-london-2027",
+      "name": "Room Mate London",
+      "orgId": "room-mate-london",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "hmod",
+          "nickname": "Hmod",
+          "overall": 79
+        },
+        {
+          "personId": "isl6nii",
+          "nickname": "iSL6Nii",
+          "overall": 79
+        },
+        {
+          "personId": "sqqp",
+          "nickname": "SQQP",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "shmn8a-mr7-mena-2027",
+      "id": "shmn8a-mr7-2027",
+      "name": "shmn8a mr7",
+      "orgId": "shmn8a-mr7",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "b2sel",
+          "nickname": "B2seL",
+          "overall": 79
+        },
+        {
+          "personId": "nadr",
+          "nickname": "Nadr",
+          "overall": 79
+        },
+        {
+          "personId": "o0vvl",
+          "nickname": "o0vvl",
+          "overall": 79
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "team-x-mena-2027",
+      "id": "team-x-2027",
+      "name": "Team X",
+      "orgId": "team-x",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "suspect",
+          "nickname": "Suspect",
+          "overall": 81
+        },
+        {
+          "personId": "t7lm",
+          "nickname": "T7LM",
+          "overall": 81
+        },
+        {
+          "personId": "twiz",
+          "nickname": "Twiz",
+          "overall": 81
+        }
+      ],
+      "coach": null,
+      "sub": null
+    },
+    {
+      "sourceId": "the-white-horse-mena-2027",
+      "id": "the-white-horse-2027",
+      "name": "The white horse",
+      "orgId": "the-white-horse",
+      "region": "MENA",
+      "regionalOnly": true,
+      "rosterStatus": "reportado",
+      "organizationStatus": "sem_org_verificada",
+      "sources": [
+        "kickoff-package",
+        "hub-mena"
+      ],
+      "players": [
+        {
+          "personId": "bang",
+          "nickname": "Bang",
+          "overall": 78
+        },
+        {
+          "personId": "israkan",
+          "nickname": "isRakan",
+          "overall": 78
+        },
+        {
+          "personId": "nmj",
+          "nickname": "nmj",
+          "overall": 78
+        }
+      ],
+      "coach": null,
+      "sub": null
     }
   ],
   "notes": [
@@ -3159,6 +4474,11 @@
     "FaZe stays faze-clan in SAM; NiP stays ninjas-in-pyjamas in EU. Existing regional Pioneers/FUT ids are preserved for save compatibility.",
     "Free-agent competitive tags occupy the existing org slot with a neutral (~) buff. No organization contract is inferred from this.",
     "Kevpert is additional coaching staff, not a substitute: the current game has one coach slot (RawGreg). Radosin is an event-only stand-in, not a 2027 starter.",
-    "Career calendar remains its existing historical timeline; 2027 is added to the draft dataset without inventing a Club Championship career calendar."
-  ]
+    "Career calendar remains its existing historical timeline; 2027 is added to the draft dataset without inventing a Club Championship career calendar.",
+    "2026-11-16 Kick-Off package: PCS Stride (shown as Project Conquerors) and NOT move to the general draft; overall refreshes for M80, PCS Stride, NOT, Tubby Troubles and Novadrift; 25 new region-only qualifiers. Package nick spellings Aztrø/sad (MIBR), Matt (1), del1very. (Parmiticos) keep the existing game ids and display names.",
+    "The 25 lineups the package marks as archive are not added. Five of them were already in the game (Fortnite Flick, Space Bound Cowboys, AVID, Ballerrinas, nimmt55) and stay, since removing cards would break saves.",
+    "lsf's Speed is the British Speed (same person id, now on an NA team). T18's misery is 80 instead of the package's 82 (his career best is 77). New players without a sourced country get none (no flag, no same-country chemistry).",
+    "2026-11-16 review by Miguel: droppz 84 (was 85) and coach STL 84 (was 81) on PCS Stride; coach Nick 85 (was 76) on M80. Bigodes 2026 coach Kaoshi 81 (was 79) is outside this snapshot. BS+COMPETITION: coach Kaoshi 80 added, klaus 83, LeoDkn 81, pan 82."
+  ],
+  "updatedAt": "2026-11-16"
 }

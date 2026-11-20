@@ -611,6 +611,7 @@ export function localSideTeamOf(save: CareerSave, ref: string): TournamentTeam {
   const region = localRegionOf(ref) ?? save.identity.region;
   return localTeamFor(ref, {
     careerSeed: save.careerSeed,
+    nameBankVersion: save.world.nameBankVersion,
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     anchor: seasonLocalAnchorOf(save, region),

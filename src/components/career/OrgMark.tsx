@@ -109,7 +109,7 @@ export function OrgMark({
     // v2.0 (R23): local amateur sides get a procedural crest from their name.
     const crest = proceduralCrestFor(
       orgRef,
-      org?.name ?? (isLocalRef(orgRef) ? localTeamName(orgRef, save.careerSeed) : undefined),
+      org?.name ?? (isLocalRef(orgRef) ? localTeamName(orgRef, save.careerSeed, save.world.nameBankVersion) : undefined),
     );
     return (
       <UserCrest

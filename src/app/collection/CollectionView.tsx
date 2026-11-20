@@ -29,6 +29,10 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { NATIONAL_CARD_IDS, NATIONAL_TEAMS, NationalAlbum } from "./NationalAlbum";
+import { AppLink } from "@/components/ui/AppLink";
+import { achievementById } from "@/data/catalog";
+import { isNationalSpecialId } from "@/data/counts";
+import { nextSpecialsMilestone } from "@/engine/counterAchievements";
 
 // Official catalogue groups, followed by discovered special-person families. The
 // special-person rarities (community/wings/creator) are intentionally absent:
@@ -242,9 +246,13 @@ export function CollectionView() {
                 {C.progress(nationalGot, NATIONAL_CARD_IDS.length)}
               </Badge>
             ) : (
-              <Badge tone="orange" className="!text-sm">
-                {C.progress(unlockedCount, collectibleCards.length)}
-              </Badge>
+              <div className="flex flex-col items-end">
+                <Badge tone="orange" className="!text-sm">
+                  {C.progress(unlockedCount, collectibleCards.length)}
+                </Badge>
+                {/* v2.0.35: the next collection reward, a quiet line under the count (player survey). */}
+                <NextMilestone owned={mounted ? Object.keys(unlockedMap ?? {}).filter((id) => !isNationalSpecialId(id)).length : null} />
+              </div>
             )}
           </div>
         }
@@ -362,6 +370,13 @@ export function CollectionView() {
       )}
 
       {/* Detail modal */}
+      {/* v2.0.35: the RLCS database, a quiet link at the end of the page (player survey: "an index of every team"). */}
+      <p className="mt-10 text-center text-xs">
+        <AppLink href="/rlcs" className="text-faint underline-offset-2 hover:text-sub hover:underline">
+          {C.databaseLink}
+        </AppLink>
+      </p>
+
       <Modal
         open={Boolean(detail)}
         title={
@@ -395,6 +410,16 @@ export function CollectionView() {
  * always-on layers (blend modes, backdrop-blur, forced tilt layers) are gone in
  * `lite` mode. Card internals are untouched; lives only in the collection.
  */
+/** v2.0.34: the next collection achievement (same count as the achievements: national cards excluded) and the database link. */
+function NextMilestone({ owned }: { owned: number | null }) {
+  const { COLLECTION_UI: C, ACH_UI } = useCopy();
+  const next = owned === null ? null : nextSpecialsMilestone(owned);
+  const def = next ? achievementById.get(next.id) : undefined;
+  if (owned === null || !next || !def) return null;
+  // v2.1.0-rc.1: set as a quiet label of the new identity (DESIGN.md: display Medium caps, faint).
+  return <p className="display mt-1.5 text-[11px] font-medium uppercase tracking-[0.04em] tabular-nums text-faint">{C.nextMilestone(ACH_UI.items[def.id]?.name ?? def.title, owned, next.at)}</p>;
+}
+
 function FxCard({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);

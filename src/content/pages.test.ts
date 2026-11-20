@@ -33,6 +33,7 @@ describe("content pages", () => {
       const pt = PAGES_PT[slug];
       expect(pt.sections.length, `${slug} sections`).toBe(en.sections.length);
       expect(pt.faqs?.length ?? 0, `${slug} faqs`).toBe(en.faqs?.length ?? 0);
+      expect(Boolean(pt.ctaAltLabel), `${slug} second button`).toBe(Boolean(en.ctaAltLabel));
     }
   });
 
@@ -92,6 +93,16 @@ describe("page metadata", () => {
       index: false,
       follow: true,
     });
+  });
+
+  it("a page with its own share image uses it in Open Graph and the X card", () => {
+    // v2.0.33, the career landing (careerShareSrc).
+    const image = { url: "/landing/career-share-en.jpg", alt: "A" };
+    const meta = pageMetadata({ title: "T", description: "D", path: "/rocket-league-manager", image });
+    expect(JSON.stringify(meta.openGraph)).toContain(image.url);
+    expect(JSON.stringify(meta.openGraph)).not.toContain("/opengraph-image.png");
+    expect(meta.openGraph).toMatchObject({ images: [{ url: image.url, alt: "A", width: 1200, height: 630 }] });
+    expect(meta.twitter).toMatchObject({ images: [{ url: image.url, alt: "A" }] });
   });
 
   it("a content page points at its twin in the other language", () => {

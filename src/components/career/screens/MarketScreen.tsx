@@ -41,6 +41,7 @@ import { growthModelOf, signsForFinalSeason } from "@/engine/career/development"
 import type {
   CareerPlayerView,
   PotentialBand,
+  TradeProposal,
   TransferOffer,
 } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
@@ -55,6 +56,11 @@ import {
   nextBreachOutcomeOf,
   signingPlanFor,
   signingTalkFor,
+  tradeCashOf,
+  tradeAcceptPlanFor,
+  tradeProposalsOf,
+  transferListOf,
+  listingPlanFor,
   rosterIsShort,
   weeklyStatementOf,
 } from "@/store/careerFlow";
@@ -64,6 +70,8 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
+import { ListPlayerSheet } from "@/components/career/ListPlayerSheet";
+import { TradeSheet } from "@/components/career/TradeSheet";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
@@ -207,6 +215,8 @@ export function MarketScreen() {
   const signPlayer = useCareerStore((s) => s.signPlayer);
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const declineBid = useCareerStore((s) => s.declineBid);
+  const delistPlayer = useCareerStore((s) => s.delistPlayer);
+  const withdrawTrade = useCareerStore((s) => s.withdrawTrade);
   const hireCoach = useCareerStore((s) => s.hireCoach);
   const fireCoach = useCareerStore((s) => s.fireCoach);
   const renewCoach = useCareerStore((s) => s.renewCoach);
@@ -241,6 +251,10 @@ export function MarketScreen() {
   const [signableOnly, setSignableOnly] = useState(false);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [confirmFire, setConfirmFire] = useState(false);
+  /** R135: the listing sheet (open + the player; null player = squad picker) and the trade sheet / confirm. */
+  const [listSheet, setListSheet] = useState<{ playerId: string | null } | null>(null);
+  const [tradeOpen, setTradeOpen] = useState(false);
+  const [confirmTrade, setConfirmTrade] = useState<TradeProposal | null>(null);
   /** v0.3 org sheet (deals tab — inspect the bidder's roster). */
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
@@ -377,6 +391,13 @@ export function MarketScreen() {
   const bids = save.pendingOffers.filter(
     (o) => o.status === "pending" && o.direction === "out",
   );
+  // R135 (ECO-06): the transfer list and the trades proposed.
+  const listed = transferListOf(save);
+  const trades = tradeProposalsOf(save);
+  const tradesToAnswer = trades.filter((p) => p.status !== "waiting");
+  const listBlock = save.squad.map((p) => listingPlanFor(save, p.id)?.error ?? null).find((e) => e === "windowClosed" || e === "listFirstWindow" || e === "listWindowClosing" || e === "listDisabled") ?? null;
+  const listErrorText = (key: string): string => (C.market.errors as Record<string, string>)[key] ?? C.market.errors.unknown;
+  const listedDate = (day: number): string => formatDateTiny(D, dateOfDay(save.clock.seasonIndex, day));
 
   // DEV-02 (R48): a player whose current season must be his last signs for
   // it only — the sheet offers the 1-season deal and says why.
@@ -489,9 +510,9 @@ export function MarketScreen() {
           >
             {label}
             {k === "coaches" && save.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) ? <span className="h-2 w-2 rounded-full bg-orange" aria-label={C.toolbox.newTag} /> : null}
-            {k === "deals" && bids.length > 0 ? (
+            {k === "deals" && bids.length + tradesToAnswer.length > 0 ? (
               <span className="rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal text-orange-bright">
-                {bids.length}
+                {bids.length + tradesToAnswer.length}
               </span>
             ) : null}
           </Chip>
@@ -776,7 +797,11 @@ export function MarketScreen() {
                           ) : null}
                           {o.emergency ? <Badge tone="bad">{C.market.emergencyBadge}</Badge> : null}
                           <MarketValueTag offer={o} />
+                          {o.listed ? <Badge tone="blue">{C.market.transferList.offerTag}</Badge> : null}
                         </div>
+                        {o.listed && o.ask !== undefined && o.fee < o.ask ? (
+                          <p className="mt-1 text-xs font-semibold text-orange-bright">{C.market.transferList.counterLine(formatMoney(o.ask))}</p>
+                        ) : null}
                         {squadPlayer ? <p className="mt-1 flex flex-wrap gap-3 text-xs text-sub"><span>{C.common.ovr} <strong className="text-ink">{Math.round(squadPlayer.overall)}</strong></span><span>{C.squad.wage} <strong className="text-ink">{wageLabel(C, squadPlayer.salaryPerSplit)}</strong></span></p> : null}
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (
@@ -840,6 +865,109 @@ export function MarketScreen() {
               })}
             </div>
           )}
+          </Panel>
+          {/* R135 (ECO-06): the transfer list. */}
+          <Panel className="p-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="kicker text-[10px]">{C.market.transferList.title}</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={Boolean(listBlock)}
+                onClick={() => setListSheet({ playerId: null })}
+              >
+                {C.market.transferList.listPlayer}
+              </Button>
+            </div>
+            {listBlock ? <p className="mb-2 text-xs font-semibold text-orange-bright">{listErrorText(listBlock)}</p> : null}
+            {listed.length === 0 ? (
+              <p className="text-xs text-faint">{C.market.transferList.empty}</p>
+            ) : (
+              <div className="space-y-2">
+                {listed.map((l) => {
+                  const sp = save.squad.find((p) => p.id === l.playerId);
+                  if (!sp) return null;
+                  return (
+                    <div key={l.playerId} className="rounded-lg border border-line bg-white/[0.02] p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="display break-words text-base font-bold text-ink">{sp.name}</span>
+                            <span className="text-xs text-sub">{C.common.ovr} <strong className="text-ink">{Math.round(sp.overall)}</strong></span>
+                          </p>
+                          <p className="mt-0.5 text-xs font-semibold text-orange-bright">{C.market.transferList.asking(formatMoney(l.ask))}</p>
+                          <p className="mt-0.5 text-[11px] text-sub">
+                            {l.status === "waiting"
+                              ? C.market.transferList.waiting(listedDate(l.answerDay))
+                              : l.status === "offered"
+                                ? C.market.transferList.offered
+                                : l.reason === "noBuyer"
+                                  ? C.market.transferList.noBuyer
+                                  : C.market.transferList.tooDear}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {l.status !== "offered" ? (
+                            <Button variant="secondary" size="sm" onClick={() => setListSheet({ playerId: l.playerId })}>
+                              {C.market.transferList.changePrice}
+                            </Button>
+                          ) : null}
+                          <Button variant="ghost" size="sm" onClick={() => delistPlayer(l.playerId)}>
+                            {C.market.transferList.withdraw}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Panel>
+
+          {/* R135 (ECO-06): player-for-player trades. */}
+          <Panel className="p-4">
+            <p className="kicker mb-2 text-[10px]">{C.market.trade.title}</p>
+            {trades.length === 0 ? (
+              <p className="text-xs text-faint">{C.market.trade.empty}</p>
+            ) : (
+              <div className="space-y-2">
+                {trades.map((p) => (
+                  <div key={p.id} className="rounded-lg border border-line bg-white/[0.02] p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="display break-words text-base font-bold text-ink">
+                          {C.market.trade.row(p.giveName, p.takeName, nameOfRef(save, p.orgRef))}
+                        </p>
+                        {p.cash > 0 ? <p className="mt-0.5 text-xs text-sub">{C.market.trade.cashLine(formatMoney(p.cash))}</p> : null}
+                        <p className={cx("mt-0.5 text-[11px]", p.status === "waiting" ? "text-sub" : "font-semibold text-good")}>
+                          {p.status === "waiting"
+                            ? C.market.trade.waiting(listedDate(p.answerDay))
+                            : p.status === "countered"
+                              ? C.market.trade.countered(formatMoney(tradeCashOf(p)))
+                              : C.market.trade.agreed}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {p.status === "waiting" ? (
+                          <Button variant="ghost" size="sm" onClick={() => withdrawTrade(p.id)}>
+                            {C.market.trade.withdraw}
+                          </Button>
+                        ) : (
+                          <>
+                            <Button variant="primary" size="sm" onClick={() => setConfirmTrade(p)}>
+                              {C.market.accept}
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => declineBid(p.id)}>
+                              {C.market.decline}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Panel>
           <RenewalsPanel save={save} C={C} />
         </div>
@@ -1060,6 +1188,16 @@ export function MarketScreen() {
               </div>
             </div>
 
+            {/* R135 (ECO-06): a contracted player can also be bought with a player of yours. */}
+            {target.orgRef ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="min-w-0 flex-1 text-[11px] text-faint">{C.market.trade.proposeHint}</p>
+                <Button variant="secondary" size="md" onClick={() => setTradeOpen(true)}>
+                  {C.market.trade.proposeCta}
+                </Button>
+              </div>
+            ) : null}
+
             {/* Consequences */}
             <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3 text-sm">
               <p className="kicker mb-2 text-[10px]">{C.market.consequences}</p>
@@ -1136,6 +1274,85 @@ export function MarketScreen() {
           </div>
         ) : null}
       </Modal>
+
+      {/* ================= R135: listing sheet, trade sheet, trade confirm ================= */}
+      {listSheet ? (
+        <ListPlayerSheet
+          key={listSheet.playerId ?? "pick"}
+          save={save}
+          open
+          playerId={listSheet.playerId}
+          onClose={() => setListSheet(null)}
+        />
+      ) : null}
+      <TradeSheet
+        save={save}
+        open={tradeOpen && Boolean(target?.orgRef)}
+        target={target && target.orgRef ? { id: target.view.id, name: target.view.name, overall: target.view.overall, orgRef: target.orgRef } : null}
+        onClose={() => setTradeOpen(false)}
+        onSent={() => {
+          setTradeOpen(false);
+          setOfferOpen(false);
+          setTarget(null);
+          setTab("deals");
+        }}
+      />
+      {(() => {
+        const p = confirmTrade;
+        const res = p ? tradeAcceptPlanFor(save, p.id) : null;
+        const tplan = res && "plan" in res ? res.plan : null;
+        const terr = res && "error" in res ? res.error : null;
+        const tcash = p ? tradeCashOf(p) : 0;
+        return (
+          <Modal
+            open={Boolean(p)}
+            title={C.market.trade.confirmTitle}
+            onClose={() => setConfirmTrade(null)}
+            actions={
+              <>
+                <Button variant="ghost" onClick={() => setConfirmTrade(null)}>
+                  {C.common.cancel}
+                </Button>
+                {tplan && p ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      acceptBid(p.id);
+                      setConfirmTrade(null);
+                    }}
+                  >
+                    {C.common.confirm}
+                  </Button>
+                ) : null}
+              </>
+            }
+          >
+            {p ? (
+              <div className="space-y-2 text-sm">
+                <p className="text-ink">{C.market.trade.row(p.giveName, p.takeName, nameOfRef(save, p.orgRef))}</p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.leaves}</span><span className="display font-bold text-ink">{p.giveName}</span></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.arrives}</span><span className="display font-bold text-ink">{p.takeName}</span></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.cash}</span><span className="display font-bold text-ink">{tcash > 0 ? formatMoney(tcash) : C.market.trade.noCash}</span></div>
+                  {tplan ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sub">{C.squad.wage}</span>
+                      <span className="text-right font-bold text-ink">
+                        {C.market.trade.wageLine(wageLabel(C, tplan.signing.talk.offered.wagePerSplit), prizeShareLabelOf(C, { prizeSharePct: tplan.signing.talk.offered.sharePct }))}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.length}</span><span className="font-bold text-ink">{C.market.trade.lengthLine(p.lengthSeasons)}</span></div>
+                </div>
+                {terr ? (
+                  <p className="rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad">{listErrorText(terr)}</p>
+                ) : null}
+                <p className="text-xs text-faint">{C.market.trade.irreversible}</p>
+              </div>
+            ) : null}
+          </Modal>
+        );
+      })()}
 
       {/* ================= fire-coach confirm ================= */}
       <Modal

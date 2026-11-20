@@ -313,12 +313,16 @@
     "ctaLabel": "Simulate an RLCS tournament"
   },
   "manager": {
-    "metaTitle": "Rocket League Manager Game & Career Simulator",
-    "metaDescription": "Road to Worlds is a free Rocket League manager game: found a club, sign real RLCS players, train them, run sponsors and finances, and win the World Championship.",
+    "metaTitle": "Rocket League Career Mode & Manager Game: Free",
+    "metaDescription": "A free Rocket League career mode in your browser, no mod or download: found a club, sign real RLCS players, train them and win the World Championship.",
     "kicker": "Career mode",
-    "title": "Road to Worlds: Rocket League Manager Game",
-    "intro": "Road to Worlds is Rocket Draft's career mode: a free Rocket League esports manager game that runs in your browser. Found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
+    "title": "Rocket League Career Mode & Manager Game: Road to Worlds",
+    "intro": "Road to Worlds is a free Rocket League career mode that runs in your browser, on PC or phone, with nothing to download. You are the manager: found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
     "sections": [
+      {
+        "heading": "Does Rocket League have a career mode?",
+        "body": "Not in the game itself: Rocket League has no career mode built around its esports scene. Fan-made projects fill the gap: mods that run inside the game on PC, manager games you download, and games that run in the browser. Road to Worlds is the browser kind. It is a club manager career, so you run an organization rather than a single player, and it plays on desktop and mobile with nothing to install, built on the real history of the RLCS."
+      },
       {
         "heading": "Found your club",
         "body": "A career starts with an empty club. Pick the region you want to compete in, name the organization, design its crest and colours, and choose a difficulty. The difficulty sets your starting budget and how forgiving the finances are. Then you sign your first roster and the season begins."
@@ -329,7 +333,7 @@
       },
       {
         "heading": "Sign, train and develop players",
-        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players: three starters and a substitute. Training targets individual attributes, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
+        "body": "The transfer market works in windows, with fees, wages, contracts and rival bids. Your squad holds four players: three starters and a substitute. Training runs in two-week cycles with a plan for the whole squad, coaches shape how fast players grow, and real RLCS coaches appear on the coach market. Players improve with matches and training, and decline as the years pass, so a roster has to be renewed."
       },
       {
         "heading": "Run the business",
@@ -346,16 +350,223 @@
     ],
     "faqs": [
       {
+        "q": "Does Rocket League have a career mode?",
+        "a": "Not an official one: Rocket League has no career mode built around its esports scene. Road to Worlds is a free, fan-made Rocket League career mode that runs in the browser: you found a club and take it through the RLCS seasons to the World Championship."
+      },
+      {
         "q": "Is there a Rocket League manager game?",
-        "a": "Road to Worlds, the career mode of Rocket Draft, is a free fan-made Rocket League esports manager game. You run a club: signings, training, finances and the RLCS calendar."
+        "a": "Yes. Road to Worlds, the career mode of Rocket Draft, is a free fan-made Rocket League esports manager game. You run a club: signings, training, finances and the RLCS calendar."
+      },
+      {
+        "q": "Do I need a mod, a download or a PC?",
+        "a": "No. Road to Worlds runs in the browser on PC, Mac, tablets and phones. There is no mod to install, nothing to download and no account to create."
+      },
+      {
+        "q": "Do I play as a player or as the manager?",
+        "a": "As the manager. You found the organization, sign the roster, hire the coach and the staff and keep the books balanced, while the matches are simulated."
       },
       {
         "q": "Is the Rocket League career simulator free?",
-        "a": "Yes. It is free, runs in the browser on desktop and mobile, and needs no download or account."
+        "a": "Yes. Road to Worlds is free to play, like the rest of Rocket Draft, and your career saves on your device. Sign in and your account keeps a copy too."
       },
       {
         "q": "Does it use real RLCS players and teams?",
         "a": "Yes. The player and coach market is built from the same database of real RLCS lineups, from 2016 to today, that the draft game uses."
+      }
+    ],
+    "ctaLabel": "Found your club",
+    "ctaAltLabel": "Start with a random club",
+    "badges": ["Free", "No download", "No account", "Desktop and mobile"],
+    "guidesLabel": "Road to Worlds guides"
+  },
+  "career-guide": {
+    "metaTitle": "Road to Worlds Guide: Rocket League Career Tips",
+    "metaDescription": "A beginner's guide to Road to Worlds, the free Rocket League career mode: pick a region, build a roster you can afford, train it and win the World Championship.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Guide: How to Win the Rocket League Career Mode",
+    "intro": "A beginner's guide to Road to Worlds, the Rocket League career mode in Rocket Draft. It covers the choices that decide a career: the region and the difficulty, a first roster you can pay for, training, the RLCS calendar, the money, and when to renew the squad.",
+    "sections": [
+      {
+        "heading": "Pick your region and difficulty",
+        "body": "The region decides who you play every week and which events you enter, and each region card shows its relative difficulty before you choose. The difficulty sets your starting budget and how forgiving the finances are. For a first career, take Normal and a region whose teams you know: recognising the names on the market makes every signing easier to judge."
+      },
+      {
+        "heading": "Build a roster you can pay for",
+        "body": "A squad is four players: three starters and a substitute. The transfer fee is paid once, but wages leave the account every week, so read the wage before the overall. A new club has little reputation, and the elite names and players under contract elsewhere stay out of reach until it grows. Start with players you can afford, win with them, and let the reputation open the market."
+      },
+      {
+        "heading": "Train with a plan",
+        "body": "Training runs in two-week cycles. For each one you choose an objective (growth, chemistry or recovery), one attribute for the squad to sharpen, the intensity and the scrims. With a coach the plan comes ready and training pays more; a coach also lowers the risk of a player missing a week through training wear; real RLCS coaches appear on the coach market. The substitute earns less experience from a series than the starters do, so rotate the lineup at HQ when you want the bench to keep up."
+      },
+      {
+        "heading": "Read the calendar",
+        "body": "Each season is a run of regional events with open qualifiers. Regional points send the best teams to the Majors, and season points decide who goes to the World Championship. Open weeks offer community cups and invitationals: they pay prize money and give the squad matches. RLCS Season X, where the career opens, has no World Championship, as it had none in real life, so the first title race is the next season's."
+      },
+      {
+        "heading": "Keep the club solvent",
+        "body": "Prize money, sponsors and reputation bring the money in; wages, staff and transfer fees take it out. Sponsor offers wait for you to accept or decline them and carry goals for the length of the contract, so sign the ones your squad can meet. The Finances screen shows the weekly statement and the projection for the season. Check it before every signing. Loans cover a bad stretch, and they have to be repaid. Support staff each help in one area and each cost a retainer."
+      },
+      {
+        "heading": "Renew the squad before it declines",
+        "body": "Players improve with matches and training and decline as the years pass. Rival clubs bid for your players during the transfer windows, and a good offer for a player near the end of their peak pays for the next one. If the world title has not come by the end of 2026, the career continues in an endless mode with new seasons, and the RLCS 2027 lineups join the world there."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How do you win Road to Worlds?",
+        "a": "By winning the World Championship. Score regional points to reach the Majors, collect enough season points to qualify for Worlds, and then win its bracket."
+      },
+      {
+        "q": "Which region should I start a Rocket League career in?",
+        "a": "Each region card shows its relative difficulty before you choose. Take an easier region for a first career and a harder one when you want a longer climb."
+      },
+      {
+        "q": "Is my career saved?",
+        "a": "Yes. Careers are saved on your device, in separate save slots, and the game is free with no download."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-market": {
+    "metaTitle": "Rocket League Manager Transfers: Market Guide",
+    "metaDescription": "How the transfer market works in Road to Worlds, the Rocket League manager game: windows, free agents, buyouts, contract talks, rival bids and the coach market.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Transfer Market: Signings, Contracts and Bids",
+    "intro": "The transfer market is where a Road to Worlds career is won or lost. This guide explains when you can sign, what a player costs, how a contract talk works, and how to sell before a player loses value.",
+    "sections": [
+      {
+        "heading": "When the market is open",
+        "body": "Deals happen only while a transfer window is open. Windows open between the splits of a season and before the World Championship. Scouting stays open the whole time, so use the closed weeks to study players and prices and arrive at the window with a list. There is one exception: when your squad is short of three players, a free agent can take the empty seat on any day."
+      },
+      {
+        "heading": "Free agents and buyouts",
+        "body": "There are two ways to sign a player. A free agent costs no fee, only the wage. A player under contract with another club has to be bought out: you pay a transfer fee to the club and then agree terms with the player. Every price on the Market shows how it was calculated. A new club can sign free agents only; buying out contracts unlocks as its reputation grows."
+      },
+      {
+        "heading": "Reputation decides who will join",
+        "body": "Money is not enough. Players above a certain level will not join a club whose reputation is too low, whatever the offer. Results raise reputation, and reputation opens the next level of player. The Market has a filter that shows only the players your club can sign today, which keeps the list honest when you are planning a window."
+      },
+      {
+        "heading": "The contract talk",
+        "body": "A player asks for three things: a weekly wage, a share of the prize money and a signing bonus. You can move each one, and the screen shows the chance that the player signs with the offer as it stands. A larger prize share or bonus lets you pay a lower wage, which helps a club with little cash each week. Pay the full ask and the player signs for certain. The contract length is part of the offer as well."
+      },
+      {
+        "heading": "Selling and rival bids",
+        "body": "Rival clubs bid for your players during the windows, and every bid waits for you to accept or decline it. You can mark a player as available and expect offers in the next window. A club in the red receives offers below market value, so sell before the money runs out, not after. A player whose contract ends leaves for free: renew it before the season closes or sell the player while there is still a price."
+      },
+      {
+        "heading": "The reserve and the coach market",
+        "body": "The fourth player is the reserve, who steps in when a starter cannot play. Without one the team misses that event. A reserve signs only inside a window, so do not leave the seat empty. Coaches have a market of their own: a generic coach comes first, and retired pros and real RLCS coaches join the shortlist as the club's reputation grows. Coaches sign contracts and renew them like players."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "When do transfer windows open in Road to Worlds?",
+        "a": "Between the splits of each season and before the World Championship. Outside a window you can scout, and a free agent can fill an empty starting seat."
+      },
+      {
+        "q": "Why can't I sign a player I can afford?",
+        "a": "Either the window is closed, the squad is full, or the club's reputation is too low for a player of that level. The Market says which one applies."
+      },
+      {
+        "q": "What happens when a contract ends?",
+        "a": "The player leaves for free. Renew the contract before the season ends, or sell the player in a window before it runs out."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-finances": {
+    "metaTitle": "Rocket League Manager Finances: Sponsors & Loans",
+    "metaDescription": "How money works in Road to Worlds, the Rocket League manager game: the Monday statement, prize money, sponsor deals and goals, loans, the floor and what to buy first.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Finances: Sponsors, Wages and Loans",
+    "intro": "A Road to Worlds career ends in two ways: with the world title or with the bank. This guide covers where the money comes from, where it goes every Monday, how sponsor deals pay, and how to borrow without losing the club.",
+    "sections": [
+      {
+        "heading": "Monday is payday",
+        "body": "The books move once a week. Every Monday the sponsor pays in, and wages, staff, facility upkeep and loan instalments go out. Prize money arrives with the results of each event. The Finances screen shows three things: the balance over time, the statement of the coming Monday, and the projection for the rest of the season. Read the projection before any signing, because a wage is paid every week until the contract ends."
+      },
+      {
+        "heading": "Prize money and the players' share",
+        "body": "Regional events, Majors, the World Championship, community cups and invitationals all pay prize money. If you agreed a prize share in a contract talk, that part goes to the players before the rest reaches the club. Open weeks matter for this reason: an invitational or a community cup is income in a week that would otherwise only cost wages."
+      },
+      {
+        "heading": "Sponsor deals",
+        "body": "A sponsor pays a guaranteed amount each split and a bonus for every goal you reach. The offers come in three profiles. A steady deal pays the least and carries no fines. A bold deal pays the most and fines a missed goal. Bold deals open as the reputation grows. Miss goals repeatedly and the next offer drops a tier, so sign the deal whose goals your squad can meet, not the one with the largest number."
+      },
+      {
+        "heading": "Loans and the floor",
+        "body": "There are two loans. The voluntary one is available whenever you want it: the bank sizes the credit by your reputation and you repay it in weekly instalments with interest. The emergency loan is not a choice. If a Monday closes below the floor, the bank lends by itself and sets a deadline. Miss that deadline and the career ends. While the emergency loan is owed you cannot pay transfer fees."
+      },
+      {
+        "heading": "What to buy first",
+        "body": "Reputation unlocks a ladder of investments: gear that speeds up training, the coach, bootcamps that build chemistry, better sponsor tiers, a psychologist and the support staff. Each one costs money up front or a retainer every week. Buy what raises results first, since results bring prize money and reputation, and add weekly costs only when the projection stays positive after them."
+      },
+      {
+        "heading": "Getting out of the red",
+        "body": "When the balance is falling, act before the floor. Check the wage bill first: one expensive player on the bench can cost more than a loan. Enter the open-week events for the prize money. Sell in the next window while the offers are still at market value, because a club in the red receives lower ones. Take the voluntary loan early if the projection shows a short gap, and keep the emergency loan as the last resort it is."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can you go bankrupt in Road to Worlds?",
+        "a": "Yes. If the balance closes a Monday below the floor, the bank makes an emergency loan with a deadline. Failing to repay it by the deadline ends the career."
+      },
+      {
+        "q": "Which sponsor deal should I sign?",
+        "a": "The one whose goals your squad can reach. A steady deal has no fines; a bold deal pays more and fines every missed goal."
+      },
+      {
+        "q": "When are wages paid?",
+        "a": "Every Monday, together with staff, upkeep and loan instalments. The Finances screen shows the next statement in advance."
+      }
+    ],
+    "ctaLabel": "Start a Road to Worlds career"
+  },
+  "career-training": {
+    "metaTitle": "Rocket League Manager Training: Player Growth",
+    "metaDescription": "How training works in Road to Worlds, the Rocket League manager game: two-week cycles, growth and chemistry, wear, coaches, peak and decline, and the reserve.",
+    "kicker": "Career mode guide",
+    "title": "Road to Worlds Training: How Players Grow and Decline",
+    "intro": "Signing a player is half of the work in Road to Worlds. The other half is training: how fast a player reaches their potential, how long the peak lasts and how well the three starters play together. This guide explains the training cycle and the choices in it.",
+    "sections": [
+      {
+        "heading": "The two-week cycle",
+        "body": "Training runs in cycles of 14 days. For each cycle you set a plan with four parts: the objective, the focus, the intensity and the scrims. The plan applies to the whole squad, and its result lands when the cycle completes. You can keep the same plan for the next cycle or change it when the calendar changes."
+      },
+      {
+        "heading": "Three objectives",
+        "body": "The objective is the main choice. Development makes attributes grow faster toward each player's peak. Chemistry makes the squad gel faster, which matters most after a signing. Recovery lowers wear and helps veterans hold their level longer. A common pattern is development in the quiet weeks, chemistry after a transfer window and recovery before the events that decide the season."
+      },
+      {
+        "heading": "Focus, intensity and scrims",
+        "body": "The focus is one attribute that every player sharpens during the cycle. The intensity trades growth for wear: a light cycle gives a smaller boost and much less wear. Scrims add match practice at a chosen difficulty and add their own wear. Wear is the cost of training hard: a worn player can miss an event, and then the reserve has to play."
+      },
+      {
+        "heading": "What the coach does",
+        "body": "With a coach, the plan for each cycle comes ready and training pays more. You can let the coach start every cycle or only read the recommendation and decide yourself. A coach also lowers the risk of losing a player to training wear. Better coaches arrive as the club's reputation grows, from a generic coach to retired pros and real RLCS coaches."
+      },
+      {
+        "heading": "Potential, peak and decline",
+        "body": "Every player grows toward a potential, holds a peak for a time and then declines. The Training screen shows which of the three stages each player is in, and how fast a player past their prime is losing overall. Use it before every renewal: a long contract for a player who is still growing is cheap later, and the same contract for a declining player is paid in full while the overall drops."
+      },
+      {
+        "heading": "The reserve and the gear",
+        "body": "The reserve earns less experience from a series than the starters, and falls behind unless you rotate the lineup or hire an assistant coach, who raises what reserves learn. Gear bought on the progression ladder, from peripherals to a performance centre, speeds up training for everyone. Bootcamps add chemistry and a rating edge before the big events."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How do players improve in Road to Worlds?",
+        "a": "Through training cycles and official matches. Players grow toward their potential every week, faster with a coach, better gear and a development plan."
+      },
+      {
+        "q": "Do players get worse with age?",
+        "a": "Yes. After the peak a player declines, and the Training screen shows the rate. Recovery cycles help veterans hold their level longer."
+      },
+      {
+        "q": "Do I need a coach?",
+        "a": "No, but training pays more with one, the plan comes ready each cycle, and the risk of a player missing an event from wear is lower."
       }
     ],
     "ctaLabel": "Start a Road to Worlds career"

@@ -192,8 +192,8 @@ export const PT: Copy = {
       },
       {
         id: "career",
-        title: "Road to Worlds: um modo manager de Rocket League",
-        body: "O Road to Worlds transforma o draft em carreira. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada (eventos regionais, Majors e o World Championship) em um mundo simulado ao seu redor.",
+        title: "Road to Worlds: um modo carreira de Rocket League",
+        body: "O Road to Worlds é um modo carreira e manager de Rocket League. Funde um clube, contrate e desenvolva jogadores reais da RLCS, administre salários, patrocínios e transferências e jogue o calendário da RLCS temporada após temporada (eventos regionais, Majors e o World Championship) em um mundo simulado ao seu redor.",
       },
     ],
     links: {
@@ -208,7 +208,8 @@ export const PT: Copy = {
       play: "Jogue o jogo de draft da RLCS",
       simulator: "Simulador de Rocket League esports",
       fantasy: "Draft fantasy da RLCS",
-      manager: "Road to Worlds, o manager de Rocket League",
+      manager: "Road to Worlds, o modo carreira e manager de Rocket League",
+      careerGuide: "Guia do modo carreira de Rocket League",
       database: "Rosters, times e overalls da RLCS",
     },
   },
@@ -892,6 +893,8 @@ export const PT: Copy = {
     subtitle:
       "Cartas especiais são desbloqueadas ao draftá-las e terminar a run, vencendo ou perdendo.",
     progress: (n: number, total: number) => `${n}/${total} desbloqueadas`,
+    nextMilestone: (name: string, n: number, at: number) => `Próxima: ${name} · ${n}/${at}`,
+    databaseLink: "Todos os times e jogadores do RLCS",
     filters: { all: "Todas", locked: "Bloqueadas", unlocked: "Desbloqueadas" },
     rarity: "Raridade",
     type: "Tipo",
@@ -1603,6 +1606,15 @@ export const PT: Copy = {
     unlockContinue: "Continuar",
     unlockNext: "Próximo",
     unlockCount: (i: number, n: number) => `${i} de ${n}`,
+    verified: {
+      label: "Verificado",
+      tooltip: "Conta verificada",
+      kicker: "Sua conta foi verificada",
+      name: "Verificado",
+      desc: "O selo azul agora aparece ao lado do seu nome no seu perfil e em todos os rankings.",
+      how: "Concedido pela equipe do Rocket Draft",
+      permanent: "Faz parte da sua conta: aparece sempre e não pode ser removido.",
+    },
     sources: {
       "legacy-participation": "Concluiu uma run na pré-temporada",
       "legacy-rank": (rank: string) => `Rank máximo na pré-temporada: ${rank}`,
@@ -2072,12 +2084,15 @@ export const PT: Copy = {
     seasonTitle: (season: string) => `Rosters e Overalls da ${season}`,
     seasonIntro: (season: string, rosters: number, regions: number) =>
       `Todos os rosters da ${season} no Rocket Draft: ${rosters} times em ${regions} ${regions === 1 ? "região" : "regiões"}, do mais forte ao mais fraco, com o overall de cada jogador.`,
-    teamTitle: (team: string) => `Rosters da ${team} na RLCS por Temporada`,
+    teamTitle: (team: string, current?: string) =>
+      current
+        ? `Roster da ${team} no Rocket League: ${current} e Anteriores`
+        : `Roster da ${team} no Rocket League por Temporada`,
     teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
       rosters === 1
         ? `${team} (${region}) no Rocket Draft: o roster da ${first}, com o overall de cada jogador.`
         : `${team} (${region}) no Rocket Draft: ${rosters} rosters, da ${first} à ${last}, com o overall de cada jogador.`,
-    playerTitle: (player: string) => `${player}: Overall e Times na RLCS`,
+    playerTitle: (player: string) => `${player} no Rocket League: Overall e Times na RLCS`,
     playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
       `${player} (${region}) no Rocket Draft: ${seasons} ${seasons === 1 ? "temporada" : "temporadas"} de RLCS, com overall máximo de ${peak} pela ${peakTeam} na ${peakSeason}.`,
     teamsIndexTitle: "Times da RLCS: Todas as Organizações por Região",
@@ -2106,6 +2121,15 @@ export const PT: Copy = {
     ratingsNote: "Os overalls são as notas do próprio Rocket Draft: uma base calculada mais uma revisão à mão.",
     ratingsLink: "Como os ratings são feitos",
     cta: "Draftar estes rosters",
+  },
+
+  // v2.0.31: o convite da pesquisa com jogadores na tela de resultados.
+  RESEARCH_UI: {
+    title: "Ajude a moldar o Rocket Draft",
+    body: "Você já joga há um tempo, então a sua leitura do jogo pesa. Um formulário curto sobre o que funciona, o que não funciona e o que deve vir a seguir.",
+    note: "Abre em uma nova aba. Só perguntamos uma vez.",
+    open: "Abrir o formulário",
+    dismiss: "Agora não, obrigado",
   },
 
   /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */

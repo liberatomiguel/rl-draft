@@ -206,8 +206,8 @@ export const HOME_SEO = {
     // v2.0 (WEB-01): shown only by a build that ships Road to Worlds (HomeSeoContent).
     {
       id: "career",
-      title: "Road to Worlds: a Rocket League manager mode",
-      body: "Road to Worlds turns the draft into a career. Found a club, sign and develop real RLCS players, manage wages, sponsors and transfers, and play the RLCS calendar season after season (regional events, Majors and the World Championship) in a world that is simulated around you.",
+      title: "Road to Worlds: a Rocket League career mode",
+      body: "Road to Worlds is a Rocket League career mode and manager game. Found a club, sign and develop real RLCS players, manage wages, sponsors and transfers, and play the RLCS calendar season after season (regional events, Majors and the World Championship) in a world that is simulated around you.",
     },
   ],
   /** Descriptive internal links (no \"click here\"). Hrefs live in the component. */
@@ -224,7 +224,8 @@ export const HOME_SEO = {
     // v2.0 (WEB-01): the search-intent pages.
     simulator: "Rocket League esports simulator",
     fantasy: "RLCS fantasy draft",
-    manager: "Road to Worlds, the Rocket League manager game",
+    manager: "Road to Worlds, the Rocket League career mode and manager game",
+    careerGuide: "Rocket League career mode guide",
     database: "RLCS rosters, teams and player ratings",
   },
 };
@@ -666,6 +667,9 @@ export const COLLECTION_UI = {
   subtitle:
     "Special cards are unlocked by drafting them and finishing the run, win or lose.",
   progress: (n: number, total: number) => `${n}/${total} unlocked`,
+  /** v2.0.34: the next collection achievement (name, owned, target, XP). */
+  nextMilestone: (name: string, n: number, at: number) => `Next: ${name} · ${n}/${at}`,
+  databaseLink: "Every RLCS team and player",
   filters: { all: "All", locked: "Locked", unlocked: "Unlocked" },
   rarity: "Rarity",
   type: "Type",
@@ -1566,6 +1570,16 @@ export const COSMETICS = {
   unlockContinue: "Continue",
   unlockNext: "Next",
   unlockCount: (i: number, n: number) => `${i} of ${n}`,
+  // v2.0.17: the Verified seal (a hand-given mark by the name, not a cosmetic)
+  verified: {
+    label: "Verified",
+    tooltip: "Verified account",
+    kicker: "Your account is verified",
+    name: "Verified",
+    desc: "The blue seal now sits next to your name on your profile and on every leaderboard.",
+    how: "Granted by the Rocket Draft team",
+    permanent: "Part of your account: it is always shown and cannot be removed.",
+  },
   sources: {
     "legacy-participation": "Finished a run in the pre-season",
     "legacy-rank": (rank: string) => `Peak pre-season rank: ${rank}`,
@@ -2061,12 +2075,14 @@ export const DATABASE_UI = {
   seasonTitle: (season: string) => `${season} Rosters & Player Ratings`,
   seasonIntro: (season: string, rosters: number, regions: number) =>
     `Every ${season} roster in Rocket Draft: ${rosters} teams across ${regions} region${regions === 1 ? "" : "s"}, strongest first, with each player's overall.`,
-  teamTitle: (team: string) => `${team} RLCS Rosters by Season`,
+  /** `current`: the newest season's label when the team plays it (v2.0.33). */
+  teamTitle: (team: string, current?: string) =>
+    current ? `${team} Rocket League Roster: ${current} & Past Seasons` : `${team} Rocket League Roster by Season`,
   teamIntro: (team: string, region: string, rosters: number, first: string, last: string) =>
     rosters === 1
       ? `${team} (${region}) in Rocket Draft: its ${first} roster, with each player's overall.`
       : `${team} (${region}) in Rocket Draft: ${rosters} rosters from ${first} to ${last}, with each player's overall.`,
-  playerTitle: (player: string) => `${player}: RLCS Rating & Teams`,
+  playerTitle: (player: string) => `${player} Rocket League: RLCS Rating & Teams`,
   playerIntro: (player: string, region: string, seasons: number, peak: number, peakTeam: string, peakSeason: string) =>
     `${player} (${region}) in Rocket Draft: ${seasons} RLCS season${seasons === 1 ? "" : "s"}, with a peak overall of ${peak} for ${peakTeam} in ${peakSeason}.`,
   teamsIndexTitle: "RLCS Teams: Every Organization by Region",
@@ -2095,6 +2111,15 @@ export const DATABASE_UI = {
   ratingsNote: "Overalls are Rocket Draft's own ratings: a calculated base plus a hand review.",
   ratingsLink: "How the ratings are built",
   cta: "Draft these rosters",
+};
+
+/** v2.0.31: the player-research invitation on the results screen (lib/researchInvite.ts). */
+export const RESEARCH_UI = {
+  title: "Help shape Rocket Draft",
+  body: "You have been playing for a while, so your read on the game carries weight. A short form on what works, what does not and what should come next.",
+  note: "Opens in a new tab. We only ask once.",
+  open: "Open the form",
+  dismiss: "No thanks",
 };
 
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
@@ -2139,6 +2164,7 @@ export const EN = {
   NATIONAL_UI,
   DAILY_TEXT,
   DATABASE_UI,
+  RESEARCH_UI,
   PAGE_TITLES,
 };
 

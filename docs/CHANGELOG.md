@@ -15,7 +15,7 @@ with the root cause — that section doubles as the project's bugfix log.
 Source: Miguel's request of 17/11 to remove the generated look from the game, audited against the anti-slop rulebook (github.com/miqdadbadjuber/anti-slop). Direction chosen by Miguel: RLCS broadcast package. Scope of this pilot: the shared primitives, the Home and the Classic Draft flow. Career screens only inherit the primitives.
 
 ### Fourth pass (17/11, after Miguel's review: "too light now; bring back the solids and the title highlight, heavier weights, on to the career")
-Current state (decision #167). Where it disagrees with the passes below, this one wins.
+Current state (decision #176). Where it disagrees with the passes below, this one wins.
 - **Home modes are solids again**, with a card finish: `.solid` (14px corner, the card's top sheen and diagonal texture, a slow tone shift) in `.solid-orange` (Classic Draft) and `.solid-blue` (Road to Worlds). Upright Bold titles; the action on each is inverted (dark on orange, paper on blue).
 - **Title highlight is back**: `.title-slab`, dark upright Bold on a paper slab with a slanted end and the orange chip. `SectionTitle` uses it, so every screen gets it.
 - **Weights up one step**: Bold for titles, buttons and key figures (`font-bold` resolves to Bold again), Demi for labels, tags and nav, text 400 / 600. Black and Ultra are still not loaded; synthetic bold is still off.
@@ -24,7 +24,7 @@ Current state (decision #167). Where it disagrees with the passes below, this on
 - Checked in a desktop browser at 1366 px on this pass: Home, career HQ, career Finances. Not checked: mobile, PT, the other career screens, tournament, results.
 
 ### Third pass (17/11, after Miguel's review: "on the right road, overdone; more minimal and premium")
-Current state. Where it disagrees with the two passes below, this one wins (decision #166, `DESIGN.md` rewritten).
+Current state. Where it disagrees with the two passes below, this one wins (decision #175, `DESIGN.md` rewritten).
 - **The card is the reference object.** Floor and boards went back to the cards' night blue (`--bg #070a11`, boards in the two tones of a common card's body); `.panel` is that body inside a hairline with a 12px corner. The radius scale steps up to the card: tag 3, button 7, board 12, card 14.
 - **Weight**: nothing heavier than Demi, text never heavier than Medium. Enforced in the font files (display 500 / 600, text 400 / 500, no heavier upright file) plus `font-synthesis-weight: none`, so every `font-bold` in the app resolves down with no code change.
 - **Italic** only on the wordmark (header logo, Home title). The global italic rule for headings is gone.
@@ -36,7 +36,7 @@ Current state. Where it disagrees with the two passes below, this one wins (deci
 - Checked in a desktop browser at 1366 px: Home, draft (cards beside the team board), review. Not checked in this pass: mobile, PT, tournament, results, career.
 
 ### Second pass (17/11, after Miguel's review: "not close, bolder")
-The first pass below only removed things and left dark boxes with thin lines, the "sterile default" the rulebook warns about. This pass adds the direction, written first in `DESIGN.md` (decision #165). Where the two passes disagree, this one is current.
+The first pass below only removed things and left dark boxes with thin lines, the "sterile default" the rulebook warns about. This pass adds the direction, written first in `DESIGN.md` (decision #174). Where the two passes disagree, this one is current.
 - **Direction file**: `DESIGN.md` at the repo root (design read, palette, type, the motif, composition, motion, copy, a "never" list).
 - **Type**: Rajdhani and Geist Sans are out of the interface. Text is Barlow (400, 600). The display face Miguel chose is **Industry**; the only files in hand are the trial set (personal-use licence, 66 characters), so it is wired for LOCAL PREVIEW ONLY from the git-ignored `public/fonts-trial/`, in a marked block of `globals.css` that must go before anything ships. Barlow Condensed (600, 700, 800 italic; OFL, committed) is the live stand-in and the fallback for every character the trial files lack.
 - **Palette**: floor `#0b0d12` (neutral ink, was navy `#05080f`; theme colour, manifest and error screen follow), orange `#ff6a1a`, blue `#2463ff`, paper `#f3efe6`. Cyan became the lightest blue. Text greys re-solved for contrast.
@@ -67,6 +67,251 @@ The first pass below only removed things and left dark boxes with thin lines, th
 - Mobile widths, PT screens, lite-effects mode, and every career screen except the HQ. Checked in a desktop browser at 1366 px: Home, setup, draft, review, tournament, results, career HQ.
 
 ---
+## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
+
+### Changed
+- **The next collection reward is a small faint line under the unlock count** ("Next: Collector · 12/15", specials album only, nothing once every milestone is reached). v2.0.34 had put it, with the XP, in a full-width row between the title and the album tabs, which broke the page's original layout (Miguel's review).
+- **The RLCS database link is a small centred line at the end of the page** (it shared that row, in bold blue).
+
+## [2.0.34] — 2026-11-19 · We heard you: fixes from the player survey (BALANCE_VERSION 37)
+
+Source: Miguel's player survey of 18/11 (28 answers). Plan and competitor study: docs/PLANO-PROXIMO-NIVEL-2026-11-19.md, docs/CONCORRENTES-2026-11-19.md. The mobile career tab bar (A7) is Miguel's, separately.
+
+### Fixed
+- **A sponsor goal signed mid-season no longer resets at the rollover.** Root cause: a contract goal (v2.0, C1) counts every event from its signing day to the deal's end, but it read its progress off `save.eventResults`, which `rolloverToNextSeason` empties every season. A deal signed in split 2 that ran into the next season lost its first season's results, so its count (sized for the whole deal) read as reset and could become out of reach ("win 8 regionals"). The user's own results now go with the deal at the rollover (`SponsorTerms.carriedResults`, additive, without their placement tables; `careerFlow.carrySponsorResults`). Test: careerSponsors.test.ts.
+- **A mismatch in the career no longer reads 7-0 every game.** Root cause: the scoreline (narrative only) grows linearly with the game's margin up to the 7-goal cap, and a career's wide gaps (a 100+ side against a 75 one) sat on the cap. Road to Worlds sides (`careerScoreline`, set by `assembleTournamentTeam` with the career's own form roll) read `SIMULATION.goals.career`, whose margin effect levels off: close games score as before, a mismatch reads 4-0, 5-1, 6-2 or 5-0. Same draws per game, so no result, seed or battery moves. The Draft keeps its curve: 7 challenge stars are tuned on its goals. Test: match.scoreline.test.ts.
+- **No more "Kimchi II".** Root cause: a long career runs past a region's name bank (about 100 to 170 names) and the next fillers and rookies reused it with a Roman numeral; the five names that clash with a real pro carried " II" from the start, cross-region homonyms a region tag. A new career reads **name bank 4** (`CAREER_NAMES`, `world.nameBankVersion` 4): a wrapped name or a clash is a gamertag variant ("Kimchi7"), the first region keeps a homonym plain, and a seeded share of the approved org names takes a real-scene shape from its first word ("Team Waffle", "Waffle Gaming", "Waffle Esports", "Waffle"). Every change maps a name one-to-one in place, so no bank slice shifts; a career started before keeps bank 3 and every name it has. Tests: careerNames.test.ts.
+
+### Added
+- **The Collection shows the next collection reward** ("Next reward: Collector at 15 specials (12/15) · +250 XP"), read from the same milestones the achievements use (`SPECIALS_MILESTONES`), and links to the RLCS database (`/rlcs`), which only the footer linked before (players asked for "an index of every team").
+- **A one-off HQ card about several careers and the account copy** (`SavesNotice`, `lib/careerSavesNotice.ts`): players asked for both, which exist since v2.0.26 and v2.0.30. It shows once per device, after a career's opening weeks, and lives in its own localStorage key (not in the save, so the account copy never differs over it).
+
+### Not changed (reported to Miguel)
+- **Org-less stacks** (the current Ikkaku) still ask a buyout like an org: the dataset has no "stack" marker, so this needs a field in `teams.md` and Miguel's list of stacks.
+- **"Mate y Tapa has no Worlds bonus"** is not a bug: the org bonus is the curated prestige per lineup (`org: Mate y Tapa ~`), not a result; 23 of 44 2026 lineups have `~`.
+
+## [2.0.33] — 2026-11-18 · The career landing answers "career mode" searches, with a one-tap start beside the usual one
+
+Search pass from Miguel's Search Console export (17/08–16/11) and PostHog (12–18/11): `/rocket-league-manager` became the first organic landing page on 17–18/11 (145 search visitors in two days, the home 96); of its visitors 51 % opened the career and 30 % founded one, and 42 % of those who reached the founding wizard left it. Google showed the guide, not the landing, for "rocket league career mode". DESIGN-DECISIONS #172, ROAD-TO-WORLDS-DECISIONS R136.
+
+#### Added
+- **Two buttons on the career landing (EN/PT):** "Found your club" / "Fundar o seu clube" opens the founding wizard as before, and beside it "Start with a random club" / "Começar com clube sorteado" opens **`/career?start=quick`** (`lib/careerEntry.ts`, `LandingConfig.secondaryCta`, copy `ctaAltLabel`). With the flag, a player who has a career lands on it as before; a newcomer goes to the founding wizard with the flag kept (`CareerShell`), and the wizard runs its own Quick start (a random club, straight to the last step: pick the difficulty, found it). Which start works better is measurable in PostHog: the `$pageview` of `/career/new` carries `?start=quick` or not.
+- **An active team's page names its current roster:** "Gentle Mates Rocket League Roster — RLCS 2027 & Past Seasons" (title and H1, `currentSeasonOf` in `lib/database`), for a team with a roster in the newest season; the others keep "… Roster by Season". The roster searches in Search Console carry the year ("… rocket league roster 2027", positions 5–11).
+- **`public/llms.txt`**: a short map of the site for answer engines (the two modes, the career landing and guides, the draft guides, the RLCS database). robots.txt already allows every crawler.
+- **Career landing (EN/PT):** a first section answering "Does Rocket League have a career mode?" (not in the game; fan-made mods on PC, downloadable manager games and browser games; Road to Worlds is the browser club-manager kind) and two FAQs, "Do I need a mod, a download or a PC?" and "Do I play as a player or as the manager?". The section captures shift by one (`ContentPage`).
+- **The landing's own share image**, Open Graph and X card, EN and PT (`public/landing/career-share-{en,pt}.jpg`, 66 KB, `careerShareSrc`), passed to the page metadata through `pageMetadata`'s new `image` option with the H1 as its alt text. `scripts/build-og-career.mjs` renders them with Chrome's headless screenshot, the site font and the HQ capture, and fails when a title overflows. Before, every page shared the site image. Not the `opengraph-image` file convention: Next ignores a route's image file when the page's metadata sets `images` (every content page does), and Turbopack drops its `.alt.txt` in a nested route (both checked on the export).
+- **A `VideoGame` node for Road to Worlds** on the landing (`careerGameJsonLd`: free, browser, part of Rocket Draft, the five landing screenshots); its Article node points at the page's own image.
+
+#### Changed
+- **Titles and the H1.** Landing: "Rocket League Career Mode & Manager Game — Free" (was "… — Free RLCS Manager Game"), H1 "Rocket League Career Mode & Manager Game — Road to Worlds" (also the anchor text every content page uses for it), description "…in your browser, no mod or download…". Guide: "Road to Worlds Guide: Rocket League Career Tips" / "Road to Worlds: Guia da Carreira de Rocket League", so it stops competing with the landing for the head query.
+- `CONTENT_DATE` 2026-11-18 (sitemap `lastmod`, Article `dateModified`).
+- `scripts/link-audit.mjs` drops a link's query and hash before matching it.
+
+#### Fixed
+- **The eight Road to Worlds guide pages sent "Start a Road to Worlds career" to the home page.** Root cause: the guides (v2.0.19–2.0.20) copied the route shell of the plain content pages, whose button ("Play Rocket Draft now") goes to `/`; only the landing pointed at `/career`. Their visitors who pressed it met the main menu and had to find the career again. They now open `/career`.
+
+## [2.0.32] — 2026-11-18 · A page whose build files failed to load repairs itself
+
+#### Fixed
+- **A player's Road to Worlds stayed on the loading placeholder in one browser, reloads included** (reported on Discord 18/11). His save was intact and opens normally in the current code; another browser played an older copy. Root cause: version skew during the v2.0.31 deploy (new sessions switched between 17:45 and 17:50 UTC; his last career action was at 17:49:02). A page from the new version asked a Cloudflare location still on the old one for a new career chunk and got a 404. `public/_headers` gives `/_next/static/*` `public, max-age=31536000, immutable`, and Cloudflare sends that header on the 404 too (checked with curl on production), so Chrome kept the 404 for a year and served it on every load, a normal reload included (checked: `only-if-cached` returns it). Turbopack's runtime, for a chunk whose `<script>` tag is already in the HTML, only listens for that tag's `error` event; a tag that failed before it looked never settles the chunk's promise, so hydration waits forever: the server-rendered skeleton, no error screen, no analytics event (PostHog has nothing from him). When the race goes the other way the same 404 shows "Something went wrong", and its reload brought the cached 404 straight back. Only career chunks were hit, so the other modes played. A player stuck before this release fixes it with Ctrl+Shift+R on the career page; the save is not touched.
+- **The repair (DESIGN-DECISIONS #171):** an inline script in the root layout (`lib/assetHeal.ts`, production builds only) watches the page's resource entries. A `/_next/static/` script, or a stylesheet the page applies, answered 400+ is fetched again with `cache: "reload"`, which replaces the cached copy, and the tab reloads once. Browsers without `responseStatus` (Safari) get a watchdog instead: the app not mounted 20 s after `load`. One repair per tab per minute, none without sessionStorage, none for a network failure or a prefetch. A browser that already holds such a 404 heals on its next visit, with nothing for the player to do. The error screen's reload (automatic and the button) now fetches the failed chunk again first (`errorRecovery.chunkUrlOf`, `assetHeal.refetchThenReload`).
+- Analytics: the load after a repair sends one `quality_error` with source `heal`, name `AssetHeal` (`AssetHealReport`, `analytics.reportAssetHeal`).
+- Checked: unit tests (`assetHeal.test.ts`, `errorRecovery.test.ts`, full suite); in Chromium against a local server that answers a chunk with a one-year immutable 404 first (without the script the 404 is reused on reload; with it the page heals, also when the 404 was cached before the script existed); and on a local production export served by `wrangler dev` (it answers a missing chunk exactly like production) with the player's own save: career chunk `0sym80-l3ozyx.js` cached as a 404, the career broken; once served again, the repair refetched it, reloaded once and the career opened intact. Not checked: the watchdog in a real Safari, the zone rule (Miguel's dashboard step).
+
+#### Changed
+- `docs/DEPLOY-CLOUDFLARE.md` §9: a zone Response Header Transform Rule sets `Cache-Control: no-store` on a 404 under `/_next/static/`; §10 checks it after each deploy. `public/_headers` explains why.
+
+## [2.0.31] — 2026-11-18 · An invitation to the player-research form
+
+#### Added
+- **An invitation to Miguel's player-research form, for returning players only.** It never opens when the game loads: it waits for a natural pause, the draft results screen (after the ceremonies, the login calendar, the unlock pop-ups and the XP count-up, plus 2.5 s) or the Road to Worlds season review (not on an insolvency). From the **second distinct day** with the game open (`login.total`), a player qualifies with **10 completed runs** or **1 completed season** in the career on screen; on the first day only a heavy session does (**25 runs** or **2 seasons**). Miguel, 18/11: a one-day heavy player may see it, the second day is preferred. Thresholds, the form URL and a campaign id live in `src/config/research.ts` (not gameplay, so BALANCE_VERSION does not move); logic in `src/lib/researchInvite.ts`; the card is `components/ResearchInvite.tsx` on the portal Modal, the link opens in a new tab (`noopener noreferrer`).
+- Once per device and campaign: a click on the link or a dismiss ends it for good; a card left unanswered (tab closed) may open once more (`maxShows` 2), never twice in one page load. Stored in its own key `rocket-draft:research-invite:v1` (plain localStorage, not a persisted store: the persist contract is unchanged). Per device rather than per account owner: since 2.0.29 a sign-out leaves a fresh guest who does not qualify, and two accounts on one device are not asked twice. A new `campaign` id asks everyone again.
+- Analytics: `research_invite` (critical, shared mode) with `action` = `shown` / `opened` / `dismissed`, `surface`, `campaign`, `activeDays`, `runsCompleted`, `careerSeasons`. A few per device ever, so no budget pressure.
+- Copy in EN/PT (`RESEARCH_UI`; career `research` in `copy.career.*`).
+
+## [2.0.30] — 2026-11-18 · A way back to the career picker
+
+#### Fixed
+- **Road to Worlds had no way back to the career picker once a career was active** (Miguel, 18/11: "ao clicar na carreira já entra direto no save"). Root cause: `/career/saves` was reached only when no slot was active, after retiring, or from the wizard; the top bar had no link to it, so a second or third career (or one the account brought from another device) could not be opened. The top bar (desktop tabs and the mobile menu) now ends with **Careers / Carreiras**, using the `nav.saves` label that already existed in both languages.
+- **A profile row could not be emptied by hand** (Miguel, cleaning the account mixed by the 2.0.29 bug: `durable` is NOT NULL, so `set durable = null` fails). A row whose `durable` is `{}` now reads as "no saved profile": the next sign-in pushes the device's profile over it, name, grants and frozen pre-season columns untouched.
+
+## [2.0.29] — 2026-11-18 · Signing out leaves a fresh guest; one account's progress and careers never reach another
+
+#### Fixed
+- **Signing out kept the whole profile on the device, and the next account to sign in received it, exclusive grants included** (Miguel, 18/11, on mobile: signed out of his main account, the progress stayed; signed into a second account, all of the first one's progress and grants went into it). Root cause: the local profile had no owner. There is one per device, signing out never touched it, and every sign-in merged it into the account that signed in as if it were a guest's progress (the guest → account migration). Now the device's saves belong to one account at a time (`rocket-draft:profile-owner:v1`, `lib/localOwner.ts`):
+  - a guest's progress is still claimed by the first sign-in;
+  - signing out (here, in another tab, or an expired session) pushes unsynced progress once (up to 4 s), stashes the profile under that account (`rocket-draft:account-stash:v1:<id>`) and resets the device to a fresh guest;
+  - a sign-in as another account than the owner stashes the owner's saves and starts clean; the account's next sign-in folds its stash back in;
+  - a sync whose account signed out while its cloud read was in flight aborts instead of merging into the guest.
+- **The Road to Worlds slots had the same hole since the career cloud save (2.0.26–2.0.28).** The three slots are the device's, so the second account's first sync uploaded the first account's careers into its own account (an empty account slot + a local career = "a new career, upload"). The slots now go with their owner: signing out moves them aside (`rocket-draft:career-stash:v1:<id>`, a move, not a copy, since three slots can pass 1 MB) and the device shows no careers; that account's next sign-in puts them back, a guest's careers keep their slots and the account's fill the empty ones. The career cloud store ignores the slot change a switch causes, so moving a career aside is never read as the player deleting it (it would have deleted the account copy at the next sign-in). The account's three cloud slots download to any device as before.
+- Deleting the account still keeps the local progress and careers, as its dialog says, now as the guest's.
+- Accounts already mixed by this bug are not separated by the fix: the second account's row has to be restored by hand (the merged progress is in its blob; career rows in `career_saves` for that account, if any went up).
+
+## [2.0.28] — 2026-11-18 · Career cloud save for every account; sell and trade reach production
+
+#### Changed
+- **The career save in the account is open to every signed-in player** (`CAREER_CLOUD_AUDIENCE` "staff" → "all", `lib/careerCloudGate.ts`; Miguel's call on 18/11). v2.0.26 had it for the `creator` grant only. Setting the constant back to "staff" or "off" and deploying is the way back; localStorage stays the copy the game plays from either way.
+- **Sell and trade (v2.0.27) goes to main with this release**, on Miguel's go-ahead after seeing the screens. Not verified before release: a physical phone, a full battery, the account path on two devices and on mobile Safari.
+
+## [2.0.27] — 2026-11-17 · Road to Worlds: sell and trade on your own initiative
+
+Players asked for it (ROADMAP-RTW-2026-11-17, Etapa 1): until now a sale needed an AI bid to arrive. Closes ECO-06; decision R135 (reopens R63). Ships without waiting for the Etapa 1 gate.
+
+#### Added
+- **The transfer list.** Market → My Deals → *List a player* (also from the Squad screen): pick an asking fee between 70 % and 160 % of his market value, two players at most. An org of his region answers in 1 to 3 days: it pays a fair ask in full, counters a high one, or does not answer one that is far too high. The answer is an ordinary offer to accept or decline. `engine/career/transferList.ts`, `listPlayerFlow`, `delistPlayerFlow`.
+- **Player-for-player trades.** From the offer sheet of a player under contract: *Propose a trade* with one of your squad and optional cash. The org answers in 1 to 3 days: yes, a counter in cash, or no (the gap is too large, or your player is more than 8 overall below theirs). A yes waits for your confirmation and holds the clock like a bid. The arrival passes every signing gate and signs at his ask; no fee, no severance. `proposeTradeFlow`, `acceptTradeFlow`.
+- HQ shows an agreed or countered trade as a decision card; the inbox and the feed report every answer.
+
+#### Balance
+- BALANCE_VERSION 36. `CAREER_TRANSFER.listing` and `.trade` (all provisional). A buyer's ceiling is market value × 0.85–1.15 plus half the youth premium, below what a poach pays (1.0–1.35 with the full premium). A trade credits your player at × 0.85–1.05 against the fee a plain buy would cost; the org never pays a difference.
+- **Short tenure:** a player who signed under a season ago is worth 60 % to a buyer and in a trade. A free agent costs no fee, so signing one to sell him on would otherwise be a repeatable profit. Founders are not discounted.
+- **No buying back:** a player you sold or traded away does not sign for you again for one season (`buyBackLockSeasons`), an ordinary bid's sale included. Selling at a buyer's ceiling and buying back on a cheap day would otherwise pay the difference every time.
+- Both work in a transfer window only, never in the career's first window, never under the resale lock. One draw per player and window: re-pricing does not re-roll the buyer.
+
+#### Changed
+- Saves gain three optional fields (`transferList`, `tradeProposals`, `soldOn`) and two optional offer fields (`listed`, `ask`). Persist keys and versions are unchanged; new RNG streams only, so a career that never lists or trades draws the same numbers as before (the one difference: it can no longer re-sign a player it sold within the season). No new analytics event.
+
+#### Not verified
+- Measured in a short probe only (2 careers, 4 seasons: no soft lock, world rosters intact), not in a battery. Checked in a desktop browser and at 320 px in emulation; no physical device.
+
+---
+## [2.0.26] — 2026-11-17 · Road to Worlds: the career save in your account, and save files
+
+Roadmap Etapa 1 (ROADMAP-RTW-2026-11-17), shipped ahead of the stage gate because players are asking. Decisions: DESIGN-DECISIONS #165–#169. SQL: `docs/sql/v2026-career-saves.sql` (applied by Miguel on 17/11).
+
+#### Added
+- **A copy of each career slot in the account** (`store/careerCloudStore.ts`, rule in `lib/careerCloud.ts`). The save in the browser stays the one the game plays from. Progress goes up 30 seconds after the last action, at once at the end of an event or a season and when the tab is hidden. A device that is behind takes the account copy when the career opens, with a one-line message. **First release: the creator grant only, which is Miguel's account** (`CAREER_CLOUD_AUDIENCE`).
+- **A notice when two copies differ**: the career was played on two devices, the slot holds another career in the account, or the account copy was deleted elsewhere. Both copies are described (club, season and week, date), the newer one is marked, and the player chooses; the device's career can be exported first. Nothing is replaced without that choice.
+- **Save files** on the saves screen, for everyone, guests included: export a career to a file, import one into an empty slot. The import runs the game's own migrations and refuses a damaged file, a file from a newer version and a file the game cannot load.
+- Analytics: `career_cloud_failed` (stage, reason) and `career_cloud_conflict` (kind, choice).
+
+#### Changed
+- Deleting a career slot while signed in deletes its account copy too; the confirmation says so.
+- `careerStore.adoptSave`: the one way a save from outside the play loop enters a slot (account copy or file), through the same migrations and repairs as a save loaded from storage.
+- `lastPlayedAt` is strictly increasing (the clock, but always past the previous stamp): the cloud rule compares it for equality.
+- Found by the persistence review before release and fixed: on a shared browser a second account's career could be written over the first account's copy without a question (a slot with a different career now goes up only after the player's own delete or replace); an answer in the notice could be applied to a situation that had changed while it waited (it is now checked against what the player saw); a delete could remove a copy another device had just played (it now names the revision).
+- BALANCE_VERSION 35: `CLOUD_SYNC.careerPushDebounceMs` and `careerRecheckAfterMs`. No gameplay value changed. The persist contract is unchanged (key `rocket-draft:career:v1`, version 3, saveVersion 5); the sync's bookkeeping is a new plain key, `rocket-draft:career-cloud:v1`.
+- Not verified: the account path against the production database (staging runs with accounts off; the store is tested against a simulated Supabase and the SQL was reviewed, not executed by the tests). Two real devices, mobile Safari, and a browser without `CompressionStream` are not checked.
+
+## [2.0.25] — 2026-11-17 · Account sync: failures are named, tried again, and an expired token no longer reads as a new account
+
+First step of the Road to Worlds cloud save (ROADMAP-RTW-2026-11-17, Etapa 1): the profile sync it will ride on. POSTLAUNCH-2.0-REPORT item 6 counted failures on 12% of signed-in players. PostHog, 12–17/11: 47 sessions with a failed sync, 35 of them on a phone, 26 on the read and 24 on the push, on every release from 2.0.1 to 2.0.24. Almost all happen in the middle of a session (four in the first 20 seconds) and the session goes on afterwards, so it is neither a regression nor a tab being closed. The event carried only the stage, so the share of each cause below is not known yet.
+
+#### Fixed
+- **A sync with an expired token ran as nobody.** Root cause: when the access token has expired and its refresh fails (a phone waking a tab after an hour), supabase-js sends the request with the public anon key (`_getAccessToken` falls back to it). Row-level security then hides the player's row, `fetchCloudRow` answered "no row", and the sync treated an existing account as a new one: it pushed without merging the cloud copy and the push was refused. Nothing was lost (the refused push wrote nothing), but it was counted as a push failure and the session stayed unsynced. `fetchCloudRow` and `pushCloudProfile` now check that the session belongs to the user they are called for and report `auth` otherwise.
+- **A failed sync was not tried again.** Root cause: one attempt per read and per push, and a sync that failed was repeated only by the next profile change (or, for the first sync of a page load, by a later sign-in event; until then no progress was pushed at all). A failed read that may pass (dropped connection, server error) is now tried again inside the sync (`CLOUD_SYNC.retryDelaysMs`). A sync that still failed is owed, per user: the whole read, merge and push runs again after a pause (`CLOUD_SYNC.resyncDelaysMs`, the last one repeating), when the connection comes back, when the tab returns, or with the next progress. A failed push is never repeated on its own, because the cloud may have changed since the read.
+- **The request carries the checked token itself** (`setHeader`), so it cannot go out with the anon key even if the session disappears between the check and the request.
+- **A new account could get a name with four digits because the network failed.** Root cause: any failed first push of a new account took the fallback name (email prefix plus four digits), not only a refused name. Only a constraint refusal (the unique name) takes it now.
+
+#### Changed
+- `account_sync_failed` carries `reason` (offline, network, auth, denied, conflict, server, rate, unavailable, other; `lib/syncErrors.ts`) and the database code when there is one. It is sent once per session, stage and reason.
+- BALANCE_VERSION 34: `CLOUD_SYNC` gained the retry pauses (it lives in `balance.ts`, so the fingerprint moves). No gameplay value changed.
+- Not verified: against the production database (staging runs with accounts off; the store is covered by tests with a simulated Supabase). The share of each reason is only known once this release has run in production for a few days.
+
+## [2.0.24] — 2026-11-17 · A newcomer reaches the game sooner
+
+Launch data, 12–16/11: 519 of 903 new players left without playing anything; on mobile 36% left after one page. A new player had to close three full-screen pop-ups before the home page (welcome tour, the 2.0 announcement, the login calendar), and the home page was always English.
+
+#### Changed
+- **The game starts in Portuguese when the browser asks for Portuguese** (`initialLang`, first language of `navigator.languages`). Only the initial value on a device with no saved settings: a saved choice wins and the /pt pages still set PT. About 140 new players with a Portuguese browser had seen the English game (119 from Brazil); the ones who got Portuguese played in 77% of cases against 46%.
+- **The 2.0 announcement is shown only to a player with a pre-season** (`legacy.preseason`). It announces a new version and pre-season rewards to someone who never played 1.x. A veteran on a new device sees it once the account syncs.
+- **A newcomer's first login pays its XP without opening the calendar.** It opens from the second day on, and at once for anyone who has already played.
+- The welcome tour is unchanged, so its own effect can be measured next.
+
+## [2.0.23] — 2026-11-16 · The new-player flag counts new players; Hard pays the title and the final
+
+#### Balance
+- **Hard pays Season Rating for the title and the final only** (third / fourth 2 → 0; BALANCE_VERSION 33). On the current table Hard was the best climb per run: +3.1 on 744 worldwide runs against Normal +1.7 and Legacy +1.1; the same results now net about +2.4. Future runs only.
+
+#### Fixed
+- **`session_started.existingPlayer` was true for almost every new player** (16 "new" in 1,061 first sessions, 12–16/11). Root cause: `profileHistory` treated any XP as history, and the day's login reward (25 XP) is paid when the app opens, before the device's first session is counted. XP now counts as history only above what a first login pays; achievements count too. The flag is decided once per device, so devices first seen before this release keep the wrong value: for 12–16/11 a new player is a first session (`sessionNumber` 1) with `runsCompleted` 0, `xp` ≤ 50 and `achievements` 0, which gives 903 new players (116 / 285 / 162 / 137 / 203 a day).
+
+## [2.0.22] — 2026-11-16 · Reward pop-ups stay off the content pages
+
+#### Changed
+- **The daily-login calendar and the cosmetic-unlock ceremony open only on the game's own routes**: the home menu, /play, /career, /challenges, /collection, /profile, /leaderboards, /missions, /achievements, /quiz and /settings (`isGameRoute`, `src/lib/gameRoutes.ts`). On the articles, the career landing, the RLCS database, /how-to-play, /pt and the reference pages nothing opens. The XP is credited as before; the pending pop-up stays in its store and opens on the first game route of the session.
+
+#### Fixed
+- A first visit from a search result was met by the Daily Login calendar on top of the page it came for, the new career landing included. Root cause: `AppShell` mounted `LoginStreakModal` and `CosmeticUnlockModal` on every route.
+
+## [2.0.21] — 2026-11-16 · The career landing page shows the game
+
+#### Changed
+- **`/rocket-league-manager` and `/pt/manager-rocket-league` are a landing page**: the "Start a Road to Worlds career" button sits under the intro, beside four selling points (free, no download, no account, desktop and mobile), above a capture of HQ. Four sections carry a capture of their screen (Calendar, Market, Finances, Standings), and the four guides are cards. The copy, the H1, the section headings and the FAQ are unchanged, so the page keeps what it ranks for. `ContentArticle` takes an optional `landing` config; every other content page renders as before.
+- The button opens `/career` (it opened the home page, two clicks from the mode).
+- Captures: `public/landing/career-<screen>.webp` at 1600 px and 900 px, taken at 2x from the static export with a save from `careerPerfFixtures.probe.test.ts`; `careerShotSrc` in `src/lib/assets.ts`; a `/landing/*` cache rule in `_headers`.
+
+#### Fixed
+- The landing said training "targets individual attributes". Root cause: copy written before the rc.35 training cycle. It now says training runs in two-week cycles with one plan for the squad.
+
+## [2.0.20] — 2026-11-16 · Three Road to Worlds guides: transfer market, finances, training
+
+#### Added
+- **Transfer market guide** (`/rocket-league-manager-transfer-market`, `/pt/manager-rocket-league-mercado`): windows, free agents and buyouts, the reputation gate, the contract talk, rival bids, the reserve and the coach market.
+- **Finances guide** (`/rocket-league-manager-finances`, `/pt/manager-rocket-league-financas`): the Monday statement, prize money and the players' share, sponsor profiles and goals, the two loans and the floor, the progression ladder, getting out of the red.
+- **Training guide** (`/rocket-league-manager-training`, `/pt/manager-rocket-league-treino`): the 14-day cycle, the three objectives, focus / intensity / scrims, the coach, potential / peak / decline, the reserve and the gear.
+- All three are career-only pages (`CAREER_ONLY_PAGES`, `CAREER_LANDING`), written from the in-game tour and explainer copy, with no balance numbers except the 14-day cycle. Every content page links to them.
+
+#### Fixed
+- The Road to Worlds guide (v2.0.19) said training "targets individual attributes". Root cause: the sentence was taken from the landing page, which predates the rc.35 training cycle. It now describes the cycle: objective, one squad focus, intensity, scrims.
+
+## [2.0.19] — 2026-11-16 · Search pass: career mode in the titles, a Road to Worlds guide
+
+Source: Search Console, 15 Aug – 14 Nov 2026 (2,426 clicks, 57 % of them on the brand name).
+
+#### Added
+- **Road to Worlds guide** at `/road-to-worlds-guide` and `/pt/guia-road-to-worlds`: region and difficulty, a first roster, training, the calendar, the finances, renewing the squad. A career-only page like the landing (`CAREER_ONLY_PAGES`, `CAREER_LANDING` in `postexport.mjs`), linked from both home pages and from every content page.
+- Landing FAQ: "Does Rocket League have a career mode?" (EN and PT).
+
+#### Changed
+- **Career landing** title and H1 lead with "Rocket League Career Mode": it is the career query with the most searches (83 impressions; "manager game" 51, "career simulator" 25) and the title did not contain it. "Manager Game" stays in both.
+- **Home description** (EN and `/pt`) names the career mode in its first sentence; it sat at the end, past the point where the snippet is cut. The home title is unchanged.
+- **Team pages**: "{team} Rocket League Roster by Season" (was "{team} RLCS Rosters by Season"). The searches are "g2 rocket league roster", "vitality rocket league roster". **Player pages** carry "Rocket League" after the nickname for the same reason.
+- Home section and link text for Road to Worlds say "career mode". `CONTENT_DATE` is 2026-11-16.
+
+## [2.0.18] — 2026-11-16 · Rank emblem in the pre-season rank titles, smaller Verified seal
+
+#### Changed
+- **Pre-season rank titles** carry the rank emblem between the prefix and the rank: "PRE-SEASON (emblem) CHAMPION", from Bronze to Supersonic Legend. Wherever the title shows (leaderboards, profile, peek, locker, unlock pop-up); colours, glow and rarity unchanged.
+- **Verified seal** on the profile is smaller (17 px, 20 px on wide screens; was 22 / 26), still centred on the capitals.
+- Staging preview board: the fictional players' season XP spreads over every rank (it stopped at Silver).
+
+## [2.0.17] — 2026-11-16 · Verified seal
+
+#### Added
+- **Verified**: a blue scalloped seal with a white check, drawn right after the player's name on the profile, on every leaderboard row and in the profile peek. Miguel grants it by hand: a `profile_grants` row with `grant_id = 'verified'` (`docs/sql/v2017-verified-grant.sql` widens the check constraint and has the grant and check queries). The public `leaderboard` view already carries every grant, so the boards need no schema change.
+- It is not a cosmetic: no locker slot, no toggle, nothing to equip or hide. It shows wherever the account's grants carry it.
+- A newly verified player gets the unlock pop-up once (same ceremony as a title or badge, the seal as the art, no "wear it"). Dismissing it records `verified` in the synced `cosmetics.announced` list, so it never replays on any device. Until it is dismissed, it is offered again on the next load or sync.
+- Staging preview board: the fictional pros carry the seal.
+
+## [2.0.16] — 2026-11-16 · Overall review: PCS Stride, M80, BS+COMPETITION and Bigodes
+
+#### Balance
+- **PCS Stride 2027** (shown as Project Conquerors): droppz 84 (was 85), coach STL 84 (was 81). sucoo stays 85.
+- **M80 2027**: coach Nick 85 (was 76).
+- **BS+COMPETITION 2027**: klaus 83 (was 81), LeoDkn 81 (was 80), pan 82 (was 81), and Kaoshi joins as coach (80). The lineup moves from the underdog tier to solid.
+- **Bigodes 2026**: coach Kaoshi 81 (was 79).
+
+#### Changed
+- Daily calendar: the new overalls moved two recorded replays off their paths, so 2027-04-11 and 2027-07-20 get new seeds. Every other date, today and tomorrow included, keeps its seed. Challenges keep every star reachable.
+
+## [2.0.15] — 2026-11-16 · RLCS 2027 Kick-Off rosters and logos
+
+#### Added
+- **25 new RLCS 2027 region-only lineups** from the Kick-Off package of 16/11 (EU 11, NA 5, MENA 6, SAM 3): BLG Doran, CKA, Detect Esports, Frites Esports Club, "Hey, its me, its joshyv.", joseadores, OGC FC, Oxalys Bunch, Radosin Corp, Rotation Station, WLT Gaming; arancini, Gulp, Legion of Boom, lsf, WASSUP; 1v1, b3den nsme, Room Mate London, shmn8a mr7, Team X, The white horse; Arrogantchi, Dynasty, T18 Esports. RLCS 2027 now has 71 lineups (26 worldwide, 45 regional). 60 new players; returning ones keep their ids (AztraL, Radosin, ejby, GiuK, sosa, Aqua, Speed, misery, UmBroken, Suspect, T7LM, Twiz, SQQP, B2seL, Wozyen).
+- **9 org logos**: Detect Esports, Frites Esports Club, Legion of Boom, lsf, OGC FC, Oxalys Bunch, T18 Esports, WASSUP, WLT Gaming. The Detect logo is black only, so it ships as a white silhouette (the game draws logos on a dark background with no plate). Team X's logo is still under identity review and was not applied; the other new orgs show the styled fallback.
+
+#### Changed
+- **PCS Stride (shown as Project Conquerors) and NOT join the worldwide draft** (they were region-only).
+- Overall refreshes: M80 89/88/86, Project Conquerors 85/85/87, NOT 86/86/84, Tubby Troubles 82/84/84, Novadrift 84/82/82.
+- Overall check of the package: every value stays within a few points of the player's own history, except T18's misery (82 against a career best of 77), set to 80.
+- Not applied from the package: its 20 new "archive" lineups (the five archive lineups already in the game stay, since removing cards would break saves), and its nick spellings Aztrø / sad / Matt / del1very. (the existing ids and display names stay).
+- `data-sources/rlcs-2027-audit.json` and `season2027.test.ts` pin the new 71-lineup snapshot.
+- Challenges are capped at RLCS 2026, so their pools do not change: every challenge still earns all three stars on its fixed seed (CH-02) and stays in its win-rate band, with no re-authoring.
+- **Daily calendar refreshed** (`DAILY_REFRESH`): the daily pools include the 2027 region-only lineups, so the new teams moved the fixed-seed drafts (316 of 365 replays failed). Every date keeps its seed when a title + bonus path still exists on it. Today and tomorrow (16–17/11) keep theirs. 108 dates from 19/11 on and two past dates (09/11, 13/11; seeds are read only for today's run) got new seeds. The refresh tool takes `DAILY_POLICIES` to search harder on dates that cannot be reseeded.
+
+#### Known gaps
+- The 60 new players have no country yet (no flag, no same-country chemistry) because the package carries none.
 
 ## [2.0.14] — 2026-11-14 · Page translation no longer crashes the game; the black error screen is gone
 
@@ -86,7 +331,7 @@ Source: the first PostHog review after the launch (12–14/11, `docs/POSTLAUNCH-
 #### Not changed (findings for Miguel's decision)
 - No career flow threw in production: zero `quality_save_error` and zero `quality_slow_advance` since the launch. PostHog shows no soft-lock cluster by week or tier; a refused action (a hold, a blocked lobby) sends no event, so one that the screen fails to explain would be invisible. Suggested next: one event for a refused advance.
 - The event budget: about 28–33 thousand events a day (near one million a month); 49 devices hit the 400-a-day circuit breaker, which also drops their error reports. `analytics-budget.json` says 120 players a day against 230–420 measured.
-
+=
 ## [2.0.13] — 2026-11-14 · Insomniac, a Legendary title granted by hand
 
 #### Added

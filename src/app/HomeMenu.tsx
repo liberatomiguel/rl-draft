@@ -133,7 +133,12 @@ export default function HomeMenu() {
     { label: HOME_SEO.links.simulator, href: localePath("simulator", active) },
     { label: HOME_SEO.links.fantasy, href: localePath("fantasy", active) },
     { label: HOME_SEO.links.database, href: "/rlcs" },
-    ...(FEATURES.careerMode ? [{ label: HOME_SEO.links.manager, href: localePath("manager", active) }] : []),
+    ...(FEATURES.careerMode
+      ? [
+          { label: HOME_SEO.links.manager, href: localePath("manager", active) },
+          { label: HOME_SEO.links.careerGuide, href: localePath("career-guide", active) },
+        ]
+      : []),
     { label: HOME_SEO.links.faq, href: localePath("faq", active) },
     { label: HOME_SEO.links.about, href: localePath("about", active) },
   ];

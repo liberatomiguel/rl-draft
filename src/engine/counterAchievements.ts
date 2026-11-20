@@ -13,6 +13,23 @@ import { ALL_STARS, totalStars } from "./challengeStars";
 
 export const CREATOR_SPECIAL_ID = "sp-liberatorl-rocket-draft-creator";
 
+/**
+ * The collection milestones (special cards owned, national cards excluded):
+ * the achievements evaluate them, and since v2.0.34 the Collection shows the
+ * next one (player survey: "a reward for the number of specials unlocked").
+ */
+export const SPECIALS_MILESTONES: readonly { id: string; at: number }[] = [
+  { id: "ach-first-special", at: 1 },
+  { id: "ach-specials-15", at: 15 },
+  { id: "ach-specials-50", at: 50 },
+  { id: "ach-specials-100", at: 100 },
+];
+
+/** The next collection milestone not reached yet, or null once all are. */
+export function nextSpecialsMilestone(owned: number): { id: string; at: number } | null {
+  return SPECIALS_MILESTONES.find((m) => owned < m.at) ?? null;
+}
+
 export interface CounterSnapshot {
   runsCompleted: number;
   titlesTotal: number;
@@ -145,9 +162,7 @@ export function evaluateCounterAchievements(
   if (s.legacyTitles >= 10) ids.push("ach-legacy-10");
   if (s.gamesWon >= 200) ids.push("ach-games-200");
   if (s.goalsScored >= 500) ids.push("ach-goals-500");
-  if (s.specialsOwned >= 1) ids.push("ach-first-special");
-  if (s.specialsOwned >= 15) ids.push("ach-specials-15");
-  if (s.specialsOwned >= 50) ids.push("ach-specials-50");
+  for (const m of SPECIALS_MILESTONES) if (m.at <= 50 && s.specialsOwned >= m.at) ids.push(m.id);
   if (s.totalSpecials > 0 && s.specialsOwned >= s.totalSpecials) ids.push("ach-specials-all");
   if (s.specialIds.has(CREATOR_SPECIAL_ID)) ids.push("ach-creator");
   if (s.dailyStreak >= 7) ids.push("ach-daily-7");
@@ -160,7 +175,7 @@ export function evaluateCounterAchievements(
   if (s.gamesWon >= 1000) ids.push("ach-games-1000");
   if (s.goalsScored >= 2500) ids.push("ach-goals-2500");
   if (s.legacyTitles >= 25) ids.push("ach-legacy-25");
-  if (s.specialsOwned >= 100) ids.push("ach-specials-100");
+  for (const m of SPECIALS_MILESTONES) if (m.at > 50 && s.specialsOwned >= m.at) ids.push(m.id);
   if (rankAtLeast(s.rankId, "diamond")) ids.push("ach-rank-diamond");
   if (rankAtLeast(s.rankId, "champion")) ids.push("ach-rank-champion");
   if (rankAtLeast(s.rankId, "grand-champion")) ids.push("ach-rank-gc");

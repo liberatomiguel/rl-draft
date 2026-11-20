@@ -1,21 +1,74 @@
 # Project Status — current state only
 
-> Updated: **2026-11-12**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 proposal (not
-> approved): ROADMAP-RTW-2026-11-17.md.
+> Updated: **2026-11-19**. History: CHANGELOG.md. Career map:
+> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
+> (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
+> Proposal of 19/11 (player survey + competitors; reorders that roadmap, not
+> approved): PLANO-PROXIMO-NIVEL-2026-11-19.md; competitor study:
+> CONCORRENTES-2026-11-19.md.
 
 ## Current builds
 
-- **v2.0.14 (14/11/2026)** follows the first PostHog review after the launch
-  (docs/POSTLAUNCH-2.0-REPORT.md): page translation no longer crashes React
-  (`lib/domGuard.ts`), the black global error screen is replaced
-  (`app/global-error.tsx`), a failed chunk reloads once, old Draft results no
-  longer crash, error reports keep the property name. Production ran v2.0.1 to
-  v2.0.13 between 12 and 14/11 (CHANGELOG). Not verified: the crash end to end
-  with a real browser translator; watch `NotFoundError` under release 2.0.14.
-  Open from the report: an event for a refused career advance, the event budget
-  (about one million a month), FR / ES, mobile career entry, account sync failures.
-- **Production is v2.0.0 "Season 1"**, https://rocketdraft.app, live since
+- **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
+  and database link made quiet (Miguel's review of 2.0.34).
+- **v2.0.34 (19/11/2026): fixes from the player survey**, in
+  the current identity. A sponsor goal keeps its first season's results
+  across the rollover; career mismatches no longer read 7-0 every game (the
+  Draft keeps its scorelines); new careers read name bank 4 (no "Kimchi II",
+  real-scene org shapes; older careers keep their names); the Collection shows
+  the next collection reward and links the RLCS database; a one-off HQ card
+  tells returning players about several careers and the account copy.
+  BALANCE_VERSION 37. Open from the survey: org-less stacks (A4, needs
+  Miguel's list). The broadcast pilot gets 2.0.34 when it merges main.
+- **v2.0.33 (18/11/2026): search pass on the career landing**
+  (DESIGN-DECISIONS #172, R136). `/rocket-league-manager` is the first organic
+  landing page; its title and H1 lead with "Rocket League Career Mode & Manager
+  Game", a new first section answers "does Rocket League have a career mode?",
+  the guide stops competing for that query, own share image and VideoGame node.
+  Two buttons: "Found your club" (wizard) and "Start with a random club"
+  (`/career?start=quick`); the guides' button opens `/career` (it linked to
+  `/`). Active teams' titles name the current roster; `llms.txt`. Watch which
+  start founds more careers (PostHog: `/career/new` with or without the flag).
+  Baseline and rivals: memory `seo-search-landscape`. Not done: video, Reddit,
+  DE/FR pages, new landing pages.
+- **v2.0.32 (18/11/2026): a page whose build files failed to load repairs
+  itself** (DESIGN-DECISIONS #171). The zone rule for Miguel
+  (DEPLOY-CLOUDFLARE §9) is not applied yet.
+- **v2.0.31 (18/11/2026): an invitation to Miguel's research form for
+  returning players** (`config/research.ts`, event `research_invite`).
+- **v2.0.30 (18/11/2026): the career top bar links to the saves
+  picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
+  saved profile.** Cross-device career saves still unverified on two devices.
+- **v2.0.29 (18/11/2026): the device's saves belong to one
+  account at a time** (DESIGN-DECISIONS #170, `lib/localOwner.ts`). Signing out
+  leaves a fresh guest with no careers; another account never inherits the
+  profile, grants or career slots; the owner's next sign-in brings them back.
+  Not verified on a phone or against production accounts (tests only).
+- **v2.0.28 (18/11/2026): the career cloud save
+  is open to every signed-in account and sell / trade is live** (Miguel's
+  go-ahead 18/11). `CAREER_CLOUD_AUDIENCE` is "all" (`lib/careerCloudGate.ts`);
+  "staff" or "off" plus a deploy is the way back.
+- **v2.0.27 (17/11/2026): Road to Worlds gets the transfer list and
+  player-for-player trades** (R135, closes ECO-06; BALANCE_VERSION 36). Three
+  additive save fields, persist contract unchanged. Checked in a desktop
+  browser and at 320 px; a short probe (2 careers, 4 seasons) and the soft-lock
+  probe; no battery, no physical device.
+- **v2.0.26 (17/11/2026): the career save in the account.** One row per account
+  and slot in `career_saves` (SQL applied by Miguel 17/11), localStorage still
+  the copy the game plays from, a notice when two copies differ, save files for
+  everyone (DESIGN-DECISIONS #165–#169). Not verified: two devices, mobile
+  Safari. Watch `account_sync_failed` after the opening.
+- **v2.0.25 (17/11/2026).**
+  Account sync, first step of the career cloud save (roadmap Etapa 1): every
+  failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
+  a failure that may pass is tried again, and a call never runs without the
+  player's own token (an expired token used to read as "new account"). Not
+  verified against the production database: staging has accounts off.
+- v2.0.15 to v2.0.24 are in
+  CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
+  page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused
+  career advance, the event budget, FR / ES, mobile career entry.
+- **v2.0.0 "Season 1"** went live at https://rocketdraft.app on
   12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
   his go-ahead because the Workers Builds queue was behind; the queued builds
   publish the same commits). Pre-season frozen at 13:05 UTC, three rewarded
@@ -57,7 +110,7 @@
    remains Gate 3b. rc.42 does not close it.
 2. Review open rc.37 handoff questions (F1/F2/F3); F5 approval before code.
    Gate 2 play and ENG-03 real-save fixtures remain.
-3. Etapa 4: collection pacing, DATA-02, SEA-01 and ECO-06. Etapa 5:
+3. Etapa 4: collection pacing, DATA-02 and SEA-01 (ECO-06 closed by R135). Etapa 5:
    integrated playtests, real saves, account/sync, performance, final EN/PT/art,
    tutorial and launch notes. Etapa 6: season dates, migration/rollback and
    Miguel's cutover tasks in V2-IMPLEMENTATION-PLAN.md §6. No main deployment.

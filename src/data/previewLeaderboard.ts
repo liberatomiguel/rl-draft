@@ -88,9 +88,13 @@ export function previewLeaderboardRows(): PreviewRow[] {
     if (r() < 0.06) grants.push("pro");
     if (r() < 0.12) grants.push("supporter");
     if (r() < 0.05) grants.push("contributor");
+    // v2.0.17: the fictional pros carry the Verified seal (no extra draw: the rows stay put).
+    if (grants.includes("pro")) grants.push("verified");
     return {
       username: i % 9 === 4 ? `${name}${Math.floor(r() * 90 + 10)}` : name,
-      season_xp: xp,
+      // v2.0.18: spread over every rank (the boards show varied emblems); follows
+      // the rating quantile, no extra draw, so every other field stays put.
+      season_xp: Math.round(1000 + Math.pow(q, 4) * 760_000),
       season_mmr: mmr,
       season_peak_mmr: mmr + Math.round(r() * 80),
       season_titles: seasonTitles,

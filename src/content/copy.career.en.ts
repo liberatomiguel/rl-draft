@@ -532,6 +532,7 @@ export const CAREER_EN = {
       invite: "Invite",
       training: "Training plan",
       bid: (player: string) => `Bid for ${player}`,
+      trade: (player: string) => `Trade: ${player}`,
       sponsor: "Sponsor offers",
       sunday: "Start Sunday",
       follow: "Without you",
@@ -621,6 +622,14 @@ export const CAREER_EN = {
     },
     tpl: {
       incomingBid: (p: Record<string, string | number>) => `Offer for ${p.player}`,
+      listingNoBuyer: (p: Record<string, string | number>) => `No takers for ${p.player}`,
+      listingTooDear: (p: Record<string, string | number>) => `${p.player}: the ask drew no offer`,
+      listingOffer: (p: Record<string, string | number>) => `${p.org} meet your ask for ${p.player}`,
+      listingCounter: (p: Record<string, string | number>) => `${p.org} counter for ${p.player}`,
+      tradeRefusedFit: (p: Record<string, string | number>) => `${p.org} turn down the trade for ${p.take}`,
+      tradeRefusedValue: (p: Record<string, string | number>) => `${p.org} find the trade for ${p.take} too light`,
+      tradeAgreed: (p: Record<string, string | number>) => `${p.org} agree to trade ${p.take}`,
+      tradeCountered: (p: Record<string, string | number>) => `${p.org} ask for cash in the ${p.take} trade`,
       blockbusterBid: (p: Record<string, string | number>) => `BLOCKBUSTER: ${p.org} want ${p.player}`,
       sponsorOffers: () => `Sponsorship proposals on your desk`,
       objectiveHit: (p: Record<string, string | number>) => `${p.name}: objective delivered`,
@@ -661,7 +670,6 @@ export const CAREER_EN = {
       cashNotice: (p: Record<string, string | number>) => `Cash notice: about ${p.weeks} weeks of runway`,
       // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
       restructured: () => `The Backer restructured the org`,
-      listingOffer: (p: Record<string, string | number>) => `Offer for ${p.player} — your listing`,
       // rc.34 (ECO-04): the deals' mails.
       sponsorLapsed: () => `The sponsorship offers lapsed`,
       // rc.36 (front S2): CAREER_SPONSOR.deadlineRule "signSafest" — nobody picked by the deadline.
@@ -680,6 +688,22 @@ export const CAREER_EN = {
     body: {
       incomingBid: (p: Record<string, string | number>) =>
         `${p.org} tabled a formal offer of ${p.fee} for ${p.player}. It expires when the window closes — accept or decline it in the Market's deals tab.`,
+      listingNoBuyer: (p: Record<string, string | number>) =>
+        `No org in his region answered your listing of ${p.player} at ${p.ask}. Withdraw him, or try again in the next window.`,
+      listingTooDear: (p: Record<string, string | number>) =>
+        `The market passed on ${p.player} at ${p.ask}. Lower the ask in the Market's deals tab, or withdraw him.`,
+      listingOffer: (p: Record<string, string | number>) =>
+        `${p.org} will pay ${p.fee} for ${p.player}, your asking fee of ${p.ask}. Accept or decline it in the Market's deals tab; it expires when the window closes.`,
+      listingCounter: (p: Record<string, string | number>) =>
+        `${p.org} want ${p.player} but offer ${p.fee}, under the ${p.ask} you asked. Accept or decline it in the Market's deals tab; it expires when the window closes.`,
+      tradeRefusedFit: (p: Record<string, string | number>) =>
+        `${p.org} will not swap ${p.take} for ${p.give}: ${p.give} would weaken their lineup too much. The proposal is closed.`,
+      tradeRefusedValue: (p: Record<string, string | number>) =>
+        `${p.org} value ${p.take} well above ${p.give} and the cash offered does not close the gap. The proposal is closed.`,
+      tradeAgreed: (p: Record<string, string | number>) =>
+        `${p.org} agree to send ${p.take} for ${p.give}, with ${p.cash} in cash from you. Accept or decline it in the Market's deals tab; it holds until the window closes.`,
+      tradeCountered: (p: Record<string, string | number>) =>
+        `${p.org} will send ${p.take} for ${p.give} if you add ${p.cash} in cash. Accept or decline it in the Market's deals tab; it holds until the window closes.`,
       // rc.32 (Miguel, 30/10): what a Blockbuster bid is, why it came, its price and the cost of refusing.
       blockbusterBid: (p: Record<string, string | number>) =>
         `${p.org} came in heavy: ${p.fee} for ${p.player}, ${p.mult === undefined ? "well above" : `×${p.mult}`} his market value. Refuse it, or let it expire, and he stays${p.pct === undefined ? ", but his next renewal ask can rise." : `, but his next renewal ask rises ${p.pct}%.`}`,
@@ -692,8 +716,6 @@ export const CAREER_EN = {
       // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
       restructured: (p: Record<string, string | number>) =>
         `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value${positive(p.garnished) ? ` (${p.garnished} of it went to the debt)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `The Backer topped the balance back up to ${p.rescueTo}` : `The balance stands at ${p.balance}`}; ${positive(p.owed) ? `you owe ${p.owed}` : "nothing is owed"}. The squad plays on — the sub steps up; an empty seat needs a free agent before the next event. ${legacyNextBreachEn(p.next)}`,
-      listingOffer: (p: Record<string, string | number>) =>
-        `${p.org} answered your listing: ${p.fee} for ${p.player}. Accept it in the Market's deals tab before the window closes, or decline to keep him — declining ends the listing.`,
       sponsorOffers: () =>
         `Brands are interested in the org. Review the proposals in Finances — the base payment is guaranteed; the bonus rides on the objective.`,
       objectiveHit: (p: Record<string, string | number>) =>
@@ -1582,6 +1604,89 @@ export const CAREER_EN = {
       tooYoung: "Too young to compete — players sign from age 13.",
       /** rc.32 (M4): the lock on commitments that shorten the runway (off since rc.34 — CAREER_LOAN.lockCommitments). */
       loanRunway: "Locked while the emergency loan is owed. Repay it or free some wages first.",
+      /** R135 (ECO-06): the transfer list and player-for-player trades. */
+      listDisabled: "The transfer list is not available.",
+      listFirstWindow: "The first window is closed to sales: no listings and no trades yet.",
+      listWindowClosing: "The window closes today. It is too late to list a player or propose a trade.",
+      listFull: "The transfer list is full. Withdraw a player first.",
+      listOffered: "An offer for him is on the table. Answer it first.",
+      resaleLocked: "A player you signed cannot be listed or traded in his signing window or the next one.",
+      tradeDisabled: "Trades are not available.",
+      tradeFreeAgent: "He is no longer under contract with an org.",
+      tradeRegion: "Trades stay inside a region. Your player must be from the same region as his org.",
+      tradePending: "One trade proposal at a time. Wait for the answer or withdraw it.",
+      buyBack: "He left your club under a season ago. He will not sign for you again yet.",
+      tradeGone: "One of the two players is no longer available.",
+    },
+    /** R135 (ECO-06): the transfer list, on the Market's deals tab and the Squad screen. */
+    transferList: {
+      title: "Transfer list",
+      empty: "Set an asking fee for a squad player and an org of his region answers within a few days. Nobody leaves until you accept.",
+      listPlayer: "List a player",
+      listForSale: "List for sale",
+      listedTag: "Listed",
+      changePrice: "Change price",
+      withdraw: "Withdraw",
+      asking: (money: string) => `Asking ${money}`,
+      waiting: (date: string) => `Answer expected by ${date}`,
+      offered: "Offer on the table, see above",
+      noBuyer: "No org in his region is buying right now.",
+      tooDear: "The asking fee was too high.",
+      offerTag: "Answer to your listing",
+      counterLine: (ask: string) => `Counter-offer: you asked ${ask}`,
+      sheetTitle: "List a player",
+      repriceTitle: "Change the asking fee",
+      pickTitle: "Choose a player",
+      pickHint: "Pick who goes on the list.",
+      value: "Market value",
+      askLabel: "Asking fee",
+      askPct: (pct: number) => `${pct}% of his market value`,
+      guidance: (minDays: number, maxDays: number) =>
+        `A fair ask is met in full. A high one may draw a lower counter-offer, or nobody. The answer takes ${minDays} to ${maxDays} days.`,
+      confirm: "List",
+      confirmReprice: "Update price",
+      shortTenure: (pct: number) => `He arrived under a season ago: clubs will pay about ${pct}% of his value for now.`,
+    },
+    /** R135 (ECO-06): player-for-player trades. */
+    trade: {
+      title: "Trades",
+      empty: "To propose a trade, open the offer for a player under contract. Trades work only inside a transfer window, with an org from the region of the player you give.",
+      proposeCta: "Propose a trade",
+      proposeHint: "Offer one of your players for him instead of paying the fee.",
+      row: (give: string, take: string, org: string) => `${give} for ${take} (${org})`,
+      cashLine: (money: string) => `plus ${money} in cash`,
+      waiting: (date: string) => `Answer expected by ${date}`,
+      agreed: "Agreed. Waiting for your yes or no.",
+      countered: (money: string) => `They ask for ${money} in cash.`,
+      nowTitle: "Trade offer",
+      withdraw: "Withdraw",
+      confirmTitle: "Confirm the trade",
+      leaves: "Leaves",
+      arrives: "Arrives",
+      cash: "Cash you pay",
+      noCash: "No cash",
+      wageLine: (wage: string, share: string) => `${wage} · ${share}`,
+      lengthLine: (n: number) => (n === 1 ? "1 season" : `${n} seasons`),
+      irreversible: "This cannot be undone.",
+      sheetTitle: (name: string) => `Trade for ${name}`,
+      target: "He arrives",
+      give: "Your player goes",
+      pickGive: "Choose who goes to his org",
+      length: "Contract length",
+      cashLabel: "Cash added",
+      cashHint: "Optional. Cash covers a gap in value.",
+      summary: "His deal",
+      wage: "Wage",
+      share: "Prize share",
+      outlook: {
+        likely: "They are likely to accept.",
+        close: "It is close: they may ask for cash.",
+        unlikely: "Unlikely at this price.",
+        noFit: "They will not weaken their lineup that much.",
+      },
+      rules: (minDays: number, maxDays: number) =>
+        `The org never pays a difference: any gap is yours to cover in cash. The answer takes ${minDays} to ${maxDays} days.`,
+      send: "Send proposal",
     },
   },
 
@@ -2168,6 +2273,18 @@ export const CAREER_EN = {
       transferFa: (p: Record<string, string | number>) => `${p.player} finds a home at ${p.to}`,
       userSigned: (p: Record<string, string | number>) => `Official: ${p.player} joins ${p.org}`,
       userSold: (p: Record<string, string | number>) => `${p.player} departs ${p.org} for ${p.to}`,
+      userTraded: (p: Record<string, string | number>) => `${p.club} swap ${p.give} for ${p.take} with ${p.org}`,
+      listingLapsed: (p: Record<string, string | number>) =>
+        Number(p.n) === 1 ? `Transfer list closes: ${p.players} stays` : `Transfer list closes: ${p.players} stay`,
+      listingNoBuyer: (p: Record<string, string | number>) => `No takers for ${p.player} at ${p.ask}`,
+      listingTooDear: (p: Record<string, string | number>) => `${p.player}: no offer at ${p.ask}`,
+      listingOffer: (p: Record<string, string | number>) => `${p.org} offer ${p.fee} for ${p.player}`,
+      listingCounter: (p: Record<string, string | number>) => `${p.org} counter at ${p.fee} for ${p.player}`,
+      tradeLapsed: (p: Record<string, string | number>) => `Trade lapses: ${p.give} for ${p.take}`,
+      tradeRefusedFit: (p: Record<string, string | number>) => `${p.org} refuse ${p.give} for ${p.take}`,
+      tradeRefusedValue: (p: Record<string, string | number>) => `${p.org} refuse ${p.give} for ${p.take}`,
+      tradeAgreed: (p: Record<string, string | number>) => `${p.org} agree to ${p.give} for ${p.take}`,
+      tradeCountered: (p: Record<string, string | number>) => `${p.org} ask ${p.cash} on top for ${p.take}`,
       userReleased: (p: Record<string, string | number>) => `${p.org} releases ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} take ${p.event}`,
       resultUser: (p: Record<string, string | number>) => `${p.org ?? "The team"} finishes ${p.placement} at ${p.event}`,
@@ -2251,7 +2368,6 @@ export const CAREER_EN = {
       // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's feed still reads.
       restructured: (p: Record<string, string | number>) =>
         p.player ? `Restructuring: ${p.player} sold to balance the books` : `Restructuring: the Backer steps in again`,
-      listingOffer: (p: Record<string, string | number>) => `${p.org} bid for listed ${p.player}`,
       listed: (p: Record<string, string | number>) => `${p.player} is on the market — the org listed him`,
       flavor1: () => `Desk notes: rotation discipline is the new meta buzzword`,
       flavor2: () => `Scrim servers busy — the whole region is grinding`,
@@ -2305,6 +2421,8 @@ export const CAREER_EN = {
         `${p.org} has confirmed the arrival of ${p.player}. The signing opens a new chapter for both the player and the organization as attention turns to their first appearance together.`,
       userSold: (p: Record<string, string | number>) =>
         `${p.to} has reached an agreement to sign ${p.player} from ${p.org}. Both organizations now turn their attention to the upcoming schedule following the transfer.`,
+      userTraded: (p: Record<string, string | number>) =>
+        `${p.club} and ${p.org} have completed a player swap: ${p.give} moves across and ${p.take} joins the roster.`,
       userReleased: (p: Record<string, string | number>) =>
         `${p.org} paid the severance and moved on. ${p.player} joins the free-agent pool.`,
       result: (p: Record<string, string | number>) =>
@@ -2822,6 +2940,54 @@ export const CAREER_EN = {
     defendTitle: "Defend the title",
   },
 
+  cloud: {
+    synced: (when: string) => `Saved in your account · ${when}`,
+    pending: "Changes waiting to be saved in your account",
+    syncing: "Saving to your account…",
+    conflict: "Two copies of this career",
+    choose: "Choose",
+    newer: "The copy in your account was saved by a newer version of the game. Reload to update.",
+    error: "Could not reach your account. It will be tried again.",
+    tryNow: "Try now",
+    restoring: "Restoring from your account…",
+    exportSave: "Export save",
+    importSave: "Import a save file",
+    importErrors: {
+      unreadable: "That file could not be read.",
+      "not-a-save": "That is not a Rocket Draft career save.",
+      newer: "That save comes from a newer version of the game. Reload to update, then import again.",
+      damaged: "That file is incomplete or damaged.",
+      invalid: "The game could not load that save.",
+      "slot-taken": "This slot already holds a career.",
+    },
+    deleteAlso: "The copy in your account is deleted too.",
+    helpActive: "Your careers are also saved in your account. Export a save file to keep your own backup.",
+    helpLocal: "Careers are saved in this browser. Export a save file to move one to another device or keep a backup.",
+    helpSignIn: "Sign in to keep a copy in your account.",
+    notice: {
+      titleDiverged: "This career was played on two devices",
+      titleDifferent: "This slot holds a different career in your account",
+      titleDeleted: "This career was deleted from your account",
+      bodyDiverged: "The two copies cannot be merged. Choose the one to keep; the other is replaced.",
+      bodyDifferent: "Choose the career to keep in this slot; the other is replaced.",
+      bodyDeleted: "It was deleted on another device. Keep it here and it goes back to your account, or delete it here too.",
+      thisDevice: "This device",
+      account: "Your account",
+      mostRecent: "Most recent",
+      keepDevice: "Keep this device's career",
+      useAccount: "Use the career from your account",
+      keepHere: "Keep it here",
+      deleteHere: "Delete it here too",
+      exportFirst: "Export this device's career first",
+      decideLater: "Decide later",
+      seasonWeek: (season: string, week: string) => `${season} · ${week}`,
+    },
+    toast: {
+      updated: (org: string) => `${org}: updated from your account (played on another device).`,
+      restored: (org: string) => `${org}: restored from your account.`,
+    },
+  },
+
   saves: {
     title: "Careers",
     empty: "Found a new org",
@@ -2836,6 +3002,23 @@ export const CAREER_EN = {
     lastPlayed: "Last played",
     newCareer: "New career",
     slotsFull: "All three slots are taken.",
+  },
+
+  /** v2.0.34: the one-off HQ card about several careers and the account copy (lib/careerSavesNotice.ts). */
+  savesNotice: {
+    title: "Your careers, on every device",
+    body: "You can run up to three careers at once: Careers, in the top bar, lists them. Signed in, each one is also kept in your account, so the same career opens on your phone and on your computer.",
+    open: "See my careers",
+    dismiss: "Got it",
+  },
+
+  /** v2.0.31: the player-research invitation on the season review (lib/researchInvite.ts). */
+  research: {
+    title: "Help shape Road to Worlds",
+    body: "A season in the books. Your read on the career and the draft helps decide what comes next. A short form on what works, what does not and what is missing.",
+    note: "Opens in a new tab. We only ask once.",
+    open: "Open the form",
+    dismiss: "No thanks",
   },
 
   goals: {

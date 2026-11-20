@@ -26,7 +26,8 @@ import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import type { ContractOffer } from "@/engine/career/contract";
-import { renewalTalkFor } from "@/store/careerFlow";
+import { listingPlanFor, renewalTalkFor, transferListOf } from "@/store/careerFlow";
+import { ListPlayerSheet } from "@/components/career/ListPlayerSheet";
 import { contractClockOf } from "@/store/careerHq";
 import { careerNewSummary, contractNewKey, contractWarnsFor } from "@/engine/career/careerNew";
 import { NewTag } from "@/components/ui/NewDot";
@@ -87,6 +88,8 @@ export function SquadScreen() {
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
+  /** R135: the listing sheet for one player. */
+  const [listing, setListing] = useState<string | null>(null);
   const [renewLen, setRenewLen] = useState<1 | 2 | 3>(2);
   /** rc.33 (ECO-10/11): the renewal offer on the table — weekly wage + prize share (empty = his ask). */
   const [renewOffer, setRenewOffer] = useState<ContractOffer>({});
@@ -106,6 +109,7 @@ export function SquadScreen() {
   const clock = clockLabel(save);
   const byId = new Map(save.squad.map((p) => [p.id, p]));
   const starters = save.starterIds.map((id) => byId.get(id)).filter(Boolean) as SquadPlayer[];
+  const listedIds = new Set(transferListOf(save).map((l) => l.playerId));
   const bench = save.squad.filter((p) => !save.starterIds.includes(p.id));
   const wageBill =
     save.squad.reduce((s, p) => s + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0);
@@ -469,6 +473,7 @@ export function SquadScreen() {
                     {expiring ? <Badge tone="orange">{C.squad.expiring}</Badge> : null}
                     {p.finalSeasonAnnounced ? <Badge tone="bad">{C.squad.finalSeason}</Badge> : null}
                     {freshKeys.has(contractNewKey(p.id, p.contractEndSeason)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null}
+                    {listedIds.has(p.id) ? <Badge tone="blue">{C.market.transferList.listedTag}</Badge> : null}
                   </div>
                   <div className="mt-0.5 text-[11px] text-faint">
                     {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))} ·{" "}
@@ -484,7 +489,7 @@ export function SquadScreen() {
                 <span className="text-xs text-sub">
                   {wageLabel(C, p.salaryPerSplit)}
                 </span>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <Button size="sm" variant="ghost" onClick={() => openSheet(p)}>
                     {C.market.viewSheet}
                   </Button>
@@ -500,6 +505,21 @@ export function SquadScreen() {
                   >
                     {C.squad.renew}
                   </Button>
+                  {/* R135 (ECO-06): the transfer list. */}
+                  {(() => {
+                    const listError = listingPlanFor(save, p.id)?.error ?? null;
+                    return (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={Boolean(listError)}
+                        title={listError ? ((C.market.errors as Record<string, string>)[listError] ?? C.market.errors.unknown) : undefined}
+                        onClick={() => setListing(p.id)}
+                      >
+                        {C.market.transferList.listForSale}
+                      </Button>
+                    );
+                  })()}
                   {/* rc.30: roster moves wait for the event (its team froze at the start). */}
                   <Button
                     size="sm"
@@ -518,6 +538,7 @@ export function SquadScreen() {
       </Panel>
 
       <PlayerSheet data={sheet} onClose={() => setSheet(null)} />
+      {listing ? <ListPlayerSheet key={listing} save={save} open playerId={listing} onClose={() => setListing(null)} /> : null}
 
       {/* ==================== release confirm ==================== */}
       <Modal

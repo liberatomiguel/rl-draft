@@ -6,7 +6,10 @@
  * production showed before the launch (v1.4.7), same portal / focus trap.
  *
  * Shown ONCE per player (`flags.seenLaunchNotice`, synced), on the home page,
- * to new and returning players alike, after the first-run tutorial. It comes
+ * after the first-run tutorial. v2.0.24: only to a player who has a pre-season
+ * (`legacy.preseason`): "2.0 is here" and "claim your pre-season rewards" say
+ * nothing to someone who never played 1.x, and it was the second of three
+ * full-screen pop-ups a newcomer had to close before seeing the game. It comes
  * BEFORE the pre-season recap: a veteran who logs in from here gets the recap
  * with the board places already synced. The primary action opens the inline
  * sign-in dialog (v1.4.8) for a guest; the secondary one goes to the changelog.
@@ -33,12 +36,13 @@ export function LaunchNotice() {
   const mounted = useMounted();
   const seen = useProfileStore((s) => Boolean(s.flags.seenLaunchNotice));
   const tutorialDue = useProfileStore(selectTutorialDue);
+  const veteran = useProfileStore((s) => Boolean(s.legacy?.preseason));
   const markFlag = useProfileStore((s) => s.markFlag);
   const accountsOn = useAccountStore((s) => s.enabled);
   const status = useAccountStore((s) => s.status);
   const [tab, setTab] = useState<LaunchNoticeTab>("career");
   const dialog = useRef<HTMLDivElement>(null);
-  const open = mounted && !seen && !tutorialDue;
+  const open = mounted && !seen && !tutorialDue && veteran;
   // The login calendar, the unlock pop-ups and the pre-season recap wait behind it.
   useOverlayHold("intro", open);
 
