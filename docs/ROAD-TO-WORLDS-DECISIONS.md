@@ -2395,3 +2395,13 @@ Miguel, 18/11 ("faça tudo o que precisar fazer para garantirmos o melhor ranque
 **Unchanged.** The wizard's steps, the Quick start itself, the save, the seed (the same world the preview shows) and analytics: `career_created` has no new property; the entry shows in the `$pageview` URL (`?start=quick`).
 
 Rejected: founding the club without the last step (the preset is the one choice that sets a career's economy, R59 and R68); a separate one-click route (two ways to found a club to keep in step).
+
+## R137 — 20 November 2026: Mundo vivo M1, the world renews itself in the infinite seasons (v2.1.0-dev.2, flag off)
+
+**Rule.** Behind `FEATURES.worldLife`, from the first infinite season (`CAREER_WORLD_LIFE`): strong orgs scout a near-ready prospect onto a reserve seat (he starts only when he beats the weakest starter, who moves to the bench and stays); a Local side that reached a Major or Worlds is signed at the rollover; a small org outside its region's top 12 for two seasons gives way to a new org; the local scene stays under its region's median − 2; coaches age and retire (the user's announces a season ahead in the Inbox and leaves only at a rollover; an AI org outside its top 10 may change coach after two seasons; retired ex-pros feed the jobs). Optional save fields only.
+
+**Why.** Player survey: real orgs fade from Worlds in the infinite seasons. Diagnosis (docs/MUNDO-VIVO-M1.md): AI orgs signed by current overall only once the anchor pass ended, and the local ceiling grew with no tie to the world. Miguel (20/11): scouting must not drop a top org's overall; coaches need a life cycle.
+
+**Measured.** S0–S5 identical with the flag on; top-4 overall above the flag-off world every season; Local sides at Worlds ~0. The endgame is not harder: the field's top falls ~3 points over six seasons either way, so Miguel's target 5 (title per Worlds ≤ 30–35 %) needs the top to hold (M2).
+
+Rejected: scouting within 3 of the weakest starter (0.6 reserves a region, no measurable effect). A retiring AI coach's successor is at most 2 points worse, so a retirement never costs a top org its level (dataset coaches outclass the generated pool).

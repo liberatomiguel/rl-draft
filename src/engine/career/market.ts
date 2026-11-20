@@ -514,6 +514,13 @@ function removeFromWorld(world: WorldState, playerId: string): string | null {
       return org.ref; // caller decides the backfill
     }
   }
+  // v2.1 M1 (R137): a scouted reserve leaves the bench (no seat to backfill).
+  for (const org of Object.values(world.orgs)) {
+    if (org.reserveIds?.includes(playerId)) {
+      org.reserveIds = org.reserveIds.filter((id) => id !== playerId);
+      return null;
+    }
+  }
   const fa = world.freeAgentIds.indexOf(playerId);
   if (fa >= 0) return null;
   return null;

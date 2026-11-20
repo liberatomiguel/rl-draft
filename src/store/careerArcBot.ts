@@ -104,7 +104,8 @@ export type ArcPolicyId =
   | "academy"
   | "contender"
   | "professional"
-  | "veterans";
+  | "veterans"
+  | "strong";
 
 /** rc.34: how the bot picks a sponsor offer (see ArcPolicy.sponsor). */
 export type ArcSponsorPick = "best" | "worst" | "steady" | "balanced" | "bold";
@@ -168,6 +169,8 @@ export interface ArcPolicy {
   fullSupport?: boolean;
   /** A youth project that buys current strength after its first Major qualification. */
   contendWhenReady?: boolean;
+  /** v2.1 M1: how much better (overall) an upgrade must be than the weakest starter (default: stars 1, others 3). */
+  upgradeMargin?: number;
 }
 
 const base: Omit<ArcPolicy, "id"> = {
@@ -238,6 +241,12 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   academy: { id: "academy", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true },
   contender: { id: "contender", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, contendWhenReady: true },
   professional: { id: "professional", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, fullSupport: true },
+  /**
+   * v2.1 M1 (R137): a strong manager, closer to the real players who win at 93+ — the professional's
+   * support and books, but it upgrades for any clearly better player (margin 1), takes the best-paying
+   * sponsor and keeps its stars (every bid declined). Opt-in: measures the endgame (careerWorldLife.probe).
+   */
+  strong: { id: "strong", ...base, sponsor: "best", market: "upgrade", upgradeMargin: 1, renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", infrastructure: true, fullSupport: true },
 };
 
 /**
@@ -661,7 +670,7 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
   const lineup = starters(save).sort((a, b) => a.overall - b.overall);
   const weakest = lineup[0];
   if (!weakest) return save;
-  const margin = policy.market === "stars" ? 1 : 3;
+  const margin = policy.upgradeMargin ?? (policy.market === "stars" ? 1 : 3);
   const age = (v: CareerPlayerView) => v.age;
   const list =
     policy.market === "youth"

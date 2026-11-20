@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.2] — 2026-11-20 · Mundo vivo M1: orgs renew, coaches retire (flag off, BALANCE_VERSION 38)
+
+Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off a career plays exactly as v2.0.35. Infinite seasons only (R137, docs/MUNDO-VIVO-M1.md).
+
+### Added
+- AI scouting: an org of prestige 1+ signs a near-ready prospect (≤ 21, potential 85+, overall within 5 of its weakest starter) as its reserve. He starts only once he passes the weakest starter, who keeps a bench seat. Measured: the top-4 overall is never lower than with the flag off.
+- A Local side that played a Major or Worlds is signed at the rollover ("stack X signs with Y"); a small org stuck outside its region's top 12 for two seasons gives its seat to a new org.
+- The local scene's ceiling: its region's median org rating − 2, set each season.
+- Coaches age and retire. An AI org outside its top 10 may change coach after two seasons; retired ex-pros take the jobs first. The user's coach announces his last season in the Inbox and leaves only at the next rollover, never mid-season; he is not offered again.
+- The `strong` arc-bot policy and the opt-in probe `careerWorldLife.probe.test.ts` (`WORLDLIFE=1`, with a Worlds replay at fixed ratings).
+
+### Balance
+- `CAREER_WORLD_LIFE` (new). BALANCE_VERSION 37 → 38 (the fingerprint test asks for it on any balance.ts change; no value read with the flag off changed).
+
+### Fixed
+- Real orgs lost Worlds seats to Local sides in the infinite seasons. Root cause: AI orgs signed free agents by current overall only once the anchor pass ended (the best young players stayed unsigned), and the local scene's ceiling grew 1.5 a season with no tie to the world. Flag on: Local sides at Worlds 0.4–1.4 → 0.0–0.1 a season (S6–S12).
+
 ## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
 
 ### Changed

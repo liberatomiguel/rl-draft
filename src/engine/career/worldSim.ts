@@ -224,7 +224,7 @@ function pickStat(f: number): StatKey {
 }
 
 const ROMAN = ["", "II", "III", "IV", "V", "VI"];
-function fillerOrgName(region: Region, i: number, careerSeed: number, nameBankVersion: number): string {
+export function fillerOrgName(region: Region, i: number, careerSeed: number, nameBankVersion: number): string {
   const bank = orgNamePoolFor(region, careerSeed, "pro", nameBankVersion);
   const wrap = Math.floor(i / bank.length);
   const base = bank[i % bank.length];
@@ -1123,6 +1123,16 @@ export function localAnchorFor(
   region: Region,
   input: { world: WorldState; competition: CompetitionState; liveUserRating?: number | null },
 ): number {
+  const anchor = localAnchorUncapped(region, input);
+  // v2.1 M1 (R137): the local scene stays local — under its region's median (set per season; absent off the flag).
+  const cap = input.competition.localCap?.[region];
+  return cap === undefined ? anchor : Math.min(anchor, cap);
+}
+
+function localAnchorUncapped(
+  region: Region,
+  input: { world: WorldState; competition: CompetitionState; liveUserRating?: number | null },
+): number {
   const frozen = input.competition.localAnchor;
   if (frozen && frozen.region === region) return frozen.rating;
   if (input.liveUserRating !== undefined && input.liveUserRating !== null) return input.liveUserRating;
@@ -1735,7 +1745,7 @@ function declineFor(age: number, rate: DeclineRate): number {
 }
 
 /** Next unused numeric "fic:{region}:{n}" id across the whole world state. */
-function nextFillerId(region: Region, world: WorldState): string {
+export function nextFillerId(region: Region, world: WorldState): string {
   const prefix = `fic:${region}:`;
   let max = -1;
   const scan = (id: string) => {
@@ -1743,7 +1753,10 @@ function nextFillerId(region: Region, world: WorldState): string {
     const n = Number(id.slice(prefix.length));
     if (Number.isInteger(n) && n > max) max = n;
   };
-  for (const org of Object.values(world.orgs)) org.playerIds.forEach(scan);
+  for (const org of Object.values(world.orgs)) {
+    org.playerIds.forEach(scan);
+    org.reserveIds?.forEach(scan);
+  }
   world.freeAgentIds.forEach(scan);
   world.retiredIds.forEach(scan);
   return `${prefix}${max + 1}`;
@@ -1806,6 +1819,7 @@ export function agePassAndIntake(
     next.orgs[ref] = {
       ...world.orgs[ref],
       playerIds: [...world.orgs[ref].playerIds] as [string, string, string],
+      ...(world.orgs[ref].reserveIds ? { reserveIds: [...world.orgs[ref].reserveIds!] } : {}),
     };
   }
 
@@ -1863,6 +1877,15 @@ export function agePassAndIntake(
       retire(id, view.name);
       holes.push({ ref, slot });
     });
+    // v2.1 M1 (R137): the bench ages out like everyone else (absent off the flag).
+    if (org.reserveIds?.length) {
+      org.reserveIds = org.reserveIds.filter((id) => {
+        const view = playerViewById(id, viewCtx);
+        if (!view || !rollsRetirement(view)) return true;
+        retire(id, view.name);
+        return false;
+      });
+    }
   }
   // 1b. Free agents (pool order).
   // rc.33 (RTW-04): in the dataset era a real free agent whose history is
@@ -1892,6 +1915,15 @@ export function agePassAndIntake(
   // 2. Backfill org holes: best regional FA by overall (deterministic).
   for (const { ref, slot } of holes) {
     const org = next.orgs[ref];
+    // v2.1 M1 (R137): the org's own reserve takes the seat first.
+    if (org.reserveIds?.length) {
+      const pick = [...org.reserveIds]
+        .map((id) => ({ id, ovr: playerViewById(id, viewCtx)?.overall ?? 0 }))
+        .sort((a, b) => b.ovr - a.ovr || a.id.localeCompare(b.id))[0];
+      org.playerIds[slot] = pick.id;
+      org.reserveIds = org.reserveIds.filter((id) => id !== pick.id);
+      continue;
+    }
     let bestId: string | null = null;
     let bestOverall = -Infinity;
     for (const id of next.freeAgentIds) {
@@ -1922,7 +1954,10 @@ export function agePassAndIntake(
   const addFictional = (id: string) => {
     if (lumpGrowth && (id.startsWith("fic:") || id.startsWith("rook:"))) devIds.add(id);
   };
-  for (const ref of Object.keys(next.orgs)) next.orgs[ref].playerIds.forEach(addFictional);
+  for (const ref of Object.keys(next.orgs)) {
+    next.orgs[ref].playerIds.forEach(addFictional);
+    next.orgs[ref].reserveIds?.forEach(addFictional);
+  }
   next.freeAgentIds.forEach(addFictional);
   for (const id of [...devIds].sort()) {
     if (userSquad.has(id) || retiredNow.has(id)) continue;
@@ -2040,7 +2075,10 @@ export function worldGrowthWeek(
   const addFictional = (id: string) => {
     if (id.startsWith("fic:") || id.startsWith("rook:")) ids.add(id);
   };
-  for (const org of Object.values(world.orgs)) org.playerIds.forEach(addFictional);
+  for (const org of Object.values(world.orgs)) {
+    org.playerIds.forEach(addFictional);
+    org.reserveIds?.forEach(addFictional);
+  }
   world.freeAgentIds.forEach(addFictional);
 
   const delta: Record<string, number> = { ...world.overallDelta };
@@ -2107,7 +2145,7 @@ function heldNamesByRegion(
   const held = new Map<Region, Set<string>>(REGIONS.map((r) => [r, new Set<string>()]));
   const ctx = { careerSeed, seasonIndex, world };
   for (const org of Object.values(world.orgs)) {
-    for (const id of org.playerIds) {
+    for (const id of [...org.playerIds, ...(org.reserveIds ?? [])]) {
       const view = playerViewById(id, ctx);
       if (view) held.get(org.region)?.add(nameKey(view.name));
     }

@@ -646,6 +646,9 @@ export const CAREER_PT: CareerCopy = {
       // DEV-02 (R48): o aposentado do próprio elenco — para onde ele foi.
       retiredToCoach: (p: Record<string, string | number>) => `${p.player} se aposenta — e vira treinador`,
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} se aposenta das competições`,
+      // v2.1 M1 (R137): o treinador do usuário envelhece e se aposenta.
+      coachRetireAnnounce: (p: Record<string, string | number>) => `${p.coach} anuncia sua última temporada`,
+      coachRetired: (p: Record<string, string | number>) => `${p.coach} se aposenta como treinador`,
       // rc.32 (ECONOMY-CONTRACT M3 / M4 / M8, provisório).
       foundingPartner: () => `Um parceiro fundador apoia a org`,
       foundingPartnerEnds: () => `O parceiro fundador se despede`,
@@ -788,6 +791,10 @@ export const CAREER_PT: CareerCopy = {
         `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta — o mercado é onde começa o próximo capítulo.`,
+      coachRetireAnnounce: (p: Record<string, string | number>) =>
+        `${p.coach} avisa a comissão que esta é sua última temporada no banco. Ele fica até o fim da temporada; o sucessor sai do mercado de treinadores.`,
+      coachRetired: (p: Record<string, string | number>) =>
+        `${p.coach} fez sua última temporada e se aposenta. O banco está vazio por enquanto: contrate um treinador no mercado antes do primeiro evento.`,
       // v2.0 (C1)
       sponsorBootcamp: (p: Record<string, string | number>) =>
         `Faz parte do contrato: a marca paga o bootcamp deste split. Ele já começou, sem custo, e a vantagem vale até o fim do split. ${
@@ -2289,6 +2296,10 @@ export const CAREER_PT: CareerCopy = {
       orgEnters: (p: Record<string, string | number>) => `${p.org} entra na cena de ${p.region}`,
       // rc.33 (RTW-03): uma org cuja história acabou cede a vaga a quem entra.
       orgLeaves: (p: Record<string, string | number>) => `${p.org} deixa a cena de ${p.region}`,
+      // v2.1 M1 (R137): o mundo se renova.
+      orgNewcomer: (p: Record<string, string | number>) => `${p.org} assume a vaga de ${p.old} em ${p.region}`,
+      stackSigned: (p: Record<string, string | number>) => `O stack local ${p.stack} assina com a ${p.org}`,
+      prospectScouted: (p: Record<string, string | number>) => `${p.org} contrata o prospecto ${p.player} para o banco`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region} — ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -2444,6 +2455,12 @@ export const CAREER_PT: CareerCopy = {
         `Um escudo novo no circuito de ${p.region}: ${p.org} coloca uma line nesta temporada. A história chega no horário — e a tabela fica mais dura.`,
       orgLeaves: (p: Record<string, string | number>) =>
         `${p.org} não monta line nesta temporada e deixa o circuito de ${p.region}. A vaga fica com um nome novo; os jogadores procuram outra casa.`,
+      orgNewcomer: (p: Record<string, string | number>) =>
+        `Depois de duas temporadas no fundo da tabela de ${p.region}, ${p.old} vende a vaga. ${p.org} entra no circuito com os mesmos jogadores.`,
+      stackSigned: (p: Record<string, string | number>) =>
+        `O time amador que chegou ao palco grande vira profissional: a ${p.org} contrata a line inteira do ${p.stack} para a nova temporada.`,
+      prospectScouted: (p: Record<string, string | number>) =>
+        `${p.org} contrata ${p.player} como reserva. Ele vira titular quando for melhor que um dos titulares.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
