@@ -2411,7 +2411,11 @@ Miguel, 20/11, sobre `docs/MATCHDAY-SPEC.md` e o roadmap de 17/11.
 
 O modo rápido só pode custar alguns pontos percentuais contra um bom jogo manual; a bateria mede isso.
 
-**Fatia 4.** Súmula, estatísticas dos jogadores e a nota de 0 a 10 estão aprovadas. A narração lance a lance e a barra de embalo **não estão aprovadas** e seguem em discussão; as opções são só a súmula, súmula com momentos-chave, ou narração completa com a barra.
+**Fatia 4 (opção B, escolhida pelo Miguel em 20/11).** Súmula com momentos-chave:
+- **Súmula:** gols, assistências, defesas, chutes, demolições, pontuação, nota de 0 a 10, MVP tirado dos números e estatísticas da temporada no elenco.
+- **Momentos-chave:** de 2 a 4 frases curtas por jogo, só quando acontece algo notável (gol na prorrogação, virada de 0–2, hat-trick e parecidos).
+- Todo momento-chave sai da súmula, então sempre bate com o resultado.
+- **Sem** narração lance a lance e **sem** barra de embalo.
 
 **Mundo vivo.**
 - M1: a hipótese do Miguel é que as orgs grandes precisam continuar contratando bons jogadores novos para se manter relevantes.

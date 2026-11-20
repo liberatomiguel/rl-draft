@@ -40,3 +40,11 @@ jogos. Golden e balance intactos.
   `FEATURES` e com a bateria do baseline.
 - `package.json`/`SITE.version` continuam 2.0.35 até o lançamento da v2.1.
 - Nada de save, copy ou tela ainda.
+
+## Fatia 4, decidida (opção B, 20/11; R137)
+
+Súmula (gols, assistências, defesas, chutes, demolições, pontuação, nota 0–10,
+MVP pelos números, estatísticas da temporada no elenco) mais 2 a 4 momentos-chave
+por jogo, só quando há algo notável (gol na prorrogação, virada de 0–2,
+hat-trick). Todo momento sai da súmula. Sem narração lance a lance, sem barra
+de embalo.
