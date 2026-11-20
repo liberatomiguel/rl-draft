@@ -70,8 +70,10 @@ count* for volumes. It equals the count while the guard is at level 0.
 
 ## The catalogue
 
-Priority: **critical** events are never sampled or capped; **standard** events
-are the volume, thinned first by the guard. "?" marks an optional property.
+Priority (see "Budget"): **essential** events are never sampled or capped and
+still go out past the circuit breaker; **critical** events are never sampled or
+capped; **standard** events are the volume, thinned first by the guard. "?"
+marks an optional property.
 
 ### Draft, challenges, quiz, collection
 
@@ -110,9 +112,9 @@ properties of `session_started`, not events.
 
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
-| `session_started` | critical | The first activity of a visit, or after 30 idle minutes | `sessionNumber`, `dayNumber`, `daysSinceFirst`, `daysSinceLast?`, `existingPlayer?`, `entryPath`, `signedIn?`, `loginStreak?`, `xp?`, `rankId?`, `rating?`, `runsCompleted?`, `specialsOwned?`, `achievements?`, `challengesCleared?`, `quizPlayed?`, `careerMarks?`, `equippedTitle?`, `equippedBanner?`, `equippedBadge?`, `openRunPhase?` |
+| `session_started` | critical | The first activity of a visit, or after 30 idle minutes | `sessionNumber`, `dayNumber`, `daysSinceFirst`, `daysSinceLast?`, `existingPlayer?`, `entryPath`, `signedIn?`, `loginStreak?`, `xp?`, `rankId?`, `rating?`, `runsCompleted?`, `specialsOwned?`, `achievements?`, `challengesCleared?`, `quizPlayed?`, `careerMarks?`, `equippedTitle?`, `equippedBanner?`, `equippedBadge?`, `openRunPhase?`, `lastCareerTab?` |
 | `onboarding_step` | critical | A first on this device, once ever per step | `step`, `sessionNumber`, `dayNumber`, `secondsSinceFirstSeen` |
-| `$pageview` | standard | The **first** visit to each route in a session | PostHog's own, plus the common properties |
+| `$pageview` | standard | The **first** visit to each route in a session. Since 2.1.0-dev.4 none for the career's inner screens: only `/career`, `/career/new` and `/career/saves` send one | PostHog's own, plus the common properties |
 
 - Steps: `draft_started`, `draft_confirmed`, `run_completed`,
   `challenge_played`, `quiz_played`, `career_created`, `career_first_event`.
@@ -124,6 +126,9 @@ properties of `session_started`, not events.
   never send the steps their profile had already done. Filter
   `existingPlayer = false` for the new-player funnel.
 - `sessionNumber` and `dayNumber` count from the 2.0 launch on this device.
+- `lastCareerTab` (2.1.0-dev.4) is the last career screen this device saw
+  before the session began (`hq`, a tab key, or a sub-route such as `event`,
+  `follow`, `saves`): where a player who stopped was standing.
 
 ### Road to Worlds
 
@@ -132,14 +137,15 @@ properties of `session_started`, not events.
 
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
-| `career_created` | critical | The wizard founds a career | `region`, `difficulty`, `rosterKey`, `startOverall`, `startBalance`, `slot?` |
-| `career_event_completed` | standard | **One per tournament** the user played | `seasonIndex`, `week`, `tier`, `eventRegion`, `placement`, `qualified?`, `qualifierPlacement?`, `watched`, `seedingDirect?`, `briefing?`, `squadOverall`, `balance`, `tab_<tab>?` × 10, `advanceCount?`, `advanceMaxMs?`, `advanceSlowCount?` |
-| `career_split_summary` | critical | The Monday that closes a split (3 per season) | `seasonIndex`, `split`, `balance`, `payrollPerSplit`, `incomePrize`, `incomeSponsor`, `incomeFanbase`, `incomeTransfers`, `spendWages`, `spendTransfers`, `spendOther`, `debtBacker`, `debtBank`, `splitRank?`, `ledgerComplete`, `squadOverall`, `squadSize`, `coachOverall?`, `sponsorTier?`, `trainingMode?`, `staffCount`, `rep` |
-| `career_season_completed` | critical | The season review is written | `seasonIndex`, `region`, `difficulty`, `regionRank`, `seasonPoints`, `majorsQualified`, `worldsPlacement?`, `grade`, `earnings`, `balance`, `rep`, `titlesSeason`, `titlesTotal`, `titlesWorlds`, `squadOverall`, `squadSize`, `squadAvgAge`, `payrollPerSplit`, `coachOverall?`, `sponsorTier?`, `sponsorProfile?`, `trainingMode?`, `staffCount`, `debtBacker`, `debtBank` |
-| `career_transfer` | critical | Sign, sell, release, renew | `seasonIndex`, `kind`, `overall`, `age`, `potentialBandMid`, `fee`, `salaryPerSplit`, `role`, `warned` |
+| `career_created` | essential | The wizard founds a career | `region`, `difficulty`, `rosterKey`, `startOverall`, `startBalance`, `slot?` |
+| `career_event_completed` | essential | **One per tournament** the user played | `seasonIndex`, `week`, `tier`, `eventRegion`, `placement`, `qualified?`, `qualifierPlacement?`, `watched`, `seedingDirect?`, `briefing?`, `squadOverall`, `balance`, `tab_<tab>?` × 10, `advanceCount?`, `advanceMaxMs?`, `advanceSlowCount?`, `seriesWon?`, `seriesLost?`, `upsetWins?`, `upsetLosses?`, `oppOverallAvg?`, `liveSeries?`, `decisions?` |
+| `career_split_summary` | essential | The Monday that closes a split (3 per season) | `seasonIndex`, `split`, `balance`, `payrollPerSplit`, `incomePrize`, `incomeSponsor`, `incomeFanbase`, `incomeTransfers`, `spendWages`, `spendTransfers`, `spendOther`, `debtBacker`, `debtBank`, `splitRank?`, `ledgerComplete`, `squadOverall`, `squadSize`, `coachOverall?`, `sponsorTier?`, `trainingMode?`, `staffCount`, `rep` |
+| `career_season_completed` | essential | The season review is written | `seasonIndex`, `region`, `difficulty`, `regionRank`, `seasonPoints`, `majorsQualified`, `worldsPlacement?`, `grade`, `earnings`, `balance`, `rep`, `titlesSeason`, `titlesTotal`, `titlesWorlds`, `squadOverall`, `squadSize`, `squadAvgAge`, `payrollPerSplit`, `coachOverall?`, `sponsorTier?`, `sponsorProfile?`, `trainingMode?`, `staffCount`, `debtBacker`, `debtBank`, `realOrgsTop8?`, `formatId?` |
+| `career_transfer` | critical | Sign, sell, release, renew, trade | `seasonIndex`, `kind`, `overall`, `age`, `potentialBandMid`, `fee`, `salaryPerSplit`, `role`, `warned`, `tradeSide?` |
 | `career_staff` | critical | `coach_hired`, `coach_fired`, `coach_renewed`, `sponsor_signed`, `staff_on`, `staff_off` | `seasonIndex`, `kind`, `overall?`, `salaryPerSplit?`, `tier?`, `basePerSplit?`, `objectiveKind?`, `profile?`, `staffId?` |
-| `career_milestone` | critical | `first_title`, `first_major`, `first_worlds`, `worlds_title`, `backer` (each rescue), `bank_loan` | `seasonIndex`, `kind`, `amount?` |
-| `career_ended` | critical | The career closes | `seasonIndex`, `reason` (`worlds_won`, `timeline_complete`, `insolvency`, `retired`), `legacyGrade?`, `titles`, `titlesWorlds`, `balance`, `rep` |
+| `career_milestone` | essential | `first_title`, `first_major`, `first_worlds`, `worlds_title`, `backer` (each rescue), `bank_loan` | `seasonIndex`, `kind`, `amount?` |
+| `career_ended` | essential | The career closes | `seasonIndex`, `reason` (`worlds_won`, `timeline_complete`, `insolvency`, `retired`), `legacyGrade?`, `titles`, `titlesWorlds`, `balance`, `rep` |
+| `career_action_refused` | essential | The career refused an action the player asked for (2.1.0-dev.4). Once per session and reason | `reason` (the store's error key: `blocked`, `actionFailed`, `funds`, `windowClosed`, `decisionPending`…), `screen` (`hq`, a tab, or a sub-route) |
 
 - **A regional weekend is one tournament.** A Saturday qualifier the team got
   through is not reported alone: it rides on Sunday's regional
@@ -158,6 +164,23 @@ properties of `session_started`, not events.
   Debt service is not spending; it shows as the debt going down.
 - `potentialBandMid` is the midpoint of the band the screens show, never the
   hidden potential.
+- **Series (2.1.0-dev.4, Etapa 1 M7).** `seriesWon` / `seriesLost` count the
+  user's series in the tournament (a regional weekend adds Saturday's
+  qualifier). An **upset** is a series won as the underdog (`upsetWins`) or
+  lost as the favourite (`upsetLosses`) by **5+ average player overall**
+  (`ANALYTICS_UPSET_GAP`, the tournament's `avgPlayerOverall`).
+  `oppOverallAvg` is the opponents' mean average player overall, one decimal.
+  `finishEvent` notes the bracket before it is discarded; null when it was
+  not seen. `liveSeries` and `decisions` are reserved for Matchday fatia 3
+  and are null until it lands.
+- **Mundo vivo (2.1.0-dev.4).** `realOrgsTop8` counts the real dataset orgs
+  in the final top 8 of the user's region (the user, local sides and entrants
+  excluded). `formatId` is reserved (null) until seasons have more than one
+  format.
+- **Trades (2.1.0-dev.4).** Saying yes to an agreed or countered trade sends
+  two `career_transfer` with `kind = trade`: `tradeSide = out` (the user's
+  player, fee 0) and `tradeSide = in` (the arriving player, fee = the cash the
+  user added). Before 2.1.0-dev.4 a trade showed as `sell` + `sign`.
 
 ### Player research
 
@@ -169,16 +192,16 @@ properties of `session_started`, not events.
 
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
-| `account_signed_in` | critical | A sign-in completes in this tab (not a restored session) | `hadLocalProgress` |
-| `account_sync_failed` | critical | A cloud sync aborts, once per session, stage and reason | `stage` (`read`, `push`), `reason` (`offline`, `network`, `auth`, `denied`, `conflict`, `server`, `rate`, `unavailable`, `other`; since 2.0.25), `code` (database / PostgREST code, when there is one) |
-| `career_cloud_failed` | critical | A step of the career cloud save fails, once per session, stage and reason (2.0.26) | `stage` (`list`, `read`, `push`, `delete`, `load`), `reason` (as `account_sync_failed`), `code` |
-| `career_cloud_conflict` | critical | The player answers the notice about two copies of a career (2.0.26) | `kind` (`diverged`, `different-career`, `cloud-deleted`), `choice` (`local`, `cloud`) |
-| `quality_save_error` | critical | A persisted store fails to save or load | `store`, `kind` (`quota`, `parse`, `migrate`, `write`) |
-| `quality_migration` | critical | A save is upgraded to a newer shape | `store`, `fromVersion`, `toVersion` |
-| `quality_duplicate_reward` | critical | A grant is refused as already given | `kind`, `id` |
-| `quality_error` | critical | A screen error: the error boundary, an uncaught error, an unhandled rejection. At most 3 distinct per page load | `source`, `name`, `route`, `message` |
-| `quality_slow_advance` | critical | A day advance over 1.5 s, or an advance-to-next-stop over 5 s. Once per session and kind | `kind`, `ms` |
-| `quality_event_cap` | critical | The guard starts dropping this device's events today | `kind` (`cap`, `breaker`), `level` |
+| `account_signed_in` | essential | A sign-in completes in this tab (not a restored session) | `hadLocalProgress` |
+| `account_sync_failed` | essential | A cloud sync aborts, once per session, stage and reason | `stage` (`read`, `push`), `reason` (`offline`, `network`, `auth`, `denied`, `conflict`, `server`, `rate`, `unavailable`, `other`; since 2.0.25), `code` (database / PostgREST code, when there is one) |
+| `career_cloud_failed` | essential | A step of the career cloud save fails, once per session, stage and reason (2.0.26) | `stage` (`list`, `read`, `push`, `delete`, `load`), `reason` (as `account_sync_failed`), `code` |
+| `career_cloud_conflict` | essential | The player answers the notice about two copies of a career (2.0.26) | `kind` (`diverged`, `different-career`, `cloud-deleted`), `choice` (`local`, `cloud`) |
+| `quality_save_error` | essential | A persisted store fails to save or load | `store`, `kind` (`quota`, `parse`, `migrate`, `write`) |
+| `quality_migration` | essential | A save is upgraded to a newer shape | `store`, `fromVersion`, `toVersion` |
+| `quality_duplicate_reward` | essential | A grant is refused as already given | `kind`, `id` |
+| `quality_error` | essential | A screen error: the error boundary, an uncaught error, an unhandled rejection. At most 3 distinct per page load | `source`, `name`, `route`, `message` |
+| `quality_slow_advance` | essential | A day advance over 1.5 s, or an advance-to-next-stop over 5 s. Once per session and kind | `kind`, `ms` |
+| `quality_event_cap` | essential | The guard starts dropping this device's events today | `kind` (`cap`, `breaker`, `ceiling` = the essential ceiling, since 2.1.0-dev.4), `level` |
 
 `quality_error.message` is the error's own message with quoted text, URLs and
 long numbers removed (a JSON parse error quotes the data it choked on, which
@@ -226,28 +249,48 @@ Add a PostHog annotation on the launch day.
 
 ## Budget
 
-Estimated events per player-day, everything sent. Draft numbers are measured;
-career numbers are an **estimate** with no production data (35% of player-days
-in the career, 0.75 season a day, about 30 events a season). Re-measure 48 hours
-after launch.
+**The plan:** PostHog **free** tier, **1,000,000 events a month** (product
+analytics; checked in billing on 20/11/2026, period 14/11 → 14/12). Rule
+(Miguel, 20/11): never past the free tier; target **≤ 70%** (700k), the rest is
+headroom for growth after v2.1.
 
-| Event | Per player-day | Monthly at 100 / 500 / 1,000 / 2,000 players a day (thousands) |
+### Measured (launch week, 14–19/11/2026, production, aggregates only)
+
+About **357 devices and 26.5k events a day** (~74 per device-day), so
+**~795k a month** (PostHog's own projection on 20/11: 785k). Top events over the
+billing period so far:
+
+| Event | Share | Note |
 |---|---|---|
-| `run_completed` | 17.2 | 52 / 258 / 516 / 1,032 |
-| `run_abandoned` | 2.7 | 8 / 41 / 81 / 162 |
-| `challenge_played` | 1.4 | 4 / 21 / 42 / 84 |
-| `quiz_played` | 0.4 | 1 / 6 / 12 / 24 |
-| `special_discovered` | 0.8 | 2 / 12 / 24 / 48 |
-| `mission_completed` | 1.0 | 3 / 15 / 30 / 60 |
-| `achievement_unlocked`, `rank_up`, `unlock_granted`, `collection_milestone` | 0.8 | 2 / 12 / 24 / 48 |
-| `session_started` | 1.6 | 5 / 24 / 48 / 96 |
-| `onboarding_step` | 1.0 | 3 / 15 / 30 / 60 |
-| `$pageview` | 5.0 | 15 / 75 / 150 / 300 |
-| `career_event_completed` | 4.5 | 14 / 68 / 135 / 270 |
-| `career_split_summary`, `career_season_completed` | 1.1 | 3 / 16 / 32 / 64 |
-| `career_transfer`, `career_staff`, `career_milestone`, `career_created`, `career_ended` | 2.3 | 7 / 35 / 69 / 138 |
-| accounts and health | 0.15 | 0 / 2 / 5 / 9 |
-| **Total** | **about 40** | **120 / 600 / 1,200 / 2,400** |
+| `career_event_completed` | 33% | ~194 per capped device-day |
+| `$pageview` | 14% | 65% of them are career routes; 2/3 of those inner screens |
+| `run_completed` | 9% | the Classic Legacy rating farm |
+| `career_transfer` | 6% | |
+| `career_split_summary` | 4% | |
+| `career_staff` | 3% | `sponsor_signed`, `staff_on/off`, coaches |
+| `unlock_granted`, `special_discovered`, `achievement_unlocked` | 2% each | |
+| `session_started` | 2% | |
+
+**The breaker was the problem.** 129 devices (155 device-days, ~19 a day) hit
+the 400-a-day breaker — the longest careers. Careers that came back after a
+capped day had jumped a median of **3 seasons** (mean 5) of events they never
+sent: roughly 140–240 events per capped device-day, **2.7–4.6k a day** lost
+(~10–17% of the volume), almost all of it career.
+
+### The budget since 2.1.0-dev.4
+
+| | Per day | Per month | Of the free tier |
+|---|---|---|---|
+| Before (measured) | 26.5k | ~795k | 79% |
+| Before, if the breaker were simply raised | 29.2–31.1k | 875–935k | 88–94% |
+| − career inner-screen pageviews | −2.0k | −60k | |
+| − level 1: standard events past 20 a day thinned 1 in 8 | −4.3k | −130k | |
+| + the career line the breaker no longer drops (essential) | +1.6–2.7k | +48–80k | |
+| + `career_action_refused` (once per session and reason; bound) | ≤ +0.3k | ≤ +9k | |
+| **After** | **22.5–23.2k** | **~675–695k** | **68–70%** |
+
+Every new property rides on an existing event (zero extra events); the only new
+event is `career_action_refused`.
 
 ### The guard (`src/lib/analyticsBudget.ts`)
 
@@ -255,15 +298,33 @@ A static site cannot know how many people are playing, so the guard has one
 input that someone keeps up to date: **`playersPerDay`** in
 `public/analytics-budget.json` (or `NEXT_PUBLIC_ANALYTICS_PLAYERS_PER_DAY` at
 build). Edit the number, deploy. The file is a static asset: no Worker request.
-A missing or broken file leaves the build's value.
+A missing or broken file leaves the build's value. "Players" = **devices a
+day** (unique `$device_id` per UTC day in PostHog). **Shipped value: 360**
+(level 1). Review it weekly; raise it before a promotion, not after.
 
-| Level | Players a day | What changes | Monthly total at the level's top |
+Three priorities:
+
+- **essential** — never sampled or capped, and **past the breaker**: the
+  career's spine (`career_created`, `career_event_completed`,
+  `career_split_summary`, `career_season_completed`, `career_milestone`,
+  `career_ended`), `career_action_refused`, accounts and health (`account_*`,
+  `career_cloud_*`, `quality_*`). They have their own ceiling, **1,500 a device
+  a day** (`essentialPerDay`), against a loop (`quality_event_cap`, `ceiling`).
+- **critical** — never sampled or capped, stopped by the breaker: sessions, the
+  entry funnel, rank-ups, collection, research, `career_transfer`,
+  `career_staff`.
+- **standard** — the volume (Draft runs, unlocks, specials, achievements,
+  missions, `$pageview`): capped and sampled first.
+
+| Level | Devices a day | What changes | ~70% of the tier up to |
 |---|---|---|---|
-| 0 | up to 699 | Everything is sent | about 840k |
-| 1 | 700 to 999 | Per device and UTC day: 30 standard events in full, then 1 in 4 | about 930k |
-| 2 | 1,000 to 1,399 | 15 in full, then 1 in 8; `$pageview` from half of the devices | about 945k |
-| 3 | 1,400 to 2,499 | Also: half of the devices send standard events | about 955k |
-| 4 | 2,500 and up | A quarter of the devices | 1M at about 4,200 |
+| 0 | up to 299 | Everything is sent | ~300 |
+| 1 | 300 to 369 | Per device and UTC day: 20 standard events in full, then 1 in 8 | ~370 |
+| 2 | 370 to 489 | 15 in full, then 1 in 8; `$pageview` from half of the devices; **75% of careers** send the per-tournament and decision events | ~495 |
+| 3 | 490 to 669 | Also: half of the devices send standard events; 50% of careers | ~700 |
+| 4 | 670 to 949 | A quarter of the devices; 30% of careers | ~1,000 |
+| 5 | 950 to 1,399 | 15% of careers | ~1,370 |
+| 6 | 1,400 and up | A tenth of the devices; 5% of careers | ~1,950 (100% at ~2,800) |
 
 - Past the cap, each standard event is sent with probability 1 in N and
   carries `sampleWeight = N`. Random, not "every Nth", so sums of
@@ -272,22 +333,29 @@ A missing or broken file leaves the build's value.
   in or out for a whole event type and funnels stay coherent inside the sample.
   To build a funnel across sampled events, add `sampleBucket < 50` (or `< 25`)
   to every step.
-- Critical events are never sampled or capped.
-- **Always on, at any level:** the circuit breaker stops a device at 400 events
-  in a UTC day (the new design's 99th percentile is about 220). It exists for a
-  loop or a bot, and reports itself once (`quality_event_cap`, `breaker`).
+- **Career sampling** (`careerRate`, levels 2+) applies only to
+  `career_event_completed`, `career_transfer` and `career_staff`, by a hash of
+  the `careerId`: a career is in or out **as a whole**, so a sampled career is
+  still complete tournament by tournament, and its events carry
+  `sampleWeight = 1 / careerRate`. Split, season, milestone and end events are
+  never sampled: every career keeps its season line.
+- **Always on, at any level:** the circuit breaker counts every event a device
+  sends in a UTC day; past **400** only essential events still go out. It exists
+  for a loop or a bot and trims the very longest days; it reports itself once
+  (`quality_event_cap`, `breaker`).
+- Past ~2,800 devices a day even level 6 would reach the free tier (the
+  essential floor is ~9 events a device-day): that is a decision to take before
+  such a launch, not something the ladder can absorb.
 - The file may also carry its own ladder (`levels`: `minPlayers`, `dailyCap`,
-  `thinTo`, `deviceRate`, `eventRates` by event name) and `breakerPerDay`.
-- Launch setting: level 0 (`playersPerDay: 120`). A 10× spike for one week costs
-  about 260k events, inside the month. Review the number 48 hours after launch
-  and weekly after that.
+  `thinTo`, `deviceRate`, `eventRates` by event name, `careerRate`),
+  `breakerPerDay` and `essentialPerDay`.
 
 ## Device state
 
 The analytics layer keeps one small record in `localStorage` on
 `rocketdraft.app`, key `rd-analytics:v1`: the sample bucket, the session and day
 counters, the funnel steps already sent, today's budget counters, the reset
-counter of the open run and the career tab counters. It is **not a save**: the
+counter of the open run, the career tab counters and the last career screen. It is **not a save**: the
 game never reads it, it holds nothing personal, and deleting it only restarts
 the counters. It is separate from the four persisted stores, whose keys and
 versions are unchanged (`persistContract.test.ts`).

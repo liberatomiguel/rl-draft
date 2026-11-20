@@ -24,8 +24,11 @@ import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
 import { ageOf, exactAgeOf, growthModelOf, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { loanBreachesOf } from "@/engine/career/economy";
+import { isLocalRef } from "@/engine/career/localScene";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
+import { datasetOrgName } from "@/engine/career/worldSim";
+import type { TournamentState } from "@/engine/types";
 import type { CareerMilestoneKind, TrackedEvent } from "@/lib/analytics";
 
 /** What the store action was, when the event depends on the user's intent. */
@@ -120,6 +123,93 @@ function newById<T extends { id: string }>(before: readonly T[], after: readonly
 }
 
 // ---------------------------------------------------------------------------
+// The user's series of a tournament (v2.1.0-dev.4, Etapa 1 M7)
+// ---------------------------------------------------------------------------
+
+/** A series is an upset when the winner's average player overall was this much (or more) below the loser's. Reporting, not gameplay. */
+export const ANALYTICS_UPSET_GAP = 5;
+
+/** The user's series in one tournament, as `career_event_completed` reports them. */
+export interface SeriesTally {
+  won: number;
+  lost: number;
+  upsetWins: number;
+  upsetLosses: number;
+  oppOverallSum: number;
+  oppCount: number;
+}
+
+/**
+ * The tallies `finishEvent` noted, by careerId:eventId, until the write that
+ * banked the event reads them. The compact result keeps no bracket, and an
+ * instant event starts and ends inside one write, so the diff alone cannot see
+ * the series. Bounded: an orphan (a write that failed) is dropped by age.
+ */
+const tallies = new Map<string, SeriesTally>();
+const TALLY_LIMIT = 32;
+
+/** Counts the user's series of a finished tournament. Pure. */
+export function seriesTallyOf(t: TournamentState): SeriesTally {
+  const tally: SeriesTally = { won: 0, lost: 0, upsetWins: 0, upsetLosses: 0, oppOverallSum: 0, oppCount: 0 };
+  const all = [...t.swiss.rounds.flatMap((r) => r.series), ...(t.playoffs?.rounds.flatMap((r) => r.series) ?? [])];
+  const mine = t.teams.user?.rating.avgPlayerOverall;
+  for (const s of all) {
+    if (s.teamAId !== "user" && s.teamBId !== "user") continue;
+    const oppId = s.teamAId === "user" ? s.teamBId : s.teamAId;
+    const theirs = t.teams[oppId]?.rating.avgPlayerOverall;
+    const won = s.winnerTeamId === "user";
+    if (won) tally.won += 1;
+    else tally.lost += 1;
+    if (typeof mine !== "number" || typeof theirs !== "number") continue;
+    tally.oppOverallSum += theirs;
+    tally.oppCount += 1;
+    if (won && theirs - mine >= ANALYTICS_UPSET_GAP) tally.upsetWins += 1;
+    if (!won && mine - theirs >= ANALYTICS_UPSET_GAP) tally.upsetLosses += 1;
+  }
+  return tally;
+}
+
+/** Called by `finishEvent` (careerFlow) with the finished tournament, before it is discarded. */
+export function noteFinishedTournament(save: CareerSave, eventId: string, t: TournamentState): void {
+  try {
+    const key = `${careerIdOf(save)}:${eventId}`;
+    tallies.delete(key);
+    tallies.set(key, seriesTallyOf(t));
+    while (tallies.size > TALLY_LIMIT) tallies.delete(tallies.keys().next().value as string);
+  } catch {
+    // analytics must never break a flow
+  }
+}
+
+function takeTally(save: CareerSave, eventId: string): SeriesTally | null {
+  const key = `${careerIdOf(save)}:${eventId}`;
+  const tally = tallies.get(key) ?? null;
+  tallies.delete(key);
+  return tally;
+}
+
+/** For tests. */
+export function resetSeriesTalliesForTests(): void {
+  tallies.clear();
+}
+
+function seriesProps(list: readonly (SeriesTally | null)[]) {
+  const seen = list.filter((t): t is SeriesTally => t !== null);
+  if (seen.length === 0) {
+    return { seriesWon: null, seriesLost: null, upsetWins: null, upsetLosses: null, oppOverallAvg: null };
+  }
+  const sum = (pick: (t: SeriesTally) => number) => seen.reduce((total, t) => total + pick(t), 0);
+  const opp = sum((t) => t.oppCount);
+  return {
+    seriesWon: sum((t) => t.won),
+    seriesLost: sum((t) => t.lost),
+    upsetWins: sum((t) => t.upsetWins),
+    upsetLosses: sum((t) => t.upsetLosses),
+    oppOverallAvg: opp > 0 ? Math.round((sum((t) => t.oppOverallSum) / opp) * 10) / 10 : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Detectors (each returns the events one write produced)
 // ---------------------------------------------------------------------------
 
@@ -155,6 +245,8 @@ function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         : undefined;
     const qualifierPlacement = qualifier ? (userPlacementIn(qualifier) ?? null) : null;
     const weekend = [prev.weekend, next.weekend].find((w) => w?.eventId === r.eventId);
+    // The weekend's series: Sunday's and, for a regional, the Saturday qualifier's.
+    const series = seriesProps([takeTally(next, r.eventId), qualifier ? takeTally(next, qualifier.eventId) : null]);
     out.push({
       name: "career_event_completed",
       props: {
@@ -172,6 +264,10 @@ function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         briefing: weekend?.briefing ?? null,
         squadOverall: squadOverallOf(next),
         balance: next.finances.balance,
+        ...series,
+        // Reserved for Matchday fatia 3 (series watched live, decisions taken).
+        liveSeries: null,
+        decisions: null,
       },
     });
   }
@@ -335,8 +431,19 @@ function seasonReviews(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         staffCount: staffCountOf(next),
         debtBacker: next.finances.loan?.remaining ?? 0,
         debtBank: next.finances.bankLoan?.remaining ?? 0,
+        realOrgsTop8: realOrgsIn(h.regionTable),
+        // Reserved: the season format, once Mundo vivo ships more than one.
+        formatId: null,
       },
     }));
+}
+
+/** Real dataset orgs in a final top 8 (the user, local sides and entrants excluded); null = no table. */
+function realOrgsIn(table: readonly { ref: string }[] | undefined): number | null {
+  if (!table || table.length === 0) return null;
+  return table
+    .slice(0, 8)
+    .filter((row) => row.ref !== "user" && !isLocalRef(row.ref) && datasetOrgName(row.ref) !== undefined).length;
 }
 
 /** A contract-expiry warning was mailed for this player this season. */
@@ -349,9 +456,10 @@ function wasWarned(save: CareerSave, p: SquadPlayer): boolean {
 function transferProps(
   save: CareerSave,
   p: SquadPlayer,
-  kind: "sign" | "sell" | "release" | "renew",
+  kind: "sign" | "sell" | "release" | "renew" | "trade",
   fee: number,
   warned = false,
+  tradeSide: "out" | "in" | null = null,
 ): TrackedEvent {
   return {
     name: "career_transfer",
@@ -367,6 +475,7 @@ function transferProps(
       salaryPerSplit: p.salaryPerSplit,
       role: p.role,
       warned,
+      ...(tradeSide ? { tradeSide } : {}),
     },
   };
 }
@@ -380,11 +489,15 @@ function transfers(prev: CareerSave, next: CareerSave, action: CareerAction): Tr
   const nextIds = new Set(next.squad.map((p) => p.id));
   const newLog = newById(prev.transferLog, next.transferLog);
   const newLedger = newById(prev.finances.ledger, next.finances.ledger);
+  // v2.1.0-dev.4: a yes to an agreed / countered trade (R135) is one deal: both legs are "trade".
+  const trade = action.kind === "sell" ? prev.tradeProposals?.find((t) => t.id === action.offerId) : undefined;
 
   // Who left first (a full squad's signing names the leaver in the same deal).
   for (const p of prev.squad) {
     if (nextIds.has(p.id)) continue;
-    if (action.kind === "sell") {
+    if (trade) {
+      out.push(transferProps(next, p, "trade", 0, wasWarned(prev, p), "out"));
+    } else if (action.kind === "sell") {
       const fee =
         newLog.find((t) => t.kind === "userOut" && t.playerId === p.id)?.fee ??
         prev.pendingOffers.find((o) => o.id === action.offerId)?.fee ??
@@ -405,6 +518,11 @@ function transfers(prev: CareerSave, next: CareerSave, action: CareerAction): Tr
       if (action.kind === "renew" && p.id === action.playerId && renewed) {
         out.push(transferProps(next, p, "renew", 0, wasWarned(prev, before)));
       }
+      continue;
+    }
+    if (trade) {
+      // The cash the user added (the org's ask, when it countered).
+      out.push(transferProps(next, p, "trade", trade.cashAsked ?? trade.cash, false, "in"));
       continue;
     }
     const fee = newLog.find((t) => t.kind === "userIn" && t.playerId === p.id)?.fee ?? 0;

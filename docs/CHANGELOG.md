@@ -30,6 +30,50 @@ Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot` (`c
 - **Known at 320 px, same as staging (the fifth pass left mobile for later):** the Home wordmark is 25 px too wide (page 345 px, the scorebug's rank label hidden), and the HQ and event stat boxes run their labels together ("PREMIAÇÃOPONTOS"). Not fixed here: it belongs to the mobile pass and Miguel's A7.
 - Four career/engine tests timed out at 5 s while other sessions loaded the machine. They pass alone with a longer timeout; the run before the fifth-pass merge was fully green.
 
+## [2.1.0-dev.4] — 2026-11-20 · Analytics: critical career events skip the cap, Etapa 1 properties
+
+Not deployed. Production analytics only (`rocketdraft.app`); no gameplay change.
+
+### Added
+- **`career_event_completed`**: `seriesWon`, `seriesLost`, `upsetWins`,
+  `upsetLosses` (a series won as the underdog / lost as the favourite by 5+
+  average player overall), `oppOverallAvg`; `liveSeries` and `decisions`
+  reserved (null) for Matchday fatia 3. `finishEvent` notes the user's series
+  before the bracket is discarded (`careerAnalytics.noteFinishedTournament`).
+- **`career_season_completed`**: `realOrgsTop8` (real dataset orgs in the
+  region's final top 8) and `formatId` (reserved, null).
+- **`career_transfer`**: `kind = trade` with `tradeSide` (out / in) for a
+  player-for-player trade (it used to read as sell + sign).
+- **`session_started`**: `lastCareerTab`, the last career screen seen.
+- **`career_action_refused`** (`reason`, `screen`): the career refused what
+  the player asked for (ended career, a failed action, a flow's error key).
+  Once per session and reason.
+- A third priority, **essential**: never sampled or capped and past the
+  circuit breaker, with its own ceiling (1,500 a device a day). The career's
+  spine (one per tournament, split, season, milestone, end, creation), refused
+  actions, accounts and health.
+- **Career sampling** for the growth levels (`careerRate`): whole careers in or
+  out, by a hash of the careerId, for the per-tournament and decision events.
+
+### Changed
+- **Budget re-sized on the launch week** (free plan, 1M events a month, target
+  ≤ 70%): measured ~795k a month (79%) before; ~675–695k (68–70%) after.
+  `public/analytics-budget.json` 120 → **360** devices a day (level 1). The
+  ladder now starts at 300 devices (cap 20 standard events a day, then 1 in 8)
+  and steps at 370 / 490 / 670 / 950 / 1,400.
+- No `$pageview` for the career's inner screens (tabs, event, follow): the tab
+  counters and `lastCareerTab` carry them (~2k events a day).
+- The breaker still counts every event; past 400 a day only essential events go
+  out (critical events used to stop there too).
+
+### Fixed
+- **The longest careers lost their data.** 129 devices hit the 400-a-day
+  breaker in the launch week; careers that came back had skipped a median of 3
+  seasons of events. Root cause: the breaker treated the career's per-tournament
+  line like any other event, and `career_event_completed` was "standard"
+  (capped on the levels above 0). It is now essential.
+
+
 ## [2.1.0-dev.3] — 2026-11-20 · Matchday slice 2: styles and traits (engine only, behind a flag, not released)
 
 Second slice of Etapa 1 (docs/MATCHDAY-SPEC.md §4, §5, §7). Everything sits behind `FEATURES.matchdayStyles`, **off by default** (`NEXT_PUBLIC_MATCHDAY_STYLES=1` turns it on). Off, no result moves: a pacing slice with the flag off is identical, career for career, to the v2.0.35 baseline dumps, and `regression.golden.test.ts`, `balance.test.ts` and `match.steps.test.ts` pass untouched. No save, copy or screen change. Decisions: ROAD-TO-WORLDS-DECISIONS R138.

@@ -116,3 +116,40 @@ PostHog cobra por evento: quase tudo é propriedade nova (custo zero).
 | Dados perdidos | Teto de 400/dia corta os mais ativos: isentar eventos críticos de carreira ou subir o teto | `analyticsBudget.ts` |
 
 Revisar `analytics-budget.json` (ainda 120 jogadores/dia) antes do evento novo.
+
+## 5. Orçamento de eventos e propriedades novas (v2.1.0-dev.4, 20/11)
+
+**Plano:** PostHog **gratuito**, **1 milhão de eventos por mês** (conferido no
+billing: período 14/11 → 14/12). Meta: no máximo **70%** (700 mil).
+
+| | Por dia | Por mês | Do plano |
+|---|---|---|---|
+| Antes (medido, 14–19/11) | 26,5 mil | ~795 mil | 79% |
+| Só subindo o teto de 400 | 29–31 mil | 875–935 mil | 88–94% |
+| **Depois** | **22,5–23,2 mil** | **~675–695 mil** | **68–70%** |
+
+- **Teto de 400/dia:** 129 aparelhos (155 dias-aparelho, ~19 por dia), os
+  mais ativos. Quem voltou depois de um dia cortado tinha pulado em mediana
+  **3 temporadas** sem evento: ~2,7–4,6 mil eventos perdidos por dia.
+- **Top 10 do período:** `career_event_completed` (33%), `$pageview` (14%, 65%
+  dentro da carreira), `run_completed` (9%), `career_transfer` (6%),
+  `career_split_summary` (4%), `career_staff` (3%), `unlock_granted`,
+  `special_discovered`, `achievement_unlocked` (2% cada), `session_started` (2%).
+- **O que mudou:** os eventos da espinha da carreira (1 por torneio, split,
+  temporada, marco, fim), `career_action_refused`, contas e saúde viraram
+  **essenciais**: passam do teto de 400 (têm teto próprio de 1.500/dia contra
+  loop). Para caber, sem pageview nas telas internas da carreira (−2 mil/dia) e
+  nível 1 do orçamento ligado (20 eventos "standard" por dia cheios, depois 1
+  em 8 com peso: −4,3 mil/dia). `analytics-budget.json`: 120 → **360**
+  aparelhos/dia.
+- **Crescimento:** a partir de 370 aparelhos/dia a escada amostra **carreiras
+  inteiras** (75%, 50%, 30%, 15%, 5%) nos eventos por torneio e de decisão; as
+  temporadas nunca são amostradas. Fica em ~70% até ~1.950 aparelhos/dia e
+  abaixo de 100% até ~2.800. Acima disso é decisão tua antes do lançamento.
+  **Atualizar o número do arquivo toda semana**: a escada só sabe o que ele diz.
+- **Propriedades novas (zero eventos a mais):** séries ganhas/perdidas, zebras
+  (por 5+ de overall médio) e overall médio dos rivais em
+  `career_event_completed`; `realOrgsTop8` em `career_season_completed`;
+  `kind = trade` nas trocas; `lastCareerTab` em `session_started`.
+  Reservadas (vazias até as fatias chegarem): `liveSeries`, `decisions`,
+  `formatId`. Evento novo: `career_action_refused` (1 por sessão e motivo).

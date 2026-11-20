@@ -398,6 +398,7 @@ import {
 } from "@/engine/career/economy";
 import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
 import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
+import { noteFinishedTournament } from "./careerAnalytics";
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -3855,6 +3856,8 @@ export function finishEvent(input: CareerSave): CareerSave {
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage !== "finished") return save;
   const def = ev.def;
+  // v2.1.0-dev.4 (analytics, Etapa 1): the user's series ride on career_event_completed.
+  noteFinishedTournament(save, def.id, ev.tournament);
 
   const result = compileEventResult(def, ev.tournament, {
     difficulty: save.difficulty,

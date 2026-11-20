@@ -18,12 +18,19 @@
 export type PropKind = "string" | "number" | "boolean" | "string?" | "number?" | "boolean?";
 
 /**
- * Budget priority (`analyticsBudget.ts`). "critical" events are never sampled
- * or capped (rare, and each one matters: funnels, summaries, decisions, health).
- * "standard" events are the volume: they are thinned first when the daily
- * player count passes a budget level.
+ * Budget priority (`analyticsBudget.ts`).
+ *  - "essential" (v2.1.0-dev.4): never sampled or capped AND outside the
+ *    circuit breaker — the career's spine (one per tournament, split, season,
+ *    milestone, end), refused actions, soft-lock signs, accounts and health.
+ *    They have their own, much higher daily ceiling against a loop. At the top
+ *    budget levels the per-tournament event is sampled by CAREER (whole careers
+ *    in or out, `CAREER_SAMPLED_EVENTS`), never by event.
+ *  - "critical": never sampled or capped (funnels, sessions, rare decisions),
+ *    but stopped by the breaker like everything that is not essential.
+ *  - "standard": the volume, thinned first when the daily player count passes a
+ *    budget level.
  */
-export type EventPriority = "critical" | "standard";
+export type EventPriority = "essential" | "critical" | "standard";
 
 /** "shared" = both modes; the payload's own `gameMode` decides. "app" = neither (sessions, accounts, health). */
 export type EventMode = "draft" | "career" | "app" | "shared";
@@ -66,6 +73,14 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 const CAREER_ID = { careerId: "string", actionId: "string" } as const;
+
+/**
+ * The career events that the top budget levels sample by career (a level's
+ * `careerRate`): the per-tournament line and the frequent decisions. The split,
+ * season, milestone and end events are never sampled, so every career keeps
+ * its season line however many players there are.
+ */
+export const CAREER_SAMPLED_EVENTS: readonly string[] = ["career_event_completed", "career_transfer", "career_staff"];
 
 export const EVENT_CATALOG = {
   // -------------------------------------------------------------------------
@@ -228,6 +243,8 @@ export const EVENT_CATALOG = {
     equippedBadge: "string?",
     /** A run was waiting to be resumed (its phase). */
     openRunPhase: "string?",
+    /** v2.1.0-dev.4: the last career screen this device saw before this session (tab key or sub-route). */
+    lastCareerTab: "string?",
   }),
   /** A first, once per device ever (`ONBOARDING_STEPS`). */
   onboarding_step: spec("app", "critical", {
@@ -242,7 +259,7 @@ export const EVENT_CATALOG = {
   // in the save; `actionId` = careerId:seasonIndex:day:kind:ref.
   // -------------------------------------------------------------------------
 
-  career_created: spec("career", "critical", {
+  career_created: spec("career", "essential", {
     ...CAREER_ID,
     region: "string",
     difficulty: "string",
@@ -256,7 +273,7 @@ export const EVENT_CATALOG = {
    * Saturday qualifier is reported with the Sunday regional (`qualifierPlacement`),
    * or alone (tier "qualifier") when the team did not qualify.
    */
-  career_event_completed: spec("career", "standard", {
+  career_event_completed: spec("career", "essential", {
     ...CAREER_ID,
     seasonIndex: "number",
     week: "number",
@@ -288,9 +305,22 @@ export const EVENT_CATALOG = {
     advanceCount: "number?",
     advanceMaxMs: "number?",
     advanceSlowCount: "number?",
+    // v2.1.0-dev.4 (Etapa 1, M7): the user's series in this tournament (a regional
+    // weekend includes Saturday's qualifier). An upset is a series won as the
+    // underdog / lost as the favourite by ANALYTICS_UPSET_GAP+ average player
+    // overall. Null when the tournament state was not seen (an older save).
+    seriesWon: "number?",
+    seriesLost: "number?",
+    upsetWins: "number?",
+    upsetLosses: "number?",
+    /** Mean average-player-overall of the opponents the user met, one decimal. */
+    oppOverallAvg: "number?",
+    /** Reserved for Matchday fatia 3: series watched live, decisions taken. Null until then. */
+    liveSeries: "number?",
+    decisions: "number?",
   }),
   /** The Monday that closes a split (weeks 11 / 21 / 31). Money is for the split. */
-  career_split_summary: spec("career", "critical", {
+  career_split_summary: spec("career", "essential", {
     ...CAREER_ID,
     seasonIndex: "number",
     split: "number",
@@ -319,7 +349,7 @@ export const EVENT_CATALOG = {
     rep: "number",
   }),
   /** The season review was written (Worlds resolved) — the season in one event. */
-  career_season_completed: spec("career", "critical", {
+  career_season_completed: spec("career", "essential", {
     ...CAREER_ID,
     seasonIndex: "number",
     region: "string",
@@ -346,12 +376,18 @@ export const EVENT_CATALOG = {
     staffCount: "number",
     debtBacker: "number",
     debtBank: "number",
+    /** v2.1.0-dev.4 (Mundo vivo): real dataset orgs in the final top 8 of the user's region (local sides, entrants and the user excluded). */
+    realOrgsTop8: "number?",
+    /** v2.1.0-dev.4: the season's competition format. Reserved: null until Mundo vivo ships formats. */
+    formatId: "string?",
   }),
   career_transfer: spec("career", "critical", {
     ...CAREER_ID,
     seasonIndex: "number",
-    /** sign / sell / release / renew. */
+    /** sign / sell / release / renew / trade (v2.1.0-dev.4: a player-for-player trade, both legs). */
     kind: "string",
+    /** kind "trade": "out" = the user's player who left, "in" = the one who arrived. */
+    tradeSide: "string?",
     overall: "number",
     age: "number",
     /** Midpoint of the band the screens show (never the hidden potential). */
@@ -378,7 +414,7 @@ export const EVENT_CATALOG = {
     staffId: "string?",
   }),
   /** first_title / first_major / first_worlds / worlds_title / backer / bank_loan. */
-  career_milestone: spec("career", "critical", {
+  career_milestone: spec("career", "essential", {
     ...CAREER_ID,
     seasonIndex: "number",
     kind: "string",
@@ -386,7 +422,7 @@ export const EVENT_CATALOG = {
     amount: "number?",
   }),
   /** The career closed: worlds_won / timeline_complete / insolvency / retired. */
-  career_ended: spec("career", "critical", {
+  career_ended: spec("career", "essential", {
     ...CAREER_ID,
     seasonIndex: "number",
     reason: "string",
@@ -395,6 +431,16 @@ export const EVENT_CATALOG = {
     titlesWorlds: "number",
     balance: "number",
     rep: "number",
+  }),
+  /**
+   * v2.1.0-dev.4 (soft lock): the career refused an action the player asked for
+   * (`reason` = the store's error key: blocked / actionFailed / funds / …;
+   * `screen` = the career screen it came from). Once per session and reason.
+   */
+  career_action_refused: spec("career", "essential", {
+    ...CAREER_ID,
+    reason: "string",
+    screen: "string",
   }),
 
   // -------------------------------------------------------------------------
@@ -420,13 +466,13 @@ export const EVENT_CATALOG = {
   // Accounts and sync (`gameMode: "app"`)
   // -------------------------------------------------------------------------
 
-  account_signed_in: spec("app", "critical", {
+  account_signed_in: spec("app", "essential", {
     hadLocalProgress: "boolean",
   }),
   /** A cloud sync aborted (stage: read / push). Once per session, stage and
    *  reason. v2.0.25: `reason` names the failure (lib/syncErrors) and `code` is
    *  the short database / PostgREST code when there is one. */
-  account_sync_failed: spec("app", "critical", {
+  account_sync_failed: spec("app", "essential", {
     actionId: "string",
     stage: "string",
     reason: "string",
@@ -435,7 +481,7 @@ export const EVENT_CATALOG = {
 
   /** v2.0.26: a career cloud step failed (stage: list / read / push / delete /
    *  load). Once per session, stage and reason. */
-  career_cloud_failed: spec("app", "critical", {
+  career_cloud_failed: spec("app", "essential", {
     actionId: "string",
     stage: "string",
     reason: "string",
@@ -443,7 +489,7 @@ export const EVENT_CATALOG = {
   }),
   /** v2.0.26: the player answered the notice about two copies of a career
    *  (kind: diverged / different-career / cloud-deleted; choice: local / cloud). */
-  career_cloud_conflict: spec("app", "critical", {
+  career_cloud_conflict: spec("app", "essential", {
     kind: "string",
     choice: "string",
   }),
@@ -453,14 +499,14 @@ export const EVENT_CATALOG = {
   // -------------------------------------------------------------------------
 
   /** A persisted store failed to save or load ("write" = a non-quota write error). */
-  quality_save_error: spec("shared", "critical", {
+  quality_save_error: spec("shared", "essential", {
     gameMode: "string",
     actionId: "string",
     store: "string",
     kind: "string",
   }),
   /** A save was upgraded to a newer shape (persist version or career saveVersion). */
-  quality_migration: spec("shared", "critical", {
+  quality_migration: spec("shared", "essential", {
     gameMode: "string",
     actionId: "string",
     store: "string",
@@ -468,14 +514,14 @@ export const EVENT_CATALOG = {
     toVersion: "number",
   }),
   /** A grant was refused because it had already been given. */
-  quality_duplicate_reward: spec("shared", "critical", {
+  quality_duplicate_reward: spec("shared", "essential", {
     gameMode: "string",
     actionId: "string",
     kind: "string",
     id: "string",
   }),
   /** A screen error (boundary / window / promise). At most 3 per session; message without quoted text. */
-  quality_error: spec("app", "critical", {
+  quality_error: spec("app", "essential", {
     actionId: "string",
     source: "string",
     name: "string",
@@ -483,13 +529,13 @@ export const EVENT_CATALOG = {
     message: "string",
   }),
   /** A career day advance (or advance-to-next-stop) took too long. Once per session and kind. */
-  quality_slow_advance: spec("career", "critical", {
+  quality_slow_advance: spec("career", "essential", {
     actionId: "string",
     kind: "string",
     ms: "number",
   }),
   /** The budget guard started dropping this device's events today (kind: cap / breaker). */
-  quality_event_cap: spec("app", "critical", {
+  quality_event_cap: spec("app", "essential", {
     kind: "string",
     level: "number",
   }),

@@ -686,7 +686,17 @@ describe("the career store sends each event once, in production only", () => {
     expect(first.props.advanceCount).toBeGreaterThan(0);
     expect(second.props.tab_club).toBeUndefined();
     expect(calls.filter((c) => c.name === "onboarding_step").map((c) => c.props.step)).toEqual(["career_created", "career_first_event"]);
-    expect(calls.filter((c) => c.name === "$pageview")).toHaveLength(2); // one per route
+    // v2.1.0-dev.4: one per route, and none for the career's inner screens (the tab counters carry them).
+    expect(calls.filter((c) => c.name === "$pageview")).toHaveLength(1);
+    // Every tournament carries the user's series, read off the finished bracket.
+    for (const c of calls.filter((x) => x.name === "career_event_completed")) {
+      expect(typeof c.props.seriesWon, String(c.props.actionId)).toBe("number");
+      expect(Number(c.props.seriesWon) + Number(c.props.seriesLost)).toBeGreaterThan(0);
+      expect(Number(c.props.upsetWins)).toBeLessThanOrEqual(Number(c.props.seriesWon));
+      expect(Number(c.props.upsetLosses)).toBeLessThanOrEqual(Number(c.props.seriesLost));
+      expect(c.props.oppOverallAvg).toBeGreaterThan(0);
+      expect(c.props.liveSeries).toBeNull();
+    }
 
     const sent = calls.length;
     await store.persist.rehydrate();

@@ -137,6 +137,7 @@ import {
   anonymousId,
   noteCareerAdvance,
   takeCareerActivity,
+  trackCareerRefusal,
   trackEvents,
   trackOnboardingStep,
   type TrackedEvent,
@@ -350,6 +351,16 @@ function nextStamp(prev: CareerSave | null | undefined): number {
   return Math.max(Date.now(), (prev?.lastPlayedAt ?? 0) + 1);
 }
 
+/** v2.1.0-dev.4 (soft lock): the store refused what the player asked for — `career_action_refused`, once per session and reason. */
+function trackRefusal(save: CareerSave | null | undefined, reason: string): void {
+  try {
+    if (!save || !analyticsAllowed()) return;
+    trackCareerRefusal(careerIdOf(save), reason);
+  } catch {
+    // analytics must never break gameplay
+  }
+}
+
 function emptySlots(): (CareerSave | null)[] {
   return Array.from({ length: CAREER_SAVE.maxSlots }, () => null);
 }
@@ -448,6 +459,7 @@ export const useCareerStore = create<CareerStoreState>()(
         const { slots, activeSlot } = get();
         if (activeSlot === null || slots[activeSlot]?.phase !== "ended") return false;
         set({ lastError: "blocked" });
+        trackRefusal(slots[activeSlot], "blocked");
         return true;
       };
 
@@ -469,6 +481,8 @@ export const useCareerStore = create<CareerStoreState>()(
             /* reporting must never throw into gameplay */
           }
           set({ lastError: "actionFailed", autoAdvance: false });
+          const { slots, activeSlot } = get();
+          trackRefusal(activeSlot === null ? null : slots[activeSlot], "actionFailed");
           return { ok: false };
         }
       };
@@ -563,6 +577,7 @@ export const useCareerStore = create<CareerStoreState>()(
               : state.toasts,
         }));
         if (changed) trackCareerWrite(prevSave, save, track);
+        if (error) trackRefusal(save, error);
       };
 
       return {

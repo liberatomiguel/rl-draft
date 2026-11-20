@@ -21,7 +21,9 @@
  * Budget (2.0, `analyticsBudget.ts`): PostHog bills per event. Three things keep
  * the volume down without losing the picture:
  *  - the catalogue itself (one event per run, per tournament, per season);
- *  - `$pageview` once per route per session (sent from here, not by the SDK);
+ *  - `$pageview` once per route per session (sent from here, not by the SDK),
+ *    and none for the career's inner screens (v2.1.0-dev.4): the tab counters on
+ *    `career_event_completed` and `session_started.lastCareerTab` cover them;
  *  - the guard: sampling and a per-device daily cap that only switch on above a
  *    configured number of players per day, plus an always-on circuit breaker.
  * Every event carries `sampleWeight` (how many real events it stands for) and
@@ -53,6 +55,7 @@ import { SEASON } from "@/config/season";
 import { SITE } from "@/config/site";
 import {
   budgetLevelOf,
+  careerBucketOf,
   decideBudget,
   defaultBudget,
   freshBudgetDay,
@@ -208,6 +211,9 @@ export const ANALYTICS_ERRORS_PER_SESSION = 3;
 /** A career advance slower than this is reported (`quality_slow_advance`) and counted as slow. */
 export const ANALYTICS_SLOW_ADVANCE_MS = { day: 1500, stop: 5000 } as const;
 
+/** A route segment or a store error key: the only shapes `lastCareerTab`, `screen` and `reason` may take (no free text). */
+const SCREEN_KEY = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/;
+
 /** Longest string sent as a property (ids, enums and id lists only; no free text). */
 const MAX_STRING = 320;
 
@@ -312,6 +318,8 @@ interface DeviceState {
   resets: number;
   /** Career tab visits since the last career event. */
   tabs: Record<string, number>;
+  /** v2.1.0-dev.4: the last career screen seen (`session_started.lastCareerTab`); "" = none yet. */
+  lastCareer: string;
 }
 
 let device: DeviceState | null = null;
@@ -358,6 +366,7 @@ function freshDevice(now: number): DeviceState {
     day: freshBudgetDay(utcDay(now)),
     resets: 0,
     tabs: {},
+    lastCareer: "",
   };
 }
 
@@ -395,11 +404,14 @@ function reviveDevice(raw: unknown, now: number): DeviceState | null {
       key: typeof day.key === "string" ? day.key : base.day.key,
       sent: num(day.sent, 0),
       standard: num(day.standard, 0),
+      ...(typeof day.essential === "number" ? { essential: num(day.essential, 0) } : {}),
       ...(day.capNoted === true ? { capNoted: true } : {}),
       ...(day.breakerNoted === true ? { breakerNoted: true } : {}),
+      ...(day.ceilingNoted === true ? { ceilingNoted: true } : {}),
     },
     resets: num(r.resets, 0),
     tabs: counts(r.tabs),
+    lastCareer: typeof r.lastCareer === "string" && SCREEN_KEY.test(r.lastCareer) ? r.lastCareer : "",
   };
 }
 
@@ -450,7 +462,8 @@ function dispatch(name: string, payload: Props, queued?: Queued): void {
   const d = getDevice();
   const day = todayOf(d, Date.now());
   const priority = isCatalogEvent(name) ? EVENT_CATALOG[name].priority : "standard";
-  const decision = decideBudget(budget, name, priority, d.bucket, day);
+  const careerBucket = typeof payload.careerId === "string" ? careerBucketOf(payload.careerId) : null;
+  const decision = decideBudget(budget, name, priority, d.bucket, day, Math.random, careerBucket);
   if (decision.note) {
     capture("quality_event_cap", {
       ...analyticsPayload("quality_event_cap", { kind: decision.note, level: budgetLevelOf(budget).index }),
@@ -570,6 +583,7 @@ function touchSession(now: number): void {
     d.lastDay = today;
   }
   seenPaths = new Set();
+  seenRefusals = new Set();
   emit(
     "session_started",
     {
@@ -580,6 +594,7 @@ function touchSession(now: number): void {
       daysSinceLast,
       existingPlayer: d.existing,
       entryPath: currentPath(),
+      lastCareerTab: d.lastCareer || null,
     },
     now,
   );
@@ -644,31 +659,83 @@ function careerTabOf(path: string): string | null {
   return (CAREER_TABS as readonly string[]).includes(key) ? key : null;
 }
 
+/** The career screen of a path: "hq", a tab key or the first sub-route ("event", "follow"…); null outside the career. */
+function careerScreenOf(path: string): string | null {
+  if (path === "/career") return "hq";
+  if (!path.startsWith("/career/")) return null;
+  const key = path.slice("/career/".length).split("/")[0];
+  return SCREEN_KEY.test(key) ? key : "other";
+}
+
+/**
+ * v2.1.0-dev.4 (budget): the career routes that still send `$pageview` — the
+ * entry (`/career`, the funnel's first step), the wizard and the saves list.
+ * The inner screens (tabs, the event, follow) were 2k events a day: the tab
+ * counters and `lastCareerTab` carry them instead.
+ */
+const CAREER_PAGEVIEW_PATHS: ReadonlySet<string> = new Set(["/career", "/career/new", "/career/saves"]);
+
 /**
  * Called by the provider on every pathname change. Sends `$pageview` for the
  * FIRST visit to each route in a session (the SDK's own pageview capture is
- * off), and counts career tab visits — every visit, as counters that ride on
- * the next `career_event_completed`, never as events.
+ * off) — none for the career's inner screens — and counts career tab visits:
+ * every visit, as counters that ride on the next `career_event_completed`,
+ * never as events. The last career screen rides on the next `session_started`.
  */
 export function notePageview(): void {
   try {
     if (typeof window === "undefined") return;
     const path = currentPath();
     const tab = careerTabOf(path);
+    const screen = careerScreenOf(path);
     if (tab) {
       const d = getDevice();
       d.tabs[tab] = (d.tabs[tab] ?? 0) + 1;
     }
-    if (!ready()) return;
+    if (!ready()) {
+      if (screen) getDevice().lastCareer = screen;
+      return;
+    }
     const now = Date.now();
-    touchSession(now);
-    if (!seenPaths.has(path)) {
+    touchSession(now); // a new session reports the PREVIOUS last screen
+    if (screen) getDevice().lastCareer = screen;
+    const sends = !path.startsWith("/career/") || CAREER_PAGEVIEW_PATHS.has(path);
+    if (sends && !seenPaths.has(path)) {
       seenPaths.add(path);
       deliver("$pageview", { ...commonProps("app") }, now);
     }
     saveDevice();
   } catch {
     // ignore
+  }
+}
+
+/** Refusal reasons already sent this session (`career_action_refused` goes out once per reason). */
+let seenRefusals = new Set<string>();
+
+/**
+ * v2.1.0-dev.4 (soft lock): the career store refused an action the player asked
+ * for (`lastError`). Sent once per session and reason, with the screen it came
+ * from. `reason` is a store error key; anything else is reported as "other".
+ */
+export function trackCareerRefusal(careerId: string, reason: string): void {
+  try {
+    if (!ready()) return;
+    const key = SCREEN_KEY.test(reason) ? reason : "other";
+    const now = Date.now();
+    touchSession(now);
+    if (seenRefusals.has(key)) return;
+    seenRefusals.add(key);
+    const screen = careerScreenOf(currentPath()) ?? (currentPath().split("/")[1] || "home");
+    trackEvent("career_action_refused", {
+      careerId,
+      // The session number keeps a later session's refusal apart from the de-duplication ring.
+      actionId: `${careerId}:refused:${key}:${getDevice().sessions}`,
+      reason: key,
+      screen: SCREEN_KEY.test(screen) ? screen : "other",
+    });
+  } catch {
+    // never into gameplay
   }
 }
 
@@ -882,6 +949,7 @@ export function resetAnalyticsForTests(): void {
   recentIds = [];
   device = null;
   seenPaths = new Set();
+  seenRefusals = new Set();
   advance = { count: 0, maxMs: 0, slow: 0 };
   reportedErrors = new Set();
   budget = defaultBudget();

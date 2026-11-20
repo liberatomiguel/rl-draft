@@ -42,6 +42,7 @@ describe("the catalogue", () => {
         "account_signed_in",
         "account_sync_failed",
         "achievement_unlocked",
+        "career_action_refused",
         "career_cloud_conflict",
         "career_cloud_failed",
         "career_created",
@@ -101,15 +102,38 @@ describe("the catalogue", () => {
     expect(new Set(ONBOARDING_STEPS).size).toBe(ONBOARDING_STEPS.length);
   });
 
-  it("the volume events are standard, and everything rare is critical (never sampled)", () => {
-    const standard = Object.entries(EVENT_CATALOG)
-      .filter(([, spec]) => spec.priority === "standard")
-      .map(([name]) => name)
-      .sort();
+  it("the volume events are standard, the career spine and health are essential, everything else rare is critical", () => {
+    const of = (priority: string) =>
+      Object.entries(EVENT_CATALOG)
+        .filter(([, spec]) => spec.priority === priority)
+        .map(([name]) => name)
+        .sort();
+    // v2.1.0-dev.4: past the breaker only these still go out (DESIGN: one per tournament / split / season, refusals, health).
+    expect(of("essential")).toEqual(
+      [
+        "account_signed_in",
+        "account_sync_failed",
+        "career_action_refused",
+        "career_cloud_conflict",
+        "career_cloud_failed",
+        "career_created",
+        "career_ended",
+        "career_event_completed",
+        "career_milestone",
+        "career_season_completed",
+        "career_split_summary",
+        "quality_duplicate_reward",
+        "quality_error",
+        "quality_event_cap",
+        "quality_migration",
+        "quality_save_error",
+        "quality_slow_advance",
+      ].sort(),
+    );
+    const standard = of("standard");
     expect(standard).toEqual(
       [
         "achievement_unlocked",
-        "career_event_completed",
         "challenge_played",
         "mission_completed",
         "quiz_played",
