@@ -2,13 +2,20 @@
 
 ## Branch de integração e staging (20/11)
 
-**`claude/etapa1-integration-3eae43` = `2.1.0-rc.1`**, a nova identidade na
-quinta passada (`design/broadcast-pilot` + `4b4ecd6`) + `main` v2.0.35 + fatia 1 do Matchday
-(`claude/matchday-f1-fd2597`) + baseline (`claude/balance-baseline-d2d477`) +
-análise PostHog (`claude/posthog-analysis-d77555`) + diagnóstico M1
-(`claude/recursing-chatelet-8a8b84`). Testes, lint, typecheck e build verdes.
-Não publicado: espera o gate da Etapa 1 e o OK do Miguel. O A7 (tab bar
-mobile da carreira, do Miguel) ainda não está aqui.
+**`claude/etapa1-integration-3eae43` = `2.1.0-rc.2`** (aprovado pelo Miguel
+em 20/11): a nova identidade na quinta passada (`design/broadcast-pilot` +
+`4b4ecd6`) + `main` v2.0.35 + as fatias 1 e 2 do Matchday + baseline +
+análise PostHog + M1 (diagnóstico e implementação, R139) + analytics da
+Etapa 1. Testes, lint, typecheck e build verdes. Não publicado: espera o OK
+do Miguel para o push. O A7 (tab bar mobile da carreira, do Miguel) ainda não
+está aqui.
+
+**Flags da Etapa 1:** `FEATURES.matchdayStyles` e `FEATURES.worldLife`
+ficam **ligadas só no build de staging** (`STAGING_BUILD` em `balance.ts`:
+`next build` + `NEXT_PUBLIC_NOINDEX=1`, sem `NEXT_PUBLIC_PLAYTEST`; a mesma
+regra do analytics). Produção, playtest, dev e testes: desligadas
+(`stagingFlags.test.ts`). Nada novo para configurar no painel. `BALANCE_VERSION`
+39 (as duas fatias tinham ido a 38 cada uma).
 
 **Atenção: `design/broadcast-pilot` está atrás de `staging`.** A quinta
 passada (`4b4ecd6`) só existe em `origin/staging`; este branch já a tem.
@@ -21,8 +28,8 @@ do evento colados. Fica para a passada mobile / A7.
 próprio, o Next usa o do checkout principal e o build quebra com um panic do
 Turbopack ("Missing content ... StaticOutputAsset").
 
-**Trazer os branches que faltam** (`matchday-f2`, implementação do M1,
-analytics), um por vez, nesta ordem, no worktree deste branch:
+**Trazer um branch novo** (fatia 3, M2...), um por vez, no worktree deste
+branch:
 
 1. `git status` limpo; `git log --oneline -1 refs/heads/<branch>` para ver o
    que entra. Use sempre `refs/heads/<branch>` (uma tag de mesmo nome venceria).
@@ -60,10 +67,17 @@ analytics), um por vez, nesta ordem, no worktree deste branch:
    `staging`) builda sozinho: `npm run build`, depois
    `npx wrangler deploy --env staging`. As variáveis `NEXT_PUBLIC_CAREER_MODE=1`
    e `NEXT_PUBLIC_NOINDEX=1` vêm das configurações desse build, não do repo
-   nem do `.env.local`. Staging nunca manda analytics.
-4. Conferir https://staging.rocketdraft.app: rodapé com `2.1.0-rc.N`,
+   nem do `.env.local`. O `NOINDEX=1` também liga as flags da Etapa 1; não
+   adicione `NEXT_PUBLIC_PLAYTEST` nesse projeto, ou elas desligam. Staging
+   nunca manda analytics.
+4. Conferir https://staging.rocketdraft.app: rodapé com `2.1.0-rc.2`,
    `robots.txt` com `Disallow: /`, Home, HQ da carreira, um evento, 320 px.
-5. Nunca fazer deploy local (`npm run deploy` lê o `.env.local` com as chaves
+   A fatia 2 não tem tela (só motor): o sinal é a carreira jogar normal. O
+   M1 só age a partir da primeira temporada infinita, e aparece no Inbox e
+   nas notícias (prospecto contratado, org nova, técnico que se aposenta).
+5. Produção não muda com este push: `rocketdraft.app` builda de `main`, e
+   num build de produção as duas flags ficam desligadas.
+6. Nunca fazer deploy local (`npm run deploy` lê o `.env.local` com as chaves
    do Supabase) e nunca enviar este branch para `main`.
 
 Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md`
@@ -107,7 +121,8 @@ temporadas). Meta 5 vale (0–8%), mas os bots quase nunca ganham o Worlds.
 
 - Plano escolhe `TeamStyle.played`; o embalo substitui o hook de comportamento
   em `traitBounce`. Teto somado ±1,2 já é aplicado em `gameSide`.
-- `package.json`/`SITE.version` seguem 2.0.35; `BALANCE_VERSION` 38.
+- `package.json`/`SITE.version`: 2.0.35 em `main`, 2.1.0-rc.2 no branch de
+  integração; `BALANCE_VERSION` 39 nele.
 
 ## Fatia 4, decidida (opção B, R137)
 

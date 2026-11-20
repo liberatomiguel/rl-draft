@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.2] — 2026-11-20 · Matchday slice 2, Mundo vivo M1 and the Etapa 1 analytics, both flags on in staging only (staging candidate, not published)
+
+Branch `claude/etapa1-integration-3eae43`. Miguel approved rc.2 on 20/11. Not pushed, not deployed: publishing waits for his go-ahead (steps at the top of `docs/ETAPA-1-STATUS.md`).
+
+### Changed
+- Merged, in order: Matchday slice 2 (`claude/matchday-f2-5bf162`, `2.1.0-dev.3` below), the Mundo vivo M1 implementation (`claude/recursing-chatelet-8a8b84`, `2.1.0-dev.2`) and the Etapa 1 analytics (`claude/analytics-etapa1-6a7f03`, `2.1.0-dev.4`). The new strings M1 brings to the career copy lose their em dashes as rc.1's did.
+- **`FEATURES.matchdayStyles` and `FEATURES.worldLife` are ON in the staging build only.** A new `STAGING_BUILD` in `balance.ts` reads the marker the staging Worker already builds with (`next build` plus `NEXT_PUBLIC_NOINDEX=1`, minus the playtest Worker, which also sets NOINDEX). It is the same rule as `analyticsEnvironment() === "staging"`, so nothing new has to be set in the Cloudflare dashboard. Production, playtest, dev and tests keep both off; `NEXT_PUBLIC_MATCHDAY_STYLES=1` / `NEXT_PUBLIC_WORLD_LIFE=1` still turn them on for the probes. `stagingFlags.test.ts` holds it. `postexport.mjs` mirrors neither flag.
+- **Decision number:** the M1 branch had written its decision as R137, which is Miguel's approval of 20/11 (and R138 is slice 2). M1 is now **R139**, with its code comments, `MUNDO-VIVO-M1.md` and the RTW status pointing to it.
+- Version 2.1.0-rc.2 in `package.json` and `SITE.version`.
+
+### Balance
+- **BALANCE_VERSION 39.** Slice 2 (`CAREER_MATCHDAY`) and M1 (`CAREER_WORLD_LIFE`) each bumped 37 → 38 on their own branch, from the same base, with different tables. Together `balance.ts` is a third set of values, so the fingerprint test wants a number neither branch used: 39 (hash `604165a4`). No value changed in the merge. `STAGING_BUILD` is left out of the fingerprint, like `FEATURES`: it is a build switch, not a tuning value.
+- With both flags off a career plays as v2.0.35 (both branches' own proofs, the golden and balance tests pass untouched). On staging both are on together, which neither branch measured: see Not verified.
+
+### Not verified
+- Not on staging and not played by Miguel. The two flags were never run together before this rc. Only a short M1 probe with both on (EU, 9 seasons) and the browser check below cover the combination; no baseline battery was run with both on.
+
 ## [2.1.0-rc.1] — 2026-11-20 · Integration of the new identity + v2.0.35 + Etapa 1 slice 1, M1 diagnosis (staging candidate, not published)
 
 Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot` (`ca05144`, fourth pass) plus the fifth pass `4b4ecd6`, which is on `staging` (v2.0.33-design.1) but **not** on `design/broadcast-pilot`. Miguel (20/11): Etapa 1 is tested on staging on the new identity. Not pushed, not deployed: it waits for the Etapa 1 gate. How to bring the rest in and publish: top of `docs/ETAPA-1-STATUS.md`.

@@ -40,8 +40,9 @@ function fnv1a(text: string): string {
 
 describe("BALANCE_VERSION (hand-bumped with every tuning change)", () => {
   it("matches the fingerprint of balance.ts", () => {
-    const { BALANCE_VERSION, FEATURES: _features, ...tuned } = balance;
+    const { BALANCE_VERSION, FEATURES: _features, STAGING_BUILD: _staging, ...tuned } = balance;
     void _features;
+    void _staging;
     const hash = fnv1a(canon(tuned));
     const changed = hash !== FINGERPRINT.hash;
     const next = changed && BALANCE_VERSION === FINGERPRINT.balanceVersion ? BALANCE_VERSION + 1 : BALANCE_VERSION;

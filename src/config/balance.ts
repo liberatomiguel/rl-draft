@@ -13,7 +13,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * `balanceVersion` with every analytics event so data splits across retunes
  * inside one release. HAND-BUMPED: any commit that changes a value (or a
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
- * of every export except FEATURES and fails until the bump is made.
+ * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
 export const BALANCE_VERSION = 39;
 
@@ -4432,6 +4432,18 @@ export const CAREER_MATCHDAY = {
 // to false to fully disable the feature with no other code change.
 // ---------------------------------------------------------------------------
 
+/**
+ * v2.1.0-rc.2: the cloud staging build (staging.rocketdraft.app). The marker
+ * is the one the staging Worker already builds with: `next build`
+ * (NODE_ENV=production) plus NEXT_PUBLIC_NOINDEX=1, minus the playtest Worker
+ * (which also sets NOINDEX). Production, playtest, dev and tests read false.
+ * Same rule as analyticsEnvironment() === "staging" (lib/analytics.ts).
+ */
+export const STAGING_BUILD =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_NOINDEX === "1" &&
+  process.env.NEXT_PUBLIC_PLAYTEST !== "1";
+
 export const FEATURES = {
   /**
    * Results screen reveals the lineup that knocked the user out on a lost run
@@ -4462,18 +4474,20 @@ export const FEATURES = {
    * v2.1 Matchday slice 2 (docs/MATCHDAY-SPEC.md §4–§5): career sides carry a
    * play style and per-player traits, and every career series reads the style
    * matchup and the traits (CAREER_MATCHDAY). Off → no side gets them and the
-   * engine runs the old path byte for byte. OFF by default until Miguel's
-   * gate; the probes turn it on with NEXT_PUBLIC_MATCHDAY_STYLES=1.
+   * engine runs the old path byte for byte. rc.2: ON in the staging build
+   * only (STAGING_BUILD), OFF in production, playtest, dev and tests until
+   * Miguel's gate; the probes turn it on with NEXT_PUBLIC_MATCHDAY_STYLES=1.
    */
-  matchdayStyles: process.env.NEXT_PUBLIC_MATCHDAY_STYLES === "1",
+  matchdayStyles: STAGING_BUILD || process.env.NEXT_PUBLIC_MATCHDAY_STYLES === "1",
   /**
    * v2.1 Mundo vivo M1 (R139): AI orgs scout prospects onto a reserve seat,
    * Local stacks get signed, weak orgs give way to new ones, the local scene
    * stays under its region's median and coaches age and retire — infinite
-   * seasons only (CAREER_WORLD_LIFE). Off = v2.0.35 exactly. On with
-   * NEXT_PUBLIC_WORLD_LIFE=1 until Miguel's playtest approves the default.
+   * seasons only (CAREER_WORLD_LIFE). Off = v2.0.35 exactly. rc.2: ON in the
+   * staging build only (STAGING_BUILD), OFF in production, playtest, dev and
+   * tests; NEXT_PUBLIC_WORLD_LIFE=1 turns it on for the probes.
    */
-  worldLife: process.env.NEXT_PUBLIC_WORLD_LIFE === "1",
+  worldLife: STAGING_BUILD || process.env.NEXT_PUBLIC_WORLD_LIFE === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
