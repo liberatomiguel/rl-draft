@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.1] — 2026-11-20 · Integration of the new identity + v2.0.35 + Etapa 1 slice 1, M1 diagnosis (staging candidate, not published)
+
+Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot`. Miguel (20/11): Etapa 1 is tested on staging on the new identity. Not pushed, not deployed: it waits for the Etapa 1 gate. How to bring the rest in and publish: top of `docs/ETAPA-1-STATUS.md`.
+
+### Changed
+- **The new identity (the broadcast pilot entry below) merged with `main` v2.0.15 to v2.0.35.** Where they met, the redesign keeps its visuals and layout and main keeps its behaviour, copy and data. Main's search titles and copy (career landing, team and player titles, the three guides) are taken with their em dashes rewritten as colons or brackets (DESIGN.md: no em dash).
+- **The Collection's quiet next-reward line (v2.0.35)** is set as a quiet label of the new identity (display Medium caps, faint, tabular figures). The database link at the end of the page stays a faint sentence.
+- **Decision numbers:** the redesign's DESIGN-DECISIONS #164 to #167 are now #173 to #176, because main had used #164 to #172. DESIGN.md and the redesign handoff point to the new numbers.
+- Merged, unchanged: Matchday slice 1 (`2.1.0-dev.1` below: series in steps, R137), the balance baseline for v2.0.35, the PostHog analysis of 20/11 and the Mundo vivo M1 diagnosis (docs only).
+- Version 2.1.0-rc.1 in `package.json` and `SITE.version`.
+
+### Fixed
+- **`runLabels.test` failed on the design branch:** the redesign removed three em dashes from the daily templates' English copy (`copy.en.ts`) but not from the plan's own text (`lib/dailyPlan.ts`), which the test requires to read the same. Root cause: a copy pass that edited one of two copies of the same strings. The plan text now matches the copy.
+
+### Not verified
+- Not on staging and not played by Miguel. The browser look covers the Home, the career HQ and one career event on desktop and at 320 px, in a local export with career on.
+
 ## [2.1.0-dev.1] — 2026-11-20 · Matchday slice 1: the series in steps (engine only, not released)
 
 First slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 B, §10). No result, seed, save, balance number, string or screen changes; `package.json` and `SITE.version` stay 2.0.35 until v2.1 ships. Miguel's decisions of 20/11: ROAD-TO-WORLDS-DECISIONS R137.
@@ -20,7 +37,7 @@ First slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 B, §10). No result, seed, sav
 ### Added
 - **`seriesSeed(careerSeed, eventStream, roundKey, teamAId, teamBId)`** and the stream id `ser:{eventStream}:{roundKey}:{teamAId}:{teamBId}` (`engine/career/seeds.ts`, the `matchTimeline` pattern): the user's own series RNG, so it can stop between games while the rest of the round plays at once. Tested, not wired in: taking the user's series off the round's RNG would reshuffle every other series of that round, so it lands with the slice that moves results.
 
-## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot`, not approved, not committed)
+## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot`, not approved; integrated in 2.1.0-rc.1)
 
 Source: Miguel's request of 17/11 to remove the generated look from the game, audited against the anti-slop rulebook (github.com/miqdadbadjuber/anti-slop). Direction chosen by Miguel: RLCS broadcast package. Scope of this pilot: the shared primitives, the Home and the Classic Draft flow. Career screens only inherit the primitives.
 
