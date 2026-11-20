@@ -453,6 +453,30 @@ export interface TournamentTeam {
   traits?: TraitId[][];
   /** v2.1: this side plays a LAN event (Major / Worlds): the `lan` trait counts. */
   lanEvent?: true;
+  /**
+   * v2.1 Matchday slice 3: the side plays the matchday series model (plan,
+   * momentum meter instead of the fixed bounce). Career sides only, with
+   * FEATURES.matchdayDecisions on; absent → the old path byte for byte.
+   */
+  matchday?: true;
+  /** Slice 3: the starter who makes the special plays (index in `playerNames`): the one worth marking. */
+  playmakerIndex?: number;
+  /** Slice 3: the side's coach quality 0..1 (its builder's coach); absent → CAREER_MATCHDAY.aiCoachQualityDefault. */
+  coachQuality?: number;
+  /** Slice 3: the Sunday briefing's edge for this round, inside the ±combinedCap (instead of the rating). */
+  briefingEdge?: number;
+}
+
+/** v2.1 Matchday slice 3: the kickoff plan (variance for both sides). */
+export type KickoffPlan = "safe" | "standard" | "aggressive";
+
+/** v2.1 Matchday slice 3: one side's series plan (MATCHDAY-SPEC §6). */
+export interface SeriesPlan {
+  /** The style played; absent → the natural one. */
+  style?: PlayStyleId;
+  kickoff: KickoffPlan;
+  /** The opponent's player marked (index in the opponent's `playerNames`); absent → nobody. */
+  mark?: number;
 }
 
 /** v2.1 Matchday: the five play styles (CAREER_MATCHDAY.styleCycle). */

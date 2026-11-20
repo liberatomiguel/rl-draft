@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 38;
+export const BALANCE_VERSION = 39;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4358,6 +4358,69 @@ export const CAREER_MATCHDAY = {
   traitCap: 0.6,
   /** §7: matchup + traits (and, from fatia 3, plan and briefing) stay within ±combinedCap. */
   combinedCap: 1.2,
+
+  // --- Fatia 3 (§6–§7): the plan, the breaks and momentum. Read only when
+  // FEATURES.matchdayDecisions is on AND a career side carries `matchday`. ---
+  /** §7: the plan's own shift (off-style cost + a wrong mark) stays within ±planCap. */
+  planCap: 0.4,
+  /** Playing a style other than the natural one costs this × (natural fit − fit in it) per game. */
+  offStyleCostPerFit: 0.5,
+  /** Kickoff: a multiplier on BOTH sides' per-game roll spread (each side's choice multiplies in). */
+  kickoffScale: { safe: 0.85, standard: 1, aggressive: 1.15 } as Record<string, number>,
+  /** Kickoff × trait roll scale, combined, stays in this range. */
+  kickoffScaleRange: [0.7, 1.3] as readonly [number, number],
+  /** Marking the side's playmaker (its special-play maker): his proc chance × (1 − markProcCut). */
+  markProcCut: 0.6,
+  /** Marking anyone else costs the marking side this much defence per game. */
+  markWrongCost: -0.15,
+  /**
+   * Momentum meter (§6), −momentumMax..+momentumMax per side. It replaces
+   * SIMULATION.momentumBounce in career series: a side reads perPoint × meter
+   * per game, within ±momentumCap (§7: the old bounce's size). Before each
+   * update both meters decay (× momentumDecay). A plain loss leaves the loser
+   * +momentumLossPlain (it regroups: 2 × 0.75 = the old 1.5 bounce); an
+   * overtime loss or a rout shakes it (smaller lift, or a drop); a rout win
+   * and a comeback win carry the winner.
+   */
+  momentumMax: 2,
+  momentumPerPoint: 0.75,
+  momentumCap: 1.5,
+  momentumDecay: 0.5,
+  momentumLossPlain: 2,
+  momentumLossOvertime: 1,
+  momentumLossRout: 0,
+  momentumWinPlain: 0,
+  momentumWinRout: 1,
+  momentumWinOvertime: 0.5,
+  /** The winner trailed in the series before this game. */
+  momentumWinComeback: 1,
+  /** A game won by this many goals or more is a rout. */
+  routGoalMargin: 3,
+  /** Behaviour traits on the meter (per player): a leader lifts his side after any loss... */
+  leaderLift: 0.5,
+  /** ... a hot-head drops it after an overtime loss or a rout ... */
+  hotHeadedDrop: -0.75,
+  /** ... and each ice-cold player halves (× 1 − this) his side's drops and the opponent's lift after his win. */
+  iceColdDamp: 0.35,
+  /** Timeout (one per series): clears the opponent's positive momentum, worth at most this in rating points. */
+  timeoutMax: 0.75,
+  /** "Leave it to the coach": coach overall → quality 0..1 over this range (no coach = default plan). */
+  coachQualityRange: [60, 90] as readonly [number, number],
+  /** Quality for an AI side whose builder knew no coach. */
+  aiCoachQualityDefault: 0.4,
+  /** AI between games (user series only): chance to re-pick its style after a loss = base + perQuality × q. */
+  aiAdjustBase: 0.15,
+  aiAdjustPerQuality: 0.5,
+  /** The coach (and the AI) reads a side as the favourite / underdog beyond this rating gap. */
+  kickoffEdgeGap: 1.5,
+  /** The coach calls the timeout once the opponent's meter is at or above this. */
+  timeoutTrigger: 1,
+  /**
+   * Custom mode's default stop: "playoffs" (playoff series and every series
+   * at a LAN event) — a stop in each Swiss series tires players on mobile;
+   * "every" is the player's opt-in.
+   */
+  customStopDefault: "playoffs" as "every" | "playoffs",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -4399,6 +4462,15 @@ export const FEATURES = {
    * gate; the probes turn it on with NEXT_PUBLIC_MATCHDAY_STYLES=1.
    */
   matchdayStyles: process.env.NEXT_PUBLIC_MATCHDAY_STYLES === "1",
+  /**
+   * v2.1 Matchday slice 3 (docs/MATCHDAY-SPEC.md §6): the series plan, the
+   * between-game breaks, the momentum meter (replacing the fixed bounce in
+   * career series), the user's series on its own seed and the quick / custom
+   * modes. Off → nothing of it runs and every result is as before (with
+   * matchdayStyles on, as slice 2). An event started with it off finishes on
+   * the old engine. OFF until Miguel's gate; probes: NEXT_PUBLIC_MATCHDAY_DECISIONS=1.
+   */
+  matchdayDecisions: process.env.NEXT_PUBLIC_MATCHDAY_DECISIONS === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the

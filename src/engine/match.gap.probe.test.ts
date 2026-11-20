@@ -51,6 +51,7 @@ function profilePool(size: number, overall: number): Profile[] {
 it.skipIf(!env.GAP)("measures series win rate by rating gap", () => {
   const n = Number(env.GAP_N ?? 20000);
   const styled = env.GAP_STYLES === "1";
+  const decisions = env.GAP_DECISIONS === "1";
   const rows: { difficulty: Difficulty; stage: string; bestOf: number; base: number; gap: number; favouriteWin: number; upset: number }[] = [];
   for (const difficulty of ["normal", "hard"] as Difficulty[]) for (const stage of ["swiss", "playoff"] as const)
     for (const bestOf of [5, 7]) for (const base of [88, 100]) for (const gap of [0, 2, 5, 6, 12]) {
@@ -60,12 +61,15 @@ it.skipIf(!env.GAP)("measures series win rate by rating gap", () => {
       const a = fakeTeam("a", base + gap), b = fakeTeam("b", base);
       let wins = 0;
       for (let i = 0; i < n; i++) {
-        const sa = styled ? { ...a, ...pool[pr.int(0, pool.length - 1)] } : a;
-        const sb = styled ? { ...b, ...pool[pr.int(0, pool.length - 1)] } : b;
+        const sa0 = styled ? { ...a, ...pool[pr.int(0, pool.length - 1)] } : a;
+        const sb0 = styled ? { ...b, ...pool[pr.int(0, pool.length - 1)] } : b;
+        // GAP_DECISIONS=1 (slice 3): both sides carry the matchday mark (default plans, momentum meter).
+        const sa = decisions ? { ...sa0, matchday: true as const } : sa0;
+        const sb = decisions ? { ...sb0, matchday: true as const } : sb0;
         if (simulateSeries(sa, sb, { bestOf, stage, difficulty }, rng).winnerTeamId === "a") wins++;
       }
       rows.push({ difficulty, stage, bestOf, base, gap, favouriteWin: wins / n, upset: 1 - wins / n });
     }
-  if (env.GAP_OUT) writeFileSync(env.GAP_OUT, JSON.stringify({ n, styled, rows }));
+  if (env.GAP_OUT) writeFileSync(env.GAP_OUT, JSON.stringify({ n, styled, decisions, rows }));
   console.log(`Gap probe: ${rows.length} cells x ${n}${styled ? " (styles on)" : ""}`);
 }, 900_000);

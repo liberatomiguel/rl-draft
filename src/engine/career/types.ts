@@ -17,7 +17,9 @@ import type {
   Region,
   StatKey,
   TournamentState,
+  TournamentTeam,
 } from "../types";
+import type { SeriesState } from "../match";
 import type { SeenState } from "../newItems";
 
 // ---------------------------------------------------------------------------
@@ -54,7 +56,19 @@ export interface CareerPrefs {
   autoEnterUnofficials: boolean;
   playbackDefault: "full" | "instant";
   newsDigest: boolean;
+  /**
+   * v2.1 Matchday slice 3: how the user's series are played. "quick" (absent
+   * = quick, every existing career): the coach makes every call, no stops.
+   * "custom": the pre-series plan and the between-game breaks.
+   */
+  matchdayMode?: MatchdayMode;
+  /** Custom only: stop at every series, or only in playoffs and at LAN events (absent = CAREER_MATCHDAY.customStopDefault). */
+  matchdayStopAt?: MatchdayStopAt;
 }
+
+/** v2.1 Matchday slice 3: the career setting (MATCHDAY-SPEC §6). */
+export type MatchdayMode = "quick" | "custom";
+export type MatchdayStopAt = "every" | "playoffs";
 
 /** Career difficulty excludes legacy (reserved for a later preset). */
 export type CareerDifficulty = Exclude<Difficulty, "legacy">;
@@ -1345,6 +1359,35 @@ export interface ActiveEventState {
    * current lineup, as before).
    */
   fieldedIds?: string[];
+  /**
+   * v2.1 Matchday slice 3: set (1) when the event started with
+   * FEATURES.matchdayDecisions on — its user series run on their own seed and
+   * the matchday model. Absent → the old engine to the end (an event in
+   * progress when the update lands finishes as it began).
+   */
+  matchday?: 1;
+  /** Slice 3: the user's series paused between games (custom mode). Absent / null = none. */
+  userSeries?: UserSeriesSave | null;
+}
+
+/**
+ * v2.1 Matchday slice 3: the user's series in progress, plain JSON. The
+ * series RNG cursor is persisted like the event's own, so a reload resumes at
+ * the same game with the same result.
+ */
+export interface UserSeriesSave {
+  /** The round it belongs to ("sw:N" / "po:N"). */
+  roundKey: string;
+  /** `seriesSeed(...)` of this round and pair. */
+  seed: number;
+  /** The series RNG cursor. */
+  rngState: number;
+  userSide: "a" | "b";
+  state: SeriesState;
+  /** After the sub: the user's side as it plays now (the reserve in). */
+  userTeam?: TournamentTeam;
+  /** The sub, once used: who went out and who came in. */
+  sub?: { outId: string; inId: string };
 }
 
 /** rc.36 (SUN-01, R88): the coach's briefing before a Sunday the user plays. */

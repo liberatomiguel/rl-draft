@@ -54,7 +54,10 @@ import type {
   TrainingMode,
   TrainingPackage,
   StaffId,
+  MatchdayMode,
+  MatchdayStopAt,
 } from "@/engine/career/types";
+import type { KickoffPlan, PlayStyleId, SeriesPlan } from "@/engine/types";
 import { createRng, randomSeed } from "@/lib/rng";
 import {
   dismissFollowFlow,
@@ -110,6 +113,13 @@ import {
   startEvent,
   stepEventRound,
   syncSquadRoles,
+  setMatchdayModeFlow,
+  setUserSeriesPlanFlow,
+  playUserSeriesGameFlow,
+  userSeriesTimeoutFlow,
+  userSeriesAdjustFlow,
+  userSeriesSubFlow,
+  delegateUserSeriesFlow,
   type CreateCareerInput,
 } from "./careerFlow";
 import {
@@ -240,6 +250,20 @@ interface CareerStoreState {
   startChampionshipSunday: (watch: boolean) => void;
   playEventRound: () => void;
   simEvent: () => void;
+  /** v2.1 Matchday slice 3: the career setting (quick / custom, and where custom stops). */
+  setMatchdayMode: (mode: MatchdayMode, stopAt?: MatchdayStopAt) => void;
+  /** Slice 3, the paused user series: the pre-series plan (before game 1). */
+  setSeriesPlan: (plan: SeriesPlan) => void;
+  /** Slice 3: plays the next game of the paused series (then `playEventRound` continues the event). */
+  playSeriesGame: () => void;
+  /** Slice 3, the break: the timeout (one per series). */
+  seriesTimeout: () => void;
+  /** Slice 3, the break: another style (null = the natural one) or kickoff. */
+  seriesAdjust: (change: { style?: PlayStyleId | null; kickoff?: KickoffPlan }) => void;
+  /** Slice 3, the break: the reserve in for a starter (one per series). */
+  seriesSub: (outId: string, inId: string) => void;
+  /** Slice 3: "leave it to the coach" for the rest of the paused series. */
+  delegateSeries: () => void;
   completeEvent: () => void;
   passUnofficial: () => void;
   /** Accept this week's unofficial invite when auto-enter is off. */
@@ -631,6 +655,13 @@ export const useCareerStore = create<CareerStoreState>()(
         startChampionshipSunday: (watch) => withSave((s) => startChampionshipSundayFlow(s, watch)),
         playEventRound: () => withSave(stepEventRound),
         simEvent: () => withSave(simEventToEnd),
+        setMatchdayMode: (mode, stopAt) => withSave((s) => setMatchdayModeFlow(s, mode, stopAt)),
+        setSeriesPlan: (plan) => withSave((s) => setUserSeriesPlanFlow(s, plan)),
+        playSeriesGame: () => withSave(playUserSeriesGameFlow),
+        seriesTimeout: () => withSave(userSeriesTimeoutFlow),
+        seriesAdjust: (change) => withSave((s) => userSeriesAdjustFlow(s, change)),
+        seriesSub: (outId, inId) => withSave((s) => userSeriesSubFlow(s, outId, inId)),
+        delegateSeries: () => withSave(delegateUserSeriesFlow),
         completeEvent: () => withSave(finishEvent),
         passUnofficial: () => withSave(declineUnofficial),
         acceptUnofficial: () =>

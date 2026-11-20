@@ -2658,6 +2658,15 @@ export const CAREER_PT: CareerCopy = {
     },
     editCrest: "Editar escudo",
     settings: "Opções da carreira",
+    // v2.1 Matchday fatia 3: o rótulo da opção e suas escolhas (a tela vem na fatia 5).
+    matchdayMode: {
+      label: "Dia de jogo",
+      quick: "Rápido: o técnico decide",
+      custom: "Personalizado: seu plano e suas pausas",
+      stopAt: "O personalizado para em",
+      stopEvery: "Toda série",
+      stopPlayoffs: "Playoffs e eventos LAN",
+    },
     abandonCareer: "Abandonar carreira",
     abandonConfirm: "Isto apaga o save permanentemente. Os troféus vão junto.",
   },

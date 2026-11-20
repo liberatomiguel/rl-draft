@@ -1,49 +1,49 @@
 # Etapa 1 (v2.1 Matchday + Mundo vivo): estado
 
-Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md`
-R137 (20/11) e R138 (fatia 2). Metas: `ANALISE-POSTHOG-2026-11-20.md`;
-referência simulada: `BALANCE-BASELINE-v2.0.35.md`.
+Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md` R137–R139.
+Metas: `ANALISE-POSTHOG-2026-11-20.md`; referência: `BALANCE-BASELINE-v2.0.35.md`.
+`package.json`/`SITE.version` seguem 2.0.35; `BALANCE_VERSION` 39.
 
-## Fatia 1 (`v2.1.0-dev.1`)
+## Feito
 
-Série em passos sem mudar resultado: `startSeries` / `playNextGame` /
-`finishSeries` em `engine/match.ts`; `SeriesState` é JSON puro. `seriesSeed`
-em `career/seeds.ts`, testado, **não ligado** (ligar move as outras séries da
-rodada). Trava: o digest de `match.steps.test.ts`.
+- **Fatia 1** (`dev.1`): série em passos; trava em `match.steps.test.ts`.
+- **Fatia 2** (`dev.3`, `FEATURES.matchdayStyles`): estilos, confronto, traços.
+- **Fatia 3** (`dev.5`, `FEATURES.matchdayDecisions`, desligada): plano, pausas, embalo no lugar do bounce, "deixar com o coach", modos `prefs.matchdayMode` (rápido por padrão) e `matchdayStopAt`. Série do usuário em `seriesSeed`, salva em `activeEvent.userSeries`. Código: `engine/career/matchday.ts`, `matchdaySeries.ts`, `store/careerFlow.ts`.
 
-## Fatia 2 (`v2.1.0-dev.3`, atrás de `FEATURES.matchdayStyles`, desligada)
+## Medição da fatia 3 (bots; dumps em `matchday-f3-dumps/` nas notas)
 
-`career/styles.ts` (cinco estilos, natural + encaixe pelos atributos),
-`career/traits.ts` (0–2 traços por nome + sal), confronto e traços em
-`match.ts`, `CAREER_MATCHDAY` em `balance.ts`. Só `assembleTournamentTeam`
-com `rollRange` (carreira) preenche `style`/`traits`. LAN não ligado.
+Flag desligada = baseline carreira por carreira (14/14).
 
-**Medição** (bots autopilot/tuned/professional, sem a política "strong" do M1,
-que não está neste ramo). Flag desligada = baseline, carreira por carreira.
-
-| | Desligada | Ligada |
+| | v2.0.35 | Ligada |
 |---|--:|--:|
-| Motor: favorito +2 / +5 / +6 | 75,2 / 96,0 / 98,2% | 74,9 / 95,9 / 98,2% |
-| Carreira ±2: Normal / Hard / Easy | 59,4 / 56,2 / 76,1% | 59,1 / 57,3 / 76,1% |
-| Carreira ≥ +6: Normal / Hard | 99,8 / 99,5% | 99,9 / 100% |
-| Final regional até T5, NA e EU (N/E/H) | 0/6 em tudo | 0/6 em tudo |
-| Título regional, rating 84–87: N / H | 17 / 7% | 8 / 13% |
-| Worlds por participação (endgame N) | 1 de 12 | 0 de 11 |
-| Soft lock / falência N / falência H | 0 / 0 / 4 de 42 | 0 / 1 / 5 de 42 |
+| Motor +2 / +5 / +6 | 75,5 / 96,1 / 98,4% | 75,6 / 96,1 / 98,4% |
+| Carreira ±2 N / H / E | 59,4 / 56,2 / 76,1% | 59,7 / 58,6 / 77,0% |
+| Carreira ≥ +6 N / H | 99,8 / 99,5% | 99,8 / 99,9% |
+| Soft lock; falência N / H | 0; 0 / 4 de 42 | 0; 1 / 5 de 42 |
 
-Guardas duras de pé (Draft intacto, +6 ≥ 98%, +2 ≥ 73%, 0 soft lock, âncoras).
-Zebra de +5: ~4% no motor, abaixo da faixa 5–8%; os tetos não precisam baixar.
-Metas 1 e 2 (EU/NA) não se movem: o confronto é aleatório em relação ao
-rating e não é a alavanca. Meta 4 está dentro do ruído (amostras de 16–37
-temporadas). Meta 5 vale (0–8%), mas os bots quase nunca ganham o Worlds.
+Zebra de +5: 3,9%, ainda abaixo de 5–8%. Final regional até T5 segue 0/6 em NA, EU e SAM.
 
-## Fatia 3 precisa saber
+**Rápido × personalizado** (vitória do usuário, 20 mil séries por célula, Normal = Hard):
 
-- Plano escolhe `TeamStyle.played`; o embalo substitui o hook de comportamento
-  em `traitBounce`. Teto somado ±1,2 já é aplicado em `gameSide`.
-- `package.json`/`SITE.version` seguem 2.0.35; `BALANCE_VERSION` 38.
+| Gap | Bom manual | Coach médio (72) | Coach 0,7 | Sem coach | Antigo |
+|---|--:|--:|--:|--:|--:|
+| −2 | 30,4% | 27,9% | 29,3% | 24,0% | 25,1% |
+| 0 | 55,7% | 53,3% | 54,8% | 49,4% | 49,7% |
+| +2 | 80,4% | 78,2% | 79,6% | 74,9% | 74,9% |
 
-## Fatia 4, decidida (opção B, R137)
+O coach médio custa 2–2,5 pp contra o bom manual; sem coach, 5,5–6,4 pp. Pedaços do manual em série igual: timeout +2,3, ajuste +1,8, estilo +1,3, marcação +1,1, kickoff ~0 pp.
 
-Súmula com 2 a 4 momentos-chave por jogo, todos tirados da súmula; sem
-narração lance a lance e sem barra de embalo.
+## Para o Miguel decidir
+
+- Sem coach custa ~6 pp: aceitar, ou dar ao time sem coach uma qualidade mínima (ex.: 0,2).
+- Decidir também deixa a série igual mais fácil que hoje: +3,6 pp com o coach médio, +6 com o bom manual (a IA não planeja).
+
+## Fatia 4 precisa saber
+
+Opção B (R137). Os momentos-chave saem da súmula; os dados do jogo estão em `SeriesState.games` e o medidor em `SeriesState.matchday` (só para leitura; sem barra de embalo).
+
+## Fatia 5 precisa saber
+
+- Telas: pré-série (`shownStyle`, `playmakerIndex`, traços; sugestão de `coachPlanFor`), pausa e a opção (rótulos `matchdayMode.*` prontos).
+- Com o personalizado, `playEventRound`/`simEvent` param numa série aberta (`pendingUserSeriesOf`); a tela usa `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries` e depois `playEventRound`. O autoplay e o "Avançar" precisam tratar essa parada.
+- Decidir se o reserva que entra na troca recebe XP (`fieldedIds` não muda hoje).

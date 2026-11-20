@@ -2684,6 +2684,15 @@ export const CAREER_EN = {
     },
     editCrest: "Edit crest",
     settings: "Career settings",
+    // v2.1 Matchday slice 3: the setting's label and options (the screen comes with slice 5).
+    matchdayMode: {
+      label: "Matchday",
+      quick: "Quick: the coach makes the calls",
+      custom: "Custom: your plan and breaks",
+      stopAt: "Custom stops at",
+      stopEvery: "Every series",
+      stopPlayoffs: "Playoffs and LAN events",
+    },
     abandonCareer: "Abandon career",
     abandonConfirm: "This deletes the save permanently. The trophies go with it.",
   },

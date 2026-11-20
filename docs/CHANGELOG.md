@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.5] — 2026-11-20 · Matchday slice 3: plan, breaks, momentum, quick and custom modes (engine and store only, behind a flag, not released)
+
+Third slice of Etapa 1 (docs/MATCHDAY-SPEC.md §6, §7, §9). Everything sits behind the new `FEATURES.matchdayDecisions`, **off by default** (`NEXT_PUBLIC_MATCHDAY_DECISIONS=1`). With it off no result moves: a pacing slice is identical, career for career, to the v2.0.35 baseline dumps (14 of 14), and `regression.golden.test.ts`, `balance.test.ts`, `match.steps.test.ts` and the persist contract pass untouched; with `matchdayStyles` on and this flag off, behaviour equals slice 2. `persist` version 3 and `saveVersion` 5 stay. No screen (slice 5). Decisions: ROAD-TO-WORLDS-DECISIONS R139.
+
+### Added
+- **The series plan** (`engine/career/matchday.ts`, `SeriesPlan`): the style played (the natural one or another; the matchup scales with fit, an off-style costs 0.5 × the fit lost), the kickoff (safe / standard / aggressive: ×0.85 / ×1 / ×1.15 on both sides' per-game roll) and a marked player (the side's playmaker makes 60% fewer special plays; marking anyone else costs 0.15). Plan ±0.4, plan + matchup + traits + Sunday briefing ±1.2 per game.
+- **The momentum meter** (−2..+2 per side, 0.75 rating per point, ±1.5): replaces `SIMULATION.momentumBounce` in career series. A plain loss leaves the loser the old bounce; an overtime loss or a rout shakes it; rout, overtime and comeback wins carry the winner; Leader, Hot-headed and Ice-cold move it (they leave the bounce).
+- **Breaks** (`engine/career/matchdaySeries.ts`): one timeout per series (clears up to 0.75 of the opponent's momentum), one sub (the reserve in, team rebuilt), an adjustment of style or kickoff. The AI keeps its natural style and the default plan and, in the user's series, re-picks its style after a loss with a chance that grows with its coach.
+- **"Leave it to the coach"**: every call right with chance = coach quality (overall 60 → 0, 90 → 1), hashed from the series seed, no RNG drawn; no coach = the default plan and no breaks.
+- **The user's series on its own seed** (`seriesSeed`, wired for events started with the flag on, `activeEvent.matchday`): the rest of the round never depends on the user's choices. `playNextRound` / the rounds take an optional `UserSeriesResolver`. `tournament.upcomingUserPairing`.
+- **Modes**: `prefs.matchdayMode` ("quick" when absent: every existing career) and `prefs.matchdayStopAt` (custom default "playoffs" = playoff series and every LAN series; "every" opt-in). Quick never stops. Custom holds the round at `activeEvent.userSeries` (plain JSON with the series RNG cursor): a reload resumes at the same game with the same result. Store actions `setMatchdayMode`, `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries`; the setting's label in `copy.career.en.ts` / `.pt.ts`.
+- `match.modes.probe.test.ts` (`GAP_MODES=1`): series win rate by policy; `match.gap.probe.test.ts` gains `GAP_DECISIONS=1`.
+
+### Balance (both flags on vs v2.0.35; bots, not players; BALANCE_VERSION 39, no value changed with the flags off)
+- Engine: +2 favourite 75.5% → 75.6%, +5 96.1% → 96.1% (upset 3.9%, still under the 5–8% band), +6 98.4% → 98.4%.
+- Career series at ±2: Normal 59.4% → 59.7%, Hard 56.2% → 58.6%, Easy 76.1% → 77.0%. ≥ +6: 99.8% / 99.5% → 99.8% / 99.9%.
+- Soft locks 0 (probe and 210 bot careers). Insolvency Normal 0 → 1 of 42, Hard 4 → 5 of 42 (as slice 2). Regional final by S5 still 0/6 in NA, EU and SAM.
+- Quick vs custom, even series: good manual 55.7%, quick with an average coach (overall 72) 53.3%, quick without a coach 49.4%.
+
 ## [2.1.0-dev.3] — 2026-11-20 · Matchday slice 2: styles and traits (engine only, behind a flag, not released)
 
 Second slice of Etapa 1 (docs/MATCHDAY-SPEC.md §4, §5, §7). Everything sits behind `FEATURES.matchdayStyles`, **off by default** (`NEXT_PUBLIC_MATCHDAY_STYLES=1` turns it on). Off, no result moves: a pacing slice with the flag off is identical, career for career, to the v2.0.35 baseline dumps, and `regression.golden.test.ts`, `balance.test.ts` and `match.steps.test.ts` pass untouched. No save, copy or screen change. Decisions: ROAD-TO-WORLDS-DECISIONS R138.

@@ -11,7 +11,7 @@
 
 import { TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
-import { simulateSeries } from "./match";
+import { simulateSeries, type UserSeriesResolver } from "./match";
 import type {
   Difficulty,
   PlayoffRound,
@@ -145,6 +145,7 @@ export function playPlayoffRound(
   teams: Record<string, TournamentTeam>,
   difficulty: Difficulty,
   rng: Rng,
+  userSeries?: UserSeriesResolver,
 ): PlayoffState {
   if (state.finished) return state;
 
@@ -155,13 +156,12 @@ export function playPlayoffRound(
 
   const round: PlayoffRound = {
     name,
-    series: pairs.map(([aId, bId]) =>
-      simulateSeries(teams[aId], teams[bId], {
-        bestOf,
-        stage: "playoff",
-        difficulty,
-      }, rng),
-    ),
+    series: pairs.map(([aId, bId]) => {
+      const options = { bestOf, stage: "playoff" as const, difficulty };
+      return userSeries && (teams[aId].isUser || teams[bId].isUser)
+        ? userSeries(teams[aId], teams[bId], options)
+        : simulateSeries(teams[aId], teams[bId], options, rng);
+    }),
   };
 
   const rounds = [...state.rounds, round];
