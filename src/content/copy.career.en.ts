@@ -3314,6 +3314,52 @@ export const CAREER_EN = {
     }),
   },
 
+  // v2.1 Matchday slice 4: the key moments of a game (engine/career/boxScore.ts).
+  // Three variants per type; a series never repeats one. (player, clock, n).
+  moments: {
+    overtimeWinner: [
+      (p: string, c: string) => `${p} ends it in overtime at ${c}.`,
+      (p: string, c: string) => `Overtime golden goal: ${p}, ${c} in.`,
+      (p: string, c: string) => `${p} settles the game in extra time, ${c}.`,
+    ],
+    comeback: [
+      (p: string, _c: string, n: number) => `Down ${n}, they turn it around: ${p} puts them ahead.`,
+      (p: string, _c: string, n: number) => `From ${n} behind to the lead, ${p} with the goal.`,
+      (p: string, _c: string, n: number) => `${p} completes the comeback from ${n} down.`,
+    ],
+    hatTrick: [
+      (p: string, _c: string, n: number) => `${p} reaches ${n} goals: hat-trick.`,
+      (p: string, _c: string, n: number) => `Hat-trick for ${p}, ${n} on the night.`,
+      (p: string, _c: string, n: number) => `${p} scores ${n}. A hat-trick in this game.`,
+    ],
+    cleanSheet: [
+      (p: string, _c: string, n: number) => `Clean sheet in the decider, ${p} with ${n} saves.`,
+      (p: string, _c: string, n: number) => `Nothing gets past ${p} (${n} saves). Shutout.`,
+      (p: string, _c: string, n: number) => `Shutout in the deciding game, ${p} makes ${n} saves.`,
+    ],
+    lateGoal: [
+      (p: string, c: string) => `${p} scores with ${c} left.`,
+      (p: string, c: string) => `Late goal from ${p}, ${c} on the clock.`,
+      (p: string, c: string) => `${p} finds the net at ${c}.`,
+    ],
+    saveMarathon: [
+      (p: string, _c: string, n: number) => `${p} makes ${n} saves.`,
+      (p: string, _c: string, n: number) => `${n} saves from ${p}, the wall of this game.`,
+      (p: string, _c: string, n: number) => `${p} stops ${n} shots.`,
+    ],
+    demoBlitz: [
+      (p: string, _c: string, n: number) => `${p} takes down ${n} opponents.`,
+      (p: string, _c: string, n: number) => `${n} demos for ${p}.`,
+      (p: string, _c: string, n: number) => `${p} is relentless: ${n} demolitions.`,
+    ],
+    decider: [
+      (p: string, c: string) => `${p} scores the goal that decides it, ${c}.`,
+      (p: string, c: string) => `The decisive goal: ${p}, ${c}.`,
+      (p: string, c: string) => `${p} puts the game away at ${c}.`,
+    ],
+    unknownPlayer: "A player",
+  },
+
   common: {
     ovr: "OVR",
     pot: "POT",

@@ -2447,3 +2447,12 @@ Implementação de `MATCHDAY-SPEC.md` §6–§7 e §9 atrás de `FEATURES.matchd
 - **Modos:** `prefs.matchdayMode` (ausente = rápido, carreiras novas e antigas) e `prefs.matchdayStopAt`. O personalizado para, por padrão, só nos playoffs e em eventos LAN (Major/Worlds); "toda série" é opcional.
 - **Série do usuário no próprio seed** (`seriesSeed`) só em eventos marcados `activeEvent.matchday = 1` (iniciados com a flag ligada); um evento em andamento na atualização termina no motor antigo. No personalizado a rodada espera a série do usuário e é jogada quando ela termina; como a série não usa o RNG da rodada, o resto da rodada sai igual em qualquer ordem.
 - **Troca:** o reserva entra no lugar de um titular para o resto da série, com o time remontado por `userTeamFor` (encaixe, química e traços mudam). `fieldedIds` (XP e estabilidade do elenco) não muda; a fatia 5 decide se o reserva recebe crédito.
+
+## R140 — 20 de novembro de 2026: Matchday fatia 4, súmula e momentos-chave (v2.1.0-dev.9)
+
+Implementação de `MATCHDAY-SPEC.md` §3 C e §8 (R137, opção B) atrás de `FEATURES.matchdayBoxScore` (desligada até o gate). Só motor e store. Escolhas:
+- **Os gols são os do motor.** A súmula lê `GameResult.scorers` (o mesmo que a linha do tempo) e só inventa o resto (assistências, chutes, defesas, demos) em cima dos gols. Não há como mudar placar nem vencedor.
+- **MVP da série = maior pontuação no jogo do vencedor** (desempate: nota média), no lugar do sorteio de `starName`. O `starName` continua nos dados antigos.
+- **Momentos-chave**: 8 tipos por regra (prorrogação, virada de 2+, hat-trick, jogo decisivo sem sofrer gol, gol no fim, maratona de defesas, blitz de demos, e o gol que decide como complemento). Três variações de texto por tipo, nunca repetidas na série.
+- **Estatísticas da temporada** no `CareerSave.boxStats` (opcional; persist version e `saveVersion` iguais): temporada atual e anterior, 12 jogadores. Entram quando o evento termina, a partir das séries do usuário. Chave pelo id do jogador.
+- Sabor de estilo (com `matchdayStyles`): Pressão +2 demos, Posse tira 2 chutes do rival.

@@ -3288,6 +3288,51 @@ export const CAREER_PT: CareerCopy = {
     }),
   },
 
+  // v2.1 Matchday fatia 4: os momentos-chave de um jogo (engine/career/boxScore.ts).
+  moments: {
+    overtimeWinner: [
+      (p: string, c: string) => `${p} decide na prorrogação, aos ${c}.`,
+      (p: string, c: string) => `Gol de ouro: ${p}, com ${c} de prorrogação.`,
+      (p: string, c: string) => `${p} resolve o jogo no tempo extra, ${c}.`,
+    ],
+    comeback: [
+      (p: string, _c: string, n: number) => `Perdendo por ${n}, o time vira: ${p} coloca na frente.`,
+      (p: string, _c: string, n: number) => `De ${n} atrás para a frente do placar, gol de ${p}.`,
+      (p: string, _c: string, n: number) => `${p} completa a virada depois de estar ${n} abaixo.`,
+    ],
+    hatTrick: [
+      (p: string, _c: string, n: number) => `${p} chega a ${n} gols: hat-trick.`,
+      (p: string, _c: string, n: number) => `Hat-trick de ${p}, ${n} no jogo.`,
+      (p: string, _c: string, n: number) => `${p} marca ${n}. Hat-trick nesta partida.`,
+    ],
+    cleanSheet: [
+      (p: string, _c: string, n: number) => `Jogo sem sofrer gol na decisão, ${p} com ${n} defesas.`,
+      (p: string, _c: string, n: number) => `Nada passa por ${p} (${n} defesas). Shutout.`,
+      (p: string, _c: string, n: number) => `Shutout no jogo decisivo, ${p} faz ${n} defesas.`,
+    ],
+    lateGoal: [
+      (p: string, c: string) => `${p} marca com ${c} no relógio.`,
+      (p: string, c: string) => `Gol no fim de ${p}, ${c} para acabar.`,
+      (p: string, c: string) => `${p} acha a rede aos ${c}.`,
+    ],
+    saveMarathon: [
+      (p: string, _c: string, n: number) => `${p} faz ${n} defesas.`,
+      (p: string, _c: string, n: number) => `${n} defesas de ${p}, a muralha do jogo.`,
+      (p: string, _c: string, n: number) => `${p} para ${n} chutes.`,
+    ],
+    demoBlitz: [
+      (p: string, _c: string, n: number) => `${p} derruba ${n} adversários.`,
+      (p: string, _c: string, n: number) => `${n} demolições de ${p}.`,
+      (p: string, _c: string, n: number) => `${p} não dá trégua: ${n} demolições.`,
+    ],
+    decider: [
+      (p: string, c: string) => `${p} faz o gol que decide, ${c}.`,
+      (p: string, c: string) => `O gol decisivo: ${p}, ${c}.`,
+      (p: string, c: string) => `${p} fecha o jogo aos ${c}.`,
+    ],
+    unknownPlayer: "Um jogador",
+  },
+
   common: {
     ovr: "OVR",
     pot: "POT",

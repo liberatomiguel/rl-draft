@@ -19,6 +19,7 @@ import type {
   TournamentState,
   TournamentTeam,
 } from "../types";
+import type { SeasonBoxStats } from "./boxScore";
 import type { SeriesState } from "../match";
 import type { SeenState } from "../newItems";
 
@@ -1765,6 +1766,12 @@ export interface CareerSave {
   scouted: Record<string, number>;
   /** This season's compiled events (archived into history at rollover). */
   eventResults: CompactEventResult[];
+  /**
+   * v2.1 Matchday slice 4 (FEATURES.matchdayBoxScore): the user roster's box-score totals
+   * per season, the current and the last one only (CAREER_BOXSCORE.seasonsKept). Optional
+   * and additive: absent on older saves, so persist version and saveVersion stay.
+   */
+  boxStats?: SeasonBoxStats[];
   /** Career-long title ledger; roster snapshots survive transfers and season rollover. */
   honors?: import("./honors").CareerHonor[];
   /** True only for a career created with the complete title recorder. */

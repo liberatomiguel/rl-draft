@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.9] — 2026-11-20 · Matchday slice 4: box score, ratings and key moments (engine and store only, behind a flag, not released)
+
+Fourth slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 C and §8, R137 option B). Everything sits behind the new `FEATURES.matchdayBoxScore`, **off by default** (`NEXT_PUBLIC_MATCHDAY_BOXSCORE=1` for probes). No screens yet (slice 5). No play-by-play and no momentum bar, as Miguel chose.
+
+### Added
+- **`engine/career/boxScore.ts`**, an extension of `matchTimeline.ts` on a local RNG seeded from the persisted result (`boxScoreSeed`): per player per game goals, assists, shots, saves, demos, in-game score and a 0–10 rating (the base of the Pro career, Etapa 2). Goals are the engine's own `scorers` counts (a legacy game without them spreads the goals at random), so a side's goals sum to its score exactly; assists ≤ goals and never on the scorer's own goal; shots ≥ goals; one side's saves are the rival's shots on target minus its goals.
+- **Series box score** (`buildSeriesBoxScore`): every game, per-player totals with the average rating, and the **series MVP from the winner's top score** (instead of the `starName` draw).
+- **Style flavour** (with `matchdayStyles` on): Pressure +2 demos, Possession cuts the shots its rival gets by 2.
+- **Key moments**: structured events (type, side, player, period, clock, variant, n) read off the goal timeline and the numbers: overtime winner, comeback from 2+ down, hat-trick, clean sheet in a deciding game, late goal, save marathon, demo blitz, and the deciding goal as a filler. 2–4 when something notable happens (the filler tops up to two), 0–1 in a quiet game, capped at 4. Three text variants per type; a series never reuses one. Text: `copy.career.en/pt.ts` `moments` plus `content/momentText.ts`.
+- **Season stats on the roster**: `CareerSave.boxStats` (optional, additive: persist version and `saveVersion` stay), per-player totals and rating sum for the current and the last season, 12 players each. Folded in when an event ends (`careerFlow.accumulateBoxStats`), from the same round keys the Match Center uses.
+- Tests: `boxScore.test.ts` (determinism, goal sums, assists/shots/saves bounds, MVP, input never written so winner and score cannot move, moments, style flavour, season fold) and `momentText.test.ts`.
+
+### Balance
+- None. Presentation only: no result changes, and the world simulation never calls the box score (nothing in `worldSim.ts` imports it). `BALANCE_VERSION` 39 → 40 only because the new `CAREER_BOXSCORE` constants change the balance.ts fingerprint.
+
 ## [2.1.0-dev.5] — 2026-11-20 · Matchday slice 3: plan, breaks, momentum, quick and custom modes (engine and store only, behind a flag, not released)
 
 Third slice of Etapa 1 (docs/MATCHDAY-SPEC.md §6, §7, §9). Everything sits behind the new `FEATURES.matchdayDecisions`, **off by default** (`NEXT_PUBLIC_MATCHDAY_DECISIONS=1`). With it off no result moves: a pacing slice is identical, career for career, to the v2.0.35 baseline dumps (14 of 14), and `regression.golden.test.ts`, `balance.test.ts`, `match.steps.test.ts` and the persist contract pass untouched; with `matchdayStyles` on and this flag off, behaviour equals slice 2. `persist` version 3 and `saveVersion` 5 stay. No screen (slice 5). Decisions: ROAD-TO-WORLDS-DECISIONS R139.

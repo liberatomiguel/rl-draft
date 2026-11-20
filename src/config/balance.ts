@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 39;
+export const BALANCE_VERSION = 40;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4424,6 +4424,47 @@ export const CAREER_MATCHDAY = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// v2.1 Matchday slice 4 (docs/MATCHDAY-SPEC.md §3 C, §8; R137 option B): the box
+// score. Presentation only: it never changes a winner or a scoreline and is
+// built on demand for series someone opens. Read with FEATURES.matchdayBoxScore.
+// ---------------------------------------------------------------------------
+
+export const CAREER_BOXSCORE = {
+  /** Chance a goal has an assist (a teammate other than the scorer). */
+  assistChance: 0.68,
+  /** Shots on target a side puts on frame BEYOND its goals (= the opponent's saves), inclusive. */
+  extraOnTarget: [2, 6],
+  /** Shots off target, inclusive. */
+  offTarget: [1, 4],
+  /** Demolitions per side per game, inclusive. */
+  demos: [1, 5],
+  /** Pressure: extra demos for the side playing it. */
+  pressureExtraDemos: 2,
+  /** Possession: shots (on and off target) the OPPONENT loses against it (floor 0). */
+  possessionShotsCut: 2,
+  /** In-game score per action (Rocket League's own scale). */
+  points: { goal: 100, assist: 50, save: 75, shot: 20, demo: 10, participation: 100 },
+  /** 0-10 rating: base, win / loss shift and the weight of each action. */
+  rating: { base: 5.4, win: 0.5, loss: -0.4, goal: 0.9, assist: 0.5, save: 0.4, demo: 0.12, missedShot: 0.04 },
+  /** Spread of a team total over its players: 1 + noise in [-n, n]. */
+  roleNoise: 0.6,
+  /** Key moments per game: the cap and the chance of one filler when nothing is notable. */
+  momentsMax: 4,
+  fillerChanceAtZero: 0.5,
+  /** Notable thresholds. */
+  hatTrickGoals: 3,
+  saveMarathon: 5,
+  demoBlitz: 4,
+  comebackDeficit: 2,
+  lateGoalSecondsLeft: 12,
+  /** Text variants per moment type (copy.career.*.moments); a series never reuses one. */
+  momentVariants: 3,
+  /** Roster stats kept: seasons and players per season (the save stays small). */
+  seasonsKept: 2,
+  playersKept: 12,
+} as const;
+
+// ---------------------------------------------------------------------------
 // Experimental feature flags (v0.7.0). Each is a single revert point — flip
 // to false to fully disable the feature with no other code change.
 // ---------------------------------------------------------------------------
@@ -4471,6 +4512,13 @@ export const FEATURES = {
    * the old engine. OFF until Miguel's gate; probes: NEXT_PUBLIC_MATCHDAY_DECISIONS=1.
    */
   matchdayDecisions: process.env.NEXT_PUBLIC_MATCHDAY_DECISIONS === "1",
+  /**
+   * v2.1 Matchday slice 4 (R137 option B): the box score, the 0-10 rating, the
+   * key moments, the series MVP from the numbers and the roster's season stats.
+   * Presentation only. Off: nothing is built or saved. OFF until Miguel's gate;
+   * probes: NEXT_PUBLIC_MATCHDAY_BOXSCORE=1.
+   */
+  matchdayBoxScore: process.env.NEXT_PUBLIC_MATCHDAY_BOXSCORE === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the

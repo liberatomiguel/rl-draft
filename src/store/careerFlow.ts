@@ -87,6 +87,7 @@ import {
   userHasPendingSeries,
 } from "@/engine/tournament";
 import { finishSeries, isSeriesOver, type UserSeriesResolver } from "@/engine/match";
+import { buildSeriesBoxScore, foldSeasonStats } from "@/engine/career/boxScore";
 import { coachQualityOf } from "@/engine/career/matchday";
 import {
   adjustSeriesPlan,
@@ -4240,6 +4241,7 @@ export function finishEvent(input: CareerSave): CareerSave {
 
   // Lifetime stats from the user's series.
   accumulateStats(save, ev.tournament);
+  accumulateBoxStats(save, ev.tournament);
   if (placement === "champion") {
     if (def.tier === "t3") save.stats.titlesT3 += 1;
     if (def.tier === "t2") save.stats.titlesT2 += 1;
@@ -4401,6 +4403,31 @@ function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placeme
   gainRep(save, kind);
   if (def.tier === "t3") (save.flags as Record<string, unknown>)[key] = used + 1;
   if (kind === "qualifierDeepRun") (save.flags as Record<string, unknown>)[deepKey] = deepRunsThisSplit + 1;
+}
+
+/**
+ * v2.1 Matchday slice 4: the user's series of the event as box scores, folded
+ * into the roster's season stats. Same round keys as the Match Center, so the
+ * stored numbers are the ones the player saw. Presentation only: reads results.
+ */
+function accumulateBoxStats(save: CareerSave, t: TournamentState): void {
+  if (!FEATURES.matchdayBoxScore) return;
+  const rounds = [
+    ...t.swiss.rounds.map((r, i) => ({ key: `sw:${i}`, series: r.series })),
+    ...(t.playoffs?.rounds ?? []).map((r, i) => ({ key: `po:${i}`, series: r.series })),
+  ];
+  const names = t.teams.user?.playerNames ?? [];
+  const keys = names.map((n) => save.squad.find((p) => p.name === n)?.id ?? n);
+  let stats = save.boxStats;
+  for (const round of rounds) {
+    for (const s of round.series) {
+      const side = s.teamAId === "user" ? "a" : s.teamBId === "user" ? "b" : null;
+      if (!side) continue;
+      const box = buildSeriesBoxScore(s, round.key, { a: t.teams[s.teamAId], b: t.teams[s.teamBId] });
+      stats = foldSeasonStats(stats, save.clock.seasonIndex, box, side, keys);
+    }
+  }
+  if (stats) save.boxStats = stats;
 }
 
 function accumulateStats(save: CareerSave, t: TournamentState): void {

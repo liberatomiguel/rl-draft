@@ -9,6 +9,7 @@ Metas: `ANALISE-POSTHOG-2026-11-20.md`; referência: `BALANCE-BASELINE-v2.0.35.m
 - **Fatia 1** (`dev.1`): série em passos; trava em `match.steps.test.ts`.
 - **Fatia 2** (`dev.3`, `FEATURES.matchdayStyles`): estilos, confronto, traços.
 - **Fatia 3** (`dev.5`, `FEATURES.matchdayDecisions`, desligada): plano, pausas, embalo no lugar do bounce, "deixar com o coach", modos `prefs.matchdayMode` (rápido por padrão) e `matchdayStopAt`. Série do usuário em `seriesSeed`, salva em `activeEvent.userSeries`. Código: `engine/career/matchday.ts`, `matchdaySeries.ts`, `store/careerFlow.ts`.
+- **Fatia 4** (`dev.9`, `FEATURES.matchdayBoxScore`, desligada): súmula, nota 0–10, momentos-chave e estatísticas da temporada (opção B, R137; decisão R140). Código: `engine/career/boxScore.ts`, `content/momentText.ts`, `store/careerFlow.ts` (`accumulateBoxStats`). Só apresentação: não muda resultado; o mundo simulado não chama a súmula (tempo de simulação por temporada inalterado). `BALANCE_VERSION` 40 só pelo fingerprint das constantes novas.
 
 ## Medição da fatia 3 (bots; dumps em `matchday-f3-dumps/` nas notas)
 
@@ -38,11 +39,16 @@ O coach médio custa 2–2,5 pp contra o bom manual; sem coach, 5,5–6,4 pp. Pe
 - Sem coach custa ~6 pp: aceitar, ou dar ao time sem coach uma qualidade mínima (ex.: 0,2).
 - Decidir também deixa a série igual mais fácil que hoje: +3,6 pp com o coach médio, +6 com o bom manual (a IA não planeja).
 
-## Fatia 4 precisa saber
-
-Opção B (R137). Os momentos-chave saem da súmula; os dados do jogo estão em `SeriesState.games` e o medidor em `SeriesState.matchday` (só para leitura; sem barra de embalo).
-
 ## Fatia 5 precisa saber
+
+**Súmula (fatia 4):**
+- `buildSeriesBoxScore(series, roundKey, {a: teams[teamAId], b: teams[teamBId]})` devolve `games[]` (`players.a/b[]` com gols, assistências, chutes, defesas, demos, pontos, nota; `moments[]`; `mvp` do jogo), `totals` (com `avgRating`) e o `mvp` da série (maior pontuação do vencedor). Use o `key` da rodada do `eventPlayback` ("sw:2" / "po:0"): é o mesmo que alimenta as estatísticas salvas, então a tela mostra os números que entram nelas. Chame só ao abrir a série; é determinístico.
+- Texto do momento: `momentText(useCareerCopy(), moment, teams[side].playerNames[moment.playerIdx])`. O `clock` é o do `matchTimeline` (restante na regulamentar, jogado na prorrogação), então o momento encaixa na linha do tempo do Match Center.
+- Estatísticas do elenco: `save.boxStats` (`SeasonBoxStats[]`, mais nova primeiro, no máximo duas temporadas; chave = id do jogador, ou o nome se não achar). Média = `avgRatingOf(linha)`. Só a série do usuário entra, ao fim do evento: o evento em curso ainda não está lá.
+- Com a flag desligada nada é gerado nem salvo; a tela esconde a súmula nesse caso (`FEATURES.matchdayBoxScore`).
+- Troca no meio da série (fatia 3): não conferi como o reserva aparece em `scorers`/`playerNames`. A súmula lê os `playerNames` do time ao fim do evento e atribui por índice; se a troca mudar o índice, olhar isso antes de mostrar nomes.
+
+**Telas e modos:**
 
 - Telas: pré-série (`shownStyle`, `playmakerIndex`, traços; sugestão de `coachPlanFor`), pausa e a opção (rótulos `matchdayMode.*` prontos).
 - Com o personalizado, `playEventRound`/`simEvent` param numa série aberta (`pendingUserSeriesOf`); a tela usa `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries` e depois `playEventRound`. O autoplay e o "Avançar" precisam tratar essa parada.
