@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 37;
+export const BALANCE_VERSION = 38;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4266,6 +4266,101 @@ export const CAREER_ARC = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// Matchday (v2.1, docs/MATCHDAY-SPEC.md §4, §5, §7): play styles, the style
+// matchup and per-player traits. Read only when FEATURES.matchdayStyles is on
+// AND a career side carries `style` / `traits` (the Draft never does).
+// Every value below is in rating points per game unless it says otherwise.
+// ---------------------------------------------------------------------------
+
+export const CAREER_MATCHDAY = {
+  /** The five styles; each beats the next one (the last beats the first). */
+  styleCycle: ["pressure", "possession", "counter", "individual", "teamplay"] as const,
+  /** §7: the matchup bonus at full fit (fit 1). The winning side of the cycle
+   *  gets matchupCap × its fit in the style it plays; nothing else moves. */
+  matchupCap: 0.6,
+  /**
+   * How a player's attributes lean toward each style: weight per stat, taken on
+   * the player's deviation from their own mean (so overall never decides the
+   * style). Each column is normalised to sum 1 in styles.ts.
+   */
+  styleStatWeights: {
+    // Tuned so each career archetype's attribute offsets (development.ts) lead to one
+    // style: playmaker → pressure, anchor → counter, mechanical → individual,
+    // icecold → possession, veteranmind → team play.
+    pressure: { offense: 0.6, defense: 0, mechanics: 0.2, consistency: 0, experience: 0.2, clutch: 0 },
+    possession: { offense: 0, defense: 0, mechanics: 0, consistency: 0.4, experience: 0, clutch: 0.6 },
+    counter: { offense: 0, defense: 0.6, mechanics: 0, consistency: 0.2, experience: 0, clutch: 0.2 },
+    individual: { offense: 0.2, defense: 0, mechanics: 0.8, consistency: 0, experience: 0, clutch: 0 },
+    teamplay: { offense: 0.2, defense: 0, mechanics: 0, consistency: 0.3, experience: 0.5, clutch: 0 },
+  },
+  /** Extra lean toward one style from the player's archetype, when known. */
+  archetypeStyle: {
+    mechanical: "individual",
+    anchor: "counter",
+    playmaker: "pressure",
+    icecold: "possession",
+    veteranmind: "teamplay",
+    allround: null,
+  } as Record<string, string | null>,
+  archetypeStyleBonus: 1.5,
+  /** Fit in the natural style: base + perMargin × its lead over the 2nd style, in [base, 1]. */
+  fitNaturalBase: 0.6,
+  fitNaturalPerMargin: 0.15,
+  /** Fit in any other style drops this much per point it trails the natural one. */
+  fitDropPerPoint: 0.2,
+  fitMin: 0.1,
+  /**
+   * Traits (§5). 0–2 per player, derived from a hash of the player key, never
+   * stored. Chance of 0 / 1 / 2 traits; a higher overall shifts weight from 0
+   * to 2 (traitCountOverallShift per point above traitCountOverallPivot).
+   */
+  traitSalt: 0x5eed7a17,
+  traitCountChance: [0.4, 0.42, 0.18] as readonly [number, number, number],
+  traitCountOverallPivot: 84,
+  traitCountOverallShift: 0.012,
+  /** Base weight of each trait, before the archetype and overall tilts. */
+  traitWeights: {
+    decisive: 1, streaky: 1, consistent: 1, slowStarter: 0.8, lan: 0.8,
+    leader: 0.8, hotHeaded: 0.8, iceCold: 0.8,
+  } as Record<string, number>,
+  /** Archetype tilt: a multiplier on the listed traits. */
+  traitArchetypeTilt: {
+    mechanical: { streaky: 2, decisive: 1.3, consistent: 0.5 },
+    anchor: { consistent: 2, leader: 1.3, streaky: 0.5 },
+    playmaker: { leader: 1.8, decisive: 1.2 },
+    icecold: { iceCold: 2.5, decisive: 1.6, hotHeaded: 0.3 },
+    veteranmind: { lan: 2, leader: 1.6, consistent: 1.3, slowStarter: 0.6 },
+    allround: {},
+  } as Record<string, Record<string, number>>,
+  /** Overall tilt: at or above `high`, these traits weigh ×highTilt; below `low`, the others do. */
+  traitOverallHigh: 88,
+  traitOverallLow: 80,
+  traitHighTilt: { decisive: 1.5, lan: 1.4, leader: 1.3, iceCold: 1.3 } as Record<string, number>,
+  traitLowTilt: { streaky: 1.5, slowStarter: 1.4, hotHeaded: 1.4 } as Record<string, number>,
+  /** Per-player effects (a side sums its starters). */
+  decisiveBonus: 0.25, // deciding game and overtime
+  streakyRollScale: 0.08, // the per-game roll spreads +8% around its centre
+  consistentRollScale: 0.08, // ... or narrows 8%
+  rollScaleRange: [0.8, 1.2] as readonly [number, number],
+  slowStarterGame1: -0.25,
+  slowStarterFromGame3: 0.15,
+  lanBonus: 0.2, // Major and Worlds (needs the event's LAN mark, `TournamentTeam.lanEvent`)
+  /** Behaviour traits on the existing bounce (SIMULATION.momentumBounce):
+   *  leader adds to the own bounce after a loss, hotHeaded takes from it after
+   *  an overtime loss, iceCold takes from the opponent's bounce. Fatia 3 moves
+   *  these onto the momentum meter. */
+  leaderBounce: 0.15,
+  hotHeadedOvertimeBounce: -0.25,
+  iceColdOpponentBounce: -0.15,
+  /** The bounce stays within momentumBounce ± this. */
+  bounceTraitCap: 0.5,
+  /** One side's flat trait shift per game stays within ±traitCap. */
+  traitCap: 0.6,
+  /** §7: matchup + traits (and, from fatia 3, plan and briefing) stay within ±combinedCap. */
+  combinedCap: 1.2,
+} as const;
+
+// ---------------------------------------------------------------------------
 // Experimental feature flags (v0.7.0). Each is a single revert point — flip
 // to false to fully disable the feature with no other code change.
 // ---------------------------------------------------------------------------
@@ -4296,6 +4391,14 @@ export const FEATURES = {
    * one flag away per the design doc §21.1.
    */
   careerHardStabilityRule: false,
+  /**
+   * v2.1 Matchday slice 2 (docs/MATCHDAY-SPEC.md §4–§5): career sides carry a
+   * play style and per-player traits, and every career series reads the style
+   * matchup and the traits (CAREER_MATCHDAY). Off → no side gets them and the
+   * engine runs the old path byte for byte. OFF by default until Miguel's
+   * gate; the probes turn it on with NEXT_PUBLIC_MATCHDAY_STYLES=1.
+   */
+  matchdayStyles: process.env.NEXT_PUBLIC_MATCHDAY_STYLES === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the

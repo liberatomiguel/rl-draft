@@ -2424,3 +2424,12 @@ O modo rápido só pode custar alguns pontos percentuais contra um bom jogo manu
 - M4: as zebras continuam realistas, nunca demais.
 
 **Próximas etapas.** As Etapas 2 (Pro) e 3 estão aprovadas em princípio, cada uma com especificação própria antes do código. A Etapa 4 (online e jogadores interagindo entre si) tem prioridade alta e é um diferencial importante.
+
+## R138 — 20 de novembro de 2026: Matchday fatia 2, estilos e traços (v2.1.0-dev.3)
+
+Implementação de `MATCHDAY-SPEC.md` §4–§5 atrás de `FEATURES.matchdayStyles` (desligada até o gate do Miguel). Desvios da especificação, todos por não mexer em `worldSim.ts` enquanto o M1 está aberto:
+- **Estilo pelos atributos.** `MemberView` não traz o `archetype`, então o estilo sai só dos atributos de cada titular (contra a média do próprio jogador). Os pesos foram ajustados para que o deslocamento de cada arquétipo leve a um estilo (playmaker → Pressão, anchor → Contra-ataque, mechanical → Individual, icecold → Posse, veteranmind → Jogada em equipe). `MemberView.archetype` é opcional e passa a contar quando a integração preencher.
+- **Traços pelo nome, sem o seed da carreira.** A chave é o nome do jogador mais um sal fixo: o mesmo jogador tem os mesmos traços em toda carreira. Um seed por carreira precisa que o `worldSim` passe id e seed.
+- **Jogador de LAN não está ligado.** O motor lê `TournamentTeam.lanEvent`, que ninguém marca ainda: eventos só da IA nascem dentro do `worldSim.simulateAiEvent`, e marcar só os do usuário seria desigual.
+- **Comportamento no bounce atual.** Líder, Temperamental e Sangue frio dobram o `momentumBounce` (±0,5) até o embalo da fatia 3.
+- O ciclo de estilos é o proposto (pergunta P1 continua aberta).

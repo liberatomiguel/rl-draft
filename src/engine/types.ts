@@ -443,7 +443,40 @@ export interface TournamentTeam {
    * scorelines and challenge goal stars stay as they are).
    */
   careerScoreline?: true;
+  /**
+   * v2.1 Matchday slice 2: the side's play style (engine/career/styles.ts).
+   * Only career sides get it, and only with FEATURES.matchdayStyles on;
+   * absent → match.ts runs the old path byte for byte.
+   */
+  style?: TeamStyle;
+  /** v2.1 Matchday slice 2: each starter's traits, in `playerNames` order (engine/career/traits.ts). */
+  traits?: TraitId[][];
+  /** v2.1: this side plays a LAN event (Major / Worlds): the `lan` trait counts. */
+  lanEvent?: true;
 }
+
+/** v2.1 Matchday: the five play styles (CAREER_MATCHDAY.styleCycle). */
+export type PlayStyleId = "pressure" | "possession" | "counter" | "individual" | "teamplay";
+
+export interface TeamStyle {
+  /** The style the three starters lean to most. */
+  natural: PlayStyleId;
+  /** 0–1 per style: how well the side plays it (the matchup bonus scales with it). */
+  fit: Record<PlayStyleId, number>;
+  /** The style played this series (fatia 3: the plan). Absent → `natural`. */
+  played?: PlayStyleId;
+}
+
+/** v2.1 Matchday: per-player traits (MATCHDAY-SPEC §5). */
+export type TraitId =
+  | "decisive"
+  | "streaky"
+  | "consistent"
+  | "slowStarter"
+  | "lan"
+  | "leader"
+  | "hotHeaded"
+  | "iceCold";
 
 export interface GameResult {
   index: number;

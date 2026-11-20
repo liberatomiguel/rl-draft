@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.3] — 2026-11-20 · Matchday slice 2: styles and traits (engine only, behind a flag, not released)
+
+Second slice of Etapa 1 (docs/MATCHDAY-SPEC.md §4, §5, §7). Everything sits behind `FEATURES.matchdayStyles`, **off by default** (`NEXT_PUBLIC_MATCHDAY_STYLES=1` turns it on). Off, no result moves: a pacing slice with the flag off is identical, career for career, to the v2.0.35 baseline dumps, and `regression.golden.test.ts`, `balance.test.ts` and `match.steps.test.ts` pass untouched. No save, copy or screen change. Decisions: ROAD-TO-WORLDS-DECISIONS R138.
+
+### Added
+- **Play styles** (`engine/career/styles.ts`): Pressure > Possession > Counter > Individual > Team play > Pressure. A side's natural style and its fit (0–1) in each style come from its three starters' attributes, read against each player's own mean so overall never picks the style (an optional archetype lean exists for callers that have it). Weights are tuned so each career archetype's offsets lead to one style; over real-looking lineups every style is the natural one of about 13–30% of sides.
+- **Style matchup in every career series**, AI against AI included (a table lookup in `match.ts`): the side whose style beats the other's gets `CAREER_MATCHDAY.matchupCap` (0.6) × its fit per game. A full-fit matchup takes an even series to about 56%.
+- **Traits** (`engine/career/traits.ts`): 0–2 per player from a hash of the player's key, weighted by archetype and overall, never stored. Form traits act per game: Decisive (deciding game and overtime), Streaky / Consistent (wider / narrower roll, no extra RNG draw), Slow starter (game 1 worse, game 3 on better), LAN player (needs `TournamentTeam.lanEvent`, which nothing sets yet). Leader, Hot-headed and Ice-cold bend the existing bounce (`SIMULATION.momentumBounce`, ±0.5); fatia 3 moves them onto the momentum meter.
+- Optional `TournamentTeam.style` / `traits` / `lanEvent`, filled only by `assembleTournamentTeam` for career sides (the `rollRange` gate) with the flag on. Caps: traits ±0.6, matchup + traits ±1.2 per game (§7). An event in progress at an update keeps the teams it was built with.
+- `match.gap.probe.test.ts` (from the baseline branch) gains a +5 gap and `GAP_STYLES=1`.
+
+### Balance (flag on vs off; bots, not players; BALANCE_VERSION 38, no value changed with the flag off)
+- Engine: +2 favourite 75.2% → 74.9%, +5 96.0% → 95.9%, +6 98.2% → 98.2%.
+- Career series at ±2: Normal 59.4% → 59.1%, Hard 56.2% → 57.3%, Easy 76.1% → 76.1%. ≥ +6: 99.8% / 99.5% → 99.9% / 100%.
+- Soft locks 0. Insolvency Normal 0 → 1 of 42, Hard 4 → 5 of 42 (noise level).
+- Regional final by S5 stays 0/6 in NA and EU on every difficulty: the matchup is not the lever for targets 1 and 2.
+
 ## [2.1.0-dev.1] — 2026-11-20 · Matchday slice 1: the series in steps (engine only, not released)
 
 First slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 B, §10). No result, seed, save, balance number, string or screen changes; `package.json` and `SITE.version` stay 2.0.35 until v2.1 ships. Miguel's decisions of 20/11: ROAD-TO-WORLDS-DECISIONS R137.

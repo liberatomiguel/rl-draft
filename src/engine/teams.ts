@@ -5,7 +5,9 @@
  * exact same rules.
  */
 
-import { BUFF_LEVEL_VALUE, DIFFICULTY, TEAM_RATING } from "@/config/balance";
+import { BUFF_LEVEL_VALUE, DIFFICULTY, FEATURES, TEAM_RATING } from "@/config/balance";
+import { teamStyleFor } from "./career/styles";
+import { playerTraits } from "./career/traits";
 import {
   careerByPlayerId,
   coachById,
@@ -43,6 +45,8 @@ export interface MemberView {
   /** Career history (all lineups/orgs this player was ever on) for chemistry. */
   careerLineupIds?: string[];
   careerOrgIds?: string[];
+  /** v2.1 Matchday: the career archetype, when the caller has it (styles / traits lean on it). */
+  archetype?: string;
 }
 
 export interface AssembleInput {
@@ -222,6 +226,13 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     orgId: input.orgId ?? "",
     // v2.0.34: only Road to Worlds passes its own form roll, so its sides also read the career scoreline.
     ...(input.rollRange ? { rollRange: input.rollRange, careerScoreline: true as const } : {}),
+    // v2.1 Matchday slice 2: career sides only (the same rollRange gate), behind the flag.
+    ...(input.rollRange && FEATURES.matchdayStyles
+      ? {
+          style: teamStyleFor(input.players),
+          traits: input.players.map((p) => playerTraits(p.name, p.overall, p.archetype)),
+        }
+      : {}),
   };
 }
 
