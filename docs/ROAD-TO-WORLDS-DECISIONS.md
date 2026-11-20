@@ -2395,3 +2395,32 @@ Miguel, 18/11 ("faça tudo o que precisar fazer para garantirmos o melhor ranque
 **Unchanged.** The wizard's steps, the Quick start itself, the save, the seed (the same world the preview shows) and analytics: `career_created` has no new property; the entry shows in the `$pageview` URL (`?start=quick`).
 
 Rejected: founding the club without the last step (the preset is the one choice that sets a career's economy, R59 and R68); a separate one-click route (two ways to found a club to keep in step).
+
+## R137 — 20 de novembro de 2026: Etapa 1 aprovada (v2.1, Matchday + Mundo vivo)
+
+Miguel, 20/11, sobre `docs/MATCHDAY-SPEC.md` e o roadmap de 17/11.
+
+**Princípio.** O objetivo não é manter o jogo como está hoje, e sim deixá-lo **melhor sem quebrar**: nunca fácil demais, nunca difícil demais.
+- Os dados reais do PostHog (`docs/ANALISE-POSTHOG-2026-11-20.md`) decidem o que é fácil ou difícil demais e definem as metas.
+- `docs/BALANCE-BASELINE-v2.0.35.md` é a referência simulada: cada fatia roda de novo a mesma bateria para mostrar o que mexeu, junto com algumas travas duras de "não quebrar".
+- Toda mudança de balanceamento entra atrás de uma flag em `FEATURES` (`balance.ts`) que a desliga.
+
+**Matchday.** As fatias 1 a 3 estão aprovadas e precisam ser muito bem feitas, para que o comportamento do jogo e o balanceamento nunca quebrem. Há **dois jeitos de jogar**:
+- **rápido**: o técnico decide o plano e as pausas, sem paradas;
+- **personalizado**: plano antes da série e decisões entre os jogos.
+
+O modo rápido só pode custar alguns pontos percentuais contra um bom jogo manual; a bateria mede isso.
+
+**Fatia 4 (opção B, escolhida pelo Miguel em 20/11).** Súmula com momentos-chave:
+- **Súmula:** gols, assistências, defesas, chutes, demolições, pontuação, nota de 0 a 10, MVP tirado dos números e estatísticas da temporada no elenco.
+- **Momentos-chave:** de 2 a 4 frases curtas por jogo, só quando acontece algo notável (gol na prorrogação, virada de 0–2, hat-trick e parecidos).
+- Todo momento-chave sai da súmula, então sempre bate com o resultado.
+- **Sem** narração lance a lance e **sem** barra de embalo.
+
+**Mundo vivo.**
+- M1: a hipótese do Miguel é que as orgs grandes precisam continuar contratando bons jogadores novos para se manter relevantes.
+- M2 precisa de especificação e bateria próprias antes de qualquer código, porque pode quebrar o balanceamento.
+- M3 mantém as diferenças naturais entre regiões (umas mais fáceis, outras mais difíceis); só se corrige um ponto fora da curva real, sem quebrar a progressão natural.
+- M4: as zebras continuam realistas, nunca demais.
+
+**Próximas etapas.** As Etapas 2 (Pro) e 3 estão aprovadas em princípio, cada uma com especificação própria antes do código. A Etapa 4 (online e jogadores interagindo entre si) tem prioridade alta e é um diferencial importante.
