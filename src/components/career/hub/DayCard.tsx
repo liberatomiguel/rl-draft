@@ -106,13 +106,14 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       className={cx(
         "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 overflow-hidden rounded-lg border px-0.5 py-1.5",
         // The transfer window marks every day; event icons keep their tier accent.
-        tournament ? "border-orange/50 bg-orange/10" : d.windowOpen ? "border-blue/50 bg-blue/15" : "border-line bg-white/[0.03]",
-        d.windowOpen && "shadow-[inset_0_-2px_0_#60a5fa]",
+        // A match day is the orange hairline; the open window is a blue rule at the foot of the day.
+        tournament ? "border-orange/60 bg-orange/[0.07]" : "border-line bg-white/[0.02]",
+        d.windowOpen && "shadow-[inset_0_-2px_0_var(--blue-bright)]",
         d.isToday && "day-tick",
         d.isPast && "opacity-40",
       )}
     >
-      <span className="kicker text-[8px] leading-none sm:text-[9px]">{D.weekdays[d.dow - 1]}</span>
+      <span className="kicker leading-none">{D.weekdays[d.dow - 1]}</span>
       <span
         className={cx(
           "display text-base font-bold leading-none",
@@ -130,7 +131,7 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       <span
         className={cx(
           // R40: two lines, so "Championship Sunday" reads whole.
-          "hidden w-full text-center text-[9px] leading-tight [overflow-wrap:anywhere] sm:line-clamp-2",
+          "hidden w-full text-center text-[10px] leading-tight [overflow-wrap:anywhere] sm:line-clamp-2",
           matchday ? "font-semibold text-orange-bright" : "text-faint",
         )}
       >
@@ -224,11 +225,11 @@ export function DayCard({
       {/* header: date + season progress */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="kicker text-[10px]">
+          <p className="kicker">
             {C.hub.today}
             {clock.split ? <span className="text-faint"> · {C.calendar.split(clock.split)} · {C.hub.week(clock.week)}</span> : null}
           </p>
-          <h2 key={today} className="display rise-in text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
+          <h2 key={today} className="display rise-in mt-1 text-3xl font-bold uppercase leading-none tracking-[0.02em] text-ink sm:text-[2.75rem]">
             {formatDateShort(D, clock.date)}
           </h2>
         </div>
@@ -270,7 +271,7 @@ export function DayCard({
           </div>
 
           {/* controls: primary (play/pause) · secondary (skip to stop) · tertiary (+1 day) */}
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {blockedPrimary ? (
               <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={blockedPrimary.go}>
                 {blockedPrimary.label}

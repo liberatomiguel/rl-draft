@@ -502,7 +502,7 @@ export function WizardScreen() {
                     </p>
                     {regionRivals.length > 0 ? (
                       <div className="mt-3 border-t border-line pt-2.5">
-                        <p className="kicker mb-1.5 !text-[11px]">{C.wizard.regionRivals}</p>
+                        <p className="kicker mb-1.5">{C.wizard.regionRivals}</p>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                           {regionRivals.map((rv) => (
                             <span key={rv.orgId} className="flex items-center gap-1.5 text-xs text-sub">
@@ -641,9 +641,9 @@ export function WizardScreen() {
                 organisation on the left, the four earlier picks as labelled
                 figures on the right (the budget's label names the difficulty). */}
             <section className="mt-8 border-t border-line pt-5" aria-label={C.wizard.summaryTitle}>
-              <h3 className="display text-lg uppercase leading-none text-ink">{C.wizard.summaryTitle}</h3>
+              <h3 className="card-title">{C.wizard.summaryTitle}</h3>
               <div className="mt-4 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-4">
                   <UserCrest crestId={crestId} colors={colors} abbrev={abbrev} size="lg" />
                   <div className="min-w-0">
                     <p className="display truncate text-xl font-bold uppercase leading-none text-ink">{nameTrim}</p>
@@ -653,7 +653,7 @@ export function WizardScreen() {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+                <div className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-[repeat(4,auto)]">
                   <Figure value={copy.SETUP.regionNames[region]} label={C.wizard.regionTitle} />
                   <Figure value={copy.STAT_LABELS[buffType]} label={C.wizard.identityBuff} />
                   <Figure value={rosterLabel} label={C.wizard.rosterTitle} />
@@ -733,7 +733,7 @@ function StepHeader({ title, kicker }: { title: string; kicker: string }) {
 function Figure({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <span className="block min-w-0">
-      <span className="display block truncate text-xl font-bold uppercase leading-none text-ink">{value}</span>
+      <span className="display block whitespace-nowrap text-xl font-bold uppercase leading-none text-ink">{value}</span>
       <span className="mt-1 block text-xs leading-snug text-sub">{label}</span>
     </span>
   );

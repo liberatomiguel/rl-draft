@@ -2,7 +2,7 @@
 
 Read this before any UI work. It is the direction; the anti-slop rulebook
 (github.com/miqdadbadjuber/anti-slop) is only the filter applied on top of it.
-Decision record: `docs/DESIGN-DECISIONS.md` #173 to #176 (numbered #164 to #167 before the v2.1.0-rc.1 merge with main).
+Decision record: `docs/DESIGN-DECISIONS.md` #173 to #177 (the redesign's first four were #164 to #167 before the merge with main v2.0.33).
 
 ## Design read
 

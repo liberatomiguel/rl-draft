@@ -58,6 +58,10 @@ export const HOME = {
   profileDesc: "Rank, XP and run history.",
   challenges: "Challenges",
   challengesDesc: "Rank-unlocked draft puzzles to clear.",
+  presentedBy: "Presented by",
+  partnerVisit: "Visit 50/50",
+  partnerDesc: "Rocket League news, from the partner of Rocket Draft.",
+  partnerSoon: "Link soon",
   challengesLocked: "Unlocks at Bronze",
   signInNudge: "Sign in to save your progress and climb the leaderboards",
   launch: {
@@ -507,7 +511,7 @@ export const TOURNAMENT_UI = {
   swiss: "Swiss Stage",
   playoffs: "Playoffs",
   round: (n: number) => `Round ${n}`,
-  record: (w: number, l: number) => `${w} – ${l}`,
+  record: (w: number, l: number) => `${w}-${l}`,
   start: "Start simulation",
   resume: "Resume simulation",
   pause: "Pause",
@@ -789,7 +793,7 @@ export const PROFILE_UI = {
     "XP, rank, collection, achievements and run history will be permanently deleted on this device.",
   resetConfirm: "Delete everything",
   cancel: "Cancel",
-  none: "—",
+  none: "-",
   placement: {
     champion: "Champion",
     runner_up: "Finalist",
@@ -1490,7 +1494,7 @@ export const LEADERBOARDS_UI = {
   rankCol: "#",
   you: "You",
   empty: "No entries yet. Be the first.",
-  none: "—",
+  none: "-",
   categories: {
     best_normal: "Best overall · Normal",
     best_easy: "Best overall · Easy",

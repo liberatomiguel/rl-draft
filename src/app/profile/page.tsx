@@ -191,20 +191,20 @@ export default function ProfilePage() {
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
               </div>
-              {/* The figure that matters here, on paper as on the Home: the
-                  number first, its label under it. */}
+              {/* The season rating stands straight on the banner, under the rank's name. */}
               <div className="flex shrink-0 justify-center">
-                <div className="rounded-lg bg-paper px-4 py-2.5 text-center text-paper-ink sm:text-right">
-                  <p className="display whitespace-nowrap text-4xl font-extrabold leading-[0.9]">
-                    {profile.mmr}
+                <div className="text-center [text-shadow:0_1px_10px_rgb(0_0_0/0.65)] sm:text-right">
+                  <p className="display whitespace-nowrap text-sm font-bold uppercase leading-none tracking-[0.04em] text-ink">{rank.label}</p>
+                  <p className="display mt-1.5 whitespace-nowrap text-5xl font-extrabold leading-[0.9] tabular-nums text-ink">
                     {lastDelta !== null && lastDelta !== 0 ? (
-                      <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-emerald-700" : "text-red-700")}>
+                      <span className={cx("mr-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
                         {lastDelta > 0 ? "+" : ""}
                         {lastDelta}
                       </span>
                     ) : null}
+                    {profile.mmr}
                   </p>
-                  <p className="display mt-1.5 whitespace-nowrap text-xs font-bold uppercase leading-none tracking-[0.04em]">{P.seasonRating}</p>
+                  <p className="display mt-1.5 whitespace-nowrap text-xs font-semibold uppercase leading-none tracking-[0.04em] text-sub">{P.seasonRating}</p>
                 </div>
               </div>
             </div>

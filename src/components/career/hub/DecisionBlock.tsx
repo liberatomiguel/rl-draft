@@ -206,7 +206,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       case "notice":
         return (
           <div>
-            <p className="kicker mb-1 text-[10px] text-orange-bright">{C.hub.decisionKind.notice}</p>
+            <p className="kicker mb-1 text-orange-bright">{C.hub.decisionKind.notice}</p>
             <h2 className="display text-xl font-bold uppercase tracking-wide text-ink">{C.hub.noticeTitle}</h2>
             <p className="mt-2 max-w-xl text-sm text-sub">{C.hub.noticeBody}</p>
           </div>
@@ -326,7 +326,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const footer =
     others.length > 0 ? (
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="kicker mr-1 text-[9px]">{C.hub.alsoDue}</span>
+        <span className="kicker mr-1">{C.hub.alsoDue}</span>
         {others.map((d) => {
           const due = deadlineTextOf(C, save, d);
           return (
@@ -370,12 +370,12 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
       {expiring > 0 ? (
         <AppLink href="/career/squad" className="flex min-h-11 items-center rounded-lg border border-orange/30 bg-white/[0.02] px-3.5 text-sm text-ink transition-colors hover:border-orange/60">
-          {C.hub.contractsExpiring(expiring)} →
+          {C.hub.contractsExpiring(expiring)}
         </AppLink>
       ) : null}
       {cashTight ? (
         <AppLink href="/career/finances" className="flex min-h-11 items-center rounded-lg border border-bad/40 bg-white/[0.02] px-3.5 text-sm text-bad transition-colors hover:border-bad/70">
-          {C.hub.cashWarningCard(runway ?? 0)} →
+          {C.hub.cashWarningCard(runway ?? 0)}
         </AppLink>
       ) : null}
       {backerOwed ? (
@@ -411,7 +411,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         {confirmBid ? (
           <div className="space-y-2">
             <p className="text-ink">
-              {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")} — {confirmBid.playerName}
+              {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")}: {confirmBid.playerName}
             </p>
             {/* ECO-02 (R46) / ECO-03 (R47): the Market's own sale block — the Backer's share and the weekly bill. */}
             <SaleConsequences save={save} offer={confirmBid} />

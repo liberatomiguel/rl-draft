@@ -232,8 +232,8 @@ export function ClubScreen() {
         <div className="flex min-w-0 flex-col gap-6 md:col-span-3">
           {/* 2. Trophy room: the Worlds pedestal (visible from day one, design §11)
               beside the shelf. Trophies are rewards and keep their gold. */}
-          <Panel data-tour="club-trophies" className="p-5">
-            <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.trophies}</h3>
+          <Panel data-tour="club-trophies" className="p-4 sm:p-5">
+            <div className="card-head"><h3 className="card-title">{copy.club.trophies}</h3></div>
             <div className="mt-4 grid gap-5 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-stretch">
               <div
                 className={cx(
@@ -289,7 +289,7 @@ export function ClubScreen() {
           {/* 3. Career achievements (v2.0 R32): each one is its own card, so the section needs no board. */}
           <section>
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h3 className="display text-lg uppercase leading-none text-ink">{copy.achievements.title}</h3>
+              <h3 className="card-title">{copy.achievements.title}</h3>
               <span className="text-sm text-sub">
                 {copy.achievements.progress(achievementsDone, CAREER_ACHIEVEMENTS.length)}
               </span>
@@ -319,8 +319,8 @@ export function ClubScreen() {
         {/* Secondary column: reputation and the Progression Track (the unlock
             ladder, never hidden) on one board, the track as a plain list. */}
         <div data-tour="club-progress" className="min-w-0 md:col-span-2">
-          <Panel className="p-5">
-            <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.reputation}</h3>
+          <Panel className="p-4 sm:p-5">
+            <div className="card-head"><h3 className="card-title">{copy.club.reputation}</h3></div>
             <p className="display mt-3 text-5xl font-extrabold leading-none text-ink">
               <AnimatedNumber value={rep} />
               <span className="ml-1.5 text-base font-semibold text-faint">/ 100</span>
@@ -347,7 +347,7 @@ export function ClubScreen() {
             ) : null}
 
             <div className="mt-5 border-t border-line pt-4">
-              <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.progression}</h3>
+              <h3 className="card-title">{copy.club.progression}</h3>
               <p className="mt-1.5 text-sm leading-snug text-sub">{copy.club.progressionDesc}</p>
               <ul className="mt-2">
                 {track.map((entry) => {
@@ -395,17 +395,17 @@ export function ClubScreen() {
 
       {/* 4. Season history: one row per finished season, the points column carrying the weight. */}
       {save.history.length > 0 ? (
-        <Panel className="mb-4 p-5">
-          <h3 className="display text-lg uppercase leading-none text-ink">{copy.club.seasonHistory}</h3>
+        <Panel className="mb-4 p-4 sm:p-5">
+          <div className="card-head"><h3 className="card-title">{copy.club.seasonHistory}</h3></div>
           <div className="mt-3 min-w-0">
             <table className="mobile-history-table w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-line-strong">
                   <th aria-label={copy.club.seasonHistory} className="px-2 pb-2" />
-                  <th className="kicker px-2 pb-2 text-center !text-[11px]">#</th>
-                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.seasonPoints}</th>
-                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.tier.worlds}</th>
-                  <th className="kicker px-2 pb-2 text-right !text-[11px]">{copy.common.prize}</th>
+                  <th className="kicker px-2 pb-2 text-center">#</th>
+                  <th className="kicker px-2 pb-2 text-right">{copy.common.seasonPoints}</th>
+                  <th className="kicker px-2 pb-2 text-right">{copy.common.tier.worlds}</th>
+                  <th className="kicker px-2 pb-2 text-right">{copy.common.prize}</th>
                 </tr>
               </thead>
               <tbody>

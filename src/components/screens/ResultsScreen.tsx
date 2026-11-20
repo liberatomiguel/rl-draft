@@ -512,7 +512,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                   .map((id) => RARITY_LABELS[specialCardById.get(id)?.rarity ?? ""])
                   .filter(Boolean)
                   .join(" · ")}{" "}
-                — {R.unlockedNote}
+               : {R.unlockedNote}
               </p>
             </Panel>
           ) : null}

@@ -289,7 +289,7 @@ export function GameCard({
               {!showOverall
                 ? "??"
                 : card.buffLevel === "~"
-                  ? "—"
+                  ? "-"
                   : `+${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`}
             </span>
           )}

@@ -54,6 +54,10 @@ export const PT: Copy = {
     profileDesc: "Rank, XP e histórico de runs.",
     challenges: "Desafios",
     challengesDesc: "Puzzles de draft liberados por rank.",
+    presentedBy: "Oferecido por",
+    partnerVisit: "Visitar o 50/50",
+    partnerDesc: "Notícias de Rocket League, do parceiro do Rocket Draft.",
+    partnerSoon: "Link em breve",
     challengesLocked: "Desbloqueia no Bronze",
     signInNudge: "Faça login pra salvar seu progresso e subir nas leaderboards",
     launch: {
@@ -495,7 +499,7 @@ export const PT: Copy = {
     rankCol: "#",
     you: "Você",
     empty: "Ainda sem entradas. Seja o primeiro.",
-    none: "—",
+    none: "-",
     categories: {
       best_normal: "Maior overall · Normal",
       best_easy: "Maior overall · Easy",
@@ -738,7 +742,7 @@ export const PT: Copy = {
     swiss: "Fase Swiss",
     playoffs: "Playoffs",
     round: (n: number) => `Rodada ${n}`,
-    record: (w: number, l: number) => `${w} – ${l}`,
+    record: (w: number, l: number) => `${w}-${l}`,
     start: "Iniciar simulação",
     resume: "Retomar simulação",
     pause: "Pausar",
@@ -1013,7 +1017,7 @@ export const PT: Copy = {
       "XP, rank, coleção, conquistas e histórico de runs serão apagados permanentemente neste dispositivo.",
     resetConfirm: "Apagar tudo",
     cancel: "Cancelar",
-    none: "—",
+    none: "-",
     placement: {
       champion: "Campeão",
       runner_up: "Finalista",

@@ -54,7 +54,7 @@ import { UserCrest } from "@/components/career/UserCrest";
 import { AppLink } from "@/components/ui/AppLink";
 import { NewTag } from "@/components/ui/NewDot";
 import { TrendDownIcon, TrendUpIcon, WhistleIcon } from "@/components/ui/icons";
-import { Panel } from "@/components/ui/Panel";
+import { BLOCK_LINK, BLOCK_TITLE } from "@/components/career/hub/hubShared";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 /** A player's contract as his card and row print it (UX-06b): the season it runs to, or its time left once it warns. */
@@ -110,13 +110,13 @@ function ReserveRow({
         </span>
         <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-sub">
           <span className="shrink-0">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.cardReserve}</span> · {squadAge(save, p)}
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.cardReserve}</span> · {squadAge(save, p)}
             {/* The trait from `sm` (a phone keeps the line whole beside the contract chip). */}
             <span className="hidden sm:inline"> · {C.player.archetype[p.archetype]}</span>
           </span>
           <span
             className={cx(
-              "min-w-0 truncate rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+              "min-w-0 truncate rounded px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em]",
               contract.warns ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-faint",
             )}
           >
@@ -133,19 +133,19 @@ function CoachRow({ coach, C }: { coach: CoachState; C: CareerCopy }) {
   const pct = coachEffectsFor(coach).trainingPct;
   return (
     <AppLink href="/career/training" className={cx(THIN_ROW, "border-line bg-white/[0.03] hover:border-line-strong")}>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-cyan">
         <WhistleIcon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold text-ink">{coach.name}</span>
         <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-sub">
           <span className="truncate">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.squadCoach}</span> ·{" "}
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.squadCoach}</span> ·{" "}
             <span className="display font-bold text-ink">{Math.round(coach.overall)}</span> {C.common.ovr}
           </span>
           <span
             className={cx(
-              "inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-px text-[10px] font-semibold",
+              "inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-px text-[11px] font-semibold",
               pct >= 0 ? "border-good/40 bg-good/10 text-good" : "border-bad/40 bg-bad/10 text-bad",
             )}
           >
@@ -167,7 +167,7 @@ function EmptyRow({ href, icon, text, hint }: { href: string; icon: React.ReactN
       </span>
       <span className="min-w-0 flex-1">
         <span className="line-clamp-2 text-[11px] text-faint">{text}</span>
-        {hint ? <span className="block truncate text-[11px] font-semibold text-blue-bright">{hint} →</span> : null}
+        {hint ? <span className="block truncate text-[11px] font-semibold text-blue-bright">{hint}</span> : null}
       </span>
     </AppLink>
   );
@@ -221,7 +221,7 @@ function SquadCard({
         </span>
         <span className="relative mt-1.5 block">
           <ProgressBar value={eta.progress} tone={eta.daysToNext ? "good" : "blue"} className="h-1" label={C.training.growth} />
-          <span className="mt-0.5 block truncate text-[10px] text-faint">
+          <span className="mt-0.5 block truncate text-[11px] text-faint">
             {eta.daysToNext ? C.hub.growthNext(eta.daysToNext) : eta.atPotential ? C.training.etaNone : C.hub.growthStalled}
           </span>
         </span>
@@ -229,12 +229,12 @@ function SquadCard({
           {band.min === band.max ? C.player.potExact(band.max) : C.player.potBand(band.min, band.max)}
         </span>
         <span className="mt-2 flex flex-wrap items-center gap-1">
-          <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] text-sub">
+          <span className="rounded bg-white/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em] text-sub">
             {p.role === "sub" ? C.hub.cardReserve : C.hub.cardStarter}
           </span>
           <span
             className={cx(
-              "truncate rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+              "truncate rounded px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em]",
               warns ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-faint",
             )}
           >
@@ -253,7 +253,7 @@ function EmptySeat({ C }: { C: CareerCopy }) {
       className="card-frame card-hidden flex min-h-60 flex-col items-center justify-center gap-1 p-2.5 text-center"
     >
       <span className="relative text-xs font-bold uppercase tracking-[0.1em] text-sub">{C.hub.cardEmptySeat}</span>
-      <span className="relative text-[11px] text-blue-bright">{C.hub.cardSignHint} →</span>
+      <span className="relative text-[11px] text-blue-bright">{C.hub.cardSignHint}</span>
     </AppLink>
   );
 }
@@ -316,18 +316,23 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
   };
 
   return (
-    <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <p className="kicker text-[10px]">{C.hub.squadTitle}</p>
-        <span className="flex items-center gap-2">
+    <div className="p-4 sm:p-5">
+      {/* The team's rating is the figure of this board: set large, beside the title. */}
+      <div className="card-head">
+        <div className="flex items-end gap-3">
+          <h3 className={BLOCK_TITLE}>{C.hub.squadTitle}</h3>
           <TeamStars stars={userStars(save)} size="sm" />
-          <span className="display text-xs font-bold text-ink" title={C.common.ovr}>{Math.round(team.rating.total)}</span>
-          <AppLink href="/career/squad" className="inline-flex items-center py-1 text-[11px] font-semibold text-blue-bright underline-offset-4 hover:underline">
-            {C.hub.squadManage} →
+        </div>
+        <span className="flex items-baseline gap-3">
+          <span className="flex items-baseline gap-1.5">
+            <span className="display text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(team.rating.total)}</span>
+            <span className="text-[11px] text-faint">{C.common.ovr}</span>
+          </span>
+          <AppLink href="/career/squad" className={BLOCK_LINK}>
+            {C.hub.squadManage}
           </AppLink>
         </span>
       </div>
-      <p className="kicker mb-1.5 !text-[9px]">{C.hub.cardStarters}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {slots.map((p, i) => (p ? cardOf(p) : <EmptySeat key={`empty:${i}`} C={C} />))}
       </div>
@@ -351,7 +356,7 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
         )}
       </div>
       <div className="mt-3 flex items-center gap-3">
-        <span className="kicker shrink-0 text-[10px]">{C.hub.chemistry}</span>
+        <span className="kicker shrink-0">{C.hub.chemistry}</span>
         <ProgressBar
           value={team.chemistry.percent / 100}
           tone={team.chemistry.percent >= 75 ? "good" : "blue"}
@@ -363,23 +368,23 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
         </span>
       </div>
       {camp ? (
-        <div className={cx("mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-3.5 py-3", campReady ? "border-orange/60 bg-orange/10" : "border-line bg-white/[0.025]")}>
+        <div className={cx("mt-4 flex flex-wrap items-center gap-3 border-t pt-3.5", campReady ? "border-orange/60" : "border-line")}>
           <RungIcon id={camp.id === "bootcamp2" ? "bootcamp2" : "bootcamp1"} className="h-5 w-5 shrink-0 text-orange-bright" />
           <div className="min-w-0 flex-1 basis-36">
             <p className="text-xs font-semibold text-ink">{camp.id === "bootcamp2" ? C.finances.bootcampT2 : C.finances.bootcampT1}</p>
-            <p className="mt-0.5 text-[10px] leading-relaxed text-sub">{C.toolbox.rating(camp.ratingEdge.toFixed(1))} · {C.toolbox.chemistry}</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-sub">{C.toolbox.rating(camp.ratingEdge.toFixed(1))} · {C.toolbox.chemistry}</p>
             <p className="mt-1 text-xs leading-relaxed text-sub">{C.toolbox.bootcampHint}</p>
-            <p className="mt-0.5 text-[10px] text-faint">{campNote}</p>
+            <p className="mt-0.5 text-[11px] text-faint">{campNote}</p>
           </div>
           <div className="flex items-center gap-2">
             {camp.status === "buyable" ? <span className="display text-xs font-semibold text-ink">{camp.free ? C.common.free : formatMoney(camp.price, { compact: true })}</span> : null}
-            {campReady ? <Button variant="primary" size="sm" className="shadow-none" onClick={() => runBootcamp()}>{C.toolbox.buy}</Button> : null}
+            {campReady ? <Button variant="secondary" size="sm" onClick={() => runBootcamp()}>{C.toolbox.buy}</Button> : null}
           </div>
         </div>
       ) : null}
       <PlayerSheet data={sheet} onClose={() => setSheet(null)} actions={sheetPlayerId ? (
         <div className="w-full space-y-2">
-          <p className="kicker text-[10px]">{C.launch.lineup}</p>
+          <p className="kicker">{C.launch.lineup}</p>
           {save.activeEvent ? <p className="text-xs text-orange-bright">{C.event.lineupLocked}</p> : null}
           <div className="flex flex-wrap gap-2">{save.squad.filter(p => p.id !== sheetPlayerId && (save.starterIds.includes(p.id) || save.starterIds.includes(sheetPlayerId))).map(p => (
             <Button key={p.id} size="sm" variant="secondary" className="min-h-11" disabled={Boolean(save.activeEvent) || save.phase === "ended"} onClick={() => {
@@ -393,6 +398,6 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
           ))}</div>
         </div>
       ) : undefined} />
-    </Panel>
+    </div>
   );
 }

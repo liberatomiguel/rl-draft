@@ -60,9 +60,17 @@ const barlow = localFont({
 // Industry (Fort Foundry), the display face (DESIGN.md). Medium/Demi/Bold
 // cover font-medium/semibold/bold; Black answers extrabold; the Bold Italic
 // serves the Home wordmark.
+// The metric overrides centre the capitals on the line: the file's own ascent
+// and descent (108% / 23%) set a 70% cap height 0.075em low, so every title in
+// a slab, tag or button sat under the middle. 100.5% / 30.5% keep the same
+// line height and put the caps in the centre.
 const industry = localFont({
   variable: "--font-industry",
   display: "swap",
+  declarations: [
+    { prop: "ascent-override", value: "100.5%" },
+    { prop: "descent-override", value: "30.5%" },
+  ],
   src: [
     { path: "./fonts/industry-medium.woff2", weight: "500", style: "normal" },
     { path: "./fonts/industry-demi.woff2", weight: "600", style: "normal" },
@@ -109,7 +117,7 @@ const GeistMono = localFont({
   weight: "100 900",
 });
 
-const TITLE = `${SITE.name} — RLCS Draft Game · Rocket League Esports History`;
+const TITLE = `${SITE.name}: RLCS Draft Game · Rocket League Esports History`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),

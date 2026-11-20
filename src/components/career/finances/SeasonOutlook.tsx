@@ -22,7 +22,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     // One line of the books: a column head and what stands under it. The
     // hairline above is the divider; the board around the four is the box.
     <div className="min-w-0 border-t border-line py-3">
-      <p className="kicker text-[11px]">{label}</p>
+      <p className="kicker">{label}</p>
       <div className="mt-1.5 space-y-1 text-sm leading-snug text-sub">{children}</div>
     </div>
   );
@@ -34,7 +34,7 @@ export function SeasonOutlook({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const now = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
   return (
     <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "210ms" }}>
-      <h3 className="display mb-3 text-lg uppercase leading-none text-ink">{O.title}</h3>
+      <div className="card-head"><h3 className="card-title">{O.title}</h3></div>
       <div className="grid gap-x-8 sm:grid-cols-2">
         <Row label={O.payroll}>
           {/* The arrow is the change itself (now, then after the review), not an ornament. */}

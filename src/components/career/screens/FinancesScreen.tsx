@@ -821,7 +821,7 @@ export function FinancesScreen() {
   /** The perks under their own head, where no host titles them. */
   const perkBlock = (tier: number): React.ReactNode => (
     <div className="mt-3 border-t border-line pt-3">
-      <p className="kicker text-[11px]">{C.finances.sponsorPerks}</p>
+      <p className="kicker">{C.finances.sponsorPerks}</p>
       {perkChips(tier)}
     </div>
   );
@@ -902,7 +902,7 @@ export function FinancesScreen() {
           <p className="mt-2 text-xs text-sub">
             {C.finances.net} · {C.finances.payday} {formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day))}
           </p>
-          <h3 className="kicker mb-1.5 mt-4 text-[11px]">{C.finances.weeklyStatement}</h3>
+          <h3 className="kicker mb-1.5 mt-4">{C.finances.weeklyStatement}</h3>
           <StatementLines st={statement} />
         </div>
 
@@ -929,8 +929,8 @@ export function FinancesScreen() {
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
         <Panel data-tour="finances-progress" className="rise-in p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
           {/* The board's title, and the one number that opens its rows: reputation. */}
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <h3 className="display text-lg uppercase leading-none text-ink">{C.ladder.title}</h3>
+          <div className="card-head">
+            <h3 className="card-title">{C.ladder.title}</h3>
             <p className="shrink-0 text-right">
               <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(rep)}</span>
               <span className="mt-1 block text-xs text-sub">{C.common.reputation}</span>
@@ -1044,27 +1044,230 @@ export function FinancesScreen() {
           <Modal open={ladderOpen} title={C.ladder.title} onClose={() => setLadderOpen(false)}><LadderGrid rungs={ladderOf(save)} C={C} /></Modal>
         </Panel>
 
-      {/* ================= Loans & debt (always visible below progression) ================= */}
-      <section data-tour="finances-loans"
-        className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
-      >
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
-          <span className="kicker text-[10px]">
-            {C.finances.loans}
-            {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
-          </span>
-          {/* rc.33 review (ECO-08): where the next breach ends the career, no Backer is promised. */}
-          <span className="text-[10px] text-faint">
-            {nextBreach === "insolvent" ? C.finances.loansHintEnd : C.finances.loansHint}
-          </span>
         </div>
-        <div className="px-4 pb-4">
-        <div className="grid grid-cols-1 gap-3">
+
+        {/* ================= right column: sponsors + ledger ================= */}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
+          {/* Sponsors */}
+          <Panel id="career-sponsors" data-tour="finances-sponsor" className="rise-in scroll-mt-44 p-4 sm:p-5" style={{ animationDelay: "160ms" }}>
+            <div className="card-head"><h3 className="card-title">{C.finances.sponsors}</h3></div>
+
+            {/* rc.32 (M3, provisional): the founding partner, its own named line and its end condition. */}
+            {foundingPartnerActive(save.foundingPartner) ? (
+              <div
+                className={cx(
+                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
+                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                    {C.finances.foundingTitle}
+                  </span>
+                  <Badge tone="good">{C.finances.activeLabel}</Badge>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-good">
+                  {C.finances.perWeekBase(formatMoney(weeklyOf(foundingPartnerPerSplitOf(save)), { compact: true }))}
+                </p>
+                <p className="text-xs text-sub">
+                  {C.finances.foundingTerms(Math.round(CAREER_SPONSOR.founding.payrollShare * 100))}
+                </p>
+                <p className="mt-1.5 text-[11px] text-faint">
+                  {save.foundingPartner?.taperStep !== undefined
+                    ? C.finances.foundingTapering(
+                        Math.round((CAREER_SPONSOR.founding.taper[save.foundingPartner.taperStep - 1] ?? 0) * 100),
+                        save.foundingPartner.taperStep >= CAREER_SPONSOR.founding.taper.length,
+                      )
+                    : C.finances.foundingEnds(seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex))}
+                </p>
+              </div>
+            ) : save.foundingPartner?.endedSeason === seasonIndex ? (
+              <p className="mb-3 text-[11px] text-faint">{C.finances.foundingEnded}</p>
+            ) : null}
+
+            {/* rc.33 (ECO-07): the rescue partner while it runs — who, the weekly help, its last payday. */}
+            {rescueLast && fin.rescuePartner ? (
+              <div
+                className={cx(
+                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
+                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                    {RESCUE_PARTNER_BRAND.name}
+                  </span>
+                  <Badge tone="good">{C.finances.rescueTitle}</Badge>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-good">
+                  {C.finances.perWeekBase(formatMoney(fin.rescuePartner.weekly, { compact: true }))}
+                </p>
+                <p className="text-xs text-sub">{C.finances.rescueTerms(CAREER_LOAN.investor.weeks)}</p>
+                <p className="mt-1.5 text-[11px] text-faint">
+                  {C.finances.rescueUntil(
+                    formatDateTiny(D, dateOfDay(rescueLast.seasonIndex, rescueLast.day)),
+                    fin.rescuePartner.mondaysLeft,
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {/* rc.34 (ECO-04): a deal signed since rc.34 reads its own panel; a deal from before keeps rc.33's. */}
+            {save.sponsor?.terms ? <SponsorDealPanel save={save} perks={perkChips(save.sponsor.tier)} /> : null}
+            {save.sponsor && !save.sponsor.terms ? (
+              <div className="rounded-lg border border-line-strong bg-white/[0.02] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                    {sponsorBrandById.get(save.sponsor.sponsorId)?.name ?? save.sponsor.sponsorId}
+                  </span>
+                  <Badge tone="blue">{C.finances.sponsorTier(save.sponsor.tier)}</Badge>
+                </div>
+                {brandFlavor(save.sponsor.sponsorId) ? (
+                  <p className="mt-1 text-xs italic text-faint">
+                    {brandFlavor(save.sponsor.sponsorId)}
+                  </p>
+                ) : null}
+                {sponsorMoneyLine(save.sponsor)}
+
+                <div className="mt-3 border-t border-line pt-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="kicker">{C.finances.sponsorObjective}</p>
+                    {save.sponsor.hitThisSplit ? (
+                      <Badge tone="good">{C.finances.objectiveHit}</Badge>
+                    ) : (
+                      <Badge tone="neutral">{C.finances.onTrack}</Badge>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-sub">
+                    {objectiveText(save.sponsor.objectiveKind)}
+                  </p>
+                  {save.sponsor.objectiveKind === "enterEvents" && !save.sponsor.hitThisSplit ? (
+                    <ProgressBar
+                      value={save.sponsor.progress / CAREER_SPONSOR.enterEventsTarget}
+                      tone="blue"
+                      className="mt-2"
+                      label={C.finances.sponsorObjective}
+                    />
+                  ) : null}
+                </div>
+
+                {/* Patience meter */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <span className="flex items-center gap-1" aria-hidden>
+                    {Array.from({ length: patienceMax }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={cx(
+                          "h-1.5 w-4 rounded-full",
+                          i < patienceMax - save.sponsor!.missedCount ? "bg-good" : "bg-bad/60",
+                        )}
+                      />
+                    ))}
+                  </span>
+                  <span className="text-[11px] text-faint">
+                    {C.finances.patience(save.sponsor.missedCount, patienceMax)}
+                  </span>
+                </div>
+                {save.sponsor.missedCount === patienceMax - 1 ? (
+                  <p className="mt-1 text-[11px] font-semibold text-orange-bright">
+                    {C.finances.patienceWarn}
+                  </p>
+                ) : null}
+
+                {perkChips(save.sponsor.tier)}
+              </div>
+            ) : null}
+
+            {save.sponsorOffers?.some((o) => o.terms) ? (
+              <div className={cx(save.sponsor && "mt-3")}>
+                <p className="kicker mb-2">{C.finances.offerTitle}</p>
+                <SponsorDecision save={save} onSign={chooseSponsor} bare />
+              </div>
+            ) : save.sponsorOffers && save.sponsorOffers.length > 0 ? (
+              <div className={cx(save.sponsor && "mt-3")}>
+                <p className="kicker mb-2">{C.finances.offerTitle}</p>
+                <div className="space-y-2.5">
+                  {save.sponsorOffers.map((o) => (
+                    <div
+                      key={o.sponsorId}
+                      className="rounded-lg border border-blue/40 bg-blue/[0.05] p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                          {sponsorBrandById.get(o.sponsorId)?.name ?? o.sponsorId}
+                        </span>
+                        <Badge tone="blue">{C.finances.sponsorTier(o.tier)}</Badge>
+                      </div>
+                      {brandFlavor(o.sponsorId) ? (
+                        <p className="mt-1 text-xs italic text-faint">{brandFlavor(o.sponsorId)}</p>
+                      ) : null}
+                      {sponsorMoneyLine(o)}
+                      <p className="mt-1.5 text-xs text-sub">
+                        {C.finances.sponsorObjective}: {objectiveText(o.objectiveKind)}
+                      </p>
+                      {perkChips(o.tier)}
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        full
+                        className="mt-3"
+                        onClick={() => chooseSponsor(o.sponsorId)}
+                      >
+                        {C.common.confirm}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* rc.34 (ECO-05, S7): other income — capped, never guaranteed. */}
+            {otherRoom.taken > 0 || otherRoom.count < CAREER_SPONSOR.otherIncome.perSplitCap ? (
+              <div className="mt-3 rounded-lg border border-line bg-white/[0.02] p-2.5">
+                <p className="kicker">{C.finances.deal.otherIncome}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.deal.otherIncomeLine(
+                    formatMoney(otherRoom.taken, { compact: true }),
+                    formatMoney(otherRoom.cap, { compact: true }),
+                    CAREER_SPONSOR.otherIncome.perSplitCap - otherRoom.count,
+                    CAREER_SPONSOR.otherIncome.perSplitCap,
+                  )}
+                </p>
+                <p className="mt-0.5 text-[11px] text-faint">
+                  {C.finances.deal.otherIncomeHint(
+                    Math.round(CAREER_SPONSOR.otherIncome.seasonShare * 100),
+                    CAREER_SPONSOR.otherIncome.perSplitCap,
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {!save.sponsor && (!save.sponsorOffers || save.sponsorOffers.length === 0) ? (
+              <div>
+                <p className="text-sm text-sub">
+                  {C.finances.lockedAtRep(CAREER_SPONSOR.firstOfferRepGate)}
+                </p>
+                <ProgressBar
+                  value={rep / CAREER_SPONSOR.firstOfferRepGate}
+                  tone="orange"
+                  className="mt-2"
+                  label={C.finances.sponsors}
+                />
+                <p className="mt-1.5 text-[11px] text-faint">
+                  {C.common.reputation} {Math.round(rep)} / {CAREER_SPONSOR.firstOfferRepGate}
+                </p>
+              </div>
+            ) : null}
+          </Panel>
+
+      {/* ================= Loans & debt (always visible below progression) ================= */}
+      {/* Two boards, one per loan (they were two boxes inside a board whose title repeated theirs). */}
+      <section data-tour="finances-loans" aria-label={C.finances.loans} className="rise-in flex flex-col gap-4">
           {/* Bank */}
-          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-              {C.finances.bankTitle}
-            </p>
+          <div className={cx("panel p-4 sm:p-5", fin.bankLoan && "panel-glow-blue")}>
+            <div className="card-head">
+              <h3 className="card-title">{C.finances.bankTitle}</h3>
+            </div>
             {fin.bankLoan ? (
               <>
                 <p className="display mt-1 text-lg font-bold text-orange-bright">
@@ -1082,7 +1285,7 @@ export function FinancesScreen() {
                   floor={backer.floor}
                   next={nextBreachParams}
                 />
-                <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
+                <p className="mt-2 text-[11px] text-faint">{C.finances.bankBlockedActive}</p>
               </>
             ) : (
               <>
@@ -1106,13 +1309,10 @@ export function FinancesScreen() {
           {/* rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the Emergency Backer) —
               what is owed, the deadline and what happens on it, how it is repaid, the top-ups,
               what the next breach does; the rule on this difficulty when nothing is owed. */}
-          <div
-            className={cx(
-              "rounded-lg border bg-white/[0.02] p-3",
-              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
-            )}
-          >
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
+          <div className={cx("panel p-4 sm:p-5", fin.loan ? "panel-glow-orange" : fin.loanUsed ? "!border-bad/40" : "")}>
+            <div className="card-head">
+              <h3 className="card-title">{C.finances.backer}</h3>
+            </div>
             {fin.loan ? (
               <>
                 <p className="display mt-1 text-lg font-bold text-orange-bright">
@@ -1201,229 +1401,12 @@ export function FinancesScreen() {
               </>
             )}
           </div>
-        </div>
-      </div>
       </section>
-        </div>
-
-        {/* ================= right column: sponsors + ledger ================= */}
-        <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
-          {/* Sponsors */}
-          <Panel id="career-sponsors" data-tour="finances-sponsor" className="rise-in scroll-mt-44 p-4" style={{ animationDelay: "160ms" }}>
-            <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
-
-            {/* rc.32 (M3, provisional): the founding partner, its own named line and its end condition. */}
-            {foundingPartnerActive(save.foundingPartner) ? (
-              <div
-                className={cx(
-                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
-                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                    {C.finances.foundingTitle}
-                  </span>
-                  <Badge tone="good">{C.finances.activeLabel}</Badge>
-                </div>
-                <p className="mt-2 text-sm font-semibold text-good">
-                  {C.finances.perWeekBase(formatMoney(weeklyOf(foundingPartnerPerSplitOf(save)), { compact: true }))}
-                </p>
-                <p className="text-xs text-sub">
-                  {C.finances.foundingTerms(Math.round(CAREER_SPONSOR.founding.payrollShare * 100))}
-                </p>
-                <p className="mt-1.5 text-[11px] text-faint">
-                  {save.foundingPartner?.taperStep !== undefined
-                    ? C.finances.foundingTapering(
-                        Math.round((CAREER_SPONSOR.founding.taper[save.foundingPartner.taperStep - 1] ?? 0) * 100),
-                        save.foundingPartner.taperStep >= CAREER_SPONSOR.founding.taper.length,
-                      )
-                    : C.finances.foundingEnds(seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex))}
-                </p>
-              </div>
-            ) : save.foundingPartner?.endedSeason === seasonIndex ? (
-              <p className="mb-3 text-[11px] text-faint">{C.finances.foundingEnded}</p>
-            ) : null}
-
-            {/* rc.33 (ECO-07): the rescue partner while it runs — who, the weekly help, its last payday. */}
-            {rescueLast && fin.rescuePartner ? (
-              <div
-                className={cx(
-                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
-                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                    {RESCUE_PARTNER_BRAND.name}
-                  </span>
-                  <Badge tone="good">{C.finances.rescueTitle}</Badge>
-                </div>
-                <p className="mt-2 text-sm font-semibold text-good">
-                  {C.finances.perWeekBase(formatMoney(fin.rescuePartner.weekly, { compact: true }))}
-                </p>
-                <p className="text-xs text-sub">{C.finances.rescueTerms(CAREER_LOAN.investor.weeks)}</p>
-                <p className="mt-1.5 text-[11px] text-faint">
-                  {C.finances.rescueUntil(
-                    formatDateTiny(D, dateOfDay(rescueLast.seasonIndex, rescueLast.day)),
-                    fin.rescuePartner.mondaysLeft,
-                  )}
-                </p>
-              </div>
-            ) : null}
-
-            {/* rc.34 (ECO-04): a deal signed since rc.34 reads its own panel; a deal from before keeps rc.33's. */}
-            {save.sponsor?.terms ? <SponsorDealPanel save={save} perks={perkChips(save.sponsor.tier)} /> : null}
-            {save.sponsor && !save.sponsor.terms ? (
-              <div className="rounded-lg border border-line-strong bg-white/[0.02] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                    {sponsorBrandById.get(save.sponsor.sponsorId)?.name ?? save.sponsor.sponsorId}
-                  </span>
-                  <Badge tone="blue">{C.finances.sponsorTier(save.sponsor.tier)}</Badge>
-                </div>
-                {brandFlavor(save.sponsor.sponsorId) ? (
-                  <p className="mt-1 text-xs italic text-faint">
-                    {brandFlavor(save.sponsor.sponsorId)}
-                  </p>
-                ) : null}
-                {sponsorMoneyLine(save.sponsor)}
-
-                <div className="mt-3 border-t border-line pt-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="kicker text-[9px]">{C.finances.sponsorObjective}</p>
-                    {save.sponsor.hitThisSplit ? (
-                      <Badge tone="good">{C.finances.objectiveHit}</Badge>
-                    ) : (
-                      <Badge tone="neutral">{C.finances.onTrack}</Badge>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-sub">
-                    {objectiveText(save.sponsor.objectiveKind)}
-                  </p>
-                  {save.sponsor.objectiveKind === "enterEvents" && !save.sponsor.hitThisSplit ? (
-                    <ProgressBar
-                      value={save.sponsor.progress / CAREER_SPONSOR.enterEventsTarget}
-                      tone="blue"
-                      className="mt-2"
-                      label={C.finances.sponsorObjective}
-                    />
-                  ) : null}
-                </div>
-
-                {/* Patience meter */}
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  <span className="flex items-center gap-1" aria-hidden>
-                    {Array.from({ length: patienceMax }).map((_, i) => (
-                      <span
-                        key={i}
-                        className={cx(
-                          "h-1.5 w-4 rounded-full",
-                          i < patienceMax - save.sponsor!.missedCount ? "bg-good" : "bg-bad/60",
-                        )}
-                      />
-                    ))}
-                  </span>
-                  <span className="text-[10px] text-faint">
-                    {C.finances.patience(save.sponsor.missedCount, patienceMax)}
-                  </span>
-                </div>
-                {save.sponsor.missedCount === patienceMax - 1 ? (
-                  <p className="mt-1 text-[11px] font-semibold text-orange-bright">
-                    {C.finances.patienceWarn}
-                  </p>
-                ) : null}
-
-                {perkChips(save.sponsor.tier)}
-              </div>
-            ) : null}
-
-            {save.sponsorOffers?.some((o) => o.terms) ? (
-              <div className={cx(save.sponsor && "mt-3")}>
-                <p className="kicker mb-2 text-[10px]">{C.finances.offerTitle}</p>
-                <SponsorDecision save={save} onSign={chooseSponsor} bare />
-              </div>
-            ) : save.sponsorOffers && save.sponsorOffers.length > 0 ? (
-              <div className={cx(save.sponsor && "mt-3")}>
-                <p className="kicker mb-2 text-[10px]">{C.finances.offerTitle}</p>
-                <div className="space-y-2.5">
-                  {save.sponsorOffers.map((o) => (
-                    <div
-                      key={o.sponsorId}
-                      className="rounded-lg border border-blue/40 bg-blue/[0.05] p-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                          {sponsorBrandById.get(o.sponsorId)?.name ?? o.sponsorId}
-                        </span>
-                        <Badge tone="blue">{C.finances.sponsorTier(o.tier)}</Badge>
-                      </div>
-                      {brandFlavor(o.sponsorId) ? (
-                        <p className="mt-1 text-xs italic text-faint">{brandFlavor(o.sponsorId)}</p>
-                      ) : null}
-                      {sponsorMoneyLine(o)}
-                      <p className="mt-1.5 text-xs text-sub">
-                        {C.finances.sponsorObjective}: {objectiveText(o.objectiveKind)}
-                      </p>
-                      {perkChips(o.tier)}
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        full
-                        className="mt-3"
-                        onClick={() => chooseSponsor(o.sponsorId)}
-                      >
-                        {C.common.confirm}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {/* rc.34 (ECO-05, S7): other income — capped, never guaranteed. */}
-            {otherRoom.taken > 0 || otherRoom.count < CAREER_SPONSOR.otherIncome.perSplitCap ? (
-              <div className="mt-3 rounded-lg border border-line bg-white/[0.02] p-2.5">
-                <p className="kicker text-[9px]">{C.finances.deal.otherIncome}</p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {C.finances.deal.otherIncomeLine(
-                    formatMoney(otherRoom.taken, { compact: true }),
-                    formatMoney(otherRoom.cap, { compact: true }),
-                    CAREER_SPONSOR.otherIncome.perSplitCap - otherRoom.count,
-                    CAREER_SPONSOR.otherIncome.perSplitCap,
-                  )}
-                </p>
-                <p className="mt-0.5 text-[10px] text-faint">
-                  {C.finances.deal.otherIncomeHint(
-                    Math.round(CAREER_SPONSOR.otherIncome.seasonShare * 100),
-                    CAREER_SPONSOR.otherIncome.perSplitCap,
-                  )}
-                </p>
-              </div>
-            ) : null}
-
-            {!save.sponsor && (!save.sponsorOffers || save.sponsorOffers.length === 0) ? (
-              <div>
-                <p className="text-sm text-sub">
-                  {C.finances.lockedAtRep(CAREER_SPONSOR.firstOfferRepGate)}
-                </p>
-                <ProgressBar
-                  value={rep / CAREER_SPONSOR.firstOfferRepGate}
-                  tone="orange"
-                  className="mt-2"
-                  label={C.finances.sponsors}
-                />
-                <p className="mt-1.5 text-[10px] text-faint">
-                  {C.common.reputation} {Math.round(rep)} / {CAREER_SPONSOR.firstOfferRepGate}
-                </p>
-              </div>
-            ) : null}
-          </Panel>
 
           {/* Ledger */}
-          <Panel className="rise-in flex flex-col p-4" style={{ animationDelay: "200ms" }}>
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="kicker text-[11px]">{C.finances.ledger}</p>
+          <Panel className="rise-in flex flex-col p-4 sm:p-5" style={{ animationDelay: "200ms" }}>
+            <div className="card-head">
+              <p className="card-title">{C.finances.ledger}</p>
               <div className="flex gap-1.5">
                 {(
                   [
@@ -1438,7 +1421,7 @@ export function FinancesScreen() {
                     onClick={() => setLedgerFilter(k)}
                     aria-pressed={ledgerFilter === k}
                     className={cx(
-                      "display inline-flex min-h-8 items-center rounded-md border px-2 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
+                      "display inline-flex min-h-8 items-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
                       ledgerFilter === k
                         ? "border-blue/50 bg-blue/15 text-blue-bright"
                         : "border-line-strong bg-white/5 text-sub hover:text-ink",
@@ -1452,15 +1435,15 @@ export function FinancesScreen() {
 
             {/* The players' share of podium prizes, stated where it is booked (rc.33 ECO-10: per contract). */}
             {CAREER_PRIZES.playerShare.enabled ? (
-              <p className="mb-2 text-[10px] text-faint">{C.finances.playerShareRule}</p>
+              <p className="mb-2 text-[11px] text-faint">{C.finances.playerShareRule}</p>
             ) : null}
             {ledgerGroups.length === 0 ? (
-              <p className="py-6 text-center text-xs text-faint">—</p>
+              <p className="py-6 text-center text-xs text-faint">-</p>
             ) : (
               <div className="-mr-2 max-h-[26rem] space-y-3 overflow-y-auto pr-2">
                 {ledgerGroups.map((g) => (
                   <div key={g.key}>
-                    <p className="kicker mb-1 text-[9px]">{g.label}</p>
+                    <p className="kicker mb-1">{g.label}</p>
                     <div className="rounded-lg border border-line bg-white/[0.02]">
                       {g.items.map((e) => (
                         <div
@@ -1475,7 +1458,7 @@ export function FinancesScreen() {
                           </span>
                           <span
                             className={cx(
-                              "shrink-0 font-mono font-semibold",
+                              "shrink-0 tabular-nums font-semibold",
                               e.amount >= 0 ? "text-good" : "text-bad",
                             )}
                           >

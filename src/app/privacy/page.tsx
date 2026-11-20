@@ -5,7 +5,7 @@ import { PrivacyView } from "./PrivacyView";
 
 export const metadata: Metadata = pageMetadata({
   title: `Privacy Policy · ${SITE.name}`,
-  description: `How ${SITE.name} handles your data — short version: it stays on your device.`,
+  description: `How ${SITE.name} handles your data. Short version: it stays on your device.`,
   path: "/privacy",
 });
 

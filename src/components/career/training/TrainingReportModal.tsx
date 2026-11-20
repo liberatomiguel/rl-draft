@@ -79,7 +79,7 @@ export function TrainingReportModal() {
     >
       <div className={cx("mb-4 rounded-xl border p-3.5", tone.ring, tone.bg)}>
         <div className="flex items-center gap-3">
-          <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border", tone.ring, tone.text)}>
+          <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center", tone.ring, tone.text)}>
             <ObjectiveIcon objective={objective} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -88,11 +88,11 @@ export function TrainingReportModal() {
           </div>
           <div className="shrink-0 text-right">
             <p className={cx("display text-2xl font-bold tabular-nums", avg >= 0 ? "text-good" : "text-bad")}>{fmt1(avg)}</p>
-            <p className="text-[10px] text-faint">{R.avg}</p>
+            <p className="text-[11px] text-faint">{R.avg}</p>
           </div>
         </div>
         <PackageChips pkg={report.package} C={C} className="mt-3" />
-        {completion > 0.004 ? <p className="mt-2 text-[10px] text-faint">{R.completion(completion.toFixed(2))}</p> : null}
+        {completion > 0.004 ? <p className="mt-2 text-[11px] text-faint">{R.completion(completion.toFixed(2))}</p> : null}
       </div>
       <CycleReportBody summary={report} C={C} statLabels={t.STAT_LABELS} stats={false} />
       {coachRuns && save.coach ? (

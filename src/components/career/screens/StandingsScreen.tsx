@@ -257,7 +257,7 @@ function StandingsTable({
       trs.push(
         <tr key={`cut:${row.ref}`}>
           <td colSpan={4} className="border-b-2 border-dashed border-blue/60 px-3 pb-1 pt-1">
-            <span className="kicker block text-right !text-[11px] text-blue-bright">{cutLabel}</span>
+            <span className="kicker block text-right text-blue-bright">{cutLabel}</span>
           </td>
         </tr>,
       );
@@ -269,10 +269,10 @@ function StandingsTable({
       <table className="mobile-list-table w-full border-collapse">
         <thead>
           <tr className="border-b border-line-strong">
-            <th className="kicker w-10 px-2 pb-2 text-center !text-[11px]">#</th>
+            <th className="kicker w-10 px-2 pb-2 text-center">#</th>
             <th aria-label={copy.standings.title} className="px-2 pb-2" />
-            <th className="kicker hidden px-2 pb-2 text-right !text-[11px] sm:table-cell">{copy.hub.form}</th>
-            <th className="kicker px-3 pb-2 text-right !text-[11px]">{copy.standings.ptsShort}</th>
+            <th className="kicker hidden px-2 pb-2 text-right sm:table-cell">{copy.hub.form}</th>
+            <th className="kicker px-3 pb-2 text-right">{copy.standings.ptsShort}</th>
           </tr>
         </thead>
         <tbody>{trs}</tbody>
@@ -299,7 +299,7 @@ function FieldList({
   const rowClass = "flex min-h-11 w-full min-w-0 items-center gap-2.5 px-2 py-2 text-left";
   return (
     <section className="mt-8">
-      <h3 className="display text-lg uppercase leading-none text-ink">{title}</h3>
+      <h3 className="card-title">{title}</h3>
       <ul className="mt-3 grid grid-cols-1 gap-x-6 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
         {refs.map((ref) => {
           const isUser = ref === "user";

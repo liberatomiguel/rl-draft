@@ -34,4 +34,6 @@ export const SITE = {
   /** Community + support. Empty string = hidden until set. */
   discordUrl: "https://discord.gg/h4FGWHyPD2", // e.g. "https://discord.gg/xxxxxxx"
   supportUrl: "https://ko-fi.com/liberatomiguel", // e.g. "https://ko-fi.com/liberatorl"
+  /** The 50/50 site (the Home's partner card). Empty = the card shows "link coming soon" and is not a link. */
+  partnerUrl: "" as string,
 } as const;

@@ -57,7 +57,7 @@ export function NowInsert({
   return (
     <div>
       <EventBrand name={id} size="lg" className="mb-3" />
-      <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
+      <p className="kicker mb-1 text-cyan">{C.inserts.kinds[def.kind]}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -76,7 +76,7 @@ export function NowInsert({
           </button>
         ))}
       </div>
-      <p className="mt-2 text-[10px] text-faint">{C.inserts.expires}</p>
+      <p className="mt-2 text-[11px] text-faint">{C.inserts.expires}</p>
     </div>
   );
 }
@@ -213,7 +213,7 @@ export function NowSquadShort({
   const absent = save.squad.length >= 3 ? uncoveredAbsenceOf(save) : null;
   return (
     <div>
-      <p className="kicker mb-1 text-[10px] text-bad">{C.hub.squadShortKicker}</p>
+      <p className="kicker mb-1 text-bad">{C.hub.squadShortKicker}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
         {absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}
       </h2>
@@ -331,19 +331,19 @@ export function NowEvent({
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
+          <p className="kicker">{C.calendar.prizePool}</p>
           <p className="display text-lg font-bold text-orange-bright">
             {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.common.seasonPoints}</p>
-          <p className="display text-lg font-bold text-ink">
-            {points !== null ? `${points} ${C.standings.ptsShort}` : "—"}
+          <p className="kicker">{C.common.seasonPoints}</p>
+          <p className="card-title">
+            {points !== null ? `${points} ${C.standings.ptsShort}` : "-"}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.fieldQuality}</p>
+          <p className="kicker">{C.calendar.fieldQuality}</p>
           <TeamStars stars={Math.round(fieldStars)} size="md" className="mt-1" />
         </div>
       </div>
@@ -448,7 +448,7 @@ export function NowBid({
           ) : null}
         </div>
         <div className="text-right">
-          <p className="kicker text-[9px]">{C.market.fee}</p>
+          <p className="kicker">{C.market.fee}</p>
           <p className="display text-2xl font-bold text-orange-bright">
             {formatMoney(offer.fee, { compact: true })}
           </p>

@@ -17,8 +17,8 @@ import { SyncLocale } from "@/components/content/SyncLocale";
 export const metadata: Metadata = pageMetadata({
   // v2.0 (WEB-01): a build that ships Road to Worlds names the career mode.
   title: FEATURES.careerMode
-    ? `${SITE.name} — Jogo de Draft da RLCS e Manager de Rocket League`
-    : `${SITE.name} — Jogo de Draft da RLCS Grátis`,
+    ? `${SITE.name}: Jogo de Draft da RLCS e Manager de Rocket League`
+    : `${SITE.name}: Jogo de Draft da RLCS Grátis`,
   description: FEATURES.careerMode
     ? "Rocket Draft é um jogo de draft da RLCS e um modo carreira de Rocket League, grátis. Monte um roster com lineups reais e vença o torneio, ou comande um clube no Road to Worlds."
     : PT.APP.description,

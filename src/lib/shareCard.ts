@@ -279,7 +279,7 @@ export function renderShareCard(
   // Footer
   ctx.font = display(15, 600);
   ctx.fillStyle = "#5b6880";
-  ctx.fillText("ROCKETDRAFT.APP — FAN-MADE RL ESPORTS HISTORY DRAFT", 64, H - 34);
+  ctx.fillText("ROCKETDRAFT.APP: FAN-MADE RL ESPORTS HISTORY DRAFT", 64, H - 34);
 
   // Border
   ctx.strokeStyle = champion ? "rgba(249,115,22,0.55)" : "rgba(146,164,196,0.3)";

@@ -57,9 +57,9 @@ import { resolveMail } from "@/components/career/news/newsText";
 import { NewsFeed } from "@/components/career/news/NewsFeed";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
-import { BLOCK_LINK, ErrorBanner, RAIL_SECTION, RAIL_TITLE, withMoneyParams } from "@/components/career/hub/hubShared";
+import { BLOCK_LINK, ErrorBanner, RAIL_HEAD, RAIL_SECTION, RAIL_TITLE, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 
 // rc.36 (UX-03): the wire — its filters, type icons and rows — lives in news/NewsFeed.tsx.
@@ -120,7 +120,7 @@ export function HubScreen() {
         `display: contents` there, so `order` interleaves them); two columns on
         desktop: main (decision, squad, training, the wires) and side.
       */}
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-start lg:gap-x-8">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-start">
         {/* ============ main column (2fr) ============ */}
         <div className="contents lg:col-span-2 lg:block lg:space-y-4">
           {/* 1 — THE DECISION BLOCK: the next needed decision, or the clock (UX-01a).
@@ -148,7 +148,7 @@ export function HubScreen() {
         </div>
 
         {/* ============ side rail (1fr): sections on the floor, a hairline between them ============ */}
-        <div className="contents lg:block lg:space-y-5">
+        <div className="contents lg:block lg:space-y-4">
           {/* 4 — RTW-01 (R49, UX-01d): the Major / Worlds race toggle + the seeding line (6-A) */}
           <div className={cx("order-4", RAIL_SECTION)}>
             <RaceBlock save={save} C={C} />
@@ -174,7 +174,7 @@ export function HubScreen() {
           {/* 8 — inbox teaser: the two latest, the whole section opens the inbox */}
           <div data-tour="hub-inbox" className={cx("order-8", RAIL_SECTION)}>
             <AppLink href="/career/news" className="group block">
-              <div className="flex items-center justify-between gap-2">
+              <div className={RAIL_HEAD}>
                 <h3 className={RAIL_TITLE}>{C.hub.inboxTeaser}</h3>
                 {unreadMail > 0 ? <Badge tone="orange">{C.mail.unread(unreadMail)}</Badge> : null}
               </div>
@@ -223,17 +223,19 @@ const TRANSFER_PREVIEW = 3;
 /** Keep the wire visible this many days past the last logged move. */
 const TRANSFER_LINGER_DAYS = 14;
 
-function TransferWirePanel({
+/** `full`: every move of the season (the desk's Transfers view); otherwise the HQ's three latest, which link there. */
+export function TransferWirePanel({
   save,
   C,
   D,
+  full = false,
 }: {
   save: CareerSave;
   C: CareerCopy;
   D: DatesCopy;
+  full?: boolean;
 }) {
   const [regionFilter, setRegionFilter] = useState<string>("all");
-  const [expanded, setExpanded] = useState(false);
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
   const seasonMoves = save.transferLog.filter(
@@ -241,13 +243,13 @@ function TransferWirePanel({
   );
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
   const recent = seasonMoves.some((t) => save.clock.day - t.day <= TRANSFER_LINGER_DAYS);
-  if (!windowOpen && !recent) return null;
+  if (!full && !windowOpen && !recent) return null;
 
   const filtered =
     regionFilter === "all"
       ? seasonMoves
       : seasonMoves.filter((t) => t.region === regionFilter);
-  const shownMoves = expanded ? filtered : filtered.slice(0, TRANSFER_PREVIEW);
+  const shownMoves = full ? filtered : filtered.slice(0, TRANSFER_PREVIEW);
 
   const orgCell = (ref: string | null) => {
     if (!ref) {
@@ -281,8 +283,8 @@ function TransferWirePanel({
 
   // A rail section like its neighbours: a title, the region filter, one row per move.
   return (
-    <div className={cx("order-10", RAIL_SECTION)}>
-      <div className="flex items-center justify-between gap-2">
+    <div className={cx(!full && "order-10", RAIL_SECTION)}>
+      <div className={RAIL_HEAD}>
         <h3 className={RAIL_TITLE}>{C.hub.transfersTitle}</h3>
         {windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
       </div>
@@ -341,11 +343,11 @@ function TransferWirePanel({
         </ul>
       )}
 
-      {!expanded && filtered.length > TRANSFER_PREVIEW ? (
-        <div className="mt-2">
-          <Button size="sm" variant="ghost" onClick={() => setExpanded(true)}>
+      {!full && filtered.length > TRANSFER_PREVIEW ? (
+        <div className="mt-3">
+          <AppLink href="/career/news#transfers" className={buttonClass("secondary", "sm")}>
             {C.hub.transfersShowAll(filtered.length)}
-          </Button>
+          </AppLink>
         </div>
       ) : null}
 

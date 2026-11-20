@@ -7,7 +7,7 @@ const OG_IMAGE = {
   url: "/opengraph-image.png",
   width: 1200,
   height: 630,
-  alt: "Rocket Draft — draft RLCS history, survive the bracket",
+  alt: "Rocket Draft: draft RLCS history, survive the bracket",
   type: "image/png",
 };
 

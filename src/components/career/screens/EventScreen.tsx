@@ -336,11 +336,11 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       </div>
 
       {/* stakes */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
-        <p className="kicker mb-2.5 text-[10px]">{C.calendar.stakes}</p>
+      <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
+        <p className="kicker mb-2.5">{C.calendar.stakes}</p>
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-            <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
+            <p className="kicker">{C.calendar.prizePool}</p>
             <p className="display text-lg font-bold text-orange-bright">
               {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
             </p>
@@ -348,22 +348,22 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           {isQualifier ? (
             // R40: a qualifier pays no points — what is on the line is a seat on Sunday.
             <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-              <p className="kicker text-[9px]">{C.event.spots}</p>
-              <p className="display text-lg font-bold text-ink">
+              <p className="kicker">{C.event.spots}</p>
+              <p className="card-title">
                 {C.event.spotsValue(CAREER_QUALIFIER.advanceSlots, TOURNAMENT.swiss.teams)}
               </p>
             </div>
           ) : (
             <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-              <p className="kicker text-[9px]">{C.common.seasonPoints}</p>
-              <p className="display text-lg font-bold text-ink">
-                {points !== null ? `${points} ${C.standings.ptsShort}` : "—"}
+              <p className="kicker">{C.common.seasonPoints}</p>
+              <p className="card-title">
+                {points !== null ? `${points} ${C.standings.ptsShort}` : "-"}
               </p>
             </div>
           )}
           <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-            <p className="kicker text-[9px]">{C.event.avgOvr}</p>
-            <p className="display text-lg font-bold text-cyan">{avgOvr ?? "—"}</p>
+            <p className="kicker">{C.event.avgOvr}</p>
+            <p className="display text-lg font-bold text-cyan">{avgOvr ?? "-"}</p>
           </div>
         </div>
         <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
@@ -379,11 +379,11 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       {/* the field */}
-      {def.teamSize ? <Panel className="p-4"><CommunityLineup key={def.id} save={save} def={def} C={C} /></Panel> : null}
+      {def.teamSize ? <Panel className="p-4 sm:p-5"><CommunityLineup key={def.id} save={save} def={def} C={C} /></Panel> : null}
       <div className={cx("grid items-stretch gap-4", "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
       {field.length > 0 ? (
-        <Panel className="rise-in flex min-w-0 flex-col p-4" style={{ animationDelay: "80ms" }}>
-          <p className="kicker mb-2.5 text-[10px]">{C.event.fieldTitle}</p>
+        <Panel className="rise-in flex min-w-0 flex-col p-4 sm:p-5" style={{ animationDelay: "80ms" }}>
+          <p className="kicker mb-2.5">{C.event.fieldTitle}</p>
           <div className={cx("grid flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-2", !isQualifier && "lg:grid-cols-4")}>
             {field.map((f) => {
               const isUser = f.ref === "user";
@@ -404,7 +404,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
                   {throughSaturday.has(f.ref) ? (
                     <abbr
                       title={C.event.qualifiedTagHint}
-                      className="display shrink-0 rounded bg-blue/15 px-1 text-[9px] font-bold uppercase tracking-wider text-blue-bright no-underline"
+                      className="display shrink-0 rounded bg-blue/15 px-1 text-[10px] font-bold uppercase tracking-wider text-blue-bright no-underline"
                     >
                       {C.event.qualifiedTag}
                     </abbr>
@@ -416,7 +416,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
                     )}
                     title={C.common.ovr}
                   >
-                    {f.rating ?? "—"}
+                    {f.rating ?? "-"}
                   </span>
                 </>
               );
@@ -448,7 +448,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-4"><EventRewardsTable save={save} def={def} C={C} />
-      {isQualifier ? <Panel className="rise-in flex flex-1 flex-col p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="flex flex-1 flex-col justify-between gap-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed, save.world.nameBankVersion)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
+      {isQualifier ? <Panel className="rise-in flex flex-1 flex-col p-4 sm:p-5"><p className="kicker mb-3 text-blue-bright">{C.event.directSunday}</p><ul className="flex flex-1 flex-col justify-between gap-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed, save.world.nameBankVersion)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
       </div>
       </div>
 
@@ -1020,7 +1020,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               <p className="kicker">{C.event.matchCenter}</p>
               {nextOpponentRef ? (
                 <span className="flex items-center gap-2 text-sm text-sub">
-                  {C.event.yourMatch} —
+                  {C.event.yourMatch}
                   <OrgMark save={save} orgRef={nextOpponentRef} size="xs" />
                   <span className="display font-bold uppercase text-ink">
                     {t.teams[nextOpponentRef]?.name ?? ""}
@@ -1068,7 +1068,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               throughRound={throughRound}
               nextUpRef={nextOpponentRef}
             />
-          ) : <Panel className="p-4"><p className="kicker mb-3 text-[10px]">{C.event.fieldTitle}</p><ul className="space-y-1">{Object.values(t.teams).map(team => <li key={team.id}><EventTeamButton teamId={team.id} name={team.name} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"><OrgMark save={save} orgRef={team.id} size="sm" /><span className="min-w-0 flex-1 truncate text-xs text-ink">{team.name}</span><span className="font-mono text-xs text-sub">{Math.round(team.rating.total)}</span></EventTeamButton></li>)}</ul></Panel>}
+          ) : <Panel className="p-4 sm:p-5"><p className="kicker mb-3">{C.event.fieldTitle}</p><ul className="space-y-1">{Object.values(t.teams).map(team => <li key={team.id}><EventTeamButton teamId={team.id} name={team.name} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"><OrgMark save={save} orgRef={team.id} size="sm" /><span className="min-w-0 flex-1 truncate text-xs text-ink">{team.name}</span><span className="tabular-nums text-xs text-sub">{Math.round(team.rating.total)}</span></EventTeamButton></li>)}</ul></Panel>}
         </div>
       </div>
     </div>
@@ -1196,7 +1196,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           {isChamp && (def.tier === "major" || def.tier === "worlds") ? <MilestoneMoment kind={def.tier} title={def.tier === "worlds" ? C.launch.worldsChampion : C.launch.majorChampion} /> : null}
           <div className="flex items-center justify-center gap-2">
             <EventBrand name={def.name} size="sm" />
-            <p className="kicker !text-[11px]">{def.name}</p>
+            <p className="kicker">{def.name}</p>
             <TierChip tier={def.tier} />
           </div>
           <p
@@ -1220,57 +1220,57 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           {/* rewards — counted up (a qualifier pays no points: its record instead) */}
           <div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-2">
             <div className="rounded-lg border border-line bg-white/[0.04] p-3">
-              <p className="kicker text-[9px]">{C.event.digestPrize}</p>
+              <p className="kicker">{C.event.digestPrize}</p>
               <p className="display text-xl font-bold text-good sm:text-2xl">
                 <CountUp value={prize} reduced={reduced} format={(n) => formatMoney(n, { compact: true })} />
               </p>
               {playerShare > 0 ? (
-                <p className="mt-0.5 text-[10px] font-semibold text-sub">
+                <p className="mt-0.5 text-[11px] font-semibold text-sub">
                   {C.event.digestPlayerShare(formatMoney(playerShare, { compact: true }))}
                 </p>
               ) : null}
             </div>
             {isQualifier ? (
               <div className="rounded-lg border border-line bg-white/[0.04] p-3">
-                <p className="kicker text-[9px]">{C.event.swissRecord}</p>
+                <p className="kicker">{C.event.swissRecord}</p>
                 <p className="display text-xl font-bold text-cyan sm:text-2xl">
                   {T.record(userRecord.wins, userRecord.losses)}
                 </p>
               </div>
             ) : (
               <div className="rounded-lg border border-line bg-white/[0.04] p-3">
-                <p className="kicker text-[9px]">{C.event.digestPoints}</p>
+                <p className="kicker">{C.event.digestPoints}</p>
                 <p className="display text-xl font-bold text-cyan sm:text-2xl">
                   {points > 0 ? (
                     <>
                       +<CountUp value={points} reduced={reduced} />
                     </>
                   ) : (
-                    "—"
+                    "-"
                   )}
                 </p>
               </div>
             )}
             <div className="rounded-lg border border-line bg-white/[0.04] p-3">
-              <p className="kicker text-[9px]">{C.event.digestRep}</p>
+              <p className="kicker">{C.event.digestRep}</p>
               <p className="display text-xl font-bold text-orange-bright sm:text-2xl">
                 {rep > 0 ? (
                   <>
                     +<CountUp value={rep} reduced={reduced} />
                   </>
                 ) : (
-                  "—"
+                  "-"
                 )}
               </p>
               {underdogRep ? (
-                <p className="mt-0.5 text-[10px] font-semibold text-sub">{C.event.digestRepUnderdog}</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-sub">{C.event.digestRepUnderdog}</p>
               ) : null}
             </div>
           </div>
 
           {topScorer ? (
             <p className="mt-4 text-xs text-sub">
-              <span className="kicker mr-1.5 !text-[9px]">{C.event.digestTopScorer}</span>
+              <span className="kicker mr-1.5">{C.event.digestTopScorer}</span>
               <span className="font-semibold text-ink">
                 {C.event.scorerLine(topScorer.name, topScorer.goals)}
               </span>
@@ -1311,11 +1311,11 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           column takes every pixel the numbers do not (it was starved to ~3
           characters at 390 px, and cut on desktop while PLACEMENT had room);
           below sm the placement drops under the team name. */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
-        <p className="kicker mb-2.5 text-[10px]">{C.event.resultsDigest}</p>
+      <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "80ms" }}>
+        <p className="kicker mb-2.5">{C.event.resultsDigest}</p>
         <table className="w-full table-fixed text-left text-xs">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-faint">
+            <tr className="text-[11px] uppercase tracking-wider text-faint">
               <th className="hidden w-36 pb-2 font-semibold sm:table-cell" scope="col">
                 {C.event.digestPlacement}
               </th>
@@ -1375,22 +1375,22 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
                         {teamName}
                       </span>
                     </EventTeamButton>
-                    <span className={cx("mt-0.5 block truncate text-[10px] leading-tight sm:hidden", placementTone)}>
+                    <span className={cx("mt-0.5 block truncate text-[11px] leading-tight sm:hidden", placementTone)}>
                       {placementLabel}
                     </span>
                   </td>
                   {isQualifier ? (
                     <td className="display whitespace-nowrap py-1.5 text-center font-bold text-ink">
-                      {rec ? T.record(rec.wins, rec.losses) : "—"}
+                      {rec ? T.record(rec.wins, rec.losses) : "-"}
                     </td>
                   ) : null}
                   {showPoints ? (
                     <td className="display py-1.5 text-right font-bold text-cyan">
-                      {rowPoints > 0 ? rowPoints : "—"}
+                      {rowPoints > 0 ? rowPoints : "-"}
                     </td>
                   ) : null}
                   <td className="display py-1.5 text-right font-bold text-ink">
-                    {rowPrize > 0 ? formatMoney(rowPrize, { compact: true }) : "—"}
+                    {rowPrize > 0 ? formatMoney(rowPrize, { compact: true }) : "-"}
                   </td>
                 </tr>
               );

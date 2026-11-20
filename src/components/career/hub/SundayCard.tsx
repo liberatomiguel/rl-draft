@@ -66,7 +66,7 @@ function CrestStrip({
   if (refs.length === 0) return null;
   return (
     <div>
-      {label ? <p className="kicker mb-1.5 !text-[9px]">{label}</p> : null}
+      {label ? <p className="kicker mb-1.5">{label}</p> : null}
       <ul className="grid grid-cols-8 gap-1.5">
         {refs.map((ref) => (
           <li key={ref} className="relative flex justify-center" title={nameOfRef(save, ref)}>
@@ -81,7 +81,7 @@ function CrestStrip({
             {marked?.has(ref) ? (
               <span
                 aria-hidden
-                className="display absolute -right-0.5 -top-1 rounded-full bg-cyan px-1 text-[7px] font-bold leading-[11px] text-[#04121a]"
+                className="display absolute -right-0.5 -top-1 rounded-sm bg-cyan px-1 text-[7px] font-bold leading-[11px] text-[#04121a]"
               >
                 Q
               </span>
@@ -109,7 +109,7 @@ function SundayHeader({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <p className="kicker !text-[10px] text-orange-bright">
+        <p className="kicker text-orange-bright">
           {ahead.sundayDay === save.clock.day ? C.sunday.today : C.sunday.tomorrow} · {formatDateShort(C.dates, dateOfDay(save.clock.seasonIndex, ahead.sundayDay))}
         </p>
         <TierChip tier={ahead.def.tier} />
@@ -180,7 +180,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
   return (
     <div>
       <SundayHeader save={save} C={C} ahead={ahead} title={championship ? C.event.championshipSunday : def.name}>
-        {championship ? <p className="kicker mt-0.5 !text-[10px] text-sub">{def.name}</p> : null}
+        {championship ? <p className="kicker mt-0.5 text-sub">{def.name}</p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {championship && seed !== null ? (
             <Badge tone="orange">{C.sunday.seedLine(seed, recordText)}</Badge>
@@ -199,7 +199,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
       <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3">
         {championship && openerId ? (
           <div>
-            <p className="kicker mb-2 !text-[9px]">{C.sunday.openerLabel}</p>
+            <p className="kicker mb-2">{C.sunday.openerLabel}</p>
             {/* Phones: the user's side is the crest and the seed, so the opponent's name reads whole. */}
             <div className="flex items-center gap-2.5 sm:gap-3">
               <span className="flex shrink-0 items-center gap-2 sm:min-w-0 sm:flex-1 sm:shrink">
@@ -327,7 +327,7 @@ export function NowFollow({
   return (
     <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="kicker !text-[10px] text-blue-bright">{C.follow.kicker}</p>
+        <p className="kicker text-blue-bright">{C.follow.kicker}</p>
         <TierChip tier={follow.def.tier} />
         {follow.def.region ? <Badge className={REGION_BADGE[follow.def.region]}>{follow.def.region}</Badge> : null}
       </div>
@@ -338,7 +338,7 @@ export function NowFollow({
       {champion ? (
         <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-amber-400/40 bg-amber-400/[0.06] px-3 py-2">
           <TrophyIcon className="h-5 w-5 shrink-0 text-amber-300" />
-          <span className="kicker !text-[9px] text-amber-300">{C.follow.champion}</span>
+          <span className="kicker text-amber-300">{C.follow.champion}</span>
           <OrgMark save={save} orgRef={champion} size="xs" className="shrink-0" />
           <span className="min-w-0 truncate text-sm font-semibold text-ink">{championName}</span>
         </div>

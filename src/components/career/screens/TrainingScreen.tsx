@@ -58,7 +58,7 @@ import {
 } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { BoltIcon, ScaleIcon, ShieldIcon, TargetIcon, FlameIcon, StarCoachIcon, AlertIcon, BaseDotIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
+import { BoltIcon, ScaleIcon, ShieldIcon, TargetIcon, FlameIcon, StarCoachIcon, AlertIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Toggle } from "@/components/ui/Toggle";
@@ -126,35 +126,38 @@ export function TrainingScreen() {
   const cycleNo = Y.cycleOf(block.period.index + 1, block.period.count);
 
   const sessionChip = (
-    <span className={cx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold", sessionToday ? "bg-white/[0.03] text-sub" : "bg-white/5 text-faint")}>
+    <span className={cx("inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-semibold", sessionToday ? "bg-white/[0.03] text-sub" : "bg-white/5 text-faint")}>
       <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "bg-white/30" : "bg-white/20")} aria-hidden />
       {sessionToday && matchPrepWeek ? C.training.matchPrepWeek : sessionToday ? C.training.sessionToday : C.training.noSessionToday}
     </span>
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-3 py-5 sm:px-4">
-      <SectionTitle kicker={C.meta.title} title={C.training.title} right={<Badge tone="neutral">{formatDateShort(D, clock.date)}</Badge>} />
+    <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
+      <SectionTitle title={C.training.title} right={<Badge tone="neutral">{formatDateShort(D, clock.date)}</Badge>} />
 
       <ErrorBanner />
 
+      {/* The plan and what it does to the squad on the left; who plans it, the week's scrims and the report switch on the right. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
+      <div className="space-y-4 lg:col-span-2">
       {/* 1 — the cycle: a running plan, or the picker as the main action */}
       {block.running && block.cycle ? (
         <Panel data-tour="training-cycle" className="rise-in overflow-hidden p-0">
-          <div className={cx("flex items-center gap-3 border-b border-line px-4 py-3", tone.bg)}>
-            <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border bg-black/15", tone.ring, tone.text)}>
-              <ObjectiveIcon objective={objective} className="h-5 w-5" />
-            </span>
+          <div className="flex items-center gap-4 border-b border-line px-4 py-4 sm:px-5">
             <div className="min-w-0 flex-1">
-              <p className="kicker text-[10px] leading-snug">
+              <p className="text-xs text-sub">
                 {cycleNo} · {Y.running}
               </p>
-              <p className={cx("display truncate text-xl font-bold", tone.text)}>{objective ? Y.objectives[objective] : Y.by.base}</p>
-              <p className="truncate text-[11px] text-sub">{Y.by[block.author] ?? ""}</p>
+              <p className="display mt-1.5 flex items-center gap-2.5 truncate text-3xl font-bold uppercase leading-none text-ink">
+                <span className={cx("shrink-0", tone.text)}><ObjectiveIcon objective={objective} className="h-6 w-6" /></span>
+                {objective ? Y.objectives[objective] : Y.by.base}
+              </p>
+              <p className="mt-1.5 truncate text-xs text-sub">{Y.by[block.author] ?? ""}</p>
             </div>
             <CycleRing progress={block.cycle.progress} daysLeft={block.cycle.daysLeft} label={Y.daysLeft(block.cycle.daysLeft)} />
           </div>
-          <div className="space-y-3 px-4 py-3">
+          <div className="space-y-3.5 px-4 py-4 sm:px-5">
             <PackageChips pkg={pkg} C={C} />
             {block.promise ? <PromiseBar promise={block.promise} C={C} /> : null}
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
@@ -164,7 +167,7 @@ export function TrainingScreen() {
               <span className="flex flex-wrap items-center gap-1.5">
                 {sessionChip}
                 {trainingWeek ? (
-                  <span className="rounded-full bg-white/[0.03] px-2 py-0.5 text-sub">
+                  <span className="rounded-sm bg-white/[0.03] px-2 py-0.5 text-sub">
                     +{trainingWeekPct}% · {C.hub.trainingWeek}
                   </span>
                 ) : null}
@@ -219,22 +222,17 @@ export function TrainingScreen() {
         </Panel>
       ) : (
         <Panel data-tour="training-cycle" strong className="rise-in overflow-hidden p-0">
-          <div className="flex items-center gap-3 border-b border-line bg-white/[0.02] px-4 py-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-line-strong bg-black/25 text-faint">
-              <BaseDotIcon className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="kicker text-[10px] leading-snug">
-                {cycleNo} · {Y.daysLeft(block.period.daysLeft)}
-              </p>
-              <p className="display text-xl font-bold leading-tight text-ink">{Y.idle}</p>
-              <p className="text-[11px] leading-snug text-sub">{Y.idleLine}</p>
-            </div>
+          <div className="border-b border-line px-4 py-4 sm:px-5">
+            <p className="text-xs text-sub">
+              {cycleNo} · {Y.daysLeft(block.period.daysLeft)}
+            </p>
+            <p className="display mt-1.5 text-3xl font-bold uppercase leading-none text-ink">{Y.idle}</p>
+            <p className="mt-1.5 text-sm leading-snug text-sub">{Y.idleLine}</p>
           </div>
-          <div className="space-y-3 px-4 py-4">
+          <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
             <div>
-              <p className="display text-base font-bold text-ink">{Y.pickTitle}</p>
-              <p className="mt-0.5 flex items-start gap-1.5 text-[11px] text-sub">
+              <p className="card-title">{Y.pickTitle}</p>
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-sub">
                 {block.controller === "coach" || coachProfile ? (
                   <WhistleIcon className="mt-px h-3.5 w-3.5 shrink-0 text-sub" />
                 ) : (
@@ -260,29 +258,23 @@ export function TrainingScreen() {
         </Panel>
       )}
 
-      <Panel className="p-4 sm:p-5">
-        <h2 className="display text-lg font-bold uppercase tracking-wide text-ink">{C.training.effectsTitle}</h2>
-        <p className="mt-1 text-xs text-sub">{C.training.effectsHint}</p>
-        <p className="mt-1 text-xs leading-relaxed text-sub">{C.training.effectBaseline(SIMULATION.statBaseline)}</p>
-        <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          {effects.map((e) => {
-            const Icon = ATTRIBUTE_ICONS[e.key];
-            return (
-            <div key={e.key} className="rounded-xl border border-line bg-black/20 p-3">
-              <div className="flex items-baseline justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold text-ink"><span aria-hidden><Icon className="h-5 w-5 shrink-0 text-blue-bright" /></span>{t.STAT_LABELS[e.key]}</h3><span className="font-mono text-sm font-bold text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
-              <ProgressBar value={teamNow.stats[e.key] / 100} tone="blue" className="mt-2 h-1.5" label={t.STAT_LABELS[e.key]} />
-              <p className="mt-2 min-h-10 text-xs leading-relaxed text-sub">{C.training.effectDescription[e.key]}</p>
-              <p className={cx("mt-1 text-xs font-semibold", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>{e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)} · {C.training.effectWhen[e.when]}</p>
-            </div>
-          ); })}
+      {/* 3 — the squad's growth */}
+      <div className="pt-2">
+        <h2 className="card-title mb-3">{C.training.plan.squadGrowth}</h2>
+        <div data-tour="training-growth" className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {save.squad.map((p, i) => (
+            <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
+          ))}
         </div>
-      </Panel>
+      </div>
 
+      </div>
+      <div className="space-y-4">
       {/* 2 — the coach: he plans each cycle, or the hire link */}
-      <Panel data-tour="training-coach" className="rise-in p-4" style={{ animationDelay: "40ms" }}>
+      <Panel data-tour="training-coach" className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
         {coachProfile ? (
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-white/[0.02] text-sub">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center text-sub">
               <WhistleIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
@@ -291,38 +283,47 @@ export function TrainingScreen() {
           </div>
         ) : (
           <AppLink href="/career/market#coaches" className="flex min-h-11 items-center gap-3 text-[11px] font-semibold text-orange-bright hover:underline">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange/25 bg-orange/[0.05]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center">
               <WhistleIcon className="h-5 w-5" />
             </span>
             <span className="min-w-0">
-              {Y.noCoach} · {Y.hireCoach} →
+              {Y.noCoach} · {Y.hireCoach}
             </span>
           </AppLink>
         )}
-        <p className="mt-2 text-[10px] text-faint">
+        <p className="mt-2 text-[11px] text-faint">
           <AppLink href="/career/finances" className="underline-offset-4 hover:text-ink hover:underline">
             {C.training.facilityEffect(gearPct)}
           </AppLink>
         </p>
       </Panel>
 
-      <Panel className="p-4"><Toggle checked={showReports} onChange={(on) => setSettings("careerTrainingReports", on)} label={Y.report.showAutomatic} hint={Y.report.historyHint} /></Panel>
-
-      {/* 3 — the squad's growth */}
-      <div>
-        <p className="kicker mb-2 text-[10px]">{C.training.plan.squadGrowth}</p>
-        <div data-tour="training-growth" className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {save.squad.map((p, i) => (
-            <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
-          ))}
-        </div>
-      </div>
-
       {/* The current week's scrims, in one compact recap. */}
-      <Panel className="rise-in p-3" style={{ animationDelay: "220ms" }}>
+      <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "220ms" }}>
         <WeeklyScrimRecap save={save} C={C} />
       </Panel>
 
+
+      <Panel className="p-4 sm:p-5"><Toggle checked={showReports} onChange={(on) => setSettings("careerTrainingReports", on)} label={Y.report.showAutomatic} hint={Y.report.historyHint} /></Panel>
+      <Panel className="p-4 sm:p-5">
+        <div className="card-head"><h2 className="card-title">{C.training.effectsTitle}</h2></div>
+        <p className="mt-2 max-w-3xl text-sm leading-snug text-sub">{C.training.effectsHint} {C.training.effectBaseline(SIMULATION.statBaseline)}</p>
+        {/* A reference table, not six boxes: one ruled cell per attribute. */}
+        <div className="mt-4 grid grid-cols-1 gap-x-8 sm:max-lg:grid-cols-2">
+          {effects.map((e) => {
+            const Icon = ATTRIBUTE_ICONS[e.key];
+            return (
+            <div key={e.key} className="border-t border-line py-3.5">
+              <div className="flex items-baseline justify-between gap-2"><h3 className="display flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.03em] text-ink"><span aria-hidden><Icon className="h-4 w-4 shrink-0 text-sub" /></span>{t.STAT_LABELS[e.key]}</h3><span className="display text-xl font-bold leading-none tabular-nums text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
+              <ProgressBar value={teamNow.stats[e.key] / 100} tone="blue" className="mt-2 h-1.5" label={t.STAT_LABELS[e.key]} />
+              <p className="mt-2 min-h-10 text-xs leading-relaxed text-sub">{C.training.effectDescription[e.key]}</p>
+              <p className={cx("mt-1 text-xs font-semibold", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>{e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)} · {C.training.effectWhen[e.when]}</p>
+            </div>
+          ); })}
+        </div>
+      </Panel>
+      </div>
+      </div>
 
       <p className="rise-in text-center text-[11px] text-faint">{C.training.matchXpHint}</p>
     </div>
@@ -355,15 +356,15 @@ function GrowthCard({
   const weeklyDecline = eta.splitCapped ? 0 : proj.weeklyDecline;
   const offsets = (Object.entries(playerEffectOf(save, p.id).offsets) as [StatKey, number][]).filter(([, v]) => v > 0);
   return (
-    <Panel className="rise-in p-3.5" style={style}>
+    <Panel className="rise-in p-4 sm:p-5" style={style}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="display text-2xl font-bold leading-none text-ink" title={C.common.ovr}>
+          <span className="display text-4xl font-bold leading-none tabular-nums text-ink" title={C.common.ovr}>
             {Math.round(p.overall)}
           </span>
           <div className="min-w-0">
             <p className="display truncate font-bold leading-tight text-ink">{p.name}</p>
-            <p className="text-[10px] text-faint">
+            <p className="text-[11px] text-faint">
               {C.common.ovr} · {C.player.age(age)}
             </p>
           </div>
@@ -372,12 +373,12 @@ function GrowthCard({
       </div>
       <div className="mt-2 flex items-center gap-3">
         <ProgressBar value={growth} tone={phase === "prime" || eta.atPotential ? "gold" : "blue"} className="flex-1" label={C.player.growthRoom} />
-        <span className="shrink-0 text-[10px] text-faint">
+        <span className="shrink-0 text-[11px] text-faint">
           {C.player.growthRoom} · {C.player.potBand(band.min, band.max)}
         </span>
       </div>
-      <div className="mt-2 rounded-lg border border-line bg-black/20 px-2.5 py-2">
-        <div className="flex items-center justify-between gap-2 text-[11px]">
+      <div className="mt-3 border-t border-line pt-3">
+        <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-semibold text-ink">
             {eta.atPotential ? (eta.splitCapped ? C.training.etaAtPotential : C.training.etaAtPeak) : C.training.nextPoint(eta.nextPoint)}
           </span>
@@ -386,11 +387,11 @@ function GrowthCard({
           </span>
         </div>
         <ProgressBar value={eta.progress} tone={eta.atPotential || phase === "prime" ? "gold" : eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
-        <p className="mt-1 text-[10px] text-faint">
+        <p className="mt-1 text-[11px] text-faint">
           {C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}
           {offsets.map(([k, v]) => ` · ${C.training.perWeekOffset(v.toFixed(2), statLabels[k] ?? k)}`).join("")}
         </p>
-        {weeklyDecline > 0 ? <p className="mt-0.5 text-[10px] text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
+        {weeklyDecline > 0 ? <p className="mt-0.5 text-[11px] text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
       </div>
     </Panel>
   );

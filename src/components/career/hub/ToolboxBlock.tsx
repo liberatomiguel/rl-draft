@@ -19,7 +19,7 @@ import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Panel } from "@/components/ui/Panel";
+import { RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
 import { NewDot } from "@/components/ui/NewDot";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -133,45 +133,43 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   };
 
   return (
-    <Panel id="career-progression" className={cx("rise-in scroll-mt-24 p-4", hasNew && "!border-blue-bright/70 bg-blue/10")} style={{ animationDelay: "150ms" }}>
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <p className="kicker flex items-center gap-2 text-[10px]">{L.title}{hasNew ? <NewDot label={C.toolbox.newTag} /> : null}</p>
-        <span className="rounded-full border border-orange/35 bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange-bright">
-          {L.rep(rep)}
-        </span>
+    <div id="career-progression" className="scroll-mt-24">
+      <div className={RAIL_HEAD}>
+        <h3 className={cx(RAIL_TITLE, "flex items-center gap-2")}>{L.title}{hasNew ? <NewDot label={C.toolbox.newTag} /> : null}</h3>
+        <span className="text-xs font-semibold text-sub">{L.rep(rep)}</span>
       </div>
 
       {available.length > 0 ? (
-        <button type="button" onClick={() => openSheet(available.find((i) => fresh.has(toolboxNewKey(i.id)))?.id ?? available[0].id)} className="mb-3 flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-blue/50 bg-blue/15 px-3 py-2 text-left text-xs font-semibold text-ink hover:bg-blue/20">
-          <span>{hasNew ? C.toolbox.newTag + " · " : ""}{C.toolbox.available}: {available.map((i) => toolboxNameOf(C, i.id)).join(", ")}</span><span aria-hidden>→</span>
+        <button type="button" onClick={() => openSheet(available.find((i) => fresh.has(toolboxNewKey(i.id)))?.id ?? available[0].id)} className="mb-3 flex min-h-11 w-full items-center rounded-lg border border-blue-bright/60 px-3 py-2 text-left text-xs font-semibold text-ink transition-colors hover:bg-blue/10">
+          <span>{hasNew ? C.toolbox.newTag + " · " : ""}{C.toolbox.available}: {available.map((i) => toolboxNameOf(C, i.id)).join(", ")}</span>
         </button>
       ) : null}
 
-      <ul className="space-y-2">
+      <ul className="border-t border-line">
         {visibleRungs.map((rung) => {
           const item = items.find((i) => rungOfItem(i.id) === rung.id);
           const canBuy = item?.status === "buyable" && !toolboxRefusalOf(save, item.id) && !ended;
           const note = item ? noteOf(item) : null;
           return (
-            <li key={rung.id} className={cx("flex min-h-16 items-center gap-3 rounded-lg border px-3 py-2.5", rung.status === "locked" ? "border-orange/10 bg-orange/[0.015]" : "border-orange/25 bg-orange/[0.035]")}>
-              <RungIcon id={rung.id} className={cx("h-5 w-5 shrink-0", rung.status === "locked" ? "text-orange/45" : "text-orange-bright")} />
+            <li key={rung.id} className="flex min-h-14 items-center gap-3 border-b border-line py-2.5">
+              <RungIcon id={rung.id} className={cx("h-5 w-5 shrink-0", rung.status === "locked" ? "text-faint" : "text-ink")} />
               <div className="min-w-0 flex-1">
                 {item && rung.status !== "locked" ? (
                   <button type="button" onClick={() => openSheet(item.id)} className="text-left text-xs font-semibold text-ink hover:underline">{toolboxNameOf(C, item.id)}</button>
                 ) : <p className="text-xs font-semibold text-sub">{L.rung[rung.id]}</p>}
-                <p className="mt-0.5 text-[10px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
+                <p className="mt-0.5 text-[11px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
               </div>
-              {item?.status === "owned" ? <span className="text-[10px] font-semibold text-good">{C.finances.ownedLabel}</span> : null}
-              {item && rung.status !== "locked" && !["owned", "active", "used", "superseded"].includes(item.status) ? <Button size="sm" variant={canBuy ? "primary" : "ghost"} className={canBuy ? "shadow-none" : undefined} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
+              {item?.status === "owned" ? <span className="text-[11px] font-semibold text-good">{C.finances.ownedLabel}</span> : null}
+              {item && rung.status !== "locked" && !["owned", "active", "used", "superseded"].includes(item.status) ? <Button size="sm" variant={canBuy ? "secondary" : "ghost"} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
             </li>
           );
         })}
       </ul>
-      {active.length > 0 ? <p className="mt-2 text-[10px] text-faint">{active.map((i) => toolboxNameOf(C, i.id) + " · " + durationOf(C, i)).join(" / ")}</p> : null}
+      {active.length > 0 ? <p className="mt-2 text-[11px] text-faint">{active.map((i) => toolboxNameOf(C, i.id) + " · " + durationOf(C, i)).join(" / ")}</p> : null}
       {next ? (
-        <div className="mt-3 border-t border-line pt-3">
-          <div className="flex justify-between gap-2 text-[10px] text-faint"><span>{L.next}</span><span>{L.progress(rep, next.gate)}</span></div>
-          <p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-sub"><RungIcon id={next.id} className="h-4 w-4 shrink-0 text-orange-bright" />{L.rung[next.id]}</p>
+        <div className="mt-3">
+          <div className="flex justify-between gap-2 text-[11px] text-faint"><span>{L.next}</span><span>{L.progress(rep, next.gate)}</span></div>
+          <p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-sub"><RungIcon id={next.id} className="h-4 w-4 shrink-0 text-sub" />{L.rung[next.id]}</p>
           <ProgressBar value={save.reputation / next.gate} tone="orange" className="mt-2 h-1" label={L.next} />
         </div>
       ) : <p className="mt-3 text-xs text-sub">{L.top}</p>}
@@ -187,7 +185,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           {L.seeMore}
         </button>
         <AppLink href="/career/finances" className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-bright hover:underline">
-          {L.finances} →
+          {L.finances}
         </AppLink>
       </div>
 
@@ -224,7 +222,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         {sheet ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange/35 bg-orange/10 text-orange-bright">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center text-orange-bright">
                 <RungIcon id={rungOfItem(sheet.id)} className="h-6 w-6" />
               </span>
               <div className="min-w-0 flex-1">
@@ -239,7 +237,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
             </div>
 
             <div>
-              <p className="kicker mb-1.5 !text-[9px]">{C.toolbox.benefits}</p>
+              <p className="kicker mb-1.5">{C.toolbox.benefits}</p>
               <ul className="space-y-1.5 rounded-lg border border-line bg-white/[0.025] p-3">
                 {benefitsOf(C, sheet).map((b) => (
                   <li key={b} className="text-xs font-medium text-orange-bright">
@@ -270,6 +268,6 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           </div>
         ) : null}
       </Modal>
-    </Panel>
+    </div>
   );
 }

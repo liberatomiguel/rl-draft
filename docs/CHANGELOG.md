@@ -37,12 +37,53 @@ First slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 B, §10). No result, seed, sav
 ### Added
 - **`seriesSeed(careerSeed, eventStream, roundKey, teamAId, teamBId)`** and the stream id `ser:{eventStream}:{roundKey}:{teamAId}:{teamBId}` (`engine/career/seeds.ts`, the `matchTimeline` pattern): the user's own series RNG, so it can stop between games while the rest of the round plays at once. Tested, not wired in: taking the user's series off the round's RNG would reshuffle every other series of that round, so it lands with the slice that moves results.
 
-## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot`, not approved; integrated in 2.1.0-rc.1)
+## [Unreleased] — broadcast package pilot (branch `design/broadcast-pilot` plus its fifth pass `4b4ecd6`, not approved; integrated in 2.1.0-rc.1)
 
 Source: Miguel's request of 17/11 to remove the generated look from the game, audited against the anti-slop rulebook (github.com/miqdadbadjuber/anti-slop). Direction chosen by Miguel: RLCS broadcast package. Scope of this pilot: the shared primitives, the Home and the Classic Draft flow. Career screens only inherit the primitives.
 
+### Fifth pass (18/11, the deep review: "a identidade geral ficou boa", now every screen, the career first). Published to staging.
+Current state (decision #177). Where it disagrees with the passes below, this one wins. The branch now carries v2.0.33 (main was merged in; the pilot's decisions were renumbered #173 to #176).
+- **Career shell.** The top bar shows the club's name, the date, balance and reputation as figures in the display face. The tabs are set in display caps, grouped by subject (clock, team, books and table, desk) with a hairline between groups, Careers apart on the right; the current tab is marked by weight and the orange rule.
+- **Career HQ.** The day card is the stage: the date is the largest thing on the screen and holds the only filled button. The squad and training share one board with real titles and the team rating as its figure. The side rail is flat: race, finances, progression, season goal, inbox and transfers are sections on the floor with a hairline between them (they were boards inside boards). Progression rungs, the bootcamp and the week's scrims are hairline rows.
+- **No box inside a box, no icon in a tile.** Tinted tiles around list icons are gone (goals, training options, coach card, toolbox, weekend plan). The news lead story and two notices lost their coloured left bar.
+- **Market.** The reputation gate reads inside the card it locks, as its last line (it used to hang under the card as a chip).
+- **Training.** "Recommended" is a flat tag inside the option, not a badge riding the border.
+- **Founding wizard.** The recap figures no longer truncate ("QUARTER PI...").
+- **Shape and type.** No pill is left on a tag or counter (radius 3); career labels have an 11px floor (10px for the two tightest); figures are set in the text or display face with tabular numerals (mono stays for seeds, codes and hex values).
+- **Copy.** No em dash in any player-facing string, EN and PT (463 lines: career, base, pages, daily plans, components). Scores read `3-1`. Decorative arrows are off links and buttons; an arrow stays where it shows a direction (a transfer, a before and after).
+- The repeated "Road to Worlds" line under every career title is gone (it said what the tab bar already says).
+
+Second round the same day, on Miguel's review of the preview (not published yet):
+- **HQ rail: the boards are back.** A flat rail read as one undivided list. Each rail section is a board again with its title ruled off in a head row (`RAIL_SECTION`, `RAIL_HEAD`); nothing inside a board is boxed.
+- **News desk.** The feed has a masthead (the desk's mark and name, ruled off), the headline is a band across the feed in the display face with the crests large beside it and a button for its action, and the stories are ruled rows.
+- **Training rebuilt to the standard of the other tabs.** Two columns: the plan and the squad's growth on the left; coach, the week's scrims and the report switch in a rail. The plan's head is a large title, the steps are ruled rows with their number as a figure, the picked option is the orange hairline (it used to take one of three tones), "Recommended" sits under the option's text, the promise and Start close the board instead of sitting in a box. The attribute reference is a ruled table at the foot, not six boxes.
+- **Squad redistributed.** Starters, stability and contracts in the main column; bench and coach in a rail. The pitch decoration behind the starters (radial tint, stripes, centre circle) is gone; contracts are ruled rows.
+- **Home.** TODAY's rows share the height of the missions board. Challenges left the TODAY list for a board of their own at mode scale, with the count of cleared challenges as its figure. Road to Worlds reads like the draft card (title, one line, the action); BETA moved to the foot with its note. The scorebug leads with the season rating on paper, then the rank; "Presented by" with the 50/50 mark sits over it.
+
+Third round (19/11, Miguel's second review of the preview; where it disagrees with the second round, this one wins):
+- **One board standard.** `.card-title` is the title of every board in the career (same face, size and weight in a main column and in a rail), `.card-head` its ruled head, boards pad 16px (20px from `sm`), and columns and boards share one 16px gap (the HQ's columns stood 32px apart over boards 16px apart). Small labels lost their per-place sizes (10 and 11px overrides on `.kicker`).
+- **The desk.** The Inbox tab is as wide as the other tabs, with its title in the same place, and has three views: the inbox (list on the left, the open message on the right with sender, date, subject as a title, body and action), the News desk and the Transfer wire. The HQ's "Full feed" and "See all moves" open those views (`/career/news#news`, `#transfers`) instead of growing the HQ.
+- **News.** The partner's credit sits under its mark in the masthead; the open story is a blue band between two blue rules. A news flash (toast) is a small front page (blue masthead, headline in the display face, crests), unlike a notification; the full-screen breaking story has a blue masthead, a paper "Breaking" tag and a larger headline.
+- **Squad.** Bench and coach are back inside the starters' board; contracts moved to the right column.
+- **Training.** The attribute reference moved to the right column.
+- **Finances.** Loans and debt moved to the right column, above the ledger; the progression board's title lines up with its top.
+- **Home.** Challenges are a row of TODAY again (the board of the second round is gone); Road to Worlds has its title on one line, BETA under the text and its button on the draft card's line; the 50/50 mark is a step larger.
+- **Profile.** The season rating stands on the banner again, under the rank's name (no paper box).
+- **Header logo.** Two weights (a medium "Rocket", a bold "Draft"), set a little open.
+
+Fourth round (19/11, Miguel's third review; published to staging with it):
+- **Capitals sit in the middle of their line.** Industry's own metrics set its capitals 0.075em low, so titles in paper slabs, tags and buttons looked dropped. The font is declared with `ascent-override` 100.5% and `descent-override` 30.5% (same line height, caps centred); the title slab's padding is symmetric again.
+- **Every board in the career rules its title off** (`.card-head`): the HQ's squad and training, Squad, Training, Finances, Market, Calendar's season overview, Club, the honours table. A script listed each board title and converted the ones that open a padded board; the rest were done by hand.
+- **Loans are two boards** (bank loan, emergency loan), each with its own head. They were two boxes inside a board whose title repeated theirs.
+- **News.** A story's mark sits in a fixed column (rows) or a fixed square (headline), centred, so marks and text line up down the feed; rows are ruled with the strong hairline.
+- **Home.** The scorebug has the rank on the left and the rating on the right; a long rank name wraps to two lines and a rating of five digits or more steps down a size. Challenges are the first row of TODAY. Road to Worlds: lighter pitch text (Medium, which matches the draft card's weight on a light-on-blue field), BETA as a framed strip under the pitch. A partner card for 50/50 sits beside the Discord card: it is not a link until `SITE.partnerUrl` is set and says "Link soon" until then.
+- **Header logo.** Bold "Rocket", black "Draft", one size smaller.
+- **Profile.** The last rating change reads before the total.
+
+Not done in this pass: mobile (its own session), the event weekend and season review screens beyond the shared changes, the rhythm pass on career copy (staccato lines, aphorisms), the first-visit flow (tour, What's New and login calendar stacking). Calendar, Market, Standings, Club and Saves kept their distribution.
+
 ### Fourth pass (17/11, after Miguel's review: "too light now; bring back the solids and the title highlight, heavier weights, on to the career")
-Current state (decision #176). Where it disagrees with the passes below, this one wins.
+Superseded where the fifth pass says otherwise (decision #176).
 - **Home modes are solids again**, with a card finish: `.solid` (14px corner, the card's top sheen and diagonal texture, a slow tone shift) in `.solid-orange` (Classic Draft) and `.solid-blue` (Road to Worlds). Upright Bold titles; the action on each is inverted (dark on orange, paper on blue).
 - **Title highlight is back**: `.title-slab`, dark upright Bold on a paper slab with a slanted end and the orange chip. `SectionTitle` uses it, so every screen gets it.
 - **Weights up one step**: Bold for titles, buttons and key figures (`font-bold` resolves to Bold again), Demi for labels, tags and nav, text 400 / 600. Black and Ultra are still not loaded; synthetic bold is still off.

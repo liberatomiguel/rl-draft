@@ -106,7 +106,7 @@ export function PlayerCardTile({
           <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-2xl" : "text-3xl")}>
             {Math.round(overall)}
           </div>
-          <div className="display mt-1 text-[10px] font-semibold uppercase text-faint">{C.common.ovr}</div>
+          <div className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</div>
         </div>
       </div>
 

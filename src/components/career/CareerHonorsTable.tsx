@@ -38,8 +38,8 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
 
   return (
     <Panel id={compact ? undefined : "history"} className="scroll-mt-40 p-4 sm:p-5">
-      <h3 className="display text-lg uppercase leading-none text-ink">{C.club.honorsTitle}</h3>
-      {!compact ? <p className="mt-1.5 max-w-prose text-sm leading-snug text-sub">{C.club.honorsHint}</p> : null}
+      <div className="card-head"><h3 className="card-title">{C.club.honorsTitle}</h3></div>
+      {!compact ? <p className="max-w-prose text-sm leading-snug text-sub">{C.club.honorsHint}</p> : null}
 
       <div className={cx("mb-4 mt-4 grid gap-3", !compact && "sm:max-w-xl sm:grid-cols-2")}>
         <fieldset className="min-w-0">
@@ -70,9 +70,9 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line-strong">
-                <th scope="col" className="kicker w-10 px-2 pb-2 text-left !text-[11px]">#</th>
-                <th scope="col" className="kicker px-2 pb-2 text-left !text-[11px]">{mode === "orgs" ? C.club.honorsOrgs : C.club.honorsPlayers}</th>
-                <th scope="col" className="kicker px-2 pb-2 text-right !text-[11px]">{C.club.honorsTitles}</th>
+                <th scope="col" className="kicker w-10 px-2 pb-2 text-left">#</th>
+                <th scope="col" className="kicker px-2 pb-2 text-left">{mode === "orgs" ? C.club.honorsOrgs : C.club.honorsPlayers}</th>
+                <th scope="col" className="kicker px-2 pb-2 text-right">{C.club.honorsTitles}</th>
               </tr>
             </thead>
             <tbody>
@@ -108,7 +108,7 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
             <span className="display ml-2 text-xl font-bold leading-none text-ink">{ownTitles}</span>
           </div>
           <AppLink href="/career/standings#history" className="mt-3 block text-right text-xs font-semibold text-blue-bright hover:text-ink">
-            {C.club.honorsAll} →
+            {C.club.honorsAll}
           </AppLink>
         </>
       ) : !save.honorsComplete ? (

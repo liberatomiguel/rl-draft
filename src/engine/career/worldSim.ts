@@ -612,8 +612,8 @@ export function careerChemistry(fielded: SquadPlayer[]): {
     // ...heritage is the pair's base: together they never count past a full pair.
     if (C.bondPerSplitTogether > 0) conn = Math.max(0, Math.min(conn, C.maxRawPerPair - her));
     raw += conn + her;
-    if (conn > 0) items.push({ label: `${a.name} · ${b.name} — time together`, points: conn });
-    if (her > 0) items.push({ label: `${a.name} · ${b.name} — ${herLabel}`, points: her });
+    if (conn > 0) items.push({ label: `${a.name} · ${b.name}: time together`, points: conn });
+    if (her > 0) items.push({ label: `${a.name} · ${b.name}: ${herLabel}`, points: her });
   }
   // RTW-05 (rc.33): the pairs of a full lineup (3) — an empty seat's pairs count 0.
   const fullPairs = (LINEUP_SEATS * (LINEUP_SEATS - 1)) / 2;
@@ -631,7 +631,7 @@ export function careerChemistry(fielded: SquadPlayer[]): {
  */
 function emptySeatMemberView(): MemberView {
   return {
-    name: "—",
+    name: "-",
     overall: 0,
     stats: effectiveStats(0),
     lineupId: "empty-seat",

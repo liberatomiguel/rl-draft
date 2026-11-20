@@ -330,7 +330,7 @@ function UnlockPath({ challenge: ch, CH, compact }: { challenge: Challenge; CH: 
   const careerMarks = useProfileStore(s => s.careerMarks);
   const quizSolved = useProfileStore(s => s.quiz.solved);
   if (!ch.prereq && !ch.unlock) return null;
-  const row = (text: string, met: boolean, progress?: string) => <span className={cx("flex items-start gap-1.5 text-xs leading-relaxed", met ? "text-good" : "text-sub")}><span aria-hidden>{met ? "✓" : "○"}</span><span className="min-w-0 flex-1">{text}</span>{progress ? <span className="shrink-0 font-mono text-[10px]">{progress}</span> : null}</span>;
+  const row = (text: string, met: boolean, progress?: string) => <span className={cx("flex items-start gap-1.5 text-xs leading-relaxed", met ? "text-good" : "text-sub")}><span aria-hidden>{met ? "✓" : "○"}</span><span className="min-w-0 flex-1">{text}</span>{progress ? <span className="shrink-0 tabular-nums text-[10px]">{progress}</span> : null}</span>;
   return <div className={cx("mt-3 rounded-lg border border-line-strong bg-bg/80 p-3", !compact && "mb-4")}>
     <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-ink">{CH.unlockTitle}</p>
     <div className="space-y-1.5">

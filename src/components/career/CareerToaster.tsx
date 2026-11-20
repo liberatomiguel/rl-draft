@@ -84,20 +84,22 @@ function Toast({ toast }: { toast: CareerToast }) {
     const crests = news && save ? newsCrestsOf(news, save, content && "orgRefs" in content ? content.orgRefs as string[] : undefined) : [];
     return (
       <button type="button" data-career-notice="news" onClick={open}
-        className="pop-in pointer-events-auto w-full shrink-0 overflow-hidden rounded-xl border border-blue/35 bg-[#111827] text-left shadow-xl">
-        <span className="flex items-center justify-between gap-2 border-b border-blue/20 bg-blue/5 px-3.5 py-2">
-          <span className="display text-xs font-bold uppercase tracking-[0.12em] text-blue-bright"><BrandMark brand={partner} name={brand.name} /></span>
-          <span className="text-[9px] uppercase tracking-wider text-faint">{news ? formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week))) : C.hub.news}</span>
-        </span>
-        <span className="block border-l-2 border-blue/70 px-3.5 py-3">
-          <span className="flex items-start gap-3">
-            <span className="min-w-0 flex-1">
-              <span className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-bright">{news ? C.news.feed.subject[news.type] : C.hub.news}</span>
-              <span className="block text-sm font-semibold leading-snug text-ink line-clamp-3">{title}</span>
-            </span>
-            {save && crests.length ? <span className="flex shrink-0 -space-x-2">{crests.map(ref => <OrgMark key={ref} save={save} orgRef={ref} size="sm" />)}</span> : <BrandMark brand={partner} name={brand.name} />}
+        // A news flash is a small front page, not a notification: the desk's masthead in blue,
+        // the headline in the display face, the crests of who it is about.
+        className="pop-in pointer-events-auto w-full shrink-0 overflow-hidden rounded-xl border border-blue-bright/55 bg-surface-strong text-left shadow-xl">
+        <span className="flex items-center justify-between gap-2 bg-blue px-4 py-2 text-white">
+          <span className="flex items-center gap-2.5">
+            <BrandMark brand={partner} name={brand.name} small />
+            <span className="display text-xs font-bold uppercase tracking-[0.05em]">{news ? C.news.feed.subject[news.type] : C.hub.news}</span>
           </span>
-          {content?.body ? <span className="mt-2 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
+          <span className="text-[11px] text-white/80">{news ? formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week))) : null}</span>
+        </span>
+        <span className="flex items-center gap-4 px-4 py-3.5">
+          <span className="min-w-0 flex-1">
+            <span className="display block text-lg font-bold uppercase leading-[1.1] text-ink line-clamp-3">{title}</span>
+            {content?.body ? <span className="mt-1.5 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
+          </span>
+          {save && crests.length ? <span className="flex shrink-0 -space-x-2">{crests.map(ref => <OrgMark key={ref} save={save} orgRef={ref} size="md" />)}</span> : null}
         </span>
       </button>
     );
@@ -121,12 +123,12 @@ function Toast({ toast }: { toast: CareerToast }) {
         {toast.source === "achievement" ? <TrophyIcon className="h-5 w-5" /> : news ? <NewsTypeIcon type={news.type} className="h-5 w-5" /> : <MailIcon className="h-5 w-5" />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-faint">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-faint">
           {kicker}{from ? ` · ${from}` : ""}
         </span>
         <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-snug text-ink">{title}</span>
         {content?.body ? <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
-        <span className="mt-2 block text-[10px] font-semibold text-blue-bright">{toast.source === "mail" ? C.mail.title : toast.source === "achievement" ? C.achievements.unlocked : C.hub.news} →</span>
+        <span className="mt-2 block text-[11px] font-semibold text-blue-bright">{toast.source === "mail" ? C.mail.title : toast.source === "achievement" ? C.achievements.unlocked : C.hub.news} →</span>
       </span>
     </button>
   );

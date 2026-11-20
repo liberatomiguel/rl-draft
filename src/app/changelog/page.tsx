@@ -4,8 +4,8 @@ import { pageMetadata } from "@/lib/contentMeta";
 import { ChangelogView } from "./ChangelogView";
 
 export const metadata: Metadata = pageMetadata({
-  title: `Changelog — What's New in ${SITE.name}`,
-  description: `What's new in ${SITE.name} — release history and notable changes.`,
+  title: `Changelog: What's New in ${SITE.name}`,
+  description: `What's new in ${SITE.name}: release history and notable changes.`,
   path: "/changelog",
 });
 

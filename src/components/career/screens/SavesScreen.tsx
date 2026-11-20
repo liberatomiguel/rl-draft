@@ -73,7 +73,7 @@ export function SavesScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle kicker={C.meta.title} title={C.saves.title} className="mb-6" />
+      <SectionTitle title={C.saves.title} className="mb-6" />
 
       <div className="grid gap-4 md:grid-cols-3">
         {metas.map((meta, slot) =>
@@ -204,7 +204,7 @@ function SlotCard({
         <MetaRow label={copy.SETUP.difficulty} value={copy.DIFFICULTY_LABELS[meta.difficulty].label} />
         <MetaRow
           label={C.saves.lastPlayed}
-          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "—"}
+          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "-"}
         />
       </div>
 
@@ -244,7 +244,7 @@ function MetaRow({
 }) {
   return (
     <div className={cx("min-w-0", wide && "col-span-2")}>
-      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
+      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
       <p
         className={cx(
           "display truncate text-sm font-bold",

@@ -25,7 +25,7 @@ export function NewTag({ children, className }: { children: React.ReactNode; cla
   return (
     <span
       className={cx(
-        "display pointer-events-none inline-flex items-center rounded-full border border-good/60 bg-[#0c2418] px-1.5 py-px text-[9px] font-bold uppercase leading-none tracking-[0.14em] text-good shadow-[0_0_10px_rgba(74,222,128,0.35)]",
+        "display pointer-events-none inline-flex items-center rounded-sm border border-good/60 bg-[#0c2418] px-1.5 py-px text-[9px] font-bold uppercase leading-none tracking-[0.14em] text-good shadow-[0_0_10px_rgba(74,222,128,0.35)]",
         className,
       )}
     >

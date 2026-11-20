@@ -106,7 +106,7 @@ const HEAVY_TONE: Tone = { text: "text-orange-bright", ring: "border-orange/60",
 const FOCUS_TONE = OBJECTIVE_TONE.preparation;
 
 export function RecommendedTag({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cx("display pointer-events-none inline-flex items-center rounded-full border border-amber-300/35 bg-[#241e0d] px-1.5 py-px text-[9px] font-bold uppercase leading-none tracking-[0.12em] text-amber-300", className)}>{children}</span>;
+  return <span className={cx("display pointer-events-none inline-flex items-center rounded-sm bg-amber-300/10 px-1.5 py-0.5 text-[11px] font-medium uppercase leading-none tracking-[0.05em] text-amber-300", className)}>{children}</span>;
 }
 
 export function ObjectiveIcon({ objective, className }: { objective: TrainingObjective | null; className?: string }) {
@@ -168,7 +168,7 @@ function Chip({ icon, label, tone }: { icon: React.ReactNode; label: string; ton
   return (
     <span
       className={cx(
-        "inline-flex min-h-7 items-center gap-1.5 rounded-full border border-line bg-white/[0.04] px-2.5 text-[11px] font-semibold",
+        "inline-flex min-h-7 items-center gap-1.5 rounded-sm border border-line bg-white/[0.04] px-2.5 text-[11px] font-semibold",
         tone ?? "text-sub",
       )}
     >
@@ -186,9 +186,9 @@ export function WeeklyScrimRecap({ save, C, compact = false }: { save: CareerSav
   const won = entries.filter((entry) => entry.won).length;
   return (
     <section className={compact ? "border-t border-line pt-2.5" : ""}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="kicker flex items-center gap-1.5 text-[10px]"><SwordsIcon className="h-3.5 w-3.5 text-blue-bright" />{C.training.weekScrims}</p>
-        {entries.length ? <span className="font-mono text-[10px] text-sub">{C.training.cycle.record(won, entries.length - won)}</span> : null}
+      <div className={compact ? "flex items-center justify-between gap-2" : "card-head"}>
+        <h3 className="card-title">{C.training.weekScrims}</h3>
+        {entries.length ? <span className="tabular-nums text-[11px] text-sub">{C.training.cycle.record(won, entries.length - won)}</span> : null}
       </div>
       {entries.length === 0 ? <p className="mt-1.5 text-[11px] text-faint">{C.scrim.noResults}</p> : (
         <ul className="mt-2 space-y-1.5">
@@ -196,7 +196,7 @@ export function WeeklyScrimRecap({ save, C, compact = false }: { save: CareerSav
             <li key={entry.id} className="flex items-center gap-2 text-[11px]">
               <span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", entry.won ? "bg-good" : "bg-bad")} aria-hidden />
               <span className="min-w-0 truncate text-sub">{entry.won ? C.scrim.won(entry.oppName, entry.scoreA, entry.scoreB) : C.scrim.lost(entry.oppName, entry.scoreA, entry.scoreB)}</span>
-              {!compact ? <span className="ml-auto shrink-0 text-[10px] text-faint">{formatDateTiny(C.dates, dateOfDay(entry.seasonIndex, entry.day))}</span> : null}
+              {!compact ? <span className="ml-auto shrink-0 text-[11px] text-faint">{formatDateTiny(C.dates, dateOfDay(entry.seasonIndex, entry.day))}</span> : null}
             </li>
           ))}
         </ul>
@@ -223,13 +223,13 @@ export function PromiseBar({ promise, C, className }: { promise: NonNullable<Tra
     <div className={className}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className="text-[11px] text-sub">{Y.promiseTitle}</span>
-        <span className="font-mono text-[11px] tabular-nums text-ink">{Y.promiseLine(fmt2(promise.paid), fmt2(promise.total))}</span>
+        <span className="tabular-nums text-[11px] tabular-nums text-ink">{Y.promiseLine(fmt2(promise.paid), fmt2(promise.total))}</span>
       </div>
       <div className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/8" role="progressbar" aria-label={Y.promiseTitle} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(paidShare * 100)}>
         <span className="absolute inset-0 origin-left rounded-full bg-blue-bright/70 transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: 'scaleX(' + paidShare + ')' }} />
         {atEnd > 0.004 ? <span className="absolute inset-y-0 w-px bg-white/30" style={{ left: (completionStart * 100) + '%' }} aria-hidden /> : null}
       </div>
-      {atEnd > 0.004 ? <p className="mt-1.5 text-[10px] text-faint">{Y.onCompletion(fmt2(atEnd))}</p> : null}
+      {atEnd > 0.004 ? <p className="mt-1.5 text-[11px] text-faint">{Y.onCompletion(fmt2(atEnd))}</p> : null}
     </div>
   );
 }
@@ -264,23 +264,19 @@ function OptionTile({
       aria-checked={selected}
       onClick={onClick}
       className={cx(
-        "relative flex min-h-[4.5rem] w-full min-w-0 items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
-        selected ? `${tone.ring} ${tone.bg}` : "border-line bg-white/[0.02] hover:border-line-strong",
+        // The picked option is the orange hairline (DESIGN.md: state is a coloured hairline); the icon keeps its own tone.
+        "relative flex min-h-[4.75rem] w-full min-w-0 items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors",
+        selected ? "border-orange bg-orange/[0.06]" : "border-line hover:border-line-strong",
       )}
     >
-      <span
-        className={cx(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
-          selected ? `${tone.ring} ${tone.bg} ${tone.text}` : `border-line ${tone.text} opacity-70`,
-        )}
-      >
+      <span className={cx("mt-0.5 flex shrink-0 items-center justify-center", selected ? tone.text : "text-sub")}>
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cx("display block truncate text-xs font-bold uppercase tracking-[0.08em]", selected ? tone.text : "text-ink")}>{title}</span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-faint">{effect}</span>
+        <span className="display block truncate text-sm font-bold uppercase tracking-[0.03em] text-ink">{title}</span>
+        <span className="mt-1 block text-xs leading-snug text-sub">{effect}</span>
+        {recommended ? <RecommendedTag className="mt-2">{C.training.cycle.recommended}</RecommendedTag> : null}
       </span>
-      {recommended ? <RecommendedTag className="absolute -top-1.5 right-2">{C.training.cycle.recommended}</RecommendedTag> : null}
     </button>
   );
 }
@@ -314,15 +310,13 @@ function CompactTile({
       aria-checked={selected}
       onClick={onClick}
       className={cx(
-        "relative flex min-h-[4.25rem] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 pb-2 pt-3 text-center transition-colors",
-        selected ? `${tone.ring} ${tone.bg}` : "border-line bg-white/[0.02] hover:border-line-strong",
+        "relative flex min-h-[4.75rem] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-lg border px-1.5 py-2.5 text-center transition-colors",
+        selected ? "border-orange bg-orange/[0.06]" : "border-line hover:border-line-strong",
       )}
     >
-      <span className={cx("flex h-6 w-6 items-center justify-center", selected ? tone.text : "text-faint")}>{icon}</span>
-      <span className={cx("display block max-w-full break-words text-[11px] font-bold leading-tight", selected ? tone.text : "text-ink")}>{title}</span>
-      {recommended ? (
-        <RecommendedTag className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">{C.training.cycle.recommended}</RecommendedTag>
-      ) : null}
+      <span className={cx("flex h-6 w-6 items-center justify-center", selected ? tone.text : "text-sub")}>{icon}</span>
+      <span className="display block max-w-full break-words text-xs font-bold uppercase leading-tight tracking-[0.03em] text-ink">{title}</span>
+      {recommended ? <RecommendedTag className="whitespace-nowrap">{C.training.cycle.recommended}</RecommendedTag> : null}
     </button>
   );
 }
@@ -353,20 +347,16 @@ function Step({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <p className="mb-2 flex items-center gap-2">
-        <span
-          className={cx(
-            "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold",
-            done ? "bg-good/20 text-good" : "bg-blue/20 text-blue-bright",
-          )}
-        >
-          {done ? <CheckIcon className="h-3.5 w-3.5" /> : n}
+    // A step is a ruled row of the plan: its number set as a figure, its title, then the choices.
+    <section className="border-t border-line pt-4">
+      <p className="mb-3 flex items-baseline gap-2.5">
+        <span className={cx("display w-4 text-xl font-bold leading-none tabular-nums", done ? "text-good" : "text-faint")}>
+          {done ? <CheckIcon className="h-4 w-4" /> : n}
         </span>
-        <span className="text-faint">{icon}</span>
-        <span className="kicker text-[10px]">{title}</span>
+        <span className="card-title">{title}</span>
+        <span className="sr-only">{icon}</span>
       </p>
-      <div className={cx("grid gap-2 pt-2", cols)} role="radiogroup" aria-label={title}>
+      <div className={cx("grid gap-2", cols)} role="radiogroup" aria-label={title}>
         {children}
       </div>
     </section>
@@ -443,8 +433,8 @@ export function PlanPicker({
   return (
     <div className="mobile-training-plan space-y-4">
       {initial ? (
-        <div className={cx("rounded-xl border px-3 py-2.5", OBJECTIVE_TONE[initial.objective].ring, OBJECTIVE_TONE[initial.objective].bg)}>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sub">{Y.running}</p>
+        <div>
+          <p className="mb-2 text-xs font-semibold text-sub">{Y.running}</p>
           <PackageChips pkg={initial} C={C} />
         </div>
       ) : null}
@@ -537,14 +527,14 @@ export function PlanPicker({
       </div>
 
       {/* The CTA: what this cycle promises, what it risks, then Start. */}
-      <div className={cx("mobile-action-bar rounded-2xl border p-3", proj ? "border-line-strong bg-white/[0.03]" : "border-line bg-white/[0.02]")}>
+      <div className="mobile-action-bar border-t border-line pt-4">
         {proj ? (
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <p className="display text-lg font-bold text-ink">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>
-            <p className="text-[11px] text-sub">{Y.runsTo(endDate, days)}</p>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p className="display text-2xl font-bold uppercase leading-none text-ink">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>
+            <p className="text-xs text-sub">{Y.runsTo(endDate, days)}</p>
           </div>
         ) : (
-          <p className="text-xs text-faint">{Y.pickAll}</p>
+          <p className="text-sm text-sub">{Y.pickAll}</p>
         )}
         {proj ? (
           <p className={cx("mt-1 flex items-center gap-1.5 text-[11px]", proj.unavailabilityPts > 0 ? "text-orange-bright" : "text-faint")}>
@@ -552,8 +542,8 @@ export function PlanPicker({
             {proj.unavailabilityPts > 0 ? Y.riskLine(proj.unavailabilityPts.toFixed(1)) : Y.noRisk}
           </p>
         ) : null}
-        {proj && proj.fromDay > save.clock.day && !adjusting ? <p className="mt-1 text-[10px] text-faint">{Y.fromTomorrow}</p> : null}
-        {adjusting ? <p className="mt-1 text-[10px] text-faint">{Y.adjustHint}</p> : null}
+        {proj && proj.fromDay > save.clock.day && !adjusting ? <p className="mt-1 text-[11px] text-faint">{Y.fromTomorrow}</p> : null}
+        {adjusting ? <p className="mt-1 text-[11px] text-faint">{Y.adjustHint}</p> : null}
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             variant="primary"
@@ -615,16 +605,16 @@ export function CycleReportBody({
       {stats ? (
         <div className="grid grid-cols-3 gap-2">
           <Stat label={R.avg} value={fmt1(avg)} tone={avg >= 0 ? "text-good" : "text-bad"} />
-          <Stat label={R.best} value={best ? fmt1(best.after - best.before) : "—"} sub={best?.name} tone="text-good" />
+          <Stat label={R.best} value={best ? fmt1(best.after - best.before) : "-"} sub={best?.name} tone="text-good" />
           <Stat
             label={Y.legend.completion}
-            value={completion > 0.004 ? `+${fmt2(completion)}` : "—"}
+            value={completion > 0.004 ? `+${fmt2(completion)}` : "-"}
             tone="text-sub"
             icon={<TrophyIcon className="h-3.5 w-3.5" />}
           />
         </div>
       ) : null}
-      <p className="kicker text-[10px]">{R.players}</p>
+      <p className="kicker">{R.players}</p>
       <ul className="space-y-2">
         {summary.players.map((p) => {
           const gain = p.after - p.before;
@@ -636,9 +626,9 @@ export function CycleReportBody({
               <div className="flex items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span className="truncate text-sm font-bold text-ink">{p.name}</span>
-                  {p.joined ? <span className="shrink-0 rounded-full bg-blue/15 px-1.5 py-px text-[9px] font-semibold text-blue-bright">{R.joined}</span> : null}
+                  {p.joined ? <span className="shrink-0 rounded-sm bg-blue/15 px-1.5 py-px text-[10px] font-semibold text-blue-bright">{R.joined}</span> : null}
                 </span>
-                <span className="shrink-0 font-mono text-xs">
+                <span className="shrink-0 tabular-nums text-xs">
                   <span className="text-faint">{p.before.toFixed(1)}</span>
                   <span className="mx-1 text-faint">→</span>
                   <span className="font-bold text-ink">{p.after.toFixed(1)}</span>
@@ -655,18 +645,18 @@ export function CycleReportBody({
                     <span className="h-full bg-bad" style={{ width: `${Math.round((Math.abs(gain) / max) * 100)}%` }} />
                   )}
                 </span>
-                <span className={cx("w-12 shrink-0 text-right font-mono text-sm font-bold", gain >= 0 ? "text-good" : "text-bad")}>{fmt1(gain)}</span>
+                <span className={cx("w-12 shrink-0 text-right tabular-nums text-sm font-bold", gain >= 0 ? "text-good" : "text-bad")}>{fmt1(gain)}</span>
               </div>
               {attrs.length > 0 || end > 0.004 ? (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {end > 0.004 ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-sub">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-sub">
                       <TrophyIcon className="h-3 w-3" />
                       {R.completionShort(fmt2(end))}
                     </span>
                   ) : null}
                   {attrs.map(([k, v]) => (
-                    <span key={k} className="text-[10px] text-faint">
+                    <span key={k} className="text-[11px] text-faint">
                       {statLabels[k] ?? k} +{fmt2(v)}
                     </span>
                   ))}
@@ -676,13 +666,13 @@ export function CycleReportBody({
           );
         })}
       </ul>
-      <div className="flex flex-wrap gap-1.5 text-[10px]">
-        <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
+      <div className="flex flex-wrap gap-1.5 text-[11px]">
+        <span className="inline-flex min-h-7 items-center gap-1.5 rounded-sm border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
           <HandshakeIcon className="h-3.5 w-3.5 text-blue-bright" />
           {Y.chemistry} <span className="text-ink">{summary.chemStart}% → {summary.chemEnd}%</span>
         </span>
         {(Object.entries(summary.scrims) as [string, [number, number]][]).map(([lvl, [w, l]]) => (
-          <span key={lvl} className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
+          <span key={lvl} className="inline-flex min-h-7 items-center gap-1.5 rounded-sm border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
             <SwordsIcon className="h-3.5 w-3.5" />
             {Y.scrims} {Y.scrimChoices[lvl] ?? lvl} <span className="text-ink">{Y.record(w, l)}</span>
           </span>
@@ -699,8 +689,8 @@ function Stat({ label, value, sub, tone, icon }: { label: string; value: string;
         {icon}
         {value}
       </span>
-      <span className="mt-1 text-[9px] uppercase tracking-[0.1em] text-faint">{label}</span>
-      {sub ? <span className="max-w-full truncate text-[10px] font-semibold text-ink">{sub}</span> : null}
+      <span className="mt-1 text-[10px] uppercase tracking-[0.1em] text-faint">{label}</span>
+      {sub ? <span className="max-w-full truncate text-[11px] font-semibold text-ink">{sub}</span> : null}
     </div>
   );
 }
@@ -724,19 +714,19 @@ export function PeriodReport({
   return (
     <details className="group rounded-xl border border-line bg-white/[0.02]" open={open}>
       <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-3 py-2 [&::-webkit-details-marker]:hidden">
-        <span className={cx("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-black/20", tone.text)}>
+        <span className={cx("flex h-8 w-8 shrink-0 items-center justify-center", tone.text)}>
           <ObjectiveIcon objective={objective} className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-bold text-ink">
             {Y.report.title(summary.periodIndex + 1, seasonLabelFor(summary.seasonIndex))}
           </span>
-          <span className="block truncate text-[10px] text-faint">
+          <span className="block truncate text-[11px] text-faint">
             {objective ? Y.objectives[objective] : Y.by.base}
             {summary.package ? ` · ${focusLabel(C, summary.package.focus)}` : ""} · {Y.by[summary.author] ?? ""}
           </span>
         </span>
-        <span className={cx("shrink-0 font-mono text-sm font-bold", avg > 0 ? "text-good" : avg < 0 ? "text-bad" : "text-sub")}>{fmt1(avg)}</span>
+        <span className={cx("shrink-0 tabular-nums text-sm font-bold", avg > 0 ? "text-good" : avg < 0 ? "text-bad" : "text-sub")}>{fmt1(avg)}</span>
         <span className="shrink-0 text-faint transition-transform group-open:rotate-90" aria-hidden>
           ▸
         </span>
@@ -773,7 +763,7 @@ export function TrainingProposalCard({
   const proj = useMemo(() => projectTrainingPackage(save, decision.proposal, { unsupervised: false }), [save, decision]);
   return (
     <div className="rounded-xl border border-orange/40 bg-orange/[0.06] p-3">
-      <p className="kicker text-[10px] text-orange-bright">{Y.cycleOf(decision.periodIndex + 1, decision.periodCount)}</p>
+      <p className="kicker text-orange-bright">{Y.cycleOf(decision.periodIndex + 1, decision.periodCount)}</p>
       <p className="display mt-0.5 text-base font-bold text-ink">{P.proposalTitle(decision.coachName)}</p>
       <PackageChips pkg={decision.proposal} C={C} className="mt-2" />
       <p className="mt-2 text-sm font-semibold text-good">{Y.expectedGain(fmt2(proj.startersAvg))}</p>

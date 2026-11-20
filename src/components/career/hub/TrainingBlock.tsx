@@ -35,9 +35,9 @@ import {
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { AlertIcon, BaseDotIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
+import { AlertIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 
-import { Panel } from "@/components/ui/Panel";
+import { BLOCK_TITLE } from "@/components/career/hub/hubShared";
 
 export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; statLabels?: Record<string, string> }) {
   const router = useRouter();
@@ -66,30 +66,31 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
   ) : (
     <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-medium text-orange-bright hover:text-orange hover:underline">
       <WhistleIcon className="h-3.5 w-3.5" />
-      {Y.hireCoach} →
+      {Y.hireCoach}
     </AppLink>
   );
 
   return (
-    <Panel className="rise-in overflow-hidden p-0" style={{ animationDelay: "90ms" }}>
-      <div className="flex items-start justify-between gap-2 px-4 pt-3">
-        <p className="kicker min-w-0 text-[10px] leading-snug">
-          {C.hub.trainingTitle} · {Y.cycleOf(b.period.index + 1, b.period.count)}
-        </p>
+    <div>
+      <div className="flex min-h-12 items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <h3 className={BLOCK_TITLE}>{C.hub.trainingTitle}</h3>
+          <span className="text-xs text-faint">{Y.cycleOf(b.period.index + 1, b.period.count)}</span>
+        </div>
         <Badge tone={trainingDay ? "good" : eventToday ? "orange" : "neutral"} className="shrink-0 whitespace-nowrap">
           {status}
         </Badge>
       </div>
 
       {b.decision ? (
-        <div className="p-4">
+        <div className="p-4 sm:px-5">
           <TrainingProposalCard save={save} decision={b.decision} C={C} onApprove={approve} onAdjust={openTraining} onKeepBase={keepBase} />
         </div>
       ) : b.running && b.cycle ? (
-        <div className="space-y-3 px-4 pb-4 pt-2.5">
+        <div className="space-y-3 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
           {/* what is running */}
-          <div className={cx("flex items-center gap-3 rounded-xl border px-3 py-2.5", tone.ring, tone.bg)}>
-            <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/25", tone.text)}>
+          <div className="flex items-center gap-3">
+            <span className={cx("shrink-0", tone.text)}>
               <ObjectiveIcon objective={objective} className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
@@ -123,21 +124,16 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
 
           {running ? (
             <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={openTraining}>
-              {Y.adjust} →
+              {Y.adjust}
             </Button>
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3 px-4 pb-4 pt-2.5">
+        <div className="space-y-3 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
           {/* nothing running: the nudge (never a hold) */}
-          <div className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-white/[0.02] px-3 py-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/25 text-faint">
-              <BaseDotIcon className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="display text-base font-bold leading-tight text-ink">{Y.idle}</p>
-              <p className="text-[11px] leading-snug text-sub">{Y.idleLine}</p>
-            </div>
+          <div>
+            <p className="text-sm font-semibold leading-tight text-ink">{Y.idle}</p>
+            <p className="mt-0.5 text-xs leading-snug text-sub">{Y.idleLine}</p>
           </div>
           {b.recommended ? (
             <div className="space-y-1.5">
@@ -154,12 +150,12 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
             {coachLine}
           </div>
           {running ? (
-            <Button variant="primary" size="md" className="min-h-11 w-full sm:w-auto" onClick={openTraining}>
-              {Y.choosePlan} →
+            <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={openTraining}>
+              {Y.choosePlan}
             </Button>
           ) : null}
         </div>
       )}
-    </Panel>
+    </div>
   );
 }

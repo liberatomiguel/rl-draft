@@ -24,7 +24,7 @@ export function PhaseChip({ phase, className }: { phase: PhaseLabel; className?:
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded border px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+        "inline-flex items-center gap-1 rounded border px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em]",
         cls,
         className,
       )}

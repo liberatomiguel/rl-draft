@@ -7,7 +7,7 @@ import { breadcrumbJsonLd, howToJsonLd } from "@/lib/jsonld";
 import { HowToPlayView } from "./HowToPlayView";
 
 export const metadata: Metadata = pageMetadata({
-  title: `How to Play ${SITE.name} — RLCS Draft Rules & Chemistry`,
+  title: `How to Play ${SITE.name}: RLCS Draft Rules & Chemistry`,
   description: `Learn how to play ${SITE.name}: draft a roster from iconic RLCS lineups, build team chemistry, and survive an RLCS-style tournament bracket. Rules, chemistry and difficulty modes explained.`,
   path: "/how-to-play",
 });
