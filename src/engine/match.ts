@@ -8,10 +8,12 @@
  * wins the series. Overall remains the dominant factor — see tests.
  */
 
-import { DIFFICULTY, SIMULATION as SIM } from "@/config/balance";
+import { CAREER_MATCHDAY, DIFFICULTY, SIMULATION as SIM } from "@/config/balance";
 import { specialCardById } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
+import { styleMatchupBonus } from "./career/styles";
+import { traitBounce, traitGameEffects } from "./career/traits";
 import type {
   Difficulty,
   GameResult,
@@ -59,6 +61,8 @@ function dampenIfNegative(
 interface GameSideResult {
   score: number;
   notes: string[];
+  /** v2.1 Matchday: extra score in the overtime roll (decisive trait). */
+  overtimeBonus: number;
 }
 
 function gameSide(
@@ -66,7 +70,7 @@ function gameSide(
   opponent: TournamentTeam,
   effects: EffectTotals,
   seriesForm: number,
-  ctx: { deciding: boolean; stage: "swiss" | "playoff"; difficulty: Difficulty },
+  ctx: { deciding: boolean; stage: "swiss" | "playoff"; difficulty: Difficulty; gameIndex: number },
   rng: Rng,
 ): GameSideResult {
   const notes: string[] = [];
@@ -75,9 +79,22 @@ function gameSide(
   // every Draft team reads its difficulty profile, as always.
   const [rollMin, rollMax] = team.rollRange ?? (team.isUser ? profile.userRollRange : profile.aiRollRange);
 
-  const roll = dampenIfNegative(rng.roll(rollMin, rollMax), team, effects);
+  // v2.1 Matchday: only a side carrying style / traits reads them (career,
+  // FEATURES.matchdayStyles); every other side takes the old path untouched.
+  const matchday = team.style !== undefined || team.traits !== undefined;
+  const traitFx = matchday ? traitGameEffects(team, ctx) : null;
+  let rawRoll = rng.roll(rollMin, rollMax);
+  if (traitFx && traitFx.rollScale !== 1) {
+    const centre = (rollMin + rollMax) / 2;
+    rawRoll = centre + (rawRoll - centre) * traitFx.rollScale;
+  }
+  const roll = dampenIfNegative(rawRoll, team, effects);
 
   let score = team.rating.total + seriesForm + roll;
+  if (traitFx) {
+    const cap = CAREER_MATCHDAY.combinedCap;
+    score += clamp(styleMatchupBonus(team, opponent) + traitFx.shift, -cap, cap);
+  }
 
   // v2.0: offense/defense weigh on every game (they used to be cosmetic).
   score += SIM.offenseWeight * norm(team.stats.offense) + SIM.defenseWeight * norm(team.stats.defense);
@@ -112,7 +129,7 @@ function gameSide(
     notes.push("upset_factor");
   }
 
-  return { score, notes };
+  return { score, notes, overtimeBonus: traitFx ? traitFx.overtime : 0 };
 }
 
 /** Split `total` goals among `n` players. Deterministic and WITHOUT consuming the
@@ -251,20 +268,32 @@ export function playNextGame(
   const careerScoreline = teamA.careerScoreline === true || teamB.careerScoreline === true;
 
   const deciding = prevA === target - 1 && prevB === target - 1;
-  const ctx = { deciding, stage: options.stage, difficulty: options.difficulty };
+  const ctx = { deciding, stage: options.stage, difficulty: options.difficulty, gameIndex: state.games.length + 1 };
 
   const a = gameSide(teamA, teamB, effectsA, state.formA, ctx, rng);
   const b = gameSide(teamB, teamA, effectsB, state.formB, ctx, rng);
-  if (state.lastWinner === "a") b.score += SIM.momentumBounce;
-  else if (state.lastWinner === "b") a.score += SIM.momentumBounce;
+  if (state.lastWinner !== null) {
+    // v2.1 Matchday: behaviour traits bend the bounce (traitBounce returns the
+    // base untouched when neither side carries traits).
+    const loserIsA = state.lastWinner === "b";
+    const prev = state.games[state.games.length - 1];
+    const bounce = traitBounce(
+      SIM.momentumBounce,
+      loserIsA ? teamA : teamB,
+      loserIsA ? teamB : teamA,
+      prev?.overtime === true,
+    );
+    if (loserIsA) a.score += bounce;
+    else b.score += bounce;
+  }
 
   let overtime = false;
   let aWins: boolean;
   const gap = a.score - b.score;
   if (Math.abs(gap) < SIM.overtimeThreshold) {
     overtime = true;
-    const otA = a.score + SIM.overtimeClutchWeight * norm(teamA.stats.clutch) + rng.roll(-1, 1);
-    const otB = b.score + SIM.overtimeClutchWeight * norm(teamB.stats.clutch) + rng.roll(-1, 1);
+    const otA = a.score + SIM.overtimeClutchWeight * norm(teamA.stats.clutch) + rng.roll(-1, 1) + a.overtimeBonus;
+    const otB = b.score + SIM.overtimeClutchWeight * norm(teamB.stats.clutch) + rng.roll(-1, 1) + b.overtimeBonus;
     aWins = otA >= otB;
   } else {
     aWins = gap > 0;

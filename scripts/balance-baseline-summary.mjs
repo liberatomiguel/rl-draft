@@ -8,7 +8,6 @@ const load = p => files.filter(f => f.startsWith(p)).flatMap(f => JSON.parse(rea
 const pace = load("pace"), end = load("end");
 const med = xs => { xs = xs.filter(Number.isFinite).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : null; };
 const f = (xs, n) => xs.length ? `${med(xs)} [${xs.length}/${n}]` : `— [0/${n}]`;
-const first = (c, tier, title) => c.events.find(e => e.tier === tier && (!title || e.placement === "champion"));
 console.log(`pace careers ${pace.length}, endgame careers ${end.length}, softlock flagged ${pace.filter(c => c.softlock).length + end.filter(c => c.softlock).length}`);
 console.log("\n## Career-real series win rate by gap (user - opponent), pacing dumps\n| diff | bucket | won | lost | win % |\n|---|---|--:|--:|--:|");
 for (const diff of ["normal", "hard"]) {

@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Matchday traits (MATCHDAY-SPEC §5) > derives the same traits from the same key, overall and archetype 1`] = `
+[
+  [],
+  [],
+  [],
+  [],
+  [
+    "hotHeaded",
+    "consistent",
+  ],
+  [
+    "decisive",
+  ],
+]
+`;
