@@ -18,6 +18,7 @@
  *   news:{seasonIndex}:{week}                           news template/flavor picks
  *   gen:{what}:{key}                                    entity generation (fillers, rookies, offers)
  *   create                                              career-creation draws
+ *   ser:{eventStream}:{roundKey}:{teamAId}:{teamBId}    the user's own series (Matchday, v2.1)
  *
  * Only the user's ACTIVE event ever persists a mid-stream RNG cursor
  * (ActiveEventState.rngState — the runStore resume trick); every other stream
@@ -53,7 +54,34 @@ export const streams = {
   news: (seasonIndex: number, week: number) => `news:${seasonIndex}:${week}`,
   gen: (what: string, key: string) => `gen:${what}:${key}`,
   create: () => "create",
+  series: (eventStream: string, roundKey: string, teamAId: string, teamBId: string) =>
+    `ser:${eventStream}:${roundKey}:${teamAId}:${teamBId}`,
 } as const;
+
+/**
+ * Seed of the user's OWN series RNG (Matchday, docs/MATCHDAY-SPEC.md §3 B).
+ *
+ * `eventStream` is the event's stream id (`streams.event(...)` /
+ * `streams.worlds(...)`), `roundKey` the round's position in it
+ * (eventPlayback's RoundRef.key, e.g. "sw:2" / "po:0"), as `matchTimeline`
+ * uses. A team plays once per round, so round + both teams pin the series.
+ * Team order matters (the engine draws side A first): pass them in the same
+ * order as `startSeries`.
+ *
+ * Its own stream means the user's series can stop between games while the
+ * rest of the round is simulated at once on the round's RNG. NOT wired in yet
+ * (slice 1): taking the user's series off the round RNG would reshuffle every
+ * other series of that round, so it lands with the slice that moves results.
+ */
+export function seriesSeed(
+  careerSeed: number,
+  eventStream: string,
+  roundKey: string,
+  teamAId: string,
+  teamBId: string,
+): number {
+  return deriveSeed(careerSeed, streams.series(eventStream, roundKey, teamAId, teamBId));
+}
 
 /**
  * Deterministic 0..1 float from a stream id — for per-entity derived values

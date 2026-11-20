@@ -3,6 +3,7 @@
 > Updated: **2026-11-19**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
 > (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
+> Etapa 1 progress (read this, not the code): ETAPA-1-STATUS.md.
 > Proposal of 19/11 (player survey + competitors; reorders that roadmap, not
 > approved): PLANO-PROXIMO-NIVEL-2026-11-19.md; competitor study:
 > CONCORRENTES-2026-11-19.md.

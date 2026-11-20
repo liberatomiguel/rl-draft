@@ -10,6 +10,16 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.1] — 2026-11-20 · Matchday slice 1: the series in steps (engine only, not released)
+
+First slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 B, §10). No result, seed, save, balance number, string or screen changes; `package.json` and `SITE.version` stay 2.0.35 until v2.1 ships. Miguel's decisions of 20/11: ROAD-TO-WORLDS-DECISIONS R137.
+
+### Changed
+- **`simulateSeries` is a loop over three steps** (`engine/match.ts`): `startSeries` (draws both series-form rolls), `playNextGame` (one game, returns a new state, never mutates the old one) and `finishSeries` (the result, with the comeback note; draws nothing), plus `isSeriesOver`. The series in progress is a plain-JSON `SeriesState` (team ids, options, forms, wins, last winner, deficits, games), so the career can persist it between games in slice 3. The RNG is consumed byte for byte as before: `match.steps.test.ts` folds 6,000 varied series (every best-of, stage, difficulty, special effect, roll range and scoreline curve) and the cursor after each into a digest taken on the v2.0.35 engine, for both `simulateSeries` and a hand-driven loop with a JSON save-and-reload between games. `regression.golden.test.ts` and `balance.test.ts` pass untouched.
+
+### Added
+- **`seriesSeed(careerSeed, eventStream, roundKey, teamAId, teamBId)`** and the stream id `ser:{eventStream}:{roundKey}:{teamAId}:{teamBId}` (`engine/career/seeds.ts`, the `matchTimeline` pattern): the user's own series RNG, so it can stop between games while the rest of the round plays at once. Tested, not wired in: taking the user's series off the round's RNG would reshuffle every other series of that round, so it lands with the slice that moves results.
+
 ## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
 
 ### Changed
