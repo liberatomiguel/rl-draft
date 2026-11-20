@@ -256,7 +256,7 @@ describe("the catalogue is enforced where events are sent", () => {
   });
 
   it("every event this module sends on its own matches the catalogue", async () => {
-    const { a, sink } = await live({ players: "800" });
+    const { a, sink } = await live({ players: "360" });
     a.trackOnboardingStep("draft_started");
     for (let i = 0; i < 40; i++) a.trackEvent("special_discovered", card(i));
     a.noteCareerAdvance("day", 9000);
@@ -421,6 +421,41 @@ describe("pageviews: once per route per session", () => {
     expect(names(sink.calls)[0]).toBe("session_started");
   });
 
+  it("the career's inner screens send no $pageview; the last one rides on the next session_started", async () => {
+    const { a, sink } = await live();
+    for (const path of ["/career", "/career/market", "/career/squad", "/career/event", "/career/new", "/career/saves"]) {
+      go(path);
+      a.notePageview();
+    }
+    expect(named(sink.calls, "$pageview").map((c) => c.props?.$pathname ?? null)).toHaveLength(3);
+    expect(own(named(sink.calls, "session_started")[0]).lastCareerTab).toBeNull();
+    go("/career/finances");
+    a.notePageview();
+    vi.setSystemTime(new Date(START.getTime() + 45 * MINUTE));
+    go("/play");
+    a.notePageview();
+    const sessions = named(sink.calls, "session_started");
+    expect(sessions).toHaveLength(2);
+    expect(own(sessions[1]).lastCareerTab).toBe("finances");
+  });
+
+  it("a refused career action is sent once per session and reason, with its screen", async () => {
+    const { a, sink } = await live();
+    go("/career/market");
+    a.notePageview();
+    a.trackCareerRefusal("c1", "funds");
+    a.trackCareerRefusal("c1", "funds");
+    a.trackCareerRefusal("c1", "free text with spaces");
+    const refused = named(sink.calls, "career_action_refused").map(own);
+    expect(refused).toEqual([
+      { careerId: "c1", actionId: "c1:refused:funds:1", reason: "funds", screen: "market" },
+      { careerId: "c1", actionId: "c1:refused:other:1", reason: "other", screen: "market" },
+    ]);
+    vi.setSystemTime(new Date(START.getTime() + 45 * MINUTE));
+    a.trackCareerRefusal("c1", "funds");
+    expect(named(sink.calls, "career_action_refused")).toHaveLength(3);
+  });
+
   it("a new session counts its routes again", async () => {
     const { a, sink } = await live();
     go("/play");
@@ -517,7 +552,7 @@ describe("screen errors", () => {
 
 describe("the budget guard, as wired in", () => {
   it("below the first threshold everything is sent, with weight 1", async () => {
-    const { a, sink } = await live({ players: "500" });
+    const { a, sink } = await live({ players: "200" });
     for (let i = 0; i < 120; i++) a.trackEvent("special_discovered", card(i));
     const sent = named(sink.calls, "special_discovered");
     expect(sent).toHaveLength(120);
@@ -526,13 +561,13 @@ describe("the budget guard, as wired in", () => {
   });
 
   it("above it, the device's daily cap thins standard events, the weights still add up, and the cap is noted once", async () => {
-    const { a, sink } = await live({ players: "800" });
+    const { a, sink } = await live({ players: "360" });
     let draws = 0;
-    vi.spyOn(Math, "random").mockImplementation(() => (draws++ % 4) / 4); // exactly 1 in 4 passes
-    for (let i = 0; i < 110; i++) a.trackEvent("special_discovered", card(i));
+    vi.spyOn(Math, "random").mockImplementation(() => (draws++ % 8) / 8); // exactly 1 in 8 passes
+    for (let i = 0; i < 100; i++) a.trackEvent("special_discovered", card(i));
     const sent = named(sink.calls, "special_discovered");
-    expect(sent).toHaveLength(30 + 20); // 30 in full, then 1 in 4 of the other 80
-    expect(sent.reduce((total, c) => total + Number(c.props?.sampleWeight), 0)).toBe(110);
+    expect(sent).toHaveLength(20 + 10); // 20 in full, then 1 in 8 of the other 80
+    expect(sent.reduce((total, c) => total + Number(c.props?.sampleWeight), 0)).toBe(100);
     expect(named(sink.calls, "quality_event_cap").map(own)).toEqual([{ kind: "cap", level: 1 }]);
     // Critical events are never capped.
     a.trackEvent("rank_up", { rankId: "gold", rankIndex: 3, xp: 900 });
@@ -540,7 +575,7 @@ describe("the budget guard, as wired in", () => {
   });
 
   it("the cap is per UTC day", async () => {
-    const { a, sink } = await live({ players: "800" });
+    const { a, sink } = await live({ players: "360" });
     for (let i = 0; i < 40; i++) a.trackEvent("special_discovered", card(i));
     vi.setSystemTime(new Date(START.getTime() + 24 * 60 * MINUTE));
     for (let i = 40; i < 60; i++) a.trackEvent("special_discovered", card(i));
@@ -551,15 +586,28 @@ describe("the budget guard, as wired in", () => {
   it("the budget file overrides the build's player count (and a broken file changes nothing)", async () => {
     const { a, sink } = await live();
     a.setAnalyticsBudget("garbage");
-    a.setAnalyticsBudget({ playersPerDay: 800 });
+    a.setAnalyticsBudget({ playersPerDay: 360 });
     for (let i = 0; i < 40; i++) a.trackEvent("special_discovered", card(i));
     expect(named(sink.calls, "special_discovered").length).toBeLessThan(40);
   });
 
   it("the circuit breaker is always on: a runaway loop stops at the daily ceiling, noted once", async () => {
     const { a, sink } = await live();
-    for (let i = 0; i < 700; i++) a.trackEvent("career_milestone", { careerId: "c", actionId: `loop:${i}`, seasonIndex: 0, kind: "backer" });
-    expect(game(sink.calls).filter((c) => c.name === "career_milestone").length).toBeLessThanOrEqual(400);
+    for (let i = 0; i < 700; i++) a.trackEvent("rank_up", { rankId: "gold", rankIndex: 3, xp: i });
+    expect(game(sink.calls).filter((c) => c.name === "rank_up").length).toBeLessThanOrEqual(400);
     expect(named(sink.calls, "quality_event_cap").map(own)).toEqual([{ kind: "breaker", level: 0 }]);
+  });
+
+  it("essential career events pass the breaker and stop only at their own, higher ceiling", async () => {
+    const { a, sink } = await live();
+    for (let i = 0; i < 450; i++) a.trackEvent("rank_up", { rankId: "gold", rankIndex: 3, xp: i });
+    for (let i = 0; i < 1600; i++) a.trackEvent("career_milestone", { careerId: "c", actionId: `loop:${i}`, seasonIndex: 0, kind: "backer" });
+    const milestones = named(sink.calls, "career_milestone").length;
+    expect(milestones).toBeGreaterThan(1000);
+    expect(milestones).toBeLessThanOrEqual(1500);
+    expect(named(sink.calls, "quality_event_cap").map(own)).toEqual([
+      { kind: "breaker", level: 0 },
+      { kind: "ceiling", level: 0 },
+    ]);
   });
 });

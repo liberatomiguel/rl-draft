@@ -6,9 +6,11 @@
 import { describe, expect, it } from "vitest";
 import {
   budgetLevelOf,
+  careerBucketOf,
   decideBudget,
   DEFAULT_BREAKER_PER_DAY,
   DEFAULT_BUDGET_LEVELS,
+  DEFAULT_ESSENTIAL_PER_DAY,
   defaultBudget,
   freshBudgetDay,
   parseBudgetConfig,
@@ -39,10 +41,16 @@ function play(config: BudgetConfig, count: number, bucket = 0, name = "run_compl
 }
 
 describe("the level ladder", () => {
-  it("level 0 holds below 700 players a day; the ladder steps at 700 / 1,000 / 1,400 / 2,500", () => {
-    expect([0, 100, 500, 699].map((n) => budgetLevelOf(at(n)).index)).toEqual([0, 0, 0, 0]);
-    expect([700, 999, 1000, 1399, 1400, 2499, 2500, 9000].map((n) => budgetLevelOf(at(n)).index)).toEqual([1, 1, 2, 2, 3, 3, 4, 4]);
+  it("level 0 holds below 300 players a day; the ladder steps at 300 / 370 / 490 / 670 / 950 / 1,400", () => {
+    expect([0, 100, 299].map((n) => budgetLevelOf(at(n)).index)).toEqual([0, 0, 0]);
+    expect([300, 369, 370, 489, 490, 669, 670, 949, 950, 1399, 1400, 9000].map((n) => budgetLevelOf(at(n)).index)).toEqual([
+      1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
+    ]);
     expect(DEFAULT_BUDGET_LEVELS[0]).toMatchObject({ dailyCap: null, deviceRate: 1 });
+    // Career sampling only on the growth levels, and it only ever goes down.
+    const rates = DEFAULT_BUDGET_LEVELS.map((l) => l.careerRate ?? 1);
+    expect(rates.slice(0, 2)).toEqual([1, 1]);
+    for (let i = 1; i < rates.length; i++) expect(rates[i]).toBeLessThanOrEqual(rates[i - 1]);
   });
 
   it("the build's default is level 0 (everything is sent) until someone raises the number", () => {
@@ -54,39 +62,41 @@ describe("the level ladder", () => {
 describe("decideBudget", () => {
   it("level 0: everything is sent with weight 1, whatever the bucket", () => {
     for (const bucket of [0, 50, 99]) {
-      const { sent, notes } = play(at(500), 300, bucket);
+      const { sent, notes } = play(at(200), 300, bucket);
       expect(sent).toHaveLength(300);
       expect(new Set(sent)).toEqual(new Set([1]));
       expect(notes).toEqual([]);
     }
   });
 
-  it("level 1: the first 30 standard events of the day in full, then 1 in 4 (at random) with weight 4 — the total is preserved", () => {
-    const { sent, notes, weight } = play(at(800), 230);
-    expect(sent.slice(0, 30)).toEqual(Array(30).fill(1));
-    expect(sent.slice(30)).toEqual(Array(50).fill(4));
-    expect(weight).toBe(230);
+  it("level 1: the first 20 standard events of the day in full, then 1 in 8 (at random) with weight 8 — the total is preserved", () => {
+    const { sent, notes, weight } = play(at(360), 260);
+    expect(sent.slice(0, 20)).toEqual(Array(20).fill(1));
+    expect(sent.slice(20)).toEqual(Array(30).fill(8));
+    expect(weight).toBe(260);
     expect(notes).toEqual(["cap"]);
   });
 
   it("level 2: a cap of 15 thinned 1 in 8, and $pageview from half of the devices", () => {
-    const { sent, weight } = play(at(1000), 175);
+    const { sent, weight } = play(at(400), 175);
     expect(sent).toHaveLength(15 + 20);
     expect(weight).toBe(175);
-    expect(play(at(1000), 5, 49, "$pageview").sent).toEqual(Array(5).fill(2));
-    expect(play(at(1000), 5, 50, "$pageview").sent).toEqual([]);
-    expect(play(at(1000), 5, 50, "run_completed").sent).toHaveLength(5);
+    expect(play(at(400), 5, 49, "$pageview").sent).toEqual(Array(5).fill(2));
+    expect(play(at(400), 5, 50, "$pageview").sent).toEqual([]);
+    expect(play(at(400), 5, 50, "run_completed").sent).toHaveLength(5);
   });
 
-  it("levels 3 and 4: half, then a quarter of the devices send standard events, weighted", () => {
-    expect(play(at(1400), 10, 49).sent).toEqual(Array(10).fill(2));
-    expect(play(at(1400), 10, 50).sent).toEqual([]);
-    expect(play(at(2500), 10, 24).sent).toEqual(Array(10).fill(4));
-    expect(play(at(2500), 10, 25).sent).toEqual([]);
+  it("levels 3 to 6: half, a quarter, then a tenth of the devices send standard events, weighted", () => {
+    expect(play(at(490), 10, 49).sent).toEqual(Array(10).fill(2));
+    expect(play(at(490), 10, 50).sent).toEqual([]);
+    expect(play(at(670), 10, 24).sent).toEqual(Array(10).fill(4));
+    expect(play(at(670), 10, 25).sent).toEqual([]);
+    expect(play(at(1400), 10, 9).sent).toEqual(Array(10).fill(10));
+    expect(play(at(1400), 10, 10).sent).toEqual([]);
   });
 
   it("across all buckets, the weighted total estimates the real total at every level", () => {
-    for (const players of [800, 1000, 1400, 2500]) {
+    for (const players of [360, 400, 490, 670, 950, 1400]) {
       const count = (budgetLevelOf(at(players)).level.dailyCap ?? 0) + 40;
       let weight = 0;
       for (let bucket = 0; bucket < 100; bucket++) weight += play(at(players), count, bucket).weight;
@@ -100,7 +110,7 @@ describe("decideBudget", () => {
     for (let i = 0; i < devices; i++) {
       const d = day();
       for (let n = 0; n < 63; n++) {
-        const decision = decideBudget(at(800), "run_completed", "standard", 0, d);
+        const decision = decideBudget(at(360), "run_completed", "standard", 0, d);
         if (decision.send) weight += decision.weight;
       }
     }
@@ -126,6 +136,57 @@ describe("decideBudget", () => {
     expect(sent).toBe(DEFAULT_BREAKER_PER_DAY);
     expect(notes).toEqual(["breaker"]);
   });
+
+  it("essential events pass the breaker, count toward it, and stop only at their own ceiling (noted once)", () => {
+    const d = day();
+    for (let i = 0; i < DEFAULT_BREAKER_PER_DAY; i++) decideBudget(at(0), "run_completed", "standard", 0, d);
+    expect(decideBudget(at(0), "career_transfer", "critical", 0, d)).toMatchObject({ send: false, note: "breaker" });
+    let sent = 0;
+    const notes: string[] = [];
+    for (let i = 0; i < DEFAULT_ESSENTIAL_PER_DAY + 20; i++) {
+      const decision = decideBudget(at(0), "career_event_completed", "essential", 99, d);
+      if (decision.send) sent += 1;
+      if (decision.note) notes.push(decision.note);
+    }
+    expect(sent).toBe(DEFAULT_ESSENTIAL_PER_DAY);
+    expect(notes).toEqual(["ceiling"]);
+    expect(d.sent).toBe(DEFAULT_BREAKER_PER_DAY + DEFAULT_ESSENTIAL_PER_DAY);
+  });
+
+  it("essential events are never sampled or capped, at any level", () => {
+    const d = day();
+    for (let i = 0; i < 200; i++) {
+      expect(decideBudget(at(9000), "career_season_completed", "essential", 99, d, Math.random, 99)).toEqual({ send: true, weight: 1 });
+    }
+  });
+
+  it("career sampling keeps whole careers in or out on the growth levels, weighted, at any priority", () => {
+    // Level 1: no career sampling.
+    expect(decideBudget(at(360), "career_event_completed", "essential", 0, day(), Math.random, 99)).toEqual({ send: true, weight: 1 });
+    // Level 2 (careerRate 0.75): buckets 0–74 in with weight 4/3, 75–99 out — for the tournament line and the decisions alike.
+    expect(decideBudget(at(400), "career_event_completed", "essential", 0, day(), Math.random, 74)).toEqual({ send: true, weight: 4 / 3 });
+    expect(decideBudget(at(400), "career_event_completed", "essential", 0, day(), Math.random, 75)).toEqual({ send: false, weight: 0 });
+    expect(decideBudget(at(400), "career_transfer", "critical", 0, day(), Math.random, 75)).toEqual({ send: false, weight: 0 });
+    // The season line and the events without a career are never career-sampled.
+    expect(decideBudget(at(1400), "career_season_completed", "essential", 0, day(), Math.random, 99)).toEqual({ send: true, weight: 1 });
+    expect(decideBudget(at(1400), "career_event_completed", "essential", 0, day(), Math.random, null)).toEqual({ send: true, weight: 1 });
+    // Across every career bucket the weighted count is the real count.
+    for (const players of [400, 490, 670, 950, 1400]) {
+      let weight = 0;
+      for (let b = 0; b < 100; b++) {
+        const decision = decideBudget(at(players), "career_event_completed", "essential", 0, day(), Math.random, b);
+        if (decision.send) weight += decision.weight;
+      }
+      expect(weight, String(players)).toBeCloseTo(100, 6);
+    }
+  });
+
+  it("the career bucket is a stable 0–99 hash of the careerId", () => {
+    expect(careerBucketOf("c0a1b2c3d")).toBe(careerBucketOf("c0a1b2c3d"));
+    const buckets = new Set(Array.from({ length: 500 }, (_, i) => careerBucketOf(`c${i.toString(16).padStart(8, "0")}`)));
+    for (const b of buckets) expect(b >= 0 && b < 100 && Number.isInteger(b)).toBe(true);
+    expect(buckets.size).toBeGreaterThan(80);
+  });
 });
 
 describe("parseBudgetConfig (the static /analytics-budget.json)", () => {
@@ -133,13 +194,13 @@ describe("parseBudgetConfig (the static /analytics-budget.json)", () => {
     const config = parseBudgetConfig({ playersPerDay: 1200 });
     expect(config.playersPerDay).toBe(1200);
     expect(config.levels).toBe(DEFAULT_BUDGET_LEVELS);
-    expect(budgetLevelOf(config).index).toBe(2);
+    expect(budgetLevelOf(config).index).toBe(5);
   });
 
-  it("the shipped file is valid and leaves everything on", () => {
+  it("the shipped file is valid and sits on level 1 (the launch week: ~360 devices a day)", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const shipped = require("../../public/analytics-budget.json") as unknown;
-    expect(budgetLevelOf(parseBudgetConfig(shipped)).index).toBe(0);
+    expect(budgetLevelOf(parseBudgetConfig(shipped)).index).toBe(1);
   });
 
   it("accepts its own ladder and per-event rates, sorted by threshold and clamped", () => {
@@ -159,7 +220,7 @@ describe("parseBudgetConfig (the static /analytics-budget.json)", () => {
 
   it("anything malformed is ignored: a bad file can never switch analytics off", () => {
     const base = defaultBudget();
-    for (const raw of [null, undefined, "x", 3, [], { playersPerDay: "many" }, { playersPerDay: -5 }, { levels: [] }, { breakerPerDay: 0 }]) {
+    for (const raw of [null, undefined, "x", 3, [], { playersPerDay: "many" }, { playersPerDay: -5 }, { levels: [] }, { breakerPerDay: 0 }, { essentialPerDay: -1 }]) {
       expect(parseBudgetConfig(raw), JSON.stringify(raw)).toEqual(base);
     }
   });

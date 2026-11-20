@@ -10,6 +10,49 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.4] — 2026-11-20 · Analytics: critical career events skip the cap, Etapa 1 properties
+
+Not deployed. Production analytics only (`rocketdraft.app`); no gameplay change.
+
+### Added
+- **`career_event_completed`**: `seriesWon`, `seriesLost`, `upsetWins`,
+  `upsetLosses` (a series won as the underdog / lost as the favourite by 5+
+  average player overall), `oppOverallAvg`; `liveSeries` and `decisions`
+  reserved (null) for Matchday fatia 3. `finishEvent` notes the user's series
+  before the bracket is discarded (`careerAnalytics.noteFinishedTournament`).
+- **`career_season_completed`**: `realOrgsTop8` (real dataset orgs in the
+  region's final top 8) and `formatId` (reserved, null).
+- **`career_transfer`**: `kind = trade` with `tradeSide` (out / in) for a
+  player-for-player trade (it used to read as sell + sign).
+- **`session_started`**: `lastCareerTab`, the last career screen seen.
+- **`career_action_refused`** (`reason`, `screen`): the career refused what
+  the player asked for (ended career, a failed action, a flow's error key).
+  Once per session and reason.
+- A third priority, **essential**: never sampled or capped and past the
+  circuit breaker, with its own ceiling (1,500 a device a day). The career's
+  spine (one per tournament, split, season, milestone, end, creation), refused
+  actions, accounts and health.
+- **Career sampling** for the growth levels (`careerRate`): whole careers in or
+  out, by a hash of the careerId, for the per-tournament and decision events.
+
+### Changed
+- **Budget re-sized on the launch week** (free plan, 1M events a month, target
+  ≤ 70%): measured ~795k a month (79%) before; ~675–695k (68–70%) after.
+  `public/analytics-budget.json` 120 → **360** devices a day (level 1). The
+  ladder now starts at 300 devices (cap 20 standard events a day, then 1 in 8)
+  and steps at 370 / 490 / 670 / 950 / 1,400.
+- No `$pageview` for the career's inner screens (tabs, event, follow): the tab
+  counters and `lastCareerTab` carry them (~2k events a day).
+- The breaker still counts every event; past 400 a day only essential events go
+  out (critical events used to stop there too).
+
+### Fixed
+- **The longest careers lost their data.** 129 devices hit the 400-a-day
+  breaker in the launch week; careers that came back had skipped a median of 3
+  seasons of events. Root cause: the breaker treated the career's per-tournament
+  line like any other event, and `career_event_completed` was "standard"
+  (capped on the levels above 0). It is now essential.
+
 ## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
 
 ### Changed
