@@ -12,20 +12,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## [2.1.0-rc.1] — 2026-11-20 · Integration of the new identity + v2.0.35 + Etapa 1 slice 1, M1 diagnosis (staging candidate, not published)
 
-Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot`. Miguel (20/11): Etapa 1 is tested on staging on the new identity. Not pushed, not deployed: it waits for the Etapa 1 gate. How to bring the rest in and publish: top of `docs/ETAPA-1-STATUS.md`.
+Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot` (`ca05144`, fourth pass) plus the fifth pass `4b4ecd6`, which is on `staging` (v2.0.33-design.1) but **not** on `design/broadcast-pilot`. Miguel (20/11): Etapa 1 is tested on staging on the new identity. Not pushed, not deployed: it waits for the Etapa 1 gate. How to bring the rest in and publish: top of `docs/ETAPA-1-STATUS.md`.
 
 ### Changed
-- **The new identity (the broadcast pilot entry below) merged with `main` v2.0.15 to v2.0.35.** Where they met, the redesign keeps its visuals and layout and main keeps its behaviour, copy and data. Main's search titles and copy (career landing, team and player titles, the three guides) are taken with their em dashes rewritten as colons or brackets (DESIGN.md: no em dash).
+- **The new identity at its fifth pass (the broadcast pilot entry below) merged with `main` v2.0.15 to v2.0.35.** Where they met, the redesign keeps its visuals and layout and main keeps its behaviour, copy and data. Main's search titles and copy (career landing, team and player titles, the three guides) are taken with their em dashes rewritten as colons or brackets (DESIGN.md: no em dash).
 - **The Collection's quiet next-reward line (v2.0.35)** is set as a quiet label of the new identity (display Medium caps, faint, tabular figures). The database link at the end of the page stays a faint sentence.
-- **Decision numbers:** the redesign's DESIGN-DECISIONS #164 to #167 are now #173 to #176, because main had used #164 to #172. DESIGN.md and the redesign handoff point to the new numbers.
+- **Decision numbers:** the redesign's DESIGN-DECISIONS are #173 to #177 (the first four were #164 to #167 on the design branch; main had used #164 to #172). DESIGN.md and the redesign handoff point to the new numbers.
 - Merged, unchanged: Matchday slice 1 (`2.1.0-dev.1` below: series in steps, R137), the balance baseline for v2.0.35, the PostHog analysis of 20/11 and the Mundo vivo M1 diagnosis (docs only).
+- The event lobby's qualifier list (fifth-pass layout) reads team names from the career's name bank, as main v2.0.34 does (`EventScreen`).
 - Version 2.1.0-rc.1 in `package.json` and `SITE.version`.
 
 ### Fixed
 - **`runLabels.test` failed on the design branch:** the redesign removed three em dashes from the daily templates' English copy (`copy.en.ts`) but not from the plan's own text (`lib/dailyPlan.ts`), which the test requires to read the same. Root cause: a copy pass that edited one of two copies of the same strings. The plan text now matches the copy.
 
 ### Not verified
-- Not on staging and not played by Miguel. The browser look covers the Home, the career HQ and one career event on desktop and at 320 px, in a local export with career on.
+- Not on staging and not played by Miguel. Browser look in a local export (career on, accounts and analytics off): the Home, the quick-start wizard, the career HQ and a Garage Series event (lobby and instant result) on desktop, then the same three pages at 320 px. No console errors.
+- **Known at 320 px, same as staging (the fifth pass left mobile for later):** the Home wordmark is 25 px too wide (page 345 px, the scorebug's rank label hidden), and the HQ and event stat boxes run their labels together ("PREMIAÇÃOPONTOS"). Not fixed here: it belongs to the mobile pass and Miguel's A7.
+- Four career/engine tests timed out at 5 s while other sessions loaded the machine. They pass alone with a longer timeout; the run before the fifth-pass merge was fully green.
 
 ## [2.1.0-dev.1] — 2026-11-20 · Matchday slice 1: the series in steps (engine only, not released)
 

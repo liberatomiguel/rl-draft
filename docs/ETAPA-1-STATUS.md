@@ -2,13 +2,24 @@
 
 ## Branch de integração e staging (20/11)
 
-**`claude/etapa1-integration-3eae43` = `2.1.0-rc.1`**, a nova identidade
-(`design/broadcast-pilot`) + `main` v2.0.35 + fatia 1 do Matchday
+**`claude/etapa1-integration-3eae43` = `2.1.0-rc.1`**, a nova identidade na
+quinta passada (`design/broadcast-pilot` + `4b4ecd6`) + `main` v2.0.35 + fatia 1 do Matchday
 (`claude/matchday-f1-fd2597`) + baseline (`claude/balance-baseline-d2d477`) +
 análise PostHog (`claude/posthog-analysis-d77555`) + diagnóstico M1
 (`claude/recursing-chatelet-8a8b84`). Testes, lint, typecheck e build verdes.
 Não publicado: espera o gate da Etapa 1 e o OK do Miguel. O A7 (tab bar
 mobile da carreira, do Miguel) ainda não está aqui.
+
+**Atenção: `design/broadcast-pilot` está atrás de `staging`.** A quinta
+passada (`4b4ecd6`) só existe em `origin/staging`; este branch já a tem.
+Qualquer trabalho novo de identidade deve partir deste branch ou de
+`4b4ecd6`, não de `design/broadcast-pilot`. Conhecido a 320 px (igual ao
+staging): wordmark da Home 25 px largo demais, rótulos dos quadros do HQ e
+do evento colados. Fica para a passada mobile / A7.
+
+**Worktree novo:** rode `npm ci` antes de buildar. Sem `node_modules`
+próprio, o Next usa o do checkout principal e o build quebra com um panic do
+Turbopack ("Missing content ... StaticOutputAsset").
 
 **Trazer os branches que faltam** (`matchday-f2`, implementação do M1,
 analytics), um por vez, nesta ordem, no worktree deste branch:
@@ -33,13 +44,18 @@ analytics), um por vez, nesta ordem, no worktree deste branch:
 **Não rodar antes do gate e do OK do Miguel.**
 
 1. Ver o que está em staging agora: `git fetch origin` e
-   `git log --oneline -3 origin/staging` (hoje: `v2.0.33-design.1`, a nova
-   identidade). Confirmar que o branch de integração contém esse commit
-   (`git merge-base --is-ancestor origin/staging HEAD`); se não, perguntar ao
-   Miguel antes de sobrescrever.
-2. `git push origin HEAD:staging` (use `--force-with-lease=staging:<sha visto
-   no passo 1>` só se o passo 1 mostrou que não é ancestral e o Miguel
-   aprovou).
+   `git log --oneline -3 origin/staging` (em 20/11: `cfefe9d`,
+   `v2.0.33-design.1`). Este branch tem o conteúdo dele (`4b4ecd6`), mas não o
+   commit `cfefe9d` em si (o merge de staging com main v2.0.28), então o push
+   não é fast-forward. Confirme com
+   `git diff --stat cfefe9d HEAD` que nada de staging se perde (só deve haver
+   coisas novas) e que `origin/staging` ainda é `cfefe9d`; se mudou, pergunte
+   ao Miguel.
+2. Com o OK do Miguel:
+   `git push --force-with-lease=staging:cfefe9d origin HEAD:staging`
+   (troque `cfefe9d` pelo sha visto no passo 1). Alternativa sem force:
+   `git merge -s ours cfefe9d` neste branch antes do push (registra staging
+   como ancestral sem mudar arquivos).
 3. O projeto Workers Builds **`rocket-draft-staging`** (branch de produção
    `staging`) builda sozinho: `npm run build`, depois
    `npx wrangler deploy --env staging`. As variáveis `NEXT_PUBLIC_CAREER_MODE=1`

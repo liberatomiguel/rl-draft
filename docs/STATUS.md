@@ -10,6 +10,13 @@
 
 ## Current builds
 
+- **Integration branch `claude/etapa1-integration-3eae43` = 2.1.0-rc.1
+  (20/11, not pushed):** the new identity at its fifth pass + v2.0.35 +
+  Etapa 1 slice 1 and its docs (baseline, PostHog analysis, M1 diagnosis).
+  The staging candidate for the Etapa 1 gate; how to add the rest and publish:
+  ETAPA-1-STATUS.md. `design/broadcast-pilot` lacks the fifth pass
+  (`4b4ecd6`, on staging only).
+
 - **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
   and database link made quiet (Miguel's review of 2.0.34).
 - **v2.0.34 (19/11/2026): fixes from the player survey**, in
