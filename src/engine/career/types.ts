@@ -402,6 +402,14 @@ export interface WorldOrgState {
   stars: number;
   /** Intrinsic team-rating snapshot from the last computeStars pass. */
   rating?: number;
+  /** v2.1 M1 (R139, FEATURES.worldLife): scouted prospects on the bench (never fielded until promoted). */
+  reserveIds?: string[];
+  /** v2.1 M1: the coach's age (set on first sight in the infinite seasons, +1 a season). */
+  coachAge?: number;
+  /** v2.1 M1: the season index the current coach took over (absent = since before M1). */
+  coachSince?: number;
+  /** v2.1 M1: seasons in a row ended outside the region's top (org turnover). */
+  lowSeasons?: number;
 }
 
 export interface WorldState {
@@ -600,6 +608,8 @@ export interface CompetitionState {
   localAnchor?: LocalSceneAnchor | null;
   /** Career-long reference for the local scene's own development; optional on old saves. */
   localOrigin?: (LocalSceneAnchor & { seasonIndex: number }) | null;
+  /** v2.1 M1 (R139): per region, the local scene's ceiling this season (median − localAnchorBelowMedian). */
+  localCap?: Partial<Record<Region, number>>;
 }
 
 /** RTW-01 (R49): the user's region and the team rating its local scene is rated around this season. */
@@ -1059,6 +1069,10 @@ export interface CoachState {
    * hiring, or at the next rollover.
    */
   contractEndSeason?: number;
+  /** v2.1 M1 (R139): his age, set on first sight in the infinite seasons. */
+  age?: number;
+  /** v2.1 M1: announced — he coaches this season and retires at its rollover. */
+  retiresAfterSeason?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -1587,6 +1601,8 @@ export interface CareerSave {
    *  Additive and optional: a save from before rc.51 gets it at its next split 1. */
   dayOne?: { seasonIndex: number; starterIds: string[]; broken: boolean };
   coach: CoachState | null;
+  /** v2.1 M1 (R139): coaches who retired from this club — never on its shortlist again. */
+  retiredCoachIds?: string[];
 
   finances: FinanceState;
   sponsor: SponsorState | null;

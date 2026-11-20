@@ -665,6 +665,9 @@ export const CAREER_EN = {
       // DEV-02 (R48): the user's own retiree — which way he went.
       retiredToCoach: (p: Record<string, string | number>) => `${p.player} retires, and moves into coaching`,
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} retires from competition`,
+      // v2.1 M1 (R139): the user's coach ages and retires.
+      coachRetireAnnounce: (p: Record<string, string | number>) => `${p.coach} announces his last season`,
+      coachRetired: (p: Record<string, string | number>) => `${p.coach} retires from coaching`,
       // rc.32 (ECONOMY-CONTRACT M3 / M4).
       foundingPartner: () => `A founding partner backs the org`,
       foundingPartnerEnds: () => `The founding partner steps back`,
@@ -807,6 +810,10 @@ export const CAREER_EN = {
         `${p.player} played his final season and steps away from competition: straight into coaching. He is in the coach pool now and can turn up on the coach shortlist.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} played his final season and leaves the scene for good. His slot is open: the market is where the next chapter starts.`,
+      coachRetireAnnounce: (p: Record<string, string | number>) =>
+        `${p.coach} tells the staff this season is his last on the bench. He stays until the season ends; the coach market is where his successor comes from.`,
+      coachRetired: (p: Record<string, string | number>) =>
+        `${p.coach} has coached his final season and retires. The bench is empty for now: hire a new coach from the market before the first event.`,
       // v2.0 (C1)
       sponsorBootcamp: (p: Record<string, string | number>) =>
         `Part of the deal: the brand pays for this split's bootcamp. It has started already, at no cost, and its edge lasts until the split ends. ${
@@ -2314,6 +2321,10 @@ export const CAREER_EN = {
       orgEnters: (p: Record<string, string | number>) => `${p.org} enters the ${p.region} scene`,
       // rc.33 (RTW-03): an org whose history is over gives its seat to an entrant.
       orgLeaves: (p: Record<string, string | number>) => `${p.org} leaves the ${p.region} scene`,
+      // v2.1 M1 (R139): the world renews itself.
+      orgNewcomer: (p: Record<string, string | number>) => `${p.org} takes ${p.old}'s seat in ${p.region}`,
+      stackSigned: (p: Record<string, string | number>) => `Local stack ${p.stack} signs with ${p.org}`,
+      prospectScouted: (p: Record<string, string | number>) => `${p.org} signs prospect ${p.player} for its bench`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives: ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -2470,6 +2481,12 @@ export const CAREER_EN = {
         `A new badge on the ${p.region} circuit: ${p.org} fields a roster this season. History arrives on schedule, and the table gets harder.`,
       orgLeaves: (p: Record<string, string | number>) =>
         `${p.org} fields no roster this season and leaves the ${p.region} circuit. Its seat goes to a new name; its players look for a new home.`,
+      orgNewcomer: (p: Record<string, string | number>) =>
+        `After two seasons at the bottom of the ${p.region} table, ${p.old} sells its seat. ${p.org} enters the circuit with the same players.`,
+      stackSigned: (p: Record<string, string | number>) =>
+        `The amateur side that reached the big stage turns pro: ${p.org} signs the whole ${p.stack} lineup for the new season.`,
+      prospectScouted: (p: Record<string, string | number>) =>
+        `${p.org} adds ${p.player} as its reserve. He starts once he is better than one of the starters.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>

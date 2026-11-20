@@ -322,7 +322,9 @@ import {
   fieldForEvent,
   LINEUP_SEATS,
   localSeedRowsFor,
+  localAnchorFor,
   localSceneSeasonRating,
+  localTeamTarget,
   orgRelocations,
   realOrgIntake,
   regionalSeedingFor,
@@ -333,6 +335,15 @@ import {
   type StarterOffer,
   worldGrowthWeek,
 } from "@/engine/career/worldSim";
+import {
+  localCapsFor,
+  orgLifecycle,
+  promoteReserves,
+  scoutingPass,
+  stackCandidatesFrom,
+  userCoachRollover,
+  worldLifeOn,
+} from "@/engine/career/worldLife";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -1243,6 +1254,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
       careerSeed: save.careerSeed,
       userSquadIds: save.squad.map((p) => p.id),
     });
+    // v2.1 M1 (R139): a scouted reserve starts once he is better than the weakest starter.
+    if (worldLifeOn(seasonIndex)) save.world = promoteReserves(save.world, { careerSeed: save.careerSeed, seasonIndex }).world;
 
     // --- 1. scripted beats --------------------------------------------------
     if (!isInfinite(save)) {
@@ -4263,6 +4276,58 @@ export function continueInfiniteFlow(input: CareerSave): CareerSave {
   return rolloverToNextSeason(save);
 }
 
+/**
+ * v2.1 Mundo vivo M1 (R139, engine/career/worldLife): at the rollover into an
+ * infinite season — the Local stacks of the season's Major / Worlds are
+ * signed, a stuck small org gives way to a new one, the AI coaches age and
+ * retire, strong orgs scout a reserve (and a better one starts), and the
+ * user's coach ages, announces his last season or retires.
+ */
+function worldLifeRollover(save: CareerSave, nextSeason: number, retiredNow: string[]): void {
+  const lastSeason = nextSeason - 1;
+  const userIds = save.squad.map((p) => p.id);
+  const stacks = stackCandidatesFrom(save.eventResults, lastSeason, (ref) => {
+    const region = localRegionOf(ref);
+    if (!region) return null;
+    const anchor = localAnchorFor(region, { world: save.world, competition: save.competition });
+    return {
+      region,
+      name: localTeamName(ref, save.careerSeed, save.world.nameBankVersion),
+      rating: localTeamTarget(ref, anchor, save.careerSeed),
+      playerNames: localPlayerNames(ref, save.careerSeed, save.world.nameBankVersion),
+    };
+  });
+  const life = orgLifecycle(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, stacks, retiredNow, userSquadIds: userIds });
+  save.world = life.world;
+  for (const t of life.report.turnovers) {
+    const mine = t.region === save.identity.region;
+    pushNews(save, { type: "milestone", priority: mine ? 2 : 1, titleKey: "orgNewcomer", params: { org: t.enteredName, old: t.leftName, region: t.region } });
+  }
+  for (const st of life.report.stacks) {
+    const mine = st.region === save.identity.region;
+    pushNews(save, { type: "milestone", priority: mine ? 2 : 1, titleKey: "stackSigned", params: { stack: st.stackName, org: st.orgName, region: st.region } });
+  }
+  const scout = scoutingPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds });
+  save.world = promoteReserves(scout.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason }).world;
+  for (const sg of scout.signings.filter((x) => x.region === save.identity.region).slice(0, 2)) {
+    pushNews(save, { type: "milestone", priority: 1, titleKey: "prospectScouted", params: { org: sg.orgName, player: sg.playerName } });
+  }
+  if (save.coach) {
+    const c = userCoachRollover(save.coach, nextSeason, save.careerSeed);
+    const name = save.coach.name;
+    if (c.retired) {
+      save.retiredCoachIds = [...(save.retiredCoachIds ?? []), save.coach.id];
+      save.coach = null;
+      pushMail(save, { kind: "club", titleKey: "coachRetired", bodyKey: "coachRetired", params: { coach: name }, fromKey: "staff", linkTo: "/career/market#coaches" });
+    } else {
+      save.coach = c.coach;
+      if (c.announced) {
+        pushMail(save, { kind: "club", titleKey: "coachRetireAnnounce", bodyKey: "coachRetireAnnounce", params: { coach: name }, fromKey: "staff", linkTo: "/career/market#coaches" });
+      }
+    }
+  }
+}
+
 export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // ECO-02 (R46): an ended career (insolvency, retired) is final — no rollover.
   if (input.phase === "ended") return input;
@@ -4317,6 +4382,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   for (const r of pass.retired.slice(0, 3)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "retired", params: { player: r.name } });
   }
+  // v2.1 M1 (R139): the world renews itself (infinite seasons, FEATURES.worldLife).
+  if (worldLifeOn(nextSeason)) worldLifeRollover(save, nextSeason, pass.retired.map((r) => r.id));
   if (pass.rookies.length > 0) {
     const headline = pass.rookies[0];
     pushNews(save, {
@@ -4455,6 +4522,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
   });
+  // v2.1 M1 (R139): the local scene's ceiling for the season, from the refreshed ratings.
+  if (worldLifeOn(nextSeason)) save.competition.localCap = localCapsFor(save.world);
   // rc.36 (UX-02): the season's goal, once the new season's world and clock are set.
   attachSeasonGoal(save, nextSeason, lastGoalMet);
   if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
@@ -6119,7 +6188,7 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     difficulty: save.difficulty,
     nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion, save.careerSeed)],
     reputation: save.reputation,
-  });
+  }).filter((c) => !save.retiredCoachIds?.includes(c.id));
 }
 
 export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult {

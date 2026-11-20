@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 38;
+export const BALANCE_VERSION = 39;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3809,6 +3809,73 @@ export const CAREER_WORLD = {
   unavailabilityNoReserveGraceSeasons: 1,
 } as const;
 
+/**
+ * v2.1 Mundo vivo M1 (R139, docs/MUNDO-VIVO-M1.md): the AI world renews
+ * itself in the infinite seasons. Read only when FEATURES.worldLife is on;
+ * every rule starts at `fromSeasonIndex` (the first season past the RLCS
+ * timeline), so the historical seasons are unchanged.
+ */
+export const CAREER_WORLD_LIFE = {
+  /** null = the first infinite season (CAREER_SEASONS.length). */
+  fromSeasonIndex: null as number | null,
+  /**
+   * Scouting: at each rollover an org of prestige ≥ prestigeMin signs, with
+   * `chance`, the region's best young free agent (age ≤ maxAge, potential ≥
+   * minPotential) as its RESERVE — never a starter. Only a prospect whose
+   * overall is within `belowWeakest` of the org's weakest starter is
+   * shortlisted (no raw kids). He starts only once his overall passes the
+   * weakest starter's (that starter moves to the bench, he stays at the
+   * org). A full bench takes a prospect only when the bench player is at
+   * least `benchVeteranAge` (he goes to free agency).
+   */
+  scouting: {
+    // Probe 20/11: prestige ≥ 2, chance 0.6, within 3 signed ~0.6 reserves a
+    // region and left the best young players unsigned (2.8 of 6 at S8).
+    prestigeMin: 1,
+    chance: 0.8,
+    maxAge: 21,
+    minPotential: 85,
+    belowWeakest: 5,
+    reserveSlots: 1,
+    benchVeteranAge: 25,
+  },
+  /**
+   * Stack signing: a Local side that played this season's Major or Worlds is
+   * signed at the rollover — at most `perRegionPerSeason` per region — by
+   * the org that enters through turnover, else by the region's weakest org
+   * (its starters go to free agency). Its three players become rookies of
+   * the new class at the side's overall.
+   */
+  stackSigning: { perRegionPerSeason: 1 },
+  /**
+   * Org turnover: an org of prestige ≤ maxPrestige that ends `seasons`
+   * seasons in a row outside its region's top `outsideTop` (stored rating)
+   * leaves; a new org takes its seat (and its players, unless a stack
+   * arrives with it). At most `perRegionPerSeason`.
+   */
+  orgTurnover: { perRegionPerSeason: 1, outsideTop: 12, seasons: 2, maxPrestige: 1 },
+  /** The local scene's anchor stays this far under its region's median org rating (fixed at season start). */
+  localAnchorBelowMedian: 2,
+  /**
+   * Coaches age (+1 a season) and retire. Age at first sight: an ex-pro
+   * `exProAge`, everyone else `ageRange` (derived per coach). Retirement
+   * chance per season by age (the highest key ≤ age). The user's coach is
+   * announced a season ahead and leaves only at a rollover. An AI org
+   * outside its region's top `aiChangeOutsideTop` changes coach with
+   * `aiChangeChance` once he has coached `aiChangeMinSeasons` seasons there.
+   */
+  coaches: {
+    ageRange: [30, 46] as const,
+    exProAge: [29, 34] as const,
+    retireByAge: { 40: 0.08, 43: 0.15, 46: 0.3, 49: 0.5, 52: 1 } as Record<number, number>,
+    aiChangeOutsideTop: 10,
+    aiChangeChance: 0.5,
+    aiChangeMinSeasons: 2,
+    /** A retiring AI coach's successor is at most this much worse (probe: dataset coaches outclass the generated pool). */
+    successorMaxDrop: 2,
+  },
+} as const;
+
 export const CAREER_NEWS = {
   maxItemsPerTick: 12,
   feedRetention: 250,
@@ -4399,6 +4466,14 @@ export const FEATURES = {
    * gate; the probes turn it on with NEXT_PUBLIC_MATCHDAY_STYLES=1.
    */
   matchdayStyles: process.env.NEXT_PUBLIC_MATCHDAY_STYLES === "1",
+  /**
+   * v2.1 Mundo vivo M1 (R139): AI orgs scout prospects onto a reserve seat,
+   * Local stacks get signed, weak orgs give way to new ones, the local scene
+   * stays under its region's median and coaches age and retire — infinite
+   * seasons only (CAREER_WORLD_LIFE). Off = v2.0.35 exactly. On with
+   * NEXT_PUBLIC_WORLD_LIFE=1 until Miguel's playtest approves the default.
+   */
+  worldLife: process.env.NEXT_PUBLIC_WORLD_LIFE === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
