@@ -45,6 +45,15 @@ export function initMatchday(planA?: SeriesPlan, planB?: SeriesPlan, seed = 0): 
   };
 }
 
+/**
+ * The quality a side's calls are made at: its coach's, never below the
+ * planning floor (R145: a coachless side — null — or a weak coach still has a
+ * captain who reads the game; quick without a coach must not fall below today).
+ */
+export function planningQuality(quality: number | null): number {
+  return Math.max(MD.coachlessQuality, quality ?? 0);
+}
+
 /** Coach overall → decision quality 0..1 (CAREER_MATCHDAY.coachQualityRange). */
 export function coachQualityOf(overall: number): number {
   const [lo, hi] = MD.coachQualityRange;
@@ -201,10 +210,52 @@ export function shownStyle(team: TournamentTeam, plan: SeriesPlan): PlayStyleId 
   return team.style ? plan.style ?? team.style.natural : undefined;
 }
 
+/** A side's coach quality as the engine reads it (an AI side whose builder knew no coach → the default). */
+export function aiQualityOf(team: TournamentTeam): number {
+  return team.coachQuality ?? MD.aiCoachQualityDefault;
+}
+
+/**
+ * The coach between games, on the matchday layer alone (R140 rev.: the AI
+ * uses it too): the timeout once the opponent's meter is up, and after a loss
+ * a style that answers the opponent's plus the kickoff the ratings call for —
+ * each the right call with chance = quality. Null quality = nothing. Draws nothing.
+ */
+export function coachBreakOn(
+  md: MatchdaySeriesState,
+  side: "a" | "b",
+  me: TournamentTeam,
+  opp: TournamentTeam,
+  quality: number | null,
+  ctx: { gamesPlayed: number; lostLast: boolean },
+): MatchdaySeriesState {
+  if (ctx.gamesPlayed === 0) return md;
+  const q = planningQuality(quality);
+  const g = ctx.gamesPlayed;
+  let next = md;
+  const oppMeter = side === "a" ? md.momentumB : md.momentumA;
+  const spent = side === "a" ? md.timeoutA : md.timeoutB;
+  if (!spent && oppMeter >= MD.timeoutTrigger && decisionUnit(md.seed, `coach:${side}:timeout:${g}`) < q) {
+    next = applyTimeout(next, side);
+  }
+  if (ctx.lostLast) {
+    const oppStyle = shownStyle(opp, side === "a" ? next.planB : next.planA);
+    if (oppStyle && decisionUnit(md.seed, `coach:${side}:adjust:${g}`) < q) {
+      const plan = { ...(side === "a" ? next.planA : next.planB) };
+      const best = bestStyleAgainst(me, opp, oppStyle);
+      if (best) plan.style = best;
+      else delete plan.style;
+      plan.kickoff = kickoffFor(me, opp);
+      next = side === "a" ? { ...next, planA: plan } : { ...next, planB: plan };
+    }
+  }
+  return next;
+}
+
 /**
  * "Leave it to the coach": the pre-series plan. Each part is the right call
- * with chance = quality, otherwise the default; no coach (null) = the default
- * plan. Quality 1 is the "good manual" policy the probes measure against.
+ * with chance = quality (never below the planning floor, `planningQuality`),
+ * otherwise the default. Quality 1 is the "good manual" policy the probes measure against.
  */
 export function coachPlanFor(
   team: TournamentTeam,
@@ -213,15 +264,15 @@ export function coachPlanFor(
   seed: number,
   sideKey: string,
 ): SeriesPlan {
-  if (quality === null) return { ...DEFAULT_PLAN };
+  const q = planningQuality(quality);
   const plan: SeriesPlan = { kickoff: "standard" };
   const oppStyle = opponent.style?.natural;
-  if (oppStyle && decisionUnit(seed, `${sideKey}:style`) < quality) {
+  if (oppStyle && decisionUnit(seed, `${sideKey}:style`) < q) {
     const best = bestStyleAgainst(team, opponent, oppStyle);
     if (best) plan.style = best;
   }
-  if (decisionUnit(seed, `${sideKey}:kickoff`) < quality) plan.kickoff = kickoffFor(team, opponent);
-  if (opponent.playmakerIndex !== undefined && decisionUnit(seed, `${sideKey}:mark`) < quality) {
+  if (decisionUnit(seed, `${sideKey}:kickoff`) < q) plan.kickoff = kickoffFor(team, opponent);
+  if (opponent.playmakerIndex !== undefined && decisionUnit(seed, `${sideKey}:mark`) < q) {
     plan.mark = opponent.playmakerIndex;
   }
   return plan;

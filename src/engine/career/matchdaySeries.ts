@@ -9,7 +9,6 @@
  * the same next game as one that never stopped.
  */
 
-import { CAREER_MATCHDAY as MD } from "@/config/balance";
 import { createRng } from "@/lib/rng";
 import {
   finishSeries,
@@ -20,15 +19,9 @@ import {
   type SeriesState,
 } from "../match";
 import type { KickoffPlan, PlayStyleId, SeriesPlan, SeriesResult, TournamentTeam } from "../types";
-import {
-  applyTimeout,
-  bestStyleAgainst,
-  coachPlanFor,
-  decisionUnit,
-  DEFAULT_PLAN,
-  kickoffFor,
-  shownStyle,
-} from "./matchday";
+import { aiQualityOf, applyTimeout, coachBreakOn, coachPlanFor } from "./matchday";
+
+export { aiQualityOf };
 
 export type Side = "a" | "b";
 
@@ -46,14 +39,9 @@ function withPlan(state: SeriesState, side: Side, plan: SeriesPlan): SeriesState
   return { ...state, matchday: side === "a" ? { ...md, planA: plan } : { ...md, planB: plan } };
 }
 
-/** The AI's plan: its natural style and the default plan (§6). */
-export function aiPlan(): SeriesPlan {
-  return { ...DEFAULT_PLAN };
-}
-
-/** The side's coach quality as the engine reads it (no coach on an AI side → the default). */
-export function aiQualityOf(team: TournamentTeam): number {
-  return team.coachQuality ?? MD.aiCoachQualityDefault;
+/** The AI's plan: its coach's, exactly as the user's "leave it to the coach" (R140 rev., Miguel 20/11). */
+export function aiPlan(ai: TournamentTeam, opponent: TournamentTeam, seed: number): SeriesPlan {
+  return coachPlanFor(ai, opponent, aiQualityOf(ai), seed, "ai");
 }
 
 /**
@@ -88,31 +76,10 @@ export function callTimeout(state: SeriesState, side: Side): SeriesState {
   return md === state.matchday ? state : { ...state, matchday: md };
 }
 
-function lostLast(state: SeriesState, side: Side): boolean {
-  return state.lastWinner !== null && state.lastWinner !== side;
-}
-
 /**
- * The AI between games (user series only, §6): after a loss it re-picks the
- * style that best answers the one the user plays now, with a chance that
- * grows with its coach. Draws nothing.
- */
-export function aiBreak(state: SeriesState, aiSide: Side, teamA: TournamentTeam, teamB: TournamentTeam): SeriesState {
-  if (!state.matchday || state.games.length === 0 || isSeriesOver(state) || !lostLast(state, aiSide)) return state;
-  const me = aiSide === "a" ? teamA : teamB;
-  const opp = aiSide === "a" ? teamB : teamA;
-  const oppStyle = shownStyle(opp, planOf(state, other(aiSide)));
-  if (!oppStyle) return state;
-  const chance = MD.aiAdjustBase + MD.aiAdjustPerQuality * aiQualityOf(me);
-  if (decisionUnit(state.matchday.seed, `ai:${aiSide}:${state.games.length}`) >= chance) return state;
-  return adjustSeriesPlan(state, aiSide, { style: bestStyleAgainst(me, opp, oppStyle) ?? null });
-}
-
-/**
- * The coach between games ("leave it to the coach"): the timeout once the
- * opponent's meter is up, and after a loss a style that answers the
- * opponent's — each the right call with chance = quality. No coach (null)
- * = nothing. Quality 1 is the probes' "good manual" policy.
+ * The coach between games ("leave it to the coach"; the AI uses the same at
+ * its own coach's quality): see `coachBreakOn`. No coach (null) = nothing.
+ * Quality 1 is the probes' "good manual" policy.
  */
 export function coachBreak(
   state: SeriesState,
@@ -121,24 +88,17 @@ export function coachBreak(
   teamB: TournamentTeam,
   quality: number | null,
 ): SeriesState {
-  if (quality === null || !state.matchday || state.games.length === 0 || isSeriesOver(state)) return state;
-  const md = state.matchday;
-  const me = side === "a" ? teamA : teamB;
-  const opp = side === "a" ? teamB : teamA;
-  const g = state.games.length;
-  let next = state;
-  const oppMeter = side === "a" ? md.momentumB : md.momentumA;
-  const spent = side === "a" ? md.timeoutA : md.timeoutB;
-  if (!spent && oppMeter >= MD.timeoutTrigger && decisionUnit(md.seed, `coach:${side}:timeout:${g}`) < quality) {
-    next = callTimeout(next, side);
-  }
-  if (lostLast(state, side)) {
-    const oppStyle = shownStyle(opp, planOf(next, other(side)));
-    if (oppStyle && decisionUnit(md.seed, `coach:${side}:adjust:${g}`) < quality) {
-      next = adjustSeriesPlan(next, side, { style: bestStyleAgainst(me, opp, oppStyle) ?? null, kickoff: kickoffFor(me, opp) });
-    }
-  }
-  return next;
+  if (!state.matchday || isSeriesOver(state)) return state;
+  const md = coachBreakOn(state.matchday, side, side === "a" ? teamA : teamB, side === "a" ? teamB : teamA, quality, {
+    gamesPlayed: state.games.length,
+    lostLast: state.lastWinner !== null && state.lastWinner !== side,
+  });
+  return md === state.matchday ? state : { ...state, matchday: md };
+}
+
+/** The AI side's break in the user's series, at its coach's quality. */
+export function aiBreak(state: SeriesState, aiSide: Side, teamA: TournamentTeam, teamB: TournamentTeam): SeriesState {
+  return coachBreak(state, aiSide, teamA, teamB, aiQualityOf(aiSide === "a" ? teamA : teamB));
 }
 
 /** Who drives each side of a user series (null quality = no coach). */
@@ -162,8 +122,8 @@ export function openUserSeries(
   const opp = ctl.userSide === "a" ? teamB : teamA;
   const plan = userPlan ?? coachPlanFor(user, opp, ctl.userQuality, seed, "user");
   const state = startSeries(teamA, teamB, options, rng, {
-    planA: ctl.userSide === "a" ? plan : aiPlan(),
-    planB: ctl.userSide === "b" ? plan : aiPlan(),
+    planA: ctl.userSide === "a" ? plan : aiPlan(teamA, teamB, seed),
+    planB: ctl.userSide === "b" ? plan : aiPlan(teamB, teamA, seed),
     seed,
   });
   return { state, rngState: rng.state };

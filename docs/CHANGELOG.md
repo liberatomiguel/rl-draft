@@ -47,6 +47,35 @@ Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot` (`c
 - **Known at 320 px, same as staging (the fifth pass left mobile for later):** the Home wordmark is 25 px too wide (page 345 px, the scorebug's rank label hidden), and the HQ and event stat boxes run their labels together ("PREMIAÇÃOPONTOS"). Not fixed here: it belongs to the mobile pass and Miguel's A7.
 - Four career/engine tests timed out at 5 s while other sessions loaded the machine. They pass alone with a longer timeout; the run before the fifth-pass merge was fully green.
 
+## [2.1.0-dev.10] — 2026-11-21 · Matchday slice 3: a planning floor for coachless teams (behind a flag, not released)
+
+Decision of 20/11 (ROAD-TO-WORLDS-DECISIONS R145). Still behind `FEATURES.matchdayDecisions`, off; flag off unchanged.
+
+### Changed
+- **A planning floor**, `CAREER_MATCHDAY.coachlessQuality` = 0.3 (`planningQuality`): a side with no coach, or a coach rated below the floor, makes its plan and break calls at this quality instead of the bare default plan. Root cause of the dev.6 gap: once the AI planned, a coachless user kept the default plan and fell to 45.9% in an even series and 71.8% as a +2 favourite (under the 73% guard).
+- The sub's XP stays as it is (`fieldedIds` unchanged): open for the Etapa 1 gate.
+
+### Balance (both flags on; bots; BALANCE_VERSION 41)
+- Quick without a coach, even series: 49.2–49.3% (old engine 49.7–50.5%); +2 without a coach 74.8–75.5%. Average coach 49.9–50.1%, coach 0.7 51.5–52.0%, good manual 52.7–53.2%.
+- Engine: +2 75.4% (worst cell 74.9%), +5 96.2% (upset 3.8%), +6 98.4% (worst 98.1%).
+- Career series at ±2: Normal 58.3%, Hard 58.1%, Easy 76.2% (v2.0.35: 59.4 / 56.2 / 76.1). 0 soft locks in 210 bot careers. Insolvency Normal 1, Hard 6 of 42.
+- Endgame series lost at Majors: Normal 58%, Hard 71% (v2.0.35: 45% / 64%).
+
+## [2.1.0-dev.6] — 2026-11-20 · Matchday slice 3: the AI plans with its coach (behind a flag, not released)
+
+Miguel's decisions of 20/11 (ROAD-TO-WORLDS-DECISIONS R144): the no-coach cost is accepted, and deciding must not make the game easier than today. Still behind `FEATURES.matchdayDecisions`, off; flag off unchanged.
+
+### Changed
+- **The AI plans and calls its breaks exactly like the user's "leave it to the coach"**, at its own coach's quality (0.4 when the builder knows no coach), in every career series: AI against AI (`simulateSeries`) and AI against the user. The plan comes from `coachPlanFor`, the breaks from the shared `coachBreakOn`; the decisions hash the series' starting RNG cursor, so no extra number is drawn. Slice 3's AI-only adjustment rule (`aiAdjustBase` / `aiAdjustPerQuality`) is gone.
+- The pacing and endgame probes take `PACING_BUDGET_MS` / `ENDGAME_BUDGET_MS` (the wall-clock stop per career; a loaded machine turned 30 slow careers into "budget" soft locks at the 300 s default).
+
+### Balance (both flags on vs v2.0.35; bots; BALANCE_VERSION 40)
+- Even series, quick with an average coach against an AI with an average coach: 50.1% (dev.5: 53.3%). Good manual 53.2% (+3 pp); quick without a coach 45.9%.
+- Engine: +2 favourite 75.4%, +5 96.2% (upset 3.8%), +6 98.4%.
+- Career series at ±2: Normal 57.7%, Hard 56.0%, Easy 75.2% (v2.0.35: 59.4 / 56.2 / 76.1). Soft locks 0 (210 bot careers and the probe). Insolvency Normal 2, Hard 6 of 42.
+- Endgame (professional bot): series lost at Majors Normal 59%, Hard 74% (v2.0.35: 45% / 64%), at Worlds Normal 57% (45%).
+- Engine cost: ~87 → ~140 µs per series with the layer; seasons did not get slower (3.4 s per season against dev.5's 4.4 under the same parallel load).
+
 ## [2.1.0-dev.9] — 2026-11-20 · Matchday slice 4: box score, ratings and key moments (engine and store only, behind a flag, not released)
 
 Fourth slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 C and §8, R137 option B). Everything sits behind the new `FEATURES.matchdayBoxScore`, **off by default** (`NEXT_PUBLIC_MATCHDAY_BOXSCORE=1` for probes). No screens yet (slice 5). No play-by-play and no momentum bar, as Miguel chose.

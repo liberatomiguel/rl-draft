@@ -83,10 +83,11 @@ describe("matchday slice 3 — engine", () => {
     expect(planShift(a, b, { kickoff: "standard", mark: 1 })).toBe(0);
   });
 
-  it("no coach = the default plan; quality 1 counters the opponent and marks its playmaker", () => {
+  it("no coach plans at the floor (R145); quality 1 counters the opponent and marks its playmaker", () => {
     const a = team("a", 86, { style: { natural: "possession", fit: fits("possession", 0.8, 0.7) } });
     const b = team("b", 88, { style: { natural: "counter", fit: fits("counter", 0.8, 0.4) } });
-    expect(coachPlanFor(a, b, null, 1, "user")).toEqual({ kickoff: "standard" });
+    expect(coachPlanFor(a, b, null, 1, "user")).toEqual(coachPlanFor(a, b, MD.coachlessQuality, 1, "user"));
+    expect(coachPlanFor(a, b, 0, 1, "user")).toEqual(coachPlanFor(a, b, null, 1, "user"));
     const best = coachPlanFor(a, b, 1, 1, "user");
     expect(best.kickoff).toBe("aggressive");
     expect(best.mark).toBe(1);
@@ -110,6 +111,21 @@ describe("matchday slice 3 — engine", () => {
     expect(again.state).toEqual(cur.state);
     expect(straight.games.length).toBeGreaterThan(0);
     expect(callTimeout(again.state, "a")).toBe(again.state);
+  });
+
+  it("a marked AI side plans with its coach (R140 rev.); no coach on the mark = the default quality", () => {
+    const a = team("a", 86, { coachQuality: 1, style: { natural: "possession", fit: fits("possession", 0.8, 0.7) } });
+    const b = team("b", 88, { coachQuality: 1, style: { natural: "counter", fit: fits("counter", 0.8, 0.4) } });
+    const st = startSeries(a, b, opts, createRng(5));
+    expect(st.matchday!.planA).toEqual(coachPlanFor(a, b, 1, st.matchday!.seed, "a"));
+    expect(st.matchday!.planA.mark).toBe(1);
+    expect(st.matchday!.planB.kickoff).toBe("safe");
+    // The seed is the starting cursor: the series draws exactly the same numbers as an unplanned one.
+    const rngPlanned = createRng(5);
+    const rngPlain = createRng(5);
+    startSeries(a, b, opts, rngPlanned);
+    startSeries({ ...a, matchday: undefined }, { ...b, matchday: undefined }, opts, rngPlain);
+    expect(rngPlanned.state).toBe(rngPlain.state);
   });
 
   it("simulateSeries with marked sides is deterministic", () => {

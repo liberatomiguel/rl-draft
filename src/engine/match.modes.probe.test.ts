@@ -122,4 +122,4 @@ it.skipIf(!env.GAP_MODES)("quick vs custom: series win rate by policy", () => {
     }
   if (env.GAP_MODES_OUT) writeFileSync(env.GAP_MODES_OUT, JSON.stringify({ n, rows }));
   for (const r of rows) console.log(JSON.stringify(r));
-}, 900_000);
+}, 3_600_000);
