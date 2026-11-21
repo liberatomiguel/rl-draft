@@ -74,10 +74,19 @@ it.runIf(env.REGIONCURVE === "1")("M3 region curve probe", { timeout: 24 * 3_600
     for (const difficulty of diffs)
       for (const policy of policies)
         for (let k = 0; k < seeds; k++) cells.push({ region, difficulty, policy, seed: 9100 + 7919 * k });
+  // RC_SEED_LIST="EU:9100,NA:17019": only these cells (re-runs a gap in a dump).
+  if (env.RC_SEED_LIST) {
+    const want = new Set(env.RC_SEED_LIST.split(","));
+    cells.splice(0, cells.length, ...cells.filter((c) => want.has(`${c.region}:${c.seed}`)));
+  }
   // Experiment only (never committed to balance.ts): RC_SHIFT={"EU":-3} overrides CAREER_REGION_FIELD.shift in this
   // process, RC_STARTER={"EU":2} its starterOvrOffset. One difficulty per process = a per-difficulty table.
   if (env.RC_SHIFT) Object.assign(CAREER_REGION_FIELD.shift as Record<string, number>, JSON.parse(env.RC_SHIFT));
   if (env.RC_STARTER) Object.assign(CAREER_REGION_FIELD.starterOvrOffset as Record<string, number>, JSON.parse(env.RC_STARTER));
+  // M3 (R138, flag on): RC_GONE=9 moves earlyShiftFade.goneAt; RC_NO_EARLY=1 zeroes earlyShift (the paired baseline).
+  if (env.RC_GONE) Object.assign(CAREER_REGION_FIELD.earlyShiftFade, { goneAt: Number(env.RC_GONE) });
+  if (env.RC_EARLY) Object.assign(CAREER_REGION_FIELD.earlyShift, JSON.parse(env.RC_EARLY));
+  if (env.RC_NO_EARLY === "1") for (const r of Object.keys(CAREER_REGION_FIELD.earlyShift)) (CAREER_REGION_FIELD.earlyShift as Record<string, number>)[r] = 0;
   // RC_FADE="4,7": the RC_SHIFT doses at full strength through seasonIndex 4, fading linearly to 0 at 7 (set each season start).
   const fullShift: Record<string, number> = env.RC_SHIFT ? JSON.parse(env.RC_SHIFT) : {};
   const [fadeFrom, fadeTo] = (env.RC_FADE ?? "").split(",").map(Number);
@@ -147,6 +156,8 @@ it.runIf(env.REGIONCURVE === "1")("M3 region curve probe", { timeout: 24 * 3_600
       }),
     });
     const c = out[out.length - 1];
+    // Written after every career, so a long run is readable (and resumable by slice) while it plays.
+    if (env.RC_OUT) writeFileSync(env.RC_OUT, JSON.stringify(out));
     console.log(`${cell.region}/${cell.difficulty}/${cell.policy}/${cell.seed} ended=${c.ended} ` +
       c.seasons.map((s) => `S${s.season}:${s.regionalFinal ? (s.regionalTitle ? "T" : "F") : "-"}${s.userRating}/${s.top4}`).join(" "));
   }

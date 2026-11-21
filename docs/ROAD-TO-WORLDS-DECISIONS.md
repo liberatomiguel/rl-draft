@@ -2405,3 +2405,18 @@ Rejected: founding the club without the last step (the preset is the one choice 
 **Measured.** S0–S5 identical with the flag on; top-4 overall above the flag-off world every season; Local sides at Worlds ~0. The endgame is not harder: the field's top falls ~3 points over six seasons either way, so Miguel's target 5 (title per Worlds ≤ 30–35 %) needs the top to hold (M2).
 
 Rejected: scouting within 3 of the weakest starter (0.6 reserves a region, no measurable effect). A retiring AI coach's successor is at most 2 points worse, so a retirement never costs a top org its level (dataset coaches outclass the generated pool).
+
+## R138 — 20 November 2026: Mundo vivo M3, an early regional ramp for EU and NA (v2.1.0-dev.8, flag off)
+
+**Rule.** Behind `FEATURES.worldLife`: the AI sides of EU's and NA's qualifiers and regionals play `CAREER_REGION_FIELD.earlyShift` weaker (EU −5, NA −1.5; every other region 0), on Easy and Normal alike (scale 1; Hard 0). Full through seasonIndex 4 (T5), fading linearly to nothing at seasonIndex 9 (T10). Carried in `difficultyShift`: the players' ratings and the seeding never change; Major and Worlds never read it. No save field.
+
+**Why.** Real players (PostHog, 20/11): a regional final by T5 in 1 % of EU Normal careers and 35 % of NA's, against 67–69 % elsewhere, and Easy barely helped EU (19 %). Every region starts with the same budget and founders, but the real EU field sits at 95–96 from the first season, 15 points above a new club at T3. It never reaches the first result that pays for its growth (docs/MUNDO-VIVO-M3.md). Miguel's targets (20/11): Normal by T5 EU ≥ 20 %, NA ≥ 40 %, other regions unchanged; Easy EU ≥ Normal + 20 points; Hard stays as it is; no region easier than a naturally easier one.
+
+**Measured** (calibrated `strong` bot, 30 seeds, final by T5 / T7 / T9). Normal: EU 3/3/3 → 23/37/57 %; NA 23/33/37 → 43/57/60 %; SAM 57/60/67 % untouched. Easy: EU 10 → 50 %, NA 60 → ~90 %, SAM 97 %. Soft lock 0, bankruptcies 0.
+
+Rejected:
+- **Fade gone at T8 (goneAt 7):** a wall. The EU field rose from 92.4 to 95.2 while the user stayed at 87–88.
+- **Gone at T11 (10):** no gain over T10.
+- **NA −1.25:** 37 % by T5.
+- **Easy ×1.2 / ×1.1:** Easy EU above Easy NA (80 against 73 at T5; 97 against 93 at T9).
+- **A constant dose, no fade:** the EU regional became weaker than SAM's from S6.

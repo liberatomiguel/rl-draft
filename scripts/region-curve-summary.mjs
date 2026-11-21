@@ -8,7 +8,9 @@ const dir = process.argv[2];
 const careersOut = process.argv.includes("--careers");
 const rows = readdirSync(dir)
   .filter((f) => f.endsWith(".json"))
-  .flatMap((f) => JSON.parse(readFileSync(join(dir, f), "utf8")));
+  .flatMap((f) => JSON.parse(readFileSync(join(dir, f), "utf8")))
+  // A career is deterministic (seed + config): the same one found in two dumps is counted once.
+  .filter((c, i, all) => all.findIndex((x) => x.policy === c.policy && x.region === c.region && x.difficulty === c.difficulty && x.seed === c.seed) === i);
 const k = (n) => `${Math.round(n / 1000)}k`;
 const med = (xs) => {
   const s = xs.filter((x) => x != null && !Number.isNaN(x)).sort((a, b) => a - b);

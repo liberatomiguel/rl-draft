@@ -1,82 +1,86 @@
-# Mundo vivo M3: curva de dificuldade por região (20/11)
+# Mundo vivo M3: rampa regional no início para EU e NA (v2.1.0-dev.8, R138)
 
-"Até T5" = `seasonIndex` 0–4, como no PostHog. Engine e `balance.ts` intactos.
+A rampa fica atrás de `FEATURES.worldLife`, a mesma flag do M1 e do M2. Desligada, tudo roda como na v2.0.35. Código: `earlyRegionShift` (`worldSim.ts`); números: `CAREER_REGION_FIELD.earlyShift*`. "Até T5" quer dizer `seasonIndex` 0–4, a convenção do PostHog.
 
-## 1. Bot `strong` recalibrado
+## Causa (diagnóstico de 20/11)
 
-O bot (`careerArcBot.ts`) funda com Prospects, conta o potencial dos jovens no mercado (margem 3), renova o núcleo, compra suporte só com 10 semanas de folha em caixa e não gasta nada opcional com o Backer aberto. Sonda: `REGIONCURVE=1` (`careerRegionCurve.probe.test.ts`, `scripts/region-curve-summary.mjs`).
+- **A largada é igual em toda região.** Orçamento e fundadores são os mesmos, e todo usuário chega a cerca de 80 no T3.
+- **O campo da EU já começa no topo.** O top 4 real da EU fica em 95–96 desde o S0. O da SAM sobe de 87 para 93.
+- **O primeiro resultado nunca vem na EU.** O usuário fica 15 pontos atrás no T3. Sem resultado não entra prêmio nem reputação, e sem isso não dá para contratar. O caixa fica em 12k e o elenco para em 80–85.
+- **A Easy não fecha a distância.** Ela tira só 1 ponto do rival.
 
-| Final regional até T5 | Real | Bot |
-|---|---|---|
-| EU Normal | 1% | 0% |
-| NA Normal | 35% | 31% |
-| SAM Normal | 67% | 60% |
-| Menores Normal | 69% | 90% |
-| EU Easy / Hard | 19% / 0% | 13% / 0% |
+Medido com o bot `strong` calibrado. Por região (até T5): EU 0% contra 1% real, NA 31% contra 35%, SAM 60% contra 67%.
 
-Overall 89–92 no T6; falência em 1 de 210 carreiras. Nas regiões menores o bot joga acima da média real. Ruído: ±11 pontos (16 seeds).
-
-## 2. Medição (Normal, medianas)
-
-| Região | Top 4 regional no T3 | Usuário no T3 | Caixa no T5 | Overall no T6 | Final até T5 / T7 / T9 |
-|---|---|---|---|---|---|
-| SSA | 82,4 | 80,3 | 153k | 89,2 | 100 / 100 / 100% |
-| APAC | 81,2 | 81,9 | 188k | 90,5 | 90 / 100 / 100% |
-| OCE | 84,2 | 79,6 | 98k | 88,7 | 70 / 90 / 90% |
-| MENA | 87,3 | 81,5 | 132k | 91,5 | 100 / 100 / 100% |
-| SAM | 88,0 | 80,7 | 80k | 89,8 | 60 / 70 / 90% |
-| NA | 92,9 | 82,1 | 39k | 86,9 | 31 / 44 / 44% |
-| **EU** | **95,2** | 79,9 | **12k** | **80,6** | **0 / 0 / 0%** |
-
-Hard até T5: EU 0, NA 20, SAM 20%. Easy: EU 13, NA 69, SAM 90%.
-
-## 3. Causa
-
-1. **Na largada, todas as regiões são iguais.**
-   - O orçamento não muda por região (`balance.ts:2128`, `economy.ts:1256`).
-   - Os fundadores de EU e NA têm offset 0 (`balance.ts:2637`).
-   - Todo usuário chega a cerca de 80 no T3.
-2. **O campo é natural.** O top 4 real da EU fica em 95–96 do S0 ao S8, enquanto o da SAM vai de 87 a 93 (`worldSim.ts:813`).
-3. **Outlier: o primeiro degrau.**
-   - Resultado traz prêmio e reputação, e a reputação libera o teto `71 + 0,4×rep` (`economy.ts:718`, `balance.ts:2961`).
-   - Com −15 pontos no T3, a EU nunca dispara essa bola de neve. O caixa fica em 12k e o elenco para em 80–85.
-4. **A Easy não escala a distância.** O rival fica só 1 ponto mais fraco que na Normal (−1,6 contra −0,6, `balance.ts:4293/4300`).
-5. **A alavanca já existe:** `CAREER_REGION_FIELD.shift` (`balance.ts:2627`, aplicada em `worldSim.ts:1636`), que vale só na qualificatória e na regional. Hoje está em 0 para EU e NA.
-
-Fica como está, porque é natural: Major, Worlds, o topo regional depois do T6 e a ordem EU > NA > SAM.
-
-## 4. Proposta
+## Decisão (Miguel, 20/11)
 
 ```ts
-// CAREER_REGION_FIELD
-earlyShift: { NA: -1.25, EU: -5, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 },
-earlyShiftScaleByDifficulty: { easy: 1.2, normal: 1, hard: 0 },
-earlyShiftFade: { fullThrough: 4, goneAt: 7 }, // seasonIndex, linear
+earlyShift: { NA: -1.5, EU: -5, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 },
+earlyShiftScaleByDifficulty: { easy: 1, normal: 1, hard: 0 },
+earlyShiftFade: { fullThrough: 4, goneAt: 9 }, // linear: do T5 ao T10
 ```
 
-Em `worldSim.ts:1636`, somar `earlyShift × escala × fade(def.seasonIndex)` ao `sceneShift`: cerca de 5 linhas. O valor vai em `difficultyShift`, então os ratings reais e o seeding não mudam. `BALANCE_VERSION` 38 → 39.
+- O ajuste soma no rival da IA, mas só na qualificatória e na regional. Ele vai no `difficultyShift`, então o rating dos jogadores e o seeding não mudam.
+- Major e Worlds não leem o ajuste.
+- A Hard fica como está.
+- `BALANCE_VERSION` vai para 39.
 
-Medido com o fade emulado na sonda (`RC_SHIFT`, `RC_FADE`), 16 seeds:
+## Medição (flag ligada, bot `strong`, 30 seeds)
 
-| Final até T5 / T7 / T9 | Hoje | Proposta |
+Final regional até T5 / T7 / T9, Normal:
+
+| | Hoje | Fim no T8 (`goneAt` 7) | **Fim no T10 (9)** | Fim no T11 (10) |
+|---|---|---|---|---|
+| EU | 3 / 3 / 3% | 23 / 30 / 37 | **23 / 37 / 57** | 23 / 37 / 53 |
+| NA −1,25 | 23 / 33 / 37% | 37 / 47 / 47 | 37 / 47 / 47 | 37 / 43 / 47 |
+| **NA −1,5** | | | **43 / 57 / 60** | |
+| SAM (sem rampa) | 57 / 60 / 67% | igual | igual | igual |
+
+Usuário menos o top 4 da regional, EU, S5 → S8:
+
+| Fim no T8 | Fim no T10 | Fim no T11 |
 |---|---|---|
-| EU Normal | 0 / 0 / 0% | **25** / 31 / 38% |
-| NA Normal | 31 / 44 / 44% | **50** / 56 / 56% |
-| EU Easy (−6) | 13 / 19 / 19% | **75** / 81 / 100% (+50) |
-| NA Easy (−1,8 medido) | 69% | 75% |
+| −5,4 → −6,1 → −6,9 → −5,8 (**parede**) | −4,6 → −4,9 → −2,7 → −1,7 | −4,3 → −4,5 → −3,3 → −0,8 |
 
-Outras regiões e Hard: iguais por construção. A ordem se mantém: EU 25 < NA 50 < SAM 60; na Easy, EU 75 < SAM 90.
+Easy, fim no T10, até T5 / T7 / T9:
 
-Rejeitados:
-- dose sem fade: no S6+, a regional da EU ficava mais fraca que a da SAM;
-- NA −1,5 (56%) e NA −2 (90%).
+| | Hoje | ×1,2 | ×1,1 | **×1,0** |
+|---|---|---|---|---|
+| EU | 10 / 17 / 23% | 80 / 90 / 100 | 77 / 93 / 97 | **50 / 77 / 93** |
+| NA | 60 / 73 / 77% | 73 / 80 / 83 | 87 / 93 / 93 | **90 / 93 / 93**\* |
+| SAM | 97 / 97 / 100% | igual | igual | igual |
 
-**Save:** nada novo é gravado. Um save na EU antes do T8 sente a mudança a partir da próxima regional.
+\*Medido em −1,25; a decisão usa −1,5.
 
-## 5. Riscos
+As outras regiões e a Hard não mudam por construção (dose 0, coberta por teste). Final até T5 com a flag ligada (18–20 seeds): Normal APAC 94, MENA 80, OCE 94, SSA 100%; Easy 100% em todas.
 
-- **Parede no T6–T8.** O campo da EU volta a 95 e o bot fica em 87 (31 → 38% entre o T7 e o T9). Alternativa: fade até o T10.
-- **Major e Worlds não mudam.**
-- **Hard segue em 0% na EU.** Fica para o Miguel decidir.
-- **O bot joga bem.** Para o jogador médio da EU, espere cerca de 25%.
-- **Ruído.** Confirmar com 30 seeds depois de implementar.
+## Escolha
+
+- **Fim no T10 (`goneAt` 9).** É o menor fim sem parede: a distância da EU encolhe a cada temporada. Fim no T11 não ganha nada a mais.
+- **NA −1,5.** Com −1,25 a NA não chega a 40%. Com −1,5 ela fica acima da EU e abaixo da SAM em todo marco.
+- **Easy ×1,0.** Com ×1,2 ou ×1,1, a EU fica mais fácil que a NA na Easy (80 contra 73 no T5; 97 contra 93 no T9).
+
+| Meta | Resultado |
+|---|---|
+| EU Normal ≥ 20% até T5 | 23% ✓ |
+| NA Normal ≥ 40% até T5 | 43% ✓ |
+| Easy EU ≥ Normal + 20 | 50% (+27) ✓ |
+| EU < NA < SAM | 23 < 43 < 57 · 37 < 57 < 60 · 57 < 60 < 67 ✓ |
+
+Pela meta, um empate entre EU e NA na Easy no T9 (93 = 93) é aceito, e EU e NA ficam abaixo da SAM.
+
+## Guardas
+
+| Guarda | Resultado |
+|---|---|
+| Ratings e seeding | `difficultyShift` só; teste `earlyRegionShift.test.ts` |
+| Major e Worlds | não leem o ajuste (`tiers` sem major/worlds, coberto por teste) |
+| Draft | suíte completa verde, com o golden test |
+| Soft lock | 0 achados: EU e NA × Easy/Normal/Hard × autopilot/tuned/strong, 9 temporadas, flag ligada |
+| Falências | 0 em 750 carreiras de medição |
+
+**Save:** nada é gravado. Um save na EU ou na NA antes do T10 sente a rampa a partir da próxima regional.
+
+**Riscos.**
+- Valores medidos com um bot bom. Para o jogador médio, a EU deve ficar perto dos 23%.
+- Ruído de cerca de ±9 pontos por célula.
+- NA Easy em −1,5 foi interpolada.
