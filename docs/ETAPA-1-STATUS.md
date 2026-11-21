@@ -1,5 +1,16 @@
 # Etapa 1 (v2.1 Matchday + Mundo vivo): estado
 
+Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md` R137–R139.
+Metas: `ANALISE-POSTHOG-2026-11-20.md`; referência: `BALANCE-BASELINE-v2.0.35.md`.
+`package.json`/`SITE.version` seguem 2.0.35; `BALANCE_VERSION` 39.
+
+## Feito
+
+- **Fatia 1** (`dev.1`): série em passos; trava em `match.steps.test.ts`.
+- **Fatia 2** (`dev.3`, `FEATURES.matchdayStyles`): estilos, confronto, traços.
+- **Fatia 3** (`dev.5`, `FEATURES.matchdayDecisions`, desligada): plano, pausas, embalo no lugar do bounce, "deixar com o coach", modos `prefs.matchdayMode` (rápido por padrão) e `matchdayStopAt`. Série do usuário em `seriesSeed`, salva em `activeEvent.userSeries`. Código: `engine/career/matchday.ts`, `matchdaySeries.ts`, `store/careerFlow.ts`.
+- **Fatia 4** (`dev.9`, `FEATURES.matchdayBoxScore`, desligada): súmula, nota 0–10, momentos-chave e estatísticas da temporada (opção B, R137; decisão R140). Código: `engine/career/boxScore.ts`, `content/momentText.ts`, `store/careerFlow.ts` (`accumulateBoxStats`). Só apresentação: não muda resultado; o mundo simulado não chama a súmula (tempo de simulação por temporada inalterado). `BALANCE_VERSION` 40 só pelo fingerprint das constantes novas.
+
 ## Branch de integração e staging (20/11)
 
 **`claude/etapa1-integration-3eae43` = `2.1.0-rc.2`** (aprovado pelo Miguel
@@ -84,47 +95,45 @@ Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md`
 R137 (20/11) e R138 (fatia 2). Metas: `ANALISE-POSTHOG-2026-11-20.md`;
 referência simulada: `BALANCE-BASELINE-v2.0.35.md`.
 
-## Fatia 1 (`v2.1.0-dev.1`)
+## Medição da fatia 3 (bots; dumps em `matchday-f3-dumps/` nas notas)
 
-Série em passos sem mudar resultado: `startSeries` / `playNextGame` /
-`finishSeries` em `engine/match.ts`; `SeriesState` é JSON puro. `seriesSeed`
-em `career/seeds.ts`, testado, **não ligado** (ligar move as outras séries da
-rodada). Trava: o digest de `match.steps.test.ts`.
+Flag desligada = baseline carreira por carreira (14/14).
 
-## Fatia 2 (`v2.1.0-dev.3`, atrás de `FEATURES.matchdayStyles`, desligada)
-
-`career/styles.ts` (cinco estilos, natural + encaixe pelos atributos),
-`career/traits.ts` (0–2 traços por nome + sal), confronto e traços em
-`match.ts`, `CAREER_MATCHDAY` em `balance.ts`. Só `assembleTournamentTeam`
-com `rollRange` (carreira) preenche `style`/`traits`. LAN não ligado.
-
-**Medição** (bots autopilot/tuned/professional, sem a política "strong" do M1,
-que não está neste ramo). Flag desligada = baseline, carreira por carreira.
-
-| | Desligada | Ligada |
+| | v2.0.35 | Ligada |
 |---|--:|--:|
-| Motor: favorito +2 / +5 / +6 | 75,2 / 96,0 / 98,2% | 74,9 / 95,9 / 98,2% |
-| Carreira ±2: Normal / Hard / Easy | 59,4 / 56,2 / 76,1% | 59,1 / 57,3 / 76,1% |
-| Carreira ≥ +6: Normal / Hard | 99,8 / 99,5% | 99,9 / 100% |
-| Final regional até T5, NA e EU (N/E/H) | 0/6 em tudo | 0/6 em tudo |
-| Título regional, rating 84–87: N / H | 17 / 7% | 8 / 13% |
-| Worlds por participação (endgame N) | 1 de 12 | 0 de 11 |
-| Soft lock / falência N / falência H | 0 / 0 / 4 de 42 | 0 / 1 / 5 de 42 |
+| Motor +2 / +5 / +6 | 75,5 / 96,1 / 98,4% | 75,6 / 96,1 / 98,4% |
+| Carreira ±2 N / H / E | 59,4 / 56,2 / 76,1% | 59,7 / 58,6 / 77,0% |
+| Carreira ≥ +6 N / H | 99,8 / 99,5% | 99,8 / 99,9% |
+| Soft lock; falência N / H | 0; 0 / 4 de 42 | 0; 1 / 5 de 42 |
 
-Guardas duras de pé (Draft intacto, +6 ≥ 98%, +2 ≥ 73%, 0 soft lock, âncoras).
-Zebra de +5: ~4% no motor, abaixo da faixa 5–8%; os tetos não precisam baixar.
-Metas 1 e 2 (EU/NA) não se movem: o confronto é aleatório em relação ao
-rating e não é a alavanca. Meta 4 está dentro do ruído (amostras de 16–37
-temporadas). Meta 5 vale (0–8%), mas os bots quase nunca ganham o Worlds.
+Zebra de +5: 3,9%, ainda abaixo de 5–8%. Final regional até T5 segue 0/6 em NA, EU e SAM.
 
-## Fatia 3 precisa saber
+**Rápido × personalizado** (vitória do usuário, 20 mil séries por célula, Normal = Hard):
 
-- Plano escolhe `TeamStyle.played`; o embalo substitui o hook de comportamento
-  em `traitBounce`. Teto somado ±1,2 já é aplicado em `gameSide`.
-- `package.json`/`SITE.version`: 2.0.35 em `main`, 2.1.0-rc.2 no branch de
-  integração; `BALANCE_VERSION` 39 nele.
+| Gap | Bom manual | Coach médio (72) | Coach 0,7 | Sem coach | Antigo |
+|---|--:|--:|--:|--:|--:|
+| −2 | 30,4% | 27,9% | 29,3% | 24,0% | 25,1% |
+| 0 | 55,7% | 53,3% | 54,8% | 49,4% | 49,7% |
+| +2 | 80,4% | 78,2% | 79,6% | 74,9% | 74,9% |
 
-## Fatia 4, decidida (opção B, R137)
+O coach médio custa 2–2,5 pp contra o bom manual; sem coach, 5,5–6,4 pp. Pedaços do manual em série igual: timeout +2,3, ajuste +1,8, estilo +1,3, marcação +1,1, kickoff ~0 pp.
 
-Súmula com 2 a 4 momentos-chave por jogo, todos tirados da súmula; sem
-narração lance a lance e sem barra de embalo.
+## Para o Miguel decidir
+
+- Sem coach custa ~6 pp: aceitar, ou dar ao time sem coach uma qualidade mínima (ex.: 0,2).
+- Decidir também deixa a série igual mais fácil que hoje: +3,6 pp com o coach médio, +6 com o bom manual (a IA não planeja).
+
+## Fatia 5 precisa saber
+
+**Súmula (fatia 4):**
+- `buildSeriesBoxScore(series, roundKey, {a: teams[teamAId], b: teams[teamBId]})` devolve `games[]` (`players.a/b[]` com gols, assistências, chutes, defesas, demos, pontos, nota; `moments[]`; `mvp` do jogo), `totals` (com `avgRating`) e o `mvp` da série (maior pontuação do vencedor). Use o `key` da rodada do `eventPlayback` ("sw:2" / "po:0"): é o mesmo que alimenta as estatísticas salvas, então a tela mostra os números que entram nelas. Chame só ao abrir a série; é determinístico.
+- Texto do momento: `momentText(useCareerCopy(), moment, teams[side].playerNames[moment.playerIdx])`. O `clock` é o do `matchTimeline` (restante na regulamentar, jogado na prorrogação), então o momento encaixa na linha do tempo do Match Center.
+- Estatísticas do elenco: `save.boxStats` (`SeasonBoxStats[]`, mais nova primeiro, no máximo duas temporadas; chave = id do jogador, ou o nome se não achar). Média = `avgRatingOf(linha)`. Só a série do usuário entra, ao fim do evento: o evento em curso ainda não está lá.
+- Com a flag desligada nada é gerado nem salvo; a tela esconde a súmula nesse caso (`FEATURES.matchdayBoxScore`).
+- Troca no meio da série (fatia 3): não conferi como o reserva aparece em `scorers`/`playerNames`. A súmula lê os `playerNames` do time ao fim do evento e atribui por índice; se a troca mudar o índice, olhar isso antes de mostrar nomes.
+
+**Telas e modos:**
+
+- Telas: pré-série (`shownStyle`, `playmakerIndex`, traços; sugestão de `coachPlanFor`), pausa e a opção (rótulos `matchdayMode.*` prontos).
+- Com o personalizado, `playEventRound`/`simEvent` param numa série aberta (`pendingUserSeriesOf`); a tela usa `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries` e depois `playEventRound`. O autoplay e o "Avançar" precisam tratar essa parada.
+- Decidir se o reserva que entra na troca recebe XP (`fieldedIds` não muda hoje).

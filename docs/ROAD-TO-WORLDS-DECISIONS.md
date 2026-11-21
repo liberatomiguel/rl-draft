@@ -2443,3 +2443,26 @@ Implementação de `MATCHDAY-SPEC.md` §4–§5 atrás de `FEATURES.matchdayStyl
 **Measured.** S0–S5 identical with the flag on; top-4 overall above the flag-off world every season; Local sides at Worlds ~0. The endgame is not harder: the field's top falls ~3 points over six seasons either way, so Miguel's target 5 (title per Worlds ≤ 30–35 %) needs the top to hold (M2).
 
 Rejected: scouting within 3 of the weakest starter (0.6 reserves a region, no measurable effect). A retiring AI coach's successor is at most 2 points worse, so a retirement never costs a top org its level (dataset coaches outclass the generated pool).
+
+## R140 — 20 de novembro de 2026: Matchday fatia 3, plano, pausas, embalo e modos (v2.1.0-dev.5)
+
+Implementação de `MATCHDAY-SPEC.md` §6–§7 e §9 atrás de `FEATURES.matchdayDecisions` (desligada até o gate do Miguel). Só motor e store; as telas são a fatia 5. Desvios e escolhas:
+- **O embalo guarda o "reagir" do bounce.** O medidor (−2 a +2 por time, 0,75 ponto de rating por ponto, teto ±1,5) decai pela metade a cada jogo. Derrota comum deixa o perdedor em +2 (= o bounce antigo de 1,5); derrota na prorrogação dá +1 e goleada (3+ gols) dá 0: o time sai abalado. Vitória por goleada, na prorrogação ou de virada carrega o vencedor. Líder ergue o time depois de perder; Temperamental derruba depois de prorrogação ou goleada; Sangue frio amortece as quedas do próprio time e a reação do rival. Motivo: um medidor só de sequência de vitórias correlaciona os jogos e derruba o favorito de +2 abaixo dos 73%.
+- **Timeout vale no máximo 0,75.** Zera o embalo positivo do adversário até 0,75 ponto de rating, sem bônus extra; um por série, só entre jogos.
+- **Jogar fora do estilo natural custa** 0,5 × (encaixe natural − encaixe no estilo escolhido) por jogo, para a escolha ser uma troca. Marcar o jogador errado custa 0,15. Os dois somam no teto do plano (±0,4); plano, confronto, traços e briefing de domingo somam no teto de ±1,2 (o briefing passa a entrar ali, e não mais no rating; o analista continua no rating, como staff permanente).
+- **Marcar** mira o "jogador de jogadas especiais" (`playmakerIndex`: o titular com mais mecânica + ataque). Marcar o certo corta 60% da chance da jogada especial do time (o proc de mecânica), com o mesmo sorteio.
+- **Kickoff** multiplica a variação do jogo dos dois lados (seguro 0,85, agressivo 1,15), dentro de 0,7–1,3 com os traços.
+- **"Deixar com o coach":** cada decisão (estilo, kickoff, marcação, timeout, ajuste depois de perder) sai certa com chance = qualidade do coach (overall 60 → 0, 90 → 1), por hash do seed da série, sem consumir RNG. Sem coach: plano padrão e nenhuma pausa. O coach não faz a troca.
+- **IA:** estilo natural e plano padrão. Só na série do usuário, depois de perder um jogo, troca para o estilo que responde ao do usuário com chance 0,15 + 0,5 × qualidade (0,4 quando o montador não conhece o coach; `worldSim.ts` não foi tocado). Séries IA × IA da carreira usam o medidor no lugar do bounce, sem pausas.
+- **Modos:** `prefs.matchdayMode` (ausente = rápido, carreiras novas e antigas) e `prefs.matchdayStopAt`. O personalizado para, por padrão, só nos playoffs e em eventos LAN (Major/Worlds); "toda série" é opcional.
+- **Série do usuário no próprio seed** (`seriesSeed`) só em eventos marcados `activeEvent.matchday = 1` (iniciados com a flag ligada); um evento em andamento na atualização termina no motor antigo. No personalizado a rodada espera a série do usuário e é jogada quando ela termina; como a série não usa o RNG da rodada, o resto da rodada sai igual em qualquer ordem.
+- **Troca:** o reserva entra no lugar de um titular para o resto da série, com o time remontado por `userTeamFor` (encaixe, química e traços mudam). `fieldedIds` (XP e estabilidade do elenco) não muda; a fatia 5 decide se o reserva recebe crédito.
+
+## R141 — 20 de novembro de 2026: Matchday fatia 4, súmula e momentos-chave (v2.1.0-dev.9)
+
+Implementação de `MATCHDAY-SPEC.md` §3 C e §8 (R137, opção B) atrás de `FEATURES.matchdayBoxScore` (desligada até o gate). Só motor e store. Escolhas:
+- **Os gols são os do motor.** A súmula lê `GameResult.scorers` (o mesmo que a linha do tempo) e só inventa o resto (assistências, chutes, defesas, demos) em cima dos gols. Não há como mudar placar nem vencedor.
+- **MVP da série = maior pontuação no jogo do vencedor** (desempate: nota média), no lugar do sorteio de `starName`. O `starName` continua nos dados antigos.
+- **Momentos-chave**: 8 tipos por regra (prorrogação, virada de 2+, hat-trick, jogo decisivo sem sofrer gol, gol no fim, maratona de defesas, blitz de demos, e o gol que decide como complemento). Três variações de texto por tipo, nunca repetidas na série.
+- **Estatísticas da temporada** no `CareerSave.boxStats` (opcional; persist version e `saveVersion` iguais): temporada atual e anterior, 12 jogadores. Entram quando o evento termina, a partir das séries do usuário. Chave pelo id do jogador.
+- Sabor de estilo (com `matchdayStyles`): Pressão +2 demos, Posse tira 2 chutes do rival.

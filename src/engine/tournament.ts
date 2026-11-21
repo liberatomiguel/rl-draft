@@ -12,8 +12,9 @@
 
 import { TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
+import type { SeriesOptions, UserSeriesResolver } from "./match";
 import { generateOpponents } from "./opponents";
-import { createPlayoffs, playPlayoffRound, userPlayoffSeries } from "./playoffs";
+import { createPlayoffs, nextPlayoffPairings, playPlayoffRound, userPlayoffSeries } from "./playoffs";
 import { createSwissState, playSwissRound, seedsFromSwiss, upcomingSwissPairings } from "./swiss";
 import type {
   Difficulty,
@@ -190,9 +191,11 @@ export function playNextRound(
   state: TournamentState,
   difficulty: Difficulty,
   rng: Rng,
+  /** v2.1 Matchday slice 3: the user's series off the round RNG (career, FEATURES.matchdayDecisions). */
+  userSeries?: UserSeriesResolver,
 ): TournamentState {
   if (state.stage === "swiss") {
-    const swiss = playSwissRound(state.swiss, state.teams, difficulty, rng);
+    const swiss = playSwissRound(state.swiss, state.teams, difficulty, rng, userSeries);
     let next: TournamentState = { ...state, swiss };
 
     if (swiss.finished && state.swissOnly) {
@@ -211,7 +214,7 @@ export function playNextRound(
   }
 
   if (state.stage === "playoffs" && state.playoffs && !state.playoffs.finished) {
-    const playoffs = playPlayoffRound(state.playoffs, state.teams, difficulty, rng);
+    const playoffs = playPlayoffRound(state.playoffs, state.teams, difficulty, rng, userSeries);
     const next: TournamentState = {
       ...state,
       playoffs,
@@ -270,6 +273,43 @@ export function userHasPendingSeries(state: TournamentState): boolean {
     return !state.userEliminated;
   }
   return false;
+}
+
+/**
+ * v2.1 Matchday slice 3: the user's pair and series options in the NEXT
+ * round (in the order the round will play them), plus that round's key
+ * ("sw:N" / "po:N", eventPlayback's RoundRef.key). Null when the next round
+ * holds no series for the user. Pure; draws nothing.
+ */
+export function upcomingUserPairing(
+  state: TournamentState,
+  difficulty: Difficulty,
+): { roundKey: string; teamAId: string; teamBId: string; options: SeriesOptions } | null {
+  if (!userHasPendingSeries(state)) return null;
+  const isUser = (id: string) => state.teams[id]?.isUser === true;
+  if (state.stage === "swiss") {
+    const pair = upcomingSwissPairings(state.swiss)?.find(([a, b]) => isUser(a) || isUser(b));
+    if (!pair) return null;
+    return {
+      roundKey: `sw:${state.swiss.rounds.length}`,
+      teamAId: pair[0],
+      teamBId: pair[1],
+      options: { bestOf: TOURNAMENT.swiss.bestOf, stage: "swiss", difficulty },
+    };
+  }
+  if (!state.playoffs) return null;
+  const pair = nextPlayoffPairings(state.playoffs).find(([a, b]) => isUser(a) || isUser(b));
+  if (!pair) return null;
+  return {
+    roundKey: `po:${state.playoffs.rounds.length}`,
+    teamAId: pair[0],
+    teamBId: pair[1],
+    options: {
+      bestOf: state.playoffs.format === "single" ? TOURNAMENT.quick.bestOf : TOURNAMENT.playoffs.bestOf,
+      stage: "playoff",
+      difficulty,
+    },
+  };
 }
 
 /**

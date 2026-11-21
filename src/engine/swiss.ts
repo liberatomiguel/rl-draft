@@ -25,7 +25,7 @@
 
 import { TOURNAMENT } from "@/config/balance";
 import { createRng, type Rng } from "@/lib/rng";
-import { simulateSeries } from "./match";
+import { simulateSeries, type UserSeriesResolver } from "./match";
 import type {
   Difficulty,
   SwissRound,
@@ -294,6 +294,7 @@ export function playSwissRound(
   teams: Record<string, TournamentTeam>,
   difficulty: Difficulty,
   rng: Rng,
+  userSeries?: UserSeriesResolver,
 ): SwissState {
   if (state.finished) return state;
 
@@ -304,11 +305,11 @@ export function playSwissRound(
   const round: SwissRound = { round: roundNumber, series: [], userSeriesIndex: null };
 
   for (const [aId, bId] of pairs) {
-    const result = simulateSeries(teams[aId], teams[bId], {
-      bestOf: TOURNAMENT.swiss.bestOf,
-      stage: "swiss",
-      difficulty,
-    }, rng);
+    const options = { bestOf: TOURNAMENT.swiss.bestOf, stage: "swiss" as const, difficulty };
+    const result =
+      userSeries && (teams[aId].isUser || teams[bId].isUser)
+        ? userSeries(teams[aId], teams[bId], options)
+        : simulateSeries(teams[aId], teams[bId], options, rng);
     round.series.push(result);
     if (teams[aId].isUser || teams[bId].isUser) {
       round.userSeriesIndex = round.series.length - 1;

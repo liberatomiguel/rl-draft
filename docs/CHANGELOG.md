@@ -47,6 +47,40 @@ Branch `claude/etapa1-integration-3eae43`, cut from `design/broadcast-pilot` (`c
 - **Known at 320 px, same as staging (the fifth pass left mobile for later):** the Home wordmark is 25 px too wide (page 345 px, the scorebug's rank label hidden), and the HQ and event stat boxes run their labels together ("PREMIAÇÃOPONTOS"). Not fixed here: it belongs to the mobile pass and Miguel's A7.
 - Four career/engine tests timed out at 5 s while other sessions loaded the machine. They pass alone with a longer timeout; the run before the fifth-pass merge was fully green.
 
+## [2.1.0-dev.9] — 2026-11-20 · Matchday slice 4: box score, ratings and key moments (engine and store only, behind a flag, not released)
+
+Fourth slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 C and §8, R137 option B). Everything sits behind the new `FEATURES.matchdayBoxScore`, **off by default** (`NEXT_PUBLIC_MATCHDAY_BOXSCORE=1` for probes). No screens yet (slice 5). No play-by-play and no momentum bar, as Miguel chose.
+
+### Added
+- **`engine/career/boxScore.ts`**, an extension of `matchTimeline.ts` on a local RNG seeded from the persisted result (`boxScoreSeed`): per player per game goals, assists, shots, saves, demos, in-game score and a 0–10 rating (the base of the Pro career, Etapa 2). Goals are the engine's own `scorers` counts (a legacy game without them spreads the goals at random), so a side's goals sum to its score exactly; assists ≤ goals and never on the scorer's own goal; shots ≥ goals; one side's saves are the rival's shots on target minus its goals.
+- **Series box score** (`buildSeriesBoxScore`): every game, per-player totals with the average rating, and the **series MVP from the winner's top score** (instead of the `starName` draw).
+- **Style flavour** (with `matchdayStyles` on): Pressure +2 demos, Possession cuts the shots its rival gets by 2.
+- **Key moments**: structured events (type, side, player, period, clock, variant, n) read off the goal timeline and the numbers: overtime winner, comeback from 2+ down, hat-trick, clean sheet in a deciding game, late goal, save marathon, demo blitz, and the deciding goal as a filler. 2–4 when something notable happens (the filler tops up to two), 0–1 in a quiet game, capped at 4. Three text variants per type; a series never reuses one. Text: `copy.career.en/pt.ts` `moments` plus `content/momentText.ts`.
+- **Season stats on the roster**: `CareerSave.boxStats` (optional, additive: persist version and `saveVersion` stay), per-player totals and rating sum for the current and the last season, 12 players each. Folded in when an event ends (`careerFlow.accumulateBoxStats`), from the same round keys the Match Center uses.
+- Tests: `boxScore.test.ts` (determinism, goal sums, assists/shots/saves bounds, MVP, input never written so winner and score cannot move, moments, style flavour, season fold) and `momentText.test.ts`.
+
+### Balance
+- None. Presentation only: no result changes, and the world simulation never calls the box score (nothing in `worldSim.ts` imports it). `BALANCE_VERSION` 39 → 40 only because the new `CAREER_BOXSCORE` constants change the balance.ts fingerprint.
+
+## [2.1.0-dev.5] — 2026-11-20 · Matchday slice 3: plan, breaks, momentum, quick and custom modes (engine and store only, behind a flag, not released)
+
+Third slice of Etapa 1 (docs/MATCHDAY-SPEC.md §6, §7, §9). Everything sits behind the new `FEATURES.matchdayDecisions`, **off by default** (`NEXT_PUBLIC_MATCHDAY_DECISIONS=1`). With it off no result moves: a pacing slice is identical, career for career, to the v2.0.35 baseline dumps (14 of 14), and `regression.golden.test.ts`, `balance.test.ts`, `match.steps.test.ts` and the persist contract pass untouched; with `matchdayStyles` on and this flag off, behaviour equals slice 2. `persist` version 3 and `saveVersion` 5 stay. No screen (slice 5). Decisions: ROAD-TO-WORLDS-DECISIONS R140.
+
+### Added
+- **The series plan** (`engine/career/matchday.ts`, `SeriesPlan`): the style played (the natural one or another; the matchup scales with fit, an off-style costs 0.5 × the fit lost), the kickoff (safe / standard / aggressive: ×0.85 / ×1 / ×1.15 on both sides' per-game roll) and a marked player (the side's playmaker makes 60% fewer special plays; marking anyone else costs 0.15). Plan ±0.4, plan + matchup + traits + Sunday briefing ±1.2 per game.
+- **The momentum meter** (−2..+2 per side, 0.75 rating per point, ±1.5): replaces `SIMULATION.momentumBounce` in career series. A plain loss leaves the loser the old bounce; an overtime loss or a rout shakes it; rout, overtime and comeback wins carry the winner; Leader, Hot-headed and Ice-cold move it (they leave the bounce).
+- **Breaks** (`engine/career/matchdaySeries.ts`): one timeout per series (clears up to 0.75 of the opponent's momentum), one sub (the reserve in, team rebuilt), an adjustment of style or kickoff. The AI keeps its natural style and the default plan and, in the user's series, re-picks its style after a loss with a chance that grows with its coach.
+- **"Leave it to the coach"**: every call right with chance = coach quality (overall 60 → 0, 90 → 1), hashed from the series seed, no RNG drawn; no coach = the default plan and no breaks.
+- **The user's series on its own seed** (`seriesSeed`, wired for events started with the flag on, `activeEvent.matchday`): the rest of the round never depends on the user's choices. `playNextRound` / the rounds take an optional `UserSeriesResolver`. `tournament.upcomingUserPairing`.
+- **Modes**: `prefs.matchdayMode` ("quick" when absent: every existing career) and `prefs.matchdayStopAt` (custom default "playoffs" = playoff series and every LAN series; "every" opt-in). Quick never stops. Custom holds the round at `activeEvent.userSeries` (plain JSON with the series RNG cursor): a reload resumes at the same game with the same result. Store actions `setMatchdayMode`, `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries`; the setting's label in `copy.career.en.ts` / `.pt.ts`.
+- `match.modes.probe.test.ts` (`GAP_MODES=1`): series win rate by policy; `match.gap.probe.test.ts` gains `GAP_DECISIONS=1`.
+
+### Balance (both flags on vs v2.0.35; bots, not players; BALANCE_VERSION 39, no value changed with the flags off)
+- Engine: +2 favourite 75.5% → 75.6%, +5 96.1% → 96.1% (upset 3.9%, still under the 5–8% band), +6 98.4% → 98.4%.
+- Career series at ±2: Normal 59.4% → 59.7%, Hard 56.2% → 58.6%, Easy 76.1% → 77.0%. ≥ +6: 99.8% / 99.5% → 99.8% / 99.9%.
+- Soft locks 0 (probe and 210 bot careers). Insolvency Normal 0 → 1 of 42, Hard 4 → 5 of 42 (as slice 2). Regional final by S5 still 0/6 in NA, EU and SAM.
+- Quick vs custom, even series: good manual 55.7%, quick with an average coach (overall 72) 53.3%, quick without a coach 49.4%.
+
 ## [2.1.0-dev.4] — 2026-11-20 · Analytics: critical career events skip the cap, Etapa 1 properties
 
 Not deployed. Production analytics only (`rocketdraft.app`); no gameplay change.

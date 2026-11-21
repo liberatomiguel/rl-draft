@@ -28,6 +28,8 @@
  */
 
 import {
+  CAREER_MATCHDAY,
+  FEATURES,
   CAREER_CALENDAR,
   CAREER_CANCELLED_WORLDS,
   CAREER_COACH_MARKET,
@@ -81,8 +83,22 @@ import {
   atPlayoffsStart,
   initFieldTournament,
   playNextRound,
+  upcomingUserPairing,
   userHasPendingSeries,
 } from "@/engine/tournament";
+import { finishSeries, isSeriesOver, type UserSeriesResolver } from "@/engine/match";
+import { buildSeriesBoxScore, foldSeasonStats } from "@/engine/career/boxScore";
+import { coachQualityOf } from "@/engine/career/matchday";
+import {
+  adjustSeriesPlan,
+  autoUserSeries,
+  callTimeout,
+  openUserSeries,
+  playOutWithCoach,
+  playUserGame,
+  setSeriesPlan,
+  type SeriesControl,
+} from "@/engine/career/matchdaySeries";
 import { createRng } from "@/lib/rng";
 import {
   DAYS_PER_SEASON,
@@ -311,7 +327,7 @@ import {
 } from "@/engine/career/sponsorDeals";
 import { fieldDrawFor, seasonGoalReputationAfter, seasonGoalMetAtReview, seasonGoalPlanFor, type FieldDraw } from "@/engine/career/seasonGoals";
 import { beatModeFor } from "@/engine/career/beats";
-import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
+import { derivedFloat, deriveSeed, seriesSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
   bestTrioRatingFor,
@@ -350,6 +366,9 @@ import type {
   CareerIdentity,
   CareerPlayerView,
   CareerPrefs,
+  MatchdayMode,
+  MatchdayStopAt,
+  UserSeriesSave,
   CareerSave,
   CoachState,
   CompactEventResult,
@@ -375,7 +394,7 @@ import type {
   TransferOffer,
   StaffId,
 } from "@/engine/career/types";
-import type { Placement, Region, TournamentState } from "@/engine/types";
+import type { KickoffPlan, Placement, PlayStyleId, Region, SeriesPlan, TournamentState, TournamentTeam } from "@/engine/types";
 // rc.34 (UX-01a): the one decision list every clock path reads (a cycle by
 // design: careerDecisions reads squadHoldFor / isEventPaused from here, and
 // both sides only call each other inside functions).
@@ -3648,6 +3667,8 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     fieldQuality,
     watched: watch,
     fieldedIds,
+    // v2.1 Matchday slice 3: this event plays the matchday model to its end.
+    ...(FEATURES.matchdayDecisions ? { matchday: 1 as const } : {}),
   };
   // Consumed the bootcamp edge (applies to this event's team build) — rc.33's
   // one-event rule only; rc.34's split-long camp (5-A) expires on its date.
@@ -3799,31 +3820,162 @@ function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<ty
   const briefing = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
   // rc.45 (R120): the analyst's edge in every playoff round (permanent staff, outside the temporary cap).
   const analyst = ev && t.stage === "playoffs" && staffOn(save.finances.gear, "analyst") ? CAREER_STAFF.roles.analyst.playoffRating : 0;
+  if (ev?.matchday) {
+    // v2.1 Matchday slice 3: the user's series on its own seed; the briefing inside the ±1.2 cap.
+    const played = playNextRound(matchdayRoundTeams(t, briefing, analyst), save.difficulty, rng, userSeriesResolver(save, t));
+    return { ...played, teams: t.teams };
+  }
   const edge = briefing + analyst;
   if (edge === 0) return playNextRound(t, save.difficulty, rng);
   return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
+}
+
+// --- v2.1 Matchday slice 3: the user's series, step by step -------------------
+
+/** The round's view of the teams on a matchday event: the analyst on the rating, the briefing as `briefingEdge`. */
+function matchdayRoundTeams(t: TournamentState, briefing: number, analyst: number): TournamentState {
+  const withAnalyst = withUserEdge(t, analyst);
+  const user = withAnalyst.teams.user;
+  if (!user || briefing === 0) return withAnalyst;
+  return { ...withAnalyst, teams: { ...withAnalyst.teams, user: { ...user, briefingEdge: briefing } } };
+}
+
+/** The same edges playEventRound gives the round about to be played (so a paused series plays the same teams). */
+function roundTeamsFor(save: CareerSave, t: TournamentState): TournamentState {
+  const ev = save.activeEvent;
+  const briefing = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
+  const analyst = ev && t.stage === "playoffs" && staffOn(save.finances.gear, "analyst") ? CAREER_STAFF.roles.analyst.playoffRating : 0;
+  return matchdayRoundTeams(t, briefing, analyst);
+}
+
+function userControlOf(save: CareerSave, userSide: "a" | "b"): SeriesControl {
+  return { userSide, userQuality: save.coach ? coachQualityOf(save.coach.overall) : null };
+}
+
+function userSeriesSeedFor(save: CareerSave, roundKey: string, teamAId: string, teamBId: string): number {
+  return seriesSeed(save.careerSeed, `evt:${save.activeEvent!.def.id}`, roundKey, teamAId, teamBId);
+}
+
+/**
+ * The resolver a matchday round hands the engine: the paused series once it
+ * is over (custom), otherwise the whole series by the coach on its own seed
+ * (quick, and custom series that do not stop).
+ */
+function userSeriesResolver(save: CareerSave, t: TournamentState): UserSeriesResolver {
+  const roundKey = t.stage === "swiss" ? `sw:${t.swiss.rounds.length}` : `po:${t.playoffs?.rounds.length ?? 0}`;
+  return (teamA, teamB, options) => {
+    const us = save.activeEvent?.userSeries;
+    if (us && us.roundKey === roundKey && isSeriesOver(us.state)) {
+      const a = us.userSide === "a" && us.userTeam ? us.userTeam : teamA;
+      const b = us.userSide === "b" && us.userTeam ? us.userTeam : teamB;
+      return finishSeries(us.state, a, b);
+    }
+    const userSide = teamA.isUser ? "a" : "b";
+    return autoUserSeries(teamA, teamB, options, userSeriesSeedFor(save, roundKey, teamA.id, teamB.id), userControlOf(save, userSide));
+  };
+}
+
+/** The career's matchday mode (absent = quick, every existing career). */
+export function matchdayModeOf(save: CareerSave): MatchdayMode {
+  return save.prefs.matchdayMode ?? "quick";
+}
+
+/** Custom mode stops before the user's next series here (quick never stops). */
+function userSeriesStopsAt(save: CareerSave, t: TournamentState): boolean {
+  const ev = save.activeEvent;
+  if (!ev?.matchday || matchdayModeOf(save) !== "custom" || !userHasPendingSeries(t)) return false;
+  const stopAt = save.prefs.matchdayStopAt ?? CAREER_MATCHDAY.customStopDefault;
+  return stopAt === "every" || t.stage === "playoffs" || isTwoDayEvent(ev.def);
+}
+
+/**
+ * Before the next round: "open" = custom mode stops here and the user's
+ * series is not opened yet; "wait" = it is open and not over (the round
+ * waits for the user); "play" = play the round (a finished paused series is
+ * read back by the resolver).
+ */
+function userSeriesGate(save: CareerSave, t: TournamentState): "open" | "wait" | "play" {
+  if (!userSeriesStopsAt(save, t)) return "play";
+  const us = save.activeEvent?.userSeries;
+  const pairing = upcomingUserPairing(t, save.difficulty);
+  if (!us || !pairing || us.roundKey !== pairing.roundKey) return "open";
+  return isSeriesOver(us.state) ? "play" : "wait";
+}
+
+/** Opens the user's series of the next round on `save` (mutates the clone): the coach's plan pre-filled. */
+function openUserSeriesOn(save: CareerSave, t: TournamentState): void {
+  const ev = save.activeEvent!;
+  const pairing = upcomingUserPairing(t, save.difficulty);
+  if (!pairing) return;
+  const teams = roundTeamsFor(save, t).teams;
+  const teamA = teams[pairing.teamAId];
+  const teamB = teams[pairing.teamBId];
+  const userSide = teamA.isUser ? "a" : "b";
+  const seed = userSeriesSeedFor(save, pairing.roundKey, teamA.id, teamB.id);
+  const opened = openUserSeries(teamA, teamB, pairing.options, seed, userControlOf(save, userSide));
+  ev.userSeries = { roundKey: pairing.roundKey, seed, rngState: opened.rngState, userSide, state: opened.state };
+}
+
+/**
+ * Plays rounds from `t` until `stop(t)`; a custom stop opens the user's
+ * series and holds there. Returns the tournament reached.
+ */
+function playRoundsOn(
+  save: CareerSave,
+  t: TournamentState,
+  rng: ReturnType<typeof createRng>,
+  first: boolean,
+  stop: (t: TournamentState) => boolean,
+  guardMax: number,
+): TournamentState {
+  const ev = save.activeEvent!;
+  let guard = 0;
+  let mustPlay = first;
+  while (t.stage !== "finished" && guard < guardMax && (mustPlay || !stop(t))) {
+    if (ev.matchday) {
+      const gate = userSeriesGate(save, t);
+      if (gate === "open") {
+        openUserSeriesOn(save, t);
+        break;
+      }
+      if (gate === "wait") break;
+    }
+    t = playEventRound(save, t, rng);
+    if (ev.userSeries) ev.userSeries = null;
+    mustPlay = false;
+    guard += 1;
+  }
+  return t;
 }
 
 export function stepEventRound(input: CareerSave): CareerSave {
   // R40: the Saturday pause — nothing to play until Sunday (same object back,
   // so a watch-mode clock calling this cannot spin store writes).
   if (isEventPaused(input)) return input;
+  // Slice 3: a paused user series holds the round (same object back).
+  if (input.activeEvent?.matchday && input.activeEvent.tournament.stage !== "finished" &&
+      userSeriesGate(input, input.activeEvent.tournament) === "wait") return input;
   const save = clone(input);
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage === "finished") return save;
   const rng = createRng(ev.rngState);
-  let t: TournamentState = playEventRound(save, ev.tournament, rng);
-  let guard = 0;
-  while (
-    t.stage !== "finished" &&
-    !userHasPendingSeries(t) &&
-    !holdsForPlayoffsDay(save, t) &&
-    guard < 16
-  ) {
-    t = playEventRound(save, t, rng);
-    guard += 1;
+  if (!ev.matchday) {
+    let t: TournamentState = playEventRound(save, ev.tournament, rng);
+    let guard = 0;
+    while (
+      t.stage !== "finished" &&
+      !userHasPendingSeries(t) &&
+      !holdsForPlayoffsDay(save, t) &&
+      guard < 16
+    ) {
+      t = playEventRound(save, t, rng);
+      guard += 1;
+    }
+    ev.tournament = t;
+    ev.rngState = rng.state;
+    return save;
   }
-  ev.tournament = t;
+  ev.tournament = playRoundsOn(save, ev.tournament, rng, true, (t) => userHasPendingSeries(t) || holdsForPlayoffsDay(save, t), 17);
   ev.rngState = rng.state;
   return save;
 }
@@ -3836,10 +3988,18 @@ export function stepEventRound(input: CareerSave): CareerSave {
  */
 export function simEventToEnd(input: CareerSave): CareerSave {
   if (isEventPaused(input)) return input;
+  if (input.activeEvent?.matchday && input.activeEvent.tournament.stage !== "finished" &&
+      userSeriesGate(input, input.activeEvent.tournament) === "wait") return input;
   const save = clone(input);
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage === "finished") return save;
   const rng = createRng(ev.rngState);
+  if (ev.matchday) {
+    // Slice 3: custom mode still stops at the user's series (quick never does).
+    ev.tournament = playRoundsOn(save, ev.tournament, rng, false, (t) => holdsForPlayoffsDay(save, t), 20);
+    ev.rngState = rng.state;
+    return save;
+  }
   let t = ev.tournament;
   let guard = 0;
   while (t.stage !== "finished" && !holdsForPlayoffsDay(save, t) && guard < 20) {
@@ -3849,6 +4009,130 @@ export function simEventToEnd(input: CareerSave): CareerSave {
   ev.tournament = t;
   ev.rngState = rng.state;
   return save;
+}
+
+/** v2.1 Matchday slice 3: the user's series paused between games, or null. */
+export function pendingUserSeriesOf(save: CareerSave): UserSeriesSave | null {
+  const ev = save.activeEvent;
+  return ev?.matchday && ev.userSeries ? ev.userSeries : null;
+}
+
+/** The two sides of the paused series, in its order (the reserve in after a sub). */
+export function userSeriesTeamsOf(save: CareerSave): { teamA: TournamentTeam; teamB: TournamentTeam } | null {
+  const us = pendingUserSeriesOf(save);
+  const ev = save.activeEvent;
+  if (!us || !ev) return null;
+  const teams = roundTeamsFor(save, ev.tournament).teams;
+  const teamA = us.userSide === "a" && us.userTeam ? us.userTeam : teams[us.state.teamAId];
+  const teamB = us.userSide === "b" && us.userTeam ? us.userTeam : teams[us.state.teamBId];
+  return teamA && teamB ? { teamA, teamB } : null;
+}
+
+/** Applies `fn` to the paused series (a clone); the SAME save back when there is none or nothing changed. */
+function withUserSeries(
+  input: CareerSave,
+  fn: (us: UserSeriesSave, teams: { teamA: TournamentTeam; teamB: TournamentTeam }, save: CareerSave) => UserSeriesSave | null,
+): CareerSave {
+  const us = pendingUserSeriesOf(input);
+  const teams = userSeriesTeamsOf(input);
+  if (!us || !teams) return input;
+  const save = clone(input);
+  const next = fn(save.activeEvent!.userSeries!, teams, save);
+  if (!next || next === us) return input;
+  save.activeEvent!.userSeries = next;
+  return save;
+}
+
+/** The career setting: quick (the coach decides, no stops) or custom (plan and breaks). */
+export function setMatchdayModeFlow(input: CareerSave, mode: MatchdayMode, stopAt?: MatchdayStopAt): CareerSave {
+  if (matchdayModeOf(input) === mode && (stopAt === undefined || input.prefs.matchdayStopAt === stopAt)) return input;
+  const save = clone(input);
+  save.prefs.matchdayMode = mode;
+  if (stopAt) save.prefs.matchdayStopAt = stopAt;
+  return save;
+}
+
+/** The pre-series plan (before game 1 only). */
+export function setUserSeriesPlanFlow(input: CareerSave, plan: SeriesPlan): CareerSave {
+  return withUserSeries(input, (us) => {
+    const state = setSeriesPlan(us.state, us.userSide, plan);
+    return state === us.state ? null : { ...us, state };
+  });
+}
+
+/** Plays the next game of the paused series (the AI's break follows it). */
+export function playUserSeriesGameFlow(input: CareerSave): CareerSave {
+  return withUserSeries(input, (us, { teamA, teamB }) => {
+    if (isSeriesOver(us.state)) return null;
+    const played = playUserGame(us.state, us.rngState, teamA, teamB, us.userSide);
+    return { ...us, state: played.state, rngState: played.rngState };
+  });
+}
+
+/** The break's timeout (one per series). */
+export function userSeriesTimeoutFlow(input: CareerSave): CareerSave {
+  return withUserSeries(input, (us) => {
+    const state = callTimeout(us.state, us.userSide);
+    return state === us.state ? null : { ...us, state };
+  });
+}
+
+/** The break's adjustment: another style (null = the natural one) or kickoff. */
+export function userSeriesAdjustFlow(
+  input: CareerSave,
+  change: { style?: PlayStyleId | null; kickoff?: KickoffPlan },
+): CareerSave {
+  return withUserSeries(input, (us) => {
+    if (us.state.games.length === 0) return null;
+    const state = adjustSeriesPlan(us.state, us.userSide, change);
+    return state === us.state ? null : { ...us, state };
+  });
+}
+
+/**
+ * The break's sub (one per series): `inId`, a squad player not on the court,
+ * takes `outId`'s seat for the rest of the series. The team is rebuilt (fit,
+ * chemistry and traits on the court change) and kept with the series.
+ */
+export function userSeriesSubFlow(input: CareerSave, outId: string, inId: string): CareerSave {
+  return withUserSeries(input, (us, _teams, save) => {
+    const ev = save.activeEvent!;
+    if (us.sub || us.state.games.length === 0 || isSeriesOver(us.state) || ev.def.teamSize) return null;
+    const onCourt = ev.fieldedIds ?? save.starterIds;
+    if (!onCourt.includes(outId) || onCourt.includes(inId) || !save.squad.some((p) => p.id === inId)) return null;
+    if (onCourt.length < LINEUP_SEATS) return null;
+    const [s0, s1, s2] = onCourt.map((id) => (id === outId ? inId : id));
+    const starterIds: [string, string, string] = [s0, s1, s2];
+    const { team } = userTeamFor({
+      identity: save.identity,
+      squad: save.squad,
+      starterIds,
+      coach: save.coach,
+      gear: save.finances.gear,
+      bootcampSharp: save.finances.bootcampSharp,
+      seasonIndex: save.clock.seasonIndex,
+      careerSeed: save.careerSeed,
+      difficulty: save.difficulty,
+      unavailablePlayerId: null,
+    });
+    const roundUser = roundTeamsFor(save, ev.tournament).teams.user;
+    const edged: TournamentTeam = {
+      ...team,
+      rating: { ...team.rating, total: team.rating.total + (roundUser.rating.total - ev.tournament.teams.user.rating.total) },
+      ...(roundUser.briefingEdge ? { briefingEdge: roundUser.briefingEdge } : {}),
+      ...(ev.tournament.teams.user.lanEvent ? { lanEvent: true as const } : {}),
+    };
+    return { ...us, userTeam: edged, sub: { outId, inId } };
+  });
+}
+
+/** "Leave it to the coach" from here: he makes every remaining call and plays the series out. */
+export function delegateUserSeriesFlow(input: CareerSave): CareerSave {
+  return withUserSeries(input, (us, { teamA, teamB }, save) => {
+    if (isSeriesOver(us.state)) return null;
+    const done = playOutWithCoach(us.state, us.rngState, teamA, teamB, userControlOf(save, us.userSide));
+    return { ...us, state: done.state, rngState: done.rngState };
+  });
 }
 
 export function finishEvent(input: CareerSave): CareerSave {
@@ -3973,6 +4257,7 @@ export function finishEvent(input: CareerSave): CareerSave {
 
   // Lifetime stats from the user's series.
   accumulateStats(save, ev.tournament);
+  accumulateBoxStats(save, ev.tournament);
   if (placement === "champion") {
     if (def.tier === "t3") save.stats.titlesT3 += 1;
     if (def.tier === "t2") save.stats.titlesT2 += 1;
@@ -4134,6 +4419,31 @@ function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placeme
   gainRep(save, kind);
   if (def.tier === "t3") (save.flags as Record<string, unknown>)[key] = used + 1;
   if (kind === "qualifierDeepRun") (save.flags as Record<string, unknown>)[deepKey] = deepRunsThisSplit + 1;
+}
+
+/**
+ * v2.1 Matchday slice 4: the user's series of the event as box scores, folded
+ * into the roster's season stats. Same round keys as the Match Center, so the
+ * stored numbers are the ones the player saw. Presentation only: reads results.
+ */
+function accumulateBoxStats(save: CareerSave, t: TournamentState): void {
+  if (!FEATURES.matchdayBoxScore) return;
+  const rounds = [
+    ...t.swiss.rounds.map((r, i) => ({ key: `sw:${i}`, series: r.series })),
+    ...(t.playoffs?.rounds ?? []).map((r, i) => ({ key: `po:${i}`, series: r.series })),
+  ];
+  const names = t.teams.user?.playerNames ?? [];
+  const keys = names.map((n) => save.squad.find((p) => p.name === n)?.id ?? n);
+  let stats = save.boxStats;
+  for (const round of rounds) {
+    for (const s of round.series) {
+      const side = s.teamAId === "user" ? "a" : s.teamBId === "user" ? "b" : null;
+      if (!side) continue;
+      const box = buildSeriesBoxScore(s, round.key, { a: t.teams[s.teamAId], b: t.teams[s.teamBId] });
+      stats = foldSeasonStats(stats, save.clock.seasonIndex, box, side, keys);
+    }
+  }
+  if (stats) save.boxStats = stats;
 }
 
 function accumulateStats(save: CareerSave, t: TournamentState): void {

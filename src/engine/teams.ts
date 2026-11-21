@@ -6,6 +6,7 @@
  */
 
 import { BUFF_LEVEL_VALUE, DIFFICULTY, FEATURES, TEAM_RATING } from "@/config/balance";
+import { coachQualityOf, playmakerIndexOf } from "./career/matchday";
 import { teamStyleFor } from "./career/styles";
 import { playerTraits } from "./career/traits";
 import {
@@ -231,6 +232,14 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
       ? {
           style: teamStyleFor(input.players),
           traits: input.players.map((p) => playerTraits(p.name, p.overall, p.archetype)),
+        }
+      : {}),
+    // v2.1 Matchday slice 3: career sides only, behind its own flag.
+    ...(input.rollRange && FEATURES.matchdayDecisions
+      ? {
+          matchday: true as const,
+          playmakerIndex: playmakerIndexOf(input.players),
+          ...(input.coach ? { coachQuality: coachQualityOf(input.coach.overall) } : {}),
         }
       : {}),
   };

@@ -12,11 +12,22 @@ import { CAREER_MATCHDAY, DIFFICULTY, SIMULATION as SIM } from "@/config/balance
 import { specialCardById } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
+import {
+  initMatchday,
+  kickoffFactor,
+  momentumTerm,
+  planShift,
+  playmakerMarked,
+  updateMomentum,
+  withPlayed,
+  type MatchdaySeriesState,
+} from "./career/matchday";
 import { styleMatchupBonus } from "./career/styles";
 import { traitBounce, traitGameEffects } from "./career/traits";
 import type {
   Difficulty,
   GameResult,
+  SeriesPlan,
   SeriesResult,
   SpecialEffectType,
   TournamentTeam,
@@ -65,6 +76,18 @@ interface GameSideResult {
   overtimeBonus: number;
 }
 
+/** v2.1 Matchday slice 3: one side's plan and momentum for this game (career `matchday` series only). */
+interface MatchdaySide {
+  /** Plan shift (off-style cost, wrong mark), already within ±planCap. */
+  planShift: number;
+  /** Both kickoffs multiplied. */
+  kickoff: number;
+  /** This side's playmaker is marked by the opponent. */
+  marked: boolean;
+  /** Momentum term, already within ±momentumCap. */
+  momentum: number;
+}
+
 function gameSide(
   team: TournamentTeam,
   opponent: TournamentTeam,
@@ -72,6 +95,7 @@ function gameSide(
   seriesForm: number,
   ctx: { deciding: boolean; stage: "swiss" | "playoff"; difficulty: Difficulty; gameIndex: number },
   rng: Rng,
+  md: MatchdaySide | null = null,
 ): GameSideResult {
   const notes: string[] = [];
   const profile = DIFFICULTY[ctx.difficulty];
@@ -84,24 +108,30 @@ function gameSide(
   const matchday = team.style !== undefined || team.traits !== undefined;
   const traitFx = matchday ? traitGameEffects(team, ctx) : null;
   let rawRoll = rng.roll(rollMin, rollMax);
-  if (traitFx && traitFx.rollScale !== 1) {
+  let rollScale = traitFx ? traitFx.rollScale : 1;
+  if (md) rollScale = clamp(rollScale * md.kickoff, CAREER_MATCHDAY.kickoffScaleRange[0], CAREER_MATCHDAY.kickoffScaleRange[1]);
+  if (rollScale !== 1) {
     const centre = (rollMin + rollMax) / 2;
-    rawRoll = centre + (rawRoll - centre) * traitFx.rollScale;
+    rawRoll = centre + (rawRoll - centre) * rollScale;
   }
   const roll = dampenIfNegative(rawRoll, team, effects);
 
   let score = team.rating.total + seriesForm + roll;
-  if (traitFx) {
+  if (traitFx || md) {
+    // §7: matchup + traits + plan + the Sunday briefing, together within ±combinedCap.
     const cap = CAREER_MATCHDAY.combinedCap;
-    score += clamp(styleMatchupBonus(team, opponent) + traitFx.shift, -cap, cap);
+    const plan = md ? md.planShift + (team.briefingEdge ?? 0) : 0;
+    score += clamp(styleMatchupBonus(team, opponent) + (traitFx ? traitFx.shift : 0) + plan, -cap, cap);
   }
+  if (md) score += md.momentum;
 
   // v2.0: offense/defense weigh on every game (they used to be cosmetic).
   score += SIM.offenseWeight * norm(team.stats.offense) + SIM.defenseWeight * norm(team.stats.defense);
 
   // Mechanics high-roll proc.
   const procChance = SIM.mechProcBaseChance * (0.5 + Math.max(0, norm(team.stats.mechanics)));
-  if (rng.chance(procChance)) {
+  // Slice 3: a marked playmaker makes fewer special plays (the same single draw).
+  if (rng.chance(md?.marked ? procChance * (1 - CAREER_MATCHDAY.markProcCut) : procChance)) {
     score += SIM.mechProcBonus + (effects.high_roll ?? 0);
     notes.push("high_roll");
   }
@@ -201,6 +231,12 @@ export interface SeriesState {
   maxDeficitA: number;
   maxDeficitB: number;
   games: GameResult[];
+  /**
+   * v2.1 Matchday slice 3: the plan / momentum layer. Present only when a side
+   * carries `matchday` (FEATURES.matchdayDecisions) or plans were given;
+   * absent → the fixed bounce, as always.
+   */
+  matchday?: MatchdaySeriesState;
 }
 
 function assertTeams(state: SeriesState, teamA: TournamentTeam, teamB: TournamentTeam): void {
@@ -217,6 +253,8 @@ export function startSeries(
   teamB: TournamentTeam,
   options: SeriesOptions,
   rng: Rng,
+  /** Slice 3: the sides' plans and the series seed (the user's series); defaults otherwise. */
+  matchday?: { planA?: SeriesPlan; planB?: SeriesPlan; seed?: number },
 ): SeriesState {
   const formA = dampenIfNegative(
     rng.roll(-SIM.seriesFormRange, SIM.seriesFormRange),
@@ -241,6 +279,9 @@ export function startSeries(
     maxDeficitA: 0,
     maxDeficitB: 0,
     games: [],
+    ...(matchday || teamA.matchday || teamB.matchday
+      ? { matchday: initMatchday(matchday?.planA, matchday?.planB, matchday?.seed) }
+      : {}),
   };
 }
 
@@ -270,9 +311,31 @@ export function playNextGame(
   const deciding = prevA === target - 1 && prevB === target - 1;
   const ctx = { deciding, stage: options.stage, difficulty: options.difficulty, gameIndex: state.games.length + 1 };
 
-  const a = gameSide(teamA, teamB, effectsA, state.formA, ctx, rng);
-  const b = gameSide(teamB, teamA, effectsB, state.formB, ctx, rng);
-  if (state.lastWinner !== null) {
+  const md = state.matchday;
+  let a: GameSideResult;
+  let b: GameSideResult;
+  if (md) {
+    // Slice 3: each side plays its plan's style; momentum replaces the bounce.
+    const pa = withPlayed(teamA, md.planA.style);
+    const pb = withPlayed(teamB, md.planB.style);
+    const kickoff = kickoffFactor(md.planA, md.planB);
+    a = gameSide(pa, pb, effectsA, state.formA, ctx, rng, {
+      planShift: planShift(pa, pb, md.planA),
+      kickoff,
+      marked: playmakerMarked(pa, md.planB),
+      momentum: momentumTerm(md.momentumA),
+    });
+    b = gameSide(pb, pa, effectsB, state.formB, ctx, rng, {
+      planShift: planShift(pb, pa, md.planB),
+      kickoff,
+      marked: playmakerMarked(pb, md.planA),
+      momentum: momentumTerm(md.momentumB),
+    });
+  } else {
+    a = gameSide(teamA, teamB, effectsA, state.formA, ctx, rng);
+    b = gameSide(teamB, teamA, effectsB, state.formB, ctx, rng);
+  }
+  if (state.lastWinner !== null && !md) {
     // v2.1 Matchday: behaviour traits bend the bounce (traitBounce returns the
     // base untouched when neither side carries traits).
     const loserIsA = state.lastWinner === "b";
@@ -330,8 +393,18 @@ export function playNextGame(
     scorers: { a: aGoals, b: bGoals },
   };
 
+  const nextMatchday = md
+    ? updateMomentum(
+        md,
+        { winner: aWins ? "a" : "b", overtime, goalDiff: score[0] - score[1], comeback: aWins ? prevA < prevB : prevB < prevA },
+        teamA,
+        teamB,
+      )
+    : undefined;
+
   return {
     ...state,
+    ...(nextMatchday ? { matchday: nextMatchday } : {}),
     winsA,
     winsB,
     lastWinner: aWins ? "a" : "b",
@@ -374,6 +447,17 @@ export function finishSeries(
     ...(comeback ? { comeback: true } : {}),
   };
 }
+
+/**
+ * v2.1 Matchday slice 3: resolves the USER's series of a round off the round
+ * RNG (its own seed, its own pace). The rounds call it instead of
+ * `simulateSeries` for the pair holding the user; absent → as always.
+ */
+export type UserSeriesResolver = (
+  teamA: TournamentTeam,
+  teamB: TournamentTeam,
+  options: SeriesOptions,
+) => SeriesResult;
 
 /** The whole series at once — a loop over the three steps above. */
 export function simulateSeries(

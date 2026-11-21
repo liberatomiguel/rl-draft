@@ -101,6 +101,11 @@ function countOf(team: TournamentTeam, id: TraitId): number {
   return n;
 }
 
+/** How many of the side's players carry `id` (slice 3's momentum meter reads the behaviour traits). */
+export function traitCount(team: TournamentTeam, id: TraitId): number {
+  return countOf(team, id);
+}
+
 export interface TraitGameEffects {
   /** Flat shift to the game score, within ±traitCap. */
   shift: number;
