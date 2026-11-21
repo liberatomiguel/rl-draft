@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 42;
+export const BALANCE_VERSION = 43;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2644,6 +2644,21 @@ export const CAREER_REGION_FIELD = {
    * regionals — is untouched. 0 = rc.38.
    */
   tierShift: { major: 0, worlds: 0 } as Record<string, number>,
+  /**
+   * v2.1 Mundo vivo M3 (R143, FEATURES.worldLife only): the early regional
+   * ramp. The real EU field sits 95–96 from the first season (SAM 87 → 93)
+   * while every region starts with the same budget and founders, so a new
+   * club in EU never reaches the first result that pays for its growth
+   * (docs/MUNDO-VIVO-M3.md). Rating added to the AI sides of the `tiers`
+   * events of that region, like `shift` (carried in difficultyShift: the
+   * players' ratings and the seeding never change; Major and Worlds never
+   * read it), times the difficulty's scale, at full strength through
+   * `fade.fullThrough` (seasonIndex) and linearly gone at `fade.goneAt`.
+   * Hard stays as it is (Miguel, 20/11).
+   */
+  earlyShift: { NA: -1.5, EU: -5, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
+  earlyShiftScaleByDifficulty: { easy: 1, normal: 1, hard: 0 } as Record<string, number>,
+  earlyShiftFade: { fullThrough: 4, goneAt: 9 },
 } as const;
 
 /**

@@ -133,9 +133,14 @@ export interface ArcPolicy {
    * signs the best young prospects by the scouted band; "stars" chases the
    * best overall it can pay for (and borrows to do it).
    */
-  market: "keep" | "upgrade" | "youth" | "stars";
-  /** Renew every expiring player, or only those still worth a starting seat. */
-  renew: "all" | "selective";
+  market: "keep" | "upgrade" | "youth" | "stars" | "value";
+  /**
+   * Renew every expiring player, or only those still worth a starting seat.
+   * M3 "core": the three best starters and every young player with upside are
+   * kept at any wage the books can carry for a split (a good manager does not
+   * lose a developed core to the renewal jump); the rest as "selective".
+   */
+  renew: "all" | "selective" | "core";
   /** No coach, the best affordable one, or a new one every season (coach change). */
   coach: "none" | "best" | "churn";
   /**
@@ -171,6 +176,18 @@ export interface ArcPolicy {
   contendWhenReady?: boolean;
   /** v2.1 M1: how much better (overall) an upgrade must be than the weakest starter (default: stars 1, others 3). */
   upgradeMargin?: number;
+  /**
+   * M3: spend on infrastructure, the psychologist and bootcamps only with this
+   * many weeks of payroll in the bank after the purchase (default: the rules
+   * of `infrastructure` / `affordable`). A good manager puts the squad first.
+   */
+  supportRunwayWeeks?: number;
+  /**
+   * M3: while the Emergency Backer is owed, nothing optional is bought (no upgrade, coach change,
+   * gear, psychologist or bootcamp) and a core renewal must leave the weekly net at or above zero
+   * or twelve weeks of runway.
+   */
+  prudent?: boolean;
 }
 
 const base: Omit<ArcPolicy, "id"> = {
@@ -242,11 +259,32 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   contender: { id: "contender", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, contendWhenReady: true },
   professional: { id: "professional", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, fullSupport: true },
   /**
-   * v2.1 M1 (R139): a strong manager, closer to the real players who win at 93+ — the professional's
-   * support and books, but it upgrades for any clearly better player (margin 1), takes the best-paying
-   * sponsor and keeps its stars (every bid declined). Opt-in: measures the endgame (careerWorldLife.probe).
+   * v2.1 M1 (R139) → M3 (R143) recalibrated (docs/MUNDO-VIVO-M3.md): a good real player. The Prospects
+   * founders, the best-paying sponsor, the coach, a Development package with scrims and the full
+   * support; the window reads a young player's upside (half the gap to his scouted potential,
+   * margin 3), the core is renewed through the renewal jump, support is bought only with ten weeks
+   * of payroll in the bank, nothing optional while the Backer is owed, and a bid is taken only when
+   * the books are tight. Calibrated on SAM's real S5 regional-final rate (67 %). M1's tables used
+   * the earlier margin-1 version (89.8 at most, 2 bankruptcies in 10).
    */
-  strong: { id: "strong", ...base, sponsor: "best", market: "upgrade", upgradeMargin: 1, renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", infrastructure: true, fullSupport: true },
+  strong: {
+    id: "strong",
+    ...base,
+    rosterKey: "prospects",
+    sponsor: "best",
+    market: "value",
+    upgradeMargin: 3,
+    renew: "core",
+    coach: "best",
+    training: "repeat",
+    scrims: true,
+    others: "take",
+    bids: "whenTight",
+    infrastructure: true,
+    fullSupport: true,
+    supportRunwayWeeks: 10,
+    prudent: true,
+  },
 };
 
 /**
@@ -663,17 +701,28 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
   }
   const pool = candidatesFor(input);
   const save = fillSeats(input, policy, t, pool);
+  if (policy.prudent && save.finances.loan) return save;
   const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   if (policy.market === "keep") return save;
 
   // 2. One upgrade per visit: release the weakest starter for a clearly better player.
-  const lineup = starters(save).sort((a, b) => a.overall - b.overall);
+  // M3 "value": a young player's upside counts (half the gap to his scouted potential), as a good manager reads it.
+  const seasonIndex = save.clock.seasonIndex;
+  const upside = (overall: number, potential: number, age: number) => (age <= 21 ? Math.max(0, potential - overall) * 0.5 : 0);
+  const ownValue = (p: (typeof save.squad)[number]) => p.overall + upside(p.overall, p.potential, ageOf(p.birthYear, seasonIndex));
+  const lineup = starters(save).sort((a, b) =>
+    policy.market === "value" ? ownValue(a) - ownValue(b) : a.overall - b.overall);
   const weakest = lineup[0];
   if (!weakest) return save;
   const margin = policy.upgradeMargin ?? (policy.market === "stars" ? 1 : 3);
   const age = (v: CareerPlayerView) => v.age;
+  const candValue = (c: Candidate) => c.view.overall + upside(c.view.overall, c.potentialRead, c.view.age);
   const list =
-    policy.market === "youth"
+    policy.market === "value"
+      ? pool
+          .filter((c) => candValue(c) >= ownValue(weakest) + margin && c.view.overall >= weakest.overall - 1)
+          .sort((a, b) => candValue(b) - candValue(a) || a.view.id.localeCompare(b.view.id))
+      : policy.market === "youth"
       ? pool
           .filter((c) => age(c.view) <= 19 && c.potentialRead >= weakest.potential + 3 && c.view.overall >= weakest.overall - 2)
           .sort((a, b) => b.potentialRead - a.potentialRead)
@@ -704,13 +753,29 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
   const expiring = save.squad
     .filter((p) => p.contractEndSeason === seasonIndex)
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
+  const core = new Set(
+    [...starters(save)].sort((a, b) => b.overall - a.overall).slice(0, 3).map((p) => p.id),
+  );
   for (const p of expiring) {
+    const young = ageOf(p.birthYear, seasonIndex) <= 21;
+    if (policy.renew === "core" && (core.has(p.id) || (young && p.potential >= lineupFloor + 3))) {
+      // The core stays at any wage one split of the books can carry: four weeks of payroll left
+      // after the raise, and a weekly loss the balance covers for at least six weeks.
+      const talk = renewalTalkFor(save, p, 2);
+      const stmt = statementOf(save);
+      const net = stmt.net - weeklyOf(talk.ask.wagePerSplit - p.salaryPerSplit);
+      const runway = policy.prudent ? 12 : 6;
+      if (!(policy.prudent && save.finances.loan) && save.finances.balance >= 4 * stmt.payroll && (net >= 0 || save.finances.balance / -net >= runway)) {
+        const res = renewPlayerFlow(save, p.id, 2, { weekly: talk.zone.floorWeekly });
+        save = res.error ? renewPlayerFlow(save, p.id, 2).save : res.save;
+        continue;
+      }
+    }
     if (policy.renew === "all") {
       const res = renewPlayerFlow(save, p.id, 2);
       if (!res.error) save = res.save;
       continue;
     }
-    const young = ageOf(p.birthYear, seasonIndex) <= 21;
     if (p.overall < lineupFloor - 1 && !young) continue;
     // The renewal ask, from the talk renewPlayerFlow answers with.
     const talk = renewalTalkFor(save, p, 2);
@@ -749,6 +814,7 @@ function answerInsert(save: CareerSave, policy: ArcPolicy): CareerSave {
 
 function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
   if (policy.coach === "none" || save.reputation < CAREER_UNLOCKS.coachRep) return save;
+  if (policy.prudent && save.finances.loan) return save;
   const candidates = coachCandidatesFor(save)
     .filter((c) => c.id !== save.coach?.id && !coachHireRefusalFor(save.reputation, c))
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
@@ -761,6 +827,13 @@ function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
   if (!pick) return save;
   const res = hireCoachFlow(save, pick);
   return res.error ? save : res.save;
+}
+
+/** M3: support spending (psychologist, bootcamp) keeps `supportRunwayWeeks` of payroll in the bank. */
+function supportOk(save: CareerSave, policy: ArcPolicy, cost = 0): boolean {
+  if (policy.prudent && save.finances.loan) return false;
+  if (policy.supportRunwayWeeks === undefined) return true;
+  return save.finances.balance - cost >= policy.supportRunwayWeeks * statementOf(save).payroll;
 }
 
 function borrow(save: CareerSave, t: Tally): CareerSave {
@@ -838,23 +911,24 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   }
   const week = weekOfDay(save.clock.day);
   const dow = dayOfWeekOf(save.clock.day);
-  if (policy.infrastructure && dow === 1 && !save.activeEvent) {
+  const frozen = Boolean(policy.prudent && save.finances.loan);
+  if (policy.infrastructure && !frozen && dow === 1 && !save.activeEvent) {
     for (const gear of CAREER_GEAR.items) {
       if (save.finances.gear[gear.id]) continue;
       if (save.reputation < gear.repGate) break;
       const bought = buyGearFlow(save, gear.id);
       if (bought.error) break;
       const statement = statementOf(bought.save);
-      if (bought.save.finances.balance >= 8 * statement.payroll &&
+      if (bought.save.finances.balance >= (policy.supportRunwayWeeks ?? 8) * statement.payroll &&
         (statement.net >= 0 || bought.save.finances.balance / -statement.net >= 12)) save = bought.save;
       else break;
     }
   }
-  if (policy.fullSupport && dow === 1 && !save.activeEvent) {
+  if (policy.fullSupport && !frozen && dow === 1 && !save.activeEvent) {
     const hired = !save.finances.gear.psychologist && save.reputation >= CAREER_GEAR.psychologistRep ? setPsychologistFlow(save, true) : null;
     if (hired && !hired.error) {
       const extra = save.finances.gear.psychologist ? 0 : psychologistPerSplitFor(save.clock.seasonIndex);
-      if (affordable(save, 0, extra, policy)) save = hired.save;
+      if (affordable(save, 0, extra, policy) && supportOk(save, policy)) save = hired.save;
     }
     // A human can hire a first coach as soon as the unlock is earned.
     if (!save.coach) save = coachMoves(save, policy);
@@ -876,7 +950,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
   if ((opts.bootcamp || policy.fullSupport) && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
     const tier = bootcampTierFor(save.reputation);
-    if (tier !== 0 && affordable(save, bootcampCostFor(tier, save.clock.seasonIndex), 0, policy)) {
+    if (tier !== 0 && affordable(save, bootcampCostFor(tier, save.clock.seasonIndex), 0, policy) && supportOk(save, policy, bootcampCostFor(tier, save.clock.seasonIndex))) {
       const res = runBootcampFlow(save);
       if (!res.error) {
         save = res.save;
@@ -964,10 +1038,13 @@ export function playArcCareer(cfg: {
    *  load-time migration) instead of founding a career. `seasons` then counts
    *  from the save's current season. */
   startFrom?: CareerSave;
+  /** M3: test-only overrides of the policy's fields (the region-curve probe's RC_OVERRIDE). */
+  policyOverride?: Partial<Omit<ArcPolicy, "id">>;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
     ...ARC_POLICIES[cfg.policy],
+    ...(cfg.policyOverride ?? {}),
     ...(cfg.rosterKey ? { rosterKey: cfg.rosterKey } : {}),
     ...(cfg.fullSupport !== undefined ? { fullSupport: cfg.fullSupport, infrastructure: cfg.fullSupport } : {}),
     ...(cfg.sponsor ? { sponsor: cfg.sponsor } : {}),

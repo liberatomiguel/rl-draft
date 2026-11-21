@@ -51,6 +51,7 @@ rc.47 (R122–R128): contract-long sponsor goals, database-driven region moves, 
 v2.1.0-dev.2 (R139, branch, not on staging): Mundo vivo M1 behind `FEATURES.worldLife` (off = v2.0.35): AI scouting onto a reserve seat, Local stacks signed, org turnover, the local ceiling, coaches who age and retire (`engine/career/worldLife.ts`, rollover in careerFlow's `worldLifeRollover`). Probe: `WORLDLIFE=1` (`careerWorldLife.probe.test.ts`); results in docs/MUNDO-VIVO-M1.md.
 
 v2.1.0-dev.7 (R142, branch): Mundo vivo M2.1, behind the same flag: elite renewal holds each region's S6 count of active AI elite (`eliteRenewalPass` in worldLife.ts, `world.potentialLift` read by `playerViewById`). Probe: `WORLDTOP=1` (`careerWorldTop.probe.test.ts`); spec and results in docs/MUNDO-VIVO-M2-SPEC.md.
+v2.1.0-dev.8 (R143, branch): Mundo vivo M3 behind the same flag: the early regional ramp (`CAREER_REGION_FIELD.earlyShift` EU −5, NA −1.5, fading out by T10; `worldSim.earlyRegionShift`). Probe: `REGIONCURVE=1` (`careerRegionCurve.probe.test.ts`, calibrated `strong` bot); results in docs/MUNDO-VIVO-M3.md.
 
 rc.50 (R130–R132): a region short of organizations fills its events with local sides (the season-3 soft lock of rc.47–rc.49), one start rule for events, no silent failure of an action; mobile selector navigation, the guided tour per tab, cleaner copy, one analytics event per tournament. After any career engine or store change run the soft-lock probe (P1_SOFT=1, src/store/careerSoftlock.probe.test.ts) before staging.
 

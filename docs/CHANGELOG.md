@@ -62,6 +62,21 @@ Fourth slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 C and §8, R137 option B). Ev
 ### Balance
 - None. Presentation only: no result changes, and the world simulation never calls the box score (nothing in `worldSim.ts` imports it). `BALANCE_VERSION` 39 → 40 only because the new `CAREER_BOXSCORE` constants change the balance.ts fingerprint.
 
+## [2.1.0-dev.8] — 2026-11-20 · Mundo vivo M3: an early regional ramp for EU and NA (flag off, BALANCE_VERSION 39)
+
+Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off a career plays exactly as v2.0.35 (R143, docs/MUNDO-VIVO-M3.md).
+
+### Added
+- `worldSim.earlyRegionShift`: the AI sides of EU's and NA's qualifiers and regionals play a little weaker early in a career. The effect is full through T5 and fades out by T10. Easy and Normal only; Hard, Major and Worlds are untouched, and so are every player's rating and the seeding.
+- Opt-in probe `careerRegionCurve.probe.test.ts` (`REGIONCURVE=1`): regional finals and titles per season, the user's rating against the regional top 4, money and squad, with `RC_*` experiment overrides. Tables come from `scripts/region-curve-summary.mjs`.
+- The arc bot's `strong` policy, recalibrated against real players (Prospects, a market that reads upside, the core renewed, support only with ten weeks of runway, nothing optional while the Backer is owed). New opt-in knobs: `market: "value"`, `renew: "core"`, `supportRunwayWeeks`, `prudent`, `policyOverride`.
+
+### Balance
+- `CAREER_REGION_FIELD.earlyShift` EU −5 / NA −1.5 (others 0), `earlyShiftScaleByDifficulty` easy 1 / normal 1 / hard 0, `earlyShiftFade` full through seasonIndex 4, gone at 9. Measured (calibrated bot, 30 seeds), regional final by T5 on Normal: EU 3 → 23 %, NA 23 → 43 %, SAM 57 % unchanged. Easy EU 10 → 50 %. Soft lock 0. BALANCE_VERSION 38 → 39.
+
+### Fixed
+- EU (and NA) Normal careers almost never reached a regional final by T5: 1 % and 35 % of real careers, against 67–69 % elsewhere. Root cause: every region starts with the same budget and founders, but the real EU field sits at 95–96 from the first season. A new club is 15 points short at T3 and never earns the first prize money and reputation that pay for its growth. Easy's 1-point rival shift could not close that gap.
+
 ## [2.1.0-dev.7] — 2026-11-20 · Mundo vivo M2.1: elite renewal, champions from other regions (flag off, BALANCE_VERSION 39)
 
 Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off nothing changes. Infinite seasons only (R142, docs/MUNDO-VIVO-M2-SPEC.md).

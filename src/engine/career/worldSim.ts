@@ -46,6 +46,7 @@ import {
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
   CHEMISTRY,
+  FEATURES,
   TEAM_RATING,
   TOURNAMENT,
 } from "@/config/balance";
@@ -438,6 +439,22 @@ export interface StarterOffer {
 function headlinerPotential(f: number): number {
   const [lo, hi] = CAREER_WORLD.prospectHeadliner.potentialRange;
   return Math.min(hi, lo + Math.floor(f * (hi - lo + 1)));
+}
+
+/**
+ * v2.1 Mundo vivo M3 (R143): the early regional ramp — rating added to the AI
+ * sides of a region's qualifiers and regionals (CAREER_REGION_FIELD.earlyShift
+ * × the difficulty's scale), full through `fade.fullThrough`, linearly gone at
+ * `fade.goneAt`. 0 with FEATURES.worldLife off (= v2.0.35).
+ */
+export function earlyRegionShift(region: Region, difficulty: CareerDifficulty, seasonIndex: number): number {
+  if (!FEATURES.worldLife) return 0;
+  const dose = (CAREER_REGION_FIELD.earlyShift[region] ?? 0) * (CAREER_REGION_FIELD.earlyShiftScaleByDifficulty[difficulty] ?? 0);
+  if (dose === 0) return 0;
+  const { fullThrough, goneAt } = CAREER_REGION_FIELD.earlyShiftFade;
+  if (seasonIndex <= fullThrough) return dose;
+  if (seasonIndex >= goneAt) return 0;
+  return (dose * (goneAt - seasonIndex)) / (goneAt - fullThrough);
 }
 
 export function starterRosterOffers(
@@ -1635,7 +1652,9 @@ export function fieldForEvent(
   const sceneShift =
     (CAREER_REGION_FIELD.tiers.includes(def.tier)
       ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0) *
-        (CAREER_REGION_FIELD.shiftScaleByDifficulty[ctx.difficulty] ?? 1)
+        (CAREER_REGION_FIELD.shiftScaleByDifficulty[ctx.difficulty] ?? 1) +
+        // v2.1 M3 (R143): the early regional ramp (EU, NA), fading out by season.
+        earlyRegionShift(def.region ?? ctx.userRegion, ctx.difficulty, def.seasonIndex)
       : 0) +
     // rc.39 F6 (R102): the top tiers' own shift (the counterpart of chemistry by time together).
     (CAREER_REGION_FIELD.tierShift[def.tier] ?? 0) +
