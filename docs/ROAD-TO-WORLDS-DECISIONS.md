@@ -2447,3 +2447,13 @@ Implementação de `MATCHDAY-SPEC.md` §6–§7 e §9 atrás de `FEATURES.matchd
 - **Modos:** `prefs.matchdayMode` (ausente = rápido, carreiras novas e antigas) e `prefs.matchdayStopAt`. O personalizado para, por padrão, só nos playoffs e em eventos LAN (Major/Worlds); "toda série" é opcional.
 - **Série do usuário no próprio seed** (`seriesSeed`) só em eventos marcados `activeEvent.matchday = 1` (iniciados com a flag ligada); um evento em andamento na atualização termina no motor antigo. No personalizado a rodada espera a série do usuário e é jogada quando ela termina; como a série não usa o RNG da rodada, o resto da rodada sai igual em qualquer ordem.
 - **Troca:** o reserva entra no lugar de um titular para o resto da série, com o time remontado por `userTeamFor` (encaixe, química e traços mudam). `fieldedIds` (XP e estabilidade do elenco) não muda; a fatia 5 decide se o reserva recebe crédito.
+
+## R140 — 20 de novembro de 2026: Matchday fatia 3, a IA planeja com o seu coach (v2.1.0-dev.6)
+
+Miguel, 20/11, sobre os dois pontos abertos do R139:
+- **Sem coach no modo rápido custa ~6 pp contra o bom manual: aceito.** Motivo dele: o rápido sem coach era igual ao jogo de hoje.
+- **A IA também planeja, com o seu coach, exatamente como o "deixar com o coach" do usuário:** plano, timeout e ajustes, com qualidade proporcional ao coach, em IA × IA e IA × usuário, dentro dos mesmos tetos. Motivo: decidir não pode deixar o jogo mais fácil que hoje; só ser melhor que o adversário ajuda. Meta: rápido + coach médio contra IA com coach médio volta a ~50% em série igual; o bom manual guarda uma vantagem pequena (≈ +2–3 pp).
+
+Implementação: `startSeries` dá a cada lado marcado sem plano o plano do seu coach (`coachPlanFor` com `aiQualityOf`, 0,4 quando o montador não conhece o coach); `simulateSeries` dá a pausa do coach (`coachBreakOn`) aos dois lados entre os jogos. As decisões fazem hash do cursor do RNG no início da série, então nenhum número extra é sorteado. Saem `aiAdjustBase` / `aiAdjustPerQuality` (a regra própria da IA na fatia 3).
+
+**Consequência que volta para o Miguel:** com a IA planejando, o rápido sem coach deixa de ser igual a hoje; fica ~4 pp abaixo em série igual (45,9% contra 49,7%) e o favorito de +2 sem coach cai para ~72%. A premissa do primeiro ponto mudou com o segundo.

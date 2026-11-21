@@ -64,7 +64,7 @@ it.skipIf(!env.ENDGAME)("measures paid full-support managers in every difficulty
           .filter(s => s.teamAId === "user" || s.teamBId === "user").map(s => ({won: s.winnerTeamId === "user", opponent: s.teamAId === "user" ? s.teamBId : s.teamAId})),
       });
     };
-    const career = playArcCareer({ ...cell, policy: (env.ENDGAME_POLICY ?? "professional") as ArcPolicyId, fullSupport: true, seasons: Number(env.ENDGAME_SEASONS ?? 8), budgetMs: 300_000,
+    const career = playArcCareer({ ...cell, policy: (env.ENDGAME_POLICY ?? "professional") as ArcPolicyId, fullSupport: true, seasons: Number(env.ENDGAME_SEASONS ?? 8), budgetMs: Number(env.ENDGAME_BUDGET_MS ?? 300_000),
       onEvent: observe,
       onSeason(moment, save) {
         if (moment === "end") support.push({ season: save.clock.seasonIndex, gear: { ...save.finances.gear },

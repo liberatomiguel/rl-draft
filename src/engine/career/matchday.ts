@@ -201,6 +201,47 @@ export function shownStyle(team: TournamentTeam, plan: SeriesPlan): PlayStyleId 
   return team.style ? plan.style ?? team.style.natural : undefined;
 }
 
+/** A side's coach quality as the engine reads it (an AI side whose builder knew no coach → the default). */
+export function aiQualityOf(team: TournamentTeam): number {
+  return team.coachQuality ?? MD.aiCoachQualityDefault;
+}
+
+/**
+ * The coach between games, on the matchday layer alone (R139 rev.: the AI
+ * uses it too): the timeout once the opponent's meter is up, and after a loss
+ * a style that answers the opponent's plus the kickoff the ratings call for —
+ * each the right call with chance = quality. Null quality = nothing. Draws nothing.
+ */
+export function coachBreakOn(
+  md: MatchdaySeriesState,
+  side: "a" | "b",
+  me: TournamentTeam,
+  opp: TournamentTeam,
+  quality: number | null,
+  ctx: { gamesPlayed: number; lostLast: boolean },
+): MatchdaySeriesState {
+  if (quality === null || ctx.gamesPlayed === 0) return md;
+  const g = ctx.gamesPlayed;
+  let next = md;
+  const oppMeter = side === "a" ? md.momentumB : md.momentumA;
+  const spent = side === "a" ? md.timeoutA : md.timeoutB;
+  if (!spent && oppMeter >= MD.timeoutTrigger && decisionUnit(md.seed, `coach:${side}:timeout:${g}`) < quality) {
+    next = applyTimeout(next, side);
+  }
+  if (ctx.lostLast) {
+    const oppStyle = shownStyle(opp, side === "a" ? next.planB : next.planA);
+    if (oppStyle && decisionUnit(md.seed, `coach:${side}:adjust:${g}`) < quality) {
+      const plan = { ...(side === "a" ? next.planA : next.planB) };
+      const best = bestStyleAgainst(me, opp, oppStyle);
+      if (best) plan.style = best;
+      else delete plan.style;
+      plan.kickoff = kickoffFor(me, opp);
+      next = side === "a" ? { ...next, planA: plan } : { ...next, planB: plan };
+    }
+  }
+  return next;
+}
+
 /**
  * "Leave it to the coach": the pre-series plan. Each part is the right call
  * with chance = quality, otherwise the default; no coach (null) = the default

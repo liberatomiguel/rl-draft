@@ -1,6 +1,6 @@
 /** Opt-in matched-seed career timing probe. Ordinals in reports are 1-based.
  * PACING=1 PACING_OUT=... PACING_REGIONS=... PACING_DIFFS=... PACING_SEEDS=2
- * PACING_POLICIES=autopilot,tuned,youth,spender PACING_SLICE=0/4
+ * PACING_POLICIES=autopilot,tuned,youth,spender PACING_SLICE=0/4 PACING_BUDGET_MS=300000 (wall clock per career)
  * Candidate prospects use the visible scouting band; observers never change saves.
  */
 import { writeFileSync } from "node:fs";
@@ -28,7 +28,7 @@ it.skipIf(!env.PACING)("measures first milestones, split-level outcomes and foun
     const events: EventRow[] = [];
     const checkpoints: Checkpoint[] = [];
     const seen = new Set<string>();
-    const career = playArcCareer({ ...cell, seasons: Number(env.PACING_SEASONS ?? 8), budgetMs: 300_000,
+    const career = playArcCareer({ ...cell, seasons: Number(env.PACING_SEASONS ?? 8), budgetMs: Number(env.PACING_BUDGET_MS ?? 300_000),
       onDay(save) {
         const season = save.clock.seasonIndex;
         const week = weekOfDay(save.clock.day);

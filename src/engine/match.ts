@@ -13,6 +13,9 @@ import { specialCardById } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import {
+  aiQualityOf,
+  coachBreakOn,
+  coachPlanFor,
   initMatchday,
   kickoffFactor,
   momentumTerm,
@@ -256,6 +259,7 @@ export function startSeries(
   /** Slice 3: the sides' plans and the series seed (the user's series); defaults otherwise. */
   matchday?: { planA?: SeriesPlan; planB?: SeriesPlan; seed?: number },
 ): SeriesState {
+  const startCursor = rng.state;
   const formA = dampenIfNegative(
     rng.roll(-SIM.seriesFormRange, SIM.seriesFormRange),
     teamA,
@@ -280,9 +284,38 @@ export function startSeries(
     maxDeficitB: 0,
     games: [],
     ...(matchday || teamA.matchday || teamB.matchday
-      ? { matchday: initMatchday(matchday?.planA, matchday?.planB, matchday?.seed) }
+      ? { matchday: openMatchday(teamA, teamB, matchday, startCursor) }
       : {}),
   };
+}
+
+/**
+ * The matchday layer at the start of a series. A side with no plan given
+ * plans with its coach (R139 rev.: the AI plans exactly like the user's
+ * "leave it to the coach"); a world series hashes its decisions from the
+ * series' starting RNG cursor, so nothing extra is drawn.
+ */
+function openMatchday(
+  teamA: TournamentTeam,
+  teamB: TournamentTeam,
+  given: { planA?: SeriesPlan; planB?: SeriesPlan; seed?: number } | undefined,
+  startCursor: number,
+): MatchdaySeriesState {
+  const seed = given?.seed ?? startCursor;
+  const autoPlan = (me: TournamentTeam, opp: TournamentTeam, key: string) =>
+    me.matchday ? coachPlanFor(me, opp, aiQualityOf(me), seed, key) : undefined;
+  return initMatchday(given?.planA ?? autoPlan(teamA, teamB, "a"), given?.planB ?? autoPlan(teamB, teamA, "b"), seed);
+}
+
+/** Between two games of a series nobody steers: each marked side's coach makes its calls. */
+function coachBreaks(state: SeriesState, teamA: TournamentTeam, teamB: TournamentTeam): SeriesState {
+  const md = state.matchday;
+  if (!md || state.games.length === 0) return state;
+  const ctx = (side: "a" | "b") => ({ gamesPlayed: state.games.length, lostLast: state.lastWinner !== null && state.lastWinner !== side });
+  let next = md;
+  if (teamA.matchday) next = coachBreakOn(next, "a", teamA, teamB, aiQualityOf(teamA), ctx("a"));
+  if (teamB.matchday) next = coachBreakOn(next, "b", teamB, teamA, aiQualityOf(teamB), ctx("b"));
+  return next === md ? state : { ...state, matchday: next };
 }
 
 /** True once one side has reached the target. */
@@ -467,6 +500,10 @@ export function simulateSeries(
   rng: Rng,
 ): SeriesResult {
   let state = startSeries(teamA, teamB, options, rng);
-  while (!isSeriesOver(state)) state = playNextGame(state, teamA, teamB, rng);
+  while (!isSeriesOver(state)) {
+    // v2.1 Matchday slice 3: the coaches' breaks (no matchday layer → the same state, nothing drawn).
+    if (state.matchday) state = coachBreaks(state, teamA, teamB);
+    state = playNextGame(state, teamA, teamB, rng);
+  }
   return finishSeries(state, teamA, teamB);
 }

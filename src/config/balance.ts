@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 39;
+export const BALANCE_VERSION = 40;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4406,11 +4406,8 @@ export const CAREER_MATCHDAY = {
   timeoutMax: 0.75,
   /** "Leave it to the coach": coach overall → quality 0..1 over this range (no coach = default plan). */
   coachQualityRange: [60, 90] as readonly [number, number],
-  /** Quality for an AI side whose builder knew no coach. */
+  /** Quality for an AI side whose builder knew no coach (the AI plans and breaks like "leave it to the coach"). */
   aiCoachQualityDefault: 0.4,
-  /** AI between games (user series only): chance to re-pick its style after a loss = base + perQuality × q. */
-  aiAdjustBase: 0.15,
-  aiAdjustPerQuality: 0.5,
   /** The coach (and the AI) reads a side as the favourite / underdog beyond this rating gap. */
   kickoffEdgeGap: 1.5,
   /** The coach calls the timeout once the opponent's meter is at or above this. */

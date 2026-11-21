@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-dev.6] — 2026-11-20 · Matchday slice 3: the AI plans with its coach (behind a flag, not released)
+
+Miguel's decisions of 20/11 (ROAD-TO-WORLDS-DECISIONS R140): the no-coach cost is accepted, and deciding must not make the game easier than today. Still behind `FEATURES.matchdayDecisions`, off; flag off unchanged.
+
+### Changed
+- **The AI plans and calls its breaks exactly like the user's "leave it to the coach"**, at its own coach's quality (0.4 when the builder knows no coach), in every career series: AI against AI (`simulateSeries`) and AI against the user. The plan comes from `coachPlanFor`, the breaks from the shared `coachBreakOn`; the decisions hash the series' starting RNG cursor, so no extra number is drawn. Slice 3's AI-only adjustment rule (`aiAdjustBase` / `aiAdjustPerQuality`) is gone.
+- The pacing and endgame probes take `PACING_BUDGET_MS` / `ENDGAME_BUDGET_MS` (the wall-clock stop per career; a loaded machine turned 30 slow careers into "budget" soft locks at the 300 s default).
+
+### Balance (both flags on vs v2.0.35; bots; BALANCE_VERSION 40)
+- Even series, quick with an average coach against an AI with an average coach: 50.1% (dev.5: 53.3%). Good manual 53.2% (+3 pp); quick without a coach 45.9%.
+- Engine: +2 favourite 75.4%, +5 96.2% (upset 3.8%), +6 98.4%.
+- Career series at ±2: Normal 57.7%, Hard 56.0%, Easy 75.2% (v2.0.35: 59.4 / 56.2 / 76.1). Soft locks 0 (210 bot careers and the probe). Insolvency Normal 2, Hard 6 of 42.
+- Endgame (professional bot): series lost at Majors Normal 59%, Hard 74% (v2.0.35: 45% / 64%), at Worlds Normal 57% (45%).
+- Engine cost: ~87 → ~140 µs per series with the layer; seasons did not get slower (3.4 s per season against dev.5's 4.4 under the same parallel load).
+
 ## [2.1.0-dev.5] — 2026-11-20 · Matchday slice 3: plan, breaks, momentum, quick and custom modes (engine and store only, behind a flag, not released)
 
 Third slice of Etapa 1 (docs/MATCHDAY-SPEC.md §6, §7, §9). Everything sits behind the new `FEATURES.matchdayDecisions`, **off by default** (`NEXT_PUBLIC_MATCHDAY_DECISIONS=1`). With it off no result moves: a pacing slice is identical, career for career, to the v2.0.35 baseline dumps (14 of 14), and `regression.golden.test.ts`, `balance.test.ts`, `match.steps.test.ts` and the persist contract pass untouched; with `matchdayStyles` on and this flag off, behaviour equals slice 2. `persist` version 3 and `saveVersion` 5 stay. No screen (slice 5). Decisions: ROAD-TO-WORLDS-DECISIONS R139.
