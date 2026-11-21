@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 41;
+export const BALANCE_VERSION = 42;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3873,6 +3873,26 @@ export const CAREER_WORLD_LIFE = {
     aiChangeMinSeasons: 2,
     /** A retiring AI coach's successor is at most this much worse (probe: dataset coaches outclass the generated pool). */
     successorMaxDrop: 2,
+  },
+  /**
+   * v2.1 Mundo vivo M2.1 (R142, docs/MUNDO-VIVO-M2-SPEC.md): the world grows.
+   * The dataset-era rookies are capped at potential 88, so the 2027 stars had
+   * no successors and the top of the field fell ~3 points by S12. At the first
+   * infinite rollover each region counts its ACTIVE AI elite (potential ≥
+   * potentialMin, not declining; the user's players never count) ×
+   * baselineShare — the dose, 1 = hold the S6 level. At every rollover a
+   * region under its baseline promotes up to perRegionPerSeason young AI
+   * players (age ≤ maxAge, potential ≥ candidateMinPotential; contracted
+   * first, the readiest first) to a potential drawn from liftWeights, with a
+   * peak age fixed then (room for the gap). They grow at the normal pace.
+   */
+  eliteRenewal: {
+    perRegionPerSeason: 2,
+    potentialMin: 94,
+    maxAge: 21,
+    candidateMinPotential: 85,
+    baselineShare: 1,
+    liftWeights: { 94: 0.3, 95: 0.25, 96: 0.2, 97: 0.15, 98: 0.1 } as Record<number, number>,
   },
 } as const;
 

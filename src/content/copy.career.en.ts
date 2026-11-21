@@ -2325,6 +2325,8 @@ export const CAREER_EN = {
       orgNewcomer: (p: Record<string, string | number>) => `${p.org} takes ${p.old}'s seat in ${p.region}`,
       stackSigned: (p: Record<string, string | number>) => `Local stack ${p.stack} signs with ${p.org}`,
       prospectScouted: (p: Record<string, string | number>) => `${p.org} signs prospect ${p.player} for its bench`,
+      // v2.1 M2.1 (R142): the world grows.
+      prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) breaks out as a prodigy`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives: ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -2487,6 +2489,8 @@ export const CAREER_EN = {
         `The amateur side that reached the big stage turns pro: ${p.org} signs the whole ${p.stack} lineup for the new season.`,
       prospectScouted: (p: Record<string, string | number>) =>
         `${p.org} adds ${p.player} as its reserve. He starts once he is better than one of the starters.`,
+      prodigyRises: (p: Record<string, string | number>) =>
+        `Scouts across ${p.region} agree: ${p.player} has a ceiling among the best in the world. Give him a season or two.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>

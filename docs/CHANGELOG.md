@@ -62,6 +62,20 @@ Fourth slice of Etapa 1 (docs/MATCHDAY-SPEC.md §3 C and §8, R137 option B). Ev
 ### Balance
 - None. Presentation only: no result changes, and the world simulation never calls the box score (nothing in `worldSim.ts` imports it). `BALANCE_VERSION` 39 → 40 only because the new `CAREER_BOXSCORE` constants change the balance.ts fingerprint.
 
+## [2.1.0-dev.7] — 2026-11-20 · Mundo vivo M2.1: elite renewal, champions from other regions (flag off, BALANCE_VERSION 39)
+
+Behind `FEATURES.worldLife` (`NEXT_PUBLIC_WORLD_LIFE=1`), off in every build: with the flag off nothing changes. Infinite seasons only (R142, docs/MUNDO-VIVO-M2-SPEC.md).
+
+### Added
+- Elite renewal: each region keeps its S6 count of active AI elite. A region under it promotes up to 2 young AI players a season to a potential of 94–98 (peak age fixed at the promotion); the news reports "X breaks out as a prodigy". Optional save fields `world.eliteBaseline` and `world.potentialLift`.
+- The opt-in probe `careerWorldTop.probe.test.ts` (`WORLDTOP=1`): the world's top 30, the elite pipeline, Worlds replays at fixed ratings and the AI Worlds champion's region.
+
+### Balance
+- `CAREER_WORLD_LIFE.eliteRenewal` (new). With the flag on, in S10–S15 the Worlds field's best side holds at 97.2–97.3 (95.3–97.0 off); a 97 team wins the Worlds 19 % of the time (39 % off), a 99 team 55 % (74 %), a 101 team 84 % (92 %). AI champions: EU 59 %, the rest 41 % (history 38 %). BALANCE_VERSION 38 → 39.
+
+### Fixed
+- The top of the AI field decayed ~3 points over the infinite seasons. Root cause: the dataset-era rookies are capped at potential 88 (`CAREER_WORLD.datasetEraPotentialCeiling`), so the 2027 stars had no successors of their level until the infinite-era rookies matured after S12.
+
 ## [2.1.0-dev.5] — 2026-11-20 · Matchday slice 3: plan, breaks, momentum, quick and custom modes (engine and store only, behind a flag, not released)
 
 Third slice of Etapa 1 (docs/MATCHDAY-SPEC.md §6, §7, §9). Everything sits behind the new `FEATURES.matchdayDecisions`, **off by default** (`NEXT_PUBLIC_MATCHDAY_DECISIONS=1`). With it off no result moves: a pacing slice is identical, career for career, to the v2.0.35 baseline dumps (14 of 14), and `regression.golden.test.ts`, `balance.test.ts`, `match.steps.test.ts` and the persist contract pass untouched; with `matchdayStyles` on and this flag off, behaviour equals slice 2. `persist` version 3 and `saveVersion` 5 stay. No screen (slice 5). Decisions: ROAD-TO-WORLDS-DECISIONS R140.

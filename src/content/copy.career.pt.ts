@@ -2301,6 +2301,8 @@ export const CAREER_PT: CareerCopy = {
       orgNewcomer: (p: Record<string, string | number>) => `${p.org} assume a vaga de ${p.old} em ${p.region}`,
       stackSigned: (p: Record<string, string | number>) => `O stack local ${p.stack} assina com a ${p.org}`,
       prospectScouted: (p: Record<string, string | number>) => `${p.org} contrata o prospecto ${p.player} para o banco`,
+      // v2.1 M2.1 (R142): o mundo cresce.
+      prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) desponta como prodígio`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -2462,6 +2464,8 @@ export const CAREER_PT: CareerCopy = {
         `O time amador que chegou ao palco grande vira profissional: a ${p.org} contrata a line inteira do ${p.stack} para a nova temporada.`,
       prospectScouted: (p: Record<string, string | number>) =>
         `${p.org} contrata ${p.player} como reserva. Ele vira titular quando for melhor que um dos titulares.`,
+      prodigyRises: (p: Record<string, string | number>) =>
+        `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
