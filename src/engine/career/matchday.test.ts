@@ -83,10 +83,11 @@ describe("matchday slice 3 — engine", () => {
     expect(planShift(a, b, { kickoff: "standard", mark: 1 })).toBe(0);
   });
 
-  it("no coach = the default plan; quality 1 counters the opponent and marks its playmaker", () => {
+  it("no coach plans at the floor (R141); quality 1 counters the opponent and marks its playmaker", () => {
     const a = team("a", 86, { style: { natural: "possession", fit: fits("possession", 0.8, 0.7) } });
     const b = team("b", 88, { style: { natural: "counter", fit: fits("counter", 0.8, 0.4) } });
-    expect(coachPlanFor(a, b, null, 1, "user")).toEqual({ kickoff: "standard" });
+    expect(coachPlanFor(a, b, null, 1, "user")).toEqual(coachPlanFor(a, b, MD.coachlessQuality, 1, "user"));
+    expect(coachPlanFor(a, b, 0, 1, "user")).toEqual(coachPlanFor(a, b, null, 1, "user"));
     const best = coachPlanFor(a, b, 1, 1, "user");
     expect(best.kickoff).toBe("aggressive");
     expect(best.mark).toBe(1);

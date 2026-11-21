@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 40;
+export const BALANCE_VERSION = 41;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -4404,8 +4404,14 @@ export const CAREER_MATCHDAY = {
   iceColdDamp: 0.35,
   /** Timeout (one per series): clears the opponent's positive momentum, worth at most this in rating points. */
   timeoutMax: 0.75,
-  /** "Leave it to the coach": coach overall → quality 0..1 over this range (no coach = default plan). */
+  /** "Leave it to the coach": coach overall → quality 0..1 over this range. */
   coachQualityRange: [60, 90] as readonly [number, number],
+  /**
+   * R141: the planning floor. A side with no coach (or a weaker one) still
+   * makes its calls at this quality, so quick without a coach stays at
+   * today's level and a +2 favourite without a coach stays ≥ 73%.
+   */
+  coachlessQuality: 0.3,
   /** Quality for an AI side whose builder knew no coach (the AI plans and breaks like "leave it to the coach"). */
   aiCoachQualityDefault: 0.4,
   /** The coach (and the AI) reads a side as the favourite / underdog beyond this rating gap. */

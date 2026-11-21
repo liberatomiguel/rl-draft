@@ -2457,3 +2457,9 @@ Miguel, 20/11, sobre os dois pontos abertos do R139:
 Implementação: `startSeries` dá a cada lado marcado sem plano o plano do seu coach (`coachPlanFor` com `aiQualityOf`, 0,4 quando o montador não conhece o coach); `simulateSeries` dá a pausa do coach (`coachBreakOn`) aos dois lados entre os jogos. As decisões fazem hash do cursor do RNG no início da série, então nenhum número extra é sorteado. Saem `aiAdjustBase` / `aiAdjustPerQuality` (a regra própria da IA na fatia 3).
 
 **Consequência que volta para o Miguel:** com a IA planejando, o rápido sem coach deixa de ser igual a hoje; fica ~4 pp abaixo em série igual (45,9% contra 49,7%) e o favorito de +2 sem coach cai para ~72%. A premissa do primeiro ponto mudou com o segundo.
+
+## R141 — 20 de novembro de 2026: Matchday fatia 3, piso de planejamento sem coach (v2.1.0-dev.10)
+
+Decisão sobre os pontos do R140:
+- **Sem coach, como no dev.6, não é aceitável:** o favorito de +2 sem coach caía para 71,8% (quebra a guarda de 73%) e a regra do Miguel é que o rápido sem coach não fique pior que hoje. Entra um **piso de planejamento**, `CAREER_MATCHDAY.coachlessQuality` = 0,3: um time sem coach, ou com coach abaixo disso, decide com essa qualidade (`planningQuality`), no plano e nas pausas. Medido com 0,25 e 0,3 (20 mil séries por célula): 0,25 fica 1,1–1,7 pp abaixo de hoje em série igual, fora do "cerca de 1 pp"; 0,3 iguala hoje. A diferença entre o coach médio e o sem coach é pequena por construção: o coach médio (0,4) precisa empatar com a IA média, e o sem coach precisa ficar perto de hoje. O coach bom (0,7) vale ~+3 pp.
+- **XP do reserva que entra na troca:** fica como hoje (`fieldedIds` não muda), para não mexer no balanço do desenvolvimento nesta versão. Em aberto para o gate da Etapa 1.
