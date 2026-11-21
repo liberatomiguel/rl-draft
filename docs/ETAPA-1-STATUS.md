@@ -1,139 +1,69 @@
-# Etapa 1 (v2.1 Matchday + Mundo vivo): estado
+# Etapa 1 (v2.1 Matchday + Mundo vivo): handoff
 
-Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md` R137–R139.
-Metas: `ANALISE-POSTHOG-2026-11-20.md`; referência: `BALANCE-BASELINE-v2.0.35.md`.
-`package.json`/`SITE.version` seguem 2.0.35; `BALANCE_VERSION` 39.
+## Branch
 
-## Feito
+**`claude/etapa1-integration-3eae43` = `2.1.0-rc.3`** (21/11), não publicado.
+Tem: a nova identidade na quinta passada (`4b4ecd6`; `design/broadcast-pilot`
+está atrás de `staging`, não parta dele), `main` v2.0.35, Matchday fatias 1 a 4
+(só motor e store), Mundo vivo M1, M2.1 e M3, analytics da Etapa 1.
+`BALANCE_VERSION` 44. Suíte, lint, typecheck e build verdes. Worktree novo:
+`npm ci` antes de buildar.
 
-- **Fatia 1** (`dev.1`): série em passos; trava em `match.steps.test.ts`.
-- **Fatia 2** (`dev.3`, `FEATURES.matchdayStyles`): estilos, confronto, traços.
-- **Fatia 3** (`dev.5`, `FEATURES.matchdayDecisions`, desligada): plano, pausas, embalo no lugar do bounce, "deixar com o coach", modos `prefs.matchdayMode` (rápido por padrão) e `matchdayStopAt`. Série do usuário em `seriesSeed`, salva em `activeEvent.userSeries`. Código: `engine/career/matchday.ts`, `matchdaySeries.ts`, `store/careerFlow.ts`.
-- **Fatia 4** (`dev.9`, `FEATURES.matchdayBoxScore`, desligada): súmula, nota 0–10, momentos-chave e estatísticas da temporada (opção B, R137; decisão R140). Código: `engine/career/boxScore.ts`, `content/momentText.ts`, `store/careerFlow.ts` (`accumulateBoxStats`). Só apresentação: não muda resultado; o mundo simulado não chama a súmula (tempo de simulação por temporada inalterado). `BALANCE_VERSION` 40 só pelo fingerprint das constantes novas.
+## Flags
 
-## Branch de integração e staging (20/11)
+`STAGING_BUILD` (`balance.ts`) = `next build` + `NEXT_PUBLIC_NOINDEX=1`, sem
+`NEXT_PUBLIC_PLAYTEST`. Liga `matchdayStyles`, `matchdayDecisions`,
+`matchdayBoxScore` e `worldLife` (M1, M2.1 e M3) **só no staging**. Produção,
+playtest, dev e testes: desligadas (`stagingFlags.test.ts`). Sondas:
+`NEXT_PUBLIC_MATCHDAY_STYLES/DECISIONS/BOXSCORE=1`, `NEXT_PUBLIC_WORLD_LIFE=1`.
 
-**`claude/etapa1-integration-3eae43` = `2.1.0-rc.2`** (aprovado pelo Miguel
-em 20/11): a nova identidade na quinta passada (`design/broadcast-pilot` +
-`4b4ecd6`) + `main` v2.0.35 + as fatias 1 e 2 do Matchday + baseline +
-análise PostHog + M1 (diagnóstico e implementação, R139) + analytics da
-Etapa 1. Testes, lint, typecheck e build verdes. Não publicado: espera o OK
-do Miguel para o push. O A7 (tab bar mobile da carreira, do Miguel) ainda não
-está aqui.
+## Decisões (`ROAD-TO-WORLDS-DECISIONS.md`)
 
-**Flags da Etapa 1:** `FEATURES.matchdayStyles` e `FEATURES.worldLife`
-ficam **ligadas só no build de staging** (`STAGING_BUILD` em `balance.ts`:
-`next build` + `NEXT_PUBLIC_NOINDEX=1`, sem `NEXT_PUBLIC_PLAYTEST`; a mesma
-regra do analytics). Produção, playtest, dev e testes: desligadas
-(`stagingFlags.test.ts`). Nada novo para configurar no painel. `BALANCE_VERSION`
-39 (as duas fatias tinham ido a 38 cada uma).
+R137 Etapa 1 aprovada (princípio, metas, fatia 4 opção B) · R138 fatia 2 ·
+R139 M1 · R140 fatia 3 · R141 fatia 4 · R142 M2.1 · R143 M3 · R144 a IA planeja
+com o coach · R145 piso de 0,3 sem coach.
 
-**Atenção: `design/broadcast-pilot` está atrás de `staging`.** A quinta
-passada (`4b4ecd6`) só existe em `origin/staging`; este branch já a tem.
-Qualquer trabalho novo de identidade deve partir deste branch ou de
-`4b4ecd6`, não de `design/broadcast-pilot`. Conhecido a 320 px (igual ao
-staging): wordmark da Home 25 px largo demais, rótulos dos quadros do HQ e
-do evento colados. Fica para a passada mobile / A7.
+## Bateria combinada (tudo ligado, 21/11)
 
-**Worktree novo:** rode `npm ci` antes de buildar. Sem `node_modules`
-próprio, o Next usa o do checkout principal e o build quebra com um panic do
-Turbopack ("Missing content ... StaticOutputAsset").
+Tabela e dumps: CHANGELOG rc.3 e `rc3-battery-dumps/` nas notas.
+- Guardas duras de pé: golden do Draft, âncoras (overall dominante) e digest
+  das séries com tudo ligado; +2 74,9%, +6 98,2%; favorito de +5 perde 4,1%
+  (motor) e 5,9–6,4% na carreira; 0 soft lock; S0–S5 do mundo iguais.
+- Meta 1 (final regional até T5, Normal, bot strong): EU 40, NA 40 (no
+  limite), SAM 63%. Meta 2: Easy EU 67% (+27). Meta 4: Hard abaixo da Normal em
+  tudo. Meta 5: time 97 ganha o Worlds 17% (S10–S15), 99 ganha 55%.
+- Campeões do Worlds da IA: EU 46%, NA 40%; S10+ a NA domina (55%).
+- 3,2 s por temporada simulada.
+- Para o gate: zebra grande (≤ −6) ganha 2,7% na Normal (era 0,3%); Hard EU
+  sem final até T5 (0 de 16); falência Hard 6 de 42 (era 4).
 
-**Trazer um branch novo** (fatia 3, M2...), um por vez, no worktree deste
-branch:
+## Próximo
 
-1. `git status` limpo; `git log --oneline -1 refs/heads/<branch>` para ver o
-   que entra. Use sempre `refs/heads/<branch>` (uma tag de mesmo nome venceria).
-2. `git merge --no-ff refs/heads/<branch>`. Conflitos: só os trechos em
-   conflito. Tela/estilo fica com a nova identidade (`DESIGN.md`: sem travessão,
-   pesos, materiais); comportamento, copy e dados ficam com o branch. Números
-   de DESIGN-DECISIONS e R não podem repetir: o maior número vence, renumere o
-   mais novo e corrija as referências. CHANGELOG e STATUS guardam as duas
-   histórias.
-3. Depois de cada merge: `npm test 2>&1 | tail -20`, `npm run lint`,
-   `npm run typecheck`. Se o branch mexe em motor/balance, rode a bateria do
-   baseline (`BALANCE-BASELINE-v2.0.35.md`) e compare.
-4. No fim: `npm run build` (inclui o postexport), uma olhada no preview deste
-   worktree (entrada `npm --prefix <worktree>` em outra porta; confira a versão
-   no log; pare todo servidor), versão `2.1.0-rc.N+1` em `package.json` e
-   `SITE.version`, entrada no CHANGELOG, commit.
+1. **Fatia 5: telas na nova identidade** (`DESIGN.md` primeiro). O store já
+   tem tudo: pré-série (`shownStyle`, `playmakerIndex`, traços, sugestão de
+   `coachPlanFor`), pausa, modos `prefs.matchdayMode` / `matchdayStopAt`,
+   súmula (`buildSeriesBoxScore`, `momentText`, `save.boxStats`). No modo
+   personalizado, `playEventRound`/`simEvent` param numa série aberta
+   (`pendingUserSeriesOf`); a tela usa `setSeriesPlan`, `playSeriesGame`,
+   `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries`. O autoplay
+   e o "Avançar" precisam tratar essa parada. Cada tela esconde o que a sua
+   flag desliga.
+2. **Publicar em `staging`** (`DEPLOY-CLOUDFLARE.md`, "Cloud staging"), só com
+   o OK do Miguel: `git fetch origin`; se `origin/staging` ainda é `cfefe9d`,
+   `git diff --stat cfefe9d HEAD` (nada de staging pode sumir) e
+   `git push --force-with-lease=staging:cfefe9d origin HEAD:staging`, ou antes
+   `git merge -s ours cfefe9d` e um push normal. O Workers Build
+   `rocket-draft-staging` builda sozinho; não adicione `NEXT_PUBLIC_PLAYTEST`
+   nele. Conferir rodapé `2.1.0-rc.N`, `robots.txt` `Disallow: /`, Home, HQ, um
+   evento, 320 px. Nunca deploy local (o `.env.local` tem as chaves do
+   Supabase); nunca este branch em `main`.
+3. **A7 do Miguel** (tab bar mobile da carreira). Também resolve o conhecido a
+   320 px: wordmark da Home 25 px largo demais, rótulos do HQ colados.
+4. **Em aberto:** metas 3, 6, 7, 8 e 9 (as sondas de bot não medem; 3 e 6 só
+   relatório); XP do reserva que entra na troca (`fieldedIds` não muda); Hard
+   EU 0% até T5.
 
-**Publicar em `staging`** (`docs/DEPLOY-CLOUDFLARE.md`, "Cloud staging").
-**Não rodar antes do gate e do OK do Miguel.**
-
-1. Ver o que está em staging agora: `git fetch origin` e
-   `git log --oneline -3 origin/staging` (em 20/11: `cfefe9d`,
-   `v2.0.33-design.1`). Este branch tem o conteúdo dele (`4b4ecd6`), mas não o
-   commit `cfefe9d` em si (o merge de staging com main v2.0.28), então o push
-   não é fast-forward. Confirme com
-   `git diff --stat cfefe9d HEAD` que nada de staging se perde (só deve haver
-   coisas novas) e que `origin/staging` ainda é `cfefe9d`; se mudou, pergunte
-   ao Miguel.
-2. Com o OK do Miguel:
-   `git push --force-with-lease=staging:cfefe9d origin HEAD:staging`
-   (troque `cfefe9d` pelo sha visto no passo 1). Alternativa sem force:
-   `git merge -s ours cfefe9d` neste branch antes do push (registra staging
-   como ancestral sem mudar arquivos).
-3. O projeto Workers Builds **`rocket-draft-staging`** (branch de produção
-   `staging`) builda sozinho: `npm run build`, depois
-   `npx wrangler deploy --env staging`. As variáveis `NEXT_PUBLIC_CAREER_MODE=1`
-   e `NEXT_PUBLIC_NOINDEX=1` vêm das configurações desse build, não do repo
-   nem do `.env.local`. O `NOINDEX=1` também liga as flags da Etapa 1; não
-   adicione `NEXT_PUBLIC_PLAYTEST` nesse projeto, ou elas desligam. Staging
-   nunca manda analytics.
-4. Conferir https://staging.rocketdraft.app: rodapé com `2.1.0-rc.2`,
-   `robots.txt` com `Disallow: /`, Home, HQ da carreira, um evento, 320 px.
-   A fatia 2 não tem tela (só motor): o sinal é a carreira jogar normal. O
-   M1 só age a partir da primeira temporada infinita, e aparece no Inbox e
-   nas notícias (prospecto contratado, org nova, técnico que se aposenta).
-5. Produção não muda com este push: `rocketdraft.app` builda de `main`, e
-   num build de produção as duas flags ficam desligadas.
-6. Nunca fazer deploy local (`npm run deploy` lê o `.env.local` com as chaves
-   do Supabase) e nunca enviar este branch para `main`.
-
-Spec: `MATCHDAY-SPEC.md`. Decisões: `ROAD-TO-WORLDS-DECISIONS.md`
-R137 (20/11) e R138 (fatia 2). Metas: `ANALISE-POSTHOG-2026-11-20.md`;
-referência simulada: `BALANCE-BASELINE-v2.0.35.md`.
-
-## Medição da fatia 3 (bots; dumps em `matchday-f3-dumps/` nas notas)
-
-Flag desligada = baseline carreira por carreira (14/14).
-
-| | v2.0.35 | Ligada |
-|---|--:|--:|
-| Motor +2 / +5 / +6 | 75,5 / 96,1 / 98,4% | 75,6 / 96,1 / 98,4% |
-| Carreira ±2 N / H / E | 59,4 / 56,2 / 76,1% | 59,7 / 58,6 / 77,0% |
-| Carreira ≥ +6 N / H | 99,8 / 99,5% | 99,8 / 99,9% |
-| Soft lock; falência N / H | 0; 0 / 4 de 42 | 0; 1 / 5 de 42 |
-
-Zebra de +5: 3,9%, ainda abaixo de 5–8%. Final regional até T5 segue 0/6 em NA, EU e SAM.
-
-**Rápido × personalizado** (vitória do usuário, 20 mil séries por célula, Normal = Hard):
-
-| Gap | Bom manual | Coach médio (72) | Coach 0,7 | Sem coach | Antigo |
-|---|--:|--:|--:|--:|--:|
-| −2 | 30,4% | 27,9% | 29,3% | 24,0% | 25,1% |
-| 0 | 55,7% | 53,3% | 54,8% | 49,4% | 49,7% |
-| +2 | 80,4% | 78,2% | 79,6% | 74,9% | 74,9% |
-
-O coach médio custa 2–2,5 pp contra o bom manual; sem coach, 5,5–6,4 pp. Pedaços do manual em série igual: timeout +2,3, ajuste +1,8, estilo +1,3, marcação +1,1, kickoff ~0 pp.
-
-## Para o Miguel decidir
-
-- Sem coach custa ~6 pp: aceitar, ou dar ao time sem coach uma qualidade mínima (ex.: 0,2).
-- Decidir também deixa a série igual mais fácil que hoje: +3,6 pp com o coach médio, +6 com o bom manual (a IA não planeja).
-
-## Fatia 5 precisa saber
-
-**Súmula (fatia 4):**
-- `buildSeriesBoxScore(series, roundKey, {a: teams[teamAId], b: teams[teamBId]})` devolve `games[]` (`players.a/b[]` com gols, assistências, chutes, defesas, demos, pontos, nota; `moments[]`; `mvp` do jogo), `totals` (com `avgRating`) e o `mvp` da série (maior pontuação do vencedor). Use o `key` da rodada do `eventPlayback` ("sw:2" / "po:0"): é o mesmo que alimenta as estatísticas salvas, então a tela mostra os números que entram nelas. Chame só ao abrir a série; é determinístico.
-- Texto do momento: `momentText(useCareerCopy(), moment, teams[side].playerNames[moment.playerIdx])`. O `clock` é o do `matchTimeline` (restante na regulamentar, jogado na prorrogação), então o momento encaixa na linha do tempo do Match Center.
-- Estatísticas do elenco: `save.boxStats` (`SeasonBoxStats[]`, mais nova primeiro, no máximo duas temporadas; chave = id do jogador, ou o nome se não achar). Média = `avgRatingOf(linha)`. Só a série do usuário entra, ao fim do evento: o evento em curso ainda não está lá.
-- Com a flag desligada nada é gerado nem salvo; a tela esconde a súmula nesse caso (`FEATURES.matchdayBoxScore`).
-- Troca no meio da série (fatia 3): não conferi como o reserva aparece em `scorers`/`playerNames`. A súmula lê os `playerNames` do time ao fim do evento e atribui por índice; se a troca mudar o índice, olhar isso antes de mostrar nomes.
-
-**Telas e modos:**
-
-- Telas: pré-série (`shownStyle`, `playmakerIndex`, traços; sugestão de `coachPlanFor`), pausa e a opção (rótulos `matchdayMode.*` prontos).
-- Com o personalizado, `playEventRound`/`simEvent` param numa série aberta (`pendingUserSeriesOf`); a tela usa `setSeriesPlan`, `playSeriesGame`, `seriesTimeout`, `seriesAdjust`, `seriesSub`, `delegateSeries` e depois `playEventRound`. O autoplay e o "Avançar" precisam tratar essa parada.
-- Decidir se o reserva que entra na troca recebe XP (`fieldedIds` não muda hoje).
+Para trazer um branch novo: `git merge --no-ff refs/heads/<branch>`; tela fica
+com a nova identidade, comportamento e dados com o branch; números R e de
+DESIGN-DECISIONS não repetem (renumere o mais novo); depois do merge, rode o
+teste de fingerprint e suba `BALANCE_VERSION` ao que ele pedir.

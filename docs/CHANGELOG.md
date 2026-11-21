@@ -10,6 +10,42 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.3] — 2026-11-21 · Matchday slices 3 and 4, Mundo vivo M2.1 and M3, every Etapa 1 flag on in staging only (staging candidate, not published)
+
+Branch `claude/etapa1-integration-3eae43`. Not pushed, not deployed. Handoff for the next chat: `docs/ETAPA-1-STATUS.md`.
+
+### Changed
+- Merged, in order: Matchday slice 4 with slice 3 (`claude/matchday-f4-4b2a5c`, `dev.5` and `dev.9`), Mundo vivo M2.1 (`claude/m2-spec-d7907f`, `dev.7`), M3 (`claude/m3-diagnosis-b95889`, `dev.8`) and slice 3's AI planning and coachless floor (`claude/matchday-f3-a2b530`, `dev.6` and `dev.10`). The new career strings M2.1 brings lose their em dashes.
+- **`FEATURES.matchdayDecisions` and `FEATURES.matchdayBoxScore` join `STAGING_BUILD`**: all four Etapa 1 flags are on in the staging build only (M2.1 and M3 ride on `worldLife`). `stagingFlags.test.ts` covers all four (off in production, playtest, dev and tests).
+- **Decision numbers:** the branches had reused R139 to R141. In merge order: fatia 3 R140, fatia 4 R141, M2.1 R142, M3 R143, the AI plans with its coach R144, the coachless floor R145 (M1 stays R139). Code comments and docs follow.
+- Version 2.1.0-rc.3 in `package.json` and `SITE.version`.
+
+### Balance
+- **BALANCE_VERSION 44.** Each merge brought a different `balance.ts`, so the fingerprint test asked for 41, 42, 43 and 44 in turn. No value changed in a merge.
+- **Combined battery, every Etapa 1 flag on together** (dumps and summaries: notes folder `rc3-battery-dumps/`; bots, not players). Off = v2.0.35 baseline; "alone" = each branch's own measurement.
+
+| | Off | Alone | All on |
+|---|--:|--:|--:|
+| Engine favourite +2 / +5 / +6 | 75.2 / 96.0 / 98.2% | f2 74.9 / 95.9 / 98.2; f3 75.4 / 96.2 / 98.4 | 74.9 / 95.9 / 98.2% |
+| Career series ±2, Normal / Hard | 59.4 / 56.2% | f2 59.1 / 57.3; f3 58.3 / 58.1 | 60.9 / 58.1% |
+| Career +2 to +6 lost, Normal / Hard | 7.8 / 6.9% | | 5.9 / 6.4% |
+| Career ≥ +6, Normal / Hard | 99.8 / 99.5% | f2 99.9 / 100 | 99.9 / 100% |
+| Career ≤ −6 won, Normal / Hard | 0.3 / 0.2% | | 2.7 / 0.2% |
+| Endgame series lost, Major N / H | 45 / 64% | f3 58 / 71 | 57 / 69% |
+| Soft locks | 0 | 0 | 0 (pacing, endgame, soft-lock probe, world probes) |
+| Insolvent, Normal / Hard (of 42) | 0 / 4 | f2 1 / 5; f3 1 / 6 | 1 / 6 |
+| Target 1: Normal regional final by T5, EU / NA / SAM (strong bot) | 3 / 23 / 57% | M3 23 / 43 / 57 | 40 / 40 / 63% |
+| Target 2: Easy EU by T5 | 10% | M3 50 (+27) | 67% (+27 over Normal) |
+| Hard by T5, EU / NA | | | 0 / 31% |
+| Target 5: Worlds title, user at 97 / 99, S10–S15 replay | 39 / 74% | M2.1 19 / 55 | 16.7 / 55.5% |
+| AI Worlds champions, EU / rest | | M2.1 59 / 41 | S6–S15 46 / 54 (NA 40.5); S10–S15 27 / 73 |
+| Time per simulated season | 6.1 s (loaded machine) | f3 3.4 s | 3.2 s |
+
+- Hard guards hold: the Draft golden test, the balance anchors (overall dominant) and the series-steps digest pass with every flag on; +2 ≥ 73%, +6 ≥ 98%, a +5 favourite loses 4.1% (engine) and 5.9–6.4% in careers (+2 to +6); zero soft locks; the world's S0–S5 (top-4, median, local anchor) is identical flags on and off: only the user's own results move, and the M3 ramp reads only in the match.
+- Targets 1, 2 and 5 are met by the bots; target 4 holds (Hard below Normal in every measure: ±2 series, region curve, M1 replay). NA sits exactly at target 1's 40%.
+- Report-only: target 3 (93+ titles) cannot be read, because no bot reaches 93+ at a regional; endgame bots won 1 of 64 Majors and 0 of 26 Worlds. Target 6 (T13+ Worlds share) cannot be read, because the world-probe bots never reach a Worlds.
+- Worth a look at the gate: a big underdog (≤ −6) wins 2.7% of Normal career series (0.3% before; momentum and coach decisions); the endgame bots reach twice as many Worlds (26 against 12) at a lower median rating (93.3 against 94); Hard EU reaches no regional final by T5 (0 of 16).
+
 ## [2.1.0-rc.2] — 2026-11-20 · Matchday slice 2, Mundo vivo M1 and the Etapa 1 analytics, both flags on in staging only (staging candidate, not published)
 
 Branch `claude/etapa1-integration-3eae43`. Miguel approved rc.2 on 20/11. Not pushed, not deployed: publishing waits for his go-ahead (steps at the top of `docs/ETAPA-1-STATUS.md`).
