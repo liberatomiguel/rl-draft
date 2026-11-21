@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { CAREER_REGION_FIELD, FEATURES } from "@/config/balance";
 import type { Region } from "@/engine/types";
-import { earlyRegionShift } from "./worldSim";
+import { earlyRegionShift, worldsRegionShift } from "./worldSim";
 
 const REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const flags = FEATURES as { worldLife: boolean };
@@ -48,5 +48,28 @@ describe("v2.1 Mundo vivo M3 (R143): the early regional ramp", () => {
     }
     expect(earlyRegionShift("EU", "normal", goneAt)).toBe(0);
     expect(earlyRegionShift("EU", "normal", goneAt + 5)).toBe(0);
+  });
+});
+
+describe("v2.1 Etapa 1 close (R146): the early Worlds spread", () => {
+  it("is 0 everywhere with FEATURES.worldLife off, and for a side with no region", () => {
+    flags.worldLife = false;
+    for (const r of REGIONS) for (let s = 0; s < 12; s++) expect(worldsRegionShift(r, s)).toBe(0);
+    flags.worldLife = true;
+    expect(worldsRegionShift(undefined, 0)).toBe(0);
+  });
+
+  it("puts EU furthest down and is gone by fade.goneAt (seasons 10+ belong to M2.1)", () => {
+    flags.worldLife = true;
+    const { fullThrough, goneAt } = CAREER_REGION_FIELD.worldsRegionShiftFade;
+    for (const r of REGIONS) {
+      if (r !== "EU") expect(worldsRegionShift(r, 0)).toBeGreaterThan(worldsRegionShift("EU", 0));
+      expect(worldsRegionShift(r, fullThrough)).toBe(CAREER_REGION_FIELD.worldsRegionShift[r]);
+      expect(worldsRegionShift(r, goneAt)).toBe(0);
+      expect(worldsRegionShift(r, 9)).toBe(0);
+    }
+    // No region is lifted past the EU gap of one +2 favourite (the engine's 73 % anchor).
+    const doses = REGIONS.map((r) => CAREER_REGION_FIELD.worldsRegionShift[r]);
+    expect(Math.max(...doses) - Math.min(...doses)).toBeLessThanOrEqual(2);
   });
 });

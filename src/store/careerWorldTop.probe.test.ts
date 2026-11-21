@@ -27,7 +27,8 @@ import { CAREER_WORLD_LIFE, FEATURES } from "@/config/balance";
 import { developmentProfileOf, developmentPhaseOf, peakTargetOf, playerViewById } from "@/engine/career/development";
 import { localRegionOf } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
-import { localAnchorFor, localTeamFor, orgTeamFor } from "@/engine/career/worldSim";
+import { localAnchorFor, localTeamFor, orgTeamFor, worldsRegionShift } from "@/engine/career/worldSim";
+import { CAREER_REGION_FIELD } from "@/config/balance";
 import { fastForward, initFieldTournament, userPlacement } from "@/engine/tournament";
 import { createRng } from "@/lib/rng";
 import type { Region, TournamentTeam } from "@/engine/types";
@@ -84,7 +85,13 @@ function worldsTeams(save: CareerSave): TournamentTeam[] {
     if (!region) return orgTeamFor(ref, ctx);
     const anchor = localAnchorFor(region, { world: save.world, competition: save.competition });
     return localTeamFor(ref, { careerSeed: save.careerSeed, seasonIndex: season, difficulty: "normal", anchor, nameBankVersion: save.world.nameBankVersion });
-  }).sort((a, b) => b.rating.total - a.rating.total);
+  })
+    // R146: the Worlds' own per-region shift, as fieldForEvent applies it.
+    .map((t) => {
+      const shift = worldsRegionShift(t.region, season);
+      return shift ? { ...t, rating: { ...t.rating, total: t.rating.total + shift } } : t;
+    })
+    .sort((a, b) => b.rating.total - a.rating.total);
 }
 
 function replay(ai: TournamentTeam[], target: number): number {
@@ -180,6 +187,15 @@ it.skipIf(!env.WORLDTOP)("Mundo vivo M2: why the top of the AI field decays", ()
   const seasons = Number(env.WORLDTOP_SEASONS ?? 16);
   // M2.1 off (M1 only): WORLDTOP_NO_RENEWAL=1.
   if (env.WORLDTOP_NO_RENEWAL) (CAREER_WORLD_LIFE.eliteRenewal as { perRegionPerSeason: number }).perRegionPerSeason = 0;
+  // R146 sweep: WORLDTOP_WSHIFT="EU:-1.5,NA:0.5" and WORLDTOP_WFADE="5/8" override the Worlds' per-region shift.
+  if (env.WORLDTOP_WSHIFT) for (const kv of env.WORLDTOP_WSHIFT.split(",")) {
+    const [r, v] = kv.split(":");
+    (CAREER_REGION_FIELD.worldsRegionShift as Record<string, number>)[r] = Number(v);
+  }
+  if (env.WORLDTOP_WFADE) {
+    const [f, g] = env.WORLDTOP_WFADE.split("/").map(Number);
+    Object.assign(CAREER_REGION_FIELD.worldsRegionShiftFade, { fullThrough: f, goneAt: g });
+  }
   const [slice, slices] = (env.WORLDTOP_SLICE ?? "0/1").split("/").map(Number);
   const cells = regions.flatMap((region) => Array.from({ length: seeds }, (_, k) => ({ region, seed: 9100 + 7919 * k })));
   const careers: Career[] = [];
@@ -190,7 +206,7 @@ it.skipIf(!env.WORLDTOP)("Mundo vivo M2: why the top of the AI field decays", ()
     const res = playArcCareer({
       region: cell.region, seed: cell.seed, difficulty: "normal", policy, seasons, budgetMs: 1_800_000,
       onSeason(moment, save) {
-        if (moment !== "end" || save.clock.seasonIndex < 4) return;
+        if (moment !== "end" || save.clock.seasonIndex < Number(env.WORLDTOP_FROM ?? 4)) return;
         const row = snapshot(save, save.clock.seasonIndex > 6 ? s6 : null);
         if (!row) return;
         if (save.clock.seasonIndex === 6) s6 = row.field;
@@ -240,8 +256,11 @@ export function summarize(careers: Career[]): string {
     const realOf = regions.filter((g) => real[g]).map((g) => `${g} ${real[g]}`).join(" ");
     return `${label} | ${pctOf} | real: ${realOf} (user ${user} of ${rs.length})`;
   };
-  for (const s of seasons.filter((x) => x >= 6)) lines.push(champLine(`S${s}`, rows.filter((r) => r.season === s)));
+  for (const s of seasons) lines.push(champLine(`S${s}`, rows.filter((r) => r.season === s)));
   lines.push(champLine("S6–S15", rows.filter((r) => r.season >= 6)));
   lines.push(champLine("S10–S15", rows.filter((r) => r.season >= 10)));
+  // Etapa 1 close: the player-facing windows (the UI shows seasonIndex + 1): seasons 1–8 and 10+.
+  lines.push(champLine("idx0–7 (seasons 1–8)", rows.filter((r) => r.season <= 7)));
+  lines.push(champLine("idx9+ (seasons 10+)", rows.filter((r) => r.season >= 9)));
   return lines.join("\n");
 }

@@ -151,7 +151,7 @@ describe("matchday slice 3 — quick mode", () => {
 describe("matchday slice 3 — custom mode", () => {
   it("stops at every series, plays game by game, and a reload mid-series changes nothing", () => {
     flags(true, true);
-    const started = setMatchdayModeFlow(startEvent(onDay(base, regional), false), "custom", "every");
+    const started = setMatchdayModeFlow(startEvent(onDay(base, regional), true), "custom", "every");
     const answer = (s: CareerSave) => playUserSeriesGameFlow(s);
     const plain = driveToEnd(started, answer);
     const reloaded = driveToEnd(started, answer, true);
@@ -163,7 +163,7 @@ describe("matchday slice 3 — custom mode", () => {
 
   it("the default stop skips Swiss series and stops in the playoffs only", () => {
     flags(true, true);
-    const started = setMatchdayModeFlow(startEvent(onDay(base, regional), false), "custom");
+    const started = setMatchdayModeFlow(startEvent(onDay(base, regional), true), "custom");
     const stages: string[] = [];
     driveToEnd(started, (s) => {
       stages.push(s.activeEvent!.tournament.stage);
@@ -174,7 +174,7 @@ describe("matchday slice 3 — custom mode", () => {
 
   it("the breaks: one timeout, an adjustment, one sub, then the coach plays it out", () => {
     flags(true, true);
-    let s = setMatchdayModeFlow(startEvent(onDay(base, regional), false), "custom", "every");
+    let s = setMatchdayModeFlow(startEvent(onDay(base, regional), true), "custom", "every");
     s = stepEventRound(s);
     const opened = pendingUserSeriesOf(s)!;
     expect(opened.state.games).toHaveLength(0);
@@ -213,9 +213,30 @@ describe("matchday slice 3 — custom mode", () => {
 
   it("delegating every stop equals quick mode (same seed, same coach)", () => {
     flags(true, true);
-    const started = startEvent(onDay(base, regional), false);
+    const started = startEvent(onDay(base, regional), true);
     const quick = simEventToEnd(started);
     const delegated = driveToEnd(setMatchdayModeFlow(started, "custom", "every"), delegateUserSeriesFlow);
     expect(digest(delegated.save)).toBe(digest(quick));
+  });
+
+  it("slice 5: an instant result never stops, even in custom mode", () => {
+    flags(true, true);
+    const instant = setMatchdayModeFlow(startEvent(onDay(base, regional), false), "custom", "every");
+    const done = simEventToEnd(instant);
+    expect(pendingUserSeriesOf(done)).toBeNull();
+    expect(done.activeEvent!.tournament.stage).not.toBe("swiss");
+  });
+
+  it("slice 5: back to quick mid-series, the coach plays it out and the games played stand", () => {
+    flags(true, true);
+    let s = setMatchdayModeFlow(startEvent(onDay(base, regional), true), "custom", "every");
+    s = playUserSeriesGameFlow(stepEventRound(s));
+    const first = pendingUserSeriesOf(s)!.state.games[0];
+    s = setMatchdayModeFlow(s, "quick");
+    const us = pendingUserSeriesOf(s)!;
+    expect(isSeriesOver(us.state)).toBe(true);
+    expect(us.state.games[0]).toEqual(first);
+    s = stepEventRound(s);
+    expect(pendingUserSeriesOf(s)).toBeNull();
   });
 });

@@ -457,6 +457,22 @@ export function earlyRegionShift(region: Region, difficulty: CareerDifficulty, s
   return (dose * (goneAt - seasonIndex)) / (goneAt - fullThrough);
 }
 
+/**
+ * v2.1 Etapa 1 close (R146): the early Worlds spread — rating added to an AI
+ * side of a Worlds by its region (CAREER_REGION_FIELD.worldsRegionShift),
+ * full through `fade.fullThrough`, linearly gone at `fade.goneAt`. 0 with
+ * FEATURES.worldLife off (= v2.0.35).
+ */
+export function worldsRegionShift(region: Region | undefined, seasonIndex: number): number {
+  if (!FEATURES.worldLife || !region) return 0;
+  const dose = CAREER_REGION_FIELD.worldsRegionShift[region] ?? 0;
+  if (dose === 0) return 0;
+  const { fullThrough, goneAt } = CAREER_REGION_FIELD.worldsRegionShiftFade;
+  if (seasonIndex <= fullThrough) return dose;
+  if (seasonIndex >= goneAt) return 0;
+  return (dose * (goneAt - seasonIndex)) / (goneAt - fullThrough);
+}
+
 export function starterRosterOffers(
   region: Region,
   careerSeed: number,
@@ -1676,6 +1692,23 @@ export function fieldForEvent(
             },
           },
     );
+  }
+
+  // v2.1 Etapa 1 close (R146): the early Worlds spread, per AI side by its own region.
+  if (def.tier === "worlds") {
+    field = field.map((team) => {
+      const shift = team.isUser ? 0 : worldsRegionShift(team.region, def.seasonIndex);
+      return shift === 0
+        ? team
+        : {
+            ...team,
+            rating: {
+              ...team.rating,
+              total: team.rating.total + shift,
+              difficultyShift: team.rating.difficultyShift + shift,
+            },
+          };
+    });
   }
 
   // rc.39 F6 (R106, lever — off at shiftPerTitle 0): the strongest AI sides of the user's Major /

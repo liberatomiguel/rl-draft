@@ -90,6 +90,8 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { CareerAiTicker, type TickerItem } from "@/components/career/event/CareerAiTicker";
 import { CareerBracket } from "@/components/career/event/CareerBracket";
 import { CareerMatchCenter } from "@/components/career/event/CareerMatchCenter";
+import { SeriesDesk } from "@/components/career/event/SeriesDesk";
+import { pendingUserSeriesOf } from "@/store/careerFlow";
 import {
   beatStepKey,
   createBeatSync,
@@ -569,6 +571,13 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const cuedRef = useRef<Set<string>>(new Set());
   /** How far the live Match Center step has played: the timer keeps it, the clock reads it. */
   const beatSyncRef = useRef(createBeatSync());
+  // v2.1 Matchday slice 5: custom mode holds the round at the user's series
+  // (the desk). While it is open the clock never asks the engine for a round;
+  // a series the user played game by game lands straight on its banner.
+  const pendingSeries = pendingUserSeriesOf(save);
+  const hasPendingSeries = pendingSeries !== null;
+  const liveRoundsRef = useRef<Set<string>>(new Set());
+  const parkedAfterRef = useRef<string | null>(null);
 
   // The playback clock — ONE effect, paced by what is being revealed.
   useEffect(() => {
@@ -643,12 +652,22 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
       // A simulated round awaits its reveal — breathe, then animate it.
       tick(P.roundGapMs, () => {
         const next = rounds[revealedRounds];
-        setAnim({ round: revealedRounds, ai: 0, banner: next.userSeriesIndex === null });
+        const playedLive = next.userSeriesIndex !== null && liveRoundsRef.current.has(next.key);
+        if (playedLive) cuedRef.current.add(seriesKey(next, next.userSeriesIndex!));
+        setAnim({ round: revealedRounds, ai: 0, banner: next.userSeriesIndex === null || playedLive });
         setLive({ game: 0, goal: 0 });
       });
-    } else if (t.stage !== "finished" && !paused) {
-      // Reveal queue drained — ask the engine for the next round(s).
-      tick(P.advanceMs, () => playEventRound());
+    } else if (t.stage !== "finished" && !paused && !hasPendingSeries) {
+      // Reveal queue drained — ask the engine for the next round(s). Slice 5:
+      // after a series the user played at the desk, park once on its result
+      // and box score (Resume asks for the next round, which may open the desk).
+      const last = rounds[rounds.length - 1];
+      if (last && liveRoundsRef.current.has(last.key) && parkedAfterRef.current !== last.key) {
+        parkedAfterRef.current = last.key;
+        tick(0, () => setRunning(false));
+      } else {
+        tick(P.advanceMs, () => playEventRound());
+      }
     } else {
       // Everything revealed and the tournament is done — or (R40) the
       // Saturday Swiss is complete and the event waits for Championship
@@ -658,7 +677,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [reduced, running, rosterOpen, anim, live, revealedRounds, rounds, t, speed, playEventRound, paused]);
+  }, [reduced, running, rosterOpen, anim, live, revealedRounds, rounds, t, speed, playEventRound, paused, hasPendingSeries]);
 
   // Reduced motion / derived reveal state (never blank, never a timer).
   const effRevealed = reduced ? rounds.length : revealedRounds;
@@ -914,6 +933,23 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   if (digestReady) return <EventDigest save={save} ev={ev} />;
   if (swissCompleteReady) return <SwissCompletePanel save={save} ev={ev} />;
 
+  // Slice 5: the desk takes the Match Center's place once every simulated round is on screen.
+  const deskReady = pendingSeries !== null && allSimRevealed;
+  const deskLabel = pendingSeries
+    ? (() => {
+        const [stage, n] = pendingSeries.roundKey.split(":");
+        const bo = T.bestOf(pendingSeries.state.target * 2 - 1);
+        return stage === "sw" ? `${C.event.swissStage} · ${C.event.roundLabel(Number(n) + 1)} · ${bo}` : `${C.event.playoffs} · ${bo}`;
+      })()
+    : "";
+  const markLive = () => {
+    if (pendingSeries) liveRoundsRef.current.add(pendingSeries.roundKey);
+  };
+  const continueFromDesk = () => {
+    setRunning(true);
+    playEventRound();
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
       <SectionTitle
@@ -941,8 +977,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         className="mb-4"
       />
 
-      {/* controls — every one of them works */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* controls — every one of them works (the desk carries its own while it is open) */}
+      <div className={cx("mb-4 flex flex-wrap items-center gap-2", deskReady && "hidden")}>
         {reduced ? (
           t.stage === "finished" || paused ? (
             // rc.29 (CAR-03): the day is played and on screen — the results
@@ -1002,7 +1038,9 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* main column — the cinema */}
         <div className="min-w-0 space-y-4 lg:col-span-2">
-          {center ? (
+          {deskReady ? (
+            <SeriesDesk save={save} label={deskLabel} onPlayGame={markLive} onContinue={continueFromDesk} />
+          ) : center ? (
             <CareerMatchCenter
               save={save}
               t={t}

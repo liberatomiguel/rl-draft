@@ -3884,7 +3884,8 @@ export function matchdayModeOf(save: CareerSave): MatchdayMode {
 /** Custom mode stops before the user's next series here (quick never stops). */
 function userSeriesStopsAt(save: CareerSave, t: TournamentState): boolean {
   const ev = save.activeEvent;
-  if (!ev?.matchday || matchdayModeOf(save) !== "custom" || !userHasPendingSeries(t)) return false;
+  // Slice 5: an instant result (not watched) is the coach's all the way, in either mode.
+  if (!ev?.matchday || !ev.watched || matchdayModeOf(save) !== "custom" || !userHasPendingSeries(t)) return false;
   const stopAt = save.prefs.matchdayStopAt ?? CAREER_MATCHDAY.customStopDefault;
   return stopAt === "every" || t.stage === "playoffs" || isTwoDayEvent(ev.def);
 }
@@ -4047,7 +4048,9 @@ function withUserSeries(
 /** The career setting: quick (the coach decides, no stops) or custom (plan and breaks). */
 export function setMatchdayModeFlow(input: CareerSave, mode: MatchdayMode, stopAt?: MatchdayStopAt): CareerSave {
   if (matchdayModeOf(input) === mode && (stopAt === undefined || input.prefs.matchdayStopAt === stopAt)) return input;
-  const save = clone(input);
+  // Slice 5: back to quick with a series paused — the coach plays it out (the games already played stand).
+  const pending = mode === "quick" ? pendingUserSeriesOf(input) : null;
+  const save = clone(pending && !isSeriesOver(pending.state) ? delegateUserSeriesFlow(input) : input);
   save.prefs.matchdayMode = mode;
   if (stopAt) save.prefs.matchdayStopAt = stopAt;
   return save;

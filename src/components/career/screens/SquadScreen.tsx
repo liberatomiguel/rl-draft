@@ -18,7 +18,8 @@
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
-import { CAREER_STABILITY } from "@/config/balance";
+import { CAREER_STABILITY, FEATURES } from "@/config/balance";
+import { RosterSeasonStats } from "@/components/career/RosterSeasonStats";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { payrollProjection, severanceFor, weeklyWage } from "@/engine/career/economy";
@@ -440,6 +441,8 @@ export function SquadScreen() {
       </Panel>
 
       </div>
+      {/* v2.1 Matchday slice 5: the season's box-score stats (staging flag). */}
+      {FEATURES.matchdayBoxScore ? <RosterSeasonStats save={save} /> : null}
       {/* ==================== contracts ==================== */}
       <Panel data-tour="squad-contracts" className="p-4 sm:p-5">
         <div className="card-head"><h2 className="card-title">{C.squad.contracts}</h2></div>

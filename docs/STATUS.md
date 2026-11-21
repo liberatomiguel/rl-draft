@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Updated: **2026-11-19**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-21**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
 > (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 > Etapa 1 progress (read this, not the code): ETAPA-1-STATUS.md.
@@ -10,12 +10,11 @@
 
 ## Current builds
 
-- **Integration branch `claude/etapa1-integration-3eae43` = 2.1.0-rc.1
-  (20/11, not pushed):** the new identity at its fifth pass + v2.0.35 +
-  Etapa 1 slice 1 and its docs (baseline, PostHog analysis, M1 diagnosis).
-  The staging candidate for the Etapa 1 gate; how to add the rest and publish:
-  ETAPA-1-STATUS.md. `design/broadcast-pilot` lacks the fifth pass
-  (`4b4ecd6`, on staging only).
+- **Staging = 2.1.0-rc.4 (21/11), branch `claude/etapa1-final-1692be`:**
+  Etapa 1 complete for the gate: the new identity (fifth pass) + v2.0.35 +
+  Matchday slices 1 to 5 (screens included) + Mundo vivo M1, M2.1, M3 and the
+  Worlds spread (R146). Every Etapa 1 flag is on in the staging build only.
+  What to play and what Miguel decides: ETAPA-1-STATUS.md.
 
 - **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
   and database link made quiet (Miguel's review of 2.0.34).

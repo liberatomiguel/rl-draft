@@ -16,7 +16,8 @@
  */
 
 import { useMemo, type RefObject } from "react";
-import { TOURNAMENT } from "@/config/balance";
+import { FEATURES, TOURNAMENT } from "@/config/balance";
+import { SeriesBoxScoreView } from "./SeriesBoxScoreView";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
@@ -436,6 +437,11 @@ export function CareerMatchCenter({
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {/* v2.1 Matchday slice 5: the box score (finished series only, R137 option B). */}
+      {done && FEATURES.matchdayBoxScore ? (
+        <SeriesBoxScoreView key={`${round.key}:${series.teamAId}:${series.teamBId}`} t={t} roundKey={round.key} series={series} defaultOpen={isUserSeries} />
       ) : null}
     </Panel>
   );

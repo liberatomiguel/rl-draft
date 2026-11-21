@@ -38,6 +38,8 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { REGION_BADGE } from "@/components/regionStyle";
+import { FEATURES } from "@/config/balance";
+import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
 import { unlockTrack, useCareerSave, userStars } from "@/components/career/careerUi";
@@ -447,6 +449,12 @@ export function ClubScreen() {
       {/* 5. Career settings: one destructive action, kept apart at the foot of the page. */}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <h3 className="display text-base uppercase leading-none text-sub">{copy.club.settings}</h3>
+        {/* v2.1 Matchday slice 5: quick or custom (staging flag). */}
+        {FEATURES.matchdayDecisions ? (
+          <div className="order-last w-full">
+            <MatchdayModeSetting save={save} />
+          </div>
+        ) : null}
         <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
           {copy.club.abandonCareer}
         </Button>

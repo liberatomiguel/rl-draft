@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 44;
+export const BALANCE_VERSION = 45;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2659,6 +2659,23 @@ export const CAREER_REGION_FIELD = {
   earlyShift: { NA: -1.5, EU: -5, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 } as Record<Region, number>,
   earlyShiftScaleByDifficulty: { easy: 1, normal: 1, hard: 0 } as Record<string, number>,
   earlyShiftFade: { fullThrough: 4, goneAt: 9 },
+  /**
+   * v2.1 Etapa 1 close (R146, FEATURES.worldLife only): the Worlds spread of
+   * the early seasons. The dataset seasons hand EU the deepest top of the
+   * field, so the AI Worlds went EU in 79 % of seasons 1–8 (NA 16, the rest
+   * 5; 10 careers, WORLDTOP=1). Rating added to each AI side of a WORLDS by
+   * its own region (carried in difficultyShift: the players' ratings, the
+   * seeding and every other event never read it; the user's side never
+   * moves), every difficulty, full through `fade.fullThrough` (seasonIndex)
+   * and linearly gone at `fade.goneAt`, where M2.1's renewal already keeps
+   * the spread (seasons 10+: EU 49, NA 36, the rest 15). The others are lifted
+   * rather than EU cut, so the top of the field (the user's Worlds) stays as
+   * hard: EU −1.25 alone doubled a 97 side's early title odds. Measured
+   * (AI-only replay, seasons 1–8): EU 57, NA 30, MENA 10, SAM 3; a 97 user
+   * side's title odds 14.2 % → 14.4 %; the world's players unchanged.
+   */
+  worldsRegionShift: { NA: 1, EU: -0.5, SAM: 1.5, MENA: 1, OCE: 0.5, APAC: 0.5, SSA: 0.5 } as Record<Region, number>,
+  worldsRegionShiftFade: { fullThrough: 5, goneAt: 8 },
 } as const;
 
 /**

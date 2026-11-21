@@ -2509,3 +2509,26 @@ Implementação: `startSeries` dá a cada lado marcado sem plano o plano do seu 
 Decisão sobre os pontos do R144:
 - **Sem coach, como no dev.6, não é aceitável:** o favorito de +2 sem coach caía para 71,8% (quebra a guarda de 73%) e a regra do Miguel é que o rápido sem coach não fique pior que hoje. Entra um **piso de planejamento**, `CAREER_MATCHDAY.coachlessQuality` = 0,3: um time sem coach, ou com coach abaixo disso, decide com essa qualidade (`planningQuality`), no plano e nas pausas. Medido com 0,25 e 0,3 (20 mil séries por célula): 0,25 fica 1,1–1,7 pp abaixo de hoje em série igual, fora do "cerca de 1 pp"; 0,3 iguala hoje. A diferença entre o coach médio e o sem coach é pequena por construção: o coach médio (0,4) precisa empatar com a IA média, e o sem coach precisa ficar perto de hoje. O coach bom (0,7) vale ~+3 pp.
 - **XP do reserva que entra na troca:** fica como hoje (`fieldedIds` não muda), para não mexer no balanço do desenvolvimento nesta versão. Em aberto para o gate da Etapa 1.
+
+## R146 — 21 de novembro de 2026: a divisão regional dos títulos do Worlds (v2.1.0-rc.4, `worldLife`)
+
+Pedido do Miguel no gate do rc.3: "ajustar a dominância no fim de jogo. quando eu disse que a EU ganhava sempre, estava falando das seasons iniciais mesmo (1-8), não só do endless". Meta: a EU é a campeã mais frequente sem ganhar todo ano (50–60%), a NA disputa de verdade (25–35%), as outras regiões ganham às vezes (8–15% somadas), nenhuma região acima de ~60% em nenhuma janela.
+
+Medição antes (`careerWorldTop.probe`, WORLDTOP=1, 10 carreiras: 5 regiões × 2 seeds, Normal, tudo ligado; Worlds só da IA, 100 por temporada; temporadas como o jogo mostra, `seasonIndex + 1`):
+- Temporadas 1–8: **EU 79, NA 16, MENA 5, SAM 0,4**. A causa são as temporadas do dataset (o topo da EU é o mais fundo), onde nenhuma alavanca do Mundo vivo chega ao Worlds.
+- Temporadas 10+: EU 49, NA 36, SAM 7, MENA 7. Com 10 carreiras a NA não domina: os 55% do rc.3 eram ruído de 5 carreiras. Fica como está (M2.1 já segura).
+
+Decisão: **`CAREER_REGION_FIELD.worldsRegionShift`**, só no Worlds e só com `worldLife`: cada lado da IA ganha um ajuste de rating pela própria região (NA +1, EU −0,5, SAM +1,5, MENA +1, OCE/APAC/SSA +0,5), cheio até `seasonIndex` 5 e zerado em 8 (`worldsRegionShiftFade` 5/8). Vai no `difficultyShift` como os outros ajustes de campo: os jogadores, o seeding, as Majors, a escalada e o lado do usuário não mudam.
+- Por que subir as outras em vez de só baixar a EU: EU −1,25 sozinha dava a mesma divisão, mas dobrava a chance de título de um time do usuário de 97 nas primeiras temporadas (S2 9 → 20%). Com a dose escolhida essa chance fica igual (média S1–S8: 14,2 → 14,4%).
+- Braços medidos (S1–S8, Worlds da IA): A EU −1,5 / NA +0,5 → EU 51, NA 39, outras 10; B EU −1,25, SAM +1, MENA +0,5 → 58 / 26 / 16 (fácil demais para o usuário); C mais forte nas outras → 56 / 25 / 20; **D (escolhido) → EU 57, NA 30, MENA 10, SAM 3**.
+- Guardas: os jogadores do mundo idênticos temporada a temporada (só a coluna do campo do Worlds se move); motor da partida intocado (+2/+5/+6 iguais); Draft intocado; 0 soft lock; vale igual em todas as dificuldades (Hard continua acima da Normal). Um ano isolado ainda pode ser de uma região só (S3 tem a EU em ~94%): é a janela que segue a meta.
+- Rampa EU do M3 (40% de final regional até T5 na Normal) não mexida: não ajuda o Worlds e a NA ficaria abaixo de 40%.
+
+## R147 — 21 de novembro de 2026: Matchday fatia 5, as telas (v2.1.0-rc.4)
+
+Regras de tela que o motor não decide:
+- **O resultado instantâneo nunca para**, nem no modo personalizado: quem escolhe "Resultado instantâneo" escolheu o técnico para o evento todo.
+- **Voltar ao rápido com uma série aberta**: o técnico termina a série; os jogos já jogados valem.
+- **A mesa (plano/pausa) toma o lugar do Match Center** enquanto o evento segura a série; os controles de reprodução somem nesse tempo. Uma série jogada na mesa não é reprisada: o banner e a súmula aparecem direto, e a reprodução para uma vez ali ("Retomar" pede a próxima rodada).
+- **Sem técnico**, a etiqueta das escolhas pré-preenchidas é "Capitão" (o piso de planejamento do R145), e o botão é "Deixar com o capitão".
+- A súmula abre aberta na série do usuário e fechada nas da IA. As estatísticas da temporada no elenco contam todas as séries do usuário (copas da comunidade incluídas), como `accumulateBoxStats` já fazia.

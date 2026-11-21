@@ -10,6 +10,37 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.4] — 2026-11-21 · Etapa 1 closes: the Worlds spread by region, the Matchday screens (staging)
+
+Branch `claude/etapa1-final-1692be`, cut from `2.1.0-rc.3` (`c9187fa`). Published to `staging` only; production is unchanged (every Etapa 1 flag stays off outside the staging build).
+
+### Added
+- **Matchday slice 5, the screens** (custom mode, `FEATURES.matchdayDecisions` / `matchdayBoxScore`). `SeriesDesk` takes the Match Center's place when the event holds at the user's series: the **series plan** (the coach's plan already filled in, tagged "Coach", or "Captain" without one; style with its fit and what it beats, kickoffs, the player marked; the scouting line and the starters' traits; every call optional), the **break** between games (the games so far, both momentum meters, one timeout, the adjustment, one sub) and the end of the series (Continue). "Leave it to the coach" plays the rest out at any point. A series played at the desk lands straight on its banner (no replay), and the playback parks once on it so its box score can be read.
+- **Box score in the Match Center** (`SeriesBoxScoreView`, R137 option B): under every finished series, open by default on the user's. Series totals and one sheet per game: goals, assists, saves, shots, score, the 0-10 rating, the MVP and the key moments (`momentText`). No play-by-play and no live momentum bar.
+- **Season stats on the roster** (`RosterSeasonStats`, Squad screen): `save.boxStats` of the current season, per player (games, goals, assists, saves, shots, score, average rating).
+- **Matchday mode in Career settings** (`MatchdayModeSetting`, Club screen): Quick (default) or Custom, and where Custom stops (playoffs and LAN events, or every series).
+- Career strings `seriesDesk.*`, `boxScore.*` and the mode hints, EN and PT.
+
+### Changed
+- **An instant result never stops** (`userSeriesStopsAt` reads `ev.watched`): "Instant result" in custom mode used to stop at the user's series and leave the screen on its loading state.
+- **Back to quick mid-series**: `setMatchdayModeFlow` lets the coach play the open series out first; the games already played stand (it used to replay the whole series from scratch).
+- `careerWorldTop.probe` measures from season index 0 (`WORLDTOP_FROM`), prints every season and the player-facing windows (seasons 1–8 and 10+), applies the Worlds' per-region shift in its AI-only replay, and takes `WORLDTOP_WSHIFT` / `WORLDTOP_WFADE` for sweeps.
+- Version 2.1.0-rc.4 in `package.json` and `SITE.version`.
+
+### Balance
+- **BALANCE_VERSION 45. R146, the regional spread of Worlds champions** (`CAREER_REGION_FIELD.worldsRegionShift`, `worldLife` only): each AI side at a Worlds gets NA +1, EU −0.5, SAM +1.5, MENA +1, OCE/APAC/SSA +0.5, full through season index 5 and gone at 8. Carried in `difficultyShift`: the players, the seeding, the Majors, the climb and the user's side never move. Measured on 10 careers (5 regions × 2 seeds, Normal, every flag on; AI-only Worlds, 100 a season):
+
+| AI Worlds champions | EU | NA | SAM | MENA | others |
+|---|--:|--:|--:|--:|--:|
+| Seasons 1–8, before | 79 | 16 | 0.4 | 5 | 0 |
+| Seasons 1–8, after | 57 | 30 | 3 | 10 | 0 |
+| Seasons 10+ (unchanged) | 49 | 36 | 7 | 7 | 0.1 |
+
+  A 97 user side's early Worlds title odds stay put (14.2 → 14.4%); EU −1.25 alone gave the same spread but doubled them. The world's players are identical season by season; the match engine, the Draft, the +2/+5/+6 anchors and the series digest are untouched. Softlock probe (7 regions × Normal/Hard × 2 policies, 10 seasons): 0 of 28. The rc.3 "NA 55% from S10" was 5-career noise: 10 careers give NA 36%.
+
+### Fixed
+- Instant result in custom mode hung on the event's loading state. Root cause: the custom stop did not check whether the event was watched, so the instant sim stopped at the user's series with no screen to play it.
+
 ## [2.1.0-rc.3] — 2026-11-21 · Matchday slices 3 and 4, Mundo vivo M2.1 and M3, every Etapa 1 flag on in staging only (staging candidate, not published)
 
 Branch `claude/etapa1-integration-3eae43`. Not pushed, not deployed. Handoff for the next chat: `docs/ETAPA-1-STATUS.md`.
