@@ -314,14 +314,18 @@
   },
   "manager": {
     "metaTitle": "Modo Carreira de Rocket League — Manager Grátis",
-    "metaDescription": "Modo carreira de Rocket League grátis no navegador, sem mod e sem download: funde um clube, contrate jogadores reais da RLCS, treine e vença o World Championship.",
+    "metaDescription": "Carreira de manager de Rocket League grátis no navegador: sem mod, sem download, roda no celular. Funde um clube, contrate jogadores reais da RLCS e vença o Mundial.",
     "kicker": "Modo carreira",
     "title": "Modo Carreira e Manager de Rocket League — Road to Worlds",
-    "intro": "Road to Worlds é um modo carreira de Rocket League grátis que roda no navegador, no PC ou no celular, sem nada para baixar. Você é o manager: funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
+    "intro": "Road to Worlds é um modo carreira de Rocket League grátis que roda no navegador, no PC, no Mac ou no celular, sem mod e sem nada para baixar. Você é o manager: funde um clube, monte um elenco com jogadores reais da RLCS e leve o time dos qualifiers regionais ao World Championship, uma temporada por vez.",
     "sections": [
       {
         "heading": "O Rocket League tem modo carreira?",
-        "body": "No jogo em si, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. Projetos feitos por fãs preenchem esse espaço: mods que rodam dentro do jogo no PC, jogos de manager para baixar e jogos que rodam no navegador. O Road to Worlds é do último tipo. É uma carreira de manager de clube, então você comanda uma organização, e não um único jogador, e joga no desktop e no celular sem instalar nada, com a história real da RLCS por trás."
+        "body": "No jogo em si, não: o Rocket League não tem um modo carreira voltado ao cenário competitivo. Projetos feitos por fãs preenchem esse espaço, e eles são de dois tipos. Os mods de carreira rodam dentro do Rocket League no PC, e você joga as partidas contra bots. Os simuladores de carreira rodam numa página da web, com as partidas simuladas. O Road to Worlds é um simulador de carreira no navegador e uma carreira de manager: você comanda uma organização, e não um único jogador, no desktop ou no celular, com a história real da RLCS por trás."
+      },
+      {
+        "heading": "Um modo carreira sem mod",
+        "body": "Os mods de carreira dentro do jogo pedem a versão de PC do Rocket League, um hub ou plugin para instalar e bots para completar os lobbies. O Road to Worlds não precisa de nada disso: abra a página, funde o seu clube e a primeira temporada começa. Funciona em qualquer aparelho com navegador, então quem joga no console ou no celular também pode ter uma carreira, e o save fica no seu aparelho, com uma cópia na sua conta se você entrar."
       },
       {
         "heading": "Funde o seu clube",

@@ -10,6 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.36] — 2026-11-22 · The career landing answers the mod searchers
+
+Source: Search Console comparison 14–18/11 vs 19–21/11 and the live SERP of 22/11. A PC career mod (released ~13/11) took over "rocket league career mode": the AI Overview, two video blocks and Reddit. The landing fell from position 3.0 to 6.4 and its CTR from 26 % to 11 %, while clicks per day held (173 → 167) and impressions grew 49 %.
+
+### Changed
+- **The career landing's search description leads with what a mod cannot offer:** no PC mod, no download, plays on phones. The title stays "Rocket League Career Mode & Manager Game — Free": "manager" is a search the landing wins (position 1.6–3.3), and nobody searches "no mod", so that angle lives in the description and the body.
+- **The first section sorts fan-made career modes into in-game PC mods and browser career simulators**, the split the AI Overview uses, and names Road to Worlds as the second kind. A new section, "A career mode without a mod", says what the mods need (PC, a hub or plugin, bots) and that console and phone players can run a career here.
+
 ## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
 
 ### Changed
