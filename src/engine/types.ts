@@ -11,6 +11,8 @@
  * No React / UI types are allowed here.
  */
 
+import type { DuelLink } from "./duel";
+
 // ---------------------------------------------------------------------------
 // 1. Data entities
 // ---------------------------------------------------------------------------
@@ -782,6 +784,12 @@ export interface RunState {
   daily?: DailyInfo;
   /** Set on `mode: "challenge"` runs (v1.4) — the puzzle being attempted. */
   challengeId?: string;
+  /**
+   * Friend duel (v2.1, `engine/duel.ts`): the link this Classic / Quick run was
+   * started from — its setup and the runs already in it (empty for the first).
+   * An exhibition: the run grants nothing. Absent on every other run.
+   */
+  duel?: DuelLink;
   draft: DraftState;
   /**
    * COL-02a (rc.33): the special cards of the current offer the player did not

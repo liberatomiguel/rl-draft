@@ -10,6 +10,20 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased] — 2026-11-24 · Friend duel: the same draft by link (staging)
+
+Branch `claude/friend-challenge`, cut from `2.1.0-rc.4` (`4ca1c4a`). O2 of PLANO-PROXIMO-NIVEL-2026-11-19 (the social loop; the answer to the rival's multiplayer). No server: everything is resolved in the browser.
+
+### Added
+- **Friend duel** (`engine/duel.ts`, DESIGN-DECISIONS #178). A Classic or Quick draft played from a seed carried in a link (`/duel#c=…`): whoever opens it drafts from the same offers and meets the same bracket field, then sees the runs side by side and can send the link back with their result added (up to 6 runs: the first and the latest replies). Entry points: "Challenge a friend" on the setup screen (this setup as a duel) and under a finished Classic / Quick run (the same settings, a new seed). The link holds the draft settings, the balance version and anonymous score lines (placement, Swiss record, playoff wins, games, goals, team OVR), nothing personal; it sits in the URL hash, which never reaches the server.
+- **`/duel`**: the landing page of a link (settings, standings, Accept), `noindex`, with its own static share image (`public/landing/duel-share.jpg`, `scripts/build-og-duel.mjs`). A missing, cut, edited (check value), newer-format or undraftable-region link never breaks: it falls back to `/play`'s normal setup with a notice that says why. A link made on another BALANCE_VERSION opens with a warning that the offers may differ.
+- **Duel results**: the standings with your run marked, the verdict, Share link (Web Share API) and Copy link (with the link in a field as the last resort), Run it back. A "Duel" tag in the run header.
+- **Analytics `friend_duel`** (standard, under the budget guard): `action` opened / invalid / completed / shared, runs in the link, placement, runs beaten / lost to, share method. Never the seed or the link.
+- Copy `DUEL_UI`, EN and PT; PT tab title for `/duel`.
+
+### Balance
+- **BALANCE_VERSION 46**: new `DUEL` block (the duel's special-card table: the Diamond rarities without national teams, baseline odds; 6 runs per link). No existing value changed.
+
 ## [2.1.0-rc.4] — 2026-11-21 · Etapa 1 closes: the Worlds spread by region, the Matchday screens (staging)
 
 Branch `claude/etapa1-final-1692be`, cut from `2.1.0-rc.3` (`c9187fa`). Published to `staging` only; production is unchanged (every Etapa 1 flag stays off outside the staging build).

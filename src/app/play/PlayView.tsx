@@ -17,6 +17,8 @@ import { ReviewScreen } from "@/components/screens/ReviewScreen";
 import { TournamentScreen } from "@/components/screens/TournamentScreen";
 import { ResultsScreen } from "@/components/screens/ResultsScreen";
 import { ChallengeScreen } from "@/components/screens/ChallengeScreen";
+import { DuelLinkNotice } from "@/components/duel/DuelLinkNotice";
+import { useDuelNotice } from "@/store/duelStore";
 
 export function PlayView() {
   const mounted = useMounted();
@@ -37,8 +39,21 @@ export function PlayView() {
   // them in turn, so they open once those are done, never over the playback.
   useOverlayHold("live", phase === "tournament");
 
+  // A refused duel link's notice (v2.1) belongs to the setup it landed on.
+  const hasRun = !!run;
+  useEffect(() => {
+    if (hasRun) useDuelNotice.getState().setNotice(null);
+  }, [hasRun]);
+
   if (!mounted) return <PageSkeleton />;
-  if (!run) return <SetupScreen />;
+  if (!run) {
+    return (
+      <>
+        <DuelLinkNotice />
+        <SetupScreen />
+      </>
+    );
+  }
 
   switch (run.phase) {
     case "draft":

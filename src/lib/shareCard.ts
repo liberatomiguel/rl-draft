@@ -188,7 +188,8 @@ export function renderShareCard(
     data.swissRecord ? `SWISS ${data.swissRecord}` : null,
     `TEAM OVR ${data.teamOverall}`,
     `${data.chemistryTier.toUpperCase()} CHEMISTRY`,
-    `+${data.xp} XP`,
+    // A run that paid nothing (a friend duel, v2.1) shows no "+0 XP".
+    data.xp > 0 ? `+${data.xp} XP` : null,
   ].filter(Boolean) as string[];
   ctx.fillText(chips.join("    "), 64, 272);
 

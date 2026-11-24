@@ -55,6 +55,7 @@ describe("the catalogue", () => {
         "career_transfer",
         "challenge_played",
         "collection_milestone",
+        "friend_duel",
         "mission_completed",
         "onboarding_step",
         "quality_duplicate_reward",
@@ -135,6 +136,7 @@ describe("the catalogue", () => {
       [
         "achievement_unlocked",
         "challenge_played",
+        "friend_duel",
         "mission_completed",
         "quiz_played",
         "run_abandoned",

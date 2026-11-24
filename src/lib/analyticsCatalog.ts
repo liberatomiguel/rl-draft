@@ -161,6 +161,29 @@ export const EVENT_CATALOG = {
     specials: "string",
     xpGained: "number",
   }),
+  /**
+   * Friend duel (v2.1, `engine/duel.ts`), one event name for the whole loop:
+   * `action` = opened (a valid link landed on /duel), invalid (a broken or
+   * edited link fell back to a normal draft; `reason`), completed (a duel run
+   * reached its results; `beat` / `lost` = earlier runs in the link it beat or
+   * lost to) or shared (the link went out; `method` native | copy).
+   * `entries` = runs already in the link. Never the seed or the link itself.
+   */
+  friend_duel: spec("draft", "standard", {
+    action: "string",
+    entries: "number",
+    mode: "string?",
+    difficulty: "string?",
+    region: "string?",
+    placement: "string?",
+    beat: "number?",
+    lost: "number?",
+    resets: "number?",
+    method: "string?",
+    reason: "string?",
+    /** The link was made on another BALANCE_VERSION (the offers may differ). */
+    staleVersion: "boolean?",
+  }),
   /** The daily quiz ended (solved or out of guesses). Clues shown = attempts − 1. */
   quiz_played: spec("draft", "standard", {
     solved: "boolean",

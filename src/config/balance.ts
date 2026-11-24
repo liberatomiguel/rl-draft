@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 45;
+export const BALANCE_VERSION = 46;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1072,6 +1072,25 @@ export const QUIZ = {
 export const DAILY_CHALLENGE = {
   opponentShift: { normal: -2, hard: -4, legacy: -8 },
   underdogOpponentShift: -6,
+} as const;
+
+/**
+ * Friend duel (v2.1, O2 — DESIGN-DECISIONS #178, `engine/duel.ts`): a Classic or
+ * Quick draft played from a seed carried in a link. The draft uses the player's
+ * setup minus everything that depends on the profile or the date, so both sides
+ * see the same offers: one special-card table for everyone (no rank gate, no
+ * event window, no national teams). Exhibition: no XP, no Season Rating, no
+ * collection, achievements or missions, since a seed known in advance can be
+ * replayed until it is perfect (the authored challenges pay once for the same
+ * reason).
+ */
+export const DUEL = {
+  /** Special rarities a duel can draw: the Diamond table without national teams. */
+  specialRarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"],
+  /** On the per-rarity rates; 1 = the baseline rank's odds (SPECIALS.rankBaselineChance). */
+  specialChanceMult: 1,
+  /** Runs a link carries: the first one and the latest replies. */
+  maxEntries: 6,
 } as const;
 
 /**

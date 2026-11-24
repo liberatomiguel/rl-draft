@@ -12,7 +12,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DIFFICULTY, regionFieldDepth, regionOpponentBoost, SPECIALS } from "@/config/balance";
+import { DIFFICULTY, DUEL, REGION_LOCK, regionFieldDepth, regionOpponentBoost, SPECIALS } from "@/config/balance";
 import {
   challengeById,
   challenges,
@@ -45,6 +45,7 @@ import {
   starRewardXp,
 } from "@/engine/challenges";
 import { liveAchievements, teamAchievements } from "@/engine/achievements";
+import { capEntries, duelEntryFromResults, duelTournamentSeed, duelVerdict, type DuelLink } from "@/engine/duel";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
 import { buildUserTeam } from "@/engine/teams";
@@ -173,6 +174,12 @@ interface RunStore {
   startDailyRun: () => void;
   /** Start a challenge run (v1.4) — a constrained draft vs a fixed boss. */
   startChallenge: (challengeId: string) => void;
+  /**
+   * Start a friend duel (v2.1, `engine/duel.ts`) from a parsed link — or a new
+   * one, with no entries yet. False when the link's region cannot be drafted
+   * (the run is not touched).
+   */
+  startDuel: (link: DuelLink) => boolean;
   clearRun: () => void;
   /** Abandon the current run and immediately start a fresh one with the SAME
    *  mode/difficulty/visibility — drops straight into a new draft. */
@@ -347,6 +354,46 @@ export const useRunStore = create<RunStore>()(
         trackOnboardingStep("draft_started");
       },
 
+      startDuel: (link) => {
+        const { setup } = link;
+        if (setup.region && !REGION_LOCK.regions.includes(setup.region)) return false;
+        const poolLineupIds = setup.region ? lineupPoolForRegion(setup.region) : undefined;
+        if (poolLineupIds && poolLineupIds.length === 0) return false;
+        // The Daily's path: a fixed seed and a pool that reads nothing from the
+        // profile or the date (no rank-gated odds, no event window, no national
+        // teams), so both sides of the link draw the same offers.
+        const rng = createRng(setup.seed);
+        const draft = drawNextOffer(
+          createDraft(setup.difficulty, {
+            mode: setup.mode,
+            poolLineupIds,
+            specialChanceMult: DUEL.specialChanceMult,
+            specialRarities: [...DUEL.specialRarities],
+          }),
+          rng,
+        );
+        const run: RunState = {
+          runId: uid("duel"),
+          mode: setup.mode,
+          ...(setup.region ? { regionLock: setup.region } : {}),
+          seed: setup.seed,
+          rngState: rng.state,
+          difficulty: setup.difficulty,
+          showOverall: DIFFICULTY[setup.difficulty].overallLockedHidden ? false : setup.showOverall,
+          phase: "draft",
+          startedAt: new Date().toISOString(),
+          xpAtStart: useProfileStore.getState().xp,
+          duel: { setup, entries: capEntries(link.entries) },
+          draft,
+          offerNew: offerNewOf(draft),
+          tournament: null,
+          challenge: null,
+          results: null,
+        };
+        set({ run });
+        return true;
+      },
+
       clearRun: () => {
         // A run cleared before its results screen is an abandonment — the
         // funnel drop-off signal. (Clearing FROM results = a completed run,
@@ -384,6 +431,11 @@ export const useRunStore = create<RunStore>()(
         const played = !!run.challenge && (run.challenge.evaluated || !!run.challenge.series);
         if (run.phase !== "results" && !played) noteRunReset();
         else takeRunResets();
+        // A duel replays the same link (same seed, same runs to beat).
+        if (run.duel) {
+          get().startDuel(run.duel);
+          return;
+        }
         // Daily restarts re-roll today's seeded run; everything else re-runs
         // startRun with the same settings (a brand-new seed → fresh draft).
         if (run.mode === "daily") {
@@ -410,7 +462,7 @@ export const useRunStore = create<RunStore>()(
         const rng = createRng(run.rngState);
         const draft = applyPick(run.draft, card, slot, rng);
         // Missions (v2.0): "select a special card" counts at pick time.
-        if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
+        if (card.specialId && !run.duel) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
         const offerNew = offerNewOf(draft);
         discoverNationalOffer(draft);
         set({
@@ -455,7 +507,9 @@ export const useRunStore = create<RunStore>()(
       startTournament: () => {
         const { run } = get();
         if (!run || run.phase !== "review") return;
-        const rng = createRng(run.rngState);
+        // A duel's bracket has its own seed: the field does not depend on the
+        // rerolls a side spent, so both sides of the link face the same teams.
+        const rng = createRng(run.duel ? duelTournamentSeed(run.seed) : run.rngState);
         const userTeam = buildUserTeam(run.draft.roster, run.difficulty, {
           mode: run.mode,
         });
@@ -492,11 +546,14 @@ export const useRunStore = create<RunStore>()(
 
         // Real-time: team-build achievements (perfect chemistry, all-one-region,
         // loaded-with-specials, etc.) pop the moment the team is locked in (v1.4).
-        useProfileStore
-          .getState()
-          .awardAchievements(
-            teamAchievements(run.draft.roster, userTeam.chemistry, userTeam.specialIds.length, new Set()),
-          );
+        // A duel is an exhibition: no achievements.
+        if (!run.duel) {
+          useProfileStore
+            .getState()
+            .awardAchievements(
+              teamAchievements(run.draft.roster, userTeam.chemistry, userTeam.specialIds.length, new Set()),
+            );
+        }
 
         const tournament = initTournament(userTeam, run.difficulty, rng, {
           mode: run.mode,
@@ -551,7 +608,7 @@ export const useRunStore = create<RunStore>()(
        */
       awardRevealedAchievements: (revealedUserSeries: number) => {
         const t = get().run?.tournament;
-        if (!t) return;
+        if (!t || get().run?.duel) return;
         useProfileStore
           .getState()
           .awardAchievements(liveAchievements(t, new Set(), revealedUserSeries));
@@ -573,6 +630,31 @@ export const useRunStore = create<RunStore>()(
           },
           rng,
         );
+
+        // A friend duel is an exhibition (DESIGN-DECISIONS #178): the result is
+        // shown and compared, nothing is granted (no XP, rating, cards,
+        // achievements, missions or history), since the seed is known in advance.
+        if (run.duel) {
+          const team = run.tournament.teams["user"];
+          const mine = duelEntryFromResults(results, team ? displayTeamOverall(team.rating) : 0);
+          const verdict = duelVerdict(mine, run.duel.entries);
+          set({ run: { ...run, rngState: rng.state, phase: "results", results: {
+            ...results, unlockedSpecialIds: [], newAchievementIds: [], runMarks: [],
+            xp: { ...results.xp, lines: [], total: 0 },
+          } } });
+          trackEvent("friend_duel", {
+            action: "completed",
+            mode: run.mode,
+            difficulty: run.difficulty,
+            region: regionLabelOf(run),
+            entries: run.duel.entries.length,
+            placement: results.placement,
+            beat: verdict.beat,
+            lost: verdict.lost,
+            resets: takeRunResets(),
+          });
+          return;
+        }
 
         // A restored/stale Daily may reach the finish action after that date's
         // official result was recorded. Show its outcome without a second grant

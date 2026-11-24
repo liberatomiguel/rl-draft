@@ -55,13 +55,15 @@ import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
 import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { ResearchInvite } from "@/components/ResearchInvite";
+import { DuelInvite } from "@/components/duel/DuelInvite";
+import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI, DUEL_UI } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -129,6 +131,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   // applyRunResults) just reached 1, with no Legacy title yet. Daily/Challenge Hard
   // wins still count as titles but do NOT unlock Legacy (v1.4), so they never celebrate.
   const legacyJustUnlocked =
+    !run.duel && // a duel grants nothing, Legacy included
     (run.mode === "classic" || run.mode === "quick") &&
     run.difficulty === "hard" &&
     results.placement === "champion" &&
@@ -271,6 +274,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
           {run.daily ? (
             <p className="mt-1 text-xs text-orange-bright">{dailyRunTag(run.daily, DAILY_TEXT)}</p>
           ) : null}
+          {run.duel ? <p className="mt-1 text-xs text-orange-bright">{DUEL_UI.kicker}</p> : null}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             {/* Quick Draft has no Swiss stage (single-elim bracket) — DRAFT-09. */}
             {run.mode !== "quick" ? (
@@ -292,6 +296,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
           ) : null}
         </div>
       </Panel>
+
+      {/* Friend duel (v2.1): the standings and the link, where the XP would be. */}
+      {run.duel ? <DuelResultsPanel run={run} /> : null}
 
       {/* Highlights */}
       <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -388,7 +395,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
       </Panel>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* XP + rank */}
+        {/* XP + rank (none in a duel: it pays nothing, and the rating shown would be the last run's). */}
+        {!run.duel ? (
         <Panel className="p-5">
           <p className="kicker mb-3">{R.xpGained}</p>
           <ul className="space-y-1.5">
@@ -454,6 +462,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
             <ProgressBar value={rankAfter.progress} tone="orange" label={R.rankProgress} />
           </div>
         </Panel>
+        ) : null}
 
         {/* Achievements + unlocks */}
         <div className="space-y-6">
@@ -521,6 +530,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
 
       {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
+
+      {/* Friend duel (v2.1): the same settings as a duel, to send to a friend. */}
+      <DuelInvite run={run} />
 
       {/* CTAs */}
       <div className="mobile-action-bar mt-10 grid grid-cols-2 items-stretch justify-center gap-2 sm:flex sm:flex-row sm:gap-3">
