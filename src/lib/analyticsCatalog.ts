@@ -161,6 +161,26 @@ export const EVENT_CATALOG = {
     specials: "string",
     xpGained: "number",
   }),
+  /**
+   * v2.1: a finished Daily's "best draft of the day" panel (engine/dailyOptimal).
+   * `action` = shown (the analysis finished on the results screen, once per
+   * Daily) | shared (the result line was shared or copied). `gap` = rating
+   * points to the best draft; `percentile` is against SIMULATED reference
+   * drafts (`percentileSource` = simulated until a real board exists);
+   * `computeMs` = how long the analysis took on the device.
+   */
+  daily_insight: spec("draft", "standard", {
+    action: "string",
+    dailyNumber: "number",
+    dailyTemplate: "string",
+    percentile: "number",
+    percentileSource: "string",
+    gap: "number",
+    matched: "boolean",
+    teamOverall: "number",
+    bestOverall: "number",
+    computeMs: "number?",
+  }),
   /** The daily quiz ended (solved or out of guesses). Clues shown = attempts − 1. */
   quiz_played: spec("draft", "standard", {
     solved: "boolean",
