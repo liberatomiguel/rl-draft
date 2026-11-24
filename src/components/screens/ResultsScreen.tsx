@@ -56,6 +56,7 @@ import { achievementStyle } from "@/components/achievementStyle";
 import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { ResearchInvite } from "@/components/ResearchInvite";
 import { RunStepper } from "./RunStepper";
+import { DailyOptimalPanel } from "./DailyOptimalPanel";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
@@ -522,6 +523,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
           ) : null}
         </div>
       </div>
+
+      {/* v2.1: the day's best draft + percentile, only once the Daily is over. */}
+      {run.daily ? <DailyOptimalPanel run={run} /> : null}
 
       {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}

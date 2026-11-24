@@ -2130,6 +2130,45 @@ export const RESEARCH_UI = {
   dismiss: "No thanks",
 };
 
+/**
+ * v2.1: the best draft of the day, revealed under a finished Daily
+ * (components/screens/DailyOptimalPanel). The percentile is against simulated
+ * drafts, never real players: the copy says so every time it shows a number.
+ */
+export const DAILY_INSIGHT_UI = {
+  kicker: "After the Daily",
+  title: "Today's best draft",
+  working: "Working out every legal draft of the day…",
+  intro: "Every legal pick, reroll and free reroll of today's draft, checked. This is the strongest team the day allowed.",
+  introCapped: (cap: number) =>
+    `Every legal pick, reroll and free reroll of today's draft, checked. This is the strongest team the day allowed at ${cap} OVR or lower.`,
+  yours: "Your draft",
+  best: "Best draft",
+  rating: "Team rating",
+  overall: (n: number) => `OVR ${n}`,
+  chemistry: (n: number) => `Chem ${n}%`,
+  gap: (points: string) => `${points} rating points from the best draft`,
+  matched: "You drafted the best team of the day.",
+  overCap: (cap: number) => `Your team finished over the ${cap} OVR cap, so it misses today's objective.`,
+  percentile: (p: number) => `Better than ${p}% of simulated drafts`,
+  percentilePlayers: (p: number) => `Better than ${p}% of today's players`,
+  percentileNote: (n: number) =>
+    `Measured against ${n} simulated drafts of today's seed (bots with different tastes for overall, chemistry and rerolls), not against real players.`,
+  percentileNotePlayers: "Measured against the drafts other players finished today.",
+  bestLine: "How to get there",
+  stepPick: (name: string, slot: string) => `Pick ${name} (${slot})`,
+  stepReroll: "Reroll",
+  stepFreeReroll: "Free reroll (nothing pickable)",
+  showLine: "Show the picks",
+  hideLine: "Hide the picks",
+  share: "Share result",
+  copied: "Copied",
+  shareText: (n: number, p: number, gap: string) =>
+    `Rocket Draft Daily #${n}: better than ${p}% of simulated drafts, ${gap} rating points from the best draft. rocketdraft.app`,
+  shareTextMatched: (n: number) => `Rocket Draft Daily #${n}: I drafted the best team of the day. rocketdraft.app`,
+  error: "The best draft could not be worked out on this device.",
+};
+
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
  *  EN is empty: the static `metadata` of each route already is the English
  *  title, and the shell only overrides the tab title when an entry exists. */
@@ -2171,6 +2210,7 @@ export const EN = {
   QUIZ_UI,
   NATIONAL_UI,
   DAILY_TEXT,
+  DAILY_INSIGHT_UI,
   DATABASE_UI,
   RESEARCH_UI,
   PAGE_TITLES,

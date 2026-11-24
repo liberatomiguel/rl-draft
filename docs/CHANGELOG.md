@@ -10,6 +10,20 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased] — 2026-11-24 · The Daily reveals its best draft and a percentile (staging)
+
+Branch `claude/daily-optimal`, cut from `2.1.0-rc.4` (`4ca1c4a`). Plan: `docs/PLANO-PROXIMO-NIVEL-2026-11-19.md` §5 (the daily habit). DESIGN-DECISIONS #183.
+
+### Added
+- **"Today's best draft" under a finished Daily** (`components/screens/DailyOptimalPanel.tsx`, on the results screen only, so it never spoils a day being drafted). Your roster and the strongest roster the day allowed side by side (OVR, chemistry, team rating, the cards that differ in bold), the gap in rating points, the steps that reach it (picks, rerolls, free rerolls), a percentile, and a share line (native share or copy; numbers only, no roster, so it spoils nothing for friends).
+- **`engine/dailyOptimal.ts`**: an exact branch-and-bound over every legal pick, paid reroll and free reroll of the day's seeded draft, scored by the game's own team rating (`buildUserTeam` → `rating.total`); on an Underdog day the best draft is the strongest one at or under the cap. The offer stream is memoised (outside the staff-only end of a draft, the next offer does not depend on the card picked) and the search runs in 10 ms slices on the client. Whole reviewed calendar (365 days, desktop): every day exhaustive, 1.5k-30k states, 105 ms average, 402 ms worst; node budget 400k (`DAILY_INSIGHT` in the engine module: analysis bounds, not gameplay values, so BALANCE_VERSION stays 45).
+- **Percentile against 200 simulated drafts** of the day's seed (bots with seeded tastes for overall, chemistry by lineup / country / season / region, rerolls and loose drafting; their choices come from a separate RNG). The copy says "simulated drafts, not real players" next to every number, EN and PT. `ScoreDistribution.source` is `"simulated"` today; a real board plugs in as `"players"` with the same shape and its own copy.
+- Event `daily_insight` (standard): `shown` once per Daily, `shared` on the share button; percentile, its source, gap, matched, both overalls, compute time.
+- Copy group `DAILY_INSIGHT_UI`, EN and PT.
+
+### Changed
+- `startDailyRun` opens the day through `createDailyDraft` (engine), the same calls in the same order, so the solver starts from exactly the state the player sees. What a Daily generates is unchanged: the 365-day replay through the real store (`dailyCalendar.replay.test.ts`) and the challenge replays pass as before.
+
 ## [2.1.0-rc.5] — 2026-11-24 · The phone redesign: every screen under 640px (staging)
 
 Branch `design/mobile-redesign` (cut from staging rc.4), merged into `staging`.

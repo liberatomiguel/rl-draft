@@ -2139,6 +2139,42 @@ export const PT: Copy = {
     dismiss: "Agora não, obrigado",
   },
 
+  // v2.1: o melhor draft do dia, revelado depois de terminar o Daily. O percentil
+  // é contra drafts simulados, nunca contra jogadores reais.
+  DAILY_INSIGHT_UI: {
+    kicker: "Depois do Daily",
+    title: "O draft ótimo de hoje",
+    working: "Conferindo todos os drafts possíveis do dia…",
+    intro: "Toda escolha, reroll e reroll grátis possível no draft de hoje, conferidos. Este é o time mais forte que o dia permitia.",
+    introCapped: (cap: number) =>
+      `Toda escolha, reroll e reroll grátis possível no draft de hoje, conferidos. Este é o time mais forte que o dia permitia com ${cap} de OVR ou menos.`,
+    yours: "Seu draft",
+    best: "Draft ótimo",
+    rating: "Rating do time",
+    overall: (n: number) => `OVR ${n}`,
+    chemistry: (n: number) => `Quím. ${n}%`,
+    gap: (points: string) => `${points} pontos de rating abaixo do draft ótimo`,
+    matched: "Você montou o melhor time do dia.",
+    overCap: (cap: number) => `Seu time terminou acima do limite de ${cap} de OVR, então fica fora do objetivo de hoje.`,
+    percentile: (p: number) => `Melhor que ${p}% dos drafts simulados`,
+    percentilePlayers: (p: number) => `Melhor que ${p}% dos jogadores de hoje`,
+    percentileNote: (n: number) =>
+      `Medido contra ${n} drafts simulados com a seed de hoje (bots com gostos diferentes por overall, química e rerolls), não contra jogadores reais.`,
+    percentileNotePlayers: "Medido contra os drafts que outros jogadores terminaram hoje.",
+    bestLine: "Como chegar lá",
+    stepPick: (name: string, slot: string) => `Escolha ${name} (${slot})`,
+    stepReroll: "Reroll",
+    stepFreeReroll: "Reroll grátis (nada para escolher)",
+    showLine: "Ver as escolhas",
+    hideLine: "Esconder as escolhas",
+    share: "Compartilhar resultado",
+    copied: "Copiado",
+    shareText: (n: number, p: number, gap: string) =>
+      `Rocket Draft Daily #${n}: melhor que ${p}% dos drafts simulados, a ${gap} pontos de rating do draft ótimo. rocketdraft.app`,
+    shareTextMatched: (n: number) => `Rocket Draft Daily #${n}: montei o melhor time do dia. rocketdraft.app`,
+    error: "Não deu para calcular o draft ótimo neste aparelho.",
+  },
+
   /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */
   PAGE_TITLES: {
     "/play": "Jogue o Draft da RLCS Online Grátis · Rocket Draft",

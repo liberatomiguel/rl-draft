@@ -44,6 +44,7 @@ import {
   resolveChallengeAttempt,
   starRewardXp,
 } from "@/engine/challenges";
+import { createDailyDraft } from "@/engine/dailyOptimal";
 import { liveAchievements, teamAchievements } from "@/engine/achievements";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
@@ -272,22 +273,9 @@ export const useRunStore = create<RunStore>()(
         const seed = dailySeedForDate(date);
         const rng = createRng(seed);
 
-        const draft = drawNextOffer(
-          createDraft(config.difficulty, {
-            mode: "daily",
-            poolLineupIds: config.poolLineupIds,
-            rerollsOverride: config.rerollsOverride,
-            specialChanceMult: config.specialChanceMult,
-            scriptedLineups: config.scriptedLineups,
-            // The daily is shared, so only the WINDOW applies (no per-player hunt
-            // boost) — everyone sees the same odds on the same day.
-            eventSpecials: (() => {
-              const ev = eventSpecialsFor(specialCards, date, undefined);
-              return ev ? { active: ev.active, boosted: [] } : undefined;
-            })(),
-          }),
-          rng,
-        );
+        // Shared with the Daily's optimal-draft analysis (engine/dailyOptimal),
+        // so the solver starts from exactly the state the player sees.
+        const draft = createDailyDraft(config, date, rng);
 
         const run: RunState = {
           runId: uid("daily"),
