@@ -27,6 +27,7 @@
  * changes when things surface, never how they roll.
  */
 
+import { emptyCompetition as emptyCompetitionState } from "@/engine/career/competition";
 import {
   CAREER_MATCHDAY,
   FEATURES,
@@ -4856,19 +4857,9 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   return processDayArrival(save);
 }
 
+/** v2.2 (R150): moved to the engine for the Pro; unchanged. */
 export function emptyCompetition(): CareerSave["competition"] {
-  const regions: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
-  const empty = () =>
-    Object.fromEntries(regions.map((r) => [r, {}])) as Record<Region, Record<string, number>>;
-  return {
-    splitPoints: empty(),
-    seasonPoints: empty(),
-    majorFieldRefs: null,
-    worldsFieldRefs: null,
-    newFacesThisSplit: [],
-    squadAtSplitStart: [],
-    stabilityTierApplied: 0,
-  };
+  return emptyCompetitionState();
 }
 
 // ---------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import { useCareerCloudStore, type SlotCloud } from "@/store/careerCloudStore";
 import { importSaveFile, type SaveFileImportError } from "@/store/careerSaveTransfer";
 import { CloudStatusLine } from "@/components/career/cloud/CloudStatusLine";
 import { downloadSlotFile } from "@/components/career/cloud/downloadSave";
+import { ProDoor } from "@/components/career/pro/ProDoor";
 import { slotMetaFor, useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 
@@ -106,6 +107,9 @@ export function SavesScreen() {
             ? `${C.cloud.helpLocal} ${C.cloud.helpSignIn}`
             : C.cloud.helpLocal}
       </p>
+
+      {/* v2.2 Pro (R150): the door into the player career (staging only). */}
+      <ProDoor />
 
       <Modal
         open={confirmSlot !== null}

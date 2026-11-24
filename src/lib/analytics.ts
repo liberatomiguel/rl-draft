@@ -128,7 +128,7 @@ export type GameMode = "draft" | "career" | "app";
 export type CareerMilestoneKind = "first_title" | "first_major" | "first_worlds" | "worlds_title" | "backer" | "bank_loan";
 
 /** Persisted stores, for the quality events. */
-export type PersistedStoreId = "settings" | "profile" | "run" | "career";
+export type PersistedStoreId = "settings" | "profile" | "run" | "career" | "pro";
 
 /** Sent with every event (and with `$pageview`). */
 export interface CommonProps {

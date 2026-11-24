@@ -2546,3 +2546,15 @@ Parte do redesenho mobile (`docs/redesign/MOBILE-PLAN.md`, DESIGN-DECISIONS #178
 - **Dia de jogo**: prêmio, pontos e nível do campo são três linhas, não três caixas (os rótulos quebravam em três linhas).
 - Um aviso por e-mail que aponta para `/career#career-progression` cai no topo do QG no celular (o bloco de progressão não está lá); a linha "Progressão" do painel leva à escada em Finanças.
 - **Não feito:** celular real e Safari; a reprodução do evento mantém os controles acima da série; a tela de acompanhamento (Follow) não foi aberta.
+
+## R150 — 24 de novembro de 2026: Pro, a carreira de jogador (Etapa 2, v2.2; spec em PRO-SPEC.md)
+
+Respostas do Miguel à versão 1 da spec, e o que vale daqui em diante:
+- **Save próprio:** chave `rocket-draft:pro:v1`, três slots ao lado dos três do Manager; dá para ter carreiras de jogador e de manager ao mesmo tempo, mais de uma de cada. Cópia na conta só depois do gate (DESIGN-DECISIONS #185).
+- **Começa aos 13 ou 14** (o RLCS aceita 13 desde 2024); as orgs quase nunca assinam antes dos 15.
+- **Sem potencial fixo:** o teto é 99 para todo Pro; o quanto ele chega perto depende do treino, do descanso, do time e de um talento oculto da seed (×0,85 a ×1,15). Metas: talento alto e tudo certo 96-99 no pico; talento médio e tudo certo 90-93; sem cuidado 82-86. O declínio é tardio, gradual e explicado.
+- **Estilo = os seis arquétipos** que o motor já lê; todas as regiões abertas, calibradas em NA/EU/SAM; as mesmas dificuldades do Manager; o Pro desloca um titular real quando assina.
+- **Sem modo expresso** (as pessoas querem profundidade); o ritmo vem de atalhos (plano do técnico, repetir a semana, simular até o próximo jogo).
+- **Um lance por jogo**, a medir no playtest. Cartão final por hash na URL e imagem por canvas.
+- **Abertos:** gala e apelido (recomendado: os dois, na fatia 7); a saída Manager da ponte (recomendado: Etapa 3, com a carreira de coach). A v2.2 grava `bridge` e tem a saída Lenda.
+- **Flag** `FEATURES.proCareer`, ligada só no staging como as da Etapa 1.

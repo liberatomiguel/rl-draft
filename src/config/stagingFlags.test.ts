@@ -1,17 +1,18 @@
 /**
  * v2.1.0-rc.2/rc.3: every Etapa 1 flag (Matchday styles, decisions and box
- * score, Mundo vivo) is ON in the staging build only. The staging Worker
+ * score, Mundo vivo) and, since v2.2, the Pro career are ON in the staging build only. The staging Worker
  * builds with NEXT_PUBLIC_NOINDEX=1; production, the playtest Worker, dev and
  * tests must keep them all OFF.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore"] as const;
+const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore", "proCareer"] as const;
 const PROBE_VARS = [
   "NEXT_PUBLIC_MATCHDAY_STYLES",
   "NEXT_PUBLIC_WORLD_LIFE",
   "NEXT_PUBLIC_MATCHDAY_DECISIONS",
   "NEXT_PUBLIC_MATCHDAY_BOXSCORE",
+  "NEXT_PUBLIC_PRO_CAREER",
 ];
 
 type Build = { nodeEnv: string; noindex?: string; playtest?: string };

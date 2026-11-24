@@ -10,6 +10,24 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-dev.1] — 2026-11-24 · Pro slice 1: the player and the save (behind `FEATURES.proCareer`, staging only)
+
+Branch `claude/pro-etapa2`, cut from `origin/staging` (`2.1.0-rc.4`). Etapa 2 "Pro", the player career: spec `docs/PRO-SPEC.md`, decisions R150 and DESIGN-DECISIONS #185. Not published; production is unchanged (the flag is off outside the staging build).
+
+### Added
+- **Create a player** (`/career/pro/new`): nickname, country and region, start age 13 or 14 (the RLCS minimum since 2024), style (the six archetypes, each leaning to two attributes) and difficulty. The **player card** (`/career/pro/player`): the six attributes, the overall (their mean), no ceiling shown (there is none), and the meters the week will move (energy, fans, money, MMR). The **Pro careers picker** (`/career/pro`), three slots of its own.
+- **Engine** `src/engine/career/pro/` (`types`, `create`, `growth`, `attrs`, `world`): a Pro save shares the manager's world, clock and competition types; the player enters the world as `pro:self` (`world.proSelf`, read by `playerViewById`). Training growth: perBlock × hidden talent (×0.85–1.15) × age × distance to 99 × coach × energy, 99 reachable, every change logged (`growthLog`). Numbers in `CAREER_PRO`; `BALANCE_VERSION` 45 → 46.
+- **Save** `rocket-draft:pro:v1` (version 1, additive migrate), `store/proStore.ts`; `persistContract.test.ts` gains the line on purpose (#185).
+- **Flag** `FEATURES.proCareer` (`STAGING_BUILD || NEXT_PUBLIC_PRO_CAREER=1`), in `stagingFlags.test.ts`. The door: a block on the manager's saves screen and a line under the manager wizard's title.
+- Career strings `pro.*`, EN and PT.
+
+### Changed
+- `emptyCompetition` moved to `engine/career/competition.ts` (careerFlow keeps exporting it, unchanged).
+- `/career/pro` is a bare route in `CareerShell` (no manager guards, no manager top bar).
+
+### Balance
+- Training alone (two blocks a week, the weakest attribute first, no match XP yet) from 13 to a peak at 22: talent 0.85 → 84.2, 1.0 → 87.7, 1.15 with a coach of 90 → 93.4. Match XP (slice 3) carries the rest of PRO-SPEC §4.1's targets.
+
 ## [Unreleased] — 2026-11-24 · Friend duel: the same draft by link (staging)
 
 Branch `claude/friend-challenge`, cut from `2.1.0-rc.4` (`4ca1c4a`). O2 of PLANO-PROXIMO-NIVEL-2026-11-19 (the social loop; the answer to the rival's multiplayer). No server: everything is resolved in the browser.

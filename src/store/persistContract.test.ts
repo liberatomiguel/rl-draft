@@ -39,6 +39,9 @@ const CONTRACT = {
   profile: { name: "rocket-draft:profile:v1", version: 12 },
   run: { name: "rocket-draft:run:v1", version: 3 },
   career: { name: "rocket-draft:career:v1", version: 3 },
+  // v2.2 (DESIGN-DECISIONS #185): the player career (Pro) under its own key,
+  // three slots beside the manager's. Added on purpose; no other line moved.
+  pro: { name: "rocket-draft:pro:v1", version: 1 },
 } as const;
 
 type StoreKey = keyof typeof CONTRACT;
@@ -108,6 +111,7 @@ type Stores = {
   profile: typeof import("./profileStore").useProfileStore;
   run: typeof import("./runStore").useRunStore;
   career: typeof import("./careerStore").useCareerStore;
+  pro: typeof import("./proStore").useProStore;
 };
 let stores: Stores;
 
@@ -140,6 +144,7 @@ beforeAll(async () => {
       profile: (await import("./profileStore")).useProfileStore,
       run: (await import("./runStore")).useRunStore,
       career: (await import("./careerStore")).useCareerStore,
+      pro: (await import("./proStore")).useProStore,
     };
   } finally {
     vi.unstubAllGlobals();
@@ -199,6 +204,25 @@ describe("persist contract (frozen)", () => {
       stores.career.getState() as never,
     );
     expect(Object.keys(careerPart as object).sort()).toStrictEqual(["achievements", "activeSlot", "slots"]);
+    const proPart = persistOf("pro").getOptions().partialize!(stores.pro.getState() as never);
+    expect(Object.keys(proPart as object).sort()).toStrictEqual(["activeSlot", "slots"]);
+  });
+
+  // v2.2 (#185): the Pro migrate is additive — it keeps every Pro save it can
+  // read, pads to three slots and never resets.
+  it("pro: migrate keeps the saves it can read and pads the slots", () => {
+    const migrate = persistOf("pro").getOptions().migrate!;
+    const kept = { kind: "pro", careerSeed: 9, player: { name: "Keep" } };
+    const out = migrate({ slots: [null, kept, { kind: "career" }, kept], activeSlot: 1 }, 0) as {
+      slots: unknown[];
+      activeSlot: number | null;
+    };
+    expect(out.slots).toHaveLength(3);
+    expect(out.slots[1]).toBe(kept);
+    expect(out.slots[0]).toBeNull();
+    expect(out.slots[2]).toBeNull();
+    expect(out.activeSlot).toBe(1);
+    expect((migrate(undefined, 0) as { slots: unknown[] }).slots).toStrictEqual([null, null, null]);
   });
 
   it("profile: every sacred progress field is persisted", () => {

@@ -59,6 +59,9 @@ const STAT_KEYS: StatKey[] = [
   "clutch",
 ];
 
+/** v2.2 Pro (R150): the id of the player career's own player in the world. */
+export const PRO_SELF_ID = "pro:self";
+
 /** Fixed pick order for the archetype roll — NEVER reorder (derivation stability). */
 const ARCHETYPES: ArchetypeId[] = [
   "allround",
@@ -926,6 +929,28 @@ export function playerViewById(id: string, ctx: ViewCtx): CareerPlayerView | nul
 
 function baseViewById(id: string, ctx: ViewCtx): CareerPlayerView | null {
   if (ctx.world.retiredIds.includes(id)) return null;
+
+  // v2.2 Pro (R150): the player career's own player, from the save's snapshot.
+  // His overall is the save's alone: the world's drift (`overallDelta`) never applies to him.
+  if (id === PRO_SELF_ID) {
+    const pro = ctx.world.proSelf;
+    if (!pro) return null;
+    return {
+      id,
+      kind: "fictional",
+      name: pro.name,
+      country: pro.country,
+      region: pro.region,
+      age: ageOf(pro.birthYear, ctx.seasonIndex),
+      archetype: pro.archetype,
+      overall: clamp(pro.overall, 60, 99),
+      attrOffsets: { ...pro.attrOffsets },
+      potential: pro.potential,
+      peakAge: pro.peakAge,
+      declineRate: pro.declineRate,
+      anchored: false,
+    };
+  }
 
   if (id.startsWith("fic:")) {
     const [, region, nRaw] = id.split(":");
