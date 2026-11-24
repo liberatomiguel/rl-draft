@@ -56,6 +56,11 @@ export function careerShareSrc(locale: "en" | "pt"): string {
   return `/landing/career-share-${locale}.jpg`;
 }
 
+/** v2.1: the friend duel's share image (Open Graph and the X card), made by scripts/build-og-duel.mjs. */
+export function duelShareSrc(): string {
+  return "/landing/duel-share.jpg";
+}
+
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };

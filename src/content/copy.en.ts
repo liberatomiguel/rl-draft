@@ -2169,6 +2169,61 @@ export const DAILY_INSIGHT_UI = {
   error: "The best draft could not be worked out on this device.",
 };
 
+/** v2.1 (O2): the friend duel, a draft from a seed in a link (engine/duel.ts). */
+export const DUEL_UI = {
+  kicker: "Friend duel",
+  introTitle: "You've been called out",
+  introBody:
+    "Same seed, same offers, same bracket field. Draft your roster, play the event and see whose run holds up.",
+  introFirst: "No runs in this link yet. Play it, then send it on.",
+  overallShown: "Overalls shown",
+  overallHidden: "Overalls hidden",
+  runLabel: (n: number) => `Run ${n}`,
+  you: "You",
+  standingsTitle: "Standings",
+  colResult: "Result",
+  colSwiss: "Swiss",
+  colGames: "Games",
+  colOvr: "OVR",
+  exhibition: "Exhibition: a duel pays no XP, rating or cards.",
+  staleVersion:
+    "This link was made on another version of the game, so the offers may not match the earlier runs.",
+  accept: "Accept the duel",
+  decline: "Not now",
+  loading: "Setting up the draft",
+  resultTitle: "Duel result",
+  verdictFirst: "First run on the board. Send the link and make them chase it.",
+  verdictWin: "You top the duel.",
+  verdictLevel: "Dead level at the top.",
+  verdictLose: (n: number) => (n === 1 ? "One run finished ahead of you." : `${n} runs finished ahead of you.`),
+  shareTitle: "Send the duel",
+  shareHintFirst: "The link carries the seed and your result. No name, no account.",
+  shareHintReply: "Send it back with your result added, or pass it on to someone new.",
+  shareNative: "Share link",
+  copyLink: "Copy link",
+  copied: "Link copied",
+  copyFailed: "Copy didn't go through. Select the link below and copy it.",
+  shareText: (placement: string) => `My Rocket Draft run: ${placement}. Same draft, same bracket. Beat it:`,
+  runItBack: "Run it back",
+  inviteTitle: "Challenge a friend",
+  inviteBody:
+    "Play a duel on these settings, then send the link: your friend drafts from the same offers and meets the same field.",
+  inviteStart: "Start a duel",
+  setupDuel: "Challenge a friend",
+  setupDuelHint: "A duel on this setup: a shareable seed, no XP or rating.",
+  noticeTitle: "That duel link doesn't open",
+  noticeReason: {
+    missing: "The link has no duel in it.",
+    malformed: "The link is incomplete or was cut short.",
+    tampered: "The link was edited after it was made.",
+    unsupported: "The link comes from a newer version of the game.",
+    region: "The link's region can't be drafted in this version.",
+  } as Record<string, string>,
+  noticeFallback: "Here's a normal draft instead.",
+  dismiss: "Dismiss",
+  stepperTag: "Duel",
+};
+
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
  *  EN is empty: the static `metadata` of each route already is the English
  *  title, and the shell only overrides the tab title when an entry exists. */
@@ -2213,6 +2268,7 @@ export const EN = {
   DAILY_INSIGHT_UI,
   DATABASE_UI,
   RESEARCH_UI,
+  DUEL_UI,
   PAGE_TITLES,
 };
 

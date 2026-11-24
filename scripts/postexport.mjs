@@ -74,10 +74,11 @@ const SITE_URL = "https://rocketdraft.app";
 
 /**
  * Pages that carry `noindex` in a PRODUCTION build on purpose: the 404
- * boundary, per-device pages, and the career app (its layout never indexes).
+ * boundary, per-device pages, the career app (its layout never indexes) and
+ * /duel (v2.1: the friend-duel landing, empty without the link in its hash).
  * Any other page with noindex fails the build (checkIndexability).
  */
-const NOINDEX_BY_DESIGN = /^\/(404|_not-found|settings|missions|career(\/.*)?)$/;
+const NOINDEX_BY_DESIGN = /^\/(404|_not-found|settings|missions|duel|career(\/.*)?)$/;
 
 /** Top-level out/ entries of the routes the playtest build cuts (/quiz, /missions). */
 const PLAYTEST_CUT_ENTRY = /^(quiz|missions)(\.[a-z]+)?$/;

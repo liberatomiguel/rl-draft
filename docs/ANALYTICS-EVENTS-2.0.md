@@ -83,6 +83,7 @@ marks an optional property.
 | `run_abandoned` | standard | A run is left for good before its results (never for a restart, never for a challenge that was already played) | `runId`, `mode`, `difficulty`, `region`, `hiddenOverall`, `phase`, `reason` (`quit`), `resets`, `picksMade`, `durationSec?` |
 | `challenge_played` | standard | A challenge attempt is evaluated | `challengeId`, `difficulty`, `kind` (`boss`, `gauntlet`, `draft`), `cleared`, `stars`, `starsNew`, `firstClear`, `resets`, `rerollsUsed`, `teamOverall`, `chemistryPercent`, `picks`, `specials`, `xpGained` |
 | `daily_insight` | standard | v2.1: a finished Daily's best-draft panel finished its analysis (`action` = `shown`, once per Daily) or its result line was shared (`shared`) | `action`, `dailyNumber`, `dailyTemplate`, `percentile` (vs simulated drafts), `percentileSource` (`simulated`), `gap` (rating points to the best draft), `matched`, `teamOverall`, `bestOverall`, `computeMs?` |
+| `friend_duel` | standard | v2.1 friend duel: a link opened or refused, a duel run finished, a link shared | `action` (`opened`, `invalid`, `completed`, `shared`), `entries`, `mode`?, `difficulty`?, `region`?, `placement`?, `beat`?, `lost`?, `resets`?, `method`? (`native`, `copy`), `reason`? (`missing`, `malformed`, `tampered`, `unsupported`, `region`), `staleVersion`? |
 | `quiz_played` | standard | The daily quiz ends (solved or out of guesses) | `solved`, `attempts`, `maxAttempts`, `score`, `xp`, `streak` (clues shown = `attempts − 1`) |
 | `special_discovered` | standard | A special card enters the collection, once per card | `specialId`, `rarity`, `national`, `mode` |
 | `collection_milestone` | critical | A national team is first seen (`national_team_found`) or its album is completed (`album_completed`) | `kind`, `id` (the lineup), `albumsCompleted?` |
@@ -366,6 +367,7 @@ versions are unchanged (`persistContract.test.ts`).
 | Event | Fires in |
 |---|---|
 | `run_completed`, `run_abandoned`, `challenge_played`, album `collection_milestone` | `runStore` (`finishRun`, `clearRun`, `playChallenge`); `restartRun` only counts a reset |
+| `friend_duel` | `runStore.finishRun` (completed), `store/duelStore` (opened, invalid, shared) |
 | `special_discovered`, `mission_completed`, `quiz_played`, national-team `collection_milestone`, `quality_duplicate_reward` | `profileStore` actions |
 | `rank_up`, `achievement_unlocked`, `unlock_granted` | `profileStore`'s subscription, built by `profileAnalytics.ts` |
 | `session_started`, `onboarding_step`, `$pageview`, `quality_error`, `quality_slow_advance`, `quality_event_cap` | `lib/analytics.ts` (sessions and pageviews from `PostHogProvider`; the boundary error from `app/error.tsx`) |

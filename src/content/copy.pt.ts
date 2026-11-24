@@ -2175,6 +2175,61 @@ export const PT: Copy = {
     error: "Não deu para calcular o draft ótimo neste aparelho.",
   },
 
+  // v2.1 (O2): o duelo entre amigos, um draft a partir de uma seed num link.
+  DUEL_UI: {
+    kicker: "Duelo entre amigos",
+    introTitle: "Você foi desafiado",
+    introBody:
+      "Mesma seed, mesmas ofertas, mesmo chaveamento. Monte o seu elenco, jogue o torneio e veja qual campanha se sustenta.",
+    introFirst: "Ainda não há campanhas neste link. Jogue e depois mande adiante.",
+    overallShown: "Overalls visíveis",
+    overallHidden: "Overalls ocultos",
+    runLabel: (n: number) => `Campanha ${n}`,
+    you: "Você",
+    standingsTitle: "Classificação",
+    colResult: "Resultado",
+    colSwiss: "Suíço",
+    colGames: "Jogos",
+    colOvr: "OVR",
+    exhibition: "Amistoso: o duelo não dá XP, rating nem cartas.",
+    staleVersion:
+      "Este link foi feito em outra versão do jogo, então as ofertas podem não bater com as campanhas anteriores.",
+    accept: "Aceitar o duelo",
+    decline: "Agora não",
+    loading: "Preparando o draft",
+    resultTitle: "Resultado do duelo",
+    verdictFirst: "Primeira campanha no placar. Mande o link e faça eles correrem atrás.",
+    verdictWin: "Você lidera o duelo.",
+    verdictLevel: "Empate técnico no topo.",
+    verdictLose: (n: number) => (n === 1 ? "Uma campanha terminou à sua frente." : `${n} campanhas terminaram à sua frente.`),
+    shareTitle: "Mande o duelo",
+    shareHintFirst: "O link leva a seed e o seu resultado. Sem nome, sem conta.",
+    shareHintReply: "Devolva com o seu resultado incluído ou passe para outra pessoa.",
+    shareNative: "Compartilhar link",
+    copyLink: "Copiar link",
+    copied: "Link copiado",
+    copyFailed: "A cópia não funcionou. Selecione o link abaixo e copie.",
+    shareText: (placement: string) => `Minha campanha no Rocket Draft: ${placement}. Mesmo draft, mesmo chaveamento. Supere:`,
+    runItBack: "Jogar de novo",
+    inviteTitle: "Desafie um amigo",
+    inviteBody:
+      "Jogue um duelo com estas configurações e mande o link: o seu amigo drafta com as mesmas ofertas e enfrenta os mesmos times.",
+    inviteStart: "Começar um duelo",
+    setupDuel: "Desafiar um amigo",
+    setupDuelHint: "Um duelo com esta configuração: seed para compartilhar, sem XP nem rating.",
+    noticeTitle: "Esse link de duelo não abre",
+    noticeReason: {
+      missing: "O link não tem nenhum duelo.",
+      malformed: "O link está incompleto ou foi cortado.",
+      tampered: "O link foi editado depois de criado.",
+      unsupported: "O link vem de uma versão mais nova do jogo.",
+      region: "A região do link não pode ser draftada nesta versão.",
+    } as Record<string, string>,
+    noticeFallback: "Aqui vai um draft normal no lugar.",
+    dismiss: "Fechar",
+    stepperTag: "Duelo",
+  },
+
   /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */
   PAGE_TITLES: {
     "/play": "Jogue o Draft da RLCS Online Grátis · Rocket Draft",
@@ -2190,6 +2245,7 @@ export const PT: Copy = {
     "/how-to-play": "Como Jogar Rocket Draft: Regras do Draft e Química",
     "/privacy": "Política de Privacidade · Rocket Draft",
     "/career": "Road to Worlds: Modo Carreira · Rocket Draft",
+    "/duel": "Duelo entre Amigos: o Mesmo Draft da RLCS · Rocket Draft",
   } as Record<string, string>,
 };
 

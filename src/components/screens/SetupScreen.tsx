@@ -9,6 +9,8 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { DIFFICULTY, REGION_LOCK } from "@/config/balance";
+import { freshDuel } from "@/engine/duel";
+import { randomSeed } from "@/lib/rng";
 import { lineupById, lineupPoolForRegion } from "@/data";
 import { useCopy } from "@/content/copy";
 import type { Difficulty, Region } from "@/engine/types";
@@ -47,8 +49,9 @@ const REGIONS: { id: Region; available: boolean; rosters: number }[] = (
   .sort((a, b) => Number(b.available) - Number(a.available));
 
 export function SetupScreen() {
-  const { HOME, SETUP, DIFFICULTY_LABELS } = useCopy();
+  const { HOME, SETUP, DIFFICULTY_LABELS, DUEL_UI } = useCopy();
   const startRun = useRunStore((s) => s.startRun);
+  const startDuel = useRunStore((s) => s.startDuel);
   // The mode comes from the menu card the player clicked (Classic / Quick) —
   // no mode switcher here by design.
   const mode = useRunStore((s) => s.setupMode);
@@ -220,6 +223,20 @@ export function SetupScreen() {
           label={SETUP.showOverall}
           hint={locked ? SETUP.overallLocked : SETUP.showOverallHint}
         />
+      </div>
+
+      {/* Friend duel (v2.1): this setup as a duel, with a seed to send. */}
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-xl text-sm text-sub">{DUEL_UI.setupDuelHint}</p>
+        <Button
+          variant="secondary"
+          className="shrink-0"
+          onClick={() =>
+            startDuel(freshDuel({ mode: mode === "quick" ? "quick" : "classic", difficulty, region: regionLock, showOverall }, randomSeed()))
+          }
+        >
+          {DUEL_UI.setupDuel}
+        </Button>
       </div>
 
       <div className="action-dock flex items-center gap-3 sm:flex-row">

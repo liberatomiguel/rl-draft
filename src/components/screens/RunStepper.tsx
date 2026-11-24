@@ -28,7 +28,7 @@ const PHASE_IDS_CHALLENGE: RunPhase[] = ["draft", "review", "challenge"];
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RUN_UI, SETUP, DIFFICULTY_LABELS } = useCopy();
+  const { RUN_UI, SETUP, DIFFICULTY_LABELS, DUEL_UI } = useCopy();
   const restartRun = useRunStore((s) => s.restartRun);
   const [confirmReset, setConfirmReset] = useState(false);
   const phaseLabel: Record<RunPhase, string> = {
@@ -101,6 +101,7 @@ export function RunStepper({ run }: { run: RunState }) {
           <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
         )}
         {!run.showOverall ? <Badge tone="neutral">{RUN_UI.hiddenOvr}</Badge> : null}
+        {run.duel ? <Badge tone="orange">{DUEL_UI.stepperTag}</Badge> : null}
         {/* Reset run — deliberate restart (the run is over on results). */}
         {run.phase !== "results" ? (
           <Button
