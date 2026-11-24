@@ -2547,6 +2547,17 @@ Parte do redesenho mobile (`docs/redesign/MOBILE-PLAN.md`, DESIGN-DECISIONS #178
 - Um aviso por e-mail que aponta para `/career#career-progression` cai no topo do QG no celular (o bloco de progressão não está lá); a linha "Progressão" do painel leva à escada em Finanças.
 - **Não feito:** celular real e Safari; a reprodução do evento mantém os controles acima da série; a tela de acompanhamento (Follow) não foi aberta.
 
+## R149 — 24 de novembro de 2026: o gate da Etapa 1 fecha; a linha do staging acumula etapas (v2.1.0-rc.6)
+
+Decisões do Miguel depois de jogar o rc.4 no staging:
+- **Gate da Etapa 1 aprovado** (Matchday fatias 1–5, Mundo vivo M1/M2.1/M3, a divisão do Worlds do R146, a identidade nova).
+- **As flags `matchdayStyles`, `matchdayDecisions`, `matchdayBoxScore` e `worldLife` ficam ligadas, mas só no staging** (`STAGING_BUILD`, `stagingFlags.test.ts`). Nada da Etapa 1 vai para `main` agora.
+- **A linha do staging acumula etapas; `main` só quando o Miguel decidir.** A produção segue nas v2.0.x (hoje v2.0.36); cada v2.0.x que sair em `main` entra no staging por merge, nunca o contrário. O rc.5 é o rc.4 com a v2.0.36 dentro.
+- **Hard EU sem final regional até a T5 (0 de 16) é aceito como está:** `earlyShiftScaleByDifficulty.hard` continua 0. A Hard não ganha rampa.
+- **Próxima etapa = Pro (carreira de jogador, v2.2)**, antecipada conforme `PLANO-PROXIMO-NIVEL-2026-11-19.md` (E1, N1). **Frentes paralelas do Draft:** desafio por link e Daily com draft ótimo (E2). Cada frente sai de `origin/staging` em sessão própria e publica no staging por fast-forward.
+
+Continuam abertos (não decididos no gate): o XP do reserva que entra na troca (`fieldedIds` não muda); confirmar a divisão do Worlds do R146 (EU 57 / NA 30 / outras 13 nas temporadas 1–8); as metas 3, 6 e 7 do gate; A7, a tab bar mobile da carreira; P1–P4 do `MATCHDAY-SPEC.md` §11 (ciclo de estilos, nomes dos traços, "Deixar com o coach" por padrão, limites da seção 7).
+
 ## R150 — 24 de novembro de 2026: Pro, a carreira de jogador (Etapa 2, v2.2; spec em PRO-SPEC.md)
 
 Respostas do Miguel à versão 1 da spec, e o que vale daqui em diante:

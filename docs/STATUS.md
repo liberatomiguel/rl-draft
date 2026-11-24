@@ -1,138 +1,95 @@
 # Project Status — current state only
 
 > Updated: **2026-11-24**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
-> (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
-> Etapa 1 progress (read this, not the code): ETAPA-1-STATUS.md.
-> Proposal of 19/11 (player survey + competitors; reorders that roadmap, not
-> approved): PLANO-PROXIMO-NIVEL-2026-11-19.md; competitor study:
-> CONCORRENTES-2026-11-19.md.
+> ROAD-TO-WORLDS-STATUS.md. Post-2.0 Road to Worlds roadmap:
+> ROADMAP-RTW-2026-11-17.md, reordered by PLANO-PROXIMO-NIVEL-2026-11-19.md
+> (E1/E2 decided 24/11). Etapa 1: ETAPA-1-STATUS.md (gate closed) and
+> MATCHDAY-SPEC.md. Etapa 2: PRO-SPEC.md. Phone redesign:
+> `docs/redesign/MOBILE-PLAN.md`. Competitor study: CONCORRENTES-2026-11-19.md.
 
 ## Current builds
 
-- **Staging = 2.1.0-rc.5 (24/11), branch `design/mobile-redesign`:** rc.4
-  plus the phone redesign. Every screen has its own layout under 640px (run,
-  career, hub); desktop is unchanged; no engine, store or save change. Rules:
-  `DESIGN.md` "Phone"; decisions #178 to #182 and R148; audit, measurements
-  and what is still open: `docs/redesign/MOBILE-PLAN.md`. Not verified on a
-  physical phone or Safari.
-- **rc.4 (21/11), `claude/etapa1-final-1692be`:** Etapa 1 complete for the
-  gate (new identity + v2.0.35 + Matchday slices 1 to 5 + Mundo vivo M1, M2.1,
-  M3, R146). Every Etapa 1 flag is on in the staging build only. What to play
-  and what Miguel decides: ETAPA-1-STATUS.md.
+- **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
+  `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
+  download, phones). The current identity; no Etapa 1 code.
+- **Staging = 2.1.0-rc.6 (24/11/2026)**, integration of five lines on top of
+  rc.5 (`3914518`, the phone redesign):
+  - **Phone redesign (rc.5):** every screen has its own layout under 640px
+    (run, career with its tab bar, hub); desktop unchanged. Rules: `DESIGN.md`
+    "Phone"; DESIGN-DECISIONS #178 to #182, R148. Not on a physical phone or
+    Safari.
+  - **Etapa 1 gate closed (R149)** and v2.0.36 merged in: new identity,
+    Matchday slices 1 to 5, Mundo vivo M1, M2.1, M3, Worlds by region (R146).
+  - **Daily: today's best draft and a percentile** against simulated drafts
+    (#183, `engine/dailyOptimal.ts`), under a finished Daily only.
+  - **Friend duel by link** (#184, `engine/duel.ts`, `/duel`): same seed, same
+    draft, standings compared; an exhibition (no XP, rating or cards).
+  - **Pro slice 1** (R150, #185, `PRO-SPEC.md`): create a player, growth,
+    own save `rocket-draft:pro:v1` (persist CONTRACT changed on purpose),
+    behind `FEATURES.proCareer`.
+  - Flags on in the staging build only (`STAGING_BUILD`,
+    `stagingFlags.test.ts`): `matchdayStyles`, `matchdayDecisions`,
+    `matchdayBoxScore`, `worldLife`, `proCareer`. BALANCE_VERSION 47.
+  - Entry: https://staging.rocketdraft.app (career on, noindex, accounts and
+    analytics off). The duel and Daily screens were built on the rc.4 look and
+    merged under the phone redesign: check them at 375 px.
 
-- **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
-  and database link made quiet (Miguel's review of 2.0.34).
-- **v2.0.34 (19/11/2026): fixes from the player survey**, in
-  the current identity. A sponsor goal keeps its first season's results
-  across the rollover; career mismatches no longer read 7-0 every game (the
-  Draft keeps its scorelines); new careers read name bank 4 (no "Kimchi II",
-  real-scene org shapes; older careers keep their names); the Collection shows
-  the next collection reward and links the RLCS database; a one-off HQ card
-  tells returning players about several careers and the account copy.
-  BALANCE_VERSION 37. Open from the survey: org-less stacks (A4, needs
-  Miguel's list). The broadcast pilot gets 2.0.34 when it merges main.
-- **v2.0.33 (18/11/2026): search pass on the career landing**
-  (DESIGN-DECISIONS #172, R136). `/rocket-league-manager` is the first organic
-  landing page; its title and H1 lead with "Rocket League Career Mode & Manager
-  Game", a new first section answers "does Rocket League have a career mode?",
-  the guide stops competing for that query, own share image and VideoGame node.
-  Two buttons: "Found your club" (wizard) and "Start with a random club"
-  (`/career?start=quick`); the guides' button opens `/career` (it linked to
-  `/`). Active teams' titles name the current roster; `llms.txt`. Watch which
-  start founds more careers (PostHog: `/career/new` with or without the flag).
-  Baseline and rivals: memory `seo-search-landscape`. Not done: video, Reddit,
-  DE/FR pages, new landing pages.
-- **v2.0.32 (18/11/2026): a page whose build files failed to load repairs
-  itself** (DESIGN-DECISIONS #171). The zone rule for Miguel
-  (DEPLOY-CLOUDFLARE §9) is not applied yet.
-- **v2.0.31 (18/11/2026): an invitation to Miguel's research form for
-  returning players** (`config/research.ts`, event `research_invite`).
-- **v2.0.30 (18/11/2026): the career top bar links to the saves
-  picker ("Careers"), and an emptied profile row (`durable = '{}'`) reads as no
-  saved profile.** Cross-device career saves still unverified on two devices.
-- **v2.0.29 (18/11/2026): the device's saves belong to one
-  account at a time** (DESIGN-DECISIONS #170, `lib/localOwner.ts`). Signing out
-  leaves a fresh guest with no careers; another account never inherits the
-  profile, grants or career slots; the owner's next sign-in brings them back.
-  Not verified on a phone or against production accounts (tests only).
-- **v2.0.28 (18/11/2026): the career cloud save
-  is open to every signed-in account and sell / trade is live** (Miguel's
-  go-ahead 18/11). `CAREER_CLOUD_AUDIENCE` is "all" (`lib/careerCloudGate.ts`);
-  "staff" or "off" plus a deploy is the way back.
-- **v2.0.27 (17/11/2026): Road to Worlds gets the transfer list and
-  player-for-player trades** (R135, closes ECO-06; BALANCE_VERSION 36). Three
-  additive save fields, persist contract unchanged. Checked in a desktop
-  browser and at 320 px; a short probe (2 careers, 4 seasons) and the soft-lock
-  probe; no battery, no physical device.
-- **v2.0.26 (17/11/2026): the career save in the account.** One row per account
-  and slot in `career_saves` (SQL applied by Miguel 17/11), localStorage still
-  the copy the game plays from, a notice when two copies differ, save files for
-  everyone (DESIGN-DECISIONS #165–#169). Not verified: two devices, mobile
-  Safari. Watch `account_sync_failed` after the opening.
-- **v2.0.25 (17/11/2026).**
-  Account sync, first step of the career cloud save (roadmap Etapa 1): every
-  failed sync is named (`lib/syncErrors.ts`, `reason` on `account_sync_failed`),
-  a failure that may pass is tried again, and a call never runs without the
-  player's own token (an expired token used to read as "new account"). Not
-  verified against the production database: staging has accounts off.
-- v2.0.15 to v2.0.24 are in
-  CHANGELOG (2027 Kick-Off rosters, Verified seal, career guides and landing
-  page, newcomer entry). Open from POSTLAUNCH-2.0-REPORT: an event for a refused
-  career advance, the event budget, FR / ES, mobile career entry.
-- **v2.0.0 "Season 1"** went live at https://rocketdraft.app on
-  12/11/2026 14:00 UTC (main `f934c6e`; first deployed from Miguel's machine with
-  his go-ahead because the Workers Builds queue was behind; the queued builds
-  publish the same commits). Pre-season frozen at 13:05 UTC, three rewarded
-  boards, 35 manual grants inserted. Three real accounts were on Season 1 with
-  their board places within a minute of the deploy. Not verified: PostHog events,
-  request budget, physical devices. Runbook and SQL: docs/handoff-2.0/CUTOVER.md.
-- Staging candidate **v2.0.0-rc.55** = rc.54 merged with the special-cards and polish branch (`codex/rc53-final-polish`: 16 new specials, 36 photos, Gian's community card removed, challenges and the 365 dailies re-authored for the final catalogue, collection / locker / career polish; notes in docs/handoff-rc53-polish.md). rc.54 is the Season 1 cutover build: pre-season rank reward for the peak rank only, one frozen place and reward per pre-season board, nine Season 1 boards, tour reworked (once per season, static draft example, no animation), achievements review (92 draft, 22 career), Rocket Street desk and championship in every SAM season, Season 1 start 12/11. Production Supabase already has the additive schema and SELECT-only public views; the freeze runs minutes before the deploy (docs/handoff-2.0/CUTOVER.md). Not verified: a real sign-in on v2.0 against the production database, the full export of real saves, most new screens in a browser. Details: CHANGELOG rc.54.
-- Before it, **rc.53** (Supernova at 90 stars; rc.52 was rc.51 plus Miguel's first look: legendary badges 8 % larger instead of 16 %, a soft glow, five epic titles quieter, Creator in orchid magenta). rc.51: Miguel's cosmetics review of 11/11. Every badge re-exported (Hypernova, Creator and the Staff art added), 9 new banners, 16 new rewards (three-star challenges, Classic feats, Road to Worlds milestones), On Target 50, Rocketeer at Grand Champion, Staff title removed; Wildfire, Heatwave, Cosmic Ascension and the new banners animate from pre-rendered frames. Not played by Miguel; animations checked on a desktop browser only; Supernova 75 vs 90 is open; the Creator / Staff grant SQL is not applied. Details: CHANGELOG rc.51.
-- Before it, **rc.50**: wave 2 integrated (mobile pass, copy clean-up, guided tour, analytics catalogue 2.0 with an event budget guard, performance) and the fix of the season-3 soft lock that stopped every career on rc.47–rc.49 (R130–R132). Not played by Miguel; mobile checked in emulation only (no physical device, no Safari); analytics runs in production only and is unverified against PostHog; draft matrix and challenge replays must be repeated once the special-card pool is final. Notes: docs/handoff-2.0/.
-- Before it, **rc.47-rc.49**: the launch wave, six fronts integrated (career engine and screens, XP/rating/rank unlocks, draft difficulty, web/SEO, quiz/menu), R129 elite signing (rc.48) and Miguel's review fixes (rc.49); notes in docs/handoff-2.0/. Not yet played by Miguel; the new career screens, the migration of real pre-season saves and account sync are not verified. Still to come before the cutover: final special cards (then repeat the draft matrix and challenge replays). BALANCE_VERSION 25.
-- Before it, **rc.42-rc.46**: Miguel's Road to Worlds feedback (rc.42, CAREER-FEEDBACK-rc42.md), mid-career balance (rc.43), real coaches and bench growth (rc.44), support staff (rc.45), elite talent price (rc.46). The coach and staff screens are not yet checked in a browser; rc.45 is not measured on Hard and Easy; rc.46 on Normal only.
-- The rc.39 F6 package remains in place (R100–R109); the 2027 roster wave
-  still enters season seven, the first infinite season. BALANCE_VERSION **19**
-  includes a 20% reduction of training-wear absence risk with a coach (R111).
-- Staging configuration: career on, noindex; accounts/analytics off in the
-  isolated QA export. Entry: https://staging.rocketdraft.app.
+## The staging line (rule since 24/11)
+
+- **Staging accumulates stages; `main` moves only when Miguel decides.**
+  Etapa 1 passed its gate on 24/11 (R149) and stays on staging.
+- New work (Etapa 2 Pro, the Draft fronts) branches from `origin/staging`.
+  A v2.0.x hotfix that ships on `main` is merged into staging, never the
+  other way round.
+- Several sessions publish to staging in parallel: `git fetch`, merge
+  `origin/staging` if it moved, re-run the checks, then a **fast-forward**
+  `git push origin HEAD:staging` (never force). Workers Build builds it
+  (~11 min). Never a local deploy (`.env.local` holds the Supabase keys),
+  never `main` without Miguel, never `public/fonts-trial/`.
+
+## Next
+
+- **Miguel plays rc.6 on staging**, phone first: the redesign, the duel
+  (`/duel`), the Daily's best draft, and the Pro door on the saves picker.
+- **Etapa 2 Pro, slice 2** after Miguel's review of slice 1 (PRO-SPEC.md
+  lists the slices).
+
+## Open decisions (Miguel's)
+
+From the Etapa 1 gate (details in ETAPA-1-STATUS.md):
+- XP for the substitute who comes in on a swap (`fieldedIds` does not change).
+- Confirm the Worlds spread of R146 (EU 57 / NA 30 / others 13, seasons 1–8).
+- Gate goals 3, 6 and 7 (the bot probes do not measure them).
+- A7: rc.5 added the career tab bar on phones (`CareerTabBar`); Miguel confirms it closes A7.
+- P1–P4 of MATCHDAY-SPEC.md §11 (style cycle, trait names, "Leave it to the
+  coach" default, the section 7 limits).
+
+Carried from v2.0.x:
+- Org-less stacks (A4 / E3): needs Miguel's list.
+- The zone rule of DEPLOY-CLOUDFLARE §9 (self-repair of failed build files,
+  v2.0.32) is not applied yet.
+- Career cloud save (v2.0.26–2.0.30): not verified on two real devices or
+  mobile Safari; watch `account_sync_failed`.
+- Which landing start founds more careers (PostHog `/career/new` with or
+  without `?start=quick`); search baseline in memory `seo-search-landscape`.
+- POSTLAUNCH-2.0-REPORT: an event for a refused career advance, the event
+  budget, FR / ES, mobile career entry.
+- PENDING-COSMETICS.md: the Staff and Creator grant SQL, missing photos, the
+  unlock copy.
 
 ## Evidence and limits
 
-- rc.40 adds eight integration regressions for historical counts, title
-  settlement/reload, routine-loan silence, reputation gates, weekly baseline,
-  exact prize tables and persisted crest roles. Historical source audit:
-  CAREER-HONORS-SOURCES.md. Missing past individual lineups in existing saves
-  are disclosed, not invented. New careers record all future title lineups.
-- Browser review covers the creation wizard, HQ, Club, Finances and Training;
-  Training/Club/Finances checked at 320 px without horizontal page overflow.
-  rc.42 checks and limits are in CAREER-FEEDBACK-rc42.md.
-- Prior challenge/daily/quiz and cosmetics validation remains documented in
-  UI-REVIEW-rc36-21.md, UI-DAILY-AUDIT-rc36-17.md and CHANGELOG.md. Daily calendar
-  reviewed through 8 November 2027; refresh before then or after rule changes.
-- rc.37 battery: 4,914 careers, no softlocks/errors. Reports and F6 experiments
-  remain in docs/battery-rc37; these are simulation policies, not predictions
-  of human success. This UI/flow release makes no new title-pacing claim.
-
-## Remaining gates
-
-1. Miguel plays F6 in NA/EU/SAM, Normal/Hard first, and answers
-   F6-EXPERIMENTOS.md Parts 7.9/7.11. Career pacing/affordability acceptance
-   remains Gate 3b. rc.42 does not close it.
-2. Review open rc.37 handoff questions (F1/F2/F3); F5 approval before code.
-   Gate 2 play and ENG-03 real-save fixtures remain.
-3. Etapa 4: collection pacing, DATA-02 and SEA-01 (ECO-06 closed by R135). Etapa 5:
-   integrated playtests, real saves, account/sync, performance, final EN/PT/art,
-   tutorial and launch notes. Etapa 6: season dates, migration/rollback and
-   Miguel's cutover tasks in V2-IMPLEMENTATION-PLAN.md §6. No main deployment.
-4. PENDING-COSMETICS.md retains the Staff and Creator grant SQL, missing photos
-   and the unlock-copy decision; UI publication does not complete them. Event cards/Season Rating
-   deltas from 5 November remain Miguel's decisions.
+- Etapa 1 numbers come from bots (probes and batteries), not players: see
+  ETAPA-1-STATUS.md. Mobile widths, PT screens and lite-effects mode of the
+  new identity were not checked screen by screen.
+- The daily calendar is reviewed through 8 November 2027; refresh before
+  then or after rule changes.
+- After any career engine or store change: the soft-lock probe
+  (`P1_SOFT=1`, alone) before staging.
 
 ## Standing contracts
 
 Player saves stay on rocketdraft.app; staging is a separate origin. Persist
 keys/versions stay frozen and repairs are additive. Pure static export,
-assets-only Worker, no account/hosting changes. Generated art/manifests follow
-the asset build pipeline; no source asset replacements beyond supplied art.
+assets-only Worker, no account/hosting changes. Generated art and manifests
+follow the asset build pipeline.

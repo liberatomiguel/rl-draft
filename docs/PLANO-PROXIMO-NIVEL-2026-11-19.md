@@ -308,16 +308,21 @@ O conteúdo da antiga Etapa 3 mais o que a pesquisa pediu de narrativa:
 Para começar a sequência consolidada (19/11), as que destravam trabalho já:
 
 - **E0.** Quando a identidade nova vai para `main`, e com qual número
-  (v2.0.35 ou v2.1)?
-- **E1.** A ordem Matchday → Pro → Diretoria → Online ao vivo (N1 e N3
-  abaixo juntos).
-- **E2.** Qual frente paralela primeiro: desafio por link (recomendada),
-  Daily com draft ótimo, RLCS-dle ou notas da comunidade?
+  (v2.0.35 ou v2.1)? *24/11: ainda não. A identidade e a Etapa 1 ficam na
+  linha do staging, que acumula etapas; `main` só quando o Miguel decidir
+  (R149).*
+- ~~**E1.** A ordem Matchday → Pro → Diretoria → Online ao vivo (N1 e N3
+  abaixo juntos).~~ **Decidida em 24/11 (R149):** o Pro (carreira de
+  jogador, v2.2) é a Etapa 2, logo depois do Matchday.
+- ~~**E2.** Qual frente paralela primeiro: desafio por link (recomendada),
+  Daily com draft ótimo, RLCS-dle ou notas da comunidade?~~ **Decidida em
+  24/11:** desafio por link e Daily com draft ótimo, as duas em paralelo.
 - **E3.** A lista de times que são stacks sem org (A4).
 
 As anteriores:
 
-- **N1.** Antecipar o Pro para a v2.2, antes do Broadcast e da Diretoria?
+- ~~**N1.** Antecipar o Pro para a v2.2, antes do Broadcast e da Diretoria?~~
+  Sim, decidida com a E1 (24/11).
 - **N2.** "Mundo vivo" como frente da Etapa 1, ou uma etapa curta antes do
   Matchday?
 - **N3.** Visualizador 2D para depois da Etapa 3?

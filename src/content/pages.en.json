@@ -314,14 +314,18 @@
   },
   "manager": {
     "metaTitle": "Rocket League Career Mode & Manager Game: Free",
-    "metaDescription": "A free Rocket League career mode in your browser, no mod or download: found a club, sign real RLCS players, train them and win the World Championship.",
+    "metaDescription": "Free Rocket League manager career in your browser: no PC mod, no download, plays on phones too. Found a club, sign real RLCS players and win the World Championship.",
     "kicker": "Career mode",
     "title": "Rocket League Career Mode & Manager Game: Road to Worlds",
-    "intro": "Road to Worlds is a free Rocket League career mode that runs in your browser, on PC or phone, with nothing to download. You are the manager: found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
+    "intro": "Road to Worlds is a free Rocket League career mode that runs in your browser, on PC, Mac or phone, with no mod and nothing to download. You are the manager: found a club, build a squad from real RLCS players, and take it from regional qualifiers to the World Championship, one season at a time.",
     "sections": [
       {
         "heading": "Does Rocket League have a career mode?",
-        "body": "Not in the game itself: Rocket League has no career mode built around its esports scene. Fan-made projects fill the gap: mods that run inside the game on PC, manager games you download, and games that run in the browser. Road to Worlds is the browser kind. It is a club manager career, so you run an organization rather than a single player, and it plays on desktop and mobile with nothing to install, built on the real history of the RLCS."
+        "body": "Not in the game itself: Rocket League has no career mode built around its esports scene. Fan-made projects fill the gap, and they come in two kinds. Career mods run inside Rocket League on PC, where you play the matches yourself against bots. Browser career simulators run on a web page instead, with the matches simulated. Road to Worlds is a browser career simulator and a manager career: you run an organization rather than a single player, on desktop or mobile, built on the real history of the RLCS."
+      },
+      {
+        "heading": "A career mode without a mod",
+        "body": "In-game career mods need the PC version of Rocket League, a hub or plugin to install, and bots to fill the lobbies. Road to Worlds needs none of that: open the page, found your club and the first season starts. It works on any device with a browser, so console and phone players can run a career too, and the save stays on your device, with a copy in your account if you sign in."
       },
       {
         "heading": "Found your club",

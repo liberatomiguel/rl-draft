@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.6] — 2026-11-24 · Everything on the staging line together: the phone redesign, the Etapa 1 gate, the Daily's best draft, the friend duel, Pro slice 1 (staging)
+
+Branch `claude/staging-integration`, cut from `origin/staging` rc.5 (`3914518`, the phone redesign, kept whole) with five lines merged in: `main` v2.0.36, the Etapa 1 gate close, `claude/daily-optimal`, `claude/friend-challenge`, `claude/pro-etapa2`. Published to `staging` only; production stays on v2.0.36.
+
+### Changed
+- **The Etapa 1 gate closes** (R149, Miguel 24/11): approved after playing rc.4; the four Etapa 1 flags stay on in staging only; Hard EU without a regional final by S5 is accepted; the staging line accumulates stages and `main` moves only when Miguel decides; Etapa 2 = Pro; Draft fronts = friend duel and the Daily's best draft.
+- **v2.0.36's career landing** is in the staging build (EN and PT).
+- Numbering after the merge: the phone redesign keeps #178–#182 and R148; the Daily is #183, the duel #184, Pro #185 and R150, the gate R149.
+
+### Balance
+- **BALANCE_VERSION 47**: the duel's `DUEL` block and Pro's `CAREER_PRO` block, each bumped to 46 on its own branch, together.
+
+### Not verified
+- The duel and Daily panels were built on the rc.4 look and now sit under the phone redesign: to check at 375 px. No physical phone, no Safari.
+
+---
+
 ## [2.2.0-dev.1] — 2026-11-24 · Pro slice 1: the player and the save (behind `FEATURES.proCareer`, staging only)
 
 Branch `claude/pro-etapa2`, cut from `origin/staging` (`2.1.0-rc.4`). Etapa 2 "Pro", the player career: spec `docs/PRO-SPEC.md`, decisions R150 and DESIGN-DECISIONS #185. Not published; production is unchanged (the flag is off outside the staging build).
@@ -679,6 +696,14 @@ The first pass below only removed things and left dark boxes with thin lines, th
 - Mobile widths, PT screens, lite-effects mode, and every career screen except the HQ. Checked in a desktop browser at 1366 px: Home, setup, draft, review, tournament, results, career HQ.
 
 ---
+## [2.0.36] — 2026-11-22 · The career landing answers the mod searchers
+
+Source: Search Console comparison 14–18/11 vs 19–21/11 and the live SERP of 22/11. A PC career mod (released ~13/11) took over "rocket league career mode": the AI Overview, two video blocks and Reddit. The landing fell from position 3.0 to 6.4 and its CTR from 26 % to 11 %, while clicks per day held (173 → 167) and impressions grew 49 %.
+
+### Changed
+- **The career landing's search description leads with what a mod cannot offer:** no PC mod, no download, plays on phones. The title stays "Rocket League Career Mode & Manager Game — Free": "manager" is a search the landing wins (position 1.6–3.3), and nobody searches "no mod", so that angle lives in the description and the body.
+- **The first section sorts fan-made career modes into in-game PC mods and browser career simulators**, the split the AI Overview uses, and names Road to Worlds as the second kind. A new section, "A career mode without a mod", says what the mods need (PC, a hub or plugin, bots) and that console and phone players can run a career here.
+
 ## [2.0.35] — 2026-11-19 · The Collection's two survey additions go quiet
 
 ### Changed
