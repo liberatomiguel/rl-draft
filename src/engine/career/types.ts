@@ -483,6 +483,13 @@ export interface WorldState {
    * so they still decline in their time). Read by `playerViewById`.
    */
   potentialLift?: Record<string, { potential: number; peakAge: number }>;
+  /**
+   * v2.2 Pro (R148): the player career's own player, id "pro:self" — a
+   * snapshot the Pro flow writes from its save (`engine/career/pro/world.ts`)
+   * so `playerViewById` resolves him like anyone else. Absent in a manager
+   * career. Optional and additive.
+   */
+  proSelf?: FormerSquadPlayer;
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */

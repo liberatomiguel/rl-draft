@@ -37,7 +37,8 @@ import { CareerCloudToast } from "@/components/career/cloud/CareerCloudToast";
 
 // Full-screen routes without the career top bar. EXACT match — "/career/news"
 // must NOT be caught by a "/career/new" prefix (that hid the nav in the inbox).
-const BARE_ROUTES = ["/career/new", "/career/saves"];
+// v2.2 Pro (R148): the player career has its own screens and save, so the manager guards skip it.
+const BARE_ROUTES = ["/career/new", "/career/saves", "/career/pro"];
 const isBareRoute = (pathname: string | null): boolean =>
   BARE_ROUTES.some((r) => pathname === r || pathname?.startsWith(`${r}/`));
 

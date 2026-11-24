@@ -6,7 +6,7 @@
  * See docs/BALANCE-GUIDE.md for what each knob does and its safe range.
  */
 
-import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } from "@/engine/types";
+import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, StatKey } from "@/engine/types";
 
 /**
  * OBS-01 (DESIGN-DECISIONS #145): the tuning generation of this file, sent as
@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 45;
+export const BALANCE_VERSION = 46;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1610,6 +1610,83 @@ export const CAREER_PRIZE_SHARE = {
    * each player who played, so three old deals pay exactly the old team share.
    */
   legacySeats: 3,
+} as const;
+
+/**
+ * v2.2 Pro, the player career (docs/PRO-SPEC.md §4, R148). Slice 1: creation
+ * and training growth. Every number is a starting point for the slice 7
+ * battery; the calibration targets are in PRO-SPEC §4.1 (peak overall 96-99
+ * for a top talent run well, 90-93 for a median one, 82-86 run carelessly).
+ */
+export const CAREER_PRO = {
+  /** Save slots of the Pro store (beside the manager's three). */
+  slots: 3,
+  /** The ages a career may start at (the RLCS minimum is 13 since 2024). */
+  startAges: [13, 14] as const,
+  /** Overall at creation (the mean of the six attributes) by start age. */
+  startOverall: { 13: 50, 14: 54 } as Record<number, number>,
+  /** Seeded noise per attribute at creation, ± this. */
+  startJitter: 1.5,
+  /**
+   * The style (archetype) shapes the start: +bonus on its two attributes,
+   * −penalty on the other four (2 × 4 − 4 × 2 = 0, so the overall holds).
+   * "allround" has no lean.
+   */
+  styleBonus: 4,
+  stylePenalty: 2,
+  styleAttrs: {
+    mechanical: ["mechanics", "offense"],
+    anchor: ["defense", "consistency"],
+    playmaker: ["offense", "experience"],
+    icecold: ["clutch", "consistency"],
+    veteranmind: ["experience", "defense"],
+    allround: [],
+  } as Record<string, readonly StatKey[]>,
+  /** Attribute bounds: 99 is the one ceiling of every Pro (no fixed potential). */
+  attrMax: 99,
+  attrMin: 30,
+  /** The hidden talent (×XP): the mean of two seeded uniforms over this range. */
+  talentRange: [0.85, 1.15] as const,
+  /** The age of the peak (whole years, seeded), then the decline (slice 6). */
+  peakAgeRange: [20, 24] as const,
+  declineRateWeights: { slow: 0.3, normal: 0.5, fast: 0.2 } as Record<string, number>,
+  growth: {
+    /**
+     * Attribute points one focused training block adds at gap factor 1, age
+     * ≤ 17, talent 1, no coach, full energy. A week has three blocks.
+     */
+    perBlock: 0.7,
+    /** "Balanced" spreads a block over the six attributes at this total. */
+    balancedShare: 0.9,
+    /** Age multiplier: the first band whose maxAge ≥ age; past the bands, `beforePeak` until the peak age, `afterPeak` after it. */
+    ageBands: [
+      { maxAge: 17, mult: 1 },
+      { maxAge: 20, mult: 0.85 },
+      { maxAge: 23, mult: 0.6 },
+    ],
+    beforePeak: 0.35,
+    afterPeak: 0.1,
+    /** Distance to the ceiling: ((attrMax − attr) / gapRef) ^ gapExponent, never under gapFloor (99 stays reachable). */
+    gapRef: 49,
+    gapExponent: 0.7,
+    gapFloor: 0.12,
+    /** A coach of overall ≥ coachFull adds coachMax (linear from coachZero). Amateur sides have none. */
+    coachZero: 60,
+    coachFull: 95,
+    coachMax: 0.2,
+    /** Training tired: full rate from energyFull up; linear down to energyFloorMult at 0. */
+    energyFull: 50,
+    energyFloorMult: 0.6,
+    /** The least a positive gain is worth (attributes keep two decimals). */
+    minGain: 0.01,
+  },
+  /** Starting values of the meters the week (slice 2) moves. */
+  startEnergy: 100,
+  startMmr: 1000,
+  /** Explained overall changes kept on the save (ring buffer). */
+  growthLogCap: 40,
+  nameMin: 2,
+  nameMax: 16,
 } as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
@@ -4664,6 +4741,15 @@ export const FEATURES = {
    * build only (STAGING_BUILD), OFF elsewhere; probes: NEXT_PUBLIC_MATCHDAY_BOXSCORE=1.
    */
   matchdayBoxScore: STAGING_BUILD || process.env.NEXT_PUBLIC_MATCHDAY_BOXSCORE === "1",
+  /**
+   * v2.2 Pro (docs/PRO-SPEC.md, R148): the player career, a second career
+   * kind beside the manager's, with its own save key (rocket-draft:pro:v1,
+   * DESIGN-DECISIONS #178). Off → no "Pro" door, `/career/pro` shows the
+   * not-found page and the store is never read by a screen. ON in the staging
+   * build only (STAGING_BUILD), OFF in production, playtest, dev and tests;
+   * dev and probes: NEXT_PUBLIC_PRO_CAREER=1.
+   */
+  proCareer: STAGING_BUILD || process.env.NEXT_PUBLIC_PRO_CAREER === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the

@@ -20,6 +20,8 @@ const GAME_MODE: Record<PersistedStoreId, GameMode> = {
   profile: "draft",
   run: "draft",
   career: "career",
+  // v2.2 Pro (#178): the player career is a career for analytics.
+  pro: "career",
 };
 
 function isQuotaError(error: unknown): boolean {

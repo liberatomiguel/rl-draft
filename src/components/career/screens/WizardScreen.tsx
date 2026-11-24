@@ -60,6 +60,7 @@ import { useMounted } from "@/store/useMounted";
 import { CountrySelect } from "@/components/career/wizard/CountrySelect";
 import { FoundingSplash } from "@/components/career/wizard/FoundingSplash";
 import { PresetEffects } from "@/components/career/wizard/PresetEffects";
+import { ProDoor } from "@/components/career/pro/ProDoor";
 import {
   QUICKSTART_MANAGER_NAMES,
   QUICKSTART_ORG_NAMES,
@@ -320,6 +321,9 @@ export function WizardScreen() {
           ) : undefined
         }
       />
+
+      {/* v2.2 Pro (R148): the player career's door, on the first step only (staging only). */}
+      {step === 1 ? <ProDoor compact /> : null}
 
       {/* Progress: five flat segments (a finished one goes back to its step).
           The count reads under the title, as a sentence. */}
