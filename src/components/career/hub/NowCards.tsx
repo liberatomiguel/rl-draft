@@ -329,7 +329,8 @@ export function NowEvent({
         <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, day ?? def.day))}</Badge>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      {/* Phone: three rows on hairlines (`.stat-trio`); as boxes a third of the screen wide the labels wrapped to three lines. */}
+      <div className="stat-trio mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
           <p className="kicker">{C.calendar.prizePool}</p>
           <p className="display text-lg font-bold text-orange-bright">

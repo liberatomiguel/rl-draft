@@ -152,7 +152,8 @@ export function LeaderboardsView() {
           {previewMode ? (
             <p className="mb-3 text-xs text-sub">{L.previewData}</p>
           ) : null}
-          <div className="mb-3 flex flex-wrap gap-1.5">
+          {/* Phone: the nine boards are one row that scrolls sideways (five rows of boxes before). */}
+          <div className="mb-3 flex flex-wrap gap-1.5 max-sm:-mx-3 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
             {BOARDS.map((b) => (
               <button
                 key={b.key}
@@ -163,7 +164,7 @@ export function LeaderboardsView() {
                   setBoard(b.key);
                 }}
                 className={cx(
-                  "display min-h-11 rounded-md border px-3 text-xs font-semibold uppercase tracking-[0.04em] transition-colors sm:min-h-8",
+                  "display min-h-11 shrink-0 whitespace-nowrap rounded-md border px-3 text-xs font-semibold uppercase tracking-[0.04em] transition-colors sm:min-h-8",
                   board === b.key ? "border-orange/60 bg-white/[0.04] text-ink" : "border-transparent text-sub hover:border-line hover:text-ink",
                 )}
               >

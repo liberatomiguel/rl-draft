@@ -353,6 +353,10 @@ export const DRAFT_UI = {
   slotCoach: "Coach",
   slotSub: "Sub",
   slotOrg: "Org",
+  // Phone team dock: the open slot in the width of a 50px cell.
+  dockPlayer: (n: number) => `P${n}`,
+  dockCoach: "Coach",
+  dockSub: "Sub",
   empty: "Empty",
   slotFull: "Slots full",
   alreadyDrafted: "Already drafted",

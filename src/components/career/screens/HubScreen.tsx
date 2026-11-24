@@ -46,6 +46,7 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { DecisionBlock } from "@/components/career/hub/DecisionBlock";
+import { HubGlance } from "@/components/career/hub/HubGlance";
 import { FinanceBlock } from "@/components/career/hub/FinanceBlock";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
@@ -119,6 +120,15 @@ export function HubScreen() {
         the wire → the transfer wire → next unlock (the two column wrappers are
         `display: contents` there, so `order` interleaves them); two columns on
         desktop: main (decision, squad, training, the wires) and side.
+
+        Mobile redesign (24/11, after Miguel played stage 3's folded sections):
+        under 640px HQ holds only what matters today, every block open: the day
+        card, the inbox, the glance board (`HubGlance`: squad, training, race and
+        finances as one figure each, two to a row, plus the progression line;
+        each cell opens its tab), the season goal and the wire's headline. The
+        full squad, training, race, finance and toolbox blocks, the transfer
+        wire and the honours are `max-sm:hidden` here: each lives whole in its
+        own tab, which is where a phone reads it.
       */}
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-start">
         {/* ============ main column (2fr) ============ */}
@@ -132,7 +142,8 @@ export function HubScreen() {
 
           {/* 2 — THE SQUAD as Draft cards (UX-01b) + 3 — TRAINING (DEV-03's block):
               one team board, a hairline between the two (they are one subject). */}
-          <Panel className="order-2">
+          <HubGlance save={save} C={C} team={team} chemTiers={CHEM} className="order-3" />
+          <Panel className="order-2 max-sm:hidden">
             <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
             <div data-tour="hub-training" className="border-t border-line">
               <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
@@ -140,7 +151,7 @@ export function HubScreen() {
           </Panel>
 
           {/* 9 — THE WIRE (rc.36, UX-03: the visual feed — lead story, crests, subject, action) */}
-          <div className="order-9">
+          <div className="hq-wire order-9">
             <NewsFeed save={save} C={C} lang={lang} />
           </div>
 
@@ -150,17 +161,17 @@ export function HubScreen() {
         {/* ============ side rail (1fr): sections on the floor, a hairline between them ============ */}
         <div className="contents lg:block lg:space-y-4">
           {/* 4 — RTW-01 (R49, UX-01d): the Major / Worlds race toggle + the seeding line (6-A) */}
-          <div className={cx("order-4", RAIL_SECTION)}>
+          <div className={cx("order-4 max-sm:hidden", RAIL_SECTION)}>
             <RaceBlock save={save} C={C} />
           </div>
 
           {/* 5 — finances (UX-01e, decision 4-A) */}
-          <div data-tour="hub-finances" className={cx("order-5", RAIL_SECTION)}>
+          <div data-tour="hub-finances" className={cx("order-5 max-sm:hidden", RAIL_SECTION)}>
             <FinanceBlock save={save} C={C} />
           </div>
 
           {/* 6 — progression + toolbox in one section (rc.35; UX-01f, 5-A, 7-A; UX-06a's unlock modal) */}
-          <div data-tour="hub-progress" className={cx("order-6", RAIL_SECTION)}>
+          <div data-tour="hub-progress" className={cx("order-6 max-sm:hidden", RAIL_SECTION)}>
             <ToolboxBlock save={save} C={C} />
           </div>
 
@@ -172,7 +183,7 @@ export function HubScreen() {
           ) : null}
 
           {/* 8 — inbox teaser: the two latest, the whole section opens the inbox */}
-          <div data-tour="hub-inbox" className={cx("order-8", RAIL_SECTION)}>
+          <div data-tour="hub-inbox" className={cx("order-8 max-sm:order-2", RAIL_SECTION)}>
             <AppLink href="/career/news" className="group block">
               <div className={RAIL_HEAD}>
                 <h3 className={RAIL_TITLE}>{C.hub.inboxTeaser}</h3>
@@ -206,7 +217,7 @@ export function HubScreen() {
           <TransferWirePanel save={save} C={C} D={D} />
 
           {/* The one board of the rail, so it closes it (a phone keeps the contract's order). */}
-          <div className="order-9"><CareerHonorsTable save={save} C={C} compact /></div>
+          <div className="order-9 max-sm:hidden"><CareerHonorsTable save={save} C={C} compact /></div>
         </div>
       </div>
 
@@ -283,7 +294,7 @@ export function TransferWirePanel({
 
   // A rail section like its neighbours: a title, the region filter, one row per move.
   return (
-    <div className={cx(!full && "order-10", RAIL_SECTION)}>
+    <WireRoot full={full}>
       <div className={RAIL_HEAD}>
         <h3 className={RAIL_TITLE}>{C.hub.transfersTitle}</h3>
         {windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
@@ -352,8 +363,13 @@ export function TransferWirePanel({
       ) : null}
 
       <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
-    </div>
+    </WireRoot>
   );
+}
+
+/** The transfer wire's board. On HQ a phone leaves it to the desk's Transfers view (News). */
+function WireRoot({ full, children }: { full: boolean; children: React.ReactNode }) {
+  return <div className={cx(RAIL_SECTION, !full && "order-10 max-sm:hidden")}>{children}</div>;
 }
 
 // ---------------------------------------------------------------------------

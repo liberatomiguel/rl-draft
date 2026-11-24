@@ -30,7 +30,7 @@ import { TeamLogo } from "@/components/ui/TeamLogo";
 export function QuizView() {
   const { QUIZ_UI: Q } = useCopy();
   return (
-    <div className="mobile-action-space rise-in mx-auto max-w-2xl">
+    <div className="rise-in mx-auto max-w-2xl">
       <BackToMenu />
       <SectionTitle kicker={Q.kicker} title={Q.title} className="mb-2" />
       <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{Q.subtitle}</p>
@@ -162,8 +162,11 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                 <p className="mt-2 text-xs text-faint">{Q.comeBack}</p>
               </div>
             ) : (
+              // Phone: the answer field rides the bottom edge while the puzzle is on
+              // screen and rests at the card's end (`.plan-dock`, sticky). It was a
+              // fixed card that sat over the stats strip under the puzzle.
               <form
-                className={cx("mt-5", !compact && "mobile-action-bar")}
+                className={cx("mt-5", !compact && "plan-dock")}
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (text.trim()) submit(text);

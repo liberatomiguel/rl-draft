@@ -130,6 +130,19 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
     setAutoAdvance(false);
   }, [pathname, setAutoAdvance]);
 
+  // Mobile redesign, stage 3: while the career's own chrome is up, a phone shows
+  // one bar on top (the career's; the site header scrolls away) and one on the
+  // bottom (the career's tabs, in place of the site nav). The rules hang on
+  // this attribute in globals.css; the wizard and the slot picker keep the site's.
+  const chrome = mounted && !bare && hasActive;
+  useEffect(() => {
+    if (!chrome) return;
+    document.documentElement.dataset.career = "on";
+    return () => {
+      delete document.documentElement.dataset.career;
+    };
+  }, [chrome]);
+
   // SSR-safe skeleton until the persisted store hydrates. v2.0 (P1): a drawn one. The shell was
   // an empty block for as long as the career's JavaScript took to start (one to two seconds on a
   // phone) and again while the next career screen loaded; the page looked stuck.

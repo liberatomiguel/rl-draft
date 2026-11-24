@@ -1364,6 +1364,7 @@ export const CAREER_PT: CareerCopy = {
     freeAgents: "Agentes livres",
     contracted: "Sob contrato",
     myDeals: "Minhas negociações",
+    tabsShort: { free: "Livres", contracted: "Contrato", coaches: "Coaches", deals: "Negócios" },
     windowClosed: "Mercado fechado",
     windowClosedHint: (label: string) => `A janela de transferências abre ${label}`,
     scoutingOpen: "A observação segue aberta entre janelas.",
@@ -2581,6 +2582,8 @@ export const CAREER_PT: CareerCopy = {
     unlockedOn: (date: string) => `Desbloqueada em ${date}`,
     xp: (n: number) => `+${n} Season XP`,
     progress: (done: number, total: number) => `${done} de ${total}`,
+    showAll: (n: number) => `Ver todas as ${n}`,
+    showLess: "Ver menos",
     tier: { common: "Comum", rare: "Rara", epic: "Épica", legend: "Lenda" } as Record<string, string>,
     // rc.36 (UX-05, #155): the achievements' names and descriptions moved to the core copy
     // (ACH_UI.careerItems) — one source, read by the general list and the career screens.

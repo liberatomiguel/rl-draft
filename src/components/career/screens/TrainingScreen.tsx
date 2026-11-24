@@ -143,7 +143,7 @@ export function TrainingScreen() {
       <div className="space-y-4 lg:col-span-2">
       {/* 1 — the cycle: a running plan, or the picker as the main action */}
       {block.running && block.cycle ? (
-        <Panel data-tour="training-cycle" className="rise-in overflow-hidden p-0">
+        <Panel data-tour="training-cycle" className="rise-in overflow-clip p-0">
           <div className="flex items-center gap-4 border-b border-line px-4 py-4 sm:px-5">
             <div className="min-w-0 flex-1">
               <p className="text-xs text-sub">
@@ -221,7 +221,7 @@ export function TrainingScreen() {
           </div>
         </Panel>
       ) : (
-        <Panel data-tour="training-cycle" strong className="rise-in overflow-hidden p-0">
+        <Panel data-tour="training-cycle" strong className="rise-in overflow-clip p-0">
           <div className="border-b border-line px-4 py-4 sm:px-5">
             <p className="text-xs text-sub">
               {cycleNo} · {Y.daysLeft(block.period.daysLeft)}

@@ -314,9 +314,9 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       {isToday && !short ? (
         <div className="rise-in space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
-            <Button variant="secondary" size="lg" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
-            {isUnofficial ? <Button variant="ghost" onClick={() => { passUnofficial(); router.push("/career"); }}>{C.calendar.skip}</Button> : null}
+            <Button variant="primary" size="lg" className="max-sm:w-full" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
+            <Button variant="secondary" size="lg" className="max-sm:min-w-0 max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-3 max-sm:text-[15px]" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+            {isUnofficial ? <Button variant="ghost" className="max-sm:shrink-0" onClick={() => { passUnofficial(); router.push("/career"); }}>{C.calendar.skip}</Button> : null}
           </div>
           {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
         </div>
@@ -340,7 +340,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       {/* stakes */}
       <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
         <p className="kicker mb-2.5">{C.calendar.stakes}</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="stat-trio grid grid-cols-3 gap-2">
           <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
             <p className="kicker">{C.calendar.prizePool}</p>
             <p className="display text-lg font-bold text-orange-bright">

@@ -389,8 +389,10 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
               {C.news.markAllRead}
             </Button>
           ) : null}
+          {/* Phone: the masthead is the desk's name alone (it wrapped to three
+              lines beside this button); the way to the full feed closes the board. */}
           {full ? null : (
-            <AppLink href="/career/news#news" className={buttonClass("secondary", "sm")}>
+            <AppLink href="/career/news#news" className={cx(buttonClass("secondary", "sm"), "max-sm:hidden")}>
               {C.hub.newsAll}
             </AppLink>
           )}
@@ -419,7 +421,7 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
       {rows.length === 0 && !lead ? (
         <p className="px-4 py-8 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
       ) : (
-        <div>
+        <div className="wire-rows">
           {rows.map((item) => (
             <div key={item.id}>{expandedId === item.id ? <LeadStory item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(item.id)} />}</div>
           ))}
@@ -427,6 +429,12 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
       )}
 
       {hasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
+      {full ? null : (
+        <AppLink href="/career/news#news" className="display flex min-h-12 items-center justify-center gap-1.5 border-t border-line text-xs font-bold uppercase tracking-[0.08em] text-blue-bright sm:hidden">
+          {C.hub.newsAll}
+          <span aria-hidden>→</span>
+        </AppLink>
+      )}
 
     </Panel>
   );

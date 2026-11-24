@@ -67,40 +67,60 @@ export function ReviewScreen({ run }: { run: RunState }) {
   // overall is the figure of the screen and Start Tournament the one action;
   // the build-up, chemistry and special effects are one board under it, and
   // the analyst's lines are plain text beside the pitch.
+  //
+  // Phone (mobile redesign, stage 2): the first screen is the pitch and the
+  // team overall with its build-up; chemistry, the special effects and the
+  // analyst's lines follow. The two desktop columns dissolve (`contents`) so
+  // the numbers board can sit between the pitch and the readout. The strip of
+  // six cards under them repeated the pitch and is desktop only. Start
+  // Tournament is the screen's one action, on ground (`.action-dock`).
+  const start = () => {
+    sfx.start();
+    startTournament();
+  };
+  const startLabel =
+    run.mode === "challenge"
+      ? run.challengeId && challengeById.get(run.challengeId)?.kind === "draft"
+        ? CHALLENGES_UI.checkDraft
+        : CHALLENGES_UI.toMatch
+      : REVIEW.startTournament;
+
   return (
-    <div className="mobile-action-space rise-in">
+    <div className="rise-in">
       <RunStepper run={run} />
       {run.mode === "challenge" ? <ChallengeGoals challengeId={run.challengeId} /> : null}
-      <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-6" />
+      <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-4 sm:mb-6" />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* Field + readout */}
-        <div>
+        <div className="max-sm:contents">
           <FieldView
             roster={run.draft.roster}
             showOverall={run.showOverall}
             showBench={!isQuick}
             className="mx-auto w-full max-w-md lg:max-w-none"
           />
-          <h3 className="display mt-6 text-lg uppercase leading-none text-ink">{REVIEW.readout}</h3>
-          <ul className="mt-3 border-t border-line">
-            {readout.map((line, i) => (
-              <li key={i} className="border-b border-line py-2.5 text-sm leading-relaxed text-sub">
-                {line}
-              </li>
-            ))}
-          </ul>
+          <div className="max-sm:order-3 max-sm:mb-4">
+            <h3 className="display text-lg uppercase leading-none text-ink sm:mt-6">{REVIEW.readout}</h3>
+            <ul className="mt-3 border-t border-line">
+              {readout.map((line, i) => (
+                <li key={i} className="border-b border-line py-2.5 text-sm leading-relaxed text-sub">
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Numbers column: one board, three parts divided by hairlines. */}
-        <div className="space-y-4">
-          <Panel strong className="divide-y divide-line">
-            <div className="grid grid-cols-1 gap-x-10 gap-y-4 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+        <div className="space-y-4 max-sm:contents">
+          <Panel strong className="divide-y divide-line max-sm:order-2">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-6 gap-y-4 p-4 sm:gap-x-10 sm:p-5">
               <div>
-                <p className="display text-7xl font-bold leading-[0.9] text-ink">
+                <p className="display text-6xl font-bold leading-[0.9] text-ink sm:text-7xl">
                   {run.showOverall ? displayTeamOverall(team.rating) : "??"}
                 </p>
-                <p className="mt-2 text-xs text-sub">{REVIEW.teamOverall}</p>
+                <p className="mt-2 max-w-[6.5rem] text-xs leading-snug text-sub sm:max-w-none">{REVIEW.teamOverall}</p>
               </div>
               {run.showOverall ? (
                 <dl className="text-sm text-sub">
@@ -120,7 +140,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
               )}
             </div>
 
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="display text-lg uppercase leading-none text-ink">{REVIEW.chemistry}</h3>
                 <Badge tone={team.chemistry.percent >= 62 ? "good" : team.chemistry.percent >= 40 ? "blue" : "neutral"}>
@@ -143,7 +163,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
             </div>
 
             {specials.length > 0 ? (
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <h3 className="display text-lg uppercase leading-none text-ink">{REVIEW.specialEffects}</h3>
                 <ul className="mt-3 space-y-3">
                   {specials.map((sp) => (
@@ -160,17 +180,8 @@ export function ReviewScreen({ run }: { run: RunState }) {
             ) : null}
           </Panel>
 
-          <Button
-            variant="primary"
-            size="lg"
-            full
-            className="mobile-action-bar"
-            onClick={() => {
-              sfx.start();
-              startTournament();
-            }}
-          >
-            {run.mode === "challenge" ? (run.challengeId && challengeById.get(run.challengeId)?.kind === "draft" ? CHALLENGES_UI.checkDraft : CHALLENGES_UI.toMatch) : REVIEW.startTournament}
+          <Button variant="primary" size="lg" full className="max-sm:hidden" onClick={start}>
+            {startLabel}
           </Button>
         </div>
       </div>
@@ -180,7 +191,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
           and the cards overlapped. This uses the SAME proven fluid + max-width
           wrapper the draft and results screens already use — the card
           internals are untouched, so no other view changes. */}
-      <div className="mt-8 grid grid-cols-3 gap-2 md:gap-3 lg:grid-cols-6">
+      <div className="mt-8 grid grid-cols-3 gap-2 max-sm:hidden md:gap-3 lg:grid-cols-6">
         {slots.map((s) => {
           const fromLineupId = run.draft.roster[s.slot]?.fromLineupId;
           const lu = fromLineupId ? lineupById.get(fromLineupId) : undefined;
@@ -197,6 +208,14 @@ export function ReviewScreen({ run }: { run: RunState }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Phone: the one action, a direct child of the root so the whole page
+          carries it (see `.action-dock`). */}
+      <div className="action-dock sm:hidden">
+        <Button variant="primary" size="lg" full onClick={start}>
+          {startLabel}
+        </Button>
       </div>
     </div>
   );

@@ -36,7 +36,7 @@ export function PlayStrip() {
     <nav
       data-play-strip
       aria-label={HOME_SEO.links.heading}
-      className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-line px-4 py-8 text-sm font-semibold"
+      className="app-footer mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-line px-4 py-8 text-sm font-semibold"
     >
       {/* The button goes to the home page, the game's main menu (Miguel, 11/11). */}
       <AppLink

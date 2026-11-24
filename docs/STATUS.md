@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Updated: **2026-11-21**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-24**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Plan: ROADMAP.md. Post-2.0 Road to Worlds roadmap
 > (decided 17/11): ROADMAP-RTW-2026-11-17.md; Etapa 1 spec: MATCHDAY-SPEC.md.
 > Etapa 1 progress (read this, not the code): ETAPA-1-STATUS.md.
@@ -10,11 +10,16 @@
 
 ## Current builds
 
-- **Staging = 2.1.0-rc.4 (21/11), branch `claude/etapa1-final-1692be`:**
-  Etapa 1 complete for the gate: the new identity (fifth pass) + v2.0.35 +
-  Matchday slices 1 to 5 (screens included) + Mundo vivo M1, M2.1, M3 and the
-  Worlds spread (R146). Every Etapa 1 flag is on in the staging build only.
-  What to play and what Miguel decides: ETAPA-1-STATUS.md.
+- **Staging = 2.1.0-rc.5 (24/11), branch `design/mobile-redesign`:** rc.4
+  plus the phone redesign. Every screen has its own layout under 640px (run,
+  career, hub); desktop is unchanged; no engine, store or save change. Rules:
+  `DESIGN.md` "Phone"; decisions #178 to #182 and R148; audit, measurements
+  and what is still open: `docs/redesign/MOBILE-PLAN.md`. Not verified on a
+  physical phone or Safari.
+- **rc.4 (21/11), `claude/etapa1-final-1692be`:** Etapa 1 complete for the
+  gate (new identity + v2.0.35 + Matchday slices 1 to 5 + Mundo vivo M1, M2.1,
+  M3, R146). Every Etapa 1 flag is on in the staging build only. What to play
+  and what Miguel decides: ETAPA-1-STATUS.md.
 
 - **Production is v2.0.35 (19/11/2026)**: the Collection's next-reward line
   and database link made quiet (Miguel's review of 2.0.34).

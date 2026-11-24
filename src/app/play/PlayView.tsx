@@ -37,6 +37,20 @@ export function PlayView() {
   // them in turn, so they open once those are done, never over the playback.
   useOverlayHold("live", phase === "tournament");
 
+  // Mobile (design/mobile-redesign): while the run is in play (draft, review,
+  // tournament) the phone's bottom nav is off. Any destination on it leaves
+  // /play, which resets the run, and the bar took 57px of a screen that needs
+  // them for the cards. Setup, results and the challenge result keep the nav.
+  // The stepper's back arrow and the header logo are the ways out.
+  const immersive = phase === "draft" || phase === "review" || phase === "tournament";
+  useEffect(() => {
+    if (!immersive) return;
+    document.documentElement.dataset.immersive = "run";
+    return () => {
+      delete document.documentElement.dataset.immersive;
+    };
+  }, [immersive]);
+
   if (!mounted) return <PageSkeleton />;
   if (!run) return <SetupScreen />;
 

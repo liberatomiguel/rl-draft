@@ -104,8 +104,7 @@ import { SponsorDealPanel, SponsorDecision } from "@/components/career/sponsors/
 import { otherIncomeRoomOfSave } from "@/engine/career/inserts";
 import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { Badge } from "@/components/ui/Badge";
-import { AppLink } from "@/components/ui/AppLink";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
@@ -852,11 +851,6 @@ export function FinancesScreen() {
 
       <FinanceErrorNotice className="rise-in" />
 
-      <nav className="flex flex-wrap gap-2 sm:hidden" aria-label={C.finances.title}>
-        <AppLink href="#career-finance-summary" className={buttonClass("secondary", "sm")}>{C.finances.weeklyStatement}</AppLink>
-        <AppLink href="#career-sponsors" className={buttonClass("secondary", "sm")}>{C.finances.sponsors}</AppLink>
-      </nav>
-
       {/* The books as ONE strip of three figures (the 1px gaps are its
           dividers): what is in the bank, what a Monday does to it, where that
           leaves it. Each cell is the figure first and large, its label under
@@ -925,9 +919,11 @@ export function FinancesScreen() {
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
-        <div className="flex min-w-0 flex-col gap-4 lg:col-span-3">
+        {/* Phone: money first (sponsors, the ledger, the loans), the ladder after
+            them (it is the longest board of the screen and was pushing them down). */}
+        <div className="flex min-w-0 flex-col gap-4 max-sm:order-2 lg:col-span-3">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
-        <Panel data-tour="finances-progress" className="rise-in p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
+        <Panel id="career-ladder" data-tour="finances-progress" className="rise-in scroll-mt-20 p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
           {/* The board's title, and the one number that opens its rows: reputation. */}
           <div className="card-head">
             <h3 className="card-title">{C.ladder.title}</h3>
@@ -1047,7 +1043,7 @@ export function FinancesScreen() {
         </div>
 
         {/* ================= right column: sponsors + ledger ================= */}
-        <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
+        <div className="flex min-w-0 flex-col gap-4 max-sm:order-1 lg:col-span-2">
           {/* Sponsors */}
           <Panel id="career-sponsors" data-tour="finances-sponsor" className="rise-in scroll-mt-44 p-4 sm:p-5" style={{ animationDelay: "160ms" }}>
             <div className="card-head"><h3 className="card-title">{C.finances.sponsors}</h3></div>
@@ -1262,7 +1258,7 @@ export function FinancesScreen() {
 
       {/* ================= Loans & debt (always visible below progression) ================= */}
       {/* Two boards, one per loan (they were two boxes inside a board whose title repeated theirs). */}
-      <section data-tour="finances-loans" aria-label={C.finances.loans} className="rise-in flex flex-col gap-4">
+      <section data-tour="finances-loans" aria-label={C.finances.loans} className="rise-in flex flex-col gap-4 max-sm:order-1">
           {/* Bank */}
           <div className={cx("panel p-4 sm:p-5", fin.bankLoan && "panel-glow-blue")}>
             <div className="card-head">
@@ -1405,9 +1401,11 @@ export function FinancesScreen() {
 
           {/* Ledger */}
           <Panel className="rise-in flex flex-col p-4 sm:p-5" style={{ animationDelay: "200ms" }}>
-            <div className="card-head">
+            {/* Phone: the three filters are a strip of tabs under the title. Beside it
+                they ran 8px past the screen's edge and widened the whole page. */}
+            <div className="card-head max-sm:flex-wrap">
               <p className="card-title">{C.finances.ledger}</p>
-              <div className="flex gap-1.5">
+              <div className="phone-tabs max-sm:-mb-3 max-sm:w-full max-sm:!border-b-0 sm:flex sm:gap-1.5">
                 {(
                   [
                     ["all", C.news.filter.all],

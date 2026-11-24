@@ -25,6 +25,7 @@ import { CAREER_ACHIEVEMENTS } from "@/data/career/achievements";
 import { FEATURES } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cx, formatDate } from "@/lib/util";
+import { PhoneFold } from "@/components/ui/PhoneFold";
 import { CheckIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 import { TiltCard } from "@/components/ui/TiltCard";
@@ -55,12 +56,20 @@ export function achievementTotals(earned: Record<string, string>, careerMarks: r
   };
 }
 
+/**
+ * Phone (mobile redesign, stage 5): a group is a board that opens on demand,
+ * its head carrying the count. The 114 feats in one column were 13 screens
+ * here and most of the Profile; from 640px the fold does nothing.
+ */
+const FOLD =
+  "max-sm:rounded-xl max-sm:border max-sm:border-line max-sm:bg-surface max-sm:px-4 max-sm:data-[open=true]:pb-3";
+
 /** The feats of one group: rows on a shared hairline grid (no gap between rows). */
 const LIST = "grid grid-cols-1 gap-x-8 sm:grid-cols-2 lg:grid-cols-3";
 
 function SectionHead({ title, done, total, icon }: { title: string; done: number; total: number; icon?: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-2 border-b border-line-strong pb-2">
+    <div className="phone-fold-head flex items-baseline justify-between gap-2 border-b border-line-strong pb-2 max-sm:min-h-12 max-sm:items-center max-sm:pb-0">
       <h3 className="display flex items-center gap-2 text-lg uppercase leading-none text-ink">
         {icon}
         {title}
@@ -103,7 +112,7 @@ export function AchievementsGrid({
   };
 
   return (
-    <div className="space-y-9">
+    <div className="space-y-2 sm:space-y-9">
       {showCareer ? (
         <div role="group" aria-label={ACH_UI.modesLabel} className="flex flex-wrap gap-2">
           {MODES.map((m) => (
@@ -130,7 +139,7 @@ export function AchievementsGrid({
 
       {active !== "career"
         ? byGroup.map(({ group, defs, earnedCount }) => (
-            <section key={group}>
+            <PhoneFold key={group} label={ACH_UI.groups[group] ?? group} className={FOLD}>
               <SectionHead title={ACH_UI.groups[group] ?? group} done={earnedCount} total={defs.length} />
               <div className={LIST}>
                 {defs.map((def) => {
@@ -158,12 +167,12 @@ export function AchievementsGrid({
                   );
                 })}
               </div>
-            </section>
+            </PhoneFold>
           ))
         : null}
 
       {showCareer && active !== "draft" ? (
-        <section>
+        <PhoneFold label={ACH_UI.careerGroup} className={FOLD}>
           <SectionHead
             title={ACH_UI.careerGroup}
             done={careerEarned}
@@ -189,7 +198,7 @@ export function AchievementsGrid({
               );
             })}
           </div>
-        </section>
+        </PhoneFold>
       ) : null}
     </div>
   );

@@ -1384,6 +1384,8 @@ export const CAREER_EN = {
     freeAgents: "Free agents",
     contracted: "Under contract",
     myDeals: "My deals",
+    // The phone's one-row tab strip: each label in a quarter of the screen.
+    tabsShort: { free: "Free", contracted: "Signed", coaches: "Coaches", deals: "Deals" },
     windowClosed: "Market closed",
     windowClosedHint: (label: string) => `Transfer window opens ${label}`,
     scoutingOpen: "Scouting stays open between windows.",
@@ -2606,6 +2608,8 @@ export const CAREER_EN = {
     unlockedOn: (date: string) => `Unlocked ${date}`,
     xp: (n: number) => `+${n} Season XP`,
     progress: (done: number, total: number) => `${done} of ${total}`,
+    showAll: (n: number) => `Show all ${n}`,
+    showLess: "Show fewer",
     tier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
     // rc.36 (UX-05, #155): the achievements' names and descriptions moved to the core copy
     // (ACH_UI.careerItems) — one source, read by the general list and the career screens.

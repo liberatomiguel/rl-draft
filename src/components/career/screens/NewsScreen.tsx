@@ -150,8 +150,9 @@ export function NewsScreen() {
 
       {view === "inbox" ? (
         <>
-          {/* Filter chips: All + the six kinds */}
-          <div className="flex flex-wrap gap-2">
+          {/* Filter chips: All + the six kinds. Phone: one row that scrolls sideways
+              (they wrapped to three rows, 140px above the first mail). */}
+          <div className="flex flex-wrap gap-2 max-sm:-mx-3 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
             {(["all", ...KINDS] as FilterKey[]).map((key) => (
               <button
                 key={key}
@@ -160,6 +161,7 @@ export function NewsScreen() {
                 aria-pressed={filter === key}
                 className={cx(
                   buttonClass(filter === key ? "secondary" : "ghost", "sm"),
+                  "max-sm:shrink-0",
                   filter === key ? "!border-blue-bright/60" : "border border-transparent",
                 )}
               >
@@ -193,7 +195,8 @@ export function NewsScreen() {
               )}
             </Panel>
 
-            <Panel strong className="p-4 sm:p-5 lg:sticky lg:top-44 lg:col-span-3">
+            {/* Phone: with nothing open the reader is an empty board repeating the list's own line. */}
+            <Panel strong className={cx("p-4 sm:p-5 lg:sticky lg:top-44 lg:col-span-3", !selected && "max-sm:hidden")}>
               {selected ? (
                 <MailReader item={selected} C={C} D={C.dates} currentSeason={save.clock.seasonIndex} />
               ) : (

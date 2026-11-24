@@ -24,6 +24,7 @@ import { useCareerStore } from "@/store/careerStore";
 import { Button } from "@/components/ui/Button";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
+import { CareerTabBar } from "@/components/career/CareerTabBar";
 import { NewDot } from "@/components/ui/NewDot";
 import { useNewTab } from "@/store/useNewItems";
 import { careerNewSummary } from "@/engine/career/careerNew";
@@ -162,10 +163,29 @@ export function CareerTopBar() {
     (key === "squad" && squadDot) || (key === "finances" && financesDot) ||
     (key === "market" && marketDot) || (key === "hub" && hubDot);
 
+  // Phone (mobile redesign, stage 3): this bar is the ONE bar on top (the site
+  // header is not pinned inside the career, see `html[data-career]` in
+  // globals.css, so it sticks at 0) and the tabs are the bar on the bottom edge
+  // (CareerTabBar), in place of the `<select>` that used to sit under it.
   return (
-    <div className="sticky top-14 z-30 border-b border-line bg-bg">
+    <>
+    <div className="sticky top-0 z-30 border-b border-line bg-bg sm:top-14">
       <div className="mx-auto flex min-h-14 max-w-6xl items-center gap-2 px-3 py-1 sm:gap-3 sm:px-4">
-        <AppLink href="/career/club" className="flex shrink-0 items-center gap-2">
+        {/* Phone: the way back to the main menu, always on screen (Miguel, 24/11:
+            the site header scrolls away in the career and its nav is hidden, so
+            the exit was three taps deep, in More). Desktop keeps the site header. */}
+        <AppLink
+          href="/"
+          aria-label={copy.nav.exit}
+          title={copy.nav.exit}
+          className="-ml-2 -mr-1 flex h-11 w-9 shrink-0 items-center justify-center text-sub transition-colors hover:text-ink sm:hidden"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </AppLink>
+        {/* Under 360px the crest gives its room to the date (the club is in More). */}
+        <AppLink href="/career/club" className="flex shrink-0 items-center gap-2 max-[359px]:hidden">
           <UserCrest
             crestId={save.identity.crestId}
             colors={save.identity.colors}
@@ -183,7 +203,7 @@ export function CareerTopBar() {
 
         {/* Center clock — the date is the game's heartbeat now. */}
         <div data-tour="career-clock" className="min-w-0 flex-1 text-center">
-          <div className="kicker leading-none text-faint">{clock.season}</div>
+          <div className="kicker truncate leading-none text-faint">{clock.season}</div>
           <div className="display truncate text-base font-bold uppercase leading-tight tracking-[0.03em] text-ink">
             {formatDateShort(copy.dates, clock.date)}
           </div>
@@ -219,11 +239,13 @@ export function CareerTopBar() {
               onClick={() => setAutoAdvance(!autoAdvance)}
               aria-pressed={autoAdvance}
               title={autoAdvance ? copy.hub.pause : nextStopLabel ? copy.hub.playHint(nextStopLabel) : copy.hub.play}
+              aria-label={autoAdvance ? copy.hub.pause : copy.hub.play}
               className="max-w-[38vw] sm:max-w-none"
             >
               <span className="flex items-center gap-1.5">
                 {autoAdvance ? <PauseGlyph /> : <PlayGlyph />}
-                <span className="truncate">
+                {/* Under 360px the glyph says it: the word took the date's room. */}
+                <span className="truncate max-[359px]:hidden">
                   {autoAdvance ? copy.hub.pause : copy.hub.play}
                   {!autoAdvance && nextStopLabel ? (
                     <span className="hidden sm:inline"> · {nextStopLabel}</span>
@@ -251,20 +273,6 @@ export function CareerTopBar() {
         )}
       </div>
 
-      <div data-tour="career-nav" className="px-3 pb-2 sm:hidden">
-        <select
-          aria-label={copy.meta.title}
-          value={TABS.find(tab => tab.href === "/career" ? pathname === tab.href : pathname.startsWith(tab.href))?.href ?? "/career"}
-          onChange={event => router.push(event.target.value)}
-          className="min-h-11 w-full rounded-lg border border-line-strong bg-raised px-3 text-sm font-semibold text-ink"
-        >
-          {TABS.map(tab => (
-            <option key={tab.key} value={tab.href}>
-              {copy.nav[tab.key as keyof typeof copy.nav]}{tabHasNew(tab.key) ? ` · ${copy.toolbox.newTag}` : ""}{tab.key === "news" && unreadMail > 0 ? ` (${unreadMail})` : ""}
-            </option>
-          ))}
-        </select>
-      </div>
       <nav data-tour="career-nav" className="mx-auto hidden max-w-6xl flex-wrap items-stretch px-3 sm:flex sm:px-4">
         {TABS.map((tab, i) => {
           const active =
@@ -299,5 +307,7 @@ export function CareerTopBar() {
         })}
       </nav>
     </div>
+    <CareerTabBar pathname={pathname} hasNew={(key) => Boolean(tabHasNew(key))} unreadMail={unreadMail} />
+    </>
   );
 }

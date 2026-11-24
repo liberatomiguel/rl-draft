@@ -26,7 +26,7 @@ import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { nationalTeamProgress, unownedOfferSpecials } from "@/engine/collection";
 import { draftLineupPool, filledCount, neededKinds, slotsForKind } from "@/engine/draft";
 import { lineupById, seasonById, specialCardById } from "@/data";
-import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
+import type { DraftOffer, DraftOfferCard, Lineup, Roster, RunState } from "@/engine/types";
 import { dailyLabel } from "@/lib/runLabels";
 import { DRAFT_TOUR, tourSeen } from "@/lib/tours";
 import { cx } from "@/lib/util";
@@ -39,6 +39,8 @@ import { Panel } from "@/components/ui/Panel";
 import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { LineupSeasonBadge } from "@/components/cards/LineupSeasonBadge";
+import { rosterSlots } from "@/components/cards/rosterView";
+import { TeamLogo } from "@/components/ui/TeamLogo";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
 import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
@@ -127,10 +129,17 @@ export function DraftScreen({ run }: { run: RunState }) {
   // Job: pick one card from the lineup on screen. The lineup (its name, then
   // its six cards) is the focal point; the team board beside it is the quiet
   // record of what has been picked. Rerolling is the only other action.
+  //
+  // Phone (mobile redesign, stage 2): the team board used to sit under the
+  // fold, so the player picked without seeing the team. It is now a dock on the
+  // bottom edge (`TeamDock`, the six slots, always in view; the phone has no
+  // bottom nav during a run) and the pitch is desktop only: it comes back, full
+  // size, on the review step.
   return (
-    // Static under the tour (no entrance animation for the spotlight to chase);
-    // the real board rises in when the tour closes.
-    <div className={cx(!touring && "rise-in")}>
+    <>
+    {/* Static under the tour (no entrance animation for the spotlight to chase);
+        the real board rises in when the tour closes. */}
+    <div className={cx("team-dock-space", !touring && "rise-in")}>
       {touring ? (
         <DraftTour onClose={finishTour} />
       ) : run.mode !== "challenge" ? (
@@ -162,7 +171,7 @@ export function DraftScreen({ run }: { run: RunState }) {
         />
 
         {/* ------------------------------------------------ Your team (field) */}
-        <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster}>
+        <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster} className="max-sm:hidden">
           <Panel className="p-4">
             {/* The count is the figure; the pitch under it shows the same
                 thing slot by slot, so no progress bar repeats it. */}
@@ -194,6 +203,56 @@ export function DraftScreen({ run }: { run: RunState }) {
         </aside>
       </div>
     </div>
+    {/* Outside the animated root: `position: fixed` needs a still ancestor. */}
+    <TeamDock roster={view.draft.roster} quick={view.mode === "quick"} />
+    </>
+  );
+}
+
+/**
+ * Phone only: the team being drafted, as a dock on the bottom edge. One cell
+ * per slot. A filled cell is the card's crest and name; an open one names the
+ * kind it still needs, so "still needed" reads off the dock itself.
+ */
+function TeamDock({ roster, quick }: { roster: Roster; quick: boolean }) {
+  const { DRAFT_UI } = useCopy();
+  const open: Record<string, string> = {
+    player1: DRAFT_UI.dockPlayer(1),
+    player2: DRAFT_UI.dockPlayer(2),
+    player3: DRAFT_UI.dockPlayer(3),
+    coach: DRAFT_UI.dockCoach,
+    sub: DRAFT_UI.dockSub,
+    org: DRAFT_UI.slotOrg,
+  };
+  const slots = rosterSlots(roster).filter((s) => !quick || s.slot.startsWith("player"));
+  return (
+    <aside data-tour="draft-roster" aria-label={DRAFT_UI.yourRoster} className="team-dock sm:hidden">
+      <ul className={cx("grid gap-1", quick ? "grid-cols-3" : "grid-cols-6")}>
+        {slots.map(({ slot, card }) => (
+          <li
+            key={slot}
+            className={cx(
+              "flex h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md border px-1",
+              card ? "border-line-strong bg-surface" : "border-dashed border-line",
+            )}
+          >
+            {card ? (
+              <>
+                {card.orgId ? <TeamLogo orgId={card.orgId} seasonId={card.seasonId} size="xs" /> : null}
+                <span className="display w-full truncate text-center text-[11px] font-bold uppercase leading-none text-ink">
+                  {card.name}
+                  {card.special ? <span className="text-orange-bright">★</span> : null}
+                </span>
+              </>
+            ) : (
+              <span className="display w-full truncate text-center text-[11px] font-semibold uppercase leading-none text-faint">
+                {open[slot]}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }
 
@@ -278,6 +337,41 @@ function OfferReveal({
   const subCard = offer.cards.find((c) => c.kind === "sub") ?? null;
   const orgCard = offer.cards.find((c) => c.kind === "org") ?? null;
 
+  // The reroll control. On a phone it shares the row of the region badge (it
+  // used to wrap onto a line of its own, 44px of the first screen); from 640px
+  // it sits at the right of the head. The tour takes the visible one.
+  // Nothing in the offer fits: this button is the free reroll too, so the paid
+  // one is never spent on a dead offer (rc.29).
+  const rerollButton = (className: string) =>
+    offer.hasPickableCard ? (
+      <Button
+        data-tour="draft-reroll"
+        variant="secondary"
+        size="sm"
+        onClick={onReroll}
+        disabled={run.draft.rerollsLeft <= 0 || rolling}
+        title={DRAFT_UI.reroll}
+        className={className}
+      >
+        <RerollIcon />
+        {DRAFT_UI.reroll} ·{" "}
+        {run.draft.rerollsLeft > 0 ? DRAFT_UI.rerollsLeft(run.draft.rerollsLeft) : DRAFT_UI.noRerolls}
+      </Button>
+    ) : (
+      // Outlined here: the filled one sits with the explanation under the cards.
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onFreeReroll}
+        disabled={rolling}
+        title={DRAFT_UI.freeReroll}
+        className={className}
+      >
+        <RerollIcon />
+        {DRAFT_UI.freeReroll}
+      </Button>
+    );
+
   const renderOfferCard = (offerCard: DraftOfferCard) => {
     const resolvedCard = resolveOfferCard(offerCard, offer.lineupId);
     const unavailable = offerCard.availability !== "available";
@@ -321,7 +415,7 @@ function OfferReveal({
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3 sm:mb-4">
         <div className="min-w-0 w-full sm:w-auto sm:flex-1">
           {/* A real column head: which lineup this is and which pick it serves. */}
           <p className="kicker mb-1">
@@ -367,38 +461,10 @@ function OfferReveal({
           >
             <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
+            {rerollButton("ml-auto sm:hidden")}
           </div>
         </div>
-        {/* Nothing in the offer fits: the top button is the free reroll too, so
-            the paid one is never spent on a dead offer (rc.29). */}
-        {offer.hasPickableCard ? (
-          <Button
-            data-tour="draft-reroll"
-            variant="secondary"
-            size="sm"
-            onClick={onReroll}
-            disabled={run.draft.rerollsLeft <= 0 || rolling}
-            title={DRAFT_UI.reroll}
-          >
-            <RerollIcon />
-            {DRAFT_UI.reroll} ·{" "}
-            {run.draft.rerollsLeft > 0
-              ? DRAFT_UI.rerollsLeft(run.draft.rerollsLeft)
-              : DRAFT_UI.noRerolls}
-          </Button>
-        ) : (
-          // Outlined here: the filled one sits with the explanation under the cards.
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onFreeReroll}
-            disabled={rolling}
-            title={DRAFT_UI.freeReroll}
-          >
-            <RerollIcon />
-            {DRAFT_UI.freeReroll}
-          </Button>
-        )}
+        {rerollButton("max-sm:hidden")}
       </div>
 
       {/* The offer fades in once the reel lands */}
@@ -427,6 +493,11 @@ function OfferReveal({
             {renderOfferCard(subCard)}
             {renderOfferCard(orgCard)}
           </div>
+        ) : null}
+
+        {/* Phone: the pitch (and the hint under it) is off, so the hint reads here. */}
+        {offer.hasPickableCard ? (
+          <p className="mt-3 text-xs leading-relaxed text-faint sm:hidden">{DRAFT_UI.selectHint}</p>
         ) : null}
 
         {!offer.hasPickableCard ? (

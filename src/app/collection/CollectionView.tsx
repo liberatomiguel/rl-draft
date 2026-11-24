@@ -171,7 +171,8 @@ export function CollectionView() {
     });
   }, [collectibleCards, isUnlocked, status, rarity]);
 
-  const firstVisibleRarity = albumRarities.find(r => !collapsed.has(r) && visible.some(sp => albumRarityOf(sp.rarity) === r));
+  const isClosed = (r: AlbumRarity): boolean => collapsed.has(r);
+  const firstVisibleRarity = albumRarities.find(r => !isClosed(r) && visible.some(sp => albumRarityOf(sp.rarity) === r));
 
   // Progressive reveal: only the first `limit` cards per rarity mount; a sentinel below the
   // grid bumps it by a batch as it nears the viewport. Reset to one batch when
@@ -294,33 +295,39 @@ export function CollectionView() {
       ) : (
         <>
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {(["all", "unlocked", "locked"] as StatusFilter[]).map((f) => (
-            <FilterChip key={f} active={status === f} onClick={() => setStatus(f)}>
-              {C.filters[f]}
+        {/* Phone: two rows (status, then rarity, which scrolls sideways if it must);
+            they wrapped to three rows of boxes. */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 sm:mb-6">
+          <div className="flex items-center gap-2 max-sm:w-full">
+            {(["all", "unlocked", "locked"] as StatusFilter[]).map((f) => (
+              <FilterChip key={f} active={status === f} onClick={() => setStatus(f)}>
+                {C.filters[f]}
+              </FilterChip>
+            ))}
+          </div>
+          <span className="mx-1 h-4 w-px bg-line-strong max-sm:hidden" aria-hidden />
+          <div className="flex items-center gap-2 max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
+            <FilterChip active={rarity === "all"} onClick={() => setRarity("all")}>
+              {C.filters.all}
             </FilterChip>
-          ))}
-          <span className="mx-1 h-4 w-px bg-line-strong" aria-hidden />
-          <FilterChip active={rarity === "all"} onClick={() => setRarity("all")}>
-            {C.filters.all}
-          </FilterChip>
-          {albumRarities.map((r) => (
-            <FilterChip key={r} active={rarity === r} onClick={() => setRarity(r)}>
-              {RARITY_LABELS[r]}
-            </FilterChip>
-          ))}
+            {albumRarities.map((r) => (
+              <FilterChip key={r} active={rarity === r} onClick={() => setRarity(r)}>
+                {RARITY_LABELS[r]}
+              </FilterChip>
+            ))}
+          </div>
         </div>
 
         {/* Grid — single grid, unlocked first (rarity → overall), then locked */}
         {visible.length === 0 ? (
           <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-2 sm:space-y-5">
             {albumRarities.filter(r => visible.some(sp => albumRarityOf(sp.rarity) === r)).map(r => {
               const cards = collectibleCards.filter(sp => albumRarityOf(sp.rarity) === r);
               const got = cards.filter(sp => isUnlocked(sp.id)).length;
               const lockRank = rarityLockedAt(r);
-              const closed = collapsed.has(r);
+              const closed = isClosed(r);
               return <section key={r} className="rounded-xl border border-line bg-white/[0.015]">
                 <button type="button" aria-expanded={!closed} aria-controls={`rarity-${r}`} onClick={() => setCollapsed(prev => {
                   const next = new Set(prev); if (next.has(r)) next.delete(r); else next.add(r); return next;
@@ -330,7 +337,7 @@ export function CollectionView() {
                   {lockRank ? <span className="ml-auto flex items-center gap-1 text-[10px] text-faint"><RankBadge rank={lockRank} variant="menu" size="sm" />{C.unlocksAt(lockRank.label)}</span> : null}
                   <span aria-hidden className="ml-auto text-sub">{closed ? "+" : "−"}</span>
                 </button>
-                {!closed ? <div id={`rarity-${r}`} className="grid grid-cols-2 gap-3 px-3 pb-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:gap-4">
+                {!closed ? <div id={`rarity-${r}`} className="grid grid-cols-3 gap-2 px-2 pb-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-3 sm:px-3 sm:pb-3 md:gap-4">
             {shown.filter(sp => albumRarityOf(sp.rarity) === r).slice(0, limit).map((sp, i) => (
               <FxCard key={sp.id}>
                 {isUnlocked(sp.id) ? (
@@ -453,7 +460,7 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        "display rounded-sm border px-3.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+        "display shrink-0 whitespace-nowrap rounded-sm border px-3.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-colors max-sm:px-2.5",
         active
           ? "border-orange/60 bg-orange/15 text-orange-bright"
           : "border-line bg-white/3 text-sub hover:border-line-strong hover:text-ink",
@@ -470,19 +477,19 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
     <button type="button" onClick={onClick} className="relative block w-full text-left">
       {/* Fluid (w-full) to fill its grid cell, matching the fluid unlocked
           GameCard so earned and locked cards stay the same size (v1.0.0). */}
-      <div className="card-frame card-hidden flex aspect-[3/4.3] w-full flex-col p-3 opacity-80 transition-all hover:opacity-100">
+      <div className="card-frame card-hidden flex aspect-[3/4.3] w-full flex-col p-2 opacity-80 transition-all hover:opacity-100 sm:p-3">
         <div className="flex items-start justify-between">
-          <span className="display text-3xl font-bold leading-none text-faint">??</span>
+          <span className="display text-2xl font-bold leading-none text-faint sm:text-3xl">??</span>
           <LockGlyph />
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <div className="flex h-[72px] w-[72px] items-center justify-center bg-gradient-to-br from-slate-700/50 to-slate-900/60 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]">
+          <div className="flex h-12 w-12 items-center justify-center bg-gradient-to-br sm:h-[72px] sm:w-[72px] from-slate-700/50 to-slate-900/60 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]">
             <span className="display text-2xl font-bold text-faint">?</span>
           </div>
         </div>
         <p className="display truncate text-sm font-bold uppercase tracking-wide text-faint">???</p>
-        <div className="mt-1.5">
-          <Badge tone="neutral" className="!text-[9px]">
+        <div className="mt-1.5 min-w-0 overflow-hidden">
+          <Badge tone="neutral" className="max-w-full truncate !text-[9px]">
             {isSecretRarity(sp.rarity)
               ? RARITY_LABELS[sp.rarity]
               : `${SPECIAL_TYPE_LABELS[sp.cardType]} · ${RARITY_LABELS[sp.rarity]}`}

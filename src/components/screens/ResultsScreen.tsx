@@ -198,8 +198,12 @@ export function ResultsScreen({ run }: { run: RunState }) {
     });
   };
 
+  // Phone (mobile redesign, stage 2): the actions are one 65px row on ground
+  // (`.action-dock`: play again and share; "back to menu" is the nav's Home on
+  // a phone) where a 124px floating block used to cover the page. The four
+  // highlights are rows of one board, and the boards breathe less.
   return (
-    <div className="mobile-results-space rise-in pb-8">
+    <div className="rise-in sm:pb-8">
       <RunStepper run={run} />
       {ceremonyOpen ? (
         <UnlockCeremony
@@ -221,7 +225,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         strong
         glow={placement.tone}
         className={cx(
-          "celebrate mb-8 px-6 py-12 text-center",
+          "celebrate mb-5 px-4 py-8 text-center sm:mb-8 sm:px-6 sm:py-12",
           isChampion && "!border-orange/50",
           isImmaculate && "!border-cyan/50",
           isLegacyChampion && "!border-cyan/60",
@@ -294,7 +298,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       </Panel>
 
       {/* Highlights */}
-      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="phone-rows mb-6 grid grid-cols-1 sm:mb-8 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         {bestPlayer ? (
           <HighlightTile label={R.bestPlayer} value={bestPlayer.name} detail={R.ovr(bestPlayer.overall ?? 0)} />
         ) : null}
@@ -329,7 +333,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         right={!run.showOverall ? <Badge tone="orange">{R.hiddenReveal}</Badge> : null}
         className="mb-4"
       />
-      <div className="mb-10">
+      <div className="mb-6 sm:mb-10">
         <div className="field rounded-2xl p-3 sm:p-6">
           <div className="mx-auto grid max-w-2xl grid-cols-3 items-start gap-2 md:gap-4">
             {playerSlots.map((s, i) =>
@@ -366,7 +370,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {/* Team-overall breakdown — shown on results for ALL modes (v1.3.3; was
           hidden runs only). A clean end-of-run summary of how the team's overall
           was built, regardless of whether overalls were visible during play. */}
-      <Panel strong glow="blue" className="mb-10 p-5">
+      <Panel strong glow="blue" className="mb-6 p-4 sm:mb-10 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="kicker">{REVIEW.teamOverall}</p>
           <p className="display text-4xl font-bold leading-none text-ink">
@@ -523,17 +527,27 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
 
       {/* CTAs */}
-      <div className="mobile-action-bar mt-10 grid grid-cols-2 items-stretch justify-center gap-2 sm:flex sm:flex-row sm:gap-3">
-        <Button variant="primary" size="lg" onClick={handlePlayAgain}>
+      <div className="action-dock mt-6 flex items-stretch justify-center gap-2 sm:mt-10 sm:flex-row sm:gap-3">
+        <Button
+          variant="primary"
+          size="lg"
+          className="max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-2 max-sm:text-[15px]"
+          onClick={handlePlayAgain}
+        >
           {R.playAgain}
         </Button>
-        <Button variant="secondary" size="lg" onClick={handleShare}>
+        <Button
+          variant="secondary"
+          size="lg"
+          className="max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-2 max-sm:text-[15px]"
+          onClick={handleShare}
+        >
           {R.share}
         </Button>
         <Button
           variant="ghost"
           size="lg"
-          className="col-span-2"
+          className="max-sm:hidden"
           // Navigate only — the home page clears the run on mount (clearing
           // first flashes the setup screen during the route transition).
           onClick={() => router.push("/")}
@@ -1019,12 +1033,20 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
 
 function HighlightTile({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <Panel className="p-4">
-      <p className="kicker mb-1 !text-[10px]">{label}</p>
-      <p className="display truncate text-sm font-bold uppercase tracking-wide text-ink" title={value}>
+    // Phone: a row of the highlights board (label and stage on the left, the
+    // figure on the right). From 640px: a tile, as before.
+    <Panel className="px-3.5 py-2.5 max-sm:flex max-sm:items-center max-sm:justify-between max-sm:gap-3 sm:p-4">
+      <p className="kicker !text-[10px] max-sm:shrink-0 sm:mb-1">
+        {label}
+        {detail ? <span className="mt-0.5 block font-normal normal-case tracking-normal text-faint sm:hidden">{detail}</span> : null}
+      </p>
+      <p
+        className="display min-w-0 truncate text-sm font-bold uppercase tracking-wide text-ink max-sm:text-right"
+        title={value}
+      >
         {value}
       </p>
-      {detail ? <p className="mt-0.5 text-[11px] text-faint">{detail}</p> : null}
+      {detail ? <p className="mt-0.5 text-[11px] text-faint max-sm:hidden">{detail}</p> : null}
     </Panel>
   );
 }

@@ -31,7 +31,7 @@ import { useMounted } from "@/store/useMounted";
 import { CAREER_ACHIEVEMENTS } from "@/data/career/achievements";
 import { useCareerStore } from "@/store/careerStore";
 import { Badge, CountryChip } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { CheckIcon, LockIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -143,6 +143,8 @@ export function ClubScreen() {
   const deleteSlot = useCareerStore((s) => s.deleteSlot);
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Phone: the list of 22 shows its first rows until the player asks for the rest.
+  const [allAchievements, setAllAchievements] = useState(false);
 
   if (!mounted) {
     return (
@@ -231,10 +233,10 @@ export function ClubScreen() {
 
       <div className="mb-4 grid grid-cols-1 items-start gap-x-4 gap-y-6 md:grid-cols-5">
         {/* Primary column: what the club has won. */}
-        <div className="flex min-w-0 flex-col gap-6 md:col-span-3">
+        <div className="flex min-w-0 flex-col gap-6 max-md:contents md:col-span-3">
           {/* 2. Trophy room: the Worlds pedestal (visible from day one, design §11)
               beside the shelf. Trophies are rewards and keep their gold. */}
-          <Panel data-tour="club-trophies" className="p-4 sm:p-5">
+          <Panel data-tour="club-trophies" className="p-4 max-md:order-1 sm:p-5">
             <div className="card-head"><h3 className="card-title">{copy.club.trophies}</h3></div>
             <div className="mt-4 grid gap-5 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-stretch">
               <div
@@ -289,7 +291,9 @@ export function ClubScreen() {
           </Panel>
 
           {/* 3. Career achievements (v2.0 R32): each one is its own card, so the section needs no board. */}
-          <section>
+          {/* Phone: after the reputation board (`order`); the list shows its first
+              six rows and a key for the rest (it was 2,250px of the screen). */}
+          <section className="max-md:order-3">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <h3 className="card-title">{copy.achievements.title}</h3>
               <span className="text-sm text-sub">
@@ -297,7 +301,7 @@ export function ClubScreen() {
               </span>
             </div>
             <p className="mt-1.5 max-w-prose text-sm leading-snug text-sub">{copy.achievements.hint}</p>
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div data-all={allAchievements} className="club-achievements mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {CAREER_ACHIEVEMENTS.map((a) => {
                 const at = achievements.unlocked[a.id];
                 const item = ACH_UI.careerItems[a.id] ?? { name: a.id, desc: "" };
@@ -315,12 +319,20 @@ export function ClubScreen() {
                 );
               })}
             </div>
+            <button
+              type="button"
+              aria-expanded={allAchievements}
+              onClick={() => setAllAchievements((v) => !v)}
+              className={cx(buttonClass("secondary", "sm"), "mt-3 w-full sm:hidden")}
+            >
+              {allAchievements ? copy.achievements.showLess : copy.achievements.showAll(CAREER_ACHIEVEMENTS.length)}
+            </button>
           </section>
         </div>
 
         {/* Secondary column: reputation and the Progression Track (the unlock
             ladder, never hidden) on one board, the track as a plain list. */}
-        <div data-tour="club-progress" className="min-w-0 md:col-span-2">
+        <div data-tour="club-progress" className="min-w-0 max-md:order-2 md:col-span-2">
           <Panel className="p-4 sm:p-5">
             <div className="card-head"><h3 className="card-title">{copy.club.reputation}</h3></div>
             <p className="display mt-3 text-5xl font-extrabold leading-none text-ink">

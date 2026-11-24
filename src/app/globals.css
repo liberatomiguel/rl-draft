@@ -2175,9 +2175,12 @@ html.reduce-fx .card-float {
 
 .login-badge-day { border-color: #fbbf2470; box-shadow: inset 0 0 14px #fbbf2410; }
 
-/* Phone presentation: readable labels and touch-sized controls in every mode.
-   Keep card geometry and decorative glyphs intact; only text utilities and
-   interactive elements receive the minimums. No page-level overflow clipping. */
+/* The phone floor (DESIGN.md, "Phone"): no label under 11px and no control
+   under 44px, in every mode. A floor, not a layout: card geometry and
+   decorative glyphs are left alone, only text utilities and interactive
+   elements receive the minimums, and each screen's phone layout is designed
+   on top of it (the phone primitives further down). No page-level overflow
+   clipping. */
 @layer base {
   @media (max-width: 639px) {
     [class*="text-[6px]"], [class*="text-[7px]"],
@@ -2204,19 +2207,6 @@ html.reduce-fx .card-float {
     max-width: 100%;
   }
   .kicker { letter-spacing: 0.12em; }
-  .mobile-action-bar {
-    position: fixed;
-    inset-inline: 12px;
-    bottom: calc(72px + env(safe-area-inset-bottom));
-    z-index: 35;
-    width: auto;
-    padding: 8px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--bg-raised);
-    box-shadow: 0 -8px 24px rgb(0 0 0 / 30%);
-  }
-  .mobile-action-space { padding-bottom: 88px; }
   .mobile-bracket { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 20px; }
   .mobile-bracket > * { min-width: 0; }
   .mobile-list-table { display: block; }
@@ -2226,11 +2216,7 @@ html.reduce-fx .card-float {
   .mobile-list-table > tbody > tr > td:nth-child(2) { flex: 1; min-width: 0; }
   .mobile-list-table > tbody > tr > td[colspan] { flex-basis: 100%; }
   .mobile-list-table > tbody > tr > td.hidden { display: none; }
-  .mobile-action-space { scroll-margin-bottom: 160px; }
-  .mobile-training-plan { padding-bottom: 190px; }
   .mobile-squad-card { min-height: 0; flex-direction: row; align-items: flex-start; gap: 12px; }
-  .mobile-results-space { padding-bottom: 160px; }
-  form.mobile-action-bar { max-height: 40dvh; overflow-y: auto; }
   .mobile-history-table { display: block; }
   .mobile-history-table > thead { display: none; }
   .mobile-history-table > tbody { display: grid; gap: 12px; }
@@ -2238,4 +2224,169 @@ html.reduce-fx .card-float {
   .mobile-history-table td { text-align: left; }
   .mobile-history-table td:first-child { grid-column: 1 / -1; }
   .mobile-history-table td::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 500; color: var(--faint); }
+}
+
+/* Mobile shell (design/mobile-redesign). While a run is in play PlayView sets
+   data-immersive on the html element: the phone's bottom nav is off (every
+   destination on it leaves /play and resets the run) and the page ends on the
+   bottom edge. Same breakpoint as the nav itself (md:hidden). */
+@media (max-width: 767px) {
+  html[data-immersive] .app-bottom-nav { display: none; }
+  html[data-immersive] .app-main { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+  /* The site footer and the "play" strip are not part of a run in play. */
+  html[data-immersive] .app-footer { display: none; }
+}
+
+/* Phone primitives (design/mobile-redesign, stage 2). Phone only: at 640px and
+   up none of this applies and the desktop layout is untouched. */
+@media (max-width: 639px) {
+  /* Rows, not boxes. A list of options or records is ONE board; each child is
+     a row under a hairline. The chosen row carries the orange rule on its
+     leading edge (the same rule the header and the bottom nav use). */
+  .phone-rows {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .phone-rows > * {
+    border-width: 0 0 1px;
+    border-style: solid;
+    border-color: var(--line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  /* A cleared legend challenge keeps its prismatic border for the desktop card. */
+  .phone-rows > .panel.ach-legend {
+    border-width: 0 0 1px;
+    border-color: var(--line);
+    border-radius: 0;
+    background: none;
+    animation: none;
+  }
+  .phone-rows > :last-child { border-bottom-width: 0; }
+  .phone-rows > [aria-checked="true"] {
+    background: color-mix(in srgb, var(--orange) 8%, transparent);
+    box-shadow: inset 3px 0 0 var(--orange);
+  }
+
+  /* The screen's one action, on ground. In flow when the screen fits, and it
+     stays on the bottom edge (over the nav, or on the edge itself in a run)
+     when the screen is longer: `sticky`, so nothing has to be padded for it
+     and it never floats over the text. It must be a direct child of the
+     screen's root for the whole page to carry it. Bleeds over main's 12px
+     phone gutter. */
+  .action-dock {
+    position: sticky;
+    bottom: calc(57px + env(safe-area-inset-bottom));
+    z-index: 35;
+    margin-inline: -12px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  html[data-immersive] .action-dock {
+    bottom: 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  /* The draft's team dock: the six slots stay on the bottom edge while the
+     player picks (the phone has no bottom nav during a run). */
+  .team-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 35;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--bg-raised);
+  }
+  .team-dock-space { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+  /* Stage 3: the career on a phone. CareerShell sets `data-career` while the
+     career's own chrome is up. One bar on top: the site header is not pinned
+     there (it scrolls away; the career bar sticks at 0). One bar on the bottom:
+     the career's tabs (CareerTabBar) in place of the site nav. Toasts open
+     clear of both top bars. */
+  html[data-career] .app-header { position: static; }
+  html[data-career] .app-bottom-nav { display: none; }
+  html[data-career] .toast-stack { top: calc(7.5rem + env(safe-area-inset-top)); }
+
+  /* Sections that open on demand (`PhoneFold`): the achievement groups and
+     the Profile's season track. Closed: the section's head alone, with room
+     for the toggle on its right. The career does not use it (Miguel, 24/11:
+     its blocks stay open; HQ shows a glance board instead, `HubGlance`). */
+  .phone-fold .card-head,
+  .phone-fold .phone-fold-head { padding-right: 2.75rem; }
+  .phone-fold[data-open="false"] .card-head ~ *:not(.phone-fold-toggle),
+  .phone-fold[data-open="false"] .phone-fold-head ~ *:not(.phone-fold-toggle) { display: none; }
+  .phone-fold[data-open="false"] .card-head { margin-bottom: -1rem; border-bottom-color: transparent; }
+  .phone-fold[data-open="false"] .phone-fold-head { border-bottom-color: transparent; }
+
+  /* The Club's 22 career achievements: the first six, until the key under the
+     list asks for the rest. */
+  .club-achievements[data-all="false"] > :nth-child(n + 7) { display: none; }
+
+  /* The training plan's CTA: sticky inside the plan's board (which must clip
+     its overflow, not hide it), over the career's tab bar. */
+  .plan-dock {
+    position: sticky;
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    z-index: 20;
+    padding-bottom: 12px;
+    background: #0f1626;
+  }
+
+  /* Tabs, not boxes: a row of view buttons becomes one strip of underlined
+     tabs across the screen, each an equal share of it. */
+  .phone-tabs {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .phone-tabs > * {
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    margin-bottom: -1px;
+    padding-inline: 2px;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--sub);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .phone-tabs > [aria-pressed="true"],
+  .phone-tabs > [aria-selected="true"] {
+    border-bottom-color: var(--orange);
+    background: none;
+    color: var(--ink);
+  }
+
+  /* Three figures side by side (an event's prize, points and field): on a
+     phone three rows on hairlines, the label left and the figure right. */
+  .stat-trio { display: block; }
+  .stat-trio > * {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+    padding: 6px 0;
+    border-width: 0 0 1px;
+    border-radius: 0;
+    background: none;
+  }
+  .stat-trio > *:last-child { border-bottom-width: 0; }
+  .stat-trio > * > * { margin-top: 0; white-space: nowrap; }
+
+  /* HQ's wire: the headline and two rows; the board's closing row opens the rest. */
+  .hq-wire .wire-rows > :nth-child(n + 3) { display: none; }
 }

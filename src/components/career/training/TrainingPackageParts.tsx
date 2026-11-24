@@ -265,7 +265,9 @@ function OptionTile({
       onClick={onClick}
       className={cx(
         // The picked option is the orange hairline (DESIGN.md: state is a coloured hairline); the icon keeps its own tone.
-        "relative flex min-h-[4.75rem] w-full min-w-0 items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors",
+        // Phone: a row of the step's board (`.phone-rows`): the title and, for the
+        // chosen row only, what it does. The mark of the recommended one rides the title's line.
+        "relative flex min-h-12 w-full min-w-0 items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors sm:min-h-[4.75rem]",
         selected ? "border-orange bg-orange/[0.06]" : "border-line hover:border-line-strong",
       )}
     >
@@ -273,9 +275,12 @@ function OptionTile({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="display block truncate text-sm font-bold uppercase tracking-[0.03em] text-ink">{title}</span>
-        <span className="mt-1 block text-xs leading-snug text-sub">{effect}</span>
-        {recommended ? <RecommendedTag className="mt-2">{C.training.cycle.recommended}</RecommendedTag> : null}
+        <span className="flex items-center justify-between gap-2">
+          <span className="display block truncate text-sm font-bold uppercase tracking-[0.03em] text-ink">{title}</span>
+          {recommended ? <RecommendedTag className="shrink-0 sm:hidden">{C.training.cycle.recommended}</RecommendedTag> : null}
+        </span>
+        <span className={cx("mt-1 block text-xs leading-snug text-sub", !selected && "max-sm:hidden")}>{effect}</span>
+        {recommended ? <RecommendedTag className="mt-2 max-sm:hidden">{C.training.cycle.recommended}</RecommendedTag> : null}
       </span>
     </button>
   );
@@ -337,6 +342,7 @@ function Step({
   title,
   done,
   cols,
+  rows = false,
   children,
 }: {
   n: number;
@@ -344,6 +350,8 @@ function Step({
   title: string;
   done: boolean;
   cols: string;
+  /** Phone: the options are rows of one board (the one-column steps). */
+  rows?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -356,7 +364,7 @@ function Step({
         <span className="card-title">{title}</span>
         <span className="sr-only">{icon}</span>
       </p>
-      <div className={cx("grid gap-2", cols)} role="radiogroup" aria-label={title}>
+      <div className={cx("grid", rows ? "phone-rows sm:gap-2" : "gap-2", cols)} role="radiogroup" aria-label={title}>
         {children}
       </div>
     </section>
@@ -431,7 +439,7 @@ export function PlanPicker({
   const showSame = lastPlan !== null;
 
   return (
-    <div className="mobile-training-plan space-y-4">
+    <div className="space-y-4">
       {initial ? (
         <div>
           <p className="mb-2 text-xs font-semibold text-sub">{Y.running}</p>
@@ -454,7 +462,7 @@ export function PlanPicker({
         </div>
       ) : null}
 
-      <Step n={1} icon={<TrendUpIcon className="h-4 w-4" />} title={Y.steps.objective} done={picks.objective !== null} cols="grid-cols-1 sm:grid-cols-3">
+      <Step n={1} icon={<TrendUpIcon className="h-4 w-4" />} title={Y.steps.objective} done={picks.objective !== null} cols="grid-cols-1 sm:grid-cols-3" rows>
         {OBJECTIVES.map((o) => (
           <OptionTile
             key={o}
@@ -486,7 +494,7 @@ export function PlanPicker({
         </Step>
         <EffectLine text={picks.focus ? `${focusLabel(C, picks.focus)}: ${focusEffectOf(C, picks.focus, statLabels)}` : Y.focusHint} />
       </div>
-      <Step n={3} icon={<GaugeIcon className="h-4 w-4" />} title={Y.steps.intensity} done={picks.workload !== null} cols="grid-cols-1 sm:grid-cols-3">
+      <Step n={3} icon={<GaugeIcon className="h-4 w-4" />} title={Y.steps.intensity} done={picks.workload !== null} cols="grid-cols-1 sm:grid-cols-3" rows>
         {WORKLOADS.map((w) => (
           <OptionTile
             key={w}
@@ -526,8 +534,11 @@ export function PlanPicker({
         />
       </div>
 
-      {/* The CTA: what this cycle promises, what it risks, then Start. */}
-      <div className="mobile-action-bar border-t border-line pt-4">
+      {/* The CTA: what this cycle promises, what it risks, then Start.
+          Phone: it rides the bottom edge while the plan is on screen and rests
+          at the plan's end (`.plan-dock`, sticky). It was a fixed card that kept
+          floating over the squad's growth and everything under the plan. */}
+      <div className="plan-dock border-t border-line pt-4">
         {proj ? (
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="display text-2xl font-bold uppercase leading-none text-ink">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>

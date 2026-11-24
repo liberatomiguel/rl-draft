@@ -459,11 +459,12 @@ export function MarketScreen() {
   const factorLabel = (key: string): string =>
     (C.market.factor as Record<string, string>)[key] ?? key;
 
-  const tabs: [Tab, string][] = [
-    ["free", C.market.freeAgents],
-    ["contracted", C.market.contracted],
-    ["coaches", C.market.coaches],
-    ["deals", C.market.myDeals],
+  // The label, and its short form for the phone's one-row tab strip.
+  const tabs: [Tab, string, string][] = [
+    ["free", C.market.freeAgents, C.market.tabsShort.free],
+    ["contracted", C.market.contracted, C.market.tabsShort.contracted],
+    ["coaches", C.market.coaches, C.market.tabsShort.coaches],
+    ["deals", C.market.myDeals, C.market.tabsShort.deals],
   ];
 
   return (
@@ -500,15 +501,17 @@ export function MarketScreen() {
       ) : null}
 
       {/* Tabs */}
-      <div data-tour="market-tabs" className="rise-in grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" style={{ animationDelay: "40ms" }}>
-        {tabs.map(([k, label]) => (
+      {/* Phone: one row of four underlined tabs (`.phone-tabs`); it was a 2 x 2 grid of boxes. */}
+      <div data-tour="market-tabs" className="phone-tabs rise-in sm:flex sm:flex-wrap sm:gap-2" style={{ animationDelay: "40ms" }}>
+        {tabs.map(([k, label, short]) => (
           <Chip
             key={k}
             active={tab === k}
             onClick={() => setTab(k)}
             className="min-h-10 px-3.5 text-[11px]"
           >
-            {label}
+            <span className="max-sm:hidden">{label}</span>
+            <span className="sm:hidden">{short}</span>
             {k === "coaches" && save.mail.some(m => !m.read && m.kind === "unlock" && ["coach", "exProCoach"].includes(String(m.params?.name))) ? <span className="h-2 w-2 rounded-full bg-orange" aria-label={C.toolbox.newTag} /> : null}
             {k === "deals" && bids.length + tradesToAnswer.length > 0 ? (
               <span className="rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] normal-case tracking-normal text-orange-bright">
@@ -523,7 +526,7 @@ export function MarketScreen() {
       {tab === "free" || tab === "contracted" ? (
         <>
           {/* Toolbar: search · sort · region */}
-          <Panel data-tour="market-search" className="rise-in space-y-2.5 p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
+          <Panel data-tour="market-search" className="rise-in space-y-2.5 p-4 max-sm:!border-0 max-sm:![background:none] max-sm:!p-0 sm:p-5" style={{ animationDelay: "60ms" }}>
             <input
               type="search"
               value={search}
@@ -596,8 +599,9 @@ export function MarketScreen() {
             </Panel>
           ) : (
             <>
+              {/* Phone: one board of rows (`.phone-rows`), a hairline between players. */}
               <div
-                className="rise-in grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+                className="phone-rows rise-in grid grid-cols-1 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3"
                 style={{ animationDelay: "80ms" }}
               >
                 {visible.slice(0, shown).map((r) => {
@@ -607,9 +611,12 @@ export function MarketScreen() {
                   // rc.35 (front C): an org signed him in this window — no offer until the next one.
                   const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
                   const locked = repLocked || justSigned;
-                  const tile = (
+                  return (
                     <PlayerCardTile
-                      key={locked ? undefined : r.view.id}
+                      key={r.view.id}
+                      // A gated player is dimmed on the tile itself (it was a wrapper, which
+                      // the phone's row list would have ruled instead of the tile).
+                      className={locked ? "opacity-65 saturate-50" : undefined}
                       name={r.view.name}
                       overall={r.view.overall}
                       age={r.view.age}
@@ -657,10 +664,6 @@ export function MarketScreen() {
                         </>
                       }
                     />
-                  );
-                  if (!locked) return tile;
-                  return (
-                    <div key={r.view.id} className="opacity-65 saturate-50">{tile}</div>
                   );
                 })}
               </div>

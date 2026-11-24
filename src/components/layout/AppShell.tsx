@@ -175,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
         {/* A solid bar, not glass (DESIGN.md): the page does not show through. */}
-        <header className="sticky top-0 z-40 border-b border-line bg-raised">
+        <header className="app-header sticky top-0 z-40 border-b border-line bg-raised">
           {/* v2.0 (G2): three zones. Brand (home) · destinations, left-aligned
               beside it · utilities on the right, with language and account
               split off by a rule. The logo is the Home link on desktop, so the
@@ -215,7 +215,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <div className="ml-auto flex shrink-0 items-center gap-0.5">
+            {/* Mobile (design/mobile-redesign): the bar carries four things a
+                thumb can hit (language, rankings, settings, account), each 44px.
+                Discord leaves the phone header: it is on the Home and in the
+                footer, and the bar had six controls in 343px. */}
+            <div className="ml-auto flex shrink-0 items-center gap-0 md:gap-0.5">
               {SITE.discordUrl ? (
                 <a
                   href={SITE.discordUrl}
@@ -223,18 +227,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   rel="noopener noreferrer"
                   aria-label={t.NAV_UI.joinDiscord}
                   title={t.NAV_UI.joinDiscord}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-sub transition-colors hover:bg-white/5 hover:text-ink"
+                  className="hidden h-9 w-9 items-center justify-center rounded-lg text-sub transition-colors hover:bg-white/5 hover:text-ink md:flex"
                 >
                   <DiscordIcon className="h-5 w-5" />
                 </a>
               ) : null}
+              <LangToggle compact />
               <AppLink
                 href="/leaderboards"
                 aria-label={t.NAV.leaderboards}
                 title={t.NAV.leaderboards}
                 onClick={() => sfx.click()}
                 className={cx(
-                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                  "flex h-11 w-11 items-center justify-center rounded-lg transition-colors md:h-9 md:w-9",
                   pathname.startsWith("/leaderboards")
                     ? "bg-orange/12 text-orange-bright"
                     : "text-sub hover:bg-white/5 hover:text-ink",
@@ -248,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 title={t.NAV.settings}
                 onClick={() => sfx.click()}
                 className={cx(
-                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                  "flex h-11 w-11 items-center justify-center rounded-lg transition-colors md:h-9 md:w-9",
                   pathname.startsWith("/settings")
                     ? "bg-orange/12 text-orange-bright"
                     : "text-sub hover:bg-white/5 hover:text-ink",
@@ -256,8 +261,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <GearIcon className="h-5 w-5" />
               </AppLink>
-              <span className="mx-1 h-5 w-px bg-line" aria-hidden />
-              <LangToggle />
+              <span className="mx-1 hidden h-5 w-px bg-line md:block" aria-hidden />
+              <span className="hidden md:block">
+                <LangToggle />
+              </span>
               <AccountChip />
             </div>
           </div>
@@ -270,7 +277,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             footer in view moved with them: a layout shift of 0.14–0.35 on a
             phone. Out of view, it cannot shift anything the player sees. */}
         <main className={cx(
-          "mx-auto min-h-svh min-w-0 w-full max-w-6xl flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12",
+          "app-main mx-auto min-h-svh min-w-0 w-full max-w-6xl flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12",
           pathname.startsWith("/career") ? "px-0 pt-0 md:px-4 md:pt-6" : "px-3 pt-4 sm:px-4 sm:pt-6",
         )}>
           {children}
@@ -280,10 +287,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <PlayStrip />
         <SiteFooter />
 
-        {/* Bottom nav (mobile) */}
+        {/* Bottom nav (mobile). A solid bar like the header (DESIGN.md: no
+            glass); the current destination carries the header's orange rule on
+            the bar's top edge as well as the colour. Hidden while a run is in
+            play (`html[data-immersive]`, set by PlayView): a stray thumb there
+            used to leave the page and reset the run. */}
         <nav
           aria-label={t.NAV_UI.ariaMain}
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+          className="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] md:hidden"
         >
           <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
             {NAV_ITEMS.map((item) => {
@@ -295,9 +306,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   item={item}
                   className={cx(
-                    "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 transition-colors",
-                    active ? "text-orange-bright" : "text-sub",
+                    "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 transition-colors",
+                    active
+                      ? "text-orange-bright after:absolute after:inset-x-3 after:top-[-1px] after:h-0.5 after:bg-orange"
+                      : "text-sub",
                   )}
+                  aria-current={active ? "page" : undefined}
                 >
                   <span className="relative">
                     <Icon className="h-6 w-6" />
@@ -347,19 +361,37 @@ function AccountChip() {
     <button
       type="button"
       onClick={() => { sfx.click(); useSignInDialog.getState().show(); }}
-      className="display rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:bg-white/5 hover:text-ink"
+      className="display min-h-11 rounded-lg px-2.5 text-xs font-bold uppercase tracking-[0.06em] text-sub transition-colors hover:bg-white/5 hover:text-ink md:min-h-0 md:px-3 md:py-1.5"
     >
       {t.NAV_UI.logIn}
     </button>
   );
 }
 
-/** EN / PT language switch — always visible in the header. */
-function LangToggle() {
+/** EN / PT language switch — always visible in the header. On a phone
+ *  (`compact`) it is one 44px button that shows the current language and flips
+ *  to the other: two options, so one tap is the whole control. */
+function LangToggle({ compact = false }: { compact?: boolean }) {
   const set = useSettings((s) => s.set);
   // The URL's language in the static HTML (PT on /pt pages), then the player's.
   const active = useUiLocale();
   const { NAV_UI } = useCopy();
+  if (compact) {
+    const next = active === "en" ? "pt" : "en";
+    return (
+      <button
+        type="button"
+        aria-label={`${NAV_UI.ariaLanguage}: ${next.toUpperCase()}`}
+        onClick={() => {
+          sfx.click();
+          set("lang", next);
+        }}
+        className="display flex h-11 w-11 items-center justify-center rounded-lg text-xs font-bold uppercase tracking-[0.06em] text-sub transition-colors hover:bg-white/5 hover:text-ink md:hidden"
+      >
+        <span className="rounded-sm border border-line-strong px-1.5 py-1 leading-none">{active}</span>
+      </button>
+    );
+  }
   return (
     <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label={NAV_UI.ariaLanguage}>
       {(["en", "pt"] as const).map((l) => (

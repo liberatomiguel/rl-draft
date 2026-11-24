@@ -258,64 +258,89 @@ export function TournamentScreen({ run }: { run: RunState }) {
   const userRecord =
     deriveSwissRecords(t, revealedKeys).get("user") ?? { wins: 0, losses: 0, gameDiff: 0 };
 
+  const stageLabel = playoffsOnScreen(run.mode, t, revealedSwissRounds) ? T.playoffs : T.swiss;
+  const recordBadge =
+    run.mode !== "quick" ? (
+      <Badge tone="blue" className="!text-sm">
+        {T.record(userRecord.wins, userRecord.losses)}
+      </Badge>
+    ) : null;
+
+  // The playback controls. Desktop: a row above the series. Phone: the same
+  // controls on the bottom edge (`.action-dock`), under the thumb, so the live
+  // series is the first thing on the screen instead of the fourth.
+  const controls = (phone: boolean) =>
+    !finished || !allRevealed ? (
+      <>
+        {!running ? (
+          <Button variant="primary" className={cx(phone && "flex-1")} onClick={() => setRunning(true)}>
+            <PlayGlyph /> {queue.length === 0 ? T.start : T.resume}
+          </Button>
+        ) : (
+          <Button variant="secondary" className={cx(phone && "flex-1")} onClick={() => setRunning(false)}>
+            <PauseGlyph /> {T.pause}
+          </Button>
+        )}
+        <div className="flex shrink-0 overflow-hidden rounded-lg border border-line">
+          {([1, 2, 4] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSpeed(s)}
+              aria-pressed={speed === s}
+              className={cx(
+                "display px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors",
+                speed === s ? "bg-blue/20 text-blue-bright" : "text-sub hover:text-ink",
+              )}
+            >
+              {T.speed(s)}
+            </button>
+          ))}
+        </div>
+        {phone ? (
+          // 44px key: the words would take the play button's room at 375px.
+          <button
+            type="button"
+            onClick={skipAll}
+            aria-label={T.skipAll}
+            title={T.skipAll}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-sub"
+          >
+            <SkipGlyph />
+          </button>
+        ) : (
+          <Button variant="ghost" size="sm" className="shrink-0" onClick={skipAll}>
+            {T.skipAll}
+          </Button>
+        )}
+      </>
+    ) : (
+      <>
+        <Button variant="primary" size="lg" className={phone ? "w-full" : "min-w-64"} onClick={finishRun}>
+          {T.toResults}
+        </Button>
+        {phone ? null : <span className="text-xs text-faint">{T.reviewHint}</span>}
+      </>
+    );
+
   return (
     <div className="rise-in">
       <RunStepper run={run} />
 
       <SectionTitle
-        kicker={playoffsOnScreen(run.mode, t, revealedSwissRounds) ? T.playoffs : T.swiss}
+        kicker={stageLabel}
         title={run.daily ? dailyRunTag(run.daily, DAILY_TEXT) : T.title}
-        right={
-          run.mode !== "quick" ? (
-            <Badge tone="blue" className="!text-sm">
-              {T.record(userRecord.wins, userRecord.losses)}
-            </Badge>
-          ) : null
-        }
-        className="mb-4"
+        right={recordBadge}
+        className="mb-4 max-sm:hidden"
       />
+      {/* Phone: no head. The stepper says "Tournament", the series names its
+          own stage and round, and the record sits on the Swiss path. Only a
+          daily run keeps a line, for the day it belongs to. */}
+      {run.daily ? (
+        <p className="kicker mb-2 sm:hidden">{dailyRunTag(run.daily, DAILY_TEXT)}</p>
+      ) : null}
 
       {/* Controls */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {!finished || !allRevealed ? (
-          <>
-            {!running ? (
-              <Button variant="primary" onClick={() => setRunning(true)}>
-                <PlayGlyph /> {queue.length === 0 ? T.start : T.resume}
-              </Button>
-            ) : (
-              <Button variant="secondary" onClick={() => setRunning(false)}>
-                <PauseGlyph /> {T.pause}
-              </Button>
-            )}
-            <div className="flex overflow-hidden rounded-lg border border-line">
-              {([1, 2, 4] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSpeed(s)}
-                  aria-pressed={speed === s}
-                  className={cx(
-                    "display px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors",
-                    speed === s ? "bg-blue/20 text-blue-bright" : "text-sub hover:text-ink",
-                  )}
-                >
-                  {T.speed(s)}
-                </button>
-              ))}
-            </div>
-            <Button variant="ghost" size="sm" onClick={skipAll}>
-              {T.skipAll}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="primary" size="lg" className="min-w-64" onClick={finishRun}>
-              {T.toResults}
-            </Button>
-            <span className="text-xs text-faint">{T.reviewHint}</span>
-          </>
-        )}
-      </div>
+      <div className="mb-6 flex flex-wrap items-center gap-2 max-sm:hidden">{controls(false)}</div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
         <div className="min-w-0 space-y-6">
@@ -343,6 +368,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
               revealedRounds={revealedSwissRounds}
               liveKey={liveEntry?.key ?? null}
               onInspect={setInspectKey}
+              record={recordBadge}
             />
           ) : null}
 
@@ -360,9 +386,10 @@ export function TournamentScreen({ run }: { run: RunState }) {
             />
           ) : null}
 
-          {/* Bottom shortcut to results — long pages shouldn't need a scroll back up. */}
+          {/* Bottom shortcut to results — long pages shouldn't need a scroll back up.
+              The phone has the dock for that. */}
           {finished && allRevealed ? (
-            <Button variant="primary" size="lg" full onClick={finishRun}>
+            <Button variant="primary" size="lg" full className="max-sm:hidden" onClick={finishRun}>
               {T.toResults}
             </Button>
           ) : null}
@@ -378,6 +405,9 @@ export function TournamentScreen({ run }: { run: RunState }) {
           />
         ) : null}
       </div>
+
+      {/* Phone: the controls, a direct child of the root (see `.action-dock`). */}
+      <div className="action-dock mt-4 flex items-center gap-2 sm:hidden">{controls(true)}</div>
     </div>
   );
 }
@@ -468,6 +498,10 @@ function swissRecordsThroughRounds(
 // Match Center
 // ---------------------------------------------------------------------------
 
+/** A team name on the scoreline: two centred lines on a phone, one cut line from 640px. */
+const TEAM_NAME =
+  "display min-w-0 font-bold uppercase tracking-wide max-sm:line-clamp-2 max-sm:w-full max-sm:text-center max-sm:text-sm max-sm:leading-tight max-sm:[overflow-wrap:anywhere] sm:truncate sm:text-base md:text-lg";
+
 function MatchCenter({
   t,
   entry,
@@ -537,8 +571,8 @@ function MatchCenter({
   })();
 
   return (
-    <Panel strong glow={live ? "orange" : undefined} className="p-5">
-      <div className="mb-1 flex items-center justify-between gap-3">
+    <Panel strong glow={live ? "orange" : undefined} className="p-4 sm:p-5">
+      <div className="mb-1 flex items-center justify-between gap-3 max-sm:mb-3">
         <p className="kicker">
           {seriesStageLabel(t, entry, T)} ·{" "}
           {T.bestOf(
@@ -551,7 +585,7 @@ function MatchCenter({
         </p>
         <div className="flex items-center gap-2">
           {live ? (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-orange-bright">
+            <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-orange-bright">
               <span className="live-dot h-2 w-2 rounded-full bg-orange" /> {T.live}
             </span>
           ) : null}
@@ -566,10 +600,12 @@ function MatchCenter({
       </div>
 
       {/* Scoreline */}
+      {/* Phone: each side is the crest over the name, and the name wraps to
+          two lines instead of being cut ("SEU TI…", "HOGA…" at 375px). */}
       <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
           <TeamLogo orgId={teamA.orgId} seasonId={teamSeasonId(teamA)} size="sm" />
-          <p className={cx("display min-w-0 truncate text-base font-bold uppercase tracking-wide md:text-lg", teamA.isUser ? "text-orange-bright" : "text-ink")}>
+          <p className={cx(TEAM_NAME, teamA.isUser ? "text-orange-bright" : "text-ink")}>
             {teamDisplayName(teamA, T)}
           </p>
         </div>
@@ -578,8 +614,8 @@ function MatchCenter({
           <span className="mx-2 text-faint">–</span>
           <span className={cx(done && winsB > winsA ? "text-good" : "text-ink")}>{winsB}</span>
         </p>
-        <div className="flex min-w-0 items-center justify-end gap-2">
-          <p className={cx("display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide md:text-lg", teamB.isUser ? "text-orange-bright" : "text-ink")}>
+        <div className="flex min-w-0 flex-col-reverse items-center gap-1.5 sm:flex-row sm:justify-end sm:gap-2">
+          <p className={cx(TEAM_NAME, "sm:text-right", teamB.isUser ? "text-orange-bright" : "text-ink")}>
             {teamDisplayName(teamB, T)}
           </p>
           <TeamLogo orgId={teamB.orgId} seasonId={teamSeasonId(teamB)} size="sm" />
@@ -617,7 +653,7 @@ function MatchCenter({
               </span>
               {/* game.score is [winnerGoals, loserGoals]; the card sits in the
                   winner's column, so showing it as-is reads "win score first". */}
-              <span className="display font-bold text-ink">
+              <span className="display ml-2 shrink-0 whitespace-nowrap font-bold text-ink">
                 {game.score[0]}–{game.score[1]}
               </span>
             </li>
@@ -657,6 +693,7 @@ function SwissPath({
   revealedRounds,
   liveKey,
   onInspect,
+  record,
 }: {
   run: RunState;
   t: TournamentState;
@@ -665,6 +702,8 @@ function SwissPath({
   revealedRounds: number;
   liveKey: string | null;
   onInspect: (key: string) => void;
+  /** The user's W-L badge: shown here on a phone (desktop has it in the head). */
+  record?: React.ReactNode;
 }) {
   const { TOURNAMENT_UI: T } = useCopy();
   // The user's series per swiss round, with reveal state.
@@ -718,14 +757,17 @@ function SwissPath({
 
   return (
     <Panel className="p-4">
-      <h3 className="display mb-3 text-sm font-bold uppercase tracking-[0.16em] text-ink">
-        {T.yourPath}: {T.swiss}
-      </h3>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
+          {T.yourPath}: {T.swiss}
+        </h3>
+        {record ? <span className="shrink-0 sm:hidden">{record}</span> : null}
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
         {cells.map((cell, i) => {
           if (cell.state === "none") {
             return (
-              <div key={i} className="flex min-h-[72px] items-center justify-center rounded-lg border border-dashed border-line text-[10px] uppercase tracking-widest text-faint">
+              <div key={i} className="flex min-h-14 items-center justify-center rounded-lg border border-dashed border-line text-[10px] uppercase tracking-widest text-faint sm:min-h-[72px]">
                 {T.round(cell.round)}
               </div>
             );
@@ -1103,6 +1145,15 @@ function SwissStandings({
         </table>
       </Panel>
     </aside>
+  );
+}
+
+function SkipGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+      <path d="M5 5.5v13l9-6.5-9-6.5Z" />
+      <rect x="16" y="5.5" width="2.5" height="13" rx="0.5" />
+    </svg>
   );
 }
 

@@ -37,7 +37,7 @@ export function SiteFooter() {
   // WEB-01: a PT reader is sent to the PT pages (/pt/sobre), not the EN twins.
   const locale = useUiLocale();
   return (
-    <footer className="border-t border-line">
+    <footer className="app-footer border-t border-line">
       {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
       <div className="mx-auto w-full max-w-6xl px-4 py-6 pb-24 md:pb-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

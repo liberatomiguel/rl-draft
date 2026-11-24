@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/Button";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { PhoneFold } from "@/components/ui/PhoneFold";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { Toggle } from "@/components/ui/Toggle";
@@ -256,11 +257,15 @@ export default function ProfilePage() {
       <SectionTitle title={SEASON.name} className="mb-4" />
       <div className="mb-12 grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
-          <Panel strong className="p-4 sm:p-5">
-            <h3 className="display text-lg uppercase leading-none text-ink">{P.seasonTrack}</h3>
-            <p className="mb-4 mt-1.5 text-sm leading-snug text-sub">{P.seasonTrackHint}</p>
-            <SeasonRankTrack xp={profile.xp} peakRankId={profile.season.peakRankId} />
-          </Panel>
+          {/* Phone: the eight-rank ladder (900px) opens on demand. The banner at the
+              top already says the rank and how far the next one is. */}
+          <PhoneFold label={P.seasonTrack}>
+            <Panel strong className="p-4 sm:p-5">
+              <h3 className="phone-fold-head display text-lg uppercase leading-none text-ink">{P.seasonTrack}</h3>
+              <p className="mb-4 mt-1.5 text-sm leading-snug text-sub">{P.seasonTrackHint}</p>
+              <SeasonRankTrack xp={profile.xp} peakRankId={profile.season.peakRankId} />
+            </Panel>
+          </PhoneFold>
           <div className="overflow-hidden rounded-xl border border-line">
             <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
               <Figure label={P.seasonRating} value={String(profile.mmr)} />

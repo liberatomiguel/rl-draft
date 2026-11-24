@@ -138,6 +138,33 @@ which is also the fallback for every character the trial lacks.
   being played).
 - Arrows only on a link that leaves the page it is on.
 
+## Phone (under 640px)
+
+The phone is designed, not shrunk (decisions #178 to #182, R148). Desktop
+rules above still hold; these are added.
+
+- **The first screen is the screen's job and its one action.** A returning
+  player acts without scrolling. The action sits in the thumb zone, docked
+  over the bottom bar when the screen is long (`.action-dock`).
+- **One bar on top, one on the bottom, about 110px together.** Never two
+  navigations. A run hides the site nav; the career swaps it for its own tabs
+  and keeps a way back to the menu in its top bar.
+- **Rows, not boxes.** A list is one board of rows under hairlines
+  (`.phone-rows`); a row of view buttons is a strip of underlined tabs
+  (`.phone-tabs`). Three figures side by side become three rows (`.stat-trio`).
+- **A summary screen shows figures, the tab shows the block.** HQ on a phone
+  is the day, the inbox, a board of one figure per subject (two to a row) and
+  the headline; each figure opens its tab. Blocks are not folded shut in the
+  career: Miguel played folded sections and refused them (24/11).
+- **A long list shows its start and a key for the rest** ("Show all 22"), or
+  opens by group where the groups are the content (achievements).
+- **Cards stay cards.** Challenges and the album are grids on a phone too
+  (two and three to a row); only the card's detail moves to the sheet it opens.
+- **The floor is global:** no label under 11px, no control under 44px
+  (`globals.css`, "The phone floor"). Screens are designed on top of it.
+- Checked at 375 x 812 and 320 x 640 before it ships; no page-level sideways
+  scroll at either.
+
 ## Never
 
 - Frosted panels, ambient glows, glow on buttons or borders.

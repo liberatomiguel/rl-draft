@@ -224,7 +224,9 @@ export function DayCard({
     <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-hidden p-4 sm:p-5", inserting && "!border-cyan/40")}>
       {/* header: date + season progress */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
+        {/* Phone: the career bar pinned right above already says the date, the
+            split and the week, so the card opens on its badges and the week. */}
+        <div className="min-w-0 max-sm:hidden">
           <p className="kicker">
             {C.hub.today}
             {clock.split ? <span className="text-faint"> · {C.calendar.split(clock.split)} · {C.hub.week(clock.week)}</span> : null}
@@ -291,10 +293,10 @@ export function DayCard({
                     {autoAdvance ? C.hub.pause : C.hub.play}
                   </span>
                 </Button>
-                <Button variant="secondary" size="md" className="min-h-11" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); advanceToNextStop(); }} disabled={!running || autoAdvance || scrimPlaying}>
-                  {C.hub.skipTo(stopLabel)}
+                <Button variant="secondary" size="md" className="min-h-11 max-sm:min-w-0 max-sm:flex-1" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); advanceToNextStop(); }} disabled={!running || autoAdvance || scrimPlaying}>
+                  <span className="truncate">{C.hub.skipTo(stopLabel)}</span>
                 </Button>
-                <Button variant="ghost" size="md" className="min-h-11" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); else advanceDay(); }} disabled={!running || autoAdvance || scrimPlaying}>
+                <Button variant="ghost" size="md" className="min-h-11 shrink-0" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); else advanceDay(); }} disabled={!running || autoAdvance || scrimPlaying}>
                   {C.hub.plusDay}
                 </Button>
               </>

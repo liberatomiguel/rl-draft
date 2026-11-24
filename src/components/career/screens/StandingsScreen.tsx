@@ -366,6 +366,16 @@ function chipClass(selected: boolean, on = "!border-blue-bright/60 !bg-blue/15 !
   return cx(buttonClass("secondary", "sm"), selected ? on : "!text-sub hover:!text-ink");
 }
 
+/** Phone: the two race tables are two underlined tabs across the screen (they were boxes). */
+function phoneTab(selected: boolean): string {
+  return cx(
+    "max-sm:!min-h-11 max-sm:flex-1 max-sm:!rounded-none max-sm:!border-0 max-sm:!border-b-2 max-sm:!bg-transparent max-sm:!px-1",
+    selected ? "max-sm:!border-orange max-sm:!text-ink" : "max-sm:!border-transparent",
+  );
+}
+/** Phone: a region is one of seven 44px keys on one row (they wrapped to two rows of boxes). */
+const PHONE_KEY = "max-sm:!min-w-0 max-sm:justify-center max-sm:!px-0";
+
 export function StandingsScreen() {
   // Job: where the club stands in the points race against the cut line. The one decision: which race to read (this split's Major, or the season's Worlds).
   const copy = useCareerCopy();
@@ -437,9 +447,9 @@ export function StandingsScreen() {
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
       <SectionTitle title={copy.standings.title} className="mb-5" />
 
-      <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-3">
         {/* Tabs: the two race tables */}
-        <div data-tour="standings-tabs" className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
+        <div data-tour="standings-tabs" className="flex flex-wrap gap-1.5 max-sm:w-full max-sm:flex-nowrap max-sm:gap-0 max-sm:border-b max-sm:border-line" role="tablist" aria-label={copy.standings.title}>
           {(
             [
               ["major", copy.race.majorTab],
@@ -454,7 +464,7 @@ export function StandingsScreen() {
               aria-selected={kind === key}
               aria-controls={`${tabIds}-panel`}
               onClick={() => setTab(key)}
-              className={chipClass(kind === key)}
+              className={cx(chipClass(kind === key), phoneTab(kind === key))}
             >
               {label}
             </button>
@@ -462,14 +472,14 @@ export function StandingsScreen() {
         </div>
 
         {/* Region selector */}
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label={copy.standings.regionLabel}>
+        <div className="flex flex-wrap gap-1.5 max-sm:grid max-sm:w-full max-sm:grid-cols-7 max-sm:gap-1" role="group" aria-label={copy.standings.regionLabel}>
           {REGIONS.map((r) => (
             <button
               key={r}
               type="button"
               onClick={() => setPickedRegion(r)}
               aria-pressed={region === r}
-              className={chipClass(region === r, REGION_BADGE[r])}
+              className={cx(chipClass(region === r, REGION_BADGE[r]), PHONE_KEY)}
             >
               {r}
             </button>

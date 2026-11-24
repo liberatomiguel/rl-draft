@@ -10,6 +10,246 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.1.0-rc.5] — 2026-11-24 · The phone redesign: every screen under 640px (staging)
+
+Branch `design/mobile-redesign` (cut from staging rc.4), merged into `staging`.
+Six stages; the five entries under this one are stages 1 to 5 as they were
+first drawn. This entry is stage 6 and Miguel's review of stages 3 to 5
+(24/11). Rules: `DESIGN.md`, "Phone". Decisions: DESIGN-DECISIONS #178 to
+#182, R148. Measurements: `docs/redesign/MOBILE-PLAN.md`. Phone only: from
+640px up nothing changes. No engine, store or save change.
+
+### Added
+- Career, phone: a way back to the main menu in the career's top bar, always
+  on screen.
+- HQ, phone: a glance board (`hub/HubGlance`): squad, training, race and
+  finances as one figure each, two to a row, and the progression as a line.
+  Each cell opens its tab.
+- Club, phone: the 22 career achievements show six and a "Show all 22" key
+  (`achievements.showAll` / `showLess`, EN and PT).
+
+### Changed
+- **HQ on a phone shows only what matters today** (the day, the inbox, the
+  glance board, the season goal, the headline and two stories): 2,524px at
+  375 x 812, from 6,100px with every block open. The full squad, training,
+  race, finance and progression blocks, the transfer wire and the honours are
+  read in their tabs. Stage 3's folded sections are gone (Miguel: the closed
+  cards do not work; focus on each tab).
+- **No folded sections in the career.** Club, Finances, Training and Standings
+  show every board open again. Finances puts sponsors, the ledger and the
+  loans ahead of the progression ladder; the Club puts the reputation ahead
+  of the achievements.
+- **Challenges are a grid on a phone**, two compact tiles to a row (stage 5
+  drew rows; Miguel asked for the grid). 4,588px, from 14,132px.
+- **The Collection opens every rarity** (stage 5 closed the empty ones):
+  three cards to a row, 5,820px on a new album, from 11,376px.
+- Matchday card and event lobby, phone: prize, season points and field
+  strength are three rows, not three boxes.
+- HQ's wire, phone: the masthead is the desk's name alone; "Full feed" closes
+  the board.
+- The global 44px / 11px rule is kept and documented as the phone floor
+  (#182).
+
+### Fixed
+- HQ's wire showed four stories on a phone where stage 3 meant two.
+  Root cause: the rule counted `article:nth-of-type` inside a wrapper that
+  holds one article each, so it never matched. The rows have a class now
+  (`.wire-rows`).
+- Matchday card: "Pontos da temporada" wrapped to three lines. Root cause:
+  three boxes a third of a phone wide, each with a wide-tracked label.
+
+### Removed
+- `lib/usePhone` (its one user, the Collection's closed rarities, is gone);
+  the fold styles for HQ; dead phone CSS (`.mobile-action-bar`,
+  `.mobile-action-space`, `.mobile-results-space`).
+
+### Not verified
+- A physical phone and Safari. A signed-in profile; an album or a challenge
+  list with progress; the Follow screen. Content pages were measured (no
+  sideways scroll on 18 of them at 375px) and not redesigned.
+
+## [2.1.0-rc.5] · stage 5 of the phone redesign (as first drawn; the entry above says what Miguel changed)
+
+Branch `design/mobile-redesign`. Plan and measurements:
+`docs/redesign/MOBILE-PLAN.md`. Everything here applies under 640px; the
+desktop layout is unchanged. No engine or store change.
+
+### Added
+- `lib/usePhone`: true under 640px, followed live, for a phone-only default
+  state.
+
+### Changed
+- Challenges: a tier is one board of rows; the row opens the briefing
+  (14,132px to 3,862px).
+- Collection: a rarity with nothing collected starts closed, three cards to a
+  row, the filters on two rows (11,376px to 1,354px on a new album).
+- Achievements: each group opens on demand (11,116px to 1,250px). The Profile,
+  which embeds the list, went from 14,910px to 4,370px with the season track
+  folded too.
+- Leaderboards: the nine boards are one row that scrolls sideways.
+- Quiz: the answer field sits in the puzzle's card (`.plan-dock`).
+
+### Fixed
+- Leaderboards (PT): the line under the title was the Challenges' intro.
+  Root cause: `LEADERBOARDS_UI.subtitle` in `copy.pt.ts` held a pasted copy of
+  `CHALLENGES_UI.subtitle`. It now translates the English line.
+- Challenges: goal lines ran up to 27px past the screen at 375px. Root cause:
+  a card's three star goals did not wrap inside the single phone column. The
+  phone shows the row instead of the card, so the goals are in the briefing.
+- Quiz: the answer field covered the stats strip. Root cause: it was
+  `position: fixed` (`.mobile-action-bar`) over whatever followed the puzzle.
+
+### Not verified
+- The full suite, `npm run build`, a physical phone, Safari; a signed-in
+  profile and an album or challenge list with progress.
+
+## [2.1.0-rc.5] · stage 4 of the phone redesign (as first drawn; the entry above says what Miguel changed)
+
+Branch `design/mobile-redesign`. Plan and measurements:
+`docs/redesign/MOBILE-PLAN.md`. Everything here applies under 640px; the
+desktop layout is unchanged. No engine or store change.
+
+### Added
+- `components/ui/PhoneFold` (stage 3's `HqFold`, now shared), `.phone-tabs`
+  and `.plan-dock` in `globals.css`.
+- Career copy `market.tabsShort` (EN and PT): the four market tabs in a
+  quarter of the screen each.
+
+### Changed
+- Market: one row of four underlined tabs, search without its board, players
+  as rows of one list.
+- Club: achievements, reputation / progression and the season history open on
+  demand (4,815px to 1,903px).
+- Finances: the gear ladder and the two loans open on demand; the ledger's
+  filters are a tab strip; the phone-only jump links are removed (4,509px to
+  2,015px).
+- Training: objective and intensity are rows, the attribute reference opens
+  on demand (4,505px to 3,238px).
+- Standings: two underlined tabs and seven region keys on one row; the title
+  race opens on demand.
+- Inbox: filters on one row; no empty reader board.
+- Event lobby: Play across the screen, the other two actions on one row.
+- The career player tile is tighter on a phone (Squad, Market, Training).
+
+### Fixed
+- Finances was 8px wider than the screen at 375px, which shrank the whole
+  page. Root cause: the ledger's three filter buttons sat beside its title in
+  a `.card-head` that does not wrap. They are a strip under the title now.
+- Training: Start floated over the squad's growth and every board under the
+  plan. Root cause: `.mobile-action-bar` is `position: fixed`, so it stayed
+  on screen after the plan had scrolled away, and the plan was padded 190px
+  to make room for it. It is `sticky` inside the plan's board now (the board
+  clips its overflow instead of hiding it, or it would be the scroll box).
+- Wizard, season review: the same floating card over the form; both use
+  `.action-dock`.
+- Market: a gated player was dimmed by a wrapper around the tile, which the
+  row list would have ruled instead of the tile. The tile is dimmed itself.
+
+### Not verified
+- The full suite, the soft-lock probe, `npm run build`, a physical phone,
+  Safari; the season review and Follow (not opened); event playback beyond a
+  first look.
+
+## [2.1.0-rc.5] · stage 3 of the phone redesign (as first drawn; the entry above says what Miguel changed)
+
+Branch `design/mobile-redesign`. Plan and measurements:
+`docs/redesign/MOBILE-PLAN.md`. Everything here applies under 640px; the
+desktop layout is unchanged. No engine or store change.
+
+### Added
+- `CareerTabBar`: the career's own bottom bar on a phone (HQ, Squad, Market,
+  Training, More). "More" is a sheet with the other six destinations and the
+  way back to the game's menu.
+- `PhoneFold`: an HQ section that opens on demand. Closed, it is the block's own
+  head.
+
+### Changed
+- Career chrome on a phone: 219px fixed to 110px. The site header is not
+  pinned inside the career and the site's bottom nav gives way to the
+  career's tabs (`html[data-career]`).
+- HQ on a phone: 7.5 screens to 3.3. Day card, then inbox, then two boards of
+  rows (team; race, finances, progression, season goal), the wire's headline
+  and two rows, the title race and the transfer wire folded.
+- Day card on a phone: no second date, "skip to" and "+1 day" on one row.
+- Finances and race heads carry their figure (balance, rank and points) while
+  folded.
+- Career toasts open under the top bars.
+
+### Fixed
+- Career navigation on a phone was a `<select>` under the top bar. Root cause:
+  rc.50 swapped a scrolling tab strip for a native select to save width; a
+  closed select hides the destinations and cost 53px of every career screen,
+  on top of the site's own bottom nav. The tabs are now the bottom bar.
+- Career bar at 320px: the season wrapped to two lines and the date was cut
+  ("SEG, 5 O…"). Root cause: the play button's label took 38vw. Under 360px
+  the button is its glyph (with an `aria-label`), and the season line
+  truncates instead of wrapping.
+
+### Not verified
+- The full suite, the soft-lock probe, `npm run build`, a physical phone,
+  Safari; the event weekend, Follow and the season review under the new shell.
+
+## [2.1.0-rc.5] · stage 2 of the phone redesign (as first drawn; the entry above says what Miguel changed)
+
+Branch `design/mobile-redesign`. Plan and measurements:
+`docs/redesign/MOBILE-PLAN.md`. Everything here applies under 640px; the
+desktop layout is unchanged.
+
+### Added
+- Three phone primitives in `globals.css`: `.phone-rows` (a list is one board
+  of rows), `.action-dock` (the screen's one action on ground, `sticky`) and
+  `.team-dock` (the draft's slots on the bottom edge).
+- Draft: the team dock. The six slots (three in Quick) stay in view while the
+  player picks. New copy keys `DRAFT_UI.dockPlayer / dockCoach / dockSub`
+  (EN and PT).
+
+### Changed
+- Setup is one screen: difficulties as rows (the chosen one spells out its
+  tagline), regions as eight 44px keys, section intros on desktop only.
+- Draft is one screen: reroll shares the region badge's row; the pitch is
+  desktop only while picking.
+- Review: pitch and team overall first, then chemistry, specials and the
+  readout; the six-card strip is desktop only.
+- Tournament: playback controls on the bottom edge, skip as a 44px key, the
+  head reduced to the series itself, the W-L record on the Swiss path.
+- Results: one 65px action row (play again, share), highlights as rows.
+- Achievement and reward toasts open under the header on a phone.
+- The site footer and the play strip are off while a run is in play.
+
+### Fixed
+- Review, Results: the pinned action floated over the page. Root cause:
+  `.mobile-action-bar` is `position: fixed` with a guessed bottom padding, so
+  text ran under and around it, and on Results it was a 124px block of three
+  wrapped buttons. The run screens now use `.action-dock` (`sticky`, a direct
+  child of the screen root), which needs no padding and cannot overlap.
+- Tournament: team names cut at 375px ("SEU TI…"). Root cause: logo, name and
+  score shared one row of 311px, leaving the name about 68px. On a phone each
+  side is now the crest over a two-line name.
+- Tournament: a game's score broke onto two lines beside a long label. Root
+  cause: the score span could shrink; it is now `shrink-0 whitespace-nowrap`.
+- Results: a toast covered Play again. Root cause: the toast stacks were
+  anchored to the bottom of the phone screen, where the action is.
+
+### Not verified
+- The full suite, `npm run build`, a physical phone, Safari.
+
+## [2.1.0-rc.5] · stage 1 of the phone redesign (as first drawn; the entry above says what Miguel changed)
+
+Audit of every screen at 375px, the proposed phone rules and the six stages: `docs/redesign/MOBILE-PLAN.md`.
+
+### Changed
+- **Phone header**: logo, language (one 44px button that flips EN / PT), rankings, settings, account. Discord is off the phone header (it is on the Home and in the footer). Desktop is unchanged.
+- **Bottom nav**: a solid bar (it was the last frosted bar, against DESIGN.md) with the header's orange rule on the current destination. It is hidden during draft, review and tournament: every destination on it leaves `/play`, which resets the run.
+- **Home on a phone**: both mode buttons are inside the first screen (hero 433px to 246px, modes 567px to 444px). The pitch is two lines, the community links sit at the end of the menu, BETA is a mark beside the career title. TODAY is a list of rows with a chevron (820px to 439px); the button that repeated each row's title is desktop-only.
+- **Run stepper on a phone**: one 44px row with the current step and its place ("1/4"); it wrapped onto two lines (86px).
+
+### Fixed
+- **The rank name was cut on the Home scorebug ("BRON")** at 375px and under. Root cause: the rating label ("RATING DA TEMPORADA") set the paper cell's width on one line and the 80px rank art took the rest. The label now takes two lines on a phone and the art steps down to 56px under 360px.
+- **The Home wordmark ran 25px past a 320px screen** (known since rc.1). Root cause: a fixed 48px size. It is fluid under 375px now (`clamp`).
+
+### Not verified
+- The full suite, `npm run build`, a physical phone, Safari. Checked in the dev build at 375, 320 and 1024px.
+
 ## [2.1.0-rc.4] — 2026-11-21 · Etapa 1 closes: the Worlds spread by region, the Matchday screens (staging)
 
 Branch `claude/etapa1-final-1692be`, cut from `2.1.0-rc.3` (`c9187fa`). Published to `staging` only; production is unchanged (every Etapa 1 flag stays off outside the staging build).

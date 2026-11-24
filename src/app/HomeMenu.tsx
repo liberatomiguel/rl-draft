@@ -72,8 +72,11 @@ const warmRunStore = {
 };
 
 /** One row of the TODAY rundown: title and line on the left, action on the right. */
+/** Phone: the row itself is the control (the whole row is the hit area), so it
+ *  ends in a chevron and the outlined button that repeated its title is off. */
 const ROW =
-  "group relative flex flex-col gap-3 border-b border-line px-1 py-5 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-3";
+  "group relative flex items-center justify-between gap-3 border-b border-line px-1 py-4 transition-colors sm:gap-6 sm:px-3 sm:py-5";
+const ROW_BUTTON = "pointer-events-none shrink-0 max-sm:hidden group-hover:border-orange group-hover:bg-orange/15";
 
 export default function HomeMenu() {
   const { APP, HOME, HOME_SEO, QUIZ_UI, DAILY_TEXT, NAV_UI } = useCopy();
@@ -160,17 +163,22 @@ export default function HomeMenu() {
           DESIGN.md: the wordmark is the only italic in the game and the only
           large orange; the player's own line (rank art, season rating, rank)
           sits beside it on one quiet board. Nothing else competes here. */}
-      <section className="grid grid-cols-1 items-end gap-x-12 gap-y-6 pb-8 pt-2 sm:pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:pb-10 md:pt-6">
+      {/* Phone (design/mobile-redesign): the first screen is the wordmark, the
+          player's line and the draft card with its button. The pitch is two
+          lines there (the whole text is in the section under the menu) and the
+          community links sit with the other ways out at the end of the menu. */}
+      <section className="grid grid-cols-1 items-end gap-x-12 gap-y-4 pb-5 pt-1 sm:gap-y-6 sm:pb-8 sm:pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:pb-10 md:pt-6">
         <div className="min-w-0">
-          <h1 className="display text-5xl font-extrabold uppercase italic leading-[0.9] sm:text-7xl md:text-[5.25rem]">
+          {/* Fluid under 375px: at 320px a fixed 44px wordmark ran 9px past the screen. */}
+          <h1 className="display text-[clamp(2.25rem,13.2vw,2.75rem)] font-extrabold uppercase italic leading-[0.9] sm:text-7xl md:text-[5.25rem]">
             <span className="text-ink">Rocket</span>
             <span className="text-orange">Draft</span>
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-sub md:text-[15px]">{APP.description}</p>
+          <p className="mt-3 line-clamp-2 max-w-md text-sm leading-snug text-sub sm:mt-4 sm:line-clamp-none sm:leading-relaxed md:text-[15px]">{APP.description}</p>
 
           {/* Community links (v2.0): under the pitch, where they are seen. */}
           {SITE.discordUrl || SITE.supportUrl ? (
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <div className="mt-4 hidden flex-wrap items-center gap-2.5 sm:flex">
               {SITE.discordUrl ? (
                 <a
                   href={SITE.discordUrl}
@@ -198,26 +206,31 @@ export default function HomeMenu() {
         <div className="w-full md:w-auto md:min-w-[23rem] md:max-w-[30rem]">
           {/* The partner line sits over the scorebug, beside the wordmark. */}
           {fiftyFifty ? (
-            <p className="mb-3 flex items-center gap-2.5 md:justify-end">
+            <p className="mb-2 flex items-center gap-2.5 sm:mb-3 md:justify-end">
               <span className="display text-xs font-medium uppercase tracking-[0.05em] text-sub">{HOME.presentedBy}</span>
               {/* eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production) */}
-              <img src={fiftyFifty} alt="50/50" width={92} height={36} className="h-9 w-auto object-contain" />
+              <img src={fiftyFifty} alt="50/50" width={92} height={36} className="h-6 w-auto object-contain sm:h-9" />
             </p>
           ) : null}
           {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR).
-              Read in this order: the rating (the number that moves), the rank, the season line. */}
-          <div className="flex min-h-[6.75rem] w-full items-stretch overflow-hidden rounded-xl border border-line-strong">
+              Read in this order: the rating (the number that moves), the rank, the season line.
+              Phone: a shorter bug (5.25rem), the rating label on two lines so the paper
+              cell stays narrow and the rank name has room ("BRONZE" was cut to "BRON"). */}
+          <div className="flex min-h-[5.25rem] w-full items-stretch overflow-hidden rounded-xl border border-line-strong sm:min-h-[6.75rem]">
             {mounted ? (
               <>
                 {/* Dark cell on the left: the rank art (drawn for a dark ground), the rank, the quiet line.
                     A long rank name ("Supersonic Legend") wraps to two lines instead of pushing the rating. */}
-                <div className="flex min-w-0 flex-1 items-center gap-3.5 bg-surface-strong px-4 py-3">
-                  <RankBadge rank={rank} variant="menu" size="md" />
+                <div className="flex min-w-0 flex-1 items-center gap-3 bg-surface-strong px-3 py-2.5 sm:gap-3.5 sm:px-4 sm:py-3">
+                  {/* Under 360px the art steps down to 56px, so the rank name keeps its line. */}
+                  <span className="shrink-0">
+                    <RankBadge rank={rank} variant="menu" size="md" className="max-[359px]:!h-14 max-[359px]:!w-14" />
+                  </span>
                   <div className="min-w-0">
-                    {playtest ? null : <p className="text-xs text-sub">{SEASON.name}</p>}
-                    <p className="display mt-1 text-2xl font-bold uppercase leading-[1.02] text-ink">{rank.label}</p>
+                    {playtest ? null : <p className="whitespace-nowrap text-xs text-sub">{SEASON.name}</p>}
+                    <p className="display mt-0.5 text-[clamp(1.05rem,5.2vw,1.25rem)] font-bold uppercase leading-[1.02] text-ink [overflow-wrap:anywhere] sm:mt-1 sm:text-2xl">{rank.label}</p>
                     {runs > 0 || titles > 0 ? (
-                      <p className="mt-2 flex flex-wrap gap-x-3 text-xs">
+                      <p className="mt-1 flex flex-wrap gap-x-3 text-xs sm:mt-2">
                         {runs > 0 ? <span className="text-sub">{HOME.runs(runs)}</span> : null}
                         {titles > 0 ? <span className="font-semibold text-amber-300">{HOME.titles(titles)}</span> : null}
                       </p>
@@ -226,9 +239,9 @@ export default function HomeMenu() {
                 </div>
                 {/* Paper cell on the right: the season rating, the one figure of the screen.
                     Five digits or more step the figure down so the cell keeps its width. */}
-                <div className="flex shrink-0 flex-col justify-center bg-paper px-5 py-3 text-right text-paper-ink">
-                  <p className="display text-xs font-bold uppercase leading-none tracking-[0.04em]">{HOME.seasonStrip.rating}</p>
-                  <p className={cx("display mt-1.5 font-extrabold leading-[0.85] tabular-nums", String(mmr).length > 4 ? "text-[2.5rem]" : "text-6xl")}>{mmr}</p>
+                <div className="flex shrink-0 flex-col justify-center bg-paper px-3 py-2.5 text-right text-paper-ink min-[360px]:px-4 sm:px-5 sm:py-3">
+                  <p className="display ml-auto max-w-[6.5rem] text-xs font-bold uppercase leading-[1.05] tracking-[0.04em] sm:max-w-none sm:leading-none">{HOME.seasonStrip.rating}</p>
+                  <p className={cx("display mt-1 font-extrabold leading-[0.85] tabular-nums sm:mt-1.5", String(mmr).length > 4 ? "text-[clamp(1.6rem,8.5vw,2rem)] sm:text-[2.5rem]" : "text-[clamp(2.25rem,12vw,3rem)] sm:text-6xl")}>{mmr}</p>
                 </div>
               </>
             ) : null}
@@ -244,14 +257,17 @@ export default function HomeMenu() {
             action on each is the inverse of its field. */}
         <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <div className={cx(careerOn ? "md:col-span-7" : "md:col-span-8")}>
-            <div className="solid solid-orange group flex h-full min-h-[14rem] flex-col justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5 sm:min-h-[17rem] sm:p-7 md:p-9">
+            {/* Phone: the card is as tall as its content and its two actions
+                share one row, so the button sits inside the first screen. */}
+            <div className="solid solid-orange group flex h-full flex-col justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5 sm:min-h-[17rem] sm:p-7 md:p-9">
               <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} {...warmRunStore} />
               <div className="pointer-events-none relative">
                 <h2 className="display text-4xl uppercase leading-[0.92] sm:text-5xl md:text-6xl">{HOME.playClassic}</h2>
-                <p className="mt-3 max-w-md text-[15px] font-semibold leading-snug">{HOME.playClassicDesc}</p>
+                <p className="mt-2.5 max-w-md text-[15px] font-semibold leading-snug sm:mt-3">{HOME.playClassicDesc}</p>
               </div>
-              <div className="pointer-events-none relative mt-8 flex flex-wrap items-center gap-3">
-                <span aria-hidden className={cx(buttonClass("primary", "lg"), "px-8 !bg-paper-ink !text-paper group-hover:!bg-[#1b2030]")}>
+              {/* One row from 360px; under it the two wrap to a row each (nothing breaks mid-label). */}
+              <div className="pointer-events-none relative mt-5 flex flex-wrap items-stretch gap-2.5 sm:mt-8 sm:items-center sm:gap-3">
+                <span aria-hidden className={cx(buttonClass("primary", "lg"), "max-sm:flex-[1.15] max-sm:whitespace-nowrap max-sm:px-3 sm:px-8 !bg-paper-ink !text-paper group-hover:!bg-[#1b2030]")}>
                   {HOME.playNow}
                 </span>
                 {/* The one exception: Quick Draft sits above the card's hit area. */}
@@ -260,7 +276,7 @@ export default function HomeMenu() {
                   onClick={() => goToSetup("quick")}
                   {...warmRunStore}
                   title={HOME.quickDraftDesc}
-                  className="display pointer-events-auto relative z-10 inline-flex min-h-12 items-center rounded-lg border-[1.5px] border-paper-ink/70 px-5 text-base font-bold uppercase leading-none tracking-[0.04em] text-paper-ink transition-colors hover:bg-paper-ink hover:text-paper"
+                  className="display pointer-events-auto relative z-10 inline-flex min-h-12 items-center justify-center rounded-lg border-[1.5px] border-paper-ink/70 px-5 text-base font-bold uppercase leading-none tracking-[0.04em] text-paper-ink transition-colors hover:bg-paper-ink hover:text-paper max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-2 max-sm:text-[15px]"
                 >
                   {HOME.quickDraftCta}
                 </button>
@@ -270,21 +286,26 @@ export default function HomeMenu() {
 
           {careerOn ? (
             <AppLink href="/career" className="group block md:col-span-5">
-              <div className="solid solid-blue flex h-full min-h-[14rem] flex-col justify-between p-5 transition-transform duration-200 group-hover:-translate-y-0.5 sm:p-7 md:p-9">
+              <div className="solid solid-blue flex h-full flex-col justify-between p-5 transition-transform duration-200 group-hover:-translate-y-0.5 sm:min-h-[14rem] sm:p-7 md:p-9">
                 {/* Read like the draft card beside it: the title on one line, one
                     line of pitch, the BETA note under it, and the action at the
-                    foot on the same line as the draft card's. */}
+                    foot on the same line as the draft card's. Phone: BETA is a
+                    mark beside the title; its note is said again by the notice
+                    that opens with the career. */}
                 <div className="relative">
-                  <h2 className="display whitespace-nowrap text-3xl uppercase leading-[0.92] sm:text-4xl lg:text-[2.6rem]">{HOME.careerTitle}</h2>
+                  <h2 className="display flex flex-wrap items-center gap-x-2 gap-y-1.5 text-3xl uppercase leading-[0.92] sm:flex-nowrap sm:whitespace-nowrap sm:text-4xl lg:text-[2.6rem]">
+                    {HOME.careerTitle}
+                    <span className="rounded-sm border border-white/50 px-1 py-1 text-[11px] font-bold leading-none tracking-[0.04em] sm:hidden">{NAV_UI.beta}</span>
+                  </h2>
                   {/* Light text on blue reads a step heavier than dark on orange: Medium here matches the draft card's line. */}
-                  <p className="mt-3 max-w-sm text-[15px] font-medium leading-snug">{HOME.careerDesc}</p>
+                  <p className="mt-2.5 max-w-sm text-[15px] font-medium leading-snug sm:mt-3">{HOME.careerDesc}</p>
                   {/* The mode's status is one framed strip under the pitch: the BETA mark, a rule, its note. */}
-                  <p className="mt-4 flex max-w-sm items-center gap-3 rounded-lg border border-white/40 px-3 py-2 text-xs leading-snug">
+                  <p className="mt-4 hidden max-w-sm items-center gap-3 rounded-lg border border-white/40 px-3 py-2 text-xs leading-snug sm:flex">
                     <span className="display shrink-0 text-base font-bold uppercase leading-none tracking-[0.04em]">{NAV_UI.beta}</span>
                     <span className="min-w-0 border-l border-white/35 pl-3">{HOME.careerBetaNote}</span>
                   </p>
                 </div>
-                <span className={cx(buttonClass("primary", "lg"), "relative mt-8 w-fit px-8 !bg-paper !text-paper-ink group-hover:!bg-white")}>
+                <span className={cx(buttonClass("primary", "lg"), "relative mt-5 w-fit px-8 sm:mt-8 !bg-paper !text-paper-ink group-hover:!bg-white")}>
                   {HOME.careerPlay}
                 </span>
               </div>
@@ -326,9 +347,10 @@ export default function HomeMenu() {
                   </h3>
                   <p className="mt-1.5 text-sm leading-snug text-sub">{HOME.challengesDesc}</p>
                 </div>
-                <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
+                <span aria-hidden className={cx(buttonClass("secondary", "md"), ROW_BUTTON)}>
                   {HOME.challenges}
                 </span>
+                <RowChevron />
               </AppLink>
             )}
 
@@ -351,7 +373,7 @@ export default function HomeMenu() {
                   ) : null}
                 </div>
                 {dailyDone ? (
-                  <div className="shrink-0 sm:text-right">
+                  <div className="max-w-[42%] shrink-0 text-right sm:max-w-none">
                     {dailyResults[today]?.placement === "champion" ? (
                       <Badge tone="good">{HOME.dailyVictory} +{dailyResults[today]?.xp} XP</Badge>
                     ) : (
@@ -360,9 +382,12 @@ export default function HomeMenu() {
                     <p className="mt-1.5 text-xs text-faint">{HOME.dailyComeBack}</p>
                   </div>
                 ) : (
-                  <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
-                    {HOME.dailyPlay}
-                  </span>
+                  <>
+                    <span aria-hidden className={cx(buttonClass("secondary", "md"), ROW_BUTTON)}>
+                      {HOME.dailyPlay}
+                    </span>
+                    <RowChevron />
+                  </>
                 )}
               </div>
             )}
@@ -383,9 +408,12 @@ export default function HomeMenu() {
                 {quizDone ? (
                   <Badge tone={quizToday?.solved ? "good" : "neutral"} className="shrink-0">{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
                 ) : (
-                  <span aria-hidden className={cx(buttonClass("secondary", "md"), "pointer-events-none shrink-0 group-hover:border-orange group-hover:bg-orange/15")}>
-                    {HOME.quizPlay}
-                  </span>
+                  <>
+                    <span aria-hidden className={cx(buttonClass("secondary", "md"), ROW_BUTTON)}>
+                      {HOME.quizPlay}
+                    </span>
+                    <RowChevron />
+                  </>
                 )}
               </div>
             )}
@@ -507,6 +535,17 @@ export default function HomeMenu() {
               <XGlyph /> {HOME.followTwitter}
             </a>
           ) : null}
+          {/* Phone: the support link left the hero, so it sits with the other ways out. */}
+          {SITE.supportUrl ? (
+            <a
+              href={SITE.supportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-sub underline-offset-4 hover:text-ink hover:underline sm:hidden"
+            >
+              <CoffeeGlyph className="h-3.5 w-3.5" /> {HOME.support}
+            </a>
+          ) : null}
         </p>
 
         <HomeSignInNudge />
@@ -599,6 +638,15 @@ function HomeSignInNudge() {
         {H.signInNudge}
       </button>
     </p>
+  );
+}
+
+/** The phone's row affordance: this row opens something. Desktop rows keep their button. */
+function RowChevron() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-faint sm:hidden" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

@@ -411,7 +411,7 @@ export const PT: Copy = {
 
   LEADERBOARDS_UI: {
     title: "Rankings",
-    subtitle: "Puzzles com seed fixo, das primeiras conexões aos drafts avançados. Vença equipes históricas, encare gauntlets ou resolva o Laboratório de Draft. Cada estrela paga uma vez.",
+    subtitle: "Seus melhores elencos e marcos. Entre com seu e-mail para salvar na nuvem e subir nos rankings globais.",
     yourRecords: "Seus recordes",
     signInTitle: "Entre para competir",
     loginDialogTitle: "Criar conta / Entrar",
@@ -586,6 +586,9 @@ export const PT: Copy = {
     slotCoach: "Técnico",
     slotSub: "Reserva",
     slotOrg: "Org",
+    dockPlayer: (n: number) => `J${n}`,
+    dockCoach: "Téc.",
+    dockSub: "Res.",
     empty: "Vazio",
     slotFull: "Vagas cheias",
     alreadyDrafted: "Já draftado",

@@ -77,7 +77,7 @@ export function PlayerCardTile({
         // glow. State (hover, selected) only colours the hairline.
         "group relative flex w-full flex-col text-left transition-[border-color,transform]",
         rarityFrame ? `card-frame card-${baseRarityOf(Math.round(overall))}` : cx("rounded-xl border bg-surface", frame.border),
-        size === "sm" ? "p-3" : "p-4",
+        size === "sm" ? "p-3" : "p-3 sm:p-4",
         onClick && !disabled && "cursor-pointer hover:-translate-y-0.5 hover:!border-orange/60",
         selected && "!border-orange",
         disabled && "cursor-not-allowed opacity-50",
@@ -103,7 +103,7 @@ export function PlayerCardTile({
         </div>
         {/* The deciding figure: the overall, set as a number with its label under it. */}
         <div className="shrink-0 text-right leading-none">
-          <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-2xl" : "text-3xl")}>
+          <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-2xl" : "text-2xl sm:text-3xl")}>
             {Math.round(overall)}
           </div>
           <div className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</div>
@@ -111,13 +111,13 @@ export function PlayerCardTile({
       </div>
 
       {potText || phase ? (
-        <div className="relative mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="relative mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 sm:mt-2.5">
           {potText ? <span className="display text-xs font-semibold text-blue-bright">{potText}</span> : null}
           {phase ? <PhaseChip phase={phase} /> : null}
         </div>
       ) : null}
 
-      {footer ? <div className="relative mt-2.5 border-t border-line pt-2.5 text-xs text-sub">{footer}</div> : null}
+      {footer ? <div className="relative mt-2 border-t border-line pt-2 text-xs text-sub sm:mt-2.5 sm:pt-2.5">{footer}</div> : null}
     </Wrapper>
   );
 }

@@ -2532,3 +2532,17 @@ Regras de tela que o motor não decide:
 - **A mesa (plano/pausa) toma o lugar do Match Center** enquanto o evento segura a série; os controles de reprodução somem nesse tempo. Uma série jogada na mesa não é reprisada: o banner e a súmula aparecem direto, e a reprodução para uma vez ali ("Retomar" pede a próxima rodada).
 - **Sem técnico**, a etiqueta das escolhas pré-preenchidas é "Capitão" (o piso de planejamento do R145), e o botão é "Deixar com o capitão".
 - A súmula abre aberta na série do usuário e fechada nas da IA. As estatísticas da temporada no elenco contam todas as séries do usuário (copas da comunidade incluídas), como `accumulateBoxStats` já fazia.
+
+## R148 — 24 de novembro de 2026: a carreira no celular (v2.1.0-rc.5)
+
+Parte do redesenho mobile (`docs/redesign/MOBILE-PLAN.md`, DESIGN-DECISIONS #178 a #182). Só abaixo de 640px; o desktop não muda.
+
+- **Uma barra em cima, uma embaixo.** O cabeçalho do site deixa de ficar preso dentro da carreira (`html[data-career]`); a barra da carreira (data, avançar) gruda no topo e as abas viram a barra de baixo (`CareerTabBar`: QG, Elenco, Mercado, Treinos, Mais), no lugar do `<select>`. Calendário, Finanças, Classificação, Notícias, Clube e Saves ficam em "Mais"; o contador de e-mails não lidos aparece no "Mais".
+- **Voltar ao menu fica sempre na tela**: uma seta à esquerda da barra da carreira (Miguel, 24/11: sentiu falta; a saída estava a três toques, dentro de "Mais"). "Voltar ao menu" continua em "Mais".
+- **O QG no celular mostra só o essencial, e isto se afasta do HQ-CONTRACT H7** (que mandava a mesma ordem de blocos numa coluna): o dia, a caixa de entrada, um painel-resumo (`HubGlance`: elenco, treino, corrida e finanças com um número cada, dois por linha, e a progressão numa linha), a meta da temporada e a manchete com duas notícias. Cada célula abre a sua aba, onde o bloco inteiro vive. Os blocos completos de elenco, treino, corrida, finanças e progressão, a janela de transferências e a corrida pela história não aparecem no QG do celular. De 640px para cima o QG é o de sempre.
+- **Nada de cards fechados na carreira.** A etapa 3 dobrou os blocos do QG e a etapa 4 os de Clube, Finanças, Treinos e Classificação; Miguel jogou e recusou (24/11): "focar em cada aba e deixar no QG só o mais importante". As abas ficam com tudo aberto, reordenadas: em Finanças, patrocinadores, movimentações e empréstimos vêm antes da escada de progressão (a maior da tela); no Clube, a reputação vem antes das conquistas, que mostram seis e uma tecla "Ver todas as 22".
+- **Mercado**: as quatro abas cabem numa linha com rótulos curtos (Livres, Contrato, Coaches, Negócios); a lista é um quadro de linhas.
+- **Treinos**: as opções do plano são linhas (o efeito aparece na opção escolhida) e o botão do plano fica grudado dentro do próprio quadro.
+- **Dia de jogo**: prêmio, pontos e nível do campo são três linhas, não três caixas (os rótulos quebravam em três linhas).
+- Um aviso por e-mail que aponta para `/career#career-progression` cai no topo do QG no celular (o bloco de progressão não está lá); a linha "Progressão" do painel leva à escada em Finanças.
+- **Não feito:** celular real e Safari; a reprodução do evento mantém os controles acima da série; a tela de acompanhamento (Follow) não foi aberta.

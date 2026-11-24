@@ -39,7 +39,7 @@ export function CareerToaster() {
   if (!mounted || toasts.length === 0) return null;
   return createPortal(
     <div
-      className="pointer-events-none fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 z-[80] flex max-h-[30dvh] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto p-1 sm:bottom-auto sm:top-16 sm:max-h-[calc(100dvh-9rem)]"
+      className="toast-stack pointer-events-none fixed top-[calc(4rem+env(safe-area-inset-top))] right-2 z-[80] flex max-h-[30dvh] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto p-1 sm:top-16 sm:max-h-[calc(100dvh-9rem)]"
       aria-live="polite"
     >
       {toasts.slice(0, 3).map((toast) => (

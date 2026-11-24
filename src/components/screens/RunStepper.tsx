@@ -42,7 +42,7 @@ export function RunStepper({ run }: { run: RunState }) {
   const currentIndex = phaseIds.findIndex((p) => p === run.phase);
 
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-4 flex items-center justify-between gap-2 sm:mb-6 sm:flex-wrap sm:gap-3">
       <div className="flex min-w-0 max-w-full items-center gap-2 md:gap-3">
         <Button
           variant="secondary"
@@ -52,7 +52,7 @@ export function RunStepper({ run }: { run: RunState }) {
           onClick={() => router.push("/")}
           title={SETUP.back}
           aria-label={SETUP.back}
-          className="h-8 !min-h-8 w-8 shrink-0 !px-0"
+          className="h-11 !min-h-11 w-11 shrink-0 !px-0 sm:h-8 sm:!min-h-8 sm:w-8"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
             <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -63,11 +63,11 @@ export function RunStepper({ run }: { run: RunState }) {
             one in ink on a flat tag, the ones to come faint. */}
         <ol className="flex min-w-0 flex-wrap items-center gap-1.5 md:gap-2" aria-label="Run progress">
           {phaseIds.map((phase, i) => (
-            <li key={phase} className="flex items-center gap-1.5 md:gap-2">
-              {i > 0 ? <span className="h-px w-3 bg-line-strong md:w-5" aria-hidden /> : null}
+            <li key={phase} className={cx("flex items-center gap-1.5 md:gap-2", i !== currentIndex && "max-sm:hidden")}>
+              {i > 0 ? <span className="h-px w-3 bg-line-strong max-sm:hidden md:w-5" aria-hidden /> : null}
               <span
                 className={cx(
-                  "display rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase leading-tight tracking-[0.05em] md:text-xs",
+                  "display rounded-sm px-1.5 py-0.5 text-sm font-semibold uppercase leading-tight tracking-[0.05em] sm:text-[11px] md:text-xs",
                   i === currentIndex
                     ? "bg-white/[0.08] font-bold text-ink"
                     : i < currentIndex
@@ -81,6 +81,11 @@ export function RunStepper({ run }: { run: RunState }) {
             </li>
           ))}
         </ol>
+        {/* Phone: one row. The current step and its place in the run; the
+            other steps are off (they wrapped the stepper onto two lines). */}
+        <span className="display text-xs font-semibold tabular-nums text-faint sm:hidden" aria-hidden>
+          {currentIndex + 1}/{phaseIds.length}
+        </span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -104,7 +109,7 @@ export function RunStepper({ run }: { run: RunState }) {
             onClick={() => setConfirmReset(true)}
             title={RUN_UI.reset}
             aria-label={RUN_UI.reset}
-            className="h-8 !min-h-8 !gap-1.5 !px-2 hover:!bg-bad/10 hover:!text-bad"
+            className="h-11 !min-h-11 !gap-1.5 !px-2 hover:!bg-bad/10 hover:!text-bad sm:h-8 sm:!min-h-8"
           >
             <ResetIcon />
             <span className="hidden sm:inline">{RUN_UI.reset}</span>

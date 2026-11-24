@@ -308,7 +308,7 @@ export function WizardScreen() {
   // Job: found a new organisation. One decision per step (identity, crest,
   // region, first signings, difficulty); the one filled button moves on.
   return (
-    <div className="mobile-action-space mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
+    <div className="mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
       <SectionTitle
         kicker={C.wizard.step(step, TOTAL_STEPS)}
         title={C.wizard.title}
@@ -676,8 +676,8 @@ export function WizardScreen() {
         ) : null}
       </div>
 
-      {/* Step navigation */}
-      <div className="mobile-action-bar mt-8 flex items-center justify-between gap-3">
+      {/* Step navigation. Phone: on ground (`.action-dock`); it was a card floating over the form. */}
+      <div className="action-dock mt-6 flex items-center justify-between gap-3 sm:mt-8">
         {step > 1 ? (
           <Button variant="ghost" onClick={() => setStep(step - 1)}>
             {C.common.back}

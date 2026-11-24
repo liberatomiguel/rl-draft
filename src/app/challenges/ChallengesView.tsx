@@ -178,8 +178,9 @@ export function ChallengesView() {
         right={<Badge tone="gold">★ {CH.starsCount(starsEarned, starsMax)}</Badge>}
         className="mb-2"
       />
-      <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
-      <p className="mb-5 max-w-2xl text-xs leading-relaxed text-sub">{CH.unlockHint}</p>
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-sub sm:mb-6">{CH.subtitle}</p>
+      {/* Phone: each locked row names its rank and the briefing spells out the path. */}
+      <p className="mb-5 max-w-2xl text-xs leading-relaxed text-sub max-sm:hidden">{CH.unlockHint}</p>
 
       {modeLocked ? (
         <Panel className="p-8 text-center">
@@ -187,7 +188,7 @@ export function ChallengesView() {
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-sub">{CH.modeLockedBody}</p>
         </Panel>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {sections.map(({ tier, items }) => {
             const cleared = mounted ? items.filter((c) => completed[c.id]).length : 0;
             return (
@@ -199,7 +200,10 @@ export function ChallengesView() {
                   <span className="text-xs font-semibold text-faint">{CH.progress(cleared, items.length)}</span>
                   <span className="h-px flex-1 bg-line/60" />
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Phone (mobile redesign): two compact tiles to a row. The page was
+                    45 full cards in one column, 17 screens; the card's detail (the
+                    brief, the three star goals) is the briefing the tile opens. */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3">
                   {items.map((ch) => (
                     <ChallengeCard
                       key={ch.id}
@@ -252,6 +256,42 @@ function ChallengeCard({
   const perfect = earnedCount >= total;
   const starLabels = challengeStarLabels(ch, CH);
   const starXp = CHALLENGE.starXp[ch.tier] ?? 0;
+
+  // Phone: the challenge as a compact tile, two to a row. Who it is against and
+  // how strong on top, its name and kind, then where the player stands (the
+  // rank that opens it, the stars earned, or what it pays). The rest is the briefing.
+  const title = CH.catalog[ch.id]?.title ?? ch.title;
+  const tile = (
+    <span className={cx("flex flex-1 flex-col sm:hidden", locked && "opacity-75")}>
+      <span className="flex items-center justify-between gap-2">
+        {ch.kind === "draft" ? (
+          <span className={cx("min-w-0 truncate rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{CH.formats.draft}</span>
+        ) : (
+          <TeamLogo orgId={lineupById.get(ch.opponentLineupId)!.orgId} size="sm" />
+        )}
+        {isNew && !locked ? <NewTag>{CH.newTag}</NewTag> : null}
+        {ch.kind === "draft" ? null : <span className="display ml-auto text-lg font-bold leading-none text-ink">{bossOverall(ch.opponentLineupId)}</span>}
+      </span>
+      <span className={cx("display mt-2 line-clamp-2 text-sm font-bold uppercase leading-tight tracking-wide", locked ? "text-sub" : "text-ink")}>{title}</span>
+      <span className="mb-2.5 mt-1 block truncate text-xs text-sub">
+        {ch.kind === "draft" ? CH.tier[ch.tier] : `${CH.formats[ch.kind ?? "boss"]} · ${header.orgName}`}
+      </span>
+      <span className="mt-auto flex min-h-9 items-center gap-1.5 border-t border-line/60 pt-2">
+        {locked ? (
+          <>
+            <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-6 !w-6" />
+            <span className="display min-w-0 truncate text-xs font-bold uppercase text-sub">{rankLabel(ch.rankRequired)}</span>
+          </>
+        ) : perfect ? (
+          <Badge className="whitespace-nowrap" tone="gold">✓ {CH.status.cleared}</Badge>
+        ) : cleared ? (
+          <StarRow mask={starMask} total={total} />
+        ) : (
+          <span className="display whitespace-nowrap text-xs font-bold text-orange-bright">{CH.rewardXp(ch.reward.xp)}</span>
+        )}
+      </span>
+    </span>
+  );
 
   // A locked card is a readable preview, including goals and unlock progress.
   const inner = (
@@ -313,13 +353,14 @@ function ChallengeCard({
       onClick={onOpen}
       aria-label={locked ? `${CH.catalog[ch.id]?.title ?? ch.title} · ${CH.status.locked} · ${rankLabel(ch.rankRequired)}` : undefined}
       className={cx(
-        "panel relative overflow-hidden p-4 text-left transition-colors hover:!border-line-strong",
-        cleared ? "!border-amber-300/40" : locked ? "!bg-raised min-h-[23rem]" : style.glow,
+        "panel relative overflow-hidden p-3 text-left transition-colors hover:!border-line-strong max-sm:flex max-sm:flex-col sm:p-4",
+        cleared ? "!border-amber-300/40" : locked ? "!bg-raised sm:min-h-[23rem]" : style.glow,
         cleared && style.legend && "ach-legend",
       )}
     >
-      <div aria-hidden={locked || undefined} className={locked ? "opacity-70" : undefined}>{inner}</div>
-      {locked ? <div className="challenge-lock absolute inset-0 flex items-center justify-center p-4"><div className="w-full"><div className="mx-auto mb-2 flex w-fit items-center justify-center gap-3 rounded-xl px-3 py-2"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-11 !w-11" /><div className="text-left"><p className="text-[10px] font-bold uppercase tracking-widest text-orange-bright">{CH.status.locked}</p><p className="display text-lg font-bold text-ink">{rankLabel(ch.rankRequired)}</p></div><svg className="h-5 w-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
+      {tile}
+      <div aria-hidden={locked || undefined} className={cx("max-sm:hidden", locked && "opacity-70")}>{inner}</div>
+      {locked ? <div className="challenge-lock absolute inset-0 flex items-center justify-center p-4 max-sm:hidden"><div className="w-full"><div className="mx-auto mb-2 flex w-fit items-center justify-center gap-3 rounded-xl px-3 py-2"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-11 !w-11" /><div className="text-left"><p className="text-[10px] font-bold uppercase tracking-widest text-orange-bright">{CH.status.locked}</p><p className="display text-lg font-bold text-ink">{rankLabel(ch.rankRequired)}</p></div><svg className="h-5 w-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
     </button>
   );
 }
