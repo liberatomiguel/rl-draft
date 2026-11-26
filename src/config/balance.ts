@@ -1919,6 +1919,44 @@ export const CAREER_PRO_AGING = {
   card: { maxList: 10, maxText: 40, legendsEachSide: 2 },
 } as const;
 
+/**
+ * v2.2 Pro slice 7 (PRO-SPEC §8): the end-of-season gala and the scene
+ * nicknames. Scores only rank candidates; an award needs the data that
+ * supports it (a floor on games, a gain, a rating).
+ */
+export const CAREER_PRO_GALA = {
+  /** Players named per award (the winner plus the nominees behind him). */
+  nominees: 3,
+  /** The team of the season has this many players (a 3v3 side). */
+  teamSize: 3,
+  /** MVP score = overall × overallW + team result (0-1) × resultW + (average rating − 6) × ratingW when a box score exists. */
+  mvp: { overallW: 1, resultW: 25, ratingW: 3, minOverall: 70 },
+  /** Breakout: age at most maxAge in at most maxSeasonsPro seasons, with an overall gain of at least minGain; score = gain × gainW + overall × overallW + result × resultW. */
+  breakout: { maxAge: 20, maxSeasonsPro: 2, minGain: 2, gainW: 3, overallW: 0.3, resultW: 8 },
+  /** Most decisive needs a box-score line: at least minGames, and (series MVPs + deciding moments) per game of at least minShare. */
+  decisive: { minGames: 10, minShare: 0.3, mvpW: 10, momentW: 10, ratingW: 2 },
+} as const;
+
+/**
+ * Nickname milestones (verifiable totals the save keeps). At most one is
+ * active; the first earned in this order is chosen, and an earned one is kept
+ * until a better-ranked one is earned.
+ */
+export const CAREER_PRO_NICKNAMES = [
+  { id: "theWall", fact: "saves", min: 400 },
+  { id: "mrLan", fact: "lanTitles", min: 2 },
+  { id: "theCloser", fact: "decidingWins", min: 5 },
+  { id: "iceCold", fact: "clutchGames", min: 15 },
+  { id: "theChamp", fact: "worldsTitles", min: 1 },
+  { id: "oneClub", fact: "seasonsAtOrg", min: 5 },
+  { id: "theMaestro", fact: "assists", min: 300 },
+  { id: "theFinisher", fact: "goals", min: 400 },
+  { id: "theBulldozer", fact: "demos", min: 250 },
+  { id: "comebackKid", fact: "comebackWins", min: 4 },
+  { id: "mrSteady", fact: "steadySeasons", min: 3 },
+  { id: "theProdigy", fact: "prodigy", min: 1 },
+] as const;
+
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
   attrOffsetCap: 6,
