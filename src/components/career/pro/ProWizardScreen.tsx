@@ -66,7 +66,7 @@ export function ProWizardScreen() {
   const create = () => {
     if (!canCreate) return;
     createPro(slot, { name: clean, country, region, startAge, archetype: style, difficulty });
-    router.push("/career/pro/player");
+    router.push("/career/pro/career");
   };
 
   return (

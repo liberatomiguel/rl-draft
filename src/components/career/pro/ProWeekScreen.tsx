@@ -84,7 +84,7 @@ export function ProWeekScreen() {
         title={W.title}
         kicker={W.kicker}
         right={
-          <AppLink href="/career/pro/player" className="text-sm font-semibold text-blue-bright hover:underline">
+          <AppLink href="/career/pro/career" className="text-sm font-semibold text-blue-bright hover:underline">
             {p.name}
           </AppLink>
         }
