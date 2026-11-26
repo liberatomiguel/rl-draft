@@ -1877,6 +1877,48 @@ export const CAREER_PRO_MOMENTS = {
   } as Record<string, string>,
 } as const;
 
+/**
+ * v2.2 Pro slice 6 (PRO-SPEC §4.1, §7.6, §9): the decline, the end and the
+ * card. Nobody falls off a cliff: a season costs 0.5 to 1.5 overall at most.
+ */
+export const CAREER_PRO_AGING = {
+  /** Seasons after his peak age before the decline starts (the plateau). */
+  graceYears: 1,
+  /** Overall points lost in the first season of decline, by his hidden decline rate. */
+  declineBase: { slow: 0.5, normal: 0.8, fast: 1.1 } as Record<string, number>,
+  /** The loss grows by this share of the base for each further season. */
+  perYear: 0.12,
+  /** The spec's range for one season's overall loss, and the seeded wobble around the curve (±). */
+  min: 0.5,
+  max: 1.5,
+  jitter: 0.08,
+  /** Who carries the loss: the physical attributes more, the read of the game least. */
+  weights: { mechanics: 1.3, offense: 1.1, defense: 1.0, consistency: 1.0, clutch: 0.35, experience: 0.15 } as Record<string, number>,
+  /** Extra seasons before the attribute starts to fall: experience and clutch hold longer. */
+  holdYears: { experience: 3, clutch: 2 } as Record<string, number>,
+  /** No single attribute loses more than this in a season. */
+  maxPerStat: 3,
+  /** The copy key that says why each attribute fell. */
+  reasons: {
+    mechanics: "reflexes",
+    offense: "pace",
+    defense: "reactions",
+    consistency: "stamina",
+    clutch: "nerve",
+    experience: "reads",
+  } as Record<string, string>,
+  /** Retirement: the yearly chance by age (the rest 0), and the age after which it is certain. */
+  retireChance: { 28: 0.1, 29: 0.2, 30: 0.35, 31: 0.55 } as Record<number, number>,
+  retireForcedAge: 32,
+  /** By choice from this age on (so a misclick at 14 cannot end a career). */
+  choiceMinAge: 18,
+  /** A year without a contract OFFERS the end (never forces it) from this age. */
+  noContractSeasons: 1,
+  noContractMinAge: 20,
+  /** The card: caps on the lists it carries, so a payload stays small. */
+  card: { maxList: 10, maxText: 40, legendsEachSide: 2 },
+} as const;
+
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
   attrOffsetCap: 6,

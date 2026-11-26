@@ -115,6 +115,8 @@ export interface ProPlayer {
   mechanicsBlocks?: number;
   /** 0-100, from scrims with a team (slices 3-4 read it). */
   chemistry?: number;
+  /** The highest overall he has reached (the card's "peak overall"). */
+  peakOverall?: number;
   /** Slice 6: the seasons this Pro has been without a contract, in a row. */
   seasonsWithoutContract?: number;
 }
