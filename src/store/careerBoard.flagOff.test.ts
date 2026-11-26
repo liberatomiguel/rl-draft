@@ -10,7 +10,7 @@ import { FEATURES } from "@/config/balance";
 import type { CareerSave } from "@/engine/career/types";
 import { playArcCareer } from "./careerArcBot";
 
-const BASE_DIGESTS: string[] = ["PENDING"];
+const BASE_DIGESTS: string[] = ["a42a77a750681368", "bce87b43a025194f"];
 
 describe("flags off", () => {
   it("plays exactly as the base commit", () => {
