@@ -14,6 +14,8 @@ const PUBLIC_KEYS = new Set([
   "worldsCancelled", "orgRelocates",
   // v2.1 M1 (R139): the world renewing itself is public reporting.
   "orgNewcomer", "stackSigned", "prospectScouted", "prodigyRises",
+  // v2.2 ENDLESS: a rival project is public reporting.
+  "endlessProject", "endlessHosts",
   // R133: the regional partner desk's stories are public reporting too.
   ...ROCKET_STREET_KEYS,
 ]);

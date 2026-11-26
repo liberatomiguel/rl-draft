@@ -258,7 +258,7 @@ export const assembleTournamentTeam = assembleTeam;
 // User team from a completed draft roster
 // ---------------------------------------------------------------------------
 
-function playerMemberFromPick(refId: string, specialId?: string): MemberView {
+export function playerMemberFromPick(refId: string, specialId?: string): MemberView {
   const card = playerCardById.get(refId)!;
   const player = playerById.get(card.playerId)!;
   const special = specialId ? specialCardById.get(specialId) : undefined;

@@ -28,6 +28,7 @@
 
 import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCOUT, CAREER_SCRIM, CAREER_TRAINING, TOURNAMENT, CAREER_STAFF } from "@/config/balance";
 import { DAYS_PER_SEASON, dayOfWeekOf, unofficialOfferFor, weekAt, weekOfDay } from "@/engine/career/calendar";
+import { endlessOffer } from "./endlessFlow";
 import { majorFieldFor, worldsFieldFor } from "@/engine/career/careerResults";
 import { ageOf, fieldQualityFor, growthCtxOf, growthModelOf, phaseTagFor, trainDay, trainWeek } from "@/engine/career/development";
 import { presetTrainingModeOf } from "@/engine/career/difficulty";
@@ -1175,12 +1176,12 @@ function forecastWeek(save: CareerSave, week: number, t3Entries: number): WeekFo
     return field.includes("user") ? { share: prep, bonus: false, t3: false } : { share: 1, bonus: false, t3: false };
   }
   if (cal.kind === "open" && save.prefs.autoEnterUnofficials) {
-    const offer = unofficialOfferFor(save.clock.seasonIndex, week, {
+    const offer = endlessOffer(save, unofficialOfferFor(save.clock.seasonIndex, week, {
       userTeamRating: approxUserRating(save),
       rep: save.reputation,
       t3EntriesThisSplit: t3Entries,
       careerSeed: save.careerSeed, region: save.identity.region,
-    });
+    }), approxUserRating(save));
     if (offer) return { share: prep, bonus: false, t3: offer.tier === "t3" };
   }
   return { share: 1, bonus: cal.kind === "open" || cal.kind === "preseason", t3: false };

@@ -6,13 +6,14 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore", "proCareer"] as const;
+const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore", "proCareer", "endlessVariety"] as const;
 const PROBE_VARS = [
   "NEXT_PUBLIC_MATCHDAY_STYLES",
   "NEXT_PUBLIC_WORLD_LIFE",
   "NEXT_PUBLIC_MATCHDAY_DECISIONS",
   "NEXT_PUBLIC_MATCHDAY_BOXSCORE",
   "NEXT_PUBLIC_PRO_CAREER",
+  "NEXT_PUBLIC_ENDLESS_VARIETY",
 ];
 
 type Build = { nodeEnv: string; noindex?: string; playtest?: string };
