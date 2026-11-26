@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 49;
+export const BALANCE_VERSION = 50;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)

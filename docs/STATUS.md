@@ -12,15 +12,15 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.3 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
+- **Staging = 2.2.0-rc.4 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
   the big update, each part behind its own staging-only flag: the Pro player
   career to retirement (`proCareer`), a start at a real organisation
   (`realOrgStart`), the board with confidence, dismissal and job offers
   (`board`), endless variety rounds 1 and 2 (`endlessVariety`).
-  BALANCE_VERSION 49. What each front shipped, measured and left open:
+  BALANCE_VERSION 50. What each front shipped, measured and left open:
   `docs/handoff-2.2/`; decisions there are not numbered yet. **Open before a
   gate:** the board's stated chances (hit 47 % where 63 % is stated, small N),
-  the Pro calibration on the real flow (battery written, not run), no browser
+  Worlds reached by 92 % of average Pro careers (spec: about 40 %), no full browser
   check of the board, real-organisation and endless screens nor of the Pro's
   match, gala and card; per-season circuit formats were judged unsafe and are
   not built.

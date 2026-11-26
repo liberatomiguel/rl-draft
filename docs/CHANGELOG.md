@@ -10,6 +10,46 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.4] — 2026-11-26 · The Pro calibrated on the real flow, and the polish from the browser pass (staging)
+
+### Changed
+- **Pro: Continue plays the coach's plan by itself** once the first week's plan has been confirmed. It stops for every real event (an offer or invite, an offer about to expire, the burnout warning, his matchday, a contract ending, the season's end, a rank up, a new mechanic) and at least every four weeks with a one-line digest. Planning week by week is a choice remembered per save.
+- **Pro: the prologue says what brings the first call** (the rank or overall an amateur side looks for, and where he stands); a rank up is a notice on Today.
+- **Pro: a season-end screen** (his season line, why each attribute moved, the gala with its winners and his place), shown once at the rollover and reachable from the history; **a goodbye screen** at retirement, a confirm for retiring by choice, a warning in his last season.
+- **Pro card**: titles ordered Worlds, Majors, regionals, the rest, then recency, repeats collapsed; the career keeps 120 titles (40 dropped early Worlds).
+- Numbers say what they are (attribute points, confidence on match ratings, what burnout costs).
+- **Filler organisations** created with the endless front on take a second word instead of a number ("Team Carnaval United"); flag off, nothing changes.
+- Real-organisation wizard: its own title; the squad rank counts what the list shows.
+- A sponsor offer no longer opens over the board's package decision; the new-mail toast hides while a dialog is open.
+
+### Balance
+- **BALANCE_VERSION 50.** Pro on the real flow (bots, 13 to 29, NA/EU/SAM, talent fixed at 0.82 / 1.0 / 1.2; N 12 for the average managed profile on Normal and on Hard, 6 for the others):
+
+  | Profile | Peak (median, range) | Peak age | Worlds played / won |
+  |---|---|---|---|
+  | average, managed | 92.1 (90.6 to 93.7) | 22.5 | 92 % / 8 % |
+  | average, managed, Hard | 92.0 | 24 | 83 % / 0 % |
+  | high, managed | 97.2 (96.1 to 99) | 24 | 100 % / 33 % |
+  | low, managed | 85.3 | 21 | 33 % / 0 % |
+  | average, careless | 82.2 | 25 | 67 % / 0 % |
+
+  First organisation at 15 (14 to 15 for a high talent); rotation to starter in 83 % of average managed careers; first amateur invite in weeks 6 to 10 of the first season (it was week 26); a new amateur side wins 43 % of its first-season cups (about 31 %).
+- Cause of the earlier drift from the pure-module calibration: a starter plays 60 to 100 official series a season on the real calendar, so match XP was 64 to 71 % of all growth. A season's series now teach at the full rate up to `matchXpFullSeries` × talent², then less with each one. Values: `CAREER_PRO.growth.afterPeak` 0.03 → 0.01; `CAREER_PRO_TEAM.inviteOverall` 54 → 50.8, `firstInviteWeek` 3 → 6, new `matchXpFullSeries` 25, `matchXpTalentExp` 2, `inviteAfterWeeks` 20, `localAnchorEdge` 1.5; new `CAREER_PRO_ORG.byDifficulty` (starter margin 0 / 1 / 3, rotation one event in 2 / 3 / 4); new `CAREER_PRO_PLAN.digestWeeks` 4.
+
+### Fixed
+- `endless.projects` kept last season's record beside this season's for an organisation that continued its project. One record per organisation.
+- The organisation on the Pro's seat keeps its coach, and its Majors and Worlds go back under its own name when it leaves the seat (the world's champion record read "user").
+
+### Not verified
+- **Out of band, left as is for Miguel to judge:** 92 % of average managed Pro careers play a Worlds at least once (the spec said about 40 %; a 90+ player lifts any side into the field, and how much one player moves a team is engine-wide); a high talent holds 98 to 99 until 25 to 28 instead of declining from 24; regional titles run about 13 a career for the average managed profile.
+- The battery ran without the board and real-organisation flags; the all-flags run (NA, EU, SAM, Normal, 13 to retirement: no throw, no stuck day) used the numbers before the last low-talent adjustment.
+- Whether rival projects answer a dynasty of the Pro's own organisation: not observed.
+- Emptiest stretches of a Pro career, by the battery: rotation seasons at 15 to 17 (31 series a season, mostly from the bench), amateur seasons (63 series of the same cups), a starter from 22 on (74 series a season, most seasons without a title).
+- The new screens at 320 px, desktop width and in PT; retire-by-choice; the sponsor / board ordering in a browser; a card download after the title change.
+- The board's stated chances, as in rc.2.
+
+---
+
 ## [2.2.0-rc.3] — 2026-11-26 · Hotfix: the Pro career did not advance on rc.2, plus the browser pass on the new screens (staging)
 
 ### Fixed
