@@ -23,7 +23,9 @@ import {
   openProOffersOf,
   proOfferBlockOf,
   proStopOf,
+  keepPlayingFlow,
   requestProTransferFlow,
+  retireProFlow,
   seatOfPro,
 } from "./proFlow";
 
@@ -45,6 +47,8 @@ export function newProBotSave(region: Region, difficulty: CareerDifficulty, seed
 /** One decision pass of the bot on the save (offers, transfer request). */
 export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): ProSave {
   let out = save;
+  // The end offered after a season without a team: he keeps going until 30, then takes it.
+  if (out.retireOffer) return ageOf(out.player.birthYear, out.clock.seasonIndex) >= 30 ? retireProFlow(out) : keepPlayingFlow(out);
   for (const offer of openProOffersOf(out)) {
     if (proOfferBlockOf(out, offer.id)) continue;
     if (offer.kind === "amateur" && (out.stage === "ranked" || out.stage === "freeAgent" || out.stage === "amateur")) {
@@ -91,7 +95,7 @@ export function playProBot(cfg: {
   let firstOrgSeason: number | null = null;
   let days = 0;
   const lastSeason = cfg.seasons;
-  for (let guard = 0; guard < cfg.seasons * 4000 && save.clock.seasonIndex < lastSeason; guard++) {
+  for (let guard = 0; guard < cfg.seasons * 4000 && save.clock.seasonIndex < lastSeason && save.stage !== "retired"; guard++) {
     save = proBotDecide(save, { counter: cfg.counter });
     if (save.stage !== stages[stages.length - 1]) stages.push(save.stage);
     if (save.stage === "org" && firstOrgAge === null) {
