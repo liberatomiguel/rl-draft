@@ -10,6 +10,38 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.2] — 2026-11-26 · The big update, complete in function: real organisations and the board, endless round 2, the Pro career (staging)
+
+Branch `release/v2.2`: rc.1 plus the board front, the second endless round and one Matchday fix. Everything new sits behind its flag, on in the staging build only. Handoffs with every tunable, measurement and decision (to be numbered at the final integration): `docs/handoff-2.2/` (BOARD, endless, PROSPINE, proengine, proqa).
+
+### Added
+- **Start at a real organisation** (`FEATURES.realOrgStart`): the wizard's second door. Region, organisation, difficulty, manager name. Each organisation shows its stature (elite, contender, mid-table, underdog), squad rank, cash, season budget beside the wage bill, expected finish and its grace season. The user takes the organisation's seat; its place in the world goes to a filler side, and the players the dataset later sends there stay where they are.
+- **The board** (`FEATURES.board`), for real organisations and for founded clubs (the owners): three packages each season (cautious, expected, ambitious; expected preselected, the offer fixed once shown), a sporting objective that becomes the season goal, a secondary objective, legacy objectives after a title; a confidence meter with every change logged and its reason, checkpoints at weeks 11 and 21; budget rises, a contract extension and one board-funded upgrade at high confidence; a budget cut, a one-window hiring freeze, a warning, an ultimatum and then dismissal at low confidence. No ultimatum in a real organisation's first board season or an owners' board's first two.
+- **Manager reputation and job offers**: dismissal never ends the save: up to three offers (one always in the home region) plus founding a new club; a strong record brings an approach from a bigger organisation; the club left behind lives on in the world with the squad the user built.
+- **Endless, round 2** (`FEATURES.endlessVariety`): rival projects now use the user's own toolbox (facilities, the region's best coach, a bench sub, a bootcamp, a psychologist), each item named in the news and on the organisation's sheet; the answer scales with consecutive Worlds titles and resets when the dynasty is broken; new elite promotions arrive a little stronger during a long dynasty; a project may bid for one of the user's starters (refusable, one a window).
+
+### Balance
+- **BALANCE_VERSION 49**: `CAREER_BOARD` (with a calibration layer for board objectives by stature and difficulty), `CAREER_ENDLESS` round 2.
+- Endless, measured (bots, Normal, NA/EU/SAM × 2 seeds, a squad floored at 97 to 99 overall): Worlds won by a 100+ team 91 % → 64 % pooled; Major and Worlds series won 96 % → 87 to 88 %; AI sides within 3 points 0.8 to 1.2 → 2.2 to 2.7 (the target of 3 is missed). The ordinary bot's seasons 1 to 6 are unchanged apart from cup results.
+
+### Fixed
+- **A sold founder stopped resolving after the next season rollover**, and his buyer fielded a stand-in. Root cause: `agePassAndIntake` rebuilt the world without `formerSquad`. Fixed in every build; the two flag-off digest tests were refreshed for it.
+- **Matchday in custom mode could stop an event from advancing** in a double-elimination round where the user's side has no series (on staging since rc.3). Root cause: `userHasPendingSeries` stays true while the user's bracket waits, so `userSeriesGate` opened a series that `openUserSeriesOn` could not pair. The gate now plays the round on when there is no pairing; regression test `careerMatchdayIdleRound.test.ts`.
+- The two flag-off digest tests hashed the save's `createdAtAppVersion`, so a version bump failed them. They now pin that one field.
+
+### Verified
+- Full suite on the merged branch: 3192 passed, 0 failed (59 opt-in probes skipped). Typecheck clean.
+- Soft-lock probe in full, run alone, every staging flag on (world life, the three Matchday flags, endless variety, board, real-organisation start, Pro): 14 careers (7 regions × autopilot and tuned, Normal, 7 seasons each, founded clubs), 0 findings. The takeover, dismissal and job-offer paths are covered by the board's own opt-in check (`BOARD_SOFT=1`), not by this probe.
+- With every new flag off a fixed-seed career is byte-identical to the base plus the `formerSquad` fix (two digest tests).
+
+### Not verified
+- **Board objectives' stated chances are not yet honest enough.** On a held-out seed (15 careers): Expected stated 63 % and hit 47 % on Normal (N 42), stated 59 % and hit 70 % on Hard (N 30); founded clubs N 6. Cautious is clearly easier than Ambitious (77 % against 33 %). Dismissals on the final config: competent 0 of 15 careers, careless 1 of 13; the larger round-1 sample (older config) had careless 9 of 12 dismissed in seasons 3 to 6. A serial multi-seed battery is still owed.
+- **Pro is not calibrated on the real flow** (peaks of 94 to 99 at 27 to 28 and 10 to 22 titles on Normal in four bot runs). The battery is written and not run.
+- No board, real-organisation or endless screen has been opened in a browser; the Pro's match decisions, gala, retirement and card with honours neither. No physical phone, no Safari. PT copy unread by a native speaker.
+- Endless: the fifth title defence is unmeasured (dynasties now break earlier, N 4 at three or more titles); the final config with the project bid ran on 3 of 6 careers.
+
+---
+
 ## [2.2.0-rc.1] — 2026-11-26 · First staging cut of the big update: the Pro player career, playable to retirement, and the endless seasons' variety (staging)
 
 Branch `release/v2.2`, cut from staging rc.6. Partial on purpose (Miguel asked to play what is ready): the board and real-organisation start, the second endless round and the Pro calibration are still on their branches. Handoffs with every tunable and decision (to be numbered at the final integration): `docs/handoff-2.2/`.

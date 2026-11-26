@@ -25,7 +25,7 @@ describe("flags off", () => {
       seed: 777,
       seasons: 2,
       onSeason: (moment: "start" | "end", save: CareerSave) => {
-        if (moment === "end") digests.push(createHash("sha1").update(JSON.stringify(save)).digest("hex").slice(0, 16));
+        if (moment === "end") digests.push(createHash("sha1").update(JSON.stringify({ ...save, createdAtAppVersion: "2.1.0-rc.6" })).digest("hex").slice(0, 16));
       },
       budgetMs: 600_000,
     });

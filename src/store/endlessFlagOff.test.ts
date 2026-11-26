@@ -40,7 +40,7 @@ describe("endless variety off = the base career", () => {
         seasons: 3,
         budgetMs: 110_000,
         onSeason(moment, save) {
-          if (moment === "end") hashes.push(fnv(JSON.stringify({ ...save, lastPlayedAt: 0 })));
+          if (moment === "end") hashes.push(fnv(JSON.stringify({ ...save, lastPlayedAt: 0, createdAtAppVersion: "2.1.0-rc.6" })));
         },
       });
       if (process.env.ENDLESS_PRINT_BASE === "1") console.log(`BASE ${key} ${JSON.stringify(hashes)}`);
