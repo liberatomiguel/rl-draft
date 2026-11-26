@@ -420,6 +420,7 @@ import {
 import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
 import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
 import { noteFinishedTournament } from "./careerAnalytics";
+import { proHooks } from "./proHooks";
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -1857,6 +1858,7 @@ function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
     difficulty: save.difficulty,
     userSeedRow,
   });
+  proHooks.onAiEvent?.(def, state);
   const result = compileEventResult(def, state, {
     difficulty: save.difficulty,
     fieldQuality: 1,
