@@ -37,6 +37,7 @@ import {
 import { activeProSave, useProStore } from "@/store/proStore";
 import { useMounted } from "@/store/useMounted";
 import { ProInbox } from "./ProInbox";
+import { ProLive } from "./ProLive";
 import { ProOffers } from "./ProOffers";
 import { ProReport } from "./ProReport";
 import { ProTeam } from "./ProTeam";
@@ -145,7 +146,9 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </Panel>
       ) : null}
 
-      {stop?.kind === "matchday" || stop?.kind === "event" ? (
+      {(stop?.kind === "matchday" || stop?.kind === "event") && save.live ? <ProLive save={save} eventName={stop.eventName} /> : null}
+
+      {(stop?.kind === "matchday" || stop?.kind === "event") && !save.live ? (
         <Panel className="p-5">
           <p className="kicker mb-2">{P.next}</p>
           <h3 className="display text-lg font-bold uppercase leading-none text-ink">{stop.eventName}</h3>

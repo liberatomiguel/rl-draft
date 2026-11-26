@@ -49,3 +49,7 @@ export function applyMatchXp(
 export function rankedOpensCups(player: ProPlayer): boolean {
   return cupsUnlocked(player);
 }
+
+/** Slice 5's moments: one decision a game, its bounded effects, his final rating. */
+export { buildDecision, EMPTY_LEDGER, finalProRating, resolveDecision } from "./moments";
+export type { DecisionLedger, ProDecision } from "./moments";

@@ -165,6 +165,8 @@ export interface ProSpineFields {
   seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[]; games?: number; benched?: number; titles?: string[] };
   /** Round 2 (R-PROSPINE-6): the org on the host seat while he is under contract (proSeat.ts). */
   orgShell?: { org: WorldOrgState; liftedOverall: Record<string, number> } | null;
+  /** Round 2: the rounds of the current event already booked (XP and counts never twice). */
+  bookedRounds?: { eventId: string; keys: string[] } | null;
   /** Round 2: the series he is playing, game by game (proMatch.ts). */
   live?: ProLiveSeries | null;
   /** Round 2: the end offered after a year without a contract (he may keep going). */

@@ -69,19 +69,17 @@ import {
   createCareerSave,
   declineBidFlow,
   declineUnofficial,
-  finishEvent,
   isEventPaused,
   rolloverToNextSeason,
-  simEventToEnd,
   skipShortSquadEventFlow,
   squadHoldFor,
-  startEvent,
   syncSquadRoles,
 } from "./careerFlow";
 import { startSundayFlow } from "./careerSunday";
 import { approveTrainingProposalFlow } from "./careerTraining";
 import { proHooks } from "./proHooks";
-import { seatOrgOnHost, unseatOrgFromHost } from "./proSeat";
+import { decideProGameFlow, playProMatchdayFlow } from "./proMatch";
+import { decideSeatLineup, proStartsOnSeat, seatOrgOnHost, swapOnSeat, unseatOrgFromHost } from "./proSeat";
 
 // ---------------------------------------------------------------------------
 // The host
@@ -161,7 +159,7 @@ export function ensureProHost(save: ProSave): ProSave {
 }
 
 /** The world's snapshot of the Pro and his entry on the host squad follow the player. */
-function syncPro(save: ProSave): ProSave {
+export function syncPro(save: ProSave): ProSave {
   const withWorld = withProInWorld(save);
   const host = hostOf(withWorld);
   if (!host) return withWorld;
@@ -172,7 +170,7 @@ function syncPro(save: ProSave): ProSave {
 }
 
 /** Answers every decision the hidden manager owes (none of them is the Pro's). Returns the host the clock can move from. */
-function settleHost(input: CareerSave): CareerSave {
+export function settleHost(input: CareerSave): CareerSave {
   let host = input;
   if (host.finances.balance < CAREER_PRO_TEAM.hostFloor) host = { ...host, finances: { ...host.finances, balance: CAREER_PRO_TEAM.hostFloor } };
   if (host.pendingInsert) host = { ...host, pendingInsert: null };
@@ -238,7 +236,8 @@ export function proStopOf(save: ProSave): ProStop | null {
   if (host.phase === "seasonReview" || host.phase === "ended") return { kind: "seasonEnd" };
   if (host.activeEvent && !isEventPaused(host)) return { kind: "event", eventName: host.activeEvent.def.name };
   const def = host.pendingEventDef;
-  if (def && def.day === host.clock.day && !host.activeEvent && save.stage === "amateur" && !squadHoldFor(host)) return { kind: "matchday", eventName: def.name };
+  const plays = save.stage === "amateur" || (save.stage === "org" && Boolean(save.orgShell));
+  if (def && def.day === host.clock.day && !host.activeEvent && plays && !squadHoldFor(host)) return { kind: "matchday", eventName: def.name };
   return null;
 }
 
@@ -246,7 +245,7 @@ export function proStopOf(save: ProSave): ProStop | null {
 export function proNextEventOf(save: ProSave): { name: string; seasonIndex: number; day: number } | null {
   const host = hostOf(save);
   if (!host) return null;
-  if (save.stage === "amateur") {
+  if (save.stage === "amateur" || save.orgShell) {
     const def = host.pendingEventDef ?? host.unofficialOffer;
     return def ? { name: def.name, seasonIndex: def.seasonIndex, day: def.day } : null;
   }
@@ -265,9 +264,27 @@ export function openProOffersOf(save: ProSave): ProOffer[] {
 }
 
 /** Does the Pro start for his org right now? (null without an org) */
+/** His seat now: on the host seat while under contract (R-PROSPINE-6), else his world roster. */
+export function seatOfPro(save: ProSave): "starter" | "reserve" | null {
+  if (save.orgShell) return proStartsOnSeat(save) ? "starter" : "reserve";
+  return proSeatOf(save.world)?.seat ?? null;
+}
+
+/** The save as the world would see it with his org back in it (offers, renewals and bars read the org). */
+export function withOrgInWorld(save: ProSave): ProSave {
+  const shell = save.orgShell;
+  const host = hostOf(save);
+  if (!shell || !host) return save;
+  const starters = host.starterIds.filter((id) => id) as string[];
+  while (starters.length < 3) starters.push(PRO_SELF_ID);
+  const bench = host.squad.map((p) => p.id).filter((id) => !host.starterIds.includes(id));
+  const org = { ...shell.org, playerIds: [starters[0], starters[1], starters[2]] as [string, string, string], reserveIds: bench };
+  return { ...save, world: { ...save.world, orgs: { ...save.world.orgs, [org.ref]: org } } };
+}
+
 export function proStartsOf(save: ProSave): boolean | null {
   if (save.stage !== "org") return null;
-  return proSeatOf(save.world)?.seat === "starter";
+  return seatOfPro(save) === "starter";
 }
 
 // ---------------------------------------------------------------------------
@@ -279,7 +296,7 @@ function nextSeq(save: ProSave): [ProSave, number] {
   return [{ ...save, seq }, seq];
 }
 
-function pushNews(save: ProSave, key: string, params: Record<string, string | number> = {}): ProSave {
+export function pushNews(save: ProSave, key: string, params: Record<string, string | number> = {}): ProSave {
   const [s, seq] = nextSeq(save);
   const item: ProNewsItem = { id: `n${seq}`, seasonIndex: s.clock.seasonIndex, day: s.clock.day, key, params };
   return { ...s, news: [item, ...s.news].slice(0, CAREER_PRO_TEAM.newsCap) };
@@ -301,7 +318,7 @@ function roundsOf(t: TournamentState): { key: string; series: TournamentState["s
   ];
 }
 
-function placementOf(t: TournamentState, teamId: string): ProMatchReport["placement"] {
+export function placementOf(t: TournamentState, teamId: string): ProMatchReport["placement"] {
   if (t.stage !== "finished") return undefined;
   if (t.playoffs?.championTeamId === teamId) return "champion";
   const po = (t.playoffs?.rounds ?? []).filter((r) => r.series.some((s) => s.teamAId === teamId || s.teamBId === teamId));
@@ -311,7 +328,7 @@ function placementOf(t: TournamentState, teamId: string): ProMatchReport["placem
 }
 
 /** His team's series in `t` not yet in `known`, with his box-score line (null when he sat out). */
-function seriesLinesOf(t: TournamentState, teamId: string, proName: string, proOvr: number, known: ReadonlySet<string>): ProSeriesLine[] {
+export function seriesLinesOf(t: TournamentState, teamId: string, proName: string, proOvr: number, known: ReadonlySet<string>): ProSeriesLine[] {
   const T = CAREER_PRO_TEAM;
   const out: ProSeriesLine[] = [];
   for (const round of roundsOf(t)) {
@@ -357,12 +374,32 @@ function seriesLinesOf(t: TournamentState, teamId: string, proName: string, proO
   return out;
 }
 
-/** Books new series: the report, match XP, the log, coach trust. */
-function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, teamId: string, teamName: string): ProSave {
-  const prior = save.report && save.report.eventId === def.id ? save.report : null;
-  const known = new Set(prior?.series.map((s) => s.roundKey) ?? []);
+/** The rounds of an event already booked (a report cleared overnight never books a series twice). */
+export function bookedRoundsOf(save: ProSave, eventId: string): Set<string> {
+  const b = save.bookedRounds;
+  return new Set(b && b.eventId === eventId ? b.keys : []);
+}
+
+/** Books new series of a finished-or-running tournament (the short report of a benched Pro, an AI-run org). */
+export function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, teamId: string, teamName: string): ProSave {
+  const known = bookedRoundsOf(save, def.id);
+  for (const k of save.report && save.report.eventId === def.id ? save.report.series.map((x) => x.roundKey) : []) known.add(k);
   const lines = seriesLinesOf(t, teamId, save.player.name, proOverall(save.player.attrs), known);
-  if (lines.length === 0 && prior) return { ...save, report: { ...prior, placement: placementOf(t, teamId) ?? prior.placement } };
+  const strength = (name: string) => Object.values(t.teams).find((x) => x.name === name)?.rating.total ?? 70;
+  return bookLines(save, def, lines, teamName, strength, placementOf(t, teamId));
+}
+
+/** Books series lines: the report, match XP, the log, coach trust, the season's counts. */
+export function bookLines(
+  save: ProSave,
+  def: CareerEventDef,
+  lines: ProSeriesLine[],
+  teamName: string,
+  strengthOf: (opponent: string) => number,
+  placement: ProMatchReport["placement"],
+): ProSave {
+  const prior = save.report && save.report.eventId === def.id ? save.report : null;
+  if (lines.length === 0) return prior && placement ? { ...save, report: { ...prior, placement } } : save;
   let player = save.player;
   let growthLog = save.growthLog;
   let trust = save.coachTrust ?? CAREER_PRO_ORG.trustStart;
@@ -375,10 +412,9 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
       continue;
     }
     ss.games = (ss.games ?? 0) + line.games.filter((g) => g.pro).length;
-    const opp = Object.values(t.teams).find((x) => x.name === line.opponent);
     const xp = applyMatchXp(player, {
       rating: line.rating,
-      opponentStrength: opp?.rating.total ?? 70,
+      opponentStrength: strengthOf(line.opponent),
       tier: def.tier,
       seasonIndex: save.clock.seasonIndex,
       day: save.clock.day,
@@ -400,11 +436,12 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
     seasonIndex: save.clock.seasonIndex,
     day: save.clock.day,
     teamName,
-    benched: series.every((s) => s.rating === null),
+    benched: series.every((x) => x.rating === null),
     series,
     revealed: prior?.revealed ?? 0,
-    placement: placementOf(t, teamId),
+    placement: placement ?? prior?.placement,
   };
+  const keys = [...bookedRoundsOf(save, def.id), ...lines.map((l) => l.roundKey)];
   return syncPro({
     ...save,
     player,
@@ -413,6 +450,7 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
     matchLog: log.slice(-CAREER_PRO_TEAM.matchLogCap),
     seasonSeries: ss,
     report,
+    bookedRounds: { eventId: def.id, keys },
   });
 }
 
@@ -450,26 +488,9 @@ export function dismissProReportFlow(save: ProSave): ProSave {
 // The amateur matchday (the host's user seat)
 // ---------------------------------------------------------------------------
 
-/** Plays the amateur side's event of today as far as today goes (a two-day event pauses after Saturday). */
+/** The matchday: the stepped series when he plays (proMatch), the short report when he sits out. */
 export function playProEventFlow(input: ProSave): ProSave {
-  const save = ensureProHost(input);
-  const stop = proStopOf(save);
-  if (!stop || (stop.kind !== "matchday" && stop.kind !== "event")) return input;
-  let host = hostOf(save)!;
-  if (!host.activeEvent) {
-    host = startEvent(host, false);
-    if (!host.activeEvent) return input;
-  }
-  host = simEventToEnd(host);
-  const ev = host.activeEvent;
-  if (!ev) return input;
-  let out = storeHost(save, host);
-  out = bookSeries(out, ev.def, ev.tournament, "user", save.amateur?.name ?? host.identity.orgName);
-  if (ev.tournament.stage === "finished") {
-    out = storeHost(out, finishEvent(hostOf(out)!));
-    if (out.report?.placement === "champion") out = noteTitle(out, ev.def.name, out.report.teamName);
-  }
-  return out;
+  return playProMatchdayFlow(input);
 }
 
 // ---------------------------------------------------------------------------
@@ -587,7 +608,7 @@ function mondayFor(save: ProSave): ProSave {
     out = { ...out, player: { ...out.player, money: out.player.money + Math.round(out.contract.salaryPerSplit / CAREER_PRO_ORG.weeksPerSplit) } };
   }
   // A week on the bench doing the work wins a little trust back.
-  if (out.stage === "org" && proSeatOf(out.world)?.seat === "reserve") {
+  if (out.stage === "org" && seatOfPro(out) === "reserve") {
     out = { ...out, coachTrust: clamp((out.coachTrust ?? CAREER_PRO_ORG.trustStart) + CAREER_PRO_ORG.trustBenchWeek, 0, 100) };
   }
   // Amateur sides call.
@@ -615,7 +636,7 @@ function mondayFor(save: ProSave): ProSave {
   }
   // The renewal talk in the deal's last season.
   if (out.stage === "org" && week === CAREER_PRO_ORG.renewalWeek && out.contract?.endSeason === seasonIndex && !out.contract.renewed) {
-    const renewal = renewalOfferFor(out, { seq: (out.seq ?? 0) + 1, starts: proSeatOf(out.world)?.seat === "starter" });
+    const renewal = renewalOfferFor(withOrgInWorld(out), { seq: (out.seq ?? 0) + 1, starts: seatOfPro(out) === "starter" });
     out = renewal ? addOffers(out, [renewal], "renewalOffer") : pushNews(out, "noRenewal", { org: out.contract.orgName });
   }
   // Last week's rotation start ends; the split's lineup (weeks 3 / 13 / 23); this week's rotation.
@@ -630,6 +651,7 @@ function endRotation(save: ProSave): ProSave {
   const outId = save.rotatedOut;
   if (!outId) return save;
   const cleared: ProSave = { ...save, rotatedOut: null };
+  if (save.orgShell) return swapOnSeat(cleared, PRO_SELF_ID, outId);
   if (save.stage !== "org" || !save.contract) return cleared;
   const org = save.world.orgs[save.contract.orgRef];
   if (!org || !org.playerIds.includes(PRO_SELF_ID) || !org.reserveIds?.includes(outId)) return cleared;
@@ -640,7 +662,8 @@ function endRotation(save: ProSave): ProSave {
 
 /** A benched Pro close to the lineup starts this week now and then (CAREER_PRO_ORG.rotationShare). */
 function rotateIn(save: ProSave, week: number): ProSave {
-  if (save.stage !== "org" || !save.contract || proSeatOf(save.world)?.seat !== "reserve") return save;
+  if (save.stage !== "org" || !save.contract || seatOfPro(save) !== "reserve") return save;
+  if (save.orgShell) return rotateInOnSeat(save, week);
   const org = save.world.orgs[save.contract.orgRef];
   if (!org) return save;
   const view = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world };
@@ -660,8 +683,28 @@ function rotateIn(save: ProSave, week: number): ProSave {
   return pushNews({ ...save, world, rotatedOut: outId }, "rotationStart", { org: save.contract.orgName, player: devView(outId, view)?.name ?? "" });
 }
 
+/** The rotation week on the seat: in for the weakest starter when his score is close enough (the seeded share). */
+function rotateInOnSeat(save: ProSave, week: number): ProSave {
+  const host = hostOf(save)!;
+  const starters = host.squad.filter((p) => host.starterIds.includes(p.id) && p.id !== PRO_SELF_ID);
+  if (starters.length === 0) return save;
+  const weakest = [...starters].sort((a, b) => a.overall - b.overall || a.id.localeCompare(b.id))[0];
+  const score = proLineupScore(save.player, save.matchLog, save.coachTrust ?? CAREER_PRO_ORG.trustStart);
+  if (score < weakest.overall - CAREER_PRO_ORG.rotationGap) return save;
+  if (derivedFloat(save.careerSeed, `pro:rotation:${save.clock.seasonIndex}:${week}`) >= CAREER_PRO_ORG.rotationShare) return save;
+  const swapped = swapOnSeat(save, weakest.id, PRO_SELF_ID);
+  if (swapped === save) return save;
+  return pushNews({ ...swapped, rotatedOut: weakest.id }, "rotationStart", { org: save.contract!.orgName, player: weakest.name });
+}
+
 function runLineup(save: ProSave, announce: boolean): ProSave {
   if (save.stage !== "org" || !save.contract) return save;
+  if (save.orgShell) {
+    const before = seatOfPro(save);
+    const r = decideSeatLineup(save);
+    const after = r.starts ? "starter" : "reserve";
+    return announce && (r.changed || before !== after) ? pushNews(r.save, r.starts ? "lineupStart" : "lineupBench", { org: save.contract.orgName }) : r.save;
+  }
   const before = proSeatOf(save.world)?.seat;
   const score = proLineupScore(save.player, save.matchLog, save.coachTrust ?? CAREER_PRO_ORG.trustStart);
   const r = decideOrgLineup(save.world, save.contract.orgRef, score, { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex });
@@ -674,6 +717,7 @@ function runLineup(save: ProSave, announce: boolean): ProSave {
 /** He is no longer where his contract says (an org left the scene, a world move): a free agent, with the news. */
 function reconcileMembership(save: ProSave): ProSave {
   if (save.stage !== "org" || !save.contract) return save;
+  if (save.orgShell) return save;
   const seat = proSeatOf(save.world);
   if (seat && seat.ref === save.contract.orgRef && proRosterCount(save.world) === 1) return save;
   const name = save.contract.orgName;
@@ -717,10 +761,11 @@ export function advanceProDayFlow(input: ProSave): ProSave {
   if (save.stage === "retired") return save;
   const stop = proStopOf(save);
   if (stop?.kind === "seasonEnd") return continueProSeasonFlow(save);
-  if (stop?.kind === "matchday" || stop?.kind === "event") return playProEventFlow(save);
+  // A matchday: Advance plays it (the first decision opens), and a waiting decision goes on instinct.
+  if (stop?.kind === "matchday" || stop?.kind === "event") return save.live ? decideProGameFlow(save, "instinct") : playProEventFlow(save);
   if (save.report) save = { ...save, report: null };
   const host = settleHost(hostOf(save)!);
-  const orgRef = save.stage === "org" ? (save.contract?.orgRef ?? null) : null;
+  const orgRef = save.stage === "org" && !save.orgShell ? (save.contract?.orgRef ?? null) : null;
   const { out: next, captured } = withAiCapture(orgRef, () => {
     const hold = clockHoldOf(host);
     if (hold?.kind === "sunday") return startSundayFlow(host).save;
@@ -895,7 +940,8 @@ export function proOfferBlockOf(save: ProSave, id: string): ProOfferRefusal | nu
   const host = hostOf(save);
   if (host?.activeEvent || proStopOf(save)?.kind === "matchday") return "matchday";
   if (host?.pendingEventDef && host.pendingEventDef.day === host.clock.day) return "matchday";
-  if ((offer.kind === "org" || offer.kind === "renewal") && !save.world.orgs[offer.ref]) return "orgGone";
+  const seatedHere = Boolean(save.orgShell) && save.contract?.orgRef === offer.ref;
+  if ((offer.kind === "org" || offer.kind === "renewal") && !save.world.orgs[offer.ref] && !seatedHere) return "orgGone";
   return null;
 }
 
@@ -985,7 +1031,8 @@ function signFor(save: ProSave, offer: ProOffer): ProSave {
     salary: offer.salaryPerSplit,
   });
   if (placed.displaced) out = pushNews(out, placed.displaced.to === "reserve" ? "displacedBench" : "displacedFree", { player: placed.displaced.name, org: offer.name });
-  return out;
+  // R-PROSPINE-6: his org takes the host seat for the stint, so he plays its series.
+  return seatOrgOnHost(syncPro(out));
 }
 
 export function acceptProOfferFlow(input: ProSave, id: string): ProSave {
@@ -1032,7 +1079,7 @@ export function counterProOfferFlow(input: ProSave, id: string): ProSave {
 /** A benched Pro asks to leave: costs trust, opens him to the next window's offers. */
 export function requestProTransferFlow(input: ProSave): ProSave {
   if (input.stage !== "org" || !input.contract || input.contract.transferRequested) return input;
-  if (proSeatOf(input.world)?.seat !== "reserve") return input;
+  if (seatOfPro(input) !== "reserve") return input;
   const out: ProSave = {
     ...input,
     contract: { ...input.contract, transferRequested: true },
@@ -1042,16 +1089,18 @@ export function requestProTransferFlow(input: ProSave): ProSave {
 }
 
 export function canRequestProTransfer(save: ProSave): boolean {
-  return save.stage === "org" && !!save.contract && !save.contract.transferRequested && proSeatOf(save.world)?.seat === "reserve";
+  return save.stage === "org" && !!save.contract && !save.contract.transferRequested && seatOfPro(save) === "reserve";
 }
 
 /** The org's roster as the team screen lists it: starters then bench, with the Pro marked. */
 export function proRosterOf(save: ProSave): { id: string; name: string; overall: number; starter: boolean; isPro: boolean }[] {
   const view = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world };
   const me = (starter: boolean) => ({ id: PRO_SELF_ID, name: save.player.name, overall: proOverall(save.player.attrs), starter, isPro: true });
-  if (save.stage === "amateur") {
+  if (save.stage === "amateur" || save.orgShell) {
     const host = hostOf(save);
-    return (host?.squad ?? []).map((p) => (p.id === PRO_SELF_ID ? me(true) : { id: p.id, name: p.name, overall: round2(p.overall), starter: true, isPro: false }));
+    const starts = (id: string) => save.stage === "amateur" || Boolean(host?.starterIds.includes(id));
+    const rows = (host?.squad ?? []).map((p) => (p.id === PRO_SELF_ID ? me(starts(p.id)) : { id: p.id, name: p.name, overall: round2(p.overall), starter: starts(p.id), isPro: false }));
+    return [...rows.filter((r) => r.starter), ...rows.filter((r) => !r.starter)];
   }
   if (save.stage !== "org" || !save.contract) return [];
   const org = save.world.orgs[save.contract.orgRef];

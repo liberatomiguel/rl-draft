@@ -9,7 +9,6 @@
 
 import { weekOfDay } from "@/engine/career/calendar";
 import { ageOf } from "@/engine/career/development";
-import { proSeatOf } from "@/engine/career/pro/offers";
 import { proOverall } from "@/engine/career/pro/attrs";
 import { createProSave } from "@/engine/career/pro/create";
 import type { ProSave } from "@/engine/career/pro/types";
@@ -25,6 +24,7 @@ import {
   proOfferBlockOf,
   proStopOf,
   requestProTransferFlow,
+  seatOfPro,
 } from "./proFlow";
 
 export interface ProBotRun {
@@ -52,7 +52,7 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
     }
     if (offer.kind === "renewal") return acceptProOfferFlow(out, offer.id);
   }
-  const benched = out.stage === "org" && proSeatOf(out.world)?.seat === "reserve";
+  const benched = out.stage === "org" && seatOfPro(out) === "reserve";
   // At an org he moves only for a promised start while benched, or when his deal is running out.
   const leaving = out.stage === "org" && out.contract && out.contract.endSeason <= out.clock.seasonIndex;
   const orgOffers = openProOffersOf(out).filter(
