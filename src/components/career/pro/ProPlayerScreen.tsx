@@ -102,15 +102,20 @@ export function ProPlayerScreen() {
       <div className="mt-8 border-t border-line pt-5">
         <h3 className="display text-lg font-bold uppercase leading-none text-ink">{C.pro.player.nextTitle}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-snug text-sub">{C.pro.player.nextBody}</p>
-        <AppLink href="/career/pro/week" className={`${buttonClass("primary", "md")} mt-4`}>
-          {C.proWeek.openWeek}
-        </AppLink>
-        <AppLink
-          href={`/career/pro/card#${encodeCard(cardFromSave(save))}`}
-          className="ml-4 inline-block text-sm font-semibold text-blue-bright hover:underline"
-        >
-          {C.proCard.own}
-        </AppLink>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+          <AppLink href="/career/pro/career" className={buttonClass("primary", "md")}>
+            {C.pro.player.openCareer}
+          </AppLink>
+          <AppLink href="/career/pro/week" className={buttonClass("secondary", "md")}>
+            {C.proWeek.openWeek}
+          </AppLink>
+          <AppLink
+            href={`/career/pro/card#${encodeCard(cardFromSave(save))}`}
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline"
+          >
+            {C.proCard.own}
+          </AppLink>
+        </div>
       </div>
     </div>
   );

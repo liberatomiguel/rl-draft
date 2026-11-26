@@ -3682,16 +3682,17 @@ export const CAREER_PT: CareerCopy = {
       content: "Dinheiro e fãs. Custa 10 de energia.",
       rest: "Devolve 35 de energia.",
     } as Record<string, string>,
-    focus: "Treinar",
+    focus: "Foco",
     focusBalanced: "Equilibrado",
     needsTeam: "Você precisa de um time para fazer scrim.",
     burnedOutBlock: "Fora esta semana: todos os blocos contam como descanso.",
     energy: "Energia",
-    energyTrace: (values: number[]) => values.join(" → "),
+    energyTrace: (values: number[]) => `${values.slice(0, -1).join(" → ")}, depois ${values[values.length - 1]} no fim de semana`,
     energyTraceLabel: "Energia depois de cada bloco e depois da semana",
     projected: {
       gain: (stat: string, n: number) => `${stat} +${n.toFixed(2)}`,
       none: "Nenhum atributo muda",
+      allStats: (n: number) => `Todos os atributos +${n.toFixed(2)}`,
       mmr: (n: number) => `Esperado ${n >= 0 ? "+" : ""}${n} MMR`,
       money: (n: number) => `+${n} de dinheiro`,
       fame: (n: number) => `+${n} fãs`,
@@ -3753,7 +3754,7 @@ export const CAREER_PT: CareerCopy = {
         age: "Idade",
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
-      day: (season: number, day: number) => `Temporada ${season + 1}, dia ${day}`,
+      day: (season: number, week: number) => `Temporada ${season + 1}, semana ${week}`,
       /** Por que um atributo caiu com a idade (a chave de motivo numa entrada "age"). */
       reasons: {
         reflexes: "Os seus reflexos começam a cair.",
@@ -3816,12 +3817,12 @@ export const CAREER_PT: CareerCopy = {
       owned: "Desbloqueadas",
       next: (name: string, blocks: number, mech: number) =>
         blocks > 0 && mech > 0
-          ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica e ${mech} de Mecânica.`
+          ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica e ${mech} pontos de Mecânica.`
           : blocks > 0
-            ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica.`
+            ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica.`
             : mech > 0
-              ? `Próxima: ${name}. Mais ${mech} de Mecânica.`
-              : `Próxima: ${name}. Treine mecânica mais uma vez.`,
+              ? `Próxima: ${name}. Faltam ${mech} pontos de Mecânica.`
+              : `Próxima: ${name}. Falta um bloco de treino em Mecânica.`,
       all: "Todas as mecânicas assinatura estão desbloqueadas.",
     },
   },
@@ -3946,7 +3947,8 @@ export const CAREER_PT: CareerCopy = {
       mmr: "MMR",
       unranked: "Sem rank",
       nextTitle: "O que vem a seguir",
-      nextBody: "Planeje a semana, jogue ranqueado e veja o registro do que mudou. Times amadores e orgs chegam nas próximas fatias.",
+      nextBody: "A tela da carreira cuida do calendário, das partidas e das propostas. A tela da semana define o seu treino e mostra por que os atributos mudaram.",
+      openCareer: "Abrir a carreira",
       allCareers: "Todas as carreiras Pro",
     },
   },
@@ -3966,6 +3968,7 @@ export const CAREER_PT: CareerCopy = {
     advance: "Continuar",
     advanceHint: "Avança dia a dia e para quando algo precisa de você: dia de jogo, súmula, proposta, fim da temporada.",
     oneDay: "Um dia",
+    offerOpenHint: "Você tem uma proposta aberta. Ela fecha na data dela se você seguir sem responder.",
     playMatchday: (name: string) => `Jogar ${name}`,
     continueEvent: (name: string) => `Continuar ${name}`,
     seasonEnd: "A temporada acabou",
@@ -4022,6 +4025,7 @@ export const CAREER_PT: CareerCopy = {
       level: (n: number) => `Nível do time ${n}`,
       sideBody: (level: number) => `Dois jogadores em torno de ${level}. Você jogaria todas as copas e o Open Qualifier com eles.`,
       expires: (season: number, week: number) => `Aberta até a temporada ${season}, semana ${week}`,
+      leavesSide: (side: string) => `Aceitar significa sair de ${side}.`,
       accept: "Aceitar",
       counter: "Contraproposta",
       decline: "Recusar",
@@ -4039,6 +4043,7 @@ export const CAREER_PT: CareerCopy = {
       status: { accepted: "Aceita", declined: "Recusada", expired: "Expirou", withdrawn: "Retirada" } as Record<string, string>,
     },
     inbox: {
+      when: (season: number, week: number) => `T${season} · sem ${week}`,
       title: "Caixa de entrada",
       none: "Nada ainda.",
       scene: "Pela cena",
@@ -4049,7 +4054,7 @@ export const CAREER_PT: CareerCopy = {
     history: {
       title: "Temporadas",
       line: (age: number, from: number, to: number) => `${age} anos: overall de ${from} para ${to}`,
-      series: (n: number, won: number, avg: string) => `${n} séries, ${won} vencidas, média ${avg}`,
+      series: (n: number, won: number, avg: string) => n === 0 ? "Nenhuma série jogada" : `${n} ${n === 1 ? "série" : "séries"}, ${won} vencidas, nota média ${avg}`,
     },
     news: {
       amateurInvite: (p: Record<string, string | number>) => `O ${p.side} quer você na escalação.`,
@@ -4071,7 +4076,7 @@ export const CAREER_PT: CareerCopy = {
       renewed: (p: Record<string, string | number>) => `Você renovou com a ${p.org}.`,
       contractEnded: (p: Record<string, string | number>) => `Seu contrato com a ${p.org} acabou. Você é agente livre.`,
       orgGone: (p: Record<string, string | number>) => `A ${p.org} saiu da cena. Você é agente livre.`,
-      seasonDone: (p: Record<string, string | number>) => `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
+      seasonDone: (p: Record<string, string | number>) => Number(p.series) === 0 ? `A temporada ${p.season} acabou sem nenhuma série jogada.` : `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
       sideTitle: (p: Record<string, string | number>) => `O ${p.side} venceu ${p.event}.`,
     } as Record<string, (p: Record<string, string | number>) => string>,
   },

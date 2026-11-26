@@ -147,10 +147,11 @@ export function ProWeekScreen() {
         ))}
       </div>
 
-      <div className="mt-5 flex justify-end">
+      <div className="action-dock mt-5 flex justify-end">
         <Button
           variant="primary"
           size="lg"
+          className="max-sm:w-full"
           onClick={() => {
             playWeek(current);
             setPlan(current);
@@ -230,8 +231,9 @@ function BlockCard({
   const W = useCareerCopy().proWeek;
   const copy = useCopy();
   const gains = Object.entries(preview.gains).filter(([, v]) => (v ?? 0) > 0) as [string, number][];
+  const evenSpread = gains.length === PRO_STAT_KEYS.length && gains.every(([, v]) => v.toFixed(2) === gains[0][1].toFixed(2));
   const effects: string[] = [
-    ...gains.map(([k, v]) => W.projected.gain(copy.STAT_LABELS[k], v)),
+    ...(evenSpread ? [W.projected.allStats(gains[0][1])] : gains.map(([k, v]) => W.projected.gain(copy.STAT_LABELS[k], v))),
     ...(preview.mmr !== undefined ? [W.projected.mmr(preview.mmr)] : []),
     ...(preview.money ? [W.projected.money(preview.money)] : []),
     ...(preview.fame ? [W.projected.fame(preview.fame)] : []),
