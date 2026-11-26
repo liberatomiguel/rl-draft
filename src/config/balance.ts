@@ -4724,7 +4724,7 @@ export const CAREER_BOARD = {
   profiles: {
     elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.12, expectedRank: 2, gear: 3 },
     contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.1, expectedRank: 4, gear: 2 },
-    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.95, aimShift: 0.12, expectedRank: 8, gear: 1 },
+    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0.12, expectedRank: 8, gear: 1 },
     underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.12, expectedRank: 12, gear: 0 },
     owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.2, expectedRank: 12, gear: 0 },
   },
@@ -4758,7 +4758,7 @@ export const CAREER_BOARD = {
    * chance since the season's start × `scale`, clamped; an objective that can
    * no longer be reached costs `outCost` once.
    */
-  checkpoint: { scale: 30, min: -8, max: 6, outCost: -6 },
+  checkpoint: { scale: 20, min: -5, max: 5, outCost: -5 },
   /** Deep debt: the balance under −this many weeks of wages costs confidence at each checkpoint. */
   debt: { weeks: 4, cost: -6 },
   /**
@@ -4767,7 +4767,7 @@ export const CAREER_BOARD = {
    */
   seasonRecovery: { board: 0.25, owners: 0.5 },
   /** Confidence lines. */
-  confidence: { start: 70, warn: 40, ultimatum: 25, high: 80, top: 90 },
+  confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },
   /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */
   titleProtectSeasons: 1,
   titleConfidence: { major: 6, worlds: 15 },
