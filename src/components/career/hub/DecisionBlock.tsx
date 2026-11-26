@@ -16,6 +16,7 @@
  * shows as a modal at the career shell) are PLACED here, never restyled.
  */
 
+import { BoardDecision } from "@/components/career/board/BoardParts";
 import { beginCareerNavigation } from "../careerNavigation";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -293,6 +294,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           </>
         );
       }
+      case "board":
+        return <BoardDecision save={save} C={C} />;
       case "sponsor": {
         if (!d.parked) return null; // The shell owns the priority popup globally.
         const offers = save.sponsorOffers ?? [];

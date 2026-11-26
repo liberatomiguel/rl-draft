@@ -215,6 +215,7 @@ export function resolveToastTitle(
   if (toast.source === "mail" && mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
   if (newsTitles[newsKey]) return newsTitles[newsKey](p);
   if (mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
+  if (career.board.mail.tpl[toast.titleKey]) return career.board.mail.tpl[toast.titleKey](p); // v2.2 board front
   return toast.titleKey;
 }
 
@@ -233,9 +234,10 @@ export function resolveMail(item: MailItem, career: CareerCopy): ResolvedMail {
   const newsKey = templateKeyOf(item.titleKey, raw);
   const newsTitles = career.news.tpl as unknown as TplMap;
   const newsBodies = career.news.body as unknown as TplMap;
-  const title = titles[item.titleKey]?.(p) ?? newsTitles[newsKey]?.(p) ?? item.titleKey;
+  // v2.2 board front: the board's mail lives in its own copy group.
+  const title = titles[item.titleKey]?.(p) ?? newsTitles[newsKey]?.(p) ?? career.board.mail.tpl[item.titleKey]?.(p) ?? item.titleKey;
   const bodyKey = item.bodyKey ?? item.titleKey;
-  const message = bodies[bodyKey]?.(p) ?? newsBodies[newsKey]?.(p) ?? title;
+  const message = bodies[bodyKey]?.(p) ?? newsBodies[newsKey]?.(p) ?? career.board.mail.body[bodyKey]?.(p) ?? title;
   const from =
     (career.mail.from as Record<string, string>)[item.fromKey] ?? career.mail.from.board;
   const kindLabel =

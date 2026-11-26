@@ -7,6 +7,7 @@
  * start (engine/career/seasonGoals.ts); this card only reads it.
  */
 
+import { BoardLink } from "@/components/career/board/BoardScreen";
 import { useMemo } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
@@ -25,6 +26,7 @@ export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }
         <span className="text-[11px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
       </div>
       <SeasonGoalRows view={view} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} showStatus={false} />
+      <BoardLink save={save} C={C} />
     </div>
   );
 }

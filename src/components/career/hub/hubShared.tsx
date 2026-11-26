@@ -102,6 +102,9 @@ export function errorTextFor(C: CareerCopy, key: string, nextBreach: BreachOutco
     // v2.0 (P1): the action threw inside the game — the store left the save untouched (careerStore.guarded).
     case "actionFailed":
       return C.common.actionFailed;
+    // v2.2 board front: the board's hiring freeze.
+    case "boardFreeze":
+      return C.board.boardFreezeError;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.

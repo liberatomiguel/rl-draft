@@ -1872,6 +1872,12 @@ export function agePassAndIntake(
     // v2.1 M2.1 (R142): the elite renewal's baseline and promoted prodigies outlive the rollover.
     ...(world.eliteBaseline ? { eliteBaseline: { ...world.eliteBaseline } } : {}),
     ...(world.potentialLift ? { potentialLift: { ...world.potentialLift } } : {}),
+    // v2.2 board front: the seat the user holds stays his through the rollover.
+    ...(world.userOrgRef ? { userOrgRef: world.userOrgRef } : {}),
+    ...(world.userBuiltRefs ? { userBuiltRefs: [...world.userBuiltRefs] } : {}),
+    // v2.2 (fix): former founders keep resolving after a rollover; the base dropped them here,
+    // so a sold founder's buyer fielded a stand-in from the next season on.
+    ...(world.formerSquad ? { formerSquad: { ...world.formerSquad } } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {
@@ -2387,6 +2393,7 @@ export function realOrgIntake(
   for (const lineup of lineups) {
     if (lineup.seasonId !== seasonId || lineup.rareSpawn || lineup.national) continue;
     if (next.orgs[lineup.orgId] || seen.has(lineup.orgId)) continue;
+    if (lineup.orgId === world.userOrgRef) continue; // v2.2 board: the user's own seat never re-enters as an AI side
     seen.add(lineup.orgId);
     const weakestFirst = (a: WorldOrgState, b: WorldOrgState) =>
       (a.rating ?? 0) - (b.rating ?? 0) || a.ref.localeCompare(b.ref);
