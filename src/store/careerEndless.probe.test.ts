@@ -45,6 +45,8 @@ export interface EndlessSeason {
   /** Rival projects running this season (the front's own state; 0 when off). */
   projects?: number;
   projectLift?: string[];
+  /** The user's lead over the three best AI sides at the season's Worlds. */
+  worldsGap?: number[];
   legends?: { user: number; top: number; mean: number; place: string }[];
   gap?: number;
   superWorld?: number;
@@ -99,6 +101,9 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
             const user = teams.find((t) => t.isUser);
             if (user && (tier === "major" || tier === "worlds")) {
               r.near3.push(teams.filter((t) => !t.isUser && t.rating.total >= user.rating.total - 3).length);
+              if (tier === "worlds") {
+                r.worldsGap = teams.filter((t) => !t.isUser).map((t) => Math.round((user.rating.total - t.rating.total) * 10) / 10).sort((x, y) => x - y).slice(0, 3);
+              }
             }
             if (tier === "t2" || tier === "t3") {
               const rounds = a.tournament.playoffs?.rounds ?? [];

@@ -425,6 +425,12 @@ export interface WorldOrgState {
   coachSince?: number;
   /** v2.1 M1: seasons in a row ended outside the region's top (org turnover). */
   lowSeasons?: number;
+  /**
+   * v2.2 ENDLESS: a rival project's performance centre this season, the same
+   * team-rating bonus the user's own centre gives (CAREER_GEAR perfCenter).
+   * Cleared at the next rollover unless the org runs a project again.
+   */
+  projectBonus?: number;
 }
 
 export interface WorldState {
@@ -568,7 +574,7 @@ export interface CareerEventDef {
    * v2.2 ENDLESS: "cup" = the Invitational's drawn field and bracket;
    * "legends" = the Legends invitational (all-time rosters). Absent = as before.
    */
-  endless?: "cup" | "legends";
+  endless?: "cup" | "legends" | "world";
 }
 
 /** v2.0 (R40): the tournament shapes a career event can take. */
@@ -1866,6 +1872,8 @@ export interface RivalProject {
   orgName: string;
   region: Region;
   signed: { playerId: string; playerName: string; fromRef: string | null; fromName: string | null; outId: string }[];
+  /** The performance centre's team-rating bonus (0 = none this season). */
+  facility: number;
   ratingBefore: number;
   ratingAfter: number;
 }

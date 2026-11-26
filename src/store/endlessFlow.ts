@@ -16,6 +16,7 @@ import {
   legendTeamFor,
   majorHostsFor,
   rivalProjectsPass,
+  worldWeekFor,
 } from "@/engine/career/endless";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import { userTeamFor } from "@/engine/career/worldSim";
@@ -24,6 +25,8 @@ import type { TournamentState } from "@/engine/types";
 
 /** The Legends invitational's event name (a proper name, like the Invitational rotation's). */
 export const LEGENDS_EVENT_NAME = "Legends Invitational";
+/** The Intercontinental Invitational: guests from the other regions' tables. */
+export const WORLD_EVENT_NAME = "Intercontinental Invitational";
 /** How many host cities the copy lists (copy.career endless.hosts); the draw picks four a season. */
 export const HOST_CITY_COUNT = 12;
 
@@ -89,6 +92,7 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
         from: p.signed[0]?.fromName ?? "",
         before: p.ratingBefore.toFixed(1),
         after: p.ratingAfter.toFixed(1),
+        fac: p.facility > 0 ? 1 : 0,
       },
     });
   }
@@ -116,6 +120,7 @@ export function endlessOffer(save: CareerSave, def: CareerEventDef | null, start
   ) {
     return { ...def, name: LEGENDS_EVENT_NAME, endless: "legends" };
   }
+  if (worldWeekFor(def.seasonIndex, def.week, save.careerSeed, openWeeks())) return { ...def, name: WORLD_EVENT_NAME, endless: "world" };
   return { ...def, endless: "cup" };
 }
 

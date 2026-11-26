@@ -16,7 +16,7 @@
  * Pure and rng-free: every roll is a derived float of (careerSeed, key), so
  * nothing here consumes a stream the rest of the career reads.
  */
-import { CAREER_ENDLESS as E, CAREER_SEASONS, FEATURES } from "@/config/balance";
+import { CAREER_ENDLESS as E, CAREER_GEAR, CAREER_SEASONS, FEATURES } from "@/config/balance";
 import { coachById, lineupById, lineups, seasonById, specialCards, subById } from "@/data";
 import { assembleTournamentTeam, playerMemberFromPick } from "@/engine/teams";
 import type { Region, TournamentTeam } from "../types";
@@ -88,13 +88,21 @@ function cloneOrgs(world: WorldState): WorldState {
  * returns the new world and the projects (for the news and the next season's
  * rotation). The user's squad is never read for a signing and never touched.
  */
-export function rivalProjectsPass(world: WorldState, ctx: Ctx): { world: WorldState; projects: RivalProject[]; gap: number; leader: string | null } {
+export function rivalProjectsPass(input: WorldState, ctx: Ctx): { world: WorldState; projects: RivalProject[]; gap: number; leader: string | null } {
   const P = E.projects;
+  // Last season's performance centres close first (a project that runs again reopens its own below).
+  let world = input;
+  if (Object.values(input.orgs).some((o) => o.projectBonus)) {
+    world = cloneOrgs(input);
+    for (const o of Object.values(world.orgs)) delete o.projectBonus;
+    world.version += 1;
+  }
   const teamCtx = { world, seasonIndex: ctx.seasonIndex, careerSeed: ctx.careerSeed, difficulty: ctx.difficulty };
   const ratings = new Map<string, number>();
   for (const ref of Object.keys(world.orgs).sort()) ratings.set(ref, matchRating(orgTeamFor(ref, teamCtx)));
   const { leader, gap } = dominanceOf([{ id: "user", rating: ctx.userRating }, ...[...ratings].map(([id, rating]) => ({ id, rating }))]);
-  const level = projectLevelFor(gap);
+  // An AI leader is answered only from a bigger lead (an ordinary career is barely touched).
+  const level = leader === "user" || gap >= P.aiLeaderFloor ? projectLevelFor(gap) : 0;
   if (level === 0 || !endlessYear(ctx.seasonIndex)) return { world, projects: [], gap, leader };
 
   // Where the answer comes from: the leader's region first, then the others in a seeded order.
@@ -190,15 +198,19 @@ export function rivalProjectsPass(world: WorldState, ctx: Ctx): { world: WorldSt
       }
     }
     if (signed.length === 0) continue;
+    const facility = level >= P.facilityFromLevel ? PERF_CENTER_BONUS : 0;
+    if (facility > 0) org.projectBonus = facility;
     next.version += 1;
     const after = matchRating(orgTeamFor(org.ref, { ...teamCtx, world: next }));
-    projects.push({ season: ctx.seasonIndex, orgRef: org.ref, orgName: org.name, region, signed, ratingBefore: round1(before), ratingAfter: round1(after) });
+    projects.push({ season: ctx.seasonIndex, orgRef: org.ref, orgName: org.name, region, signed, facility, ratingBefore: round1(before), ratingAfter: round1(after) });
   }
   if (projects.length === 0) return { world, projects, gap, leader };
   return { world: next, projects, gap, leader };
 }
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
+/** The user's performance centre's team-rating bonus: a project's money buys the same. */
+const PERF_CENTER_BONUS = CAREER_GEAR.items.find((i) => i.id === "perfCenter")?.ratingBonus ?? 0;
 
 // ---------------------------------------------------------------------------
 // Cups: the Invitational's field and the bracket draw
@@ -225,7 +237,25 @@ export function invitationalGuests(rankedByPoints: readonly string[], def: Pick<
  * lineups (as `legend:` refs), the drawn Invitational guests, or (the front
  * off, or a plain def) the points table's top seven as before.
  */
-export function invitationalRefsFor(def: Pick<CareerEventDef, "id" | "endless">, careerSeed: number, ranked: readonly string[], seats: number): string[] {
+export function invitationalRefsFor(
+  def: Pick<CareerEventDef, "id" | "endless">,
+  careerSeed: number,
+  ranked: readonly string[],
+  seats: number,
+  /** The Intercontinental's guests: another region's points order (fieldForEvent and the lobby pass the same). */
+  rankedIn?: (region: Region) => readonly string[],
+  homeRegion?: Region,
+): string[] {
+  if (FEATURES.endlessVariety && def.endless === "world" && rankedIn) {
+    const pool = (E.world.regions as readonly Region[])
+      .filter((r) => r !== homeRegion)
+      .flatMap((r) => rankedIn(r).slice(0, E.world.perRegion));
+    const drawn = pool
+      .map((ref) => ({ ref, k: f(careerSeed, "endlessWorld", `${def.id}:${ref}`) }))
+      .sort((a, b) => a.k - b.k || a.ref.localeCompare(b.ref))
+      .map((x) => x.ref);
+    if (drawn.length >= seats) return drawn.slice(0, seats);
+  }
   if (FEATURES.endlessVariety && def.endless === "legends") return legendLineupIdsFor(def, careerSeed).slice(0, seats).map((id) => `${LEGEND_REF_PREFIX}${id}`);
   if (FEATURES.endlessVariety && def.endless === "cup") return invitationalGuests(ranked, def, careerSeed, seats);
   return ranked.slice(0, seats);
@@ -337,6 +367,18 @@ export function legendsWeekFor(seasonIndex: number, week: number, careerSeed: nu
     .sort((a, b) => a.k - b.k || a.w - b.w);
   for (const x of ordered.slice(0, L.perSeason)) picks.add(x.w);
   return picks.has(week);
+}
+
+/** Is this open week an Intercontinental week (endless year, not a Legends week, the season's draw)? */
+export function worldWeekFor(seasonIndex: number, week: number, careerSeed: number, openWeeks: readonly number[]): boolean {
+  if (!endlessYear(seasonIndex)) return false;
+  const free = openWeeks.filter((w) => !legendsWeekFor(seasonIndex, w, careerSeed, openWeeks));
+  const picks = free
+    .map((w) => ({ w, k: f(careerSeed, "endlessWorldWeek", `${seasonIndex}:${w}`) }))
+    .sort((a, b) => a.k - b.k || a.w - b.w)
+    .slice(0, E.world.perSeason)
+    .map((x) => x.w);
+  return picks.includes(week);
 }
 
 // ---------------------------------------------------------------------------

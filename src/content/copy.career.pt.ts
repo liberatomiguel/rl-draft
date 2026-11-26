@@ -2484,7 +2484,7 @@ export const CAREER_PT: CareerCopy = {
         `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
       // v2.2 ENDLESS: só o que o save mostra (as contratações e o rating antes e depois).
       endlessProject: (p: Record<string, string | number>) =>
-        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada. No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada.${Number(p.fac) ? " A org também abre um centro de performance para a temporada." : ""} No papel, o rating do time vai de ${p.before} para ${p.after}.`,
       endlessHosts: (p: Record<string, string | number>) =>
         `As paradas do circuito em ${p.season} estão definidas: Majors em ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}, e o Mundial em ${hostPt(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>

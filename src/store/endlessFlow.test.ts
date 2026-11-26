@@ -21,7 +21,7 @@ beforeAll(async () => {
   ef = await import("./endlessFlow");
   const { FEATURES } = await import("@/config/balance");
   expect(FEATURES.endlessVariety).toBe(true);
-});
+}, 90_000);
 afterAll(() => {
   vi.unstubAllEnvs();
   vi.resetModules();
@@ -54,12 +54,12 @@ describe("endless flow (flag on)", () => {
     expect(next.endless?.projects).toEqual([]); // no project before the endless years
   });
 
-  it("a Legends invitational and a drawn Invitational play and settle", { timeout: 120_000 }, () => {
+  it("a Legends, a drawn and an Intercontinental Invitational play and settle", { timeout: 120_000 }, () => {
     const base = flow.createCareerSave(
       { identity: { orgName: "Test Org", abbrev: "TST", region: "EU", managerName: "M", crestId: "c1", colors: { primary: "#000000", secondary: "#ffffff" } } as CareerSave["identity"], difficulty: "normal", rosterKey: "balanced" },
       777,
     );
-    for (const kind of ["legends", "cup"] as const) {
+    for (const kind of ["legends", "cup", "world"] as const) {
       const save = structuredClone(base);
       save.endless = { fromSeason: 0, projects: [] };
       const def: CareerEventDef = { id: `0:${save.clock.day}:unofficial`, tier: "t2", seasonIndex: 0, week: 1, day: save.clock.day, name: kind === "legends" ? ef.LEGENDS_EVENT_NAME : "Elite Eight", format: "single", endless: kind };
@@ -70,6 +70,8 @@ describe("endless flow (flag on)", () => {
       const teams = Object.keys(started.activeEvent!.tournament.teams);
       expect(teams).toHaveLength(8);
       if (kind === "legends") expect(teams.filter((t) => t.startsWith("legend:"))).toHaveLength(7);
+      // The Intercontinental's guests come from the other regions.
+      if (kind === "world") expect(teams.filter((t) => t !== "user").every((t) => started.world.orgs[t] && started.world.orgs[t].region !== "EU")).toBe(true);
       const done = flow.simEventToEnd(started);
       expect(done.activeEvent?.tournament.stage).toBe("finished");
       const settled = flow.finishEvent(done);

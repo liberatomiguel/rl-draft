@@ -908,6 +908,8 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
         }
       : undefined,
     specialIds: [],
+    // v2.2 ENDLESS: a rival project's performance centre (absent = as before).
+    ...(org.projectBonus ? { ratingBonus: org.projectBonus } : {}),
     difficulty: ctx.difficulty,
     // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
     difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
@@ -1640,7 +1642,7 @@ export function fieldForEvent(
       field = [ctx.userTeam, ...refs.map((ref) => (isLocalRef(ref) ? localTeam(ref) : teamFor(ref)))];
     } else {
       // v2.2 ENDLESS: the Legends field, or the Invitational's drawn guests (lobbyField reads the same helper).
-      field = [ctx.userTeam, ...invitationalRefsFor(def, ctx.careerSeed, rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {}), SINGLE_ELIM_TEAMS - 1).map((ref) => (isLegendRef(ref) ? legendTeamFor(ref.slice(LEGEND_REF_PREFIX.length), ctx.difficulty) : teamFor(ref)))];
+      field = [ctx.userTeam, ...invitationalRefsFor(def, ctx.careerSeed, rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {}), SINGLE_ELIM_TEAMS - 1, (r) => rankedByPoints(r, ctx.competition.seasonPoints[r] ?? {}), region).map((ref) => (isLegendRef(ref) ? legendTeamFor(ref.slice(LEGEND_REF_PREFIX.length), ctx.difficulty) : teamFor(ref)))];
     }
   }
 

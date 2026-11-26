@@ -4858,6 +4858,13 @@ export const CAREER_ENDLESS = {
     importGap: 2.5,
     /** The project also hires its region's best AI coach (a swap). */
     coachSwap: true,
+    /** An AI leader (no user dynasty) needs this bigger lead before the world answers it. */
+    aiLeaderFloor: 3,
+    /**
+     * From this project level the org also opens a performance centre for the
+     * season: the team-rating bonus of the user's own (CAREER_GEAR perfCenter).
+     */
+    facilityFromLevel: 2,
   },
   cups: {
     /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
@@ -4871,5 +4878,12 @@ export const CAREER_ENDLESS = {
     perSeason: 2,
     /** The invitation needs the starters' average overall at this level (and the Invitational's reputation). */
     minStarterOverall: 93,
+  },
+  world: {
+    /** Intercontinental Invitational weeks per endless season (open weeks the Legends did not take). */
+    perSeason: 2,
+    /** Each other region sends its best N by Season Points (rating breaks ties); seven are drawn. */
+    perRegion: 2,
+    regions: ["NA", "EU", "SAM", "MENA", "OCE", "APAC"] as const,
   },
 } as const;

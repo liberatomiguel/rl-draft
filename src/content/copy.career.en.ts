@@ -2510,7 +2510,7 @@ export const CAREER_EN = {
         `Scouts across ${p.region} agree: ${p.player} has a ceiling among the best in the world. Give him a season or two.`,
       // v2.2 ENDLESS: what the save shows, nothing more (the signings and the rating before and after).
       endlessProject: (p: Record<string, string | number>) =>
-        `${p.org} (${p.region}) signs ${listEn(p)} for the new season. On paper the team rating goes from ${p.before} to ${p.after}.`,
+        `${p.org} (${p.region}) signs ${listEn(p)} for the new season.${Number(p.fac) ? " The org also opens a performance centre for the season." : ""} On paper the team rating goes from ${p.before} to ${p.after}.`,
       endlessHosts: (p: Record<string, string | number>) =>
         `The circuit's ${p.season} stops are set: Majors in ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}, and the World Championship in ${hostEn(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
