@@ -58,7 +58,10 @@ function OfferCard({ save, offer: o }: { save: ProSave; offer: ProOffer }) {
       <p className="kicker">{kindLabel}</p>
       <h3 className="display mt-1 text-lg font-bold uppercase leading-none text-ink">{o.name}</h3>
       {o.kind === "amateur" ? (
-        <p className="mt-2 text-sm leading-snug text-sub">{O.sideBody(Math.floor(o.level))}</p>
+        <>
+          <p className="mt-2 text-sm leading-snug text-sub">{O.sideBody(Math.floor(o.level))}</p>
+          {save.stage === "amateur" && save.amateur ? <p className="mt-1 text-sm leading-snug text-sub">{O.leavesSide(save.amateur.name)}</p> : null}
+        </>
       ) : (
         <>
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">

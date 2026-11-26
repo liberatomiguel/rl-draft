@@ -114,6 +114,7 @@ import {
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
 import { intakeSeasonIdFor } from "./calendar";
+import { invitationalRefsFor, isLegendRef, LEGEND_REF_PREFIX, legendTeamFor } from "./endless";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -907,6 +908,8 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
         }
       : undefined,
     specialIds: [],
+    // v2.2 ENDLESS: a rival project's performance centre (absent = as before).
+    ...(org.projectBonus ? { ratingBonus: org.projectBonus } : {}),
     difficulty: ctx.difficulty,
     // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
     difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
@@ -1638,8 +1641,8 @@ export function fieldForEvent(
       });
       field = [ctx.userTeam, ...refs.map((ref) => (isLocalRef(ref) ? localTeam(ref) : teamFor(ref)))];
     } else {
-      const ranked = rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {});
-      field = [ctx.userTeam, ...ranked.slice(0, SINGLE_ELIM_TEAMS - 1).map((ref) => teamFor(ref))];
+      // v2.2 ENDLESS: the Legends field, or the Invitational's drawn guests (lobbyField reads the same helper).
+      field = [ctx.userTeam, ...invitationalRefsFor(def, ctx.careerSeed, rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {}), SINGLE_ELIM_TEAMS - 1, (r) => rankedByPoints(r, ctx.competition.seasonPoints[r] ?? {}), region).map((ref) => (isLegendRef(ref) ? legendTeamFor(ref.slice(LEGEND_REF_PREFIX.length), ctx.difficulty) : teamFor(ref)))];
     }
   }
 

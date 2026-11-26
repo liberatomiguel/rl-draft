@@ -16,6 +16,7 @@
 
 import { TOURNAMENT } from "@/config/balance";
 import { repTierOf } from "@/engine/career/economy";
+import { invitationalRefsFor } from "@/engine/career/endless";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import {
   directEventRefsFor,
@@ -48,10 +49,10 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
     fieldsUser: ownRegion,
     careerSeed: save.careerSeed,
   };
-  const ranked = (points: Record<string, number>) =>
+  const ranked = (points: Record<string, number>, inRegion = region) =>
     orgsByPointsFor({
       world: save.world,
-      region,
+      region: inRegion,
       points,
       seasonIndex: def.seasonIndex,
       careerSeed: save.careerSeed,
@@ -86,8 +87,8 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
       }),
     ];
   }
-  const top = ranked(save.competition.seasonPoints[region] ?? {});
-  return ["user", ...top.slice(0, TOURNAMENT.quick.teams - 1)];
+  // v2.2 ENDLESS: the engine's own guest list (Legends, the drawn Invitational, or the top seven).
+  return ["user", ...invitationalRefsFor(def, save.careerSeed, ranked(save.competition.seasonPoints[region] ?? {}), TOURNAMENT.quick.teams - 1, (r) => ranked(save.competition.seasonPoints[r] ?? {}, r), region)];
 }
 
 export function lobbyDirectRefs(save: CareerSave, def: CareerEventDef, userRating: number): string[] {

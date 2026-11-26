@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { weekOfDay, dayOfWeekOf } from "@/engine/career/calendar";
 import { proOverall } from "@/engine/career/pro/attrs";
+import { isBurnedOut } from "@/engine/career/pro/week";
 import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -74,8 +75,9 @@ export function ProCareerScreen() {
         title={save.player.name}
         kicker={P.date(save.clock.seasonIndex + 1, weekOfDay(save.clock.day), P.days[dayOfWeekOf(save.clock.day)] ?? "")}
         right={
-          <AppLink href="/career/pro/player" className="text-sm font-semibold text-blue-bright hover:underline">
-            {Math.floor(proOverall(save.player.attrs))}
+          <AppLink href="/career/pro/player" className="flex min-h-11 flex-col items-end justify-center text-blue-bright hover:underline">
+            <span className="display text-xl font-bold leading-none">{Math.floor(proOverall(save.player.attrs))}</span>
+            <span className="mt-0.5 text-xs font-semibold">{C.pro.player.overall}</span>
           </AppLink>
         }
       />
@@ -132,7 +134,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm leading-snug text-sub">{status}</p>
+      {save.stage === "ranked" && offers.length > 0 ? null : <p className="text-sm leading-snug text-sub">{status}</p>}
 
       {save.retireOffer ? <RetireOffer /> : null}
 
@@ -169,7 +171,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </button>
       ) : null}
 
-      {!stop ? (
+      {!stop && !save.report ? (
         <div>
           <p className="kicker mb-1">{P.next}</p>
           <p className="text-sm text-ink">
@@ -198,16 +200,22 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
           ))}
         </ol>
         <p className="mt-1 text-xs text-faint">{save.weekPlan ? P.yourPlan : P.coachPlan}</p>
+        <p className={isBurnedOut(save.player) ? "mt-2 text-sm text-orange-bright" : "mt-2 text-sm text-sub"}>
+          {isBurnedOut(save.player) ? C.proWeek.warn.burnedOut : `${C.proWeek.energy}: ${Math.round(save.player.energy)}`}
+        </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-line pt-5">
-        <Button variant="primary" size="lg" onClick={() => apply(advanceProToNextStopFlow)}>
-          {P.advance}
-        </Button>
-        <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
-          {P.oneDay}
-        </Button>
-        <p className="w-full text-xs leading-snug text-faint">{P.advanceHint}</p>
+      <div>
+        <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
+          <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>
+            {P.advance}
+          </Button>
+          <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
+            {P.oneDay}
+          </Button>
+        </div>
+        <p className="mt-3 text-xs leading-snug text-faint">{P.advanceHint}</p>
+        {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
       </div>
 
       {canRetireProNow(save) && !save.retireOffer ? (

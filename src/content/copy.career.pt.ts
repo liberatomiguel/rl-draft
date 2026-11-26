@@ -10,6 +10,18 @@
 
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
 
+/** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
+const ENDLESS_HOSTS_PT = [
+  "Londres", "Paris", "Copenhague", "Estocolmo", "Boston", "Dallas",
+  "Los Angeles", "São Paulo", "Riad", "Sydney", "Tóquio", "Madri",
+] as const;
+const hostPt = (i: string | number | undefined): string => ENDLESS_HOSTS_PT[Number(i)] ?? "";
+/** v2.2 ENDLESS: "A", "A e B", "A, B e C". */
+const listPt = (p: Record<string, string | number>): string => {
+  const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
+  return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`;
+};
+
 /** rc.33 review: quanto tempo o parceiro de resgate paga (rc.34: o investidor, CAREER_LOAN.investor.weeks, recebido) — nada quando não se sabe. */
 const partnerRunPt = (weeks?: string | number): string => (Number(weeks) > 0 ? ` por ${weeks} semanas` : "");
 
@@ -2304,6 +2316,9 @@ export const CAREER_PT: CareerCopy = {
       prospectScouted: (p: Record<string, string | number>) => `${p.org} contrata o prospecto ${p.player} para o banco`,
       // v2.1 M2.1 (R142): o mundo cresce.
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) desponta como prodígio`,
+      // v2.2 ENDLESS
+      endlessProject: (p: Record<string, string | number>) => `${p.org} monta o time em torno de ${listPt(p)}`,
+      endlessHosts: (p: Record<string, string | number>) => `${p.season}: os Majors vão para ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -2467,6 +2482,11 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} contrata ${p.player} como reserva. Ele vira titular quando for melhor que um dos titulares.`,
       prodigyRises: (p: Record<string, string | number>) =>
         `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
+      // v2.2 ENDLESS: só o que o save mostra (as contratações e o rating antes e depois).
+      endlessProject: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada.${Number(p.fac) ? " A org também abre um centro de performance para a temporada." : ""} No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+      endlessHosts: (p: Record<string, string | number>) =>
+        `As paradas do circuito em ${p.season} estão definidas: Majors em ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}, e o Mundial em ${hostPt(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
@@ -3662,16 +3682,17 @@ export const CAREER_PT: CareerCopy = {
       content: "Dinheiro e fãs. Custa 10 de energia.",
       rest: "Devolve 35 de energia.",
     } as Record<string, string>,
-    focus: "Treinar",
+    focus: "Foco",
     focusBalanced: "Equilibrado",
     needsTeam: "Você precisa de um time para fazer scrim.",
     burnedOutBlock: "Fora esta semana: todos os blocos contam como descanso.",
     energy: "Energia",
-    energyTrace: (values: number[]) => values.join(" → "),
+    energyTrace: (values: number[]) => `${values.slice(0, -1).join(" → ")}, depois ${values[values.length - 1]} no fim de semana`,
     energyTraceLabel: "Energia depois de cada bloco e depois da semana",
     projected: {
       gain: (stat: string, n: number) => `${stat} +${n.toFixed(2)}`,
       none: "Nenhum atributo muda",
+      allStats: (n: number) => `Todos os atributos +${n.toFixed(2)}`,
       mmr: (n: number) => `Esperado ${n >= 0 ? "+" : ""}${n} MMR`,
       money: (n: number) => `+${n} de dinheiro`,
       fame: (n: number) => `+${n} fãs`,
@@ -3733,7 +3754,7 @@ export const CAREER_PT: CareerCopy = {
         age: "Idade",
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
-      day: (season: number, day: number) => `Temporada ${season + 1}, dia ${day}`,
+      day: (season: number, week: number) => `Temporada ${season + 1}, semana ${week}`,
       /** Por que um atributo caiu com a idade (a chave de motivo numa entrada "age"). */
       reasons: {
         reflexes: "Os seus reflexos começam a cair.",
@@ -3796,12 +3817,12 @@ export const CAREER_PT: CareerCopy = {
       owned: "Desbloqueadas",
       next: (name: string, blocks: number, mech: number) =>
         blocks > 0 && mech > 0
-          ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica e ${mech} de Mecânica.`
+          ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica e ${mech} pontos de Mecânica.`
           : blocks > 0
-            ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica.`
+            ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica.`
             : mech > 0
-              ? `Próxima: ${name}. Mais ${mech} de Mecânica.`
-              : `Próxima: ${name}. Treine mecânica mais uma vez.`,
+              ? `Próxima: ${name}. Faltam ${mech} pontos de Mecânica.`
+              : `Próxima: ${name}. Falta um bloco de treino em Mecânica.`,
       all: "Todas as mecânicas assinatura estão desbloqueadas.",
     },
   },
@@ -3926,7 +3947,8 @@ export const CAREER_PT: CareerCopy = {
       mmr: "MMR",
       unranked: "Sem rank",
       nextTitle: "O que vem a seguir",
-      nextBody: "Planeje a semana, jogue ranqueado e veja o registro do que mudou. Times amadores e orgs chegam nas próximas fatias.",
+      nextBody: "A tela da carreira cuida do calendário, das partidas e das propostas. A tela da semana define o seu treino e mostra por que os atributos mudaram.",
+      openCareer: "Abrir a carreira",
       allCareers: "Todas as carreiras Pro",
     },
   },
@@ -3946,6 +3968,7 @@ export const CAREER_PT: CareerCopy = {
     advance: "Continuar",
     advanceHint: "Avança dia a dia e para quando algo precisa de você: dia de jogo, súmula, proposta, fim da temporada.",
     oneDay: "Um dia",
+    offerOpenHint: "Você tem uma proposta aberta. Ela fecha na data dela se você seguir sem responder.",
     playMatchday: (name: string) => `Jogar ${name}`,
     continueEvent: (name: string) => `Continuar ${name}`,
     seasonEnd: "A temporada acabou",
@@ -4033,6 +4056,7 @@ export const CAREER_PT: CareerCopy = {
       level: (n: number) => `Nível do time ${n}`,
       sideBody: (level: number) => `Dois jogadores em torno de ${level}. Você jogaria todas as copas e o Open Qualifier com eles.`,
       expires: (season: number, week: number) => `Aberta até a temporada ${season}, semana ${week}`,
+      leavesSide: (side: string) => `Aceitar significa sair de ${side}.`,
       accept: "Aceitar",
       counter: "Contraproposta",
       decline: "Recusar",
@@ -4050,6 +4074,7 @@ export const CAREER_PT: CareerCopy = {
       status: { accepted: "Aceita", declined: "Recusada", expired: "Expirou", withdrawn: "Retirada" } as Record<string, string>,
     },
     inbox: {
+      when: (season: number, week: number) => `T${season} · sem ${week}`,
       title: "Caixa de entrada",
       none: "Nada ainda.",
       scene: "Pela cena",
@@ -4061,7 +4086,7 @@ export const CAREER_PT: CareerCopy = {
       games: (n: number) => `${n} jogos`,
       title: "Temporadas",
       line: (age: number, from: number, to: number) => `${age} anos: overall de ${from} para ${to}`,
-      series: (n: number, won: number, avg: string) => `${n} séries, ${won} vencidas, média ${avg}`,
+      series: (n: number, won: number, avg: string) => n === 0 ? "Nenhuma série jogada" : `${n} ${n === 1 ? "série" : "séries"}, ${won} vencidas, nota média ${avg}`,
     },
     news: {
       nicknameEarned: (p: Record<string, string | number>) => `A cena agora tem um apelido para você: ${p.name}.`,
@@ -4088,8 +4113,13 @@ export const CAREER_PT: CareerCopy = {
       renewed: (p: Record<string, string | number>) => `Você renovou com a ${p.org}.`,
       contractEnded: (p: Record<string, string | number>) => `Seu contrato com a ${p.org} acabou. Você é agente livre.`,
       orgGone: (p: Record<string, string | number>) => `A ${p.org} saiu da cena. Você é agente livre.`,
-      seasonDone: (p: Record<string, string | number>) => `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
+      seasonDone: (p: Record<string, string | number>) => Number(p.series) === 0 ? `A temporada ${p.season} acabou sem nenhuma série jogada.` : `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
       sideTitle: (p: Record<string, string | number>) => `O ${p.side} venceu ${p.event}.`,
     } as Record<string, (p: Record<string, string | number>) => string>,
+  },
+  /** v2.2 ENDLESS: os textos da frente. */
+  endless: {
+    hosts: ENDLESS_HOSTS_PT as readonly string[],
+    legendsNote: "Elencos históricos da RLCS no rating real do auge. Paga prêmio e reputação, sem Season Points.",
   },
 };

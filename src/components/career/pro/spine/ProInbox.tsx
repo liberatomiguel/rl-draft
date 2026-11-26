@@ -44,7 +44,7 @@ export function ProInbox({ save }: { save: ProSave }) {
             <li key={n.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
               <span className={n.read ? "text-sub" : "text-ink"}>{textOf(n.key, n.params)}</span>
               <span className="shrink-0 text-xs text-faint">
-                {n.seasonIndex + 1}.{weekOfDay(n.day)}
+                {I.when(n.seasonIndex + 1, weekOfDay(n.day))}
               </span>
             </li>
           ))}

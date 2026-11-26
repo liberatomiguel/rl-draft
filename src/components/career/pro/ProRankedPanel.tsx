@@ -8,6 +8,7 @@
 
 import { CAREER_PRO_RANKED } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
+import { weekOfDay } from "@/engine/career/calendar";
 import { cupsUnlocked, rankOf } from "@/engine/career/pro/ranked";
 import type { ProPlayer } from "@/engine/career/pro/types";
 import { RankBadge } from "@/components/ui/RankBadge";
@@ -43,7 +44,7 @@ export function ProRankedPanel({ player }: { player: ProPlayer }) {
           {log.map((s, i) => (
             <li key={`${s.seasonIndex}:${s.day}:${i}`} className="flex items-baseline justify-between gap-3 border-b border-line pb-1.5">
               <span className="text-ink">{C.ranked.session(s.wins, s.games, s.mmrDelta)}</span>
-              <span className="shrink-0 text-xs text-faint">{C.log.day(s.seasonIndex, s.day)}</span>
+              <span className="shrink-0 text-xs text-faint">{C.log.day(s.seasonIndex, weekOfDay(s.day))}</span>
             </li>
           ))}
         </ul>

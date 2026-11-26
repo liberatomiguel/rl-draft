@@ -10,6 +10,18 @@
  * Tone: broadcast desk / post-match analysis — clean esports language.
  */
 
+/** v2.2 ENDLESS: the host cities a season draws its Majors and Worlds from (indexes are stored in the save). */
+const ENDLESS_HOSTS_EN = [
+  "London", "Paris", "Copenhagen", "Stockholm", "Boston", "Dallas",
+  "Los Angeles", "São Paulo", "Riyadh", "Sydney", "Tokyo", "Madrid",
+] as const;
+const hostEn = (i: string | number | undefined): string => ENDLESS_HOSTS_EN[Number(i)] ?? "";
+/** v2.2 ENDLESS: "A", "A and B", "A, B and C". */
+const listEn = (p: Record<string, string | number>): string => {
+  const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
+  return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
+};
+
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
 
@@ -2329,6 +2341,9 @@ export const CAREER_EN = {
       prospectScouted: (p: Record<string, string | number>) => `${p.org} signs prospect ${p.player} for its bench`,
       // v2.1 M2.1 (R142): the world grows.
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) breaks out as a prodigy`,
+      // v2.2 ENDLESS
+      endlessProject: (p: Record<string, string | number>) => `${p.org} build around ${listEn(p)}`,
+      endlessHosts: (p: Record<string, string | number>) => `${p.season}: the Majors go to ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives: ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -2493,6 +2508,11 @@ export const CAREER_EN = {
         `${p.org} adds ${p.player} as its reserve. He starts once he is better than one of the starters.`,
       prodigyRises: (p: Record<string, string | number>) =>
         `Scouts across ${p.region} agree: ${p.player} has a ceiling among the best in the world. Give him a season or two.`,
+      // v2.2 ENDLESS: what the save shows, nothing more (the signings and the rating before and after).
+      endlessProject: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) signs ${listEn(p)} for the new season.${Number(p.fac) ? " The org also opens a performance centre for the season." : ""} On paper the team rating goes from ${p.before} to ${p.after}.`,
+      endlessHosts: (p: Record<string, string | number>) =>
+        `The circuit's ${p.season} stops are set: Majors in ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}, and the World Championship in ${hostEn(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>
@@ -3690,16 +3710,17 @@ export const CAREER_EN = {
       content: "Money and fans. Costs 10 energy.",
       rest: "Gives back 35 energy.",
     } as Record<string, string>,
-    focus: "Train",
+    focus: "Focus",
     focusBalanced: "Balanced",
     needsTeam: "You need a team to scrim.",
     burnedOutBlock: "Out this week: every block counts as rest.",
     energy: "Energy",
-    energyTrace: (values: number[]) => values.join(" → "),
+    energyTrace: (values: number[]) => `${values.slice(0, -1).join(" → ")}, then ${values[values.length - 1]} after the weekend`,
     energyTraceLabel: "Energy after each block and after the week",
     projected: {
       gain: (stat: string, n: number) => `${stat} +${n.toFixed(2)}`,
       none: "No attribute change",
+      allStats: (n: number) => `Every attribute +${n.toFixed(2)}`,
       mmr: (n: number) => `Expected ${n >= 0 ? "+" : ""}${n} MMR`,
       money: (n: number) => `+${n} money`,
       fame: (n: number) => `+${n} fans`,
@@ -3761,7 +3782,7 @@ export const CAREER_EN = {
         age: "Age",
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
-      day: (season: number, day: number) => `Season ${season + 1}, day ${day}`,
+      day: (season: number, week: number) => `Season ${season + 1}, week ${week}`,
       /** Why an attribute fell with age (the reason key on an "age" entry). */
       reasons: {
         reflexes: "Your reflexes are starting to go.",
@@ -3824,12 +3845,12 @@ export const CAREER_EN = {
       owned: "Unlocked",
       next: (name: string, blocks: number, mech: number) =>
         blocks > 0 && mech > 0
-          ? `Next: ${name}. ${blocks} more mechanics blocks and ${mech} more Mechanics.`
+          ? `Next: ${name}. It needs ${blocks} more training blocks on Mechanics and ${mech} more points of Mechanics.`
           : blocks > 0
-            ? `Next: ${name}. ${blocks} more mechanics blocks.`
+            ? `Next: ${name}. It needs ${blocks} more training blocks on Mechanics.`
             : mech > 0
-              ? `Next: ${name}. ${mech} more Mechanics.`
-              : `Next: ${name}. Train mechanics once more.`,
+              ? `Next: ${name}. It needs ${mech} more points of Mechanics.`
+              : `Next: ${name}. One more Mechanics training block.`,
       all: "Every signature mechanic is unlocked.",
     },
   },
@@ -3954,7 +3975,8 @@ export const CAREER_EN = {
       mmr: "MMR",
       unranked: "Unranked",
       nextTitle: "What comes next",
-      nextBody: "Plan the week, play ranked and watch the log of what moved. Amateur teams and orgs come in the next slices.",
+      nextBody: "The career screen runs your calendar, matches and offers. The week screen sets your training and shows why your attributes moved.",
+      openCareer: "Open career",
       allCareers: "All Pro careers",
     },
   },
@@ -3974,6 +3996,7 @@ export const CAREER_EN = {
     advance: "Continue",
     advanceHint: "Moves day by day and stops when something needs you: a matchday, a report, an offer, the end of the season.",
     oneDay: "One day",
+    offerOpenHint: "You have an open offer. It closes on its date if you keep going without answering.",
     playMatchday: (name: string) => `Play ${name}`,
     continueEvent: (name: string) => `Continue ${name}`,
     seasonEnd: "The season is over",
@@ -4061,6 +4084,7 @@ export const CAREER_EN = {
       level: (n: number) => `Team level ${n}`,
       sideBody: (level: number) => `Two players around ${level}. You would play every cup and the Open Qualifier with them.`,
       expires: (season: number, week: number) => `Open until season ${season}, week ${week}`,
+      leavesSide: (side: string) => `Accepting means leaving ${side}.`,
       accept: "Accept",
       counter: "Counter",
       decline: "Decline",
@@ -4078,6 +4102,7 @@ export const CAREER_EN = {
       status: { accepted: "Accepted", declined: "Declined", expired: "Expired", withdrawn: "Withdrawn" } as Record<string, string>,
     },
     inbox: {
+      when: (season: number, week: number) => `S${season} · wk ${week}`,
       title: "Inbox",
       none: "Nothing yet.",
       scene: "Around the scene",
@@ -4089,7 +4114,7 @@ export const CAREER_EN = {
       games: (n: number) => `${n} games`,
       title: "Seasons",
       line: (age: number, from: number, to: number) => `Age ${age}: overall ${from} to ${to}`,
-      series: (n: number, won: number, avg: string) => `${n} series, ${won} won, average ${avg}`,
+      series: (n: number, won: number, avg: string) => n === 0 ? "No series played" : `${n} series, ${won} won, average rating ${avg}`,
     },
     news: {
       nicknameEarned: (p: Record<string, string | number>) => `The scene has a name for you now: ${p.name}.`,
@@ -4116,9 +4141,14 @@ export const CAREER_EN = {
       renewed: (p: Record<string, string | number>) => `You renewed with ${p.org}.`,
       contractEnded: (p: Record<string, string | number>) => `Your contract with ${p.org} ended. You are a free agent.`,
       orgGone: (p: Record<string, string | number>) => `${p.org} left the scene. You are a free agent.`,
-      seasonDone: (p: Record<string, string | number>) => `Season ${p.season} is over: ${p.series} series played, average rating ${p.avg}.`,
+      seasonDone: (p: Record<string, string | number>) => Number(p.series) === 0 ? `Season ${p.season} is over with no series played.` : `Season ${p.season} is over: ${p.series} series played, average rating ${p.avg}.`,
       sideTitle: (p: Record<string, string | number>) => `${p.side} won ${p.event}.`,
     } as Record<string, (p: Record<string, string | number>) => string>,
+  },
+  /** v2.2 ENDLESS: the front's own strings. */
+  endless: {
+    hosts: ENDLESS_HOSTS_EN as readonly string[],
+    legendsNote: "All-time RLCS rosters at their real peak ratings. Prize money and reputation, no Season Points.",
   },
 };
 
