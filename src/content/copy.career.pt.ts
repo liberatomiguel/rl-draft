@@ -3662,16 +3662,17 @@ export const CAREER_PT: CareerCopy = {
       content: "Dinheiro e fãs. Custa 10 de energia.",
       rest: "Devolve 35 de energia.",
     } as Record<string, string>,
-    focus: "Treinar",
+    focus: "Foco",
     focusBalanced: "Equilibrado",
     needsTeam: "Você precisa de um time para fazer scrim.",
     burnedOutBlock: "Fora esta semana: todos os blocos contam como descanso.",
     energy: "Energia",
-    energyTrace: (values: number[]) => values.join(" → "),
+    energyTrace: (values: number[]) => `${values.slice(0, -1).join(" → ")}, depois ${values[values.length - 1]} no fim de semana`,
     energyTraceLabel: "Energia depois de cada bloco e depois da semana",
     projected: {
       gain: (stat: string, n: number) => `${stat} +${n.toFixed(2)}`,
       none: "Nenhum atributo muda",
+      allStats: (n: number) => `Todos os atributos +${n.toFixed(2)}`,
       mmr: (n: number) => `Esperado ${n >= 0 ? "+" : ""}${n} MMR`,
       money: (n: number) => `+${n} de dinheiro`,
       fame: (n: number) => `+${n} fãs`,
@@ -3796,12 +3797,12 @@ export const CAREER_PT: CareerCopy = {
       owned: "Desbloqueadas",
       next: (name: string, blocks: number, mech: number) =>
         blocks > 0 && mech > 0
-          ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica e ${mech} de Mecânica.`
+          ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica e ${mech} pontos de Mecânica.`
           : blocks > 0
-            ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica.`
+            ? `Próxima: ${name}. Faltam ${blocks} blocos de treino em Mecânica.`
             : mech > 0
-              ? `Próxima: ${name}. Mais ${mech} de Mecânica.`
-              : `Próxima: ${name}. Treine mecânica mais uma vez.`,
+              ? `Próxima: ${name}. Faltam ${mech} pontos de Mecânica.`
+              : `Próxima: ${name}. Falta um bloco de treino em Mecânica.`,
       all: "Todas as mecânicas assinatura estão desbloqueadas.",
     },
   },

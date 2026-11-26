@@ -70,7 +70,7 @@ export function ProWizardScreen() {
   };
 
   return (
-    <div className="mobile-action-space rise-in mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
+    <div className="rise-in mx-auto max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
       <SectionTitle
         title={C.pro.wizard.title}
         kicker={C.pro.wizard.kicker}
@@ -191,8 +191,8 @@ export function ProWizardScreen() {
         ))}
       </div>
 
-      <div className="mt-8 flex justify-end">
-        <Button variant="primary" size="lg" disabled={!canCreate} onClick={create}>
+      <div className="action-dock mt-8 flex justify-end">
+        <Button variant="primary" size="lg" className="max-sm:w-full" disabled={!canCreate} onClick={create}>
           {C.pro.wizard.create}
         </Button>
       </div>

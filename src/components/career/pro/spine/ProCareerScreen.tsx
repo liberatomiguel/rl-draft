@@ -69,8 +69,9 @@ export function ProCareerScreen() {
         title={save.player.name}
         kicker={P.date(save.clock.seasonIndex + 1, weekOfDay(save.clock.day), P.days[dayOfWeekOf(save.clock.day)] ?? "")}
         right={
-          <AppLink href="/career/pro/player" className="text-sm font-semibold text-blue-bright hover:underline">
-            {Math.floor(proOverall(save.player.attrs))}
+          <AppLink href="/career/pro/player" className="flex min-h-11 flex-col items-end justify-center text-blue-bright hover:underline">
+            <span className="display text-xl font-bold leading-none">{Math.floor(proOverall(save.player.attrs))}</span>
+            <span className="mt-0.5 text-xs font-semibold">{C.pro.player.overall}</span>
           </AppLink>
         }
       />
