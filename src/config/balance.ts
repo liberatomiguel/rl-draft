@@ -5130,14 +5130,15 @@ export const CAREER_BOARD = {
    * BOARD_PROBE=1 BOARD_CAL_OUT (careerBoard.probe.test.ts, BOARD_FIT_FROM).
    * A missing cell reads the raw model.
    */
-  // Fitted 26/11 on 30 competent careers × 6 seasons (NA/EU/SAM, seed 9000, every staging flag on),
-  // every season goal settled against the season (about 510-620 goals a cell). Easy has no cell (raw model).
+  // Fitted 26/11 (shift-only, ridge 20: the model's ordering kept) on 58 competent careers × 6 seasons
+  // (NA/EU/SAM, seeds 9000/12000/12101, every staging flag on), every season goal settled against its
+  // season: 840-1230 goals a cell. Easy has no cell (raw model).
   calibration: {
-    elite: { normal: { a: 1.87, b: 0.33, first: 0.43 }, hard: { a: 0.57, b: 0.3, first: 1.01 } },
-    contender: { normal: { a: 1.65, b: 0.25, first: 0.39 }, hard: { a: 0.56, b: 0.36, first: 0.4 } },
-    mid: { normal: { a: 0.62, b: 0.29, first: 0.19 }, hard: { a: -0.57, b: 0.36, first: 0.26 } },
-    underdog: { normal: { a: 0.91, b: 0.48, first: 0.8 }, hard: { a: -1.43, b: 0.66, first: 3.1 } },
-    owners: { normal: { a: -1.2, b: 0.62, first: -0.25 }, hard: { a: -2.63, b: 0.54, first: -1.95 } },
+    elite: { normal: { a: 3.15, b: 1, first: 0.08 }, hard: { a: 0.4, b: 1, first: -0.2 } },
+    contender: { normal: { a: 3.82, b: 1, first: 0.09 }, hard: { a: 1.54, b: 1, first: 0.2 } },
+    mid: { normal: { a: 3.33, b: 1, first: 0.01 }, hard: { a: -0.36, b: 1, first: -0.33 } },
+    underdog: { normal: { a: 1.84, b: 1, first: 0.57 }, hard: { a: -0.72, b: 1, first: 0.84 } },
+    owners: { normal: { a: -0.78, b: 1, first: -0.34 }, hard: { a: -1.64, b: 1, first: -0.51 } },
   } as Record<string, Record<string, { a: number; b: number; first: number }>>,
   /** Confidence lines. */
   confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },

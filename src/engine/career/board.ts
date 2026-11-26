@@ -73,9 +73,13 @@ const logit = (p: number) => Math.log(p / (1 - p));
  * The measured chance for a model chance: logit(p) = a + b·logit(model) (+ first
  * in a first season), fitted per stature × difficulty on BOARD_CAL (careerBoard.probe).
  */
-export function calibratedChance(model: number, cell: CalibrationCell | undefined): number {
+export function calibratedChance(
+  model: number,
+  cell: CalibrationCell | undefined,
+  table: Record<string, Record<string, { a: number; b: number; first: number }> | undefined> = B.calibration,
+): number {
   if (!cell || !(model > 0)) return model;
-  const row = (B.calibration as Record<string, Record<string, { a: number; b: number; first: number }> | undefined>)[cell.stature]?.[cell.difficulty];
+  const row = table[cell.stature]?.[cell.difficulty];
   if (!row) return model;
   const x = logit(clamp(model, 0.01, 0.99));
   const z = row.a + row.b * x + (cell.first ? row.first : 0);

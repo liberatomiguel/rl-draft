@@ -26,6 +26,7 @@ vi.mock("@/config/balance", async (orig) => {
 });
 
 import type { PackageId } from "@/engine/career/boardTypes";
+import { calibratedChance, objectiveAimOf } from "@/engine/career/board";
 import { realOrgChoicesFor } from "@/engine/career/orgProfile";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
 import type { CareerDifficulty, CareerSave, SeasonGoalSpec } from "@/engine/career/types";
@@ -74,6 +75,9 @@ interface CalRow {
   first: boolean;
   model: number;
   met: boolean;
+  /** Which career-season it came from, and the goal (the offline re-pick of the packages). */
+  key?: string;
+  goal?: string;
 }
 
 function input(region: Region, difficulty: CareerDifficulty, realOrgRef?: string): CreateCareerInput {
@@ -142,15 +146,50 @@ function fit(rows: CalRow[]): { a: number; b: number; first: number } {
   return { a: r2(w[0]), b: r2(Math.max(0.2, w[1])), first: r2(w[2]) };
 }
 
+/** The shift-only fit (slope fixed at 1, the model's ordering kept): logit(p) = logit(model) + a + first·[first season]. */
+function fitShift(rows: CalRow[]): { a: number; b: number; first: number } {
+  let a = 0;
+  let f = 0;
+  for (let it = 0; it < 60; it++) {
+    let ga = 0, gf = 0, haa = 1e-3, haf = 0, hff = 1e-3;
+    for (const r of rows) {
+      const x = r.first ? 1 : 0;
+      const p = 1 / (1 + Math.exp(-(lg(r.model) + a + f * x)));
+      const y = r.met ? 1 : 0;
+      ga += y - p;
+      gf += (y - p) * x;
+      const w = p * (1 - p);
+      haa += w;
+      haf += w * x;
+      hff += w * x;
+    }
+    // Ridge toward the raw model (BOARD_FIT_RIDGE): a cell with few careers stays near it.
+    const lam = Number(env.BOARD_FIT_RIDGE ?? 0);
+    ga -= lam * a;
+    gf -= lam * f;
+    haa += lam;
+    hff += lam;
+    const det = haa * hff - haf * haf;
+    const da = (ga * hff - gf * haf) / det;
+    const df = (haa * gf - haf * ga) / det;
+    a += Math.max(-1, Math.min(1, da));
+    f += Math.max(-1, Math.min(1, df));
+    if (Math.abs(da) + Math.abs(df) < 1e-6) break;
+  }
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  return { a: r2(a), b: 1, first: r2(f) };
+}
+
 it.skipIf(!env.BOARD_PROBE)("board probe", () => {
   if (env.BOARD_FIT_FROM) {
-    const rows: CalRow[] = env.BOARD_FIT_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]);
+    const skip = env.BOARD_FIT_EXCLUDE_SEED ? `:${env.BOARD_FIT_EXCLUDE_SEED}:` : null;
+    const rows: CalRow[] = env.BOARD_FIT_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => !skip || !r.key?.includes(skip));
     const out: Record<string, Record<string, { a: number; b: number; first: number }>> = {};
     for (const st of [...new Set(rows.map((r) => r.stature))])
       for (const df of [...new Set(rows.map((r) => r.diff))]) {
         const xs = rows.filter((r) => r.stature === st && r.diff === df);
         if (xs.length < 40) continue;
-        const f = fit(xs);
+        const f = env.BOARD_FIT_FREE ? fit(xs) : fitShift(xs);
         (out[st] ??= {})[df] = f;
         const bins = [0, 0.2, 0.4, 0.6, 0.8, 1.01];
         const line = bins.slice(0, -1).map((lo, i) => {
@@ -160,6 +199,37 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         console.log(`${st}/${df} n=${xs.length} fit ${JSON.stringify(f)} | real by model band: ${line.filter(Boolean).join(", ")}`);
       }
     console.log("CALIBRATION " + JSON.stringify(out));
+    return;
+  }
+  if (env.BOARD_EVAL_FROM) {
+    // Offline: re-pick the three packages of every recorded career-season under a calibration table and settle them.
+    const only = env.BOARD_EVAL_SEED ? `:${env.BOARD_EVAL_SEED}:` : null;
+    const rows: CalRow[] = env.BOARD_EVAL_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => r.key && (!only || r.key.includes(only)));
+    const table = env.BOARD_EVAL_CAL ? JSON.parse(env.BOARD_EVAL_CAL) : {};
+    const groups = new Map<string, CalRow[]>();
+    for (const r of rows) groups.set(r.key!, [...(groups.get(r.key!) ?? []), r]);
+    const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number }>();
+    for (const g of groups.values()) {
+      const { stature, diff, first } = g[0];
+      const cell = { stature: stature as never, difficulty: diff as CareerDifficulty, first };
+      const pool = g.map((r) => ({ r, c: calibratedChance(r.model, cell, table) }));
+      const near = (aim: number, f: (c: number) => boolean) => pool.filter((x) => f(x.c)).sort((x, y) => Math.abs(x.c - aim) - Math.abs(y.c - aim))[0];
+      const ex = near(objectiveAimOf("expected", stature as never, diff as CareerDifficulty), () => true);
+      if (!ex) continue;
+      const ca = near(objectiveAimOf("cautious", stature as never, diff as CareerDifficulty), (c) => c > ex.c + 0.02) ?? ex;
+      const am = near(objectiveAimOf("ambitious", stature as never, diff as CareerDifficulty), (c) => c < ex.c - 0.02) ?? ex;
+      const k = `${stature}/${diff}`;
+      const t = cells.get(k) ?? { n: 0, stated: 0, met: 0, ca: 0, am: 0 };
+      t.n += 1;
+      t.stated += ex.c;
+      t.met += ex.r.met ? 1 : 0;
+      t.ca += ca.r.met ? 1 : 0;
+      t.am += am.r.met ? 1 : 0;
+      cells.set(k, t);
+    }
+    for (const [k, t] of [...cells].sort()) {
+      console.log(`EVAL ${k.padEnd(16)} Expected stated ${Math.round((100 * t.stated) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (N=${t.n}) | Cautious ${Math.round((100 * t.ca) / t.n)}% / Ambitious ${Math.round((100 * t.am) / t.n)}%`);
+    }
     return;
   }
   if (env.BOARD_SUMMARY_FROM) {
@@ -210,7 +280,8 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       const ctx = overCtx(save);
       if (pool && pool.s === save.clock.seasonIndex) {
         const st = job.stature === "founded" && pool.stature === "owners" ? "owners" : pool.stature;
-        for (const g of pool.goals) cal.push({ stature: st, diff: job.diff, first: pool.first, model: g.chance, met: seasonGoalProgressOf(g, ctx).hit });
+        const key = `${job.region}:${job.seed}:${job.stature}:${save.clock.seasonIndex}`;
+        for (const g of pool.goals) cal.push({ stature: st, diff: job.diff, first: pool.first, model: g.chance, met: seasonGoalProgressOf(g, ctx).hit, key, goal: `${g.kind}:${g.count}:${g.place ?? ""}` });
       }
       const offers: Record<string, [number, boolean]> = {};
       if (se?.seasonIndex === save.clock.seasonIndex) for (const o of se.offers) offers[o.id] = [o.objective.chance, seasonGoalProgressOf(o.objective, ctx).hit];
