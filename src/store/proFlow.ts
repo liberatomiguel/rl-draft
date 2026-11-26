@@ -24,11 +24,12 @@
  * the same object), no throw for a reachable state.
  */
 
-import { CAREER_PRO_ORG, CAREER_PRO_TEAM } from "@/config/balance";
+import { CAREER_PRO, CAREER_PRO_ORG, CAREER_PRO_TEAM } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import { buildSeriesBoxScore } from "@/engine/career/boxScore";
 import { dayOfWeekOf, isWindowStartWeek, weekOfDay, windowIndexOf, DAYS_PER_SEASON } from "@/engine/career/calendar";
 import { ageOf, playerViewById as devView } from "@/engine/career/development";
+import { derivedFloat } from "@/engine/career/seeds";
 import { proOverall, round2 } from "@/engine/career/pro/attrs";
 import { decideOrgLineup, proLineupScore, trustAfterSeries } from "@/engine/career/pro/lineup";
 import {
@@ -41,7 +42,7 @@ import {
   removeProFromWorld,
   renewalOfferFor,
 } from "@/engine/career/pro/offers";
-import { applyBlock, applyMatchXp, coachPlanFor, type ProActivity } from "@/engine/career/pro/spineBridge";
+import { applyBlock, applyMatchXp, closeWeek, coachPlanFor } from "@/engine/career/pro/spineBridge";
 import type {
   ProHost,
   ProMatchReport,
@@ -50,9 +51,10 @@ import type {
   ProSeasonLine,
   ProSeriesLine,
   ProStop,
+  ProWeekLog,
 } from "@/engine/career/pro/spineTypes";
 import { amateurInviteFor, amateurTeammates, proSquadPlayer, sideLevelOf } from "@/engine/career/pro/team";
-import type { ProSave } from "@/engine/career/pro/types";
+import type { ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { PRO_SELF_ID, withProInWorld } from "@/engine/career/pro/world";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { TournamentState, TournamentTeam } from "@/engine/types";
@@ -390,7 +392,7 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
   return syncPro({
     ...save,
     player,
-    growthLog: growthLog.slice(-60),
+    growthLog: growthLog.slice(-CAREER_PRO.growthLogCap),
     coachTrust: trust,
     matchLog: log.slice(-CAREER_PRO_TEAM.matchLogCap),
     seasonSeries: ss,
@@ -459,13 +461,34 @@ function blockIndexFor(dow: number): number | null {
   return dow === 2 ? 0 : dow === 4 ? 1 : dow === 5 ? 2 : null;
 }
 
-export function weekPlanOf(save: ProSave): ProActivity[] {
-  return save.weekPlan && save.weekPlan.length === 3 ? save.weekPlan : coachPlanFor(save.player);
+const hasTeamOf = (save: ProSave) => save.stage === "amateur" || save.stage === "org";
+
+/** The coach's plan for this week (rest before a LAN, the weak spots otherwise). */
+export function proCoachPlanOf(save: ProSave): ProWeekPlan {
+  const host = hostOf(save);
+  const def = save.stage === "amateur" ? (host?.pendingEventDef ?? null) : null;
+  const days = def && def.seasonIndex === save.clock.seasonIndex ? def.day - save.clock.day : undefined;
+  return coachPlanFor(save.player, {
+    seasonIndex: save.clock.seasonIndex,
+    careerSeed: save.careerSeed,
+    hasTeam: hasTeamOf(save),
+    coachOverall: coachOverallOf(save),
+    stage: save.stage,
+    ...(days !== undefined && days >= 0 ? { daysToNextEvent: days, nextEventIsLan: def!.tier === "major" || def!.tier === "worlds" } : {}),
+  });
 }
 
-export function setProWeekPlanFlow(save: ProSave, plan: ProActivity[] | null): ProSave {
+export function weekPlanOf(save: ProSave): ProWeekPlan {
+  return save.weekPlan && save.weekPlan.length === 3 ? save.weekPlan : proCoachPlanOf(save);
+}
+
+export function setProWeekPlanFlow(save: ProSave, plan: ProWeekPlan | null): ProSave {
   if (plan !== null && plan.length !== 3) return save;
   return { ...save, weekPlan: plan };
+}
+
+function emptyWeekLog(save: ProSave): ProWeekLog {
+  return { seasonIndex: save.clock.seasonIndex, day: save.clock.day, growth: [], notes: [], energyTrace: [] };
 }
 
 function applyTodaysBlock(save: ProSave): ProSave {
@@ -476,9 +499,28 @@ function applyTodaysBlock(save: ProSave): ProSave {
     seasonIndex: save.clock.seasonIndex,
     day: save.clock.day,
     coachOverall: coachOverallOf(save),
-    hasTeam: save.stage === "amateur" || save.stage === "org",
+    hasTeam: hasTeamOf(save),
+    careerSeed: save.careerSeed,
   });
-  return { ...save, player: r.player, growthLog: [...save.growthLog, ...r.growth].slice(-60) };
+  const log = save.weekLog ?? emptyWeekLog(save);
+  const notes = [...log.notes];
+  for (const n of r.notes) if (!notes.some((x) => x.code === n.code && x.n === n.n && x.ref === n.ref)) notes.push(n);
+  return {
+    ...save,
+    player: { ...r.player, lastPlan: weekPlanOf(save) },
+    growthLog: [...save.growthLog, ...r.growth].slice(-CAREER_PRO.growthLogCap),
+    weekLog: { ...log, growth: [...log.growth, ...r.growth], notes, energyTrace: [...log.energyTrace, Math.round(r.player.energy)] },
+  };
+}
+
+/** Monday: the last week closes (the weekend's sleep, the burnout rules) and a new log opens. */
+function closeTheWeek(save: ProSave): ProSave {
+  const closed = closeWeek(save.player, { seasonIndex: save.clock.seasonIndex, day: save.clock.day, careerSeed: save.careerSeed });
+  const log = save.weekLog;
+  const last: ProWeekLog | null = log
+    ? { ...log, notes: [...log.notes, ...closed.notes], energyTrace: [...log.energyTrace, Math.round(closed.player.energy)] }
+    : null;
+  return { ...save, player: closed.player, lastWeekLog: last ?? save.lastWeekLog ?? null, weekLog: emptyWeekLog(save) };
 }
 
 /** The last day of the window `week` belongs to. */
@@ -533,7 +575,9 @@ function mondayFor(save: ProSave): ProSave {
     out.stage === "ranked" ||
     out.stage === "amateur" ||
     out.stage === "freeAgent" ||
-    (out.stage === "org" && !!out.contract && (out.contract.transferRequested || (out.contract.endSeason === seasonIndex && !out.contract.renewed)));
+    (out.stage === "org" &&
+      !!out.contract &&
+      (out.contract.transferRequested || (out.contract.endSeason === seasonIndex && !out.contract.renewed && windowIndexOf(week) === 3)));
   if (canMove && isWindowStartWeek(week) && windowIndexOf(week) !== null) {
     const offers = orgOffersFor(out, { week, windowEndDay: windowEndDayOf(week), seq: (out.seq ?? 0) + 1, currentOrg: out.contract?.orgRef ?? null });
     out = addOffers(out, offers, "orgOffer");
@@ -543,9 +587,46 @@ function mondayFor(save: ProSave): ProSave {
     const renewal = renewalOfferFor(out, { seq: (out.seq ?? 0) + 1, starts: proSeatOf(out.world)?.seat === "starter" });
     out = renewal ? addOffers(out, [renewal], "renewalOffer") : pushNews(out, "noRenewal", { org: out.contract.orgName });
   }
-  // The split's lineup (weeks 3 / 13 / 23).
+  // Last week's rotation start ends; the split's lineup (weeks 3 / 13 / 23); this week's rotation.
+  out = endRotation(out);
   if (out.stage === "org" && (week === 3 || week === 13 || week === 23)) out = runLineup(out, true);
+  out = rotateIn(out, week);
   return out;
+}
+
+/** The rotation start of last week ends: the starter he replaced takes his seat back. */
+function endRotation(save: ProSave): ProSave {
+  const outId = save.rotatedOut;
+  if (!outId) return save;
+  const cleared: ProSave = { ...save, rotatedOut: null };
+  if (save.stage !== "org" || !save.contract) return cleared;
+  const org = save.world.orgs[save.contract.orgRef];
+  if (!org || !org.playerIds.includes(PRO_SELF_ID) || !org.reserveIds?.includes(outId)) return cleared;
+  const playerIds = org.playerIds.map((id) => (id === PRO_SELF_ID ? outId : id)) as [string, string, string];
+  const reserveIds = org.reserveIds.map((id) => (id === outId ? PRO_SELF_ID : id));
+  return { ...cleared, world: { ...save.world, orgs: { ...save.world.orgs, [org.ref]: { ...org, playerIds, reserveIds } }, version: save.world.version + 1 } };
+}
+
+/** A benched Pro close to the lineup starts this week now and then (CAREER_PRO_ORG.rotationShare). */
+function rotateIn(save: ProSave, week: number): ProSave {
+  if (save.stage !== "org" || !save.contract || proSeatOf(save.world)?.seat !== "reserve") return save;
+  const org = save.world.orgs[save.contract.orgRef];
+  if (!org) return save;
+  const view = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world };
+  const ovr = (id: string) => devView(id, view)?.overall ?? 0;
+  let weakest = 0;
+  org.playerIds.forEach((id, i) => {
+    if (ovr(id) < ovr(org.playerIds[weakest])) weakest = i;
+  });
+  const score = proLineupScore(save.player, save.matchLog, save.coachTrust ?? CAREER_PRO_ORG.trustStart);
+  if (score < ovr(org.playerIds[weakest]) - CAREER_PRO_ORG.rotationGap) return save;
+  if (derivedFloat(save.careerSeed, `pro:rotation:${save.clock.seasonIndex}:${week}`) >= CAREER_PRO_ORG.rotationShare) return save;
+  const outId = org.playerIds[weakest];
+  const playerIds = [...org.playerIds] as [string, string, string];
+  playerIds[weakest] = PRO_SELF_ID;
+  const reserveIds = (org.reserveIds ?? []).map((id) => (id === PRO_SELF_ID ? outId : id));
+  const world = { ...save.world, orgs: { ...save.world.orgs, [org.ref]: { ...org, playerIds, reserveIds } }, version: save.world.version + 1 };
+  return pushNews({ ...save, world, rotatedOut: outId }, "rotationStart", { org: save.contract.orgName, player: devView(outId, view)?.name ?? "" });
 }
 
 function runLineup(save: ProSave, announce: boolean): ProSave {
@@ -572,7 +653,7 @@ function reconcileMembership(save: ProSave): ProSave {
 /** Everything that happens to the Pro on the day the host just arrived at. */
 function afterArrival(save: ProSave, captured: { def: CareerEventDef; state: TournamentState }[]): ProSave {
   let out = expireOffers(save);
-  if (dayOfWeekOf(out.clock.day) === 1) out = mondayFor(out);
+  if (dayOfWeekOf(out.clock.day) === 1) out = mondayFor(closeTheWeek(out));
   out = applyTodaysBlock(out);
   out = reconcileMembership(out);
   if (out.stage === "org" && out.contract) {
@@ -667,8 +748,22 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
   host = hostOf(syncPro(save))!;
   if (host.phase === "ended") host = { ...host, phase: "seasonReview" };
   host = settleHost(reviewContractsFlow(host).save);
+  const seatBefore = proSeatOf(save.world);
   host = rolloverToNextSeason(host);
   save = storeHost(save, host);
+  // The rollover rebuilds the historical seasons' rosters from the dataset: a Pro under contract keeps his seat.
+  if (save.stage === "org" && save.contract && !proSeatOf(save.world)) {
+    if (save.world.orgs[save.contract.orgRef]) {
+      const placed = placeProInOrg(save.world, save.contract.orgRef, seatBefore?.seat === "starter" ? "starter" : "rotation", {
+        careerSeed: save.careerSeed,
+        seasonIndex: save.clock.seasonIndex,
+      });
+      save = { ...save, world: placed.world };
+    } else {
+      const name = save.contract.orgName;
+      save = pushNews({ ...save, stage: "freeAgent", team: null, contract: null }, "orgGone", { org: name });
+    }
+  }
   // The rollover's own aging never decides his attributes (slice 6 does): the host entry is rebuilt.
   if (!hostOf(save)!.squad.some((p) => p.id === PRO_SELF_ID)) {
     const h = hostOf(save)!;
@@ -768,7 +863,8 @@ function signFor(save: ProSave, offer: ProOffer): ProSave {
       orgRef: offer.ref,
       orgName: offer.name,
       salaryPerSplit: offer.salaryPerSplit,
-      endSeason: out.clock.seasonIndex + offer.lengthSeasons - 1,
+      // A deal signed after the preseason window runs through the next season(s): "1 season" is a full one.
+      endSeason: out.clock.seasonIndex + offer.lengthSeasons - (weekOfDay(out.clock.day) <= 2 ? 1 : 0),
       role: offer.role,
       signedSeason: out.clock.seasonIndex,
       signedDay: out.clock.day,
@@ -862,3 +958,28 @@ export function proRosterOf(save: ProSave): { id: string; name: string; overall:
   return [...org.playerIds.map((id) => row(id, true)), ...(org.reserveIds ?? []).map((id) => row(id, false))];
 }
 
+
+// ---------------------------------------------------------------------------
+// The week as the planner plays it
+// ---------------------------------------------------------------------------
+
+/**
+ * "Play the week" (slice 2's planner): the plan is set and the real calendar
+ * runs until the next Monday, or until something needs him first (a
+ * matchday, the season's end). The blocks land on their own days and the
+ * week closes on Monday. Returns what the week did for the planner.
+ */
+export function playProWeekFlow(input: ProSave, plan: ProWeekPlan): { save: ProSave; log: ProWeekLog | null } {
+  let save = setProWeekPlanFlow(ensureProHost(input), plan);
+  const startWeek = `${save.clock.seasonIndex}:${weekOfDay(save.clock.day)}`;
+  for (let guard = 0; guard < 9; guard++) {
+    const before = seasonDayKey(save);
+    save = advanceProDayFlow(save);
+    if (seasonDayKey(save) === before && !proStopOf(save)) break;
+    const stop = proStopOf(save);
+    if (stop) break;
+    if (`${save.clock.seasonIndex}:${weekOfDay(save.clock.day)}` !== startWeek && dayOfWeekOf(save.clock.day) === 1) break;
+  }
+  const closedNow = save.lastWeekLog && save.weekLog && save.weekLog.day === save.clock.day;
+  return { save, log: (closedNow ? save.lastWeekLog : save.weekLog) ?? null };
+}

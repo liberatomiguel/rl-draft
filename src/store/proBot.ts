@@ -7,7 +7,9 @@
  * a step that does not move the save.
  */
 
+import { weekOfDay } from "@/engine/career/calendar";
 import { ageOf } from "@/engine/career/development";
+import { proSeatOf } from "@/engine/career/pro/offers";
 import { proOverall } from "@/engine/career/pro/attrs";
 import { createProSave } from "@/engine/career/pro/create";
 import type { ProSave } from "@/engine/career/pro/types";
@@ -50,7 +52,12 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
     }
     if (offer.kind === "renewal") return acceptProOfferFlow(out, offer.id);
   }
-  const orgOffers = openProOffersOf(out).filter((o) => o.kind === "org" && !proOfferBlockOf(out, o.id));
+  const benched = out.stage === "org" && proSeatOf(out.world)?.seat === "reserve";
+  // At an org he moves only for a promised start while benched, or when his deal is running out.
+  const leaving = out.stage === "org" && out.contract && out.contract.endSeason <= out.clock.seasonIndex;
+  const orgOffers = openProOffersOf(out).filter(
+    (o) => o.kind === "org" && !proOfferBlockOf(out, o.id) && (out.stage !== "org" || leaving || (benched && o.role === "starter")),
+  );
   if (orgOffers.length > 0) {
     // Prefer a promised start, then the stronger org.
     const best = [...orgOffers].sort((a, b) => (a.role === b.role ? b.level - a.level : a.role === "starter" ? -1 : 1))[0];
@@ -63,7 +70,8 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
       return acceptProOfferFlow(out, best.id);
     }
   }
-  if (canRequestProTransfer(out)) out = requestProTransferFlow(out);
+  // A whole season mostly on the bench: he asks to leave in the last split.
+  if (canRequestProTransfer(out) && weekOfDay(out.clock.day) >= 23 && out.contract && out.contract.endSeason > out.clock.seasonIndex) out = requestProTransferFlow(out);
   return out;
 }
 

@@ -19,6 +19,7 @@ import type { ArchetypeId, SquadPlayer } from "../types";
 import { PRO_STAT_KEYS, proOverall, round2 } from "./attrs";
 import type { ProAmateurSide, ProOffer } from "./spineTypes";
 import type { ProPlayer, ProSave } from "./types";
+import { rankedOpensCups } from "./spineBridge";
 import { PRO_SELF_ID } from "./world";
 
 const ARCHETYPES: ArchetypeId[] = ["allround", "mechanical", "playmaker", "anchor", "icecold", "veteranmind"];
@@ -118,7 +119,7 @@ export function amateurInviteFor(
   if (save.stage !== "ranked" && save.stage !== "freeAgent" && save.stage !== "amateur") return null;
   if (seasonIndex === 0 && ctx.week < CAREER_PRO_TEAM.firstInviteWeek) return null;
   const overall = proOverall(save.player.attrs);
-  if (overall < CAREER_PRO_TEAM.inviteOverall) return null;
+  if (!rankedOpensCups(save.player) && overall < CAREER_PRO_TEAM.inviteOverall) return null;
   if (save.stage === "amateur" && (ctx.currentLevel === null || overall - ctx.currentLevel < CAREER_PRO_TEAM.betterSideGap)) return null;
   const last = [...save.offers].reverse().find((o) => o.kind === "amateur");
   if (last) {

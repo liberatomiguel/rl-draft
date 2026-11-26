@@ -18,11 +18,13 @@ import { persist } from "zustand/middleware";
 import { CAREER_PRO } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { createProSave } from "@/engine/career/pro/create";
-import type { CreateProInput, ProSave } from "@/engine/career/pro/types";
+import type { WeekResult } from "@/engine/career/pro/week";
+import type { CreateProInput, ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { anonymousId } from "@/lib/analytics";
 import { randomSeed } from "@/lib/rng";
 import { skipUnchangedWrites } from "./careerPersist";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
+import { ensureProHost, playProWeekFlow } from "./proFlow";
 
 export const PRO_PERSIST_VERSION = 1;
 
@@ -33,6 +35,12 @@ export interface ProStoreState {
   createPro: (slot: number, input: CreateProInput, customSeed?: number) => void;
   selectSlot: (slot: number) => void;
   deleteSlot: (slot: number) => void;
+  /** Play a week plan on the active save: the real calendar to next Monday, or to a matchday first (PROSPINE). */
+  playWeek: (plan: ProWeekPlan) => void;
+  /** What the last played week did, for the planner to show. Not persisted. */
+  lastWeek: WeekResult | null;
+  /** PROSPINE: run any proFlow step on the active save (the hub, offers, the match report). A refused step writes nothing. */
+  apply: (fn: (save: ProSave) => ProSave) => void;
 }
 
 function emptySlots(): (ProSave | null)[] {
@@ -61,11 +69,39 @@ export const useProStore = create<ProStoreState>()(
     (set, get) => ({
       slots: emptySlots(),
       activeSlot: null,
+      lastWeek: null,
+
+      playWeek: (plan) => {
+        const { slots, activeSlot } = get();
+        const save = activeProSave({ slots, activeSlot });
+        if (activeSlot === null || !save || save.stage === "retired") return;
+        const played = playProWeekFlow(save, plan);
+        const next = [...slots];
+        next[activeSlot] = { ...played.save, lastPlayedAt: Math.max(Date.now(), (save.lastPlayedAt ?? 0) + 1) };
+        const log = played.log;
+        set({
+          slots: next,
+          lastWeek: log ? { player: played.save.player, growth: log.growth, notes: log.notes, energyTrace: log.energyTrace } : null,
+        });
+      },
+
+      apply: (fn) => {
+        const { slots, activeSlot } = get();
+        const save = activeProSave({ slots, activeSlot });
+        if (activeSlot === null || !save) return;
+        const base = save.host ? save : ensureProHost(save);
+        const out = fn(base);
+        if (out === save) return;
+        const next = [...slots];
+        next[activeSlot] = { ...out, lastPlayedAt: Math.max(Date.now(), (save.lastPlayedAt ?? 0) + 1) };
+        set({ slots: next });
+      },
 
       createPro: (slot, input, customSeed) => {
         if (slot < 0 || slot >= CAREER_PRO.slots || get().slots[slot]) return;
         const seed = (customSeed ?? randomSeed()) >>> 0;
-        const save = createProSave(input, seed, SITE.version);
+        // PROSPINE: the world's calendar is the hidden host's from the first day.
+        const save = ensureProHost(createProSave(input, seed, SITE.version));
         save.careerId = anonymousId("p");
         save.lastPlayedAt = Date.now();
         const slots = [...get().slots];

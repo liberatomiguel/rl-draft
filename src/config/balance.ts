@@ -1713,8 +1713,12 @@ export const CAREER_PRO = {
  * Starting points for the slice 7 battery; each comment says what it moves.
  */
 export const CAREER_PRO_TEAM = {
-  /** A Pro without a side hears from an amateur side once his overall reaches this (13-year-olds start at 50: a few weeks of ranked first). */
-  inviteOverall: 52,
+  /**
+   * A Pro without a side hears from an amateur side once ranked opens the
+   * cups (Grand Champion, CAREER_PRO_RANKED.cupsRankId) or, for one who skips
+   * ranked, once his overall reaches this.
+   */
+  inviteOverall: 54,
   /** No amateur invite before this week of the first season (the ranked prologue). */
   firstInviteWeek: 3,
   /** The teammates' level when a side calls: the Pro's overall plus this (slightly under him: he is the side's best). */
@@ -1736,10 +1740,6 @@ export const CAREER_PRO_TEAM = {
    */
   ratingEdgePerPoint: 0.12,
   ratingEdgeCap: 1.5,
-  /** Match XP before the engine's applyMatchXp lands (proEngineBridge): points per series at rating 6, by tier. */
-  matchXpByTier: { t3: 0.25, t2: 0.3, qualifier: 0.35, regional: 0.45, major: 0.7, worlds: 0.9 } as Record<string, number>,
-  /** Rating above/below 6 scales that XP by this per point (a 9 earns ×1.75 at 0.25), never under 0.25×. */
-  matchXpPerRatingPoint: 0.25,
   /** Series kept in the match log (offers and the lineup read the recent ones). */
   matchLogCap: 30,
   /** The "recent form" window (series). */
@@ -1795,6 +1795,14 @@ export const CAREER_PRO_ORG = {
   badRating: 5,
   trustGood: 3,
   trustBad: 2,
+  /**
+   * Rotation ("the bench plays a little"): on a Monday on the bench, when his
+   * lineup score is within rotationGap of the weakest starter, the coach
+   * starts him for the week with this seeded chance (swapped back the next
+   * Monday unless the split's lineup keeps him).
+   */
+  rotationGap: 6,
+  rotationShare: 0.4,
   /** A week on the bench training (doing what the coach asks) earns this back: the bench is recoverable. */
   trustBenchWeek: 1,
   /** Asking for a transfer costs this much trust. */
@@ -1807,6 +1815,122 @@ export const CAREER_PRO_ORG = {
   renewTrust: 40,
   /** The renewal's raise over the current salary when his value grew. */
   renewalRaise: 0.15,
+} as const;
+
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §4.3, §5): the week. Three blocks (Mon-Tue,
+ * Wed-Thu, Fri), energy, burnout, confidence. Starting points for the slice 7
+ * battery; each line says what it moves.
+ */
+export const CAREER_PRO_WEEK = {
+  /** Days from the week's first day to each block (Mon, Wed, Fri). Stamps the growth log. */
+  blockDays: [0, 2, 4] as const,
+  energyMax: 100,
+  /** Energy an activity costs. Moves how many blocks a week can train before the player is tired. */
+  cost: { train: 20, ranked: 15, scrim: 15, content: 10 } as const,
+  /** Energy a rest block gives back. Two trainings and one rest (−40 +35) nearly hold the line. */
+  restGain: 35,
+  /** Energy back when the week closes (the weekend's sleep). With the rest block it makes T-T-R a slow gain, T-T-T a fast drain. */
+  weekEndRecovery: 15,
+  /** Under this a block is a tired block: training at its rate (growth.energyFactorFor) and ranked skill drop; the burnout window opens. */
+  lowEnergy: 30,
+  /** A week that closes under this shows the burnout warning (a week before burnout can happen). */
+  warnBelow: 45,
+  /** The warning clears once the week closes at or above this. */
+  warnClear: 60,
+  /** At a week's close under lowEnergy, with the warning already shown a week earlier: chance = base + (lowEnergy − energy) × perPoint, capped. */
+  burnoutBase: 0.3,
+  burnoutPerPoint: 0.02,
+  burnoutMax: 0.85,
+  /** Weeks out (one or two, seeded) and the energy he comes back with. A burnout week plays as rest and trains nothing. */
+  burnoutWeeks: [1, 2] as const,
+  burnoutReturnEnergy: 60,
+  /** Ranked gives this share of a balanced training block (a little XP); a scrim, this share of a block on experience. */
+  rankedXpShare: 0.25,
+  scrimXpShare: 0.5,
+  /** Scrim chemistry with the team, per scrim (0-chemistryMax). Slices 3-4 feed it to the lineup. */
+  scrimChemistry: 6,
+  chemistryMax: 100,
+  /**
+   * Content (live, video): money and fame per block. Fame grows the next
+   * block's take by famePerFame (a bigger audience pays more), and the
+   * fameCap keeps the loop from running away.
+   */
+  content: { money: 150, moneyPerFame: 0.02, fame: 60, famePerFame: 0.04, fameCap: 250_000 },
+  /** Confidence: the mean of the last `window` match ratings, centred on `center`, one point per `perPoint` rating points, ±2. */
+  confidence: { window: 5, center: 6, perPoint: 1, max: 2 },
+  /** Confidence adds this much to the Pro's own match rating, per point (±0.3 at the extremes). */
+  ratingBonusPerConfidence: 0.15,
+  /** Ranked skill lost per energy point under lowEnergy (a tired player queues worse). */
+  tiredFormPerPoint: 0.1,
+  /** The coach's plan: rests first when the week starts under this, and rests the block before a LAN. */
+  coachRestBelow: 45,
+  lanRestDays: 7,
+  /**
+   * Match XP (growth.applyMatchXp): points per game = base × tier × rating ×
+   * opponent, spread over the six attributes by weight. Moves how much an
+   * official series is worth beside a week of training (a Worlds game with a
+   * 9 rating against a stronger team is worth roughly two training blocks).
+   */
+  matchXp: {
+    base: 0.5,
+    tier: { t3: 0.5, t2: 0.7, qualifier: 0.8, regional: 1.2, major: 1.7, worlds: 2.2 } as Record<string, number>,
+    tierDefault: 0.8,
+    /** 1 at a 6 rating, ±ratingPerPoint per point, bounded. */
+    ratingCenter: 6,
+    ratingPerPoint: 0.15,
+    ratingBounds: [0.4, 1.6] as const,
+    /** Playing up: +1 per opponentPerPoint overall points of the opponent above his own, bounded. */
+    opponentPerPoint: 40,
+    opponentBounds: [0.6, 1.6] as const,
+    /** Experience grows most from matches; the rest evenly. */
+    weights: { offense: 1, defense: 1, mechanics: 1, consistency: 1, experience: 2, clutch: 1 } as Record<string, number>,
+  },
+} as const;
+
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §7.1): the ranked ladder. A player has a MMR; his
+ * game is decided by the gap between the MMR his overall deserves
+ * (`skillTable`) and the MMR he holds. Moves how long Bronze to Grand
+ * Champion takes (calibrated with the bot in pro.test.ts).
+ */
+export const CAREER_PRO_RANKED = {
+  /** Games in one ranked block. */
+  gamesPerSession: 6,
+  /** MMR per game won or lost (no streak bonus: the table below is the pace). */
+  step: 10,
+  /** Logistic scale of a game: 200 MMR below the skill MMR = ~73% to win. Smaller = a steeper, more deterministic ladder. */
+  spread: 200,
+  /** The MMR a given overall deserves: linear between rows, flat beyond. A Pro starts at ~50 overall = ~1000 MMR (Silver). */
+  skillTable: [
+    [40, 500],
+    [50, 1000],
+    [54, 1500],
+    [57, 1950],
+    [60, 2400],
+    [66, 2800],
+    [99, 3100],
+  ] as readonly (readonly [number, number])[],
+  /** Confidence adds this many overall points of effective skill per point (a player in form queues better). */
+  confidenceSkill: 0.8,
+  mmrMin: 0,
+  mmrMax: 3200,
+  /** Rank thresholds in MMR; the tier splits into `divisions` (I to III) except the last. */
+  tiers: [
+    { id: "bronze", min: 0 },
+    { id: "silver", min: 850 },
+    { id: "gold", min: 1150 },
+    { id: "platinum", min: 1450 },
+    { id: "diamond", min: 1750 },
+    { id: "champion", min: 2050 },
+    { id: "grand-champion", min: 2350 },
+    { id: "supersonic-legend", min: 2750 },
+  ] as readonly { id: string; min: number }[],
+  divisions: 3,
+  /** Grand Champion (and above) opens the community cup invitations (PRO-SPEC §7.1). */
+  cupsRankId: "grand-champion",
+  /** Sessions kept for the panel. */
+  logCap: 8,
 } as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */

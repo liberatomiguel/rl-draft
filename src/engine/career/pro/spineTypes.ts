@@ -7,7 +7,7 @@
  */
 
 import type { CareerSave, CareerEventDef } from "../types";
-import type { ProActivity } from "./spineBridge";
+import type { ProGrowthEntry, ProWeekNote, ProWeekPlan } from "./types";
 
 /** The hidden host: the manager flow that runs the Pro's calendar (R-PROSPINE-1). The world, clock and competition live on the ProSave. */
 export type ProHost = Omit<CareerSave, "world" | "clock" | "competition">;
@@ -159,7 +159,23 @@ export interface ProSpineFields {
   seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[] };
   /** Days the batched advance already stopped on (a stop is shown once). */
   seenStopKey?: string;
-  /** The week's three blocks (null = the coach's plan each week). Slice 2's week replaces it. */
-  weekPlan?: ProActivity[] | null;
+  /** The starter a rotation start benched for this week (swapped back next Monday). */
+  rotatedOut?: string | null;
+  /** The week's three blocks, played on their days (null = the coach's plan each week). */
+  weekPlan?: ProWeekPlan | null;
+  /** The running week's blocks (reset when the week closes on Monday) and the last closed week, for the planner. */
+  weekLog?: ProWeekLog;
+  lastWeekLog?: ProWeekLog | null;
   seq?: number;
+}
+
+/** What a week of blocks did (slice 2's WeekResult without the player). */
+export interface ProWeekLog {
+  seasonIndex: number;
+  /** The Monday it started. */
+  day: number;
+  growth: ProGrowthEntry[];
+  notes: ProWeekNote[];
+  /** Energy after each block played, then after the close. */
+  energyTrace: number[];
 }
