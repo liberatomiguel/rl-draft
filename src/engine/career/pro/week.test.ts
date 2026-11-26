@@ -400,3 +400,22 @@ describe("Pro: a slice-1 save loads and plays", () => {
     expect(r.player.rankedLog).toHaveLength(1);
   });
 });
+
+describe("Pro: a week on a save", () => {
+  it("logs the growth, refreshes the world's snapshot and moves the clock by a week, rolling into the next season", async () => {
+    const { playProWeek, nextWeekClock } = await import("./weekFlow");
+    const { playerViewById } = await import("../development");
+    const { PRO_SELF_ID } = await import("./world");
+    const save = createProSave(INPUT, 12, "test");
+    const played = playProWeek(save, [TRAIN("defense"), RANKED, REST]);
+    expect(played.save.clock).toEqual({ seasonIndex: 0, day: 8 });
+    expect(played.save.growthLog.length).toBeGreaterThan(0);
+    expect(played.save.growthLog.every((g) => g.delta > 0)).toBe(true);
+    expect(played.save.world.proSelf?.overall).toBeCloseTo(proOverall(played.save.player.attrs), 1);
+    expect(playerViewById(PRO_SELF_ID, { careerSeed: 12, seasonIndex: 0, world: played.save.world })).toBeTruthy();
+    expect(save.growthLog).toHaveLength(0);
+    const last = 32 * 7;
+    expect(nextWeekClock({ seasonIndex: 2, day: last - 6 })).toEqual({ clock: { seasonIndex: 3, day: 1 }, rolledOver: true });
+    expect(nextWeekClock({ seasonIndex: 2, day: last - 13 }).rolledOver).toBe(false);
+  });
+});

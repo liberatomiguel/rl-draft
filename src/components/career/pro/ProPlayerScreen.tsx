@@ -12,6 +12,8 @@ import { CAREER_PRO } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { PRO_STAT_KEYS, proAgeOf, proOverall } from "@/engine/career/pro/growth";
+import { rankOf } from "@/engine/career/pro/ranked";
+import { buttonClass } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { AppLink } from "@/components/ui/AppLink";
@@ -36,6 +38,7 @@ export function ProPlayerScreen() {
   if (!mounted || !save) return <div className="min-h-[60vh]" aria-busy />;
 
   const p = save.player;
+  const rank = rankOf(p.mmr);
   const overall = proOverall(p.attrs);
   const span = CAREER_PRO.attrMax - CAREER_PRO.attrMin;
 
@@ -90,14 +93,17 @@ export function ProPlayerScreen() {
         <Figure value={formatMoney(p.money)} label={C.pro.player.money} />
         <Figure value={`${p.mmr}`} label={C.pro.player.mmr} />
         <span className="flex items-center gap-2">
-          <RankBadge rank={{ id: "unranked", label: C.pro.player.unranked }} variant="menu" size="sm" />
-          <span className="text-xs text-sub">{C.pro.player.unranked}</span>
+          <RankBadge rank={rank} variant="menu" size="sm" />
+          <span className="text-xs text-sub">{C.proWeek.ranked.division(rank.label, rank.division)}</span>
         </span>
       </div>
 
       <div className="mt-8 border-t border-line pt-5">
         <h3 className="display text-lg font-bold uppercase leading-none text-ink">{C.pro.player.nextTitle}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-snug text-sub">{C.pro.player.nextBody}</p>
+        <AppLink href="/career/pro/week" className={`${buttonClass("primary", "md")} mt-4`}>
+          {C.proWeek.openWeek}
+        </AppLink>
       </div>
     </div>
   );
