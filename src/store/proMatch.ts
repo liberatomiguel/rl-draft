@@ -117,6 +117,12 @@ function prepareDecision(save: ProSave, host: CareerSave): ProSave {
   return { ...save, live: { ...live, decision } };
 }
 
+const roundsPlayed = (h: CareerSave): number => {
+  const t = h.activeEvent?.tournament;
+  return t ? t.swiss.rounds.length + (t.playoffs?.rounds.length ?? 0) + (t.stage === "finished" ? 1 : 0) : -1;
+};
+const progressed = (a: CareerSave, b: CareerSave): boolean => roundsPlayed(b) !== roundsPlayed(a) || !b.activeEvent || Boolean(pendingUserSeriesOf(b));
+
 /** Moves the event on to his next series (or its pause, or its end). */
 function runToNextSeries(input: ProSave): ProSave {
   let save = input;
@@ -128,8 +134,15 @@ function runToNextSeries(input: ProSave): ProSave {
     if (isEventPaused(host)) return { ...save, live: null };
     const us = pendingUserSeriesOf(host);
     if (us && !isSeriesOver(us.state)) return prepareDecision(save, host);
-    const next = stepEventRound(host);
-    if (next === host) return save;
+    let next = stepEventRound(host);
+    if (next === host || !progressed(host, next)) {
+      // A double-elimination round he sits out (his bracket waits) holds the custom mode's gate open with no
+      // series to open (careerFlow's userSeriesGate, a latent stall): that round is played in quick mode.
+      next = stepEventRound(withMode(host, "quick"));
+      if (!progressed(host, next)) return save;
+      save = bookSeries(storeHost(save, withMode(next, "custom")), ev.def, next.activeEvent!.tournament, "user", teamNameOf(save, host));
+      continue;
+    }
     save = storeHost(save, next);
   }
   return save;
