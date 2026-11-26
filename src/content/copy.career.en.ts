@@ -3803,7 +3803,7 @@ export const CAREER_EN = {
   /** v2.2 Pro slice 5: the decision of a game and the signature mechanics (docs/PRO-SPEC.md §4.2, §6). */
   proMoments: {
     title: "Your call",
-    kicker: "One call a game. The word beside each option is how it looks for you right now.",
+    kicker: "One call a game. The word beside each option says how likely it is to work for you right now; the line under the name is the attribute it tests. A locked call is a mechanic you have not unlocked yet.",
     moment: {
       decider: "The decider",
       overtimeWinner: "Overtime",
@@ -3830,7 +3830,7 @@ export const CAREER_EN = {
       flipReset: "Flip reset",
     } as Record<string, string>,
     hints: { risky: "Risky", uncertain: "Uncertain", likely: "Likely", mastered: "You own this" } as Record<string, string>,
-    locked: (name: string) => `Needs ${name}`,
+    locked: (_name: string) => `Not unlocked yet`,
     instinct: "On instinct",
     instinctHint: "Your style makes the call. It does not help you and it does not hurt you.",
     result: {
@@ -4022,8 +4022,8 @@ export const CAREER_EN = {
     roles: { starter: "Starter", rotation: "Rotation", bench: "Bench", amateur: "Amateur", none: "No team" } as Record<string, string>,
     live: {
       playGame: (n: number) => `Play game ${n}`,
-      yourCall: (call: string, ok: boolean) => (ok ? `${call}: it came off.` : `${call}: it did not come off.`),
-      instinctCall: (call: string, ok: boolean) => (ok ? `On instinct, ${call}: it came off.` : `On instinct, ${call}: it did not come off.`),
+      yourCall: (call: string, ok: boolean) => (ok ? `${call}: it came off. A small lift to your rating and your team's chances in this game.` : `${call}: it did not come off. A small cost to your rating and your team's chances in this game.`),
+      instinctCall: (call: string, ok: boolean) => (ok ? `On instinct you went for ${call}: it came off, a small lift this game.` : `On instinct you went for ${call}: it did not come off, a small cost this game.`),
       simSeries: "Sim the rest of the series",
       simEvent: "Sim the rest of the event",
       simHint: "Simming plays every remaining call on instinct, which on average neither helps nor hurts.",
@@ -4042,8 +4042,8 @@ export const CAREER_EN = {
     weekStop: {
       title: "Plan this week",
       body: "Pick the week's three blocks before it starts. The coach's plan rests you when you are tired.",
-      coach: "Accept the coach's plan",
-      repeat: "Repeat last week",
+      coach: "Play the coach's plan",
+      repeat: "Play last week again",
       own: "Plan it myself",
       continueWithPlan: "Accept the plan and continue",
       auto: "Plan each week for me until something happens",

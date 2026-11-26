@@ -62,18 +62,25 @@ export function ProLive({ save, eventName }: { save: ProSave; eventName: string 
       </Panel>
 
       {live.decision ? (
-        <ProDecisionCard decision={live.decision} onChoose={(choice) => apply((s) => decideProGameFlow(s, choice))} />
+        <ProDecisionCard decision={live.decision} onChoose={(choice) => apply((s) => decideProGameFlow(s, choice))} hideInstinct />
       ) : (
         <Button variant="primary" size="lg" onClick={() => apply((s) => decideProGameFlow(s, "instinct"))}>
           {L.playGame(live.games.length + 1)}
         </Button>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="sm" onClick={() => apply(simProSeriesFlow)}>
+      <div className="action-dock flex gap-2">
+        {live.decision ? (
+          <Button variant="secondary" className="max-sm:flex-1" onClick={() => apply((s) => decideProGameFlow(s, "instinct"))}>
+            {C.proMoments.instinct}
+          </Button>
+        ) : null}
+        <Button variant="secondary" className="max-sm:flex-1" onClick={() => apply(simProSeriesFlow)}>
           {L.simSeries}
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => apply(simProEventFlow)}>
+      </div>
+      <div>
+        <Button variant="ghost" size="sm" onClick={() => apply(simProEventFlow)}>
           {L.simEvent}
         </Button>
       </div>
