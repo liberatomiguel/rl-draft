@@ -1,23 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { CAREER_ENDLESS } from "@/config/balance";
+import { CAREER_ENDLESS, CAREER_GEAR } from "@/config/balance";
 import { lineupById } from "@/data";
 import type { TournamentTeam } from "../types";
 import {
   cupDrawSeeds,
   dominanceOf,
   invitationalGuests,
+  KIT_ORDER,
+  kitFor,
   legendLineupIdsFor,
   legendTeamFor,
   legendsWeekFor,
   majorHostsFor,
-  projectLevelFor,
+  projectKitEffect,
+  projectStrengthFor,
   rivalProjectsPass,
+  worldsStreakOf,
 } from "./endless";
-import { buildWorldAtCreation } from "./worldSim";
+import { buildWorldAtCreation, orgTeamFor } from "./worldSim";
 
 const SEED = 4242;
+const P = CAREER_ENDLESS.projects;
 
-describe("dominance and the number of projects", () => {
+describe("dominance, dynasty and the strength of the answer", () => {
   it("measures the leader against the next three", () => {
     const d = dominanceOf([
       { id: "user", rating: 101 },
@@ -29,11 +34,35 @@ describe("dominance and the number of projects", () => {
     expect(d.leader).toBe("user");
     expect(d.gap).toBeCloseTo(4, 5);
   });
-  it("a level world runs no project; a dynasty runs several, capped", () => {
-    expect(projectLevelFor(0)).toBe(0);
-    expect(projectLevelFor(CAREER_ENDLESS.projects.dominanceFloor - 0.01)).toBe(0);
-    expect(projectLevelFor(CAREER_ENDLESS.projects.dominanceFloor)).toBe(1);
-    expect(projectLevelFor(50)).toBe(CAREER_ENDLESS.projects.maxProjects);
+  it("reads the reigning champion's consecutive Worlds from the honours", () => {
+    const h = (seasonIndex: number, orgRef: string) => ({ tier: "worlds", seasonIndex, orgRef });
+    expect(worldsStreakOf([h(7, "x"), h(8, "user"), h(9, "user"), h(10, "user")], 10)).toEqual({ ref: "user", titles: 3 });
+    expect(worldsStreakOf([h(8, "user"), h(9, "user"), h(10, "x")], 10)).toEqual({ ref: "x", titles: 1 });
+    expect(worldsStreakOf([{ tier: "major", seasonIndex: 10, orgRef: "user" }], 10)).toEqual({ ref: null, titles: 0 });
+    expect(worldsStreakOf(undefined, 10)).toEqual({ ref: null, titles: 0 });
+  });
+  it("a first defence meets one project, each further title one more, capped; no dominance no answer", () => {
+    expect(projectStrengthFor(0.5, 3)).toBe(0);
+    expect(projectStrengthFor(P.defenceFloor, 0)).toBe(0);
+    expect(projectStrengthFor(P.defenceFloor, 1)).toBe(1);
+    expect(projectStrengthFor(P.defenceFloor, 3)).toBe(3);
+    expect(projectStrengthFor(P.dominanceFloor, 0)).toBe(1);
+    expect(projectStrengthFor(P.bigGap, 2)).toBe(3);
+    expect(projectStrengthFor(50, 50)).toBe(P.maxProjects);
+  });
+  it("the kit grows with the strength, in the toolbox order", () => {
+    expect(kitFor(1)).toEqual(KIT_ORDER.slice(0, P.kitBase));
+    expect(kitFor(2).length).toBe(P.kitBase + 1);
+    expect(kitFor(99)).toEqual([...KIT_ORDER]);
+  });
+  it("every kit item is the user's own effect, read from CAREER_GEAR", () => {
+    const perf = CAREER_GEAR.items.find((i) => i.id === "perfCenter")!.ratingBonus;
+    const camp = Math.min(Math.max(...CAREER_GEAR.bootcamp.map((b) => b.sharpRating)), CAREER_GEAR.tempRatingMax);
+    expect(projectKitEffect(["facilities"]).ratingBonus).toBe(perf);
+    expect(projectKitEffect(["facilities"]).buffLevel).toBe("+++");
+    expect(projectKitEffect(["bootcamp"]).ratingBonus).toBe(camp);
+    expect(projectKitEffect(["psychologist"]).statBonus).toEqual(CAREER_GEAR.psychologistStatBonus);
+    expect(projectKitEffect([]).ratingBonus).toBe(0);
   });
 });
 
@@ -42,22 +71,41 @@ describe("rival projects", () => {
   const allIds = (w: typeof world) =>
     [...Object.values(w.orgs).flatMap((o) => [...o.playerIds, ...(o.reserveIds ?? [])]), ...w.freeAgentIds].sort();
   const userSquadIds = Object.values(world.orgs).find((o) => o.region === "NA")!.playerIds.slice(0, 1);
-  const ctx = { careerSeed: SEED, seasonIndex: 8, difficulty: "normal" as const, userSquadIds, userRating: 110, userRegion: "NA" as const, lastProjectRefs: [] };
+  const ctx = {
+    careerSeed: SEED,
+    seasonIndex: 8,
+    difficulty: "normal" as const,
+    userSquadIds,
+    userRating: 110,
+    userRegion: "NA" as const,
+    running: [],
+    streak: { ref: "user", titles: 3 },
+  };
 
   it("only moves players: the same people, every org still fields three, nobody twice", () => {
     const res = rivalProjectsPass(world, ctx);
-    expect(res.projects.length).toBeGreaterThan(0);
+    expect(res.projects.length).toBe(projectStrengthFor(res.gap, 3));
     expect(allIds(res.world)).toEqual(allIds(world));
     for (const o of Object.values(res.world.orgs)) {
       expect(o.playerIds.filter(Boolean)).toHaveLength(3);
       expect(new Set(o.playerIds).size).toBe(3);
     }
   });
-  it("never signs a player the user holds, answers in the leader's region first, and never runs for the leader", () => {
+  it("never signs a player the user holds, answers in the leader's region first, and its kit shows on the org", () => {
     const res = rivalProjectsPass(world, ctx);
     expect(res.projects[0].region).toBe("NA");
-    for (const p of res.projects) for (const s of p.signed) expect(userSquadIds).not.toContain(s.playerId);
-    expect(res.projects.every((p) => p.ratingAfter >= p.ratingBefore)).toBe(true);
+    for (const p of res.projects) {
+      for (const s of p.signed) expect(userSquadIds).not.toContain(s.playerId);
+      expect(res.world.orgs[p.orgRef].projectKit?.items).toEqual(kitFor(res.strength));
+      expect(p.ratingAfter).toBeGreaterThan(p.ratingBefore);
+    }
+  });
+  it("the kit is what lifts the side: the same roster without it rates lower", () => {
+    const res = rivalProjectsPass(world, ctx);
+    const p = res.projects[0];
+    const tc = { world: res.world, seasonIndex: 8, careerSeed: SEED, difficulty: "normal" as const };
+    const bare = { ...res.world, orgs: { ...res.world.orgs, [p.orgRef]: { ...res.world.orgs[p.orgRef], projectKit: undefined } } };
+    expect(orgTeamFor(p.orgRef, tc).rating.total).toBeGreaterThan(orgTeamFor(p.orgRef, { ...tc, world: bare }).rating.total);
   });
   it("is deterministic and leaves the input world alone", () => {
     const before = JSON.stringify(world);
@@ -66,15 +114,30 @@ describe("rival projects", () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     expect(JSON.stringify(world)).toBe(before);
   });
-  it("rotates: last season's project orgs sit out", () => {
+  it("a core continues next season (same orgs, same start) and stops after maxSeasons", () => {
     const first = rivalProjectsPass(world, ctx);
-    const next = rivalProjectsPass(world, { ...ctx, lastProjectRefs: first.projects.map((p) => p.orgRef) });
-    for (const p of next.projects) expect(first.projects.map((x) => x.orgRef)).not.toContain(p.orgRef);
+    const next = rivalProjectsPass(first.world, { ...ctx, seasonIndex: 9, running: first.projects });
+    for (const p of first.projects) {
+      const again = next.projects.find((x) => x.orgRef === p.orgRef);
+      if (again) expect(again.since).toBe(8);
+    }
+    expect(next.projects.filter((x) => x.since === 8).length).toBeGreaterThan(0);
+    const late = rivalProjectsPass(first.world, { ...ctx, seasonIndex: 8 + P.maxSeasons, running: first.projects });
+    expect(late.projects.some((x) => x.since === 8)).toBe(false);
   });
-  it("does nothing before the endless years; an AI leader is answered too, never by itself", () => {
+  it("a broken dynasty with no lead: no answer, and every kit closes", () => {
+    const first = rivalProjectsPass(world, ctx);
+    const after = rivalProjectsPass(first.world, { ...ctx, seasonIndex: 9, userRating: 60, streak: { ref: null, titles: 0 }, running: first.projects });
+    if (after.strength === 0) {
+      expect(after.projects).toEqual([]);
+      expect(Object.values(after.world.orgs).some((o) => o.projectKit)).toBe(false);
+    } else for (const p of after.projects) expect(p.orgRef).not.toBe(after.leader);
+  });
+  it("does nothing before the endless years; an AI leader gets the same rule, never answered by itself", () => {
     expect(rivalProjectsPass(world, { ...ctx, seasonIndex: 3 }).projects).toEqual([]);
-    const ai = rivalProjectsPass(world, { ...ctx, userRating: 60 });
+    const ai = rivalProjectsPass(world, { ...ctx, userRating: 60, streak: { ref: null, titles: 0 } });
     expect(ai.leader).not.toBe("user");
+    expect(ai.strength).toBe(projectStrengthFor(ai.gap, 0));
     for (const p of ai.projects) expect(p.orgRef).not.toBe(ai.leader);
   });
 });

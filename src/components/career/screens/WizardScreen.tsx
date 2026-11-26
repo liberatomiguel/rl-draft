@@ -15,7 +15,8 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
-import { CAREER_DIFFICULTY, CAREER_ECONOMY } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_ECONOMY, FEATURES } from "@/config/balance";
+import { TakeoverWizard, WizardDoor } from "@/components/career/board/TakeoverWizard";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs, playerCardById } from "@/data";
@@ -184,6 +185,8 @@ export function WizardScreen() {
 
   const [slotsFull, setSlotsFull] = useState(false);
   const [founding, setFounding] = useState(false);
+  // v2.2 board front: found a club, or take over a real organization (FEATURES.realOrgStart).
+  const [door, setDoor] = useState<"found" | "takeover" | null>(FEATURES.realOrgStart ? null : "found");
 
   // Locale-appropriate country default (design §6: defaults from locale).
   // Deferred a tick — reading navigator is an external-system sync, and the
@@ -300,6 +303,8 @@ export function WizardScreen() {
   const onFounded = useCallback(() => router.push("/career"), [router]);
 
   if (!mounted) return <div className="min-h-[60vh]" />;
+  if (door === null) return <WizardDoor onPick={setDoor} />;
+  if (door === "takeover") return <TakeoverWizard onBack={() => setDoor(null)} onCreated={onFounded} />;
 
   const canContinue = step === 1 ? step1Ok : true;
   const rivals = rivalsByRegion();

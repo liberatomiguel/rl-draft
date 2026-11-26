@@ -39,6 +39,7 @@ import {
   type FlowResult,
 } from "./careerFlow";
 import { trainingDecisionOf } from "./careerTraining";
+import { boardDecisionOf } from "./boardFlow";
 import { followCardOf, sundayStopHolds, sundayWithoutYouOf } from "./careerSunday";
 
 export type DecisionKind =
@@ -53,7 +54,8 @@ export type DecisionKind =
   | "training" // DEV-03: the coach's period proposal (front E)
   | "bid" // an incoming bid for a squad player
   | "sponsor" // the sponsor offers (front F's deals replace rc.33's)
-  | "follow"; // rc.36 (SUN-03): an event the user is out of — watch / results / skip (never holds)
+  | "follow" // rc.36 (SUN-03): an event the user is out of — watch / results / skip (never holds)
+  | "board"; // v2.2 board front: the pre-season package, or the job choice after a dismissal (store/boardFlow)
 
 /** A day of the save's calendar. */
 export interface DecisionDate {
@@ -311,6 +313,7 @@ const KIND_ORDER: DecisionKind[] = [
   "bid",
   "sponsor",
   "follow",
+  "board",
 ];
 
 /**
@@ -358,6 +361,8 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
   const notice = save.phase === "ended" ? null : DECISION_SOURCES.notice(save);
   if (notice) out.push(dueNow("notice", notice.id, notice.holds ?? true));
   push(contractReviewDecisionOf(save));
+  const board = boardDecisionOf(save); // v2.2 board front
+  if (board) out.push(dueNow("board", board.id));
   push(squadShortDecisionOf(save));
   push(insertDecisionOf(save));
   push(inviteDecisionOf(save));

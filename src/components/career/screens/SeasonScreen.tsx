@@ -11,6 +11,7 @@
  * title, the infinite-era explainer, or retire.
  */
 
+import { BoardSeasonPanel } from "@/components/career/board/BoardParts";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CareerSave } from "@/engine/career/types";
@@ -373,6 +374,7 @@ export function SeasonScreen() {
 
       {/* 5b — rc.34 (UX-06b): the explicit contract review before the rollover. */}
       <ContractReview save={save} C={C} />
+      <BoardSeasonPanel save={save} C={C} />
 
       {/* 5c — rc.37 F2: next season's books in one view (live: a renewal above moves it). */}
       {!isInsolvent && !isRetired ? <SeasonOutlook save={save} C={C} /> : null}

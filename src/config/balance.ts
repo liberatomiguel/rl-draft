@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 47;
+export const BALANCE_VERSION = 49;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5069,6 +5069,124 @@ export const CAREER_BOXSCORE = {
  * (which also sets NOINDEX). Production, playtest, dev and tests read false.
  * Same rule as analyticsEnvironment() === "staging" (lib/analytics.ts).
  */
+/**
+ * v2.2 board front (FEATURES.realOrgStart / FEATURES.board): org stature,
+ * the board's money, objectives, confidence, the ultimatum, dismissal and
+ * manager reputation. Every amount in "weeks" is weeks of the club's own
+ * weekly wage bill (squad + coach), so money scales with the squad and the
+ * season's money index. Tuned on BOARD_PROBE=1 (store/careerBoard.probe.test.ts).
+ */
+export const CAREER_BOARD = {
+  /**
+   * Stature from what the data proves: the org's squad rating rank in its
+   * region's AI field (1 = best) and its curated prestige (0-3). The first
+   * rule an org meets wins; underdog otherwise.
+   */
+  stature: {
+    elite: { maxRank: 2, maxRankWithPrestige: 4, prestige: 3 },
+    contender: { maxRank: 5, maxRankWithPrestige: 7, prestige: 2 },
+    mid: { maxRank: 10, maxRankWithPrestige: 12, prestige: 1 },
+  },
+  /**
+   * What each stature means. rep: the club reputation a takeover starts on.
+   * runwayWeeks: starting cash. grantWeeks: the board's seasonal budget
+   * (paid at the season's start, × the package). wageRoom: the wage ceiling
+   * (× the weekly bill at takeover). patience: multiplies every confidence
+   * LOSS (higher = less patient). aimShift: the sporting objective's chance
+   * aim moves by this (negative = harder). gear: installations the org owns.
+   * "owners" = a founded club (D5: owners and investors, softer).
+   */
+  profiles: {
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3 },
+    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2 },
+    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0, expectedRank: 8, gear: 1 },
+    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
+    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.08, expectedRank: 12, gear: 0 },
+  },
+  /** Difficulty scales patience and the objective's band (never a hidden number). */
+  difficulty: {
+    easy: { patience: 0.8, aimShift: 0.06 },
+    normal: { patience: 1, aimShift: 0 },
+    hard: { patience: 1.1, aimShift: -0.02 },
+  } as Record<string, { patience: number; aimShift: number }>,
+  /** The base chance aim of the sporting objective before the package, stature and difficulty. */
+  baseAim: 0.6,
+  /** The objective's chance stays inside this band whatever the shifts. */
+  aimClamp: { min: 0.3, max: 0.85 },
+  /**
+   * The pre-season packages. aimShift: on the objective's chance. grantMult:
+   * × the seasonal budget. upfrontWeeks: extra cash paid with it (founded
+   * clubs too). bonusWeeks: paid when the objective is met. hit / miss:
+   * confidence (a miss × patience).
+   */
+  packages: {
+    cautious: { aimShift: 0.14, grantMult: 0.85, upfrontWeeks: 0, bonusWeeks: 2, hit: 8, miss: -14 },
+    expected: { aimShift: 0, grantMult: 1, upfrontWeeks: 1, bonusWeeks: 4, hit: 12, miss: -18 },
+    ambitious: { aimShift: -0.18, grantMult: 1.2, upfrontWeeks: 3, bonusWeeks: 8, hit: 18, miss: -24 },
+  },
+  /** The secondary objective: confidence and a bonus (weeks). */
+  secondary: { hit: 6, miss: -5, bonusWeeks: 1, youthAge: 20, homeStarters: 2 },
+  /** A legacy objective (after a title): no penalty if missed. */
+  legacy: { hit: 8, bonusWeeks: 4, managerRep: 4 },
+  /**
+   * Split checkpoints (end of splits 1 and 2): the change in the objective's
+   * chance since the season's start × `scale`, clamped; an objective that can
+   * no longer be reached costs `outCost` once.
+   */
+  checkpoint: { scale: 20, min: -5, max: 5, outCost: -5 },
+  /** Deep debt: the balance under −this many weeks of wages costs confidence at each checkpoint. */
+  debt: { weeks: 4, cost: -6 },
+  /**
+   * At each new season the board forgives part of the gap below `confidence.start`
+   * (a fresh season): one bad year costs, a run of them dismisses. Owners forgive more.
+   */
+  seasonRecovery: { board: 0.25, owners: 0.5 },
+  /**
+   * The board states MEASURED chances: logit(p) = a + b·logit(model) (+ first
+   * in the board's first season), per stature × difficulty, fitted on
+   * BOARD_PROBE=1 BOARD_CAL_OUT (careerBoard.probe.test.ts, BOARD_FIT_FROM).
+   * A missing cell reads the raw model.
+   */
+  // Fitted 26/11 (shift-only, ridge 20: the model's ordering kept) on 58 competent careers × 6 seasons
+  // (NA/EU/SAM, seeds 9000/12000/12101, every staging flag on), every season goal settled against its
+  // season: 840-1230 goals a cell. Easy has no cell (raw model).
+  calibration: {
+    elite: { normal: { a: 3.15, b: 1, first: 0.08 }, hard: { a: 0.4, b: 1, first: -0.2 } },
+    contender: { normal: { a: 3.82, b: 1, first: 0.09 }, hard: { a: 1.54, b: 1, first: 0.2 } },
+    mid: { normal: { a: 3.33, b: 1, first: 0.01 }, hard: { a: -0.36, b: 1, first: -0.33 } },
+    underdog: { normal: { a: 1.84, b: 1, first: 0.57 }, hard: { a: -0.72, b: 1, first: 0.84 } },
+    owners: { normal: { a: -0.78, b: 1, first: -0.34 }, hard: { a: -1.64, b: 1, first: -0.51 } },
+  } as Record<string, Record<string, { a: number; b: number; first: number }>>,
+  /** Confidence lines. */
+  confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },
+  /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */
+  titleProtectSeasons: 1,
+  titleConfidence: { major: 6, worlds: 15 },
+  /** Seasons of the board's tenure without an ultimatum (so no dismissal): real orgs, founded clubs. */
+  graceSeasons: { board: 1, owners: 2 },
+  /** The ultimatum's mission: aimed at this chance over the splits left. Met: confidence back to `restore`. */
+  ultimatum: { aim: 0.6, restore: 45 },
+  /** High / low confidence at the verdict: next season's budget multiplier steps, its range. */
+  budget: { step: 0.1, min: 0.6, max: 1.3 },
+  /** Contract: seasons at the start; extension at high confidence. */
+  contract: { startSeasons: 2, extendSeasons: 1 },
+  /** Hiring freeze below this confidence at the verdict: the next transfer window. */
+  freezeBelow: 30,
+  /** Manager reputation (0-100): start, per result, offers. */
+  manager: {
+    start: 30,
+    objectiveHit: { cautious: 2, expected: 4, ambitious: 7 },
+    objectiveMiss: -3,
+    titles: { regional: 1, major: 4, worlds: 10 },
+    dismissed: -8,
+    /** Statures an offer may come from, by manager reputation. */
+    offerReach: { elite: 65, contender: 45, mid: 25 },
+    offersAfterDismissal: 3,
+    /** Unsolicited off-season offer: the manager's reputation and confidence it needs, and its chance. */
+    unsolicited: { minRep: 55, minConfidence: 60, chance: 0.5 },
+  },
+} as const;
+
 export const STAGING_BUILD =
   process.env.NODE_ENV === "production" &&
   process.env.NEXT_PUBLIC_NOINDEX === "1" &&
@@ -5145,6 +5263,21 @@ export const FEATURES = {
    */
   proCareer: STAGING_BUILD || process.env.NEXT_PUBLIC_PRO_CAREER === "1",
   /**
+   * v2.2 board front: the wizard's second door, "take over a real
+   * organization" (engine/career/orgProfile.ts, seatSwap.ts). Off → the
+   * wizard only founds a club, as before. Staging only; probes and dev:
+   * NEXT_PUBLIC_REAL_ORG_START=1.
+   */
+  realOrgStart: STAGING_BUILD || process.env.NEXT_PUBLIC_REAL_ORG_START === "1",
+  /**
+   * v2.2 board front: board objectives, the ambition × budget package, board
+   * confidence, the ultimatum, dismissal and job offers (engine/career/board.ts,
+   * manager.ts, store/boardFlow.ts; CAREER_BOARD). Off → no board state is
+   * created or read and every career plays exactly as before. Staging only;
+   * probes and dev: NEXT_PUBLIC_BOARD=1.
+   */
+  board: STAGING_BUILD || process.env.NEXT_PUBLIC_BOARD === "1",
+  /**
    * v2.2 ENDLESS (CAREER_ENDLESS, engine/career/endless.ts): the infinite
    * seasons answer a dominant team (rival projects), the cups stop repeating
    * (a wider Invitational field, a drawn bracket, the Legends invitational)
@@ -5217,36 +5350,53 @@ export const CAREER_ENDLESS = {
   projects: {
     /** Regions that can run a project (the leader's region answers first). */
     regions: ["NA", "EU", "SAM", "MENA", "OCE"] as const,
-    /** The leader's team rating (as the matches read it) minus the next three sides' mean: below this, no project. */
-    dominanceFloor: 1.5,
-    /** Each further step of dominance adds one project (one region). */
-    dominanceStep: 0.75,
-    maxProjects: 4,
-    /** A project is one of the region's best N AI orgs (not the leader, not last season's project). */
+    /**
+     * Round 2 (26/11): the answer scales with the dynasty. The leader's team
+     * rating (as the matches read it) minus the next three sides' mean is the
+     * gap. The world answers at dominanceFloor, or at defenceFloor when the
+     * leader also holds the Worlds title. Strength = its consecutive Worlds
+     * titles (at least 1), +1 from bigGap, capped at maxProjects; the same
+     * rule for the user and for an AI side.
+     */
+    dominanceFloor: 2.5,
+    defenceFloor: 2,
+    /** The reigning champion still "holds" (two titles or more: answered with no lead) within this of the top rating. */
+    holdSlack: 1,
+    /**
+     * bigGap 2.5 / gapStep 0.75 measured harder (a 100.7 team won 6 of 12
+     * Worlds against 21 of 27 here, N = 3 careers): kept at 3 / 1.
+     */
+    bigGap: 3,
+    /** Past bigGap, each further point of lead adds one more project. */
+    gapStep: 1,
+    maxProjects: 5,
+    /** Kit items (KIT_ORDER: facilities, coach, bench, bootcamp, psychologist) at strength 1; +1 per step. */
+    kitBase: 3,
+    /** A project is one of the region's best N AI orgs (not the leader, not a resting org). */
     candidateOrgs: 4,
-    /** Signings per project: buysBase, +1 per two levels, +1 from importGap; capped. */
-    buysBase: 1,
+    /** Signings for a new project (maxBuys once it signs worldwide), and the top-up of a continued one. */
+    buysBase: 2,
     maxBuys: 3,
+    topUpBuys: 1,
     /** A signing beats the weakest starter by at least this overall. */
     minEdge: 1,
-    /** From this dominance the projects sign from every region (the world's best players). */
-    importGap: 2.5,
-    /** The project also hires its region's best AI coach (a swap). */
-    coachSwap: true,
-    /** An AI leader (no user dynasty) needs this bigger lead before the world answers it. */
-    aiLeaderFloor: 3,
-    /**
-     * From this project level the org also opens a performance centre for the
-     * season: the team-rating bonus of the user's own (CAREER_GEAR perfCenter).
-     */
-    facilityFromLevel: 2,
-    /**
-     * A project keeps its performance centre this many seasons (its signings
-     * stay anyway), then the org sits one out. 2 measured no better than 1
-     * (Worlds share of a 101 team 85 % against 75 %, N = 40 each, within noise).
-     */
-    seasons: 1,
+    /** From this strength the projects sign from every region (the world's best players). */
+    importFromStrength: 2,
+    /** A project's core stays together this many seasons while the answer lasts, then the org rests a season. */
+    maxSeasons: 3,
   },
+  /**
+   * M2.1 in a long dynasty: from `fromTitles` consecutive Worlds, the season's
+   * new elite promotions get `perTitle` more potential per further title, up
+   * to `max` (new players only; capped at 99).
+   */
+  eliteGeneration: { fromTitles: 2, perTitle: 1, max: 2 },
+  /**
+   * Lever (c): during a user dynasty (this many consecutive Worlds) the
+   * strongest project bids for the user's best starter through the ordinary
+   * bid decision; one a window at most, a per-day roll inside the window.
+   */
+  projectBid: { fromTitles: 2, dailyChance: 0.15 },
   cups: {
     /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
     keepTop: 2,

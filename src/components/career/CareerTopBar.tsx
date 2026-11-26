@@ -24,6 +24,7 @@ import { useCareerStore } from "@/store/careerStore";
 import { Button } from "@/components/ui/Button";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
+import { OrgMark } from "@/components/career/OrgMark";
 import { CareerTabBar } from "@/components/career/CareerTabBar";
 import { NewDot } from "@/components/ui/NewDot";
 import { useNewTab } from "@/store/useNewItems";
@@ -186,12 +187,16 @@ export function CareerTopBar() {
         </AppLink>
         {/* Under 360px the crest gives its room to the date (the club is in More). */}
         <AppLink href="/career/club" className="flex shrink-0 items-center gap-2 max-[359px]:hidden">
-          <UserCrest
-            crestId={save.identity.crestId}
-            colors={save.identity.colors}
-            abbrev={save.identity.abbrev}
-            size="sm"
-          />
+          {save.identity.realOrgRef ? (
+            <OrgMark save={save} orgRef="user" size="sm" />
+          ) : (
+            <UserCrest
+              crestId={save.identity.crestId}
+              colors={save.identity.colors}
+              abbrev={save.identity.abbrev}
+              size="sm"
+            />
+          )}
           <span className="hidden flex-col items-start gap-1 sm:flex">
             <span className="display max-w-44 truncate text-base font-bold uppercase leading-none text-ink">
               <span className="lg:hidden">{save.identity.abbrev}</span>

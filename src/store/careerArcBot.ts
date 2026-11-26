@@ -73,6 +73,8 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
+import { boardAutoAnswer } from "./boardFlow";
+import type { PackageId } from "@/engine/career/boardTypes";
 import { recordSundayBriefingFlow, sundayStopHolds } from "./careerSunday";
 import {
   approveTrainingProposalFlow,
@@ -1040,6 +1042,10 @@ export function playArcCareer(cfg: {
   startFrom?: CareerSave;
   /** M3: test-only overrides of the policy's fields (the region-curve probe's RC_OVERRIDE). */
   policyOverride?: Partial<Omit<ArcPolicy, "id">>;
+  /** v2.2 board front: the package the bot takes each season (default expected). */
+  boardPackage?: PackageId;
+  /** v2.2 board front: accept an unsolicited off-season approach when one comes. */
+  boardApproach?: boolean;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
@@ -1077,6 +1083,7 @@ export function playArcCareer(cfg: {
         out.softlock = `budget: season ${save.clock.seasonIndex} day ${save.clock.day} squad ${save.squad.length} starters ${starters(save).length} event ${save.pendingEventDef?.id ?? "-"}/${save.activeEvent?.def.id ?? "-"}`;
         break;
       }
+      save = boardAutoAnswer(save, cfg.boardPackage); // v2.2 board front: a no-op with the flag off
       save = decide(save, policy, t, { bootcamp: cfg.bootcamp, onEvent: cfg.onEvent });
       track(save, t);
       cfg.onDay?.(save);
@@ -1154,6 +1161,7 @@ export function playArcCareer(cfg: {
       // v2.0 (C1): a coach whose deal ends is renewed like a player (two seasons); refused (the bank), he leaves.
       if (coachLeavingAtRolloverOf(save)) save = renewCoachFlow(save, 2).save;
       save = reviewContractsFlow(save).save;
+      save = boardAutoAnswer(save, cfg.boardPackage, cfg.boardApproach); // v2.2 board front: a dismissal's job choice (and an approach, opt-in)
       const hold = rolloverHoldOf(save);
       if (hold) {
         out.softlock = `season ${save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;
