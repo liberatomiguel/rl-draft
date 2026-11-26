@@ -73,10 +73,10 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         const seed = 9000 + k * 101;
         const world = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: diff });
         const choices = realOrgChoicesFor(region, { careerSeed: seed, seasonIndex: 0, difficulty: diff, world });
-        const picks = (["elite", "contender", "mid", "underdog"] as const).map((st) => choices.find((c) => c.stature === st)).filter(Boolean);
+        const picks = list(env.BOARD_STATURES, ["elite", "contender", "mid", "underdog"]).map((st) => choices.find((c) => c.stature === st)).filter(Boolean);
         for (const policy of policies) {
           for (const c of picks) jobs.push({ region, diff, policy, seed, ref: c!.ref, stature: c!.stature });
-          jobs.push({ region, diff, policy, seed, ref: null, stature: "founded" });
+          if (env.BOARD_FOUNDED !== "0") jobs.push({ region, diff, policy, seed, ref: null, stature: "founded" });
         }
       }
   const mine = jobs.filter((_, i) => i % sn === si);

@@ -3777,6 +3777,7 @@ export const CAREER_PT: CareerCopy = {
       titleWorlds: "Título mundial",
       debt: "Dívida profunda",
       ultimatumMet: "Ultimato respondido",
+      newSeason: "Nova temporada: a diretoria alivia a avaliação",
     } as Record<string, string>,
     objectives: "Objetivos da temporada",
     sporting: "Objetivo da temporada",

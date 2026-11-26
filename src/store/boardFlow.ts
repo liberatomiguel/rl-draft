@@ -171,6 +171,11 @@ export function boardOnSeasonStart(save: CareerSave): void {
   }
   const board = save.board;
   board.weekWages = weekWagesOf(save);
+  // A fresh season: the board forgives part of the gap below its starting view.
+  const gap = B.confidence.start - board.confidence;
+  if (gap > 0 && board.startSeason < save.clock.seasonIndex) {
+    applyConfidence(board, Math.round(gap * B.seasonRecovery[board.kind]), "newSeason", today(save));
+  }
   if (board.freeze && board.freeze.seasonIndex < save.clock.seasonIndex) board.freeze = null;
   offerSeason(save as CareerSave & { board: BoardState });
 }

@@ -3806,6 +3806,7 @@ export const CAREER_EN = {
       titleWorlds: "Worlds title",
       debt: "Deep debt",
       ultimatumMet: "Ultimatum answered",
+      newSeason: "New season: the board eases its view",
     } as Record<string, string>,
     objectives: "This season's objectives",
     sporting: "Season objective",

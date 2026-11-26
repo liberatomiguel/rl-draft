@@ -4722,7 +4722,7 @@ export const CAREER_BOARD = {
    * "owners" = a founded club (D5: owners and investors, softer).
    */
   profiles: {
-    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 24, wageRoom: 1.25, patience: 1.3, aimShift: -0.12, expectedRank: 2, gear: 3 },
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 20, wageRoom: 1.25, patience: 1.3, aimShift: -0.12, expectedRank: 2, gear: 3 },
     contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.1, expectedRank: 4, gear: 2 },
     mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.95, aimShift: 0, expectedRank: 8, gear: 1 },
     underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
@@ -4761,6 +4761,11 @@ export const CAREER_BOARD = {
   checkpoint: { scale: 30, min: -8, max: 6, outCost: -6 },
   /** Deep debt: the balance under −this many weeks of wages costs confidence at each checkpoint. */
   debt: { weeks: 4, cost: -6 },
+  /**
+   * At each new season the board forgives part of the gap below `confidence.start`
+   * (a fresh season): one bad year costs, a run of them dismisses. Owners forgive more.
+   */
+  seasonRecovery: { board: 0.25, owners: 0.5 },
   /** Confidence lines. */
   confidence: { start: 70, warn: 40, ultimatum: 25, high: 80, top: 90 },
   /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */
@@ -4771,7 +4776,7 @@ export const CAREER_BOARD = {
   /** The ultimatum's mission: aimed at this chance over the splits left. Met: confidence back to `restore`. */
   ultimatum: { aim: 0.6, restore: 45 },
   /** High / low confidence at the verdict: next season's budget multiplier steps, its range. */
-  budget: { step: 0.15, min: 0.6, max: 1.6 },
+  budget: { step: 0.1, min: 0.6, max: 1.3 },
   /** Contract: seasons at the start; extension at high confidence. */
   contract: { startSeasons: 2, extendSeasons: 1 },
   /** Hiring freeze below this confidence at the verdict: the next transfer window. */
