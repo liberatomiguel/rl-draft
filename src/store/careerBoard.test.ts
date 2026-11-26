@@ -14,7 +14,7 @@ import { CAREER_BOARD } from "@/config/balance";
 import { buildWorldAtCreation, computeStars } from "@/engine/career/worldSim";
 import { realOrgChoicesFor } from "@/engine/career/orgProfile";
 import type { CareerSave } from "@/engine/career/types";
-import { createCareerSave, enterSeasonReview, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
+import { advanceDayFlow, createCareerSave, enterSeasonReview, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
 import { pendingDecisionsOf, rolloverHoldOf } from "./careerDecisions";
 import {
   acceptJobOfferFlow,
@@ -183,6 +183,15 @@ describe("warning, ultimatum, dismissal, offers", () => {
 });
 
 describe("older saves", () => {
+  it("a save without board fields plays its season with the flags on: nothing is judged before its rollover", () => {
+    let save = createCareerSave(input("SAM"), SEED);
+    delete save.board;
+    delete save.manager;
+    for (let i = 0; i < 40; i++) save = advanceDayFlow(boardAutoAnswer(save));
+    expect(save.board).toBeUndefined();
+    expect(pendingDecisionsOf(save).some((d) => d.kind === "board")).toBe(false);
+  });
+
   it("a save without board fields starts its board at the rollover, at full confidence, judged on nothing before", () => {
     const save = createCareerSave(input("NA"), SEED);
     delete save.board;
