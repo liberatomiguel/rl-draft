@@ -50,8 +50,10 @@ type Ctx = {
   /** The user's team rating (userSeedRatingFor), on the orgs' intrinsic scale. */
   userRating: number;
   userRegion: Region;
-  /** Orgs that ran a project last season (they sit this one out: projects rotate). */
+  /** Orgs whose project is running or just ended (they start no new one: projects rotate). */
   lastProjectRefs: readonly string[];
+  /** Orgs whose project still runs this season: their performance centre stays open. */
+  runningProjectRefs?: readonly string[];
 };
 
 /** As the matches read it: the difficulty's shift on the AI side included (a Hard world needs a bigger lead). */
@@ -92,9 +94,10 @@ export function rivalProjectsPass(input: WorldState, ctx: Ctx): { world: WorldSt
   const P = E.projects;
   // Last season's performance centres close first (a project that runs again reopens its own below).
   let world = input;
-  if (Object.values(input.orgs).some((o) => o.projectBonus)) {
+  const running = new Set(ctx.runningProjectRefs ?? []);
+  if (Object.values(input.orgs).some((o) => o.projectBonus && !running.has(o.ref))) {
     world = cloneOrgs(input);
-    for (const o of Object.values(world.orgs)) delete o.projectBonus;
+    for (const o of Object.values(world.orgs)) if (!running.has(o.ref)) delete o.projectBonus;
     world.version += 1;
   }
   const teamCtx = { world, seasonIndex: ctx.seasonIndex, careerSeed: ctx.careerSeed, difficulty: ctx.difficulty };

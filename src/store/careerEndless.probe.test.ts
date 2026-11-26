@@ -156,8 +156,9 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
             r.superWorld = superOf(null);
             r.superRegion = superOf(save.identity.region);
             r.top3Ovr = pool.slice(0, 3).map((v) => v.overall);
-            r.projects = save.endless?.projects.length ?? 0;
-            r.projectLift = (save.endless?.projects ?? []).map((p) => `${p.region}:${p.ratingBefore}>${p.ratingAfter}`);
+            const fresh = (save.endless?.projects ?? []).filter((p) => p.season === save.clock.seasonIndex);
+            r.projects = fresh.length;
+            r.projectLift = fresh.map((p) => `${p.region}:${p.ratingBefore}>${p.ratingAfter}`);
             r.gap = save.endless?.gap;
           },
         });

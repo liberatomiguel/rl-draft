@@ -4865,6 +4865,12 @@ export const CAREER_ENDLESS = {
      * season: the team-rating bonus of the user's own (CAREER_GEAR perfCenter).
      */
     facilityFromLevel: 2,
+    /**
+     * A project keeps its performance centre this many seasons (its signings
+     * stay anyway), then the org sits one out. 2 measured no better than 1
+     * (Worlds share of a 101 team 85 % against 75 %, N = 40 each, within noise).
+     */
+    seasons: 1,
   },
   cups: {
     /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */

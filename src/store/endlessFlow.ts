@@ -18,6 +18,7 @@ import {
   rivalProjectsPass,
   worldWeekFor,
 } from "@/engine/career/endless";
+import { PARTNER_EVENT_NAMES } from "@/data/career/names";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import { userTeamFor } from "@/engine/career/worldSim";
 import { createPlayoffs } from "@/engine/playoffs";
@@ -70,10 +71,12 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
     userSquadIds: save.squad.map((p) => p.id),
     userRating: userRatingOf(save),
     userRegion: save.identity.region,
-    lastProjectRefs: last.filter((p) => p.season === nextSeason - 1).map((p) => p.orgRef),
+    lastProjectRefs: last.filter((p) => p.season >= nextSeason - CAREER_ENDLESS.projects.seasons).map((p) => p.orgRef),
+    runningProjectRefs: last.filter((p) => p.season > nextSeason - CAREER_ENDLESS.projects.seasons && p.facility > 0).map((p) => p.orgRef),
   });
   save.world = res.world;
-  save.endless.projects = res.projects;
+  // The running projects stay on the record (rotation, the review); only the new ones make the news.
+  save.endless.projects = [...last.filter((p) => p.season > nextSeason - CAREER_ENDLESS.projects.seasons), ...res.projects];
   save.endless.gap = Math.round(res.gap * 10) / 10;
   for (const p of res.projects) {
     const mine = p.region === save.identity.region;
@@ -114,6 +117,8 @@ function openWeeks(): number[] {
  */
 export function endlessOffer(save: CareerSave, def: CareerEventDef | null, starterAverage: number): CareerEventDef | null {
   if (!def || def.tier !== "t2" || def.region || def.endless || !endlessOn(save, def.seasonIndex)) return def;
+  // A partner's edition (Duds Cup) keeps its week and its art: only its field and draw change.
+  if (PARTNER_EVENT_NAMES.includes(def.name)) return { ...def, endless: "cup" };
   if (
     starterAverage >= CAREER_ENDLESS.legends.minStarterOverall &&
     legendsWeekFor(def.seasonIndex, def.week, save.careerSeed, openWeeks())
