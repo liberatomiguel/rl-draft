@@ -47,8 +47,9 @@ Normal, bot `strong` with squad floored from S6, NA/EU/SAM × 2 seeds = 6 career
 ## Not verified / open
 
 - **Targets missed:** AI sides within 3 points average 2.2–2.7 (target 3+). A fifth defence was never reached: dynasties break earlier now, so the deepest step has N = 4.
-- **Lever (c) is not in the Normal arms** (they started before it). It is in Hard/Easy. A confirming run (`fin-f99`) was still running at handoff.
-- **Soft-lock probe:** unfloored bot, so it never reaches a user dynasty or a project bid. Those paths are covered only by `endlessFlow.test.ts`.
+- **Arms and config.** Final config = commit a0a75ec. The Normal arms (on 97, on 99, unfloored) ran on f367511 minus lever (c); every other number matches the final config. Hard and Easy include (c). fin-f99 (final config, (c) included) was stopped after 3 of 6 careers: 16/27 Worlds at 100+, series 85.2 %, 2.9 sides within 3. The same 3 careers without (c) gave 59 % and 85.8 %, so (c) changes little. r3 (bigGap 2.5) ran to completion but is not shipped.
+- **Still to run** (one process, when the machine is free): ENDLESS_PROBE=1 NEXT_PUBLIC_WORLD_LIFE=1 NEXT_PUBLIC_MATCHDAY_STYLES=1 NEXT_PUBLIC_MATCHDAY_DECISIONS=1 NEXT_PUBLIC_MATCHDAY_BOXSCORE=1 NEXT_PUBLIC_ENDLESS_VARIETY=1 EP_REGIONS=NA,EU,SAM EP_SEEDS=2 EP_SEASONS=16 EP_FLOOR=99 EP_OUT=fin-f99.json npx vitest run src/store/careerEndless.probe.test.ts (about 30 min alone). Repeat with EP_FLOOR=97 EP_SEASONS=14 for the 97 arm on the final config.
+- **Soft-lock probe** (final config, NA and SAM, strong, 10 seasons: 0 findings): unfloored bot, so it never reaches a user dynasty or a project bid. Those paths are covered only by `endlessFlow.test.ts`.
 - **Guard noise:** the unfloored drop (5 → 3 Worlds in 27–28) is within noise but points down.
 - No browser check (org sheet line).
 
