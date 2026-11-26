@@ -55,7 +55,7 @@ const B = CAREER_BOARD;
 const OFFER_REGIONS: readonly Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 
 export function boardOn(save: CareerSave): save is CareerSave & { board: BoardState } {
-  return FEATURES.board && save.board !== undefined;
+  return FEATURES.board && !save.proHost && save.board !== undefined;
 }
 
 function today(save: CareerSave) {
@@ -157,6 +157,11 @@ function titlesOfSeason(save: CareerSave, seasonIndex: number): { worlds: boolea
  * board starts with its first season's offer (FEATURES.board).
  */
 export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void {
+  // The Pro's hidden host has no board, no manager and no takeover: the predicate every board hook reads.
+  if (input.proHost) {
+    save.proHost = true;
+    return;
+  }
   let stature: ProfileKey = "owners";
   if (input.realOrgRef && FEATURES.realOrgStart) {
     const ref = input.realOrgRef;
@@ -183,7 +188,7 @@ export function boardOnDayArrival(save: CareerSave): void {
 
 /** Hook: the rollover, once the new season's goal is attached. An older save's board starts here, at full confidence. */
 export function boardOnSeasonStart(save: CareerSave): void {
-  if (!FEATURES.board) return;
+  if (!FEATURES.board || save.proHost) return;
   if (!save.board) {
     save.board = boardFor(save, save.identity.realOrgRef ? "mid" : "owners", save.clock.seasonIndex, 100);
     save.manager ??= newManagerState(save.clock.seasonIndex, save.identity.orgName, save.identity.realOrgRef);

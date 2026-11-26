@@ -61,7 +61,7 @@ import type { ProHonor, ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { PRO_SELF_ID, withProInWorld } from "@/engine/career/pro/world";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { TournamentState, TournamentTeam } from "@/engine/types";
-import { clockHoldOf, declineSponsorOffersFlow, reviewContractsFlow } from "./careerDecisions";
+import { clockHoldOf, declineSponsorOffersFlow, parkDecisionFlow, reviewContractsFlow } from "./careerDecisions";
 import {
   acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
@@ -121,10 +121,12 @@ function newHost(save: ProSave): CareerSave {
       difficulty: save.difficulty,
       rosterKey: "balanced",
       trainingMode: "auto",
+      proHost: true,
       prefs: { autoEnterUnofficials: false, autoTrain: true, matchdayMode: "quick", playbackDefault: "instant" },
     },
     save.careerSeed,
   );
+  host.proHost = true;
   host.squad = [proSquadPlayer(save.player, host.clock.seasonIndex)];
   host.starterIds = [PRO_SELF_ID, "", ""];
   syncSquadRoles(host);
@@ -175,6 +177,8 @@ export function settleHost(input: CareerSave): CareerSave {
   let host = input;
   if (host.finances.balance < CAREER_PRO_TEAM.hostFloor) host = { ...host, finances: { ...host.finances, balance: CAREER_PRO_TEAM.hostFloor } };
   if (host.pendingInsert) host = { ...host, pendingInsert: null };
+  // A host made before the board front existed (or by an older build) never carries a board: the front is inert on it.
+  if (!host.proHost || host.board || host.manager) host = { ...host, proHost: true, board: undefined, manager: undefined };
   for (let i = 0; i < 16; i++) {
     const hold = clockHoldOf(host);
     if (!hold) break;
@@ -205,7 +209,12 @@ export function settleHost(input: CareerSave): CareerSave {
       case "sponsor":
         next = declineSponsorOffersFlow(host).save;
         break;
+      case "board":
+        next = { ...host, board: undefined, manager: undefined };
+        break;
       default:
+        // Any decision this list does not know is parked, never left to hold the Pro's clock.
+        next = parkDecisionFlow(host, hold.id).save;
         break;
     }
     if (next === host) break;
