@@ -536,6 +536,7 @@ export const CAREER_EN = {
       sponsor: "Sponsor offers",
       sunday: "Start Sunday",
       follow: "Without you",
+      board: "The board",
     },
     noticeTitle: "A notice needs you",
     noticeBody: "Read and acknowledge the notice: the clock moves once you have.",
@@ -1812,6 +1813,9 @@ export const CAREER_EN = {
       // rc.34 (ECO-04): a Bold deal's milestone payment and a missed goal's fine instalment.
       sponsorMilestone: "Sponsor milestone",
       sponsorFine: "Sponsor fine",
+      // v2.2 board front: the board's seasonal budget and an objective's bonus.
+      boardGrant: "Board budget",
+      boardBonus: "Board bonus",
     },
     sponsors: "Sponsors",
     sponsorTier: (t: number) => `Tier ${t}`,

@@ -47,6 +47,11 @@ export interface CareerIdentity {
   colors: CareerColors;
   /** The org's chosen identity buff (fed to the team assembler as orgOverride). */
   buffType: StatKey;
+  /**
+   * v2.2 board front (FEATURES.realOrgStart): the dataset org the manager
+   * runs (its real logo and name). Absent = a founded club. Optional, additive.
+   */
+  realOrgRef?: string;
 }
 
 export type ManagementStyle = "handsOn" | "balanced" | "delegate";
@@ -490,6 +495,12 @@ export interface WorldState {
    * career. Optional and additive.
    */
   proSelf?: FormerSquadPlayer;
+  /**
+   * v2.2 board front: the dataset org whose seat the user holds — it never
+   * enters the world as an AI side while he runs it (worldSim.realOrgIntake).
+   * Optional, additive: absent = a founded club.
+   */
+  userOrgRef?: string;
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */
@@ -694,7 +705,9 @@ export type LedgerKind =
   | "bankPayment" // v2.0: weekly instalment / early pay-down
   | "insert" // v2.0 (R33): a mid-week decision's money effect
   | "sponsorMilestone" // rc.34 (ECO-04): a Bold deal's milestone payment, the day its first goal is reached
-  | "sponsorFine"; // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
+  | "sponsorFine" // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
+  | "boardGrant" // v2.2 board front: the board's seasonal budget (the package chosen)
+  | "boardBonus"; // v2.2 board front: an objective met
 
 export interface LedgerEntry {
   id: string;
@@ -1833,6 +1846,15 @@ export interface CareerSave {
 
   /** Stamped by the STORE on each persist (engine never reads the clock). */
   lastPlayedAt: number;
+
+  /**
+   * v2.2 board front (FEATURES.board): the board (or the owners of a founded
+   * club), its objectives and confidence. Optional, additive: absent = no
+   * board yet (an older save starts one at its next rollover).
+   */
+  board?: import("./boardTypes").BoardState;
+  /** v2.2 board front: the manager's own reputation, record and job offers. Optional, additive. */
+  manager?: import("./boardTypes").ManagerState;
 }
 
 /** Slot metadata rendered by the saves picker without hydrating full saves. */

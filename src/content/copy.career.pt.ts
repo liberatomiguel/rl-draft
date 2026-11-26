@@ -516,6 +516,7 @@ export const CAREER_PT: CareerCopy = {
       sponsor: "Propostas de patrocínio",
       sunday: "Começar o domingo",
       follow: "Sem você",
+      board: "A diretoria",
     },
     noticeTitle: "Um aviso precisa de você",
     noticeBody: "Leia e confirme o aviso: o relógio anda depois disso.",
@@ -1786,6 +1787,8 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (ECO-04): a Bold deal's milestone payment and a missed goal's fine instalment.
       sponsorMilestone: "Marco do patrocinador",
       sponsorFine: "Multa do patrocinador",
+      boardGrant: "Verba da diretoria",
+      boardBonus: "Bônus da diretoria",
     },
     sponsors: "Patrocinadores",
     sponsorTier: (t: number) => `Nível ${t}`,
