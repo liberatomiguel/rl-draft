@@ -14,9 +14,9 @@ import type {
   CareerDifficulty,
   CompetitionState,
   DeclineRate,
-  NewsItem,
   WorldState,
 } from "../types";
+import type { ProNewsItem, ProOffer, ProSeasonLine, ProSpineFields } from "./spineTypes";
 
 export type ProStartAge = 13 | 14;
 
@@ -74,7 +74,7 @@ export interface ProGrowthEntry {
 
 export type ProBridge = { to: "manager" | "coach" | "legend"; atSeason: number };
 
-export interface ProSave {
+export interface ProSave extends ProSpineFields {
   kind: "pro";
   /** The Pro save's own shape version (1 = v2.2 slice 1). */
   proSaveVersion: 1;
@@ -91,11 +91,13 @@ export interface ProSave {
   team: ProTeam | null;
   /** Explained attribute changes, newest last (CAREER_PRO.growthLogCap). */
   growthLog: ProGrowthEntry[];
-  /** Filled by slices 3–7. */
-  offers: unknown[];
-  history: unknown[];
+  /** Slices 3-4 (PROSPINE): offers from sides and orgs, newest last. */
+  offers: ProOffer[];
+  /** One line per finished season. */
+  history: ProSeasonLine[];
   honors: unknown[];
-  news: NewsItem[];
+  /** The Pro's inbox (PRO_WORLD.news), newest first. */
+  news: ProNewsItem[];
   flags: Record<string, boolean>;
   /** Set on retirement (slice 6): where the career went next. */
   bridge: ProBridge | null;
