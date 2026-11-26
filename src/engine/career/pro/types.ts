@@ -26,6 +26,50 @@ export type ProStage = "ranked" | "amateur" | "org" | "freeAgent" | "retired";
 /** What a training block works on. */
 export type ProTrainingFocus = StatKey | "balanced";
 
+/** One block of the week (PRO-SPEC §5). "mechanics" is a training focus too (it is a StatKey). */
+export type ProActivity =
+  | { kind: "train"; focus: ProTrainingFocus }
+  | { kind: "ranked" }
+  | { kind: "scrim" }
+  | { kind: "content" }
+  | { kind: "rest" };
+
+/** Monday-Tuesday, Wednesday-Thursday, Friday. */
+export type ProWeekPlan = [ProActivity, ProActivity, ProActivity];
+
+/** A line the week shows the player: a code the copy maps, with one optional number. */
+export type ProNoteCode =
+  | "tiredTraining"
+  | "lowEnergy"
+  | "burnoutWarning"
+  | "burnedOut"
+  | "stillBurnedOut"
+  | "backFromBurnout"
+  | "scrimNeedsTeam"
+  | "rankedResult"
+  | "rankUp"
+  | "rankDown"
+  | "mechanicUnlocked"
+  | "contentPaid";
+
+export interface ProWeekNote {
+  code: ProNoteCode;
+  /** The number the line quotes (MMR change, energy, money), when it has one. */
+  n?: number;
+  /** A key the line quotes (a mechanic id, a rank id). */
+  ref?: string;
+}
+
+/** One ranked session, kept for the panel (CAREER_PRO_RANKED.logCap). */
+export interface ProRankedEntry {
+  seasonIndex: number;
+  day: number;
+  mmrDelta: number;
+  wins: number;
+  games: number;
+  mmr: number;
+}
+
 export interface ProPlayer {
   name: string;
   /** ISO 3166-1 alpha-2. */
@@ -53,6 +97,26 @@ export interface ProPlayer {
   money: number;
   /** Ranked MMR (slice 2). */
   mmr: number;
+  /**
+   * Slice 2+ state, all optional so a slice-1 save loads and plays (a missing
+   * field reads as its starting value).
+   */
+  /** The last three-block plan played ("repeat last week"). */
+  lastPlan?: ProWeekPlan;
+  /** The last ranked sessions, newest last. */
+  rankedLog?: ProRankedEntry[];
+  /** Total ranked sessions played (the RNG stream key of the next one). */
+  rankedSessions?: number;
+  /** The last official match ratings (0-10), newest last; confidence is their mean. */
+  recentRatings?: number[];
+  /** Burnout: warned = the week-end warning was shown; outWeeks = weeks still out. */
+  burnout?: { warned: boolean; outWeeks: number };
+  /** Mechanics training blocks done (slice 5 unlocks signature mechanics from it). */
+  mechanicsBlocks?: number;
+  /** 0-100, from scrims with a team (slices 3-4 read it). */
+  chemistry?: number;
+  /** Slice 6: the seasons this Pro has been without a contract, in a row. */
+  seasonsWithoutContract?: number;
 }
 
 /** The team the Pro plays for (slices 3–4 add the contract). */
@@ -67,9 +131,11 @@ export interface ProGrowthEntry {
   seasonIndex: number;
   day: number;
   /** Why it moved: a training block, a match, age (slices 2–6 add theirs). */
-  source: "training" | "match" | "age";
+  source: "training" | "match" | "age" | "ranked" | "scrim";
   stat: StatKey;
   delta: number;
+  /** Slice 6: a copy key that says why ("reflexes", "reads"...) for an age entry. */
+  reason?: string;
 }
 
 export type ProBridge = { to: "manager" | "coach" | "legend"; atSeason: number };
