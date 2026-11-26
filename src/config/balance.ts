@@ -1665,7 +1665,7 @@ export const CAREER_PRO = {
   attrMax: 99,
   attrMin: 30,
   /** The hidden talent (×XP): the mean of two seeded uniforms over this range. */
-  talentRange: [0.85, 1.15] as const,
+  talentRange: [0.78, 1.25] as const,
   /** The age of the peak (whole years, seeded), then the decline (slice 6). */
   peakAgeRange: [20, 24] as const,
   declineRateWeights: { slow: 0.3, normal: 0.5, fast: 0.2 } as Record<string, number>,
@@ -1674,21 +1674,21 @@ export const CAREER_PRO = {
      * Attribute points one focused training block adds at gap factor 1, age
      * ≤ 17, talent 1, no coach, full energy. A week has three blocks.
      */
-    perBlock: 0.7,
+    perBlock: 0.5,
     /** "Balanced" spreads a block over the six attributes at this total. */
     balancedShare: 0.9,
     /** Age multiplier: the first band whose maxAge ≥ age; past the bands, `beforePeak` until the peak age, `afterPeak` after it. */
     ageBands: [
       { maxAge: 17, mult: 1 },
-      { maxAge: 20, mult: 0.85 },
-      { maxAge: 23, mult: 0.6 },
+      { maxAge: 19, mult: 0.3 },
+      { maxAge: 21, mult: 0.1 },
     ],
-    beforePeak: 0.35,
-    afterPeak: 0.1,
+    beforePeak: 0.05,
+    afterPeak: 0.03,
     /** Distance to the ceiling: ((attrMax − attr) / gapRef) ^ gapExponent, never under gapFloor (99 stays reachable). */
     gapRef: 49,
-    gapExponent: 0.7,
-    gapFloor: 0.12,
+    gapExponent: 0.92,
+    gapFloor: 0.03,
     /** A coach of overall ≥ coachFull adds coachMax (linear from coachZero). Amateur sides have none. */
     coachZero: 60,
     coachFull: 95,
@@ -1764,7 +1764,7 @@ export const CAREER_PRO_WEEK = {
    * 9 rating against a stronger team is worth roughly two training blocks).
    */
   matchXp: {
-    base: 0.5,
+    base: 1.0,
     tier: { t3: 0.5, t2: 0.7, qualifier: 0.8, regional: 1.2, major: 1.7, worlds: 2.2 } as Record<string, number>,
     tierDefault: 0.8,
     /** 1 at a 6 rating, ±ratingPerPoint per point, bounded. */
@@ -1796,9 +1796,9 @@ export const CAREER_PRO_RANKED = {
   skillTable: [
     [40, 500],
     [50, 1000],
-    [54, 1500],
-    [57, 1950],
-    [60, 2400],
+    [53, 1500],
+    [55, 2000],
+    [57, 2400],
     [66, 2800],
     [99, 3100],
   ] as readonly (readonly [number, number])[],
