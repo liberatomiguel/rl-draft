@@ -80,7 +80,7 @@ function closeEvent(save: ProSave): ProSave {
   const placement = placementOf(ev.tournament, "user");
   let out = save.report && save.report.eventId === ev.def.id ? { ...save, report: { ...save.report, placement } } : save;
   out = storeHost({ ...out, live: null }, withMode(finishEvent(host), "quick"));
-  if (placement === "champion") out = noteTitle(out, ev.def.name, teamNameOf(save, host));
+  if (placement === "champion") out = noteTitle(out, ev.def.name, teamNameOf(save, host), ev.def.tier);
   return out;
 }
 

@@ -11,6 +11,15 @@ export function ProInbox({ save }: { save: ProSave }) {
   const C = useCareerCopy();
   const I = C.proWorld.inbox;
   const N = C.proWorld.news;
+  const G = C.proCard.gala;
+  const textOf = (key: string, p: Record<string, string | number>): string => {
+    if (key === "galaWon" || key === "galaNominee") {
+      const award = G.line(G.scopes[String(p.scope)] ?? String(p.scope), G.kinds[String(p.kind)] ?? String(p.kind), Number(p.year));
+      return key === "galaWon" ? G.winner(award) : G.nominee(award);
+    }
+    if (key === "nicknameEarned") return N.nicknameEarned({ name: C.proCard.nicknames[String(p.id)] ?? String(p.id) });
+    return N[key]?.(p) ?? key;
+  };
   const host = hostOf(save);
   const season = save.clock.seasonIndex;
   const region = save.player.region;
@@ -33,7 +42,7 @@ export function ProInbox({ save }: { save: ProSave }) {
         <ul className="divide-y divide-line border-y border-line">
           {save.news.slice(0, 30).map((n) => (
             <li key={n.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-              <span className={n.read ? "text-sub" : "text-ink"}>{N[n.key]?.(n.params) ?? n.key}</span>
+              <span className={n.read ? "text-sub" : "text-ink"}>{textOf(n.key, n.params)}</span>
               <span className="shrink-0 text-xs text-faint">
                 {n.seasonIndex + 1}.{weekOfDay(n.day)}
               </span>

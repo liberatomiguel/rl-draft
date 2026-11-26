@@ -31,6 +31,9 @@ describe("PROSPINE the end", () => {
     expect(save.history[0].role).toBeDefined();
     expect(proRosterCount(save.world)).toBe(0);
     expect(hostOf(save)!.squad.map((p) => p.id)).toEqual(["pro:self"]);
+    // The gala ran at the season's end: every honour is his and named by kind and scope.
+    for (const h of save.honors as { kind: string; scope: string; place: string }[]) expect(["winner", "nominee"]).toContain(h.place);
+    expect(proCardOf(save).awards.every((k) => /^(mvp|breakout|teamOfSeason|mostDecisive)\.(region|world)\.\d{4}$/.test(k))).toBe(true);
     const payload = proCardHrefOf(save).split("#")[1];
     expect(decodeCard(payload)).toEqual(proCardOf(save));
     // A retired save does not move (the hub shows the card instead of Advance).

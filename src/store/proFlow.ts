@@ -57,7 +57,7 @@ import type {
   ProWeekLog,
 } from "@/engine/career/pro/spineTypes";
 import { amateurInviteFor, amateurTeammates, proSquadPlayer, sideLevelOf } from "@/engine/career/pro/team";
-import type { ProSave, ProWeekPlan } from "@/engine/career/pro/types";
+import type { ProHonor, ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { PRO_SELF_ID, withProInWorld } from "@/engine/career/pro/world";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { TournamentState, TournamentTeam } from "@/engine/types";
@@ -79,6 +79,7 @@ import { startSundayFlow } from "./careerSunday";
 import { approveTrainingProposalFlow } from "./careerTraining";
 import { proHooks } from "./proHooks";
 import { decideProGameFlow, playProMatchdayFlow } from "./proMatch";
+import { awardLinesOf, factsAfterGames, nicknameAfter, seasonGalaOf } from "./proGala";
 import { decideSeatLineup, proStartsOnSeat, seatOrgOnHost, swapOnSeat, unseatOrgFromHost } from "./proSeat";
 
 // ---------------------------------------------------------------------------
@@ -406,12 +407,15 @@ export function bookLines(
   const log = [...(save.matchLog ?? [])];
   const ss = { ...(save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] }) };
   ss.teams = ss.teams.includes(teamName) ? ss.teams : [...ss.teams, teamName];
+  let facts = save.careerFacts;
   for (const line of lines) {
     if (line.rating === null) {
       ss.benched = (ss.benched ?? 0) + 1;
       continue;
     }
     ss.games = (ss.games ?? 0) + line.games.filter((g) => g.pro).length;
+    ss.mvps = (ss.mvps ?? 0) + line.games.filter((g) => g.pro?.mvp).length;
+    facts = factsAfterGames(facts, line.games);
     const xp = applyMatchXp(player, {
       rating: line.rating,
       opponentStrength: strengthOf(line.opponent),
@@ -451,15 +455,19 @@ export function bookLines(
     seasonSeries: ss,
     report,
     bookedRounds: { eventId: def.id, keys },
+    careerFacts: facts,
   });
 }
 
 /** His team won an event: the news, the season's results, the career's titles (the card). */
-export function noteTitle(save: ProSave, eventName: string, teamName: string): ProSave {
+export function noteTitle(save: ProSave, eventName: string, teamName: string, tier?: CareerEventDef["tier"]): ProSave {
   const line = `${eventName} ${seasonYear(save.clock.seasonIndex)}`;
   const ss = { ...(save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] }) };
   ss.titles = [...(ss.titles ?? []), eventName];
-  const out = { ...save, seasonSeries: ss, careerTitles: [...(save.careerTitles ?? []), line].slice(-40) };
+  const facts = { ...(save.careerFacts ?? {}) };
+  if (tier === "major" || tier === "worlds") facts.lanTitles = (facts.lanTitles ?? 0) + 1;
+  if (tier === "worlds") facts.worldsTitles = (facts.worldsTitles ?? 0) + 1;
+  const out = { ...save, seasonSeries: ss, careerFacts: facts, careerTitles: [...(save.careerTitles ?? []), line].slice(-40) };
   return pushNews(out, "sideTitle", { side: teamName, event: eventName });
 }
 
@@ -778,6 +786,23 @@ export function advanceProDayFlow(input: ProSave): ProSave {
   return afterArrival(storeHost(save, next), captured);
 }
 
+/** Why the week stopped (the planner says it) and what it is, or null when it simply reached Monday. */
+export type ProWeekStop =
+  | { kind: "matchday" | "event"; name: string }
+  | { kind: "offer"; n: number }
+  | { kind: "report" | "seasonEnd" | "retired" };
+
+export function proWeekStopOf(save: ProSave): ProWeekStop | null {
+  const stop = proStopOf(save);
+  if (stop?.kind === "retired") return { kind: "retired" };
+  if (stop?.kind === "seasonEnd") return { kind: "seasonEnd" };
+  if (stop?.kind === "matchday" || stop?.kind === "event") return { kind: stop.kind, name: stop.eventName };
+  const offers = openProOffersOf(save).filter((o) => o.madeSeason === save.clock.seasonIndex && o.madeDay === save.clock.day).length;
+  if (offers > 0) return { kind: "offer", n: offers };
+  if (save.report && save.report.day === save.clock.day) return { kind: "report" };
+  return null;
+}
+
 /** The batched Advance: days until something needs the Pro (a matchday, a report, an offer, the season's end). */
 export function advanceProToNextStopFlow(input: ProSave): ProSave {
   let save = ensureProHost(input);
@@ -805,6 +830,7 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
   const seasonIndex = save.clock.seasonIndex;
   save = { ...save, history: [...save.history, seasonLineOf(save)], report: null, live: null };
   const line = save.history[save.history.length - 1];
+  save = seasonHonors(save, line);
   save = pushNews(save, "seasonDone", { season: seasonIndex + 1, series: line.series, avg: line.avgRating === null ? "-" : line.avgRating.toFixed(1) });
   // A deal that ends with this season: renewed, or he walks into free agency.
   if (save.contract && save.contract.endSeason <= seasonIndex) {
@@ -854,6 +880,21 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
   };
   if (save.stage === "org" && save.contract && seated) save = seatOrgOnHost(syncPro(save));
   return save.stage === "retired" ? syncPro(save) : afterArrival(syncPro(save), []);
+}
+
+/** The gala of the season and the nickname: his honours, the news, the facts a season adds. */
+function seasonHonors(save: ProSave, line: ProSeasonLine): ProSave {
+  const teamRef = save.orgShell || save.stage === "amateur" ? "user" : (save.contract?.orgRef ?? null);
+  const gala = seasonGalaOf(save, teamRef);
+  let out: ProSave = { ...save, honors: [...(save.honors as ProHonor[]), ...gala.honors] };
+  for (const h of gala.honors) out = pushNews(out, h.place === "winner" ? "galaWon" : "galaNominee", { kind: h.kind, scope: h.scope, year: seasonYear(h.seasonIndex) });
+  const facts = { ...(out.careerFacts ?? {}) };
+  if (line.avgRating !== null && line.avgRating >= 7 && line.series >= 10) facts.steadySeasons = (facts.steadySeasons ?? 0) + 1;
+  if (out.contract) facts.seasonsAtOrg = Math.max(facts.seasonsAtOrg ?? 0, out.clock.seasonIndex - out.contract.signedSeason + 1);
+  out = { ...out, careerFacts: facts };
+  const nick = nicknameAfter(out);
+  if (nick && nick !== out.player.nickname) out = pushNews({ ...out, player: { ...out.player, nickname: nick } }, "nicknameEarned", { id: nick });
+  return out;
 }
 
 /** The season's line for the record: team, how he was used, games, average rating, results. */
@@ -917,7 +958,13 @@ export function keepPlayingFlow(save: ProSave): ProSave {
 /** The card of the career (the card page's payload): the orgs he signed for, his titles, his best season rating. */
 export function proCardOf(save: ProSave): ProCard {
   const best = save.history.reduce((m, h) => Math.max(m, h.avgRating ?? 0), 0);
-  const card = cardFromSave(save, { orgs: save.careerOrgs ?? [], titles: save.careerTitles ?? [], bestRating: best, seasons: Math.max(1, save.history.length) });
+  const card = cardFromSave(save, {
+    orgs: save.careerOrgs ?? [],
+    titles: save.careerTitles ?? [],
+    awards: awardLinesOf(save.honors as ProHonor[]),
+    bestRating: best,
+    seasons: Math.max(1, save.history.length),
+  });
   // The payload carries the peak to one decimal: the card is that card, so it round-trips.
   return { ...card, peak: Math.round(card.peak * 10) / 10 };
 }
@@ -1022,6 +1069,7 @@ function signFor(save: ProSave, offer: ProOffer): ProSave {
     },
     coachTrust: CAREER_PRO_ORG.trustStart + (offer.role === "starter" ? CAREER_PRO_ORG.trustPromised : 0),
     careerOrgs: (out.careerOrgs ?? []).includes(offer.name) ? out.careerOrgs : [...(out.careerOrgs ?? []), offer.name],
+    careerFacts: ageOf(out.player.birthYear, out.clock.seasonIndex) <= 15 ? { ...(out.careerFacts ?? {}), prodigy: 1 } : out.careerFacts,
   };
   out = pushNews(out, fromOrg ? "transferred" : "signed", {
     org: offer.name,

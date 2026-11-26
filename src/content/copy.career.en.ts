@@ -4092,6 +4092,7 @@ export const CAREER_EN = {
       series: (n: number, won: number, avg: string) => `${n} series, ${won} won, average ${avg}`,
     },
     news: {
+      nicknameEarned: (p: Record<string, string | number>) => `The scene has a name for you now: ${p.name}.`,
       orgLeftScene: (p: Record<string, string | number>) => `${p.org} is not in the scene this season, so your contract ends with it. You are a free agent, and orgs will call in this window.`,
       retiredAge: (p: Record<string, string | number>) => `At ${p.age}, the time has come: you retire. Your card is ready.`,
       retireOffered: () => `A season without a contract. You can retire now with your card, or keep going.`,

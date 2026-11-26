@@ -4064,6 +4064,7 @@ export const CAREER_PT: CareerCopy = {
       series: (n: number, won: number, avg: string) => `${n} séries, ${won} vencidas, média ${avg}`,
     },
     news: {
+      nicknameEarned: (p: Record<string, string | number>) => `A cena agora tem um apelido para você: ${p.name}.`,
       orgLeftScene: (p: Record<string, string | number>) => `A ${p.org} não está na cena nesta temporada, e seu contrato acaba com ela. Você é agente livre, e orgs vão chamar nesta janela.`,
       retiredAge: (p: Record<string, string | number>) => `Aos ${p.age} anos, chegou a hora: você se aposenta. Seu cartão está pronto.`,
       retireOffered: () => `Uma temporada sem contrato. Você pode se aposentar agora com seu cartão, ou seguir em frente.`,

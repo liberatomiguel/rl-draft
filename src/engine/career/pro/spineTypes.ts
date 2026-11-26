@@ -162,7 +162,9 @@ export interface ProSpineFields {
   matchLog?: ProMatchLogEntry[];
   /** The season's overall at its first day (the history line reads it). */
   seasonStartOverall?: number;
-  seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[]; games?: number; benched?: number; titles?: string[] };
+  seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[]; games?: number; benched?: number; titles?: string[]; mvps?: number };
+  /** Round 2: career totals the scene nicknames read (nickname.ts facts). */
+  careerFacts?: Partial<Record<string, number>>;
   /** Round 2 (R-PROSPINE-6): the org on the host seat while he is under contract (proSeat.ts). */
   orgShell?: { org: WorldOrgState; liftedOverall: Record<string, number> } | null;
   /** Round 2: the rounds of the current event already booked (XP and counts never twice). */
