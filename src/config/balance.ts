@@ -1665,7 +1665,7 @@ export const CAREER_PRO = {
   attrMax: 99,
   attrMin: 30,
   /** The hidden talent (×XP): the mean of two seeded uniforms over this range. */
-  talentRange: [0.85, 1.15] as const,
+  talentRange: [0.78, 1.25] as const,
   /** The age of the peak (whole years, seeded), then the decline (slice 6). */
   peakAgeRange: [20, 24] as const,
   declineRateWeights: { slow: 0.3, normal: 0.5, fast: 0.2 } as Record<string, number>,
@@ -1674,21 +1674,21 @@ export const CAREER_PRO = {
      * Attribute points one focused training block adds at gap factor 1, age
      * ≤ 17, talent 1, no coach, full energy. A week has three blocks.
      */
-    perBlock: 0.7,
+    perBlock: 0.5,
     /** "Balanced" spreads a block over the six attributes at this total. */
     balancedShare: 0.9,
     /** Age multiplier: the first band whose maxAge ≥ age; past the bands, `beforePeak` until the peak age, `afterPeak` after it. */
     ageBands: [
       { maxAge: 17, mult: 1 },
-      { maxAge: 20, mult: 0.85 },
-      { maxAge: 23, mult: 0.6 },
+      { maxAge: 19, mult: 0.3 },
+      { maxAge: 21, mult: 0.1 },
     ],
-    beforePeak: 0.35,
-    afterPeak: 0.1,
+    beforePeak: 0.05,
+    afterPeak: 0.03,
     /** Distance to the ceiling: ((attrMax − attr) / gapRef) ^ gapExponent, never under gapFloor (99 stays reachable). */
     gapRef: 49,
-    gapExponent: 0.7,
-    gapFloor: 0.12,
+    gapExponent: 0.92,
+    gapFloor: 0.03,
     /** A coach of overall ≥ coachFull adds coachMax (linear from coachZero). Amateur sides have none. */
     coachZero: 60,
     coachFull: 95,
@@ -1873,7 +1873,7 @@ export const CAREER_PRO_WEEK = {
    * 9 rating against a stronger team is worth roughly two training blocks).
    */
   matchXp: {
-    base: 0.5,
+    base: 1.0,
     tier: { t3: 0.5, t2: 0.7, qualifier: 0.8, regional: 1.2, major: 1.7, worlds: 2.2 } as Record<string, number>,
     tierDefault: 0.8,
     /** 1 at a 6 rating, ±ratingPerPoint per point, bounded. */
@@ -1905,9 +1905,9 @@ export const CAREER_PRO_RANKED = {
   skillTable: [
     [40, 500],
     [50, 1000],
-    [54, 1500],
-    [57, 1950],
-    [60, 2400],
+    [53, 1500],
+    [55, 2000],
+    [57, 2400],
     [66, 2800],
     [99, 3100],
   ] as readonly (readonly [number, number])[],
@@ -2027,6 +2027,44 @@ export const CAREER_PRO_AGING = {
   /** The card: caps on the lists it carries, so a payload stays small. */
   card: { maxList: 10, maxText: 40, legendsEachSide: 2 },
 } as const;
+
+/**
+ * v2.2 Pro slice 7 (PRO-SPEC §8): the end-of-season gala and the scene
+ * nicknames. Scores only rank candidates; an award needs the data that
+ * supports it (a floor on games, a gain, a rating).
+ */
+export const CAREER_PRO_GALA = {
+  /** Players named per award (the winner plus the nominees behind him). */
+  nominees: 3,
+  /** The team of the season has this many players (a 3v3 side). */
+  teamSize: 3,
+  /** MVP score = overall × overallW + team result (0-1) × resultW + (average rating − 6) × ratingW when a box score exists. */
+  mvp: { overallW: 1, resultW: 25, ratingW: 3, minOverall: 70 },
+  /** Breakout: age at most maxAge in at most maxSeasonsPro seasons, with an overall gain of at least minGain; score = gain × gainW + overall × overallW + result × resultW. */
+  breakout: { maxAge: 20, maxSeasonsPro: 2, minGain: 2, gainW: 3, overallW: 0.3, resultW: 8 },
+  /** Most decisive needs a box-score line: at least minGames, and (series MVPs + deciding moments) per game of at least minShare. */
+  decisive: { minGames: 10, minShare: 0.3, mvpW: 10, momentW: 10, ratingW: 2 },
+} as const;
+
+/**
+ * Nickname milestones (verifiable totals the save keeps). At most one is
+ * active; the first earned in this order is chosen, and an earned one is kept
+ * until a better-ranked one is earned.
+ */
+export const CAREER_PRO_NICKNAMES = [
+  { id: "theWall", fact: "saves", min: 400 },
+  { id: "mrLan", fact: "lanTitles", min: 2 },
+  { id: "theCloser", fact: "decidingWins", min: 5 },
+  { id: "iceCold", fact: "clutchGames", min: 15 },
+  { id: "theChamp", fact: "worldsTitles", min: 1 },
+  { id: "oneClub", fact: "seasonsAtOrg", min: 5 },
+  { id: "theMaestro", fact: "assists", min: 300 },
+  { id: "theFinisher", fact: "goals", min: 400 },
+  { id: "theBulldozer", fact: "demos", min: 250 },
+  { id: "comebackKid", fact: "comebackWins", min: 4 },
+  { id: "mrSteady", fact: "steadySeasons", min: 3 },
+  { id: "theProdigy", fact: "prodigy", min: 1 },
+] as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {

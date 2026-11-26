@@ -149,17 +149,17 @@ describe("Pro: training growth", () => {
     expect(s.growthLog.length).toBe(CAREER_PRO.growthLogCap);
   });
 
-  // The slice-1 share of PRO-SPEC §4.1's targets: training alone, before match
-  // XP (slice 3) and the week's other sources. The slice 7 battery retunes.
-  it("training alone: a median talent reaches the high 80s by his peak, a top one with a good coach the low 90s", () => {
+  // Training alone, before match XP and the week's other sources (round 2 recalibration, 26/11):
+  // the careers reach their peak with the official series' XP (lifecycle.test.ts holds the spec
+  // bands), so training on its own is a floor the series build on, not the whole climb.
+  it("training alone: a median talent reaches the low 70s by 22, a top one with a good coach is clearly above", () => {
     const median = project({ ...base, talent: 1, peakAge: 22 }, 22, null);
-    const top = project({ ...base, talent: 1.15, peakAge: 22 }, 22, 90);
-    const low = project({ ...base, talent: 0.85, peakAge: 22 }, 22, null);
-    // Measured 24/11: low 84.2, median 87.7, top with a coach of 90 93.4.
-    expect(median).toBeGreaterThanOrEqual(84);
-    expect(median).toBeLessThanOrEqual(90);
-    expect(top).toBeGreaterThanOrEqual(91);
-    expect(top).toBeLessThanOrEqual(97);
+    const top = project({ ...base, talent: 1.2, peakAge: 22 }, 22, 90);
+    const low = project({ ...base, talent: 0.8, peakAge: 22 }, 22, null);
+    expect(median).toBeGreaterThanOrEqual(66);
+    expect(median).toBeLessThanOrEqual(78);
+    expect(top).toBeGreaterThan(median + 3);
+    expect(top).toBeLessThanOrEqual(90);
     expect(low).toBeLessThan(median);
   });
 });

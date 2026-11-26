@@ -1,37 +1,34 @@
 # PROENGINE handoff (branch v22/pro-engine)
 
-## What shipped
-- **Slice 2 (week + ranked)**: `pro/week.ts` (applyBlock, applyWeekPlan, closeWeek, coachPlanFor, repeatPlanFor, previewBlock/previewWeek), `pro/ranked.ts` (playRankedSession, rankOf, cupsUnlocked, skillMmrFor, winChance), `pro/form.ts` (confidence from the last 5 ratings), `growth.applyMatchXp`, `pro/weekFlow.ts` (applyWeekToSave, nextWeekClock, rolloverProPlayer, playProWeek), `proStore.playWeek`. Screens: `ProWeekScreen` (route `/career/pro/week`), `ProRankedPanel`, `ProGrowthLog`; copy group `proWeek`.
-- **Slice 5 (moments)**: `pro/mechanics.ts`, `pro/moments.ts` (buildDecision, resolveDecision, finalProRating), presentational `ProDecisionCard`; copy `proMoments`.
-- **Slice 6 (end + card)**: `pro/aging.ts`, `pro/retire.ts`, `pro/card.ts`, page `/career/pro/card#<payload>` (`ProCardScreen`); copy `proCard`.
-- Optional `ProPlayer` fields (slice-1 saves load): lastPlan, rankedLog, rankedSessions, recentRatings, burnout, mechanicsBlocks, chemistry, peakOverall, seasonsWithoutContract. `ProGrowthEntry.source` gained ranked/scrim, plus `reason`.
+## Round 1 (merged, 71ea066)
+- Slice 2: `pro/week.ts`, `ranked.ts`, `form.ts`, `weekFlow.ts`, `growth.applyMatchXp`, `proStore.playWeek`; screens `ProWeekScreen` (`/career/pro/week`), `ProRankedPanel`, `ProGrowthLog`; copy `proWeek`.
+- Slice 5: `mechanics.ts`, `moments.ts` (bounds 0.5 / 1.0 / 1.5, instinct EV zero, hint words), `ProDecisionCard`; copy `proMoments`.
+- Slice 6: `aging.ts`, `retire.ts` (legend bridge), `card.ts`, page `/career/pro/card#<payload>`; copy `proCard`.
+- Spine hooks: `applyWeekToSave`, `rolloverProPlayer` (aging, retire by age, `check.offer`), `applyMatchXp`, `buildDecision`/`resolveDecision`/`finalProRating`, `cardFromSave`. `stage "freeAgent"` counts seasons without a contract.
 
-## For the spine
-Call `applyWeekToSave(save, plan, coachOverall)` per week, `rolloverProPlayer(save)` at a season rollover (aging, retirement by age, contract-less count, returns `check.offer`), `applyMatchXp` per official game, `buildDecision`/`resolveDecision` + `finalProRating` per game with `EMPTY_LEDGER` per series. `playProWeek` is only the store's stand-in. `cardFromSave(save, {orgs, titles, awards, bestRating, nickname})`: the world's honours are yours to hand over. `stage "freeAgent"` is what counts seasons without a contract.
+## Round 2
+**Decision (a)**: a year without a contract stays an OFFER.
 
-## Decisions
-- R-PROENGINE-1: burnout can only roll in a week that closes under 30 with the warning already up from an earlier week; warning shows when a week closes under 45.
-- R-PROENGINE-2: a week gets +15 energy at close; train/ranked/rest holds the line, three trainings drain.
-- R-PROENGINE-3: ranked = 6 games of ±10 MMR decided by the gap between the MMR his (form- and energy-adjusted) overall deserves and his MMR; Grand Champion sits at overall ~60.
-- R-PROENGINE-5: "a year without a contract" OFFERS retirement, never forces it; age forces it at 32.
-- R-PROENGINE-6: instinct pays zero expected value by scaling the hit and the miss (p·x = (1-p)·y), inside the bounds.
-- R-PROENGINE-7: signature mechanics need blocks AND Mechanics, in order, never lost.
-- R-PROENGINE-8: decline starts the season after a plateau year; experience holds 3 more years, clutch 2.
-- R-PROENGINE-9: the card carries no legends; the page computes the all-time ranking (best card overall per real player) from the dataset on load.
+**Slice 7 pure parts**
+- `gala.ts`: `galaAwards`, `galaForSeason(season, region, candidates)`, `honorsOf(awards, id, season)`. Awards: MVP, breakout, team of the season (3), most decisive. The spine supplies one `GalaCandidate` per player (overall, overall at season start, age, seasons as pro, team result 0-1, optional box-score `line`). Rules: MVP needs overall 70+; breakout needs age 20 or less, 2 seasons or less, +2 overall; most decisive needs a line with 10+ games and (series MVPs + deciding moments) per game of 0.3+, so with no line nobody gets it. The Pro (`pro:self`) is a normal candidate; `honorsOf` gives winner or nominee.
+- `nickname.ts`: 12 nicknames from totals the save must keep (`saves`, `lanTitles`, `decidingWins`, `clutchGames`, `worldsTitles`, `seasonsAtOrg`, `assists`, `goals`, `demos`, `comebackWins`, `steadySeasons`, `prodigy`). `activeNickname(facts, current)` returns one; a worn one is kept unless a better-ranked one is earned. Store the id in `ProPlayer.nickname`; `cardFromSave` reads it.
+- The card carries language-free keys (a nickname id, `mvp.world.2026` via `awardKey`); the card page translates them EN/PT. Copy: `proCard.gala`, `.nicknames`, `.nicknameWhy`.
 
-## Tunables (balance.ts, new blocks only)
-`CAREER_PRO_WEEK` (costs 20/15/15/10, rest +35, close +15, lowEnergy 30, warnBelow 45, burnout 0.3 + 0.02/pt for 1-2 weeks, confidence window 5, matchXp), `CAREER_PRO_RANKED` (6 games, step 10, spread 200, skillTable, tiers), `CAREER_PRO_MOMENTS` (mechanics table, bounds 0.5/1.0/1.5, chance and option tables), `CAREER_PRO_AGING` (grace 1, 0.5/0.8/1.1 + 12% a year, range 0.5-1.5, retire table, forced 32). No existing value changed; BALANCE_VERSION untouched.
+**Growth recalibration** (permission (b)). Changed values, before to after:
+`CAREER_PRO.growth.perBlock` 0.7 to 0.5; `ageBands` {17: 1, 20: 0.85, 23: 0.6} to {17: 1, 19: 0.3, 21: 0.1}; `beforePeak` 0.35 to 0.05; `afterPeak` 0.1 to 0.03; `gapExponent` 0.7 to 0.92; `gapFloor` 0.12 to 0.03; `talentRange` [0.85, 1.15] to [0.78, 1.25]; `CAREER_PRO_WEEK.matchXp.base` 0.5 to 1.0; `CAREER_PRO_RANKED.skillTable` rows 54/57/60/66 (1500/1950/2400/2800) to 53/55/57/66 (1500/2000/2400/2800). Unchanged: `gapRef`, coach values, scrim and ranked shares.
 
-## Measured
-- Sensible Pro (coach's plan, 8 seeds): Grand Champion in 53-71 weeks, median 65 (age ~15); careless (content + ranked, no training) never in 400.
-- Moments Monte-Carlo (thousands of seeds): bounds hold; instinct mean team |0.012|, rating |0.04|.
-- Lifecycle bot (12 seasons, 5 seeds, generous: team + coach 85 + a regional series a week from GC): high talent managed 99.0 (target 96-99), average managed 98.9 (target 90-93), average careless 55 (target 82-86).
+**Bot** (`lifecycleBot.ts`): regional weeks come from the real calendar for his region (9 a season), 3 series of 3 games each as an org, 2 cup series a week outside windows as an amateur, no majors. Amateur side from week 40 after Grand Champion, org at overall 72+ and age 15+. Careless = on a team, plays its series and scrims, own blocks on content, no rest.
 
-## The calibration gap (slice 1 growth, not retuned)
-Growth is too fast: `CAREER_PRO.growth.perBlock` 0.7 drives an average managed Pro to 99. perBlock 0.3 gives high 94.5 / average 89.9, but then Grand Champion takes ~136 weeks, so `CAREER_PRO_RANKED.skillTable` must be lowered with it. The careless profile cannot reach 82-86 because content and an unplayed team give no attribute XP: the lever is a small passive weekly gain, or a share of XP from content and from ranked.
+| Profile (10 seeds) | Peak median [range] | Target |
+|---|---|---|
+| High talent (1.2), managed | 96.5 [94.6-97.6] | 96-99 |
+| Average, managed | 92.8 [91.2-94.4] | 90-93 |
+| Average, careless | 85.2 [83.5-86.3] | 82-86 |
+
+Grand Champion 65 weeks [57-71]; overall at 16 80.4 [79.1-82.1]; org signing at week 102 [94-108]; peak seen at age 22 [21-24]. Coach 85 vs none moves the average peak by only 0.4 (92.8 vs 92.4); `coachMax` 0.2 is the lever if coaches should matter more. Bands are tests in `lifecycle.test.ts`; `pro.test.ts` "training alone" was rewritten (training alone is now a floor, about 72 for a median Pro, the series carry the rest).
 
 ## Not verified
-Screens and the canvas image never ran in a browser (no dev server); share sheet untested; PT copy not read by a native speaker; the soft-lock probe was not run (no manager flow touched); nothing integrated with the spine's flow yet.
+Screens, canvas image and share sheet never ran in a browser. Gala and nickname inputs are untested against real world data (the spine must supply them). Calibration is on the pure modules with a bot, not the real flow. Soft-lock probe not run (no manager flow touched). `BALANCE_VERSION` untouched, so `balanceVersion.test.ts` still fails by design.
 
 ## For Miguel
-perBlock and the careless floor (above); whether the end-by-contract stays an offer; the card's honours depend on the gala and nicknames (slice 7).
+Careless tops out near 85 only because match XP is generous; if series feel too rewarding, lower `matchXp.base` and raise `perBlock`. Nickname names and thresholds are a first pass.
