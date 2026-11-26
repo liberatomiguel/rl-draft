@@ -12,7 +12,7 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.2 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
+- **Staging = 2.2.0-rc.3 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
   the big update, each part behind its own staging-only flag: the Pro player
   career to retirement (`proCareer`), a start at a real organisation
   (`realOrgStart`), the board with confidence, dismissal and job offers
