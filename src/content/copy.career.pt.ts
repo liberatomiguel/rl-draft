@@ -4027,6 +4027,13 @@ export const CAREER_PT: CareerCopy = {
     },
     confidence: "Confiança da diretoria",
     confidenceOf: (n: number) => `${n} / 100`,
+    verdict: {
+      title: "O veredito da diretoria",
+      met: (goal: string) => `Objetivo cumprido: ${goal}.`,
+      missed: (goal: string) => `Objetivo perdido: ${goal}.`,
+      confidence: (n: number) => `A confiança da diretoria termina a temporada em ${n} / 100.`,
+      open: "Abrir a diretoria",
+    },
     band: (n: number): string => (n >= 80 ? "Forte" : n >= 40 ? "Estável" : n >= 25 ? "Sob pressão" : "Crítica"),
     lines: (warn: number, ultimatum: number) => `Abaixo de ${warn} a diretoria avisa. Abaixo de ${ultimatum}, depois de um aviso, ela dá um ultimato.`,
     log: "Por que mudou",

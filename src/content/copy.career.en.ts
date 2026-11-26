@@ -4056,6 +4056,13 @@ export const CAREER_EN = {
     },
     confidence: "Board confidence",
     confidenceOf: (n: number) => `${n} / 100`,
+    verdict: {
+      title: "The board's verdict",
+      met: (goal: string) => `Objective met: ${goal}.`,
+      missed: (goal: string) => `Objective missed: ${goal}.`,
+      confidence: (n: number) => `Board confidence ends the season at ${n} / 100.`,
+      open: "Open the board",
+    },
     band: (n: number): string => (n >= 80 ? "Strong" : n >= 40 ? "Steady" : n >= 25 ? "Under pressure" : "Critical"),
     lines: (warn: number, ultimatum: number) => `Below ${warn} the board warns you. Below ${ultimatum}, after a warning, it sets an ultimatum.`,
     log: "Why it moved",
