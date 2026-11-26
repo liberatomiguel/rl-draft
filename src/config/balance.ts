@@ -1708,6 +1708,217 @@ export const CAREER_PRO = {
   nameMax: 16,
 } as const;
 
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §4.3, §5): the week. Three blocks (Mon-Tue,
+ * Wed-Thu, Fri), energy, burnout, confidence. Starting points for the slice 7
+ * battery; each line says what it moves.
+ */
+export const CAREER_PRO_WEEK = {
+  /** Days from the week's first day to each block (Mon, Wed, Fri). Stamps the growth log. */
+  blockDays: [0, 2, 4] as const,
+  energyMax: 100,
+  /** Energy an activity costs. Moves how many blocks a week can train before the player is tired. */
+  cost: { train: 20, ranked: 15, scrim: 15, content: 10 } as const,
+  /** Energy a rest block gives back. Two trainings and one rest (−40 +35) nearly hold the line. */
+  restGain: 35,
+  /** Energy back when the week closes (the weekend's sleep). With the rest block it makes T-T-R a slow gain, T-T-T a fast drain. */
+  weekEndRecovery: 15,
+  /** Under this a block is a tired block: training at its rate (growth.energyFactorFor) and ranked skill drop; the burnout window opens. */
+  lowEnergy: 30,
+  /** A week that closes under this shows the burnout warning (a week before burnout can happen). */
+  warnBelow: 45,
+  /** The warning clears once the week closes at or above this. */
+  warnClear: 60,
+  /** At a week's close under lowEnergy, with the warning already shown a week earlier: chance = base + (lowEnergy − energy) × perPoint, capped. */
+  burnoutBase: 0.3,
+  burnoutPerPoint: 0.02,
+  burnoutMax: 0.85,
+  /** Weeks out (one or two, seeded) and the energy he comes back with. A burnout week plays as rest and trains nothing. */
+  burnoutWeeks: [1, 2] as const,
+  burnoutReturnEnergy: 60,
+  /** Ranked gives this share of a balanced training block (a little XP); a scrim, this share of a block on experience. */
+  rankedXpShare: 0.25,
+  scrimXpShare: 0.5,
+  /** Scrim chemistry with the team, per scrim (0-chemistryMax). Slices 3-4 feed it to the lineup. */
+  scrimChemistry: 6,
+  chemistryMax: 100,
+  /**
+   * Content (live, video): money and fame per block. Fame grows the next
+   * block's take by famePerFame (a bigger audience pays more), and the
+   * fameCap keeps the loop from running away.
+   */
+  content: { money: 150, moneyPerFame: 0.02, fame: 60, famePerFame: 0.04, fameCap: 250_000 },
+  /** Confidence: the mean of the last `window` match ratings, centred on `center`, one point per `perPoint` rating points, ±2. */
+  confidence: { window: 5, center: 6, perPoint: 1, max: 2 },
+  /** Confidence adds this much to the Pro's own match rating, per point (±0.3 at the extremes). */
+  ratingBonusPerConfidence: 0.15,
+  /** Ranked skill lost per energy point under lowEnergy (a tired player queues worse). */
+  tiredFormPerPoint: 0.1,
+  /** The coach's plan: rests first when the week starts under this, and rests the block before a LAN. */
+  coachRestBelow: 45,
+  lanRestDays: 7,
+  /**
+   * Match XP (growth.applyMatchXp): points per game = base × tier × rating ×
+   * opponent, spread over the six attributes by weight. Moves how much an
+   * official series is worth beside a week of training (a Worlds game with a
+   * 9 rating against a stronger team is worth roughly two training blocks).
+   */
+  matchXp: {
+    base: 0.5,
+    tier: { t3: 0.5, t2: 0.7, qualifier: 0.8, regional: 1.2, major: 1.7, worlds: 2.2 } as Record<string, number>,
+    tierDefault: 0.8,
+    /** 1 at a 6 rating, ±ratingPerPoint per point, bounded. */
+    ratingCenter: 6,
+    ratingPerPoint: 0.15,
+    ratingBounds: [0.4, 1.6] as const,
+    /** Playing up: +1 per opponentPerPoint overall points of the opponent above his own, bounded. */
+    opponentPerPoint: 40,
+    opponentBounds: [0.6, 1.6] as const,
+    /** Experience grows most from matches; the rest evenly. */
+    weights: { offense: 1, defense: 1, mechanics: 1, consistency: 1, experience: 2, clutch: 1 } as Record<string, number>,
+  },
+} as const;
+
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §7.1): the ranked ladder. A player has a MMR; his
+ * game is decided by the gap between the MMR his overall deserves
+ * (`skillTable`) and the MMR he holds. Moves how long Bronze to Grand
+ * Champion takes (calibrated with the bot in pro.test.ts).
+ */
+export const CAREER_PRO_RANKED = {
+  /** Games in one ranked block. */
+  gamesPerSession: 6,
+  /** MMR per game won or lost (no streak bonus: the table below is the pace). */
+  step: 10,
+  /** Logistic scale of a game: 200 MMR below the skill MMR = ~73% to win. Smaller = a steeper, more deterministic ladder. */
+  spread: 200,
+  /** The MMR a given overall deserves: linear between rows, flat beyond. A Pro starts at ~50 overall = ~1000 MMR (Silver). */
+  skillTable: [
+    [40, 500],
+    [50, 1000],
+    [54, 1500],
+    [57, 1950],
+    [60, 2400],
+    [66, 2800],
+    [99, 3100],
+  ] as readonly (readonly [number, number])[],
+  /** Confidence adds this many overall points of effective skill per point (a player in form queues better). */
+  confidenceSkill: 0.8,
+  mmrMin: 0,
+  mmrMax: 3200,
+  /** Rank thresholds in MMR; the tier splits into `divisions` (I to III) except the last. */
+  tiers: [
+    { id: "bronze", min: 0 },
+    { id: "silver", min: 850 },
+    { id: "gold", min: 1150 },
+    { id: "platinum", min: 1450 },
+    { id: "diamond", min: 1750 },
+    { id: "champion", min: 2050 },
+    { id: "grand-champion", min: 2350 },
+    { id: "supersonic-legend", min: 2750 },
+  ] as readonly { id: string; min: number }[],
+  divisions: 3,
+  /** Grand Champion (and above) opens the community cup invitations (PRO-SPEC §7.1). */
+  cupsRankId: "grand-champion",
+  /** Sessions kept for the panel. */
+  logCap: 8,
+} as const;
+
+/**
+ * v2.2 Pro slice 5 (PRO-SPEC §4.2, §6): signature mechanics and the one
+ * decision per game. The bounds are the spec's table; the rest says what each
+ * number moves.
+ */
+export const CAREER_PRO_MOMENTS = {
+  /**
+   * Signature mechanics, unlocked in this order by mechanics training: each
+   * needs `blocks` mechanics blocks done and the Mechanics attribute at
+   * `mechanics`. Moves how soon the extra option shows in a match.
+   */
+  mechanics: [
+    { id: "wavedash", mechanics: 55, blocks: 4 },
+    { id: "speedflip", mechanics: 60, blocks: 10 },
+    { id: "airDribble", mechanics: 66, blocks: 18 },
+    { id: "ceilingShot", mechanics: 72, blocks: 28 },
+    { id: "doubleTap", mechanics: 78, blocks: 40 },
+    { id: "mustyFlick", mechanics: 84, blocks: 54 },
+    { id: "flipReset", mechanics: 90, blocks: 70 },
+  ] as readonly { id: string; mechanics: number; blocks: number }[],
+  /** The spec's limits: a decision moves the team's rating in that game by at most teamPerGame, all of a series' decisions by at most teamPerSeries, and the Pro's own rating by at most ratingPerGame. */
+  bounds: { teamPerGame: 0.5, teamPerSeries: 1.0, ratingPerGame: 1.5 },
+  /**
+   * The chance a call comes off: base of the option + (attribute − attrCenter)
+   * × perAttr + confidence × perConfidence − tiredness, kept in floor..ceil.
+   * Moves how much the Pro's attribute decides the call.
+   */
+  chance: { attrCenter: 70, perAttr: 0.008, perConfidence: 0.04, tiredBelow: 50, perTiredPoint: 0.002, floor: 0.12, ceil: 0.9 },
+  /**
+   * The options. `base` = chance at the centre attribute; `up` / `down` = the
+   * team rating (per game) and own rating a success adds and a miss takes.
+   * The safe call has low variance and about zero EV; the bold one pays when
+   * the attribute is high and costs when it is not; a mechanic's call pays most
+   * and its base rises with how advanced the mechanic is (`perTier` per step).
+   */
+  options: {
+    safe: { base: 0.62, up: { team: 0.12, rating: 0.4 }, down: { team: 0.18, rating: 0.5 } },
+    bold: { base: 0.42, up: { team: 0.5, rating: 1.3 }, down: { team: 0.25, rating: 0.9 } },
+    mechanic: { base: 0.34, perTier: 0.02, up: { team: 0.5, rating: 1.5 }, down: { team: 0.2, rating: 0.8 } },
+  },
+  /** Hint words from the chance: under risky = "risky", under uncertain = "uncertain", under likely = "likely", else "mastered". */
+  hints: { risky: 0.35, uncertain: 0.55, likely: 0.75 },
+  /** "On instinct" picks this kind of call by style; the rest ("allround") picks one of the available at random. */
+  instinct: {
+    mechanical: "mechanic",
+    anchor: "safe",
+    playmaker: "safe",
+    icecold: "bold",
+    veteranmind: "safe",
+    allround: "any",
+  } as Record<string, string>,
+} as const;
+
+/**
+ * v2.2 Pro slice 6 (PRO-SPEC §4.1, §7.6, §9): the decline, the end and the
+ * card. Nobody falls off a cliff: a season costs 0.5 to 1.5 overall at most.
+ */
+export const CAREER_PRO_AGING = {
+  /** Seasons after his peak age before the decline starts (the plateau). */
+  graceYears: 1,
+  /** Overall points lost in the first season of decline, by his hidden decline rate. */
+  declineBase: { slow: 0.5, normal: 0.8, fast: 1.1 } as Record<string, number>,
+  /** The loss grows by this share of the base for each further season. */
+  perYear: 0.12,
+  /** The spec's range for one season's overall loss, and the seeded wobble around the curve (±). */
+  min: 0.5,
+  max: 1.5,
+  jitter: 0.08,
+  /** Who carries the loss: the physical attributes more, the read of the game least. */
+  weights: { mechanics: 1.3, offense: 1.1, defense: 1.0, consistency: 1.0, clutch: 0.35, experience: 0.15 } as Record<string, number>,
+  /** Extra seasons before the attribute starts to fall: experience and clutch hold longer. */
+  holdYears: { experience: 3, clutch: 2 } as Record<string, number>,
+  /** No single attribute loses more than this in a season. */
+  maxPerStat: 3,
+  /** The copy key that says why each attribute fell. */
+  reasons: {
+    mechanics: "reflexes",
+    offense: "pace",
+    defense: "reactions",
+    consistency: "stamina",
+    clutch: "nerve",
+    experience: "reads",
+  } as Record<string, string>,
+  /** Retirement: the yearly chance by age (the rest 0), and the age after which it is certain. */
+  retireChance: { 28: 0.1, 29: 0.2, 30: 0.35, 31: 0.55 } as Record<number, number>,
+  retireForcedAge: 32,
+  /** By choice from this age on (so a misclick at 14 cannot end a career). */
+  choiceMinAge: 18,
+  /** A year without a contract OFFERS the end (never forces it) from this age. */
+  noContractSeasons: 1,
+  noContractMinAge: 20,
+  /** The card: caps on the lists it carries, so a payload stays small. */
+  card: { maxList: 10, maxText: 40, legendsEachSide: 2 },
+} as const;
+
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
   attrOffsetCap: 6,

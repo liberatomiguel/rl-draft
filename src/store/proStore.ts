@@ -18,7 +18,9 @@ import { persist } from "zustand/middleware";
 import { CAREER_PRO } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { createProSave } from "@/engine/career/pro/create";
-import type { CreateProInput, ProSave } from "@/engine/career/pro/types";
+import type { WeekResult } from "@/engine/career/pro/week";
+import { playProWeek } from "@/engine/career/pro/weekFlow";
+import type { CreateProInput, ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { anonymousId } from "@/lib/analytics";
 import { randomSeed } from "@/lib/rng";
 import { skipUnchangedWrites } from "./careerPersist";
@@ -33,6 +35,10 @@ export interface ProStoreState {
   createPro: (slot: number, input: CreateProInput, customSeed?: number) => void;
   selectSlot: (slot: number) => void;
   deleteSlot: (slot: number) => void;
+  /** Play a week plan on the active save (one week of the clock, for now). */
+  playWeek: (plan: ProWeekPlan) => void;
+  /** What the last played week did, for the planner to show. Not persisted. */
+  lastWeek: WeekResult | null;
 }
 
 function emptySlots(): (ProSave | null)[] {
@@ -61,6 +67,17 @@ export const useProStore = create<ProStoreState>()(
     (set, get) => ({
       slots: emptySlots(),
       activeSlot: null,
+      lastWeek: null,
+
+      playWeek: (plan) => {
+        const { slots, activeSlot } = get();
+        const save = activeProSave({ slots, activeSlot });
+        if (activeSlot === null || !save || save.stage === "retired") return;
+        const played = playProWeek(save, plan);
+        const next = [...slots];
+        next[activeSlot] = { ...played.save, lastPlayedAt: Math.max(Date.now(), (save.lastPlayedAt ?? 0) + 1) };
+        set({ slots: next, lastWeek: played.result });
+      },
 
       createPro: (slot, input, customSeed) => {
         if (slot < 0 || slot >= CAREER_PRO.slots || get().slots[slot]) return;
