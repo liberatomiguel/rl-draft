@@ -146,6 +146,24 @@ function fit(rows: CalRow[]): { a: number; b: number; first: number } {
   return { a: r2(w[0]), b: r2(Math.max(0.2, w[1])), first: r2(w[2]) };
 }
 
+function goalRatesOf(rows: CalRow[]): Map<string, { n: number; met: number }> {
+  const m = new Map<string, { n: number; met: number }>();
+  for (const r of rows) {
+    const k = `${r.stature}|${r.diff}|${r.goal}`;
+    const t = m.get(k) ?? { n: 0, met: 0 };
+    t.n += 1;
+    t.met += r.met ? 1 : 0;
+    m.set(k, t);
+  }
+  return m;
+}
+
+function tableChance(t: Map<string, { n: number; met: number }>, r: CalRow, prior: number): number {
+  const k = Number(env.BOARD_TABLE_K ?? 8);
+  const x = t.get(`${r.stature}|${r.diff}|${r.goal}`);
+  return x ? (x.met + k * prior) / (x.n + k) : prior;
+}
+
 /** The shift-only fit (slope fixed at 1, the model's ordering kept): logit(p) = logit(model) + a + first·[first season]. */
 function fitShift(rows: CalRow[]): { a: number; b: number; first: number } {
   let a = 0;
@@ -199,6 +217,13 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         console.log(`${st}/${df} n=${xs.length} fit ${JSON.stringify(f)} | real by model band: ${line.filter(Boolean).join(", ")}`);
       }
     console.log("CALIBRATION " + JSON.stringify(out));
+    // The measured rate of each goal per cell, from the rows that name their goal: CAREER_BOARD.goalRates.
+    const rates: Record<string, Record<string, [number, number]>> = {};
+    for (const [k, t] of goalRatesOf(rows.filter((r) => r.goal))) {
+      const [st, df, goal] = k.split("|");
+      (rates[`${st}/${df}`] ??= {})[goal] = [t.n, t.met];
+    }
+    console.log("GOALRATES " + JSON.stringify(rates));
     return;
   }
   if (env.BOARD_EVAL_FROM) {
@@ -206,14 +231,18 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     const only = env.BOARD_EVAL_SEED ? `:${env.BOARD_EVAL_SEED}:` : null;
     const rows: CalRow[] = env.BOARD_EVAL_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => r.key && (!only || r.key.includes(only)));
     const table = env.BOARD_EVAL_CAL ? JSON.parse(env.BOARD_EVAL_CAL) : {};
+    // BOARD_EVAL_TABLE_FROM: the measured rate of each goal per stature × difficulty on the training rows
+    // (the evaluated seed left out), shrunk toward the fitted chance.
+    const goalTable = env.BOARD_EVAL_TABLE_FROM ? goalRatesOf(env.BOARD_EVAL_TABLE_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => r.goal && (!only || !r.key!.includes(only)))) : null;
     const groups = new Map<string, CalRow[]>();
-    for (const r of rows) groups.set(r.key!, [...(groups.get(r.key!) ?? []), r]);
+    // The key lacks the difficulty (both difficulties share region:seed:stature:season): group on both.
+    for (const r of rows) groups.set(`${r.key}:${r.diff}`, [...(groups.get(`${r.key}:${r.diff}`) ?? []), r]);
     const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number; s1n: number; s1met: number; s1stated: number }>();
     const picks: { cell: string; band: string; c: number; met: boolean }[] = [];
     for (const g of groups.values()) {
       const { stature, diff, first } = g[0];
       const cell = { stature: stature as never, difficulty: diff as CareerDifficulty, first };
-      const pool = g.map((r) => ({ r, c: calibratedChance(r.model, cell, table) }));
+      const pool = g.map((r) => ({ r, c: goalTable ? tableChance(goalTable, r, calibratedChance(r.model, cell, table)) : calibratedChance(r.model, cell, table) }));
       const near = (aim: number, f: (c: number) => boolean) => pool.filter((x) => f(x.c)).sort((x, y) => Math.abs(x.c - aim) - Math.abs(y.c - aim))[0];
       const ex = near(objectiveAimOf("expected", stature as never, diff as CareerDifficulty), () => true);
       if (!ex) continue;
@@ -309,7 +338,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       const ctx = overCtx(save);
       if (pool && pool.s === save.clock.seasonIndex) {
         const st = job.stature === "founded" && pool.stature === "owners" ? "owners" : pool.stature;
-        const key = `${job.region}:${job.seed}:${job.stature}:${save.clock.seasonIndex}`;
+        const key = `${job.region}:${job.seed}:${job.stature}:${save.clock.seasonIndex}:${job.diff}`;
         for (const g of pool.goals) cal.push({ stature: st, diff: job.diff, first: pool.first, model: g.chance, met: seasonGoalProgressOf(g, ctx).hit, key, goal: `${g.kind}:${g.count}:${g.place ?? ""}` });
       }
       const offers: Record<string, [number, boolean]> = {};

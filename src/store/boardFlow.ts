@@ -289,13 +289,17 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
     const oi = objectiveInputOf(save);
     const progress = seasonGoalProgressOf(pkg.objective, progressCtx(save));
     const now = chanceNowOf(pkg.objective, progress, oi);
-    bandNow = chanceBandOf(now);
-    season.bandNow = bandNow;
     if (progress.out && !season.outCharged) {
       season.outCharged = true;
       applyConfidence(board, B.checkpoint.outCost, "objectiveOut", when, patienceNow(save));
     } else if (!progress.out) {
-      applyConfidence(board, checkpointDelta(season.startChance, now), now >= season.startChance ? "onTrack" : "behind", when, patienceNow(save));
+      // Compared on one basis: the model's chance now against its own chance with nothing played yet.
+      const base = chanceNowOf(pkg.objective, { done: 0, target: Math.max(1, pkg.objective.count), left: 99, hit: false, out: false }, oi);
+      const shift = season.startChance - base;
+      const nowStated = Math.min(1, Math.max(0, now + shift));
+      bandNow = chanceBandOf(nowStated);
+      season.bandNow = bandNow;
+      applyConfidence(board, checkpointDelta(base, now), now >= base ? "onTrack" : "behind", when, patienceNow(save));
     }
   }
   debtCheck(save);
