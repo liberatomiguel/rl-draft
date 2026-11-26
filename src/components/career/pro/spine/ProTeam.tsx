@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { canRequestProTransfer, proRosterOf, proTeamNameOf, requestProTransferFlow } from "@/store/proFlow";
+import { rotationCountdownOf } from "@/store/proMatch";
 import { useProStore } from "@/store/proStore";
 
 export function ProTeam({ save }: { save: ProSave }) {
@@ -57,6 +58,12 @@ export function ProTeam({ save }: { save: ProSave }) {
           <div className="text-sm text-sub">
             <p>{T.contract(formatMoney(c.salaryPerSplit), c.endSeason + 1)}</p>
             <p className="mt-1">{T.promised(C.proWorld.offers.role[c.role])}</p>
+            {rotationCountdownOf(save) !== null ? (
+              <p className="mt-1">
+                {T.rotationShare(CAREER_PRO_ORG.rotationEvery)} {T.nextRotation(rotationCountdownOf(save)!)}
+              </p>
+            ) : null}
+            {c.role === "rotation" ? <p className="mt-1">{T.review(save.roleReview?.left ?? CAREER_PRO_ORG.reviewAfter)}</p> : null}
           </div>
           {c.transferRequested ? (
             <p className="text-sm text-sub">{T.requested}</p>

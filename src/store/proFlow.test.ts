@@ -51,8 +51,13 @@ describe("PROSPINE proFlow", () => {
       expect(proRosterCount(save.world)).toBeLessThanOrEqual(1);
     }
     if (save.stage === "org") {
-      expect(proRosterCount(save.world)).toBe(1);
-      expect(proSeatOf(save.world)?.ref).toBe(save.contract!.orgRef);
+      // R-PROSPINE-6: his org sits on the host seat for the stint: off the world (no duplicate), him on its squad.
+      expect(save.orgShell?.org.ref).toBe(save.contract!.orgRef);
+      expect(save.world.orgs[save.contract!.orgRef]).toBeUndefined();
+      expect(proRosterCount(save.world)).toBe(0);
+      expect(hostOf(save)!.squad.filter((p) => p.id === PRO_SELF_ID)).toHaveLength(1);
+      expect(hostOf(save)!.identity.orgName).toBe(save.contract!.orgName);
+      void proSeatOf;
     }
   }, 600_000);
 });

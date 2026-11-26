@@ -6,6 +6,7 @@
  * takes one counter, with the risk of the org walking away shown first.
  */
 
+import { CAREER_PRO_ORG } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { weekOfDay } from "@/engine/career/calendar";
 import type { ProOffer } from "@/engine/career/pro/spineTypes";
@@ -90,6 +91,8 @@ function OfferCard({ save, offer: o }: { save: ProSave; offer: ProOffer }) {
         </Button>
       </div>
       {o.kind !== "amateur" && !o.counter ? <p className="mt-2 text-xs text-faint">{O.counterRisk(Math.round(o.counterRisk * 100))}</p> : null}
+      {o.kind !== "amateur" ? <p className="mt-2 text-xs leading-snug text-sub">{o.role === "rotation" ? O.rotationMeans(CAREER_PRO_ORG.rotationEvery) : O.starterMeans}</p> : null}
+      {o.uncertain ? <p className="mt-2 text-xs leading-snug text-bad">{O.uncertain}</p> : null}
     </Panel>
   );
 }

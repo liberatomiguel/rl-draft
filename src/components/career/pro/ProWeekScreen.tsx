@@ -23,6 +23,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { cx } from "@/lib/util";
 import { activeProSave, useProStore } from "@/store/proStore";
+import { ProWeekStop } from "./spine/ProWeekStop";
 import { useMounted } from "@/store/useMounted";
 import { ProGrowthLog } from "./ProGrowthLog";
 import { ProRankedPanel } from "./ProRankedPanel";
@@ -160,6 +161,8 @@ export function ProWeekScreen() {
           {W.play}
         </Button>
       </div>
+      {/* PROSPINE: why the week stopped before Monday, and the way to the hub. */}
+      <ProWeekStop save={save} />
 
       {lastWeek ? (
         <Panel className="mt-6 p-5">

@@ -9,7 +9,6 @@
 
 import { weekOfDay } from "@/engine/career/calendar";
 import { ageOf } from "@/engine/career/development";
-import { proSeatOf } from "@/engine/career/pro/offers";
 import { proOverall } from "@/engine/career/pro/attrs";
 import { createProSave } from "@/engine/career/pro/create";
 import type { ProSave } from "@/engine/career/pro/types";
@@ -24,7 +23,10 @@ import {
   openProOffersOf,
   proOfferBlockOf,
   proStopOf,
+  keepPlayingFlow,
   requestProTransferFlow,
+  retireProFlow,
+  seatOfPro,
 } from "./proFlow";
 
 export interface ProBotRun {
@@ -45,6 +47,8 @@ export function newProBotSave(region: Region, difficulty: CareerDifficulty, seed
 /** One decision pass of the bot on the save (offers, transfer request). */
 export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): ProSave {
   let out = save;
+  // The end offered after a season without a team: he keeps going until 30, then takes it.
+  if (out.retireOffer) return ageOf(out.player.birthYear, out.clock.seasonIndex) >= 30 ? retireProFlow(out) : keepPlayingFlow(out);
   for (const offer of openProOffersOf(out)) {
     if (proOfferBlockOf(out, offer.id)) continue;
     if (offer.kind === "amateur" && (out.stage === "ranked" || out.stage === "freeAgent" || out.stage === "amateur")) {
@@ -52,7 +56,7 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
     }
     if (offer.kind === "renewal") return acceptProOfferFlow(out, offer.id);
   }
-  const benched = out.stage === "org" && proSeatOf(out.world)?.seat === "reserve";
+  const benched = out.stage === "org" && seatOfPro(out) === "reserve";
   // At an org he moves only for a promised start while benched, or when his deal is running out.
   const leaving = out.stage === "org" && out.contract && out.contract.endSeason <= out.clock.seasonIndex;
   const orgOffers = openProOffersOf(out).filter(
@@ -91,7 +95,7 @@ export function playProBot(cfg: {
   let firstOrgSeason: number | null = null;
   let days = 0;
   const lastSeason = cfg.seasons;
-  for (let guard = 0; guard < cfg.seasons * 260 && save.clock.seasonIndex < lastSeason; guard++) {
+  for (let guard = 0; guard < cfg.seasons * 4000 && save.clock.seasonIndex < lastSeason && save.stage !== "retired"; guard++) {
     save = proBotDecide(save, { counter: cfg.counter });
     if (save.stage !== stages[stages.length - 1]) stages.push(save.stage);
     if (save.stage === "org" && firstOrgAge === null) {
@@ -100,7 +104,7 @@ export function playProBot(cfg: {
     }
     const before = save;
     const next = advanceProDayFlow(save);
-    if (next === before || (next.clock.day === before.clock.day && next.clock.seasonIndex === before.clock.seasonIndex && proStopOf(next)?.kind === proStopOf(before)?.kind && next.report === before.report)) {
+    if (next === before || (next.clock.day === before.clock.day && next.clock.seasonIndex === before.clock.seasonIndex && proStopOf(next)?.kind === proStopOf(before)?.kind && next.report === before.report && next.live === before.live && next.stage === before.stage)) {
       stuck.push(`S${save.clock.seasonIndex} d${save.clock.day} stage=${save.stage} stop=${proStopOf(save)?.kind ?? "-"}`);
       if (stuck.length > 3) break;
     }

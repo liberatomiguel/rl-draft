@@ -23,6 +23,7 @@ import { ageOf, playerViewById } from "../development";
 import { derivedFloat } from "../seeds";
 import type { WorldOrgState, WorldState } from "../types";
 import { worldLifeOn } from "../worldLife";
+import { orgHistoryOverAt } from "../worldSim";
 import { proOverall, round2 } from "./attrs";
 import type { ProMatchLogEntry, ProOffer, ProOfferReason, ProRole } from "./spineTypes";
 import type { ProSave } from "./types";
@@ -65,6 +66,12 @@ export function orgLevelOf(org: WorldOrgState, ctx: ViewCtx): number {
   return round2(ids.reduce((s, id) => s + overallOf(id, ctx), 0) / Math.max(1, ids.length));
 }
 
+/** Its future is in doubt: the dataset ends it within two seasons, or Mundo vivo's turnover is one bad season away. */
+export function orgFutureUncertain(org: WorldOrgState, seasonIndex: number): boolean {
+  const T = CAREER_WORLD_LIFE.orgTurnover;
+  return orgHistoryOverAt(org.ref, seasonIndex + 2) || (worldLifeOn(seasonIndex) && org.prestige <= T.maxPrestige && (org.lowSeasons ?? 0) >= T.seasons - 1);
+}
+
 /** The counter-offer's shown risk of the org walking away (a bigger org walks more easily). */
 export function counterRiskFor(prestige: number): number {
   return round2(clamp(CAREER_PRO_ORG.counterRisk + CAREER_PRO_ORG.counterRiskPerPrestige * prestige, 0, 0.9));
@@ -96,6 +103,8 @@ export interface OrgOfferCtx {
   seq: number;
   /** The org he is at now (never offers itself), or null. */
   currentOrg: string | null;
+  /** At least one offer this window (his org left the scene at the rollover). */
+  guarantee?: boolean;
 }
 
 /**
@@ -111,18 +120,38 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
   const form = recentFormOf(save.matchLog, 8);
   const value = proValueOf(save, form);
   const calls: { org: WorldOrgState; role: ProRole; level: number }[] = [];
-  for (const ref of Object.keys(save.world.orgs).sort()) {
-    const org = save.world.orgs[ref];
-    if (org.region !== save.player.region || ref === ctx.currentOrg) continue;
-    if (org.playerIds.includes(PRO_SELF_ID) || org.reserveIds?.includes(PRO_SELF_ID)) continue;
-    const bar = orgBarOf(org, view);
+  // The region's orgs, weakest first: the bottom half offers a start, the top half a rotation spot (R-PROSPINE-7).
+  const region = Object.keys(save.world.orgs)
+    .sort()
+    .map((ref) => save.world.orgs[ref])
+    .filter((o) => o.region === save.player.region && o.ref !== ctx.currentOrg && !o.playerIds.includes(PRO_SELF_ID) && !o.reserveIds?.includes(PRO_SELF_ID))
+    // QA round: an org the dataset ends after this season does not sign him (it would fold under him).
+    .filter((o) => !orgHistoryOverAt(o.ref, seasonIndex + 1))
+    .map((org) => ({ org, level: orgLevelOf(org, view), bar: orgBarOf(org, view) }))
+    .sort((a, b) => a.level - b.level || a.org.ref.localeCompare(b.org.ref));
+  const half = Math.ceil(region.length / 2);
+  const roleFor = (i: number, bar: number): ProRole =>
+    (i < half && value >= bar - O.starterMargin) || value >= bar + O.topStarterMargin ? "starter" : "rotation";
+  region.forEach(({ org, level, bar }, i) => {
     const rotationBar = bar - O.rotationMargin;
-    if (value < rotationBar) continue;
+    if (value < rotationBar) return;
     const chance = callChance(value, rotationBar, save.difficulty, age);
-    if (derivedFloat(save.careerSeed, `pro:offer:${seasonIndex}:${ctx.week}:${ref}`) >= chance) continue;
-    calls.push({ org, role: value >= bar - O.starterMargin ? "starter" : "rotation", level: orgLevelOf(org, view) });
+    if (derivedFloat(save.careerSeed, `pro:offer:${seasonIndex}:${ctx.week}:${org.ref}`) >= chance) return;
+    calls.push({ org, role: roleFor(i, bar), level });
+  });
+  // A 15-16 year old good enough for a bottom-half org's weakest starter gets at least one start offered.
+  if (age > O.minAge && age <= O.youthStarterAge && !calls.some((c) => c.role === "starter")) {
+    const fits = region.filter((r, i) => i < half && value >= r.bar - O.starterMargin);
+    const pick = fits[fits.length - 1];
+    if (pick) calls.push({ org: pick.org, role: "starter", level: pick.level });
   }
-  calls.sort((a, b) => b.level - a.level || a.org.ref.localeCompare(b.org.ref));
+  // Guaranteed (his org left the scene): the best org whose bar he reaches, else the region's weakest.
+  if (ctx.guarantee && calls.length === 0 && region.length > 0) {
+    const reach = region.filter((r) => value >= r.bar - O.rotationMargin);
+    const pick = reach[reach.length - 1] ?? region[0];
+    calls.push({ org: pick.org, role: roleFor(region.indexOf(pick), pick.bar), level: pick.level });
+  }
+  calls.sort((a, b) => (a.role === b.role ? 0 : a.role === "starter" ? -1 : 1) || b.level - a.level || a.org.ref.localeCompare(b.org.ref));
   const reason = reasonFor(save, form);
   return calls.slice(0, O.maxOffers).map(({ org, role, level }, i) => {
     const salary = Math.max(
@@ -146,6 +175,7 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
       expiresDay: ctx.windowEndDay,
       status: "open",
       counterRisk: counterRiskFor(org.prestige),
+      ...(orgFutureUncertain(org, seasonIndex) ? { uncertain: true } : {}),
     } satisfies ProOffer;
   });
 }
