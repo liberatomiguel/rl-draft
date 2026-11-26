@@ -130,8 +130,9 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
     .map((org) => ({ org, level: orgLevelOf(org, view), bar: orgBarOf(org, view) }))
     .sort((a, b) => a.level - b.level || a.org.ref.localeCompare(b.org.ref));
   const half = Math.ceil(region.length / 2);
+  const starterMargin = (O.byDifficulty[save.difficulty] ?? O.byDifficulty.normal).starterMargin;
   const roleFor = (i: number, bar: number): ProRole =>
-    (i < half && value >= bar - O.starterMargin) || value >= bar + O.topStarterMargin ? "starter" : "rotation";
+    (i < half && value >= bar - starterMargin) || value >= bar + O.topStarterMargin ? "starter" : "rotation";
   region.forEach(({ org, level, bar }, i) => {
     const rotationBar = bar - O.rotationMargin;
     if (value < rotationBar) return;
@@ -141,7 +142,7 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
   });
   // A 15-16 year old good enough for a bottom-half org's weakest starter gets at least one start offered.
   if (age > O.minAge && age <= O.youthStarterAge && !calls.some((c) => c.role === "starter")) {
-    const fits = region.filter((r, i) => i < half && value >= r.bar - O.starterMargin);
+    const fits = region.filter((r, i) => i < half && value >= r.bar - starterMargin);
     const pick = fits[fits.length - 1];
     if (pick) calls.push({ org: pick.org, role: "starter", level: pick.level });
   }

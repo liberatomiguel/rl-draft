@@ -7,6 +7,7 @@
  */
 
 import type { CareerEventDef } from "../types";
+import { PRO_STAT_KEYS } from "./attrs";
 import { applyMatchXp as engineMatchXp } from "./growth";
 import { cupsUnlocked } from "./ranked";
 import type { ProGrowthEntry, ProPlayer, ProStage, ProWeekNote, ProWeekPlan } from "./types";
@@ -38,11 +39,21 @@ export function coachPlanFor(
   return engineCoachPlan(player, { ...ctx, coachOverall: ctx.coachOverall ?? undefined });
 }
 
+/**
+ * Match XP of one series. `scale` (0-1, the spine's diminishing return over a
+ * season) shrinks what the series adds; the form side effect stays whole.
+ */
 export function applyMatchXp(
   player: ProPlayer,
   ctx: { rating: number; opponentStrength: number; tier: CareerEventDef["tier"]; seasonIndex: number; day: number },
+  scale = 1,
 ): { player: ProPlayer; growth: ProGrowthEntry[] } {
-  return engineMatchXp(player, ctx);
+  const r = engineMatchXp(player, ctx);
+  if (scale >= 1) return r;
+  const attrs = { ...r.player.attrs };
+  for (const k of PRO_STAT_KEYS) attrs[k] = Math.round((player.attrs[k] + (r.player.attrs[k] - player.attrs[k]) * scale) * 100) / 100;
+  const growth = r.growth.map((g) => ({ ...g, delta: Math.round(g.delta * scale * 100) / 100 })).filter((g) => g.delta > 0);
+  return { player: { ...r.player, attrs }, growth };
 }
 
 /** Ranked's gate to the cups (Grand Champion, PRO-SPEC §7.1). */

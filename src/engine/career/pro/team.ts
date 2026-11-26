@@ -119,7 +119,8 @@ export function amateurInviteFor(
   if (save.stage !== "ranked" && save.stage !== "freeAgent" && save.stage !== "amateur") return null;
   if (seasonIndex === 0 && ctx.week < CAREER_PRO_TEAM.firstInviteWeek) return null;
   const overall = proOverall(save.player.attrs);
-  if (!rankedOpensCups(save.player) && overall < CAREER_PRO_TEAM.inviteOverall) return null;
+  const careerWeek = seasonIndex * 32 + ctx.week;
+  if (!rankedOpensCups(save.player) && overall < CAREER_PRO_TEAM.inviteOverall && careerWeek < CAREER_PRO_TEAM.inviteAfterWeeks) return null;
   if (save.stage === "amateur" && (ctx.currentLevel === null || overall - ctx.currentLevel < CAREER_PRO_TEAM.betterSideGap)) return null;
   const last = [...save.offers].reverse().find((o) => o.kind === "amateur");
   if (last) {

@@ -4,6 +4,8 @@
  * org seasons, in each region asked. Fails on a throw or a soft lock (a day
  * where Advance does nothing) and on pro:self on two rosters.
  *
+ *   NEXT_PUBLIC_MATCHDAY_STYLES=1 NEXT_PUBLIC_WORLD_LIFE=1 NEXT_PUBLIC_MATCHDAY_DECISIONS=1 NEXT_PUBLIC_MATCHDAY_BOXSCORE=1 \
+ *   NEXT_PUBLIC_PRO_CAREER=1 NEXT_PUBLIC_ENDLESS_VARIETY=1 NEXT_PUBLIC_BOARD=1 NEXT_PUBLIC_REAL_ORG_START=1 \
  *   PRO_BOT=1 PRO_BOT_REGIONS=NA,EU,SAM PRO_BOT_SEASONS=4 npx vitest run src/store/proBot.probe.test.ts
  */
 import { describe, expect, it } from "vitest";

@@ -141,6 +141,19 @@ export function seatOrgOnHost(save: ProSave): ProSave {
     starterIds: [org.playerIds[0], org.playerIds[1], org.playerIds[2]],
     identity: { ...host.identity, orgName: org.name, abbrev: org.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase() || "ORG" },
     reputation: 15 + org.prestige * 20,
+    // Its coach comes with it (orgTeamFor's thresholds: 85 "++", 75 "+"), so the seat plays as the org did.
+    coach:
+      org.coachOverall !== undefined
+        ? {
+            id: `seat:${ref}`,
+            name: org.name,
+            overall: org.coachOverall,
+            bonusType: "consistency",
+            bonusLevel: org.coachOverall >= 85 ? "++" : org.coachOverall >= 75 ? "+" : "~",
+            salaryPerSplit: 0,
+            source: "generated",
+          }
+        : null,
     prefs: { ...host.prefs, autoEnterUnofficials: false },
     unofficialOffer: null,
     pendingEventDef: host.pendingEventDef && (host.pendingEventDef.tier === "t3" || host.pendingEventDef.tier === "t2") ? null : host.pendingEventDef,
@@ -195,6 +208,7 @@ export function unseatOrgFromHost(save: ProSave, keepPro: boolean): ProSave {
     competition,
     squad: [{ ...me, role: "starter" }],
     starterIds: [PRO_SELF_ID, "", ""],
+    coach: null,
     identity: { ...host.identity, orgName: save.player.name },
     pendingEventDef: null,
     pendingUnavailability: null,

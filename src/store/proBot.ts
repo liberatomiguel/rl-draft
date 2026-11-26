@@ -55,7 +55,13 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
     if (offer.kind === "amateur" && (out.stage === "ranked" || out.stage === "freeAgent" || out.stage === "amateur")) {
       return acceptProOfferFlow(out, offer.id);
     }
-    if (offer.kind === "renewal") return acceptProOfferFlow(out, offer.id);
+    if (offer.kind === "renewal") {
+      // He waits for the Worlds window's offers: a starter spot at a stronger org beats renewing.
+      const better = openProOffersOf(out).some((o) => o.kind === "org" && !proOfferBlockOf(out, o.id) && o.role === "starter" && o.level > offer.level + 1);
+      if (better) continue;
+      if (weekOfDay(out.clock.day) >= 31) return acceptProOfferFlow(out, offer.id);
+      continue;
+    }
   }
   const benched = out.stage === "org" && seatOfPro(out) === "reserve";
   // At an org he moves only for a promised start while benched, or when his deal is running out.

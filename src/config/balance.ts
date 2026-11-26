@@ -1684,7 +1684,8 @@ export const CAREER_PRO = {
       { maxAge: 21, mult: 0.1 },
     ],
     beforePeak: 0.05,
-    afterPeak: 0.03,
+    // PROSPINE battery (real flow): 0.03 → 0.01. Seventy series a season at the top tiers kept a high talent growing to 27-28; now the decline wins after the seed's peak.
+    afterPeak: 0.01,
     /** Distance to the ceiling: ((attrMax − attr) / gapRef) ^ gapExponent, never under gapFloor (99 stays reachable). */
     gapRef: 49,
     gapExponent: 0.92,
@@ -1718,9 +1719,23 @@ export const CAREER_PRO_TEAM = {
    * cups (Grand Champion, CAREER_PRO_RANKED.cupsRankId) or, for one who skips
    * ranked, once his overall reaches this.
    */
-  inviteOverall: 54,
+  inviteOverall: 50.8, // QA (rc.2 hand play): 54 → 50.8, the first invite in weeks 6-10 of season 1 for a Pro who trains
+  /**
+   * Battery (R-PROSPINE-10): a Pro still without a side after this many weeks of
+   * career hears from one anyway (a local team short of a player). Without
+   * it a careless Pro (no training, no rest) never reached a team at all.
+   */
+  inviteAfterWeeks: 20, // inside season 1 for a careless Pro too
+  /**
+   * QA (rc.2): the local scene a Pro's region meets is centred on its own
+   * level. The manager's localSceneBand is [-1, +4] around the frozen anchor
+   * (a new org meets a slightly stronger garage scene: a side won ~33% of its
+   * first-season cups); the Pro's world lowers its anchor by this once a
+   * season (target 35-50%). Manager careers are untouched.
+   */
+  localAnchorEdge: 1.5,
   /** No amateur invite before this week of the first season (the ranked prologue). */
-  firstInviteWeek: 3,
+  firstInviteWeek: 6, // QA: 3 → 6 (a few weeks of ranked first)
   /** The teammates' level when a side calls: the Pro's overall plus this (slightly under him: he is the side's best). */
   teammateOffset: -1,
   /** ± seeded spread of each teammate around that level. */
@@ -1742,6 +1757,8 @@ export const CAREER_PRO_TEAM = {
    */
   ratingEdgePerPoint: 0.12,
   ratingEdgeCap: 1.5,
+  /** Battery (R-PROSPINE-11): a season's series teach at full rate up to this many, then at full / n (proFlow.matchXpScaleAt). */
+  matchXpFullSeries: 25,
   /** Series kept in the match log (offers and the lineup read the recent ones). */
   matchLogCap: 30,
   /** The "recent form" window (series). */
@@ -1816,6 +1833,16 @@ export const CAREER_PRO_ORG = {
    * him a starter.
    */
   rotationEvery: 3,
+  /**
+   * Battery (R-PROSPINE-12): the fight for a spot by difficulty (Hard is a harder
+   * fight, never a weaker player): the promise of a start needs his value this
+   * close to the weakest starter, and a rotation player starts one event in this many.
+   */
+  byDifficulty: {
+    easy: { starterMargin: 0, rotationEvery: 2 },
+    normal: { starterMargin: 1, rotationEvery: 3 },
+    hard: { starterMargin: 3, rotationEvery: 4 },
+  } as Record<string, { starterMargin: number; rotationEvery: number }>,
   reviewAfter: 6,
   promoteRating: 6.8,
   /** A week on the bench training (doing what the coach asks) earns this back: the bench is recoverable. */

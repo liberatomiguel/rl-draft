@@ -429,6 +429,17 @@ export function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentStat
   return bookLines(save, def, lines, teamName, strength, placementOf(t, teamId));
 }
 
+/**
+ * The battery's lever (R-PROSPINE-11): a season's first matchXpFullSeries
+ * series teach at full rate, each later one at full/n. The real calendar
+ * gives a starter 60-100 official series a season (pro-engine's model
+ * assumed about a regional run a month), so match XP ran the career.
+ */
+export function matchXpScaleAt(seriesBefore: number): number {
+  const full = CAREER_PRO_TEAM.matchXpFullSeries;
+  return seriesBefore < full ? 1 : full / (seriesBefore + 1);
+}
+
 /** Books series lines: the report, match XP, the log, coach trust, the season's counts. */
 export function bookLines(
   save: ProSave,
@@ -462,7 +473,7 @@ export function bookLines(
       tier: def.tier,
       seasonIndex: save.clock.seasonIndex,
       day: save.clock.day,
-    });
+    }, matchXpScaleAt(ss.played));
     player = xp.player;
     growthLog = [...growthLog, ...xp.growth];
     log.push({ seasonIndex: save.clock.seasonIndex, day: save.clock.day, tier: def.tier, won: line.won, rating: line.rating });
@@ -791,8 +802,20 @@ function reconcileMembership(save: ProSave): ProSave {
 }
 
 /** Everything that happens to the Pro on the day the host just arrived at. */
+/** The season's frozen local anchor of his region, lowered once (CAREER_PRO_TEAM.localAnchorEdge): the scene of his own level. */
+function centreLocalScene(save: ProSave): ProSave {
+  const a = save.competition.localAnchor;
+  const flag = `localEdge:${save.clock.seasonIndex}`;
+  if (!a || a.region !== save.player.region || save.flags[flag]) return save;
+  return {
+    ...save,
+    competition: { ...save.competition, localAnchor: { ...a, rating: a.rating - CAREER_PRO_TEAM.localAnchorEdge } },
+    flags: { ...save.flags, [flag]: true },
+  };
+}
+
 function afterArrival(save: ProSave, captured: { def: CareerEventDef; state: TournamentState }[]): ProSave {
-  let out = expireOffers(save);
+  let out = centreLocalScene(expireOffers(save));
   if (dayOfWeekOf(out.clock.day) === 1) {
     out = mondayFor(closeTheWeek(out));
     out = weekCloseNotice(out);

@@ -8,7 +8,7 @@
  * when PRO_BATTERY_OUT is set.
  *
  *   NEXT_PUBLIC_MATCHDAY_STYLES=1 NEXT_PUBLIC_WORLD_LIFE=1 NEXT_PUBLIC_MATCHDAY_DECISIONS=1 \
- *   NEXT_PUBLIC_MATCHDAY_BOXSCORE=1 NEXT_PUBLIC_PRO_CAREER=1 NEXT_PUBLIC_ENDLESS_VARIETY=1 \
+ *   NEXT_PUBLIC_MATCHDAY_BOXSCORE=1 NEXT_PUBLIC_PRO_CAREER=1 NEXT_PUBLIC_ENDLESS_VARIETY=1 NEXT_PUBLIC_BOARD=1 NEXT_PUBLIC_REAL_ORG_START=1 \
  *   PRO_BATTERY=1 PRO_BATTERY_CELLS=avg-managed-NA-normal PRO_BATTERY_SEEDS=3 npx vitest run src/store/proBattery.probe.test.ts
  *
  * Cells: `<talent>-<plan>-<region>-<difficulty>`; "all" = the spec grid.
@@ -24,7 +24,7 @@ import { hostOf } from "./proFlow";
 
 const env = process.env;
 const ON = env.PRO_BATTERY === "1";
-const TALENT: Record<string, number> = { low: 0.88, avg: 1.0, high: 1.12 };
+const TALENT: Record<string, number> = { low: 0.82, avg: 1.0, high: 1.2 }; // the lifecycle bot's profiles (talentRange 0.78-1.25)
 const GRID = [
   ...["low", "avg", "high"].flatMap((t) => ["managed", "careless"].flatMap((p) => ["NA", "EU", "SAM"].map((r) => `${t}-${p}-${r}-normal`))),
   "avg-managed-NA-hard",
@@ -52,6 +52,16 @@ export interface BatteryRow {
   /** Attribute points by source over the career (the "why" of the peak). */
   xp: Record<string, number>;
   seriesPerSeason: number;
+  /** Endless (ENDLESS_VARIETY): seasons his side was the reigning champion the world answered, and seasons it was answered by projects. */
+  /** Week of the career (season 0 = weeks 1-32) of the first amateur invite, and his side's first-season cup series won / played. */
+  firstInviteWeek: number | null;
+  /** The career's title lines (event name and year). */
+  titleNames: string[];
+  firstSideCups: string;
+  reigningSeasons: number;
+  projectSeasons: number;
+  /** Per-season trace (age, overall end, series, role) for the diagnosis. */
+  trace: string;
   seconds: number;
 }
 
@@ -71,6 +81,14 @@ function runCell(cell: string, seed: number): BatteryRow {
   let majorTitles = 0;
   let wasRotation = false;
   let rotationToStarter = false;
+  const seasonsSeen = new Set<number>();
+  let reigningSeasons = 0;
+  let firstInviteWeek: number | null = null;
+  const seenLog = new WeakSet<object>();
+  let sideSeason: number | null = null;
+  let cupsWon = 0;
+  let cupsPlayed = 0;
+  let projectSeasons = 0;
   const run = playProBot({
     region,
     difficulty,
@@ -93,6 +111,28 @@ function runCell(cell: string, seed: number): BatteryRow {
         champs.add(r.id);
         if (r.tier === "worlds") worldsTitles += 1;
         if (r.tier === "major") majorTitles += 1;
+      }
+      if (!seasonsSeen.has(s.clock.seasonIndex)) {
+        seasonsSeen.add(s.clock.seasonIndex);
+        const e = hostOf(s)?.endless;
+        const mine = (ref: string | null | undefined) => ref === "user" || (!!ref && ref === s.contract?.orgRef);
+        if (e?.streak && e.streak.titles >= 1 && mine(e.streak.ref)) {
+          reigningSeasons += 1;
+          if ((e.strength ?? 0) > 0 && e.projects.length > 0) projectSeasons += 1;
+        }
+      }
+      if (firstInviteWeek === null && s.offers.some((o) => o.kind === "amateur")) {
+        const o = s.offers.find((x) => x.kind === "amateur")!;
+        firstInviteWeek = o.madeSeason * 32 + Math.ceil(o.madeDay / 7);
+      }
+      if (s.stage === "amateur" && sideSeason === null) sideSeason = s.clock.seasonIndex;
+      for (const e of s.matchLog ?? []) {
+        if (seenLog.has(e)) continue;
+        seenLog.add(e);
+        if (sideSeason !== null && e.seasonIndex === sideSeason && (e.tier === "t3" || e.tier === "t2")) {
+          cupsPlayed += 1;
+          if (e.won) cupsWon += 1;
+        }
       }
       if (s.contract?.role === "rotation") wasRotation = true;
       if (wasRotation && s.contract?.role === "starter") rotationToStarter = true;
@@ -126,6 +166,12 @@ function runCell(cell: string, seed: number): BatteryRow {
     rotationToStarter,
     xp,
     seriesPerSeason: played.length ? Math.round(played.reduce((a, l) => a + l.series, 0) / played.length) : 0,
+    firstInviteWeek,
+    titleNames: run.save.careerTitles ?? [],
+    firstSideCups: `${cupsWon}/${cupsPlayed}`,
+    reigningSeasons,
+    projectSeasons,
+    trace: h.map((l) => `${l.age}:${l.overallEnd.toFixed(0)}/${l.series}s/${(l.role ?? "-").slice(0, 3)}/${(l.results ?? []).length}t`).join(" "),
     seconds: Math.round((Date.now() - t0) / 1000),
   };
 }
