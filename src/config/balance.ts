@@ -1770,6 +1770,10 @@ export const CAREER_PRO_ORG = {
   rotationMargin: 6,
   /** ... and promises a start when it reaches the weakest starter minus this. */
   starterMargin: 1,
+  /** A top-half org of the region promises a start only when his value beats its weakest starter by this (R-PROSPINE-7). */
+  topStarterMargin: 2,
+  /** Up to this age, a Pro good enough for a bottom-half org's weakest starter is offered at least one start in a window. */
+  youthStarterAge: 16,
   /** Per interested org, per window: the base chance, + perPoint per point of value over its bar, capped at maxChance. Easy ×1.2, Hard ×0.8. */
   baseChance: 0.35,
   perPoint: 0.06,

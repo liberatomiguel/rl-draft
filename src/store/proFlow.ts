@@ -28,7 +28,7 @@ import { CAREER_PRO, CAREER_PRO_ORG, CAREER_PRO_TEAM } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import { buildSeriesBoxScore } from "@/engine/career/boxScore";
 import { dayOfWeekOf, isWindowStartWeek, weekOfDay, windowIndexOf, DAYS_PER_SEASON } from "@/engine/career/calendar";
-import { ageOf, playerViewById as devView } from "@/engine/career/development";
+import { ageOf, playerViewById as devView, seasonYear } from "@/engine/career/development";
 import { derivedFloat } from "@/engine/career/seeds";
 import { proOverall, round2 } from "@/engine/career/pro/attrs";
 import { decideOrgLineup, proLineupScore, trustAfterSeries } from "@/engine/career/pro/lineup";
@@ -43,6 +43,9 @@ import {
   renewalOfferFor,
 } from "@/engine/career/pro/offers";
 import { applyBlock, applyMatchXp, closeWeek, coachPlanFor } from "@/engine/career/pro/spineBridge";
+import { cardFromSave, encodeCard, type ProCard } from "@/engine/career/pro/card";
+import { canRetireByChoice, retireProSave } from "@/engine/career/pro/retire";
+import { rolloverProPlayer } from "@/engine/career/pro/weekFlow";
 import type {
   ProHost,
   ProMatchReport,
@@ -78,6 +81,7 @@ import {
 import { startSundayFlow } from "./careerSunday";
 import { approveTrainingProposalFlow } from "./careerTraining";
 import { proHooks } from "./proHooks";
+import { seatOrgOnHost, unseatOrgFromHost } from "./proSeat";
 
 // ---------------------------------------------------------------------------
 // The host
@@ -92,7 +96,7 @@ export function hostOf(save: ProSave): CareerSave | null {
 /** The host's own feed and mail are never shown (the Pro has his inbox): only the latest are kept, to keep the save small. */
 const HOST_FEED_KEEP = 20;
 
-function storeHost(save: ProSave, host: CareerSave): ProSave {
+export function storeHost(save: ProSave, host: CareerSave): ProSave {
   const { world, clock, competition, ...rest } = host;
   const trimmed: ProHost = {
     ...rest,
@@ -366,7 +370,11 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
   const ss = { ...(save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] }) };
   ss.teams = ss.teams.includes(teamName) ? ss.teams : [...ss.teams, teamName];
   for (const line of lines) {
-    if (line.rating === null) continue;
+    if (line.rating === null) {
+      ss.benched = (ss.benched ?? 0) + 1;
+      continue;
+    }
+    ss.games = (ss.games ?? 0) + line.games.filter((g) => g.pro).length;
     const opp = Object.values(t.teams).find((x) => x.name === line.opponent);
     const xp = applyMatchXp(player, {
       rating: line.rating,
@@ -406,6 +414,15 @@ function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentState, team
     seasonSeries: ss,
     report,
   });
+}
+
+/** His team won an event: the news, the season's results, the career's titles (the card). */
+export function noteTitle(save: ProSave, eventName: string, teamName: string): ProSave {
+  const line = `${eventName} ${seasonYear(save.clock.seasonIndex)}`;
+  const ss = { ...(save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] }) };
+  ss.titles = [...(ss.titles ?? []), eventName];
+  const out = { ...save, seasonSeries: ss, careerTitles: [...(save.careerTitles ?? []), line].slice(-40) };
+  return pushNews(out, "sideTitle", { side: teamName, event: eventName });
 }
 
 /** The screen reveals one more game (the "next game" of the series view). */
@@ -450,7 +467,7 @@ export function playProEventFlow(input: ProSave): ProSave {
   out = bookSeries(out, ev.def, ev.tournament, "user", save.amateur?.name ?? host.identity.orgName);
   if (ev.tournament.stage === "finished") {
     out = storeHost(out, finishEvent(hostOf(out)!));
-    if (out.report?.placement === "champion") out = pushNews(out, "sideTitle", { side: out.report.teamName, event: ev.def.name });
+    if (out.report?.placement === "champion") out = noteTitle(out, ev.def.name, out.report.teamName);
   }
   return out;
 }
@@ -587,8 +604,14 @@ function mondayFor(save: ProSave): ProSave {
       !!out.contract &&
       (out.contract.transferRequested || (out.contract.endSeason === seasonIndex && !out.contract.renewed && windowIndexOf(week) === 3)));
   if (canMove && isWindowStartWeek(week) && windowIndexOf(week) !== null) {
-    const offers = orgOffersFor(out, { week, windowEndDay: windowEndDayOf(week), seq: (out.seq ?? 0) + 1, currentOrg: out.contract?.orgRef ?? null });
-    out = addOffers(out, offers, "orgOffer");
+    const offers = orgOffersFor(out, {
+      week,
+      windowEndDay: windowEndDayOf(week),
+      seq: (out.seq ?? 0) + 1,
+      currentOrg: out.contract?.orgRef ?? null,
+      guarantee: Boolean(out.guaranteeOffers),
+    });
+    out = addOffers({ ...out, guaranteeOffers: false }, offers, "orgOffer");
   }
   // The renewal talk in the deal's last season.
   if (out.stage === "org" && week === CAREER_PRO_ORG.renewalWeek && out.contract?.endSeason === seasonIndex && !out.contract.renewed) {
@@ -733,26 +756,19 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
   let save = ensureProHost(input);
   let host = hostOf(save)!;
   if (host.phase !== "seasonReview" && host.phase !== "ended") return input;
+  if (save.stage === "retired") return input;
   const seasonIndex = save.clock.seasonIndex;
-  const ss = save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] };
-  const line: ProSeasonLine = {
-    seasonIndex,
-    age: ageOf(save.player.birthYear, seasonIndex),
-    teams: ss.teams,
-    overallStart: save.seasonStartOverall ?? proOverall(save.player.attrs),
-    overallEnd: proOverall(save.player.attrs),
-    series: ss.played,
-    seriesWon: ss.won,
-    avgRating: ss.played ? Math.round((ss.ratingSum / ss.played) * 10) / 10 : null,
-  };
-  save = { ...save, history: [...save.history, line], report: null };
-  save = pushNews(save, "seasonDone", { season: seasonIndex + 1, series: ss.played, avg: line.avgRating === null ? "-" : line.avgRating.toFixed(1) });
+  save = { ...save, history: [...save.history, seasonLineOf(save)], report: null, live: null };
+  const line = save.history[save.history.length - 1];
+  save = pushNews(save, "seasonDone", { season: seasonIndex + 1, series: line.series, avg: line.avgRating === null ? "-" : line.avgRating.toFixed(1) });
   // A deal that ends with this season: renewed, or he walks into free agency.
   if (save.contract && save.contract.endSeason <= seasonIndex) {
     const name = save.contract.orgName;
-    const world = removeProFromWorld(save.world, { careerSeed: save.careerSeed, seasonIndex });
-    save = pushNews({ ...save, world, stage: "freeAgent", team: null, contract: null }, "contractEnded", { org: name });
+    save = pushNews({ ...leaveOrg(save), stage: "freeAgent", team: null, contract: null }, "contractEnded", { org: name });
   }
+  // The world rolls his org as its own: it goes back into the world for the rollover.
+  const seated = Boolean(save.orgShell);
+  if (seated) save = unseatOrgFromHost(save, true);
   host = hostOf(syncPro(save))!;
   if (host.phase === "ended") host = { ...host, phase: "seasonReview" };
   host = settleHost(reviewContractsFlow(host).save);
@@ -768,8 +784,9 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
       });
       save = { ...save, world: placed.world };
     } else {
+      // The org left the scene with the dataset: a free agent, told why, with offers guaranteed in this window.
       const name = save.contract.orgName;
-      save = pushNews({ ...save, stage: "freeAgent", team: null, contract: null }, "orgGone", { org: name });
+      save = pushNews({ ...save, stage: "freeAgent", team: null, contract: null, guaranteeOffers: true }, "orgLeftScene", { org: name });
     }
   }
   // The rollover's own aging never decides his attributes (slice 6 does): the host entry is rebuilt.
@@ -777,12 +794,91 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
     const h = hostOf(save)!;
     save = storeHost(save, { ...h, squad: [proSquadPlayer(save.player, save.clock.seasonIndex), ...h.squad] });
   }
+  // The player's own rollover: aging with its reasons, the end by age, a year without a contract.
+  const rolled = rolloverProPlayer(save);
+  save = rolled.save;
+  if (save.stage === "retired") {
+    save = pushNews(leaveTeamForRetirement(save), "retiredAge", { age: ageOf(save.player.birthYear, save.clock.seasonIndex) });
+  } else if (rolled.check.offer === "noContract") {
+    save = pushNews({ ...save, retireOffer: true }, "retireOffered", {});
+  }
   save = {
     ...save,
     seasonStartOverall: proOverall(save.player.attrs),
     seasonSeries: { played: 0, won: 0, ratingSum: 0, teams: proTeamNameOf(save) ? [proTeamNameOf(save)!] : [] },
   };
-  return afterArrival(syncPro(save), []);
+  if (save.stage === "org" && save.contract && seated) save = seatOrgOnHost(syncPro(save));
+  return save.stage === "retired" ? syncPro(save) : afterArrival(syncPro(save), []);
+}
+
+/** The season's line for the record: team, how he was used, games, average rating, results. */
+function seasonLineOf(save: ProSave): ProSeasonLine {
+  const seasonIndex = save.clock.seasonIndex;
+  const ss = save.seasonSeries ?? { played: 0, won: 0, ratingSum: 0, teams: [] };
+  const team = ss.teams[ss.teams.length - 1] ?? null;
+  const role: ProSeasonLine["role"] =
+    save.stage === "amateur" ? "amateur" : !team ? "none" : ss.played === 0 ? "bench" : (ss.benched ?? 0) > ss.played ? "rotation" : "starter";
+  return {
+    seasonIndex,
+    age: ageOf(save.player.birthYear, seasonIndex),
+    teams: ss.teams,
+    overallStart: save.seasonStartOverall ?? proOverall(save.player.attrs),
+    overallEnd: proOverall(save.player.attrs),
+    series: ss.played,
+    seriesWon: ss.won,
+    avgRating: ss.played ? Math.round((ss.ratingSum / ss.played) * 10) / 10 : null,
+    team,
+    role,
+    games: ss.games ?? 0,
+    results: ss.titles ?? [],
+  };
+}
+
+/** He leaves his org (a move, the end of the deal, retirement): off the host seat, off the roster, his seat refilled. */
+function leaveOrg(save: ProSave): ProSave {
+  const unseated = save.orgShell ? unseatOrgFromHost(save, false) : save;
+  return { ...unseated, world: removeProFromWorld(unseated.world, { careerSeed: unseated.careerSeed, seasonIndex: unseated.clock.seasonIndex }), rotatedOut: null };
+}
+
+/** Retirement leaves whatever team he had (nothing he earned is taken). */
+function leaveTeamForRetirement(save: ProSave): ProSave {
+  let out = save;
+  if (out.amateur) out = leaveSide({ ...out, stage: "amateur" });
+  if (out.contract || out.orgShell || proRosterCount(out.world) > 0) out = leaveOrg(out);
+  return { ...out, stage: "retired", team: null, contract: null, amateur: null, retireOffer: false };
+}
+
+/** Retiring by choice (from CAREER_PRO_AGING.choiceMinAge), or taking the end offered after a year without a contract. */
+export function retireProFlow(input: ProSave): ProSave {
+  const save = ensureProHost(input);
+  if (save.stage === "retired") return input;
+  const host = hostOf(save);
+  if (host?.activeEvent) return input;
+  const reason = save.retireOffer ? "noContract" : "choice";
+  if (reason === "choice" && !canRetireByChoice(save.player, save.clock.seasonIndex)) return input;
+  const retired = retireProSave(leaveTeamForRetirement(save), reason);
+  return syncPro(pushNews({ ...retired, history: [...retired.history, seasonLineOf(save)] }, "retiredChoice", {}));
+}
+
+export function canRetireProNow(save: ProSave): boolean {
+  return save.stage !== "retired" && (Boolean(save.retireOffer) || canRetireByChoice(save.player, save.clock.seasonIndex));
+}
+
+/** Declines the end offered after a year without a contract. */
+export function keepPlayingFlow(save: ProSave): ProSave {
+  return save.retireOffer ? { ...save, retireOffer: false } : save;
+}
+
+/** The card of the career (the card page's payload): the orgs he signed for, his titles, his best season rating. */
+export function proCardOf(save: ProSave): ProCard {
+  const best = save.history.reduce((m, h) => Math.max(m, h.avgRating ?? 0), 0);
+  const card = cardFromSave(save, { orgs: save.careerOrgs ?? [], titles: save.careerTitles ?? [], bestRating: best, seasons: Math.max(1, save.history.length) });
+  // The payload carries the peak to one decimal: the card is that card, so it round-trips.
+  return { ...card, peak: Math.round(card.peak * 10) / 10 };
+}
+
+export function proCardHrefOf(save: ProSave): string {
+  return `/career/pro/card#${encodeCard(proCardOf(save))}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -860,6 +956,7 @@ function signFor(save: ProSave, offer: ProOffer): ProSave {
   let out = leaveSide(save);
   const ctx = { careerSeed: out.careerSeed, seasonIndex: out.clock.seasonIndex };
   const fromOrg = out.contract?.orgName ?? null;
+  if (out.orgShell || out.contract) out = leaveOrg(out);
   const placed = placeProInOrg(out.world, offer.ref, offer.role, ctx);
   if (proRosterCount(placed.world) !== 1) return save; // never two rosters (offers.test pins it)
   out = {
@@ -878,6 +975,7 @@ function signFor(save: ProSave, offer: ProOffer): ProSave {
       signedDay: out.clock.day,
     },
     coachTrust: CAREER_PRO_ORG.trustStart + (offer.role === "starter" ? CAREER_PRO_ORG.trustPromised : 0),
+    careerOrgs: (out.careerOrgs ?? []).includes(offer.name) ? out.careerOrgs : [...(out.careerOrgs ?? []), offer.name],
   };
   out = pushNews(out, fromOrg ? "transferred" : "signed", {
     org: offer.name,

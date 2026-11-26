@@ -6,7 +6,8 @@
  * slice-1 save loads and plays.
  */
 
-import type { CareerSave, CareerEventDef } from "../types";
+import type { CareerSave, CareerEventDef, WorldOrgState } from "../types";
+import type { DecisionLedger, ProDecision } from "./moments";
 import type { ProGrowthEntry, ProWeekNote, ProWeekPlan } from "./types";
 
 /** The hidden host: the manager flow that runs the Pro's calendar (R-PROSPINE-1). The world, clock and competition live on the ProSave. */
@@ -126,6 +127,11 @@ export interface ProSeasonLine {
   series: number;
   seriesWon: number;
   avgRating: number | null;
+  /** Round 2 (optional on older lines): his main team, how he was used, games played, what the team won. */
+  team?: string | null;
+  role?: "starter" | "rotation" | "bench" | "amateur" | "none";
+  games?: number;
+  results?: string[];
 }
 
 export interface ProNewsItem {
@@ -156,7 +162,18 @@ export interface ProSpineFields {
   matchLog?: ProMatchLogEntry[];
   /** The season's overall at its first day (the history line reads it). */
   seasonStartOverall?: number;
-  seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[] };
+  seasonSeries?: { played: number; won: number; ratingSum: number; teams: string[]; games?: number; benched?: number; titles?: string[] };
+  /** Round 2 (R-PROSPINE-6): the org on the host seat while he is under contract (proSeat.ts). */
+  orgShell?: { org: WorldOrgState; liftedOverall: Record<string, number> } | null;
+  /** Round 2: the series he is playing, game by game (proMatch.ts). */
+  live?: ProLiveSeries | null;
+  /** Round 2: the end offered after a year without a contract (he may keep going). */
+  retireOffer?: boolean;
+  /** Round 2: what the career holds for the card. */
+  careerOrgs?: string[];
+  careerTitles?: string[];
+  /** Round 2: the next window's offers are guaranteed (his org left the scene at a rollover). */
+  guaranteeOffers?: boolean;
   /** Days the batched advance already stopped on (a stop is shown once). */
   seenStopKey?: string;
   /** The starter a rotation start benched for this week (swapped back next Monday). */
@@ -178,4 +195,17 @@ export interface ProWeekLog {
   notes: ProWeekNote[];
   /** Energy after each block played, then after the close. */
   energyTrace: number[];
+}
+
+/** The series he is playing now (round 2): the next game's decision, the series ledger, the games so far. */
+export interface ProLiveSeries {
+  eventId: string;
+  roundKey: string;
+  opponent: string;
+  /** The decision of the next game, or null (no key moment: the game just plays). */
+  decision: ProDecision | null;
+  ledger: DecisionLedger;
+  games: ProGameLine[];
+  /** The last game's call, for the screen ("it worked", "it did not"). */
+  last?: { optionId: string; success: boolean; instinct: boolean } | null;
 }

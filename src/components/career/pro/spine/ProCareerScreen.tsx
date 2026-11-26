@@ -15,11 +15,15 @@ import { weekOfDay, dayOfWeekOf } from "@/engine/career/calendar";
 import { proOverall } from "@/engine/career/pro/attrs";
 import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import {
   advanceProDayFlow,
   advanceProToNextStopFlow,
+  canRetireProNow,
+  keepPlayingFlow,
+  proCardHrefOf,
+  retireProFlow,
   continueProSeasonFlow,
   markProNewsReadFlow,
   openProOffersOf,
@@ -123,9 +127,13 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
           ? P.freeAgent
           : P.noTeam;
 
+  if (save.stage === "retired") return <Retired save={save} />;
+
   return (
     <div className="space-y-5">
       <p className="text-sm leading-snug text-sub">{status}</p>
+
+      {save.retireOffer ? <RetireOffer /> : null}
 
       {stop?.kind === "seasonEnd" ? (
         <Panel className="p-5">
@@ -199,19 +207,76 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         <p className="w-full text-xs leading-snug text-faint">{P.advanceHint}</p>
       </div>
 
-      {save.history.length > 0 ? (
+      {canRetireProNow(save) && !save.retireOffer ? (
         <div>
-          <p className="kicker mb-2">{P.history.title}</p>
-          <ul className="space-y-1.5 text-sm">
-            {[...save.history].reverse().map((h) => (
-              <li key={h.seasonIndex} className="flex flex-wrap justify-between gap-x-3 border-b border-line pb-1.5">
-                <span className="text-ink">{P.history.line(h.age, Math.floor(h.overallStart), Math.floor(h.overallEnd))}</span>
-                <span className="text-sub">{P.history.series(h.series, h.seriesWon, h.avgRating === null ? "-" : h.avgRating.toFixed(1))}</span>
-              </li>
-            ))}
-          </ul>
+          <Button variant="ghost" size="sm" onClick={() => apply(retireProFlow)}>
+            {P.retire.retire}
+          </Button>
+          <p className="mt-1 text-xs text-faint">{P.retire.retireHint}</p>
         </div>
       ) : null}
+
+      <History save={save} />
     </div>
+  );
+}
+
+function History({ save }: { save: ProSave }) {
+  const P = useCareerCopy().proWorld;
+  if (save.history.length === 0) return null;
+  return (
+    <div>
+      <p className="kicker mb-2">{P.history.title}</p>
+      <ul className="space-y-1.5 text-sm">
+        {[...save.history].reverse().map((h) => (
+          <li key={h.seasonIndex} className="border-b border-line pb-1.5">
+            <div className="flex flex-wrap justify-between gap-x-3">
+              <span className="text-ink">{P.history.line(h.age, Math.floor(h.overallStart), Math.floor(h.overallEnd))}</span>
+              <span className="text-sub">{P.history.series(h.series, h.seriesWon, h.avgRating === null ? "-" : h.avgRating.toFixed(1))}</span>
+            </div>
+            {h.role ? (
+              <p className="mt-0.5 text-xs text-faint">
+                {[h.team, P.roles[h.role], h.games ? P.history.games(h.games) : null, ...(h.results ?? [])].filter(Boolean).join(" · ")}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Retired({ save }: { save: ProSave }) {
+  const P = useCareerCopy().proWorld;
+  return (
+    <div className="space-y-5">
+      <Panel className="p-5">
+        <h3 className="display text-lg font-bold uppercase leading-none text-ink">{P.retire.retiredTitle}</h3>
+        <p className="mt-2 text-sm leading-snug text-sub">{P.retire.retiredBody}</p>
+        <AppLink href={proCardHrefOf(save)} className={`${buttonClass("primary", "lg")} mt-4`}>
+          {P.retire.card}
+        </AppLink>
+      </Panel>
+      <History save={save} />
+    </div>
+  );
+}
+
+function RetireOffer() {
+  const P = useCareerCopy().proWorld;
+  const apply = useProStore((s) => s.apply);
+  return (
+    <Panel className="p-5">
+      <h3 className="display text-lg font-bold uppercase leading-none text-ink">{P.retire.offerTitle}</h3>
+      <p className="mt-2 text-sm leading-snug text-sub">{P.retire.offerBody}</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="primary" onClick={() => apply(keepPlayingFlow)}>
+          {P.retire.keepGoing}
+        </Button>
+        <Button variant="secondary" onClick={() => apply(retireProFlow)}>
+          {P.retire.retire}
+        </Button>
+      </div>
+    </Panel>
   );
 }
