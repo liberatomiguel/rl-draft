@@ -460,8 +460,9 @@ export function bookSeries(save: ProSave, def: CareerEventDef, t: TournamentStat
  * gives a starter 60-100 official series a season (pro-engine's model
  * assumed about a regional run a month), so match XP ran the career.
  */
-export function matchXpScaleAt(seriesBefore: number): number {
-  const full = CAREER_PRO_TEAM.matchXpFullSeries;
+export function matchXpScaleAt(seriesBefore: number, talent = 1): number {
+  // A gifted player keeps learning from more games (talent^matchXpTalentExp): the profiles stay apart on a busy calendar.
+  const full = CAREER_PRO_TEAM.matchXpFullSeries * Math.pow(talent, talent > 1 ? CAREER_PRO_TEAM.matchXpTalentExp : 1);
   return seriesBefore < full ? 1 : full / (seriesBefore + 1);
 }
 
@@ -498,7 +499,7 @@ export function bookLines(
       tier: def.tier,
       seasonIndex: save.clock.seasonIndex,
       day: save.clock.day,
-    }, matchXpScaleAt(ss.played));
+    }, matchXpScaleAt(ss.played, player.talent));
     player = xp.player;
     growthLog = [...growthLog, ...xp.growth];
     log.push({ seasonIndex: save.clock.seasonIndex, day: save.clock.day, tier: def.tier, won: line.won, rating: line.rating });

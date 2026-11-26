@@ -19,6 +19,7 @@ import {
   advanceProDayFlow,
   canRequestProTransfer,
   confirmProWeekFlow,
+  setProWeeklyPlanningFlow,
   counterProOfferFlow,
   ensureProHost,
   openProOffersOf,
@@ -105,6 +106,8 @@ export function playProBot(cfg: {
 }): ProBotRun {
   let save = newProBotSave(cfg.region, cfg.difficulty, cfg.seed, cfg.startAge ?? 13);
   if (cfg.talent !== undefined) save = { ...save, player: { ...save.player, talent: cfg.talent } };
+  // Careless plays his own week every week (content, ranked, content): week-by-week planning, no auto-plan fallback.
+  if (cfg.plan === "careless") save = setProWeeklyPlanningFlow(save, true);
   const stuck: string[] = [];
   const stages: string[] = [save.stage];
   let firstOrgAge: number | null = null;

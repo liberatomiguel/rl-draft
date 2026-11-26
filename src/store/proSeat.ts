@@ -212,6 +212,9 @@ export function unseatOrgFromHost(save: ProSave, keepPro: boolean): ProSave {
     identity: { ...host.identity, orgName: save.player.name },
     pendingEventDef: null,
     pendingUnavailability: null,
+    // Its Majors and Worlds won on the seat go back under its ref (the world's champion record, read by
+    // the endless front's rival projects at the rollover: a Pro's dynasty is answered like any org's).
+    honors: (host.honors ?? []).map((x) => (x.orgRef === "user" && x.orgName === shell.org.name ? { ...x, orgRef: ref } : x)),
   };
   syncSquadRoles(h);
   return { ...storeHost(save, h), orgShell: null };

@@ -1759,6 +1759,8 @@ export const CAREER_PRO_TEAM = {
   ratingEdgeCap: 1.5,
   /** Battery (R-PROSPINE-11): a season's series teach at full rate up to this many, then at full / n (proFlow.matchXpScaleAt). */
   matchXpFullSeries: 25,
+  /** ... times talent to this power above 1 (1.2 → ×1.44; below 1 it is linear, 0.82 → ×0.82): without it a busy season flattened the talent profiles to 2 points apart (3 put the low talent at 82). */
+  matchXpTalentExp: 2,
   /** Series kept in the match log (offers and the lineup read the recent ones). */
   matchLogCap: 30,
   /** The "recent form" window (series). */
