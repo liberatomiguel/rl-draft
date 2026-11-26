@@ -30,7 +30,8 @@ describe.skipIf(!ON)("PROSPINE whole-career probe", () => {
   it("13 to retirement: no throw, no stuck day, every season closes, the card round-trips", () => {
     const problems: string[] = [];
     for (const [region, difficulty] of RUNS) {
-      const seed = 4040 + region.length * 17 + difficulty.length;
+      // A seed per region and difficulty (NA and EU shared one: region.length was the only region term).
+      const seed = 4040 + [...region].reduce((n, ch) => n * 31 + ch.charCodeAt(0), 0) % 997 + difficulty.length * 7;
       const t0 = Date.now();
       let peak = 0;
       let peakAge = 0;
