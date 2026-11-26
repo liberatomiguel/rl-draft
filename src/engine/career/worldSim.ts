@@ -68,6 +68,7 @@ import {
 import { gamertagVariant, orgNamePoolFor, playerNamePoolFor } from "./names";
 import { communityTeamFor } from "./community";
 import {
+  exhaustedBankName,
   isLocalRef,
   localPlayerNames,
   localRegionOf,
@@ -230,6 +231,7 @@ export function fillerOrgName(region: Region, i: number, careerSeed: number, nam
   const bank = orgNamePoolFor(region, careerSeed, "pro", nameBankVersion);
   const wrap = Math.floor(i / bank.length);
   const base = bank[i % bank.length];
+  if (wrap >= ROMAN.length && FEATURES.endlessVariety) return exhaustedBankName(base, wrap + 1);
   return wrap === 0 ? base : `${base} ${ROMAN[wrap] ?? String(wrap + 1)}`;
 }
 

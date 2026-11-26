@@ -37,7 +37,7 @@ export function WizardDoor({ onPick }: { onPick: (door: "found" | "takeover") =>
   const D = C.board.door;
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
-      <h1 className="display text-2xl font-bold uppercase tracking-wide text-ink">{C.wizard.title}</h1>
+      <h1 className="display text-2xl font-bold uppercase tracking-wide text-ink">{D.title}</h1>
       <div className="mt-5 grid gap-3">
         <button type="button" className={cx(option(false), "p-4")} onClick={() => onPick("takeover")}>
           <span className="display block text-lg font-bold uppercase leading-none text-ink">{D.takeover}</span>

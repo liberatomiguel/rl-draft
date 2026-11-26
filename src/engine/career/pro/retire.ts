@@ -58,3 +58,12 @@ export function retireProSave(save: ProSave, reason: RetireReason): ProSave {
     flags: { ...save.flags, [`retired:${reason}`]: true },
   };
 }
+
+/**
+ * Polish: what the end looks like from this season: the last one (the forced
+ * age comes at its rollover), or one where the end can come by chance.
+ */
+export function retirementOutlookOf(player: Pick<ProPlayer, "birthYear">, seasonIndex: number): { age: number; lastSeason: boolean; mayEnd: boolean } {
+  const next = proAgeOf(player, seasonIndex + 1);
+  return { age: proAgeOf(player, seasonIndex), lastSeason: next >= A.retireForcedAge, mayEnd: retireChanceAt(next) > 0 };
+}

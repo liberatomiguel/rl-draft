@@ -7,12 +7,13 @@
  */
 
 import { useCareerCopy } from "@/content/careerCopy";
+import { RANKS } from "@/config/balance";
 import { rankOf } from "@/engine/career/pro/ranked";
 import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
-import { advanceProToNextStopFlow, autoPlanOf, confirmProWeekFlow, proCoachPlanOf, setProAutoPlanFlow } from "@/store/proFlow";
+import { advanceProToNextStopFlow, autoPlanOf, confirmProWeekFlow, planAutoOf, proCoachPlanOf, setProWeeklyPlanningFlow } from "@/store/proFlow";
 import { useProStore } from "@/store/proStore";
 
 export function ProWeekGate({ save }: { save: ProSave }) {
@@ -47,7 +48,7 @@ export function ProWeekGate({ save }: { save: ProSave }) {
         </AppLink>
       </div>
       <div className="mt-4 border-t border-line pt-3">
-        <Button variant="ghost" size="sm" onClick={() => apply((s) => confirmProWeekFlow(setProAutoPlanFlow(s, true), s.weekPlan ? "own" : "coach"))}>
+        <Button variant="ghost" size="sm" onClick={() => apply((s) => advanceProToNextStopFlow(confirmProWeekFlow(setProWeeklyPlanningFlow(s, false), s.weekPlan ? "own" : "coach")))}>
           {G.auto}
         </Button>
         <p className="mt-1 text-xs leading-snug text-faint">{G.autoHint}</p>
@@ -76,10 +77,16 @@ export function ProLastWeek({ save }: { save: ProSave }) {
             ? N.contractEnding(n.org, n.renewal)
             : n.kind === "planFellBack"
               ? N.planFellBack(n.energy)
-              : n.kind === "rolePromoted"
-                ? N.rolePromoted(n.org)
-                : N.roleKept(n.org);
-  if (!log && !notice && !save.autoPlan) return null;
+              : n.kind === "digest"
+                ? N.digest(n.weeks, n.overallFrom, n.overallTo, n.mmrFrom, n.mmrTo, n.energy)
+                : n.kind === "rankUp"
+                  ? N.rankUp(RANKS.find((r) => r.id === n.rank)?.label ?? n.rank)
+                  : n.kind === "mechanic"
+                    ? N.mechanic(C.proMoments.calls[n.id] ?? n.id)
+                    : n.kind === "rolePromoted"
+                      ? N.rolePromoted(n.org)
+                      : N.roleKept(n.org);
+  if (!log && !notice && !planAutoOf(save)) return null;
   const growth = log ? log.growth.reduce((a, g) => a + g.delta, 0) : 0;
   const ranks = log?.notes.filter((x) => x.code === "rankUp" || x.code === "rankDown") ?? [];
   const now = rankOf(save.player.mmr);
@@ -96,10 +103,10 @@ export function ProLastWeek({ save }: { save: ProSave }) {
           </AppLink>
         </p>
       ) : null}
-      {save.autoPlan ? (
+      {planAutoOf(save) ? (
         <p className="text-xs text-faint">
           {P.weekStop.autoOn}{" "}
-          <button type="button" className="font-semibold text-blue-bright hover:underline" onClick={() => apply((s) => setProAutoPlanFlow(s, false))}>
+          <button type="button" className="font-semibold text-blue-bright hover:underline" onClick={() => apply((s) => setProWeeklyPlanningFlow(s, true))}>
             {P.weekStop.autoOff}
           </button>
         </p>

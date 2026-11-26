@@ -97,7 +97,9 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
   const activeSlot = useCareerStore((s) => s.activeSlot);
 
   const save = activeSlot === null ? null : slots[activeSlot];
-  const sponsor = save ? pendingDecisionsOf(save).find(d => d.kind === "sponsor" && !d.parked) : null;
+  // The board's package comes first (v2.2): the sponsor popup waits until it is answered.
+  const boardFirst = save ? pendingDecisionsOf(save).some(d => d.kind === "board") : false;
+  const sponsor = save && !boardFirst ? pendingDecisionsOf(save).find(d => d.kind === "sponsor" && !d.parked) : null;
   const hasAnySave = slots.some(Boolean);
   const hasActive = activeSlot !== null && Boolean(slots[activeSlot]);
   const bare = isBareRoute(pathname);

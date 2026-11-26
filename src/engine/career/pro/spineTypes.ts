@@ -154,6 +154,17 @@ export type ProStop =
   | { kind: "seasonEnd" }
   | { kind: "retired" };
 
+/** Polish: what the season-end screen shows, kept per season (the last 12): the gala as it was, and why his attributes moved. */
+export interface ProSeasonReview {
+  seasonIndex: number;
+  /** Every award given: who won it (names), and whether he won or was named. */
+  gala: { kind: string; scope: string; winners: string[]; you: "winner" | "nominee" | null }[];
+  /** Attribute changes of the season with their sources. */
+  growth: { stat: string; delta: number; sources: string[] }[];
+  /** His best series rating of the season (from the match log), or null. */
+  bestSeries: number | null;
+}
+
 /** The spine's fields on a ProSave (all optional: a slice-1 save has none). */
 export interface ProSpineFields {
   host?: ProHost;
@@ -187,6 +198,11 @@ export interface ProSpineFields {
   thisWeek?: { key: string; plan: ProWeekPlan; source: "coach" | "own" | "repeat" | "fallback" } | null;
   /** QA round: Continue plans each week by itself (the saved plan, the coach's when it would tire him) until something happens. */
   autoPlan?: boolean;
+  /** Polish: he chose to plan week by week (after his first confirmed plan Continue plays the coach's plan by itself otherwise). */
+  weeklyPlanning?: boolean;
+  /** Polish: the season reviews, and the one still to show (shown once at the rollover; later from the history). */
+  seasonReviews?: ProSeasonReview[];
+  pendingReview?: number | null;
   /** QA round: why the last Continue stopped when it was none of the stops (an offer about to expire, the burnout warning, a contract ending, the plan falling back). */
   notice?: ProNotice | null;
   /** QA round: offers already warned about before they expire. */
@@ -223,6 +239,9 @@ export type ProNotice =
   | { kind: "burnedOut"; weeks: number }
   | { kind: "contractEnding"; org: string; renewal: boolean }
   | { kind: "planFellBack"; energy: number }
+  | { kind: "digest"; weeks: number; overallFrom: number; overallTo: number; mmrFrom: number; mmrTo: number; energy: number }
+  | { kind: "rankUp"; rank: string }
+  | { kind: "mechanic"; id: string }
   | { kind: "rolePromoted"; org: string }
   | { kind: "roleKept"; org: string };
 

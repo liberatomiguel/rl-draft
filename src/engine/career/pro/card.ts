@@ -46,6 +46,28 @@ const list = (x: unknown): string[] =>
 const num = (x: unknown, lo: number, hi: number, fallback: number): number =>
   typeof x === "number" && Number.isFinite(x) ? clamp(x, lo, hi) : fallback;
 
+/**
+ * The titles a card shows: the most important first (Worlds, Majors,
+ * regionals, the rest), then the most recent, repeats of one event collapsed
+ * ("SAM Regional 2 ×3"), and never more than the payload holds.
+ */
+export function titlesForCard(titles: readonly string[], cap: number = A.card.maxList): string[] {
+  const groups = new Map<string, { name: string; years: number[]; tier: number }>();
+  for (const raw of titles) {
+    const m = /^(.*?)\s+(\d{4})$/.exec(raw.trim());
+    const name = (m ? m[1] : raw).trim();
+    if (!name) continue;
+    const year = m ? Number(m[2]) : 0;
+    const g = groups.get(name) ?? { name, years: [], tier: /world/i.test(name) ? 3 : /major/i.test(name) ? 2 : /regional/i.test(name) ? 1 : 0 };
+    g.years.push(year);
+    groups.set(name, g);
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.tier - a.tier || Math.max(...b.years) - Math.max(...a.years) || a.name.localeCompare(b.name))
+    .slice(0, cap)
+    .map((g) => (g.years.length > 1 ? `${g.name} ×${g.years.length}` : g.years[0] ? `${g.name} ${g.years[0]}` : g.name));
+}
+
 /** What a card needs beyond the save (the world's honours are the spine's and the gala's to hand over). */
 export interface CardExtras {
   orgs?: string[];

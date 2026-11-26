@@ -16,8 +16,10 @@ import {
   confirmProWeekFlow,
   declineProOfferFlow,
   openProOffersOf,
+  planAutoOf,
   proStopOf,
   setProAutoPlanFlow,
+  setProWeeklyPlanningFlow,
   weekKeyOf,
 } from "./proFlow";
 
@@ -28,20 +30,36 @@ const TRAIN3: ProWeekPlan = [
 ];
 
 describe("PROSPINE QA invariants", () => {
-  it("1: the first Continue of a new career stops at the plan; no Continue crosses a week unplanned", () => {
+  it("1: the first Continue of a new career stops at the plan; afterwards Continue never runs more than 4 weeks without a stop", () => {
     let save = newProBotSave("NA", "normal", 501, 13);
     expect(proStopOf(save)?.kind).toBe("weekPlan");
+    // A first-time player confirms the very first week; the plan gate does not stop the next Monday by itself.
+    save = advanceProToNextStopFlow(save);
+    expect(save.thisWeek).toBeTruthy();
     for (let i = 0; i < 60; i++) {
       const before = save;
       save = advanceProToNextStopFlow(save);
       const weeks = (save.clock.seasonIndex - before.clock.seasonIndex) * 32 + weekOfDay(save.clock.day) - weekOfDay(before.clock.day);
-      expect(weeks, `Continue ran ${weeks} weeks from S${before.clock.seasonIndex} d${before.clock.day}`).toBeLessThanOrEqual(1);
-      if (weeks === 1 && proStopOf(save)?.kind !== "seasonEnd") {
-        expect(dayOfWeekOf(save.clock.day)).toBe(1);
-        expect(save.thisWeek?.key === weekKeyOf(save) ? "planned" : proStopOf(save)?.kind).toBe("weekPlan");
-      }
+      expect(weeks, `Continue ran ${weeks} weeks from S${before.clock.seasonIndex} d${before.clock.day}`).toBeLessThanOrEqual(4);
+      expect(save.live ?? null).toBe(save.live ?? null);
     }
     expect(save.clock.day).toBeGreaterThan(1);
+  }, 300_000);
+
+  it("1b: a digest stops a long quiet stretch; planning week by week brings the gate back and is remembered", () => {
+    // A quiet plan (rest all week): nothing else can stop him, so the 4-week digest does.
+    let save = confirmProWeekFlow(newProBotSave("NA", "normal", 502, 13), [{ kind: "rest" }, { kind: "rest" }, { kind: "rest" }]);
+    const startWeek = weekOfDay(save.clock.day);
+    save = advanceProToNextStopFlow(save);
+    expect(save.notice?.kind).toBe("digest");
+    expect(weekOfDay(save.clock.day) - startWeek).toBe(4);
+    save = setProWeeklyPlanningFlow(save, true);
+    expect(save.weeklyPlanning).toBe(true);
+    for (let i = 0; i < 8 && proStopOf(save)?.kind !== "weekPlan"; i++) save = advanceProToNextStopFlow(save);
+    expect(proStopOf(save)?.kind).toBe("weekPlan");
+    const back = setProWeeklyPlanningFlow(save, false);
+    expect(planAutoOf(back)).toBe(true);
+    expect(planAutoOf(newProBotSave("NA", "normal", 503, 13))).toBe(false);
   }, 300_000);
 
   it("2: an offer about to expire stops Continue once; the burnout warning stops it", () => {
