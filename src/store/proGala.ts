@@ -17,6 +17,7 @@ import { awardKey } from "@/engine/career/pro/card";
 import { galaForSeason, honorsOf, type GalaAward, type GalaCandidate } from "@/engine/career/pro/gala";
 import { activeNickname, type NicknameFacts } from "@/engine/career/pro/nickname";
 import { proOverall } from "@/engine/career/pro/attrs";
+import type { ProSeasonReview } from "@/engine/career/pro/spineTypes";
 import type { ProHonor, ProSave } from "@/engine/career/pro/types";
 import { PRO_SELF_ID } from "@/engine/career/pro/world";
 
@@ -63,6 +64,33 @@ export function seasonGalaOf(save: ProSave, teamRef: string | null): { awards: G
   });
   const awards = galaForSeason(seasonIndex, save.player.region, candidates);
   return { awards, honors: honorsOf(awards, PRO_SELF_ID, seasonIndex) };
+}
+
+/** Polish: the gala as the season-end screen shows it: winners by name, and his own place per award. */
+export function galaReviewOf(save: ProSave, awards: readonly GalaAward[], honors: readonly ProHonor[]): ProSeasonReview["gala"] {
+  const view = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world };
+  const nameOf = (id: string) => (id === PRO_SELF_ID ? save.player.name : (playerViewById(id, view)?.name ?? id));
+  return awards
+    .filter((a) => a.winners.length > 0)
+    .map((a) => ({
+      kind: a.kind,
+      scope: a.scope,
+      winners: a.winners.map(nameOf),
+      you: honors.find((h) => h.kind === a.kind && h.scope === a.scope)?.place ?? null,
+    }));
+}
+
+/** Polish: the season's attribute changes by stat, with the sources that moved it (training, ranked, age...). */
+export function growthReviewOf(save: ProSave, seasonIndex: number): ProSeasonReview["growth"] {
+  const by = new Map<string, { delta: number; sources: Set<string> }>();
+  for (const e of save.growthLog) {
+    if (e.seasonIndex !== seasonIndex) continue;
+    const cur = by.get(e.stat) ?? { delta: 0, sources: new Set<string>() };
+    cur.delta += e.delta;
+    cur.sources.add(e.reason ?? e.source);
+    by.set(e.stat, cur);
+  }
+  return [...by.entries()].map(([stat, v]) => ({ stat, delta: Math.round(v.delta * 100) / 100, sources: [...v.sources] })).filter((g) => Math.abs(g.delta) >= 0.01);
 }
 
 /** The card's award lines: his wins only, as the card page's language-free keys. */

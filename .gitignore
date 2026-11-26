@@ -51,3 +51,4 @@ next-env.d.ts
 
 # Trial font files (personal-use licence): local preview only, never commit or deploy.
 /public/fonts-trial/
+public/qa-fixtures/

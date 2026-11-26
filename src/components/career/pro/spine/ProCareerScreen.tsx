@@ -12,20 +12,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { weekOfDay, dayOfWeekOf } from "@/engine/career/calendar";
+import { RANKS } from "@/config/balance";
 import { proOverall } from "@/engine/career/pro/attrs";
+import { rankOf } from "@/engine/career/pro/ranked";
+import { retirementOutlookOf } from "@/engine/career/pro/retire";
+import { firstCallOf } from "@/engine/career/pro/team";
 import { isBurnedOut } from "@/engine/career/pro/week";
 import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import {
   advanceProDayFlow,
   advanceProToNextStopFlow,
   canRetireProNow,
   keepPlayingFlow,
-  proCardHrefOf,
   retireProFlow,
   continueProSeasonFlow,
+  dismissProSeasonReviewFlow,
   markProNewsReadFlow,
   openProOffersOf,
   playProEventFlow,
@@ -38,7 +42,9 @@ import {
 import { activeProSave, useProStore } from "@/store/proStore";
 import { useMounted } from "@/store/useMounted";
 import { ProInbox } from "./ProInbox";
+import { ProGoodbye } from "./ProGoodbye";
 import { ProLive } from "./ProLive";
+import { ProSeasonReviewPanel } from "./ProSeasonReview";
 import { ProLastWeek, ProWeekGate } from "./ProWeekGate";
 import { ProOffers } from "./ProOffers";
 import { ProReport } from "./ProReport";
@@ -122,6 +128,17 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
   const plan = weekPlanOf(save);
   const offers = openProOffersOf(save);
 
+  const outlook = save.stage === "retired" ? null : retirementOutlookOf(save.player, save.clock.seasonIndex);
+  const callInfo = save.stage === "ranked" ? firstCallOf(save.player) : null;
+  const rk = rankOf(save.player.mmr);
+  const first = callInfo
+    ? {
+        cups: RANKS.find((r) => r.id === callInfo.cupsRankId)?.label ?? callInfo.cupsRankId,
+        rank: `${rk.label}${rk.division ? ` ${"I".repeat(rk.division)}` : ""}`,
+        overall: callInfo.overall,
+        need: callInfo.needOverall,
+      }
+    : null;
   const status =
     save.stage === "amateur" && team
       ? P.amateurTeam(team)
@@ -129,15 +146,31 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         ? P.orgTeam(team, starts === true)
         : save.stage === "freeAgent"
           ? P.freeAgent
-          : P.noTeam;
+          : first
+            ? P.prologue(first.cups, first.rank, first.overall, first.need)
+            : P.noTeam;
 
   if (save.stage === "retired") return <Retired save={save} />;
+
+  // Polish: the season just closed gets its own screen first, once.
+  if (save.pendingReview != null && (save.seasonReviews ?? []).some((r) => r.seasonIndex === save.pendingReview)) {
+    return (
+      <div className="space-y-5">
+        <ProSeasonReviewPanel save={save} season={save.pendingReview} onClose={() => apply(dismissProSeasonReviewFlow)} />
+      </div>
+    );
+  }
+
+  // Mid-series the screen is the series and nothing else: no week strip, no Continue bar over the options.
+  if (save.live && (stop?.kind === "matchday" || stop?.kind === "event")) return <ProLive save={save} eventName={stop.eventName} />;
 
   return (
     <div className="space-y-5">
       {save.stage === "ranked" && offers.length > 0 ? null : <p className="text-sm leading-snug text-sub">{status}</p>}
 
       <ProLastWeek save={save} />
+
+      {outlook?.lastSeason ? <p className="text-sm font-semibold text-orange-bright">{P.retire.lastSeason(outlook.age)}</p> : outlook?.mayEnd ? <p className="text-sm text-sub">{P.retire.mayEnd}</p> : null}
 
       {save.retireOffer ? <RetireOffer /> : null}
 
@@ -210,27 +243,24 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </p>
       </div>
 
-      <div>
+      {stop?.kind === "weekPlan" || stop?.kind === "seasonEnd" ? null : (
+        <>
         <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
           <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>
-            {stop?.kind === "weekPlan" ? P.weekStop.continueWithPlan : P.advance}
+            {P.advance}
           </Button>
           <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
             {P.oneDay}
           </Button>
         </div>
-        <p className="mt-3 text-xs leading-snug text-faint">{P.advanceHint}</p>
-        {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
-      </div>
-
-      {canRetireProNow(save) && !save.retireOffer ? (
         <div>
-          <Button variant="ghost" size="sm" onClick={() => apply(retireProFlow)}>
-            {P.retire.retire}
-          </Button>
-          <p className="mt-1 text-xs text-faint">{P.retire.retireHint}</p>
+          <p className="text-xs leading-snug text-faint">{P.advanceHint}</p>
+          {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
         </div>
-      ) : null}
+        </>
+      )}
+
+      {canRetireProNow(save) && !save.retireOffer ? <RetireChoice /> : null}
 
       <History save={save} />
     </div>
@@ -239,6 +269,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
 
 function History({ save }: { save: ProSave }) {
   const P = useCareerCopy().proWorld;
+  const [shown, setShown] = useState<number | null>(null);
   if (save.history.length === 0) return null;
   return (
     <div>
@@ -255,6 +286,12 @@ function History({ save }: { save: ProSave }) {
                 {[h.team, P.roles[h.role], h.games ? P.history.games(h.games) : null, ...(h.results ?? [])].filter(Boolean).join(" · ")}
               </p>
             ) : null}
+            {(save.seasonReviews ?? []).some((r) => r.seasonIndex === h.seasonIndex) ? (
+              <button type="button" className="mt-1 min-h-11 text-sm font-semibold text-blue-bright hover:underline" onClick={() => setShown(shown === h.seasonIndex ? null : h.seasonIndex)}>
+                {P.seasonReview.open}
+              </button>
+            ) : null}
+            {shown === h.seasonIndex ? <ProSeasonReviewPanel save={save} season={h.seasonIndex} onClose={() => setShown(null)} /> : null}
           </li>
         ))}
       </ul>
@@ -263,17 +300,43 @@ function History({ save }: { save: ProSave }) {
 }
 
 function Retired({ save }: { save: ProSave }) {
-  const P = useCareerCopy().proWorld;
+  const apply = useProStore((s) => s.apply);
   return (
     <div className="space-y-5">
-      <Panel className="p-5">
-        <h3 className="display text-lg font-bold uppercase leading-none text-ink">{P.retire.retiredTitle}</h3>
-        <p className="mt-2 text-sm leading-snug text-sub">{P.retire.retiredBody}</p>
-        <AppLink href={proCardHrefOf(save)} className={`${buttonClass("primary", "lg")} mt-4`}>
-          {P.retire.card}
-        </AppLink>
-      </Panel>
+      {save.pendingReview != null ? <ProSeasonReviewPanel save={save} season={save.pendingReview} onClose={() => apply(dismissProSeasonReviewFlow)} /> : null}
+      <ProGoodbye save={save} />
       <History save={save} />
+    </div>
+  );
+}
+
+/** Retiring by choice goes through a confirm: the same end, the same goodbye screen. */
+function RetireChoice() {
+  const P = useCareerCopy().proWorld;
+  const apply = useProStore((s) => s.apply);
+  const [confirming, setConfirming] = useState(false);
+  if (confirming) {
+    return (
+      <Panel className="p-5">
+        <h3 className="display text-lg font-bold uppercase leading-none text-ink">{P.retire.confirmTitle}</h3>
+        <p className="mt-2 text-sm leading-snug text-sub">{P.retire.confirmBody}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => apply(retireProFlow)}>
+            {P.retire.confirm}
+          </Button>
+          <Button variant="secondary" onClick={() => setConfirming(false)}>
+            {P.retire.cancel}
+          </Button>
+        </div>
+      </Panel>
+    );
+  }
+  return (
+    <div>
+      <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+        {P.retire.retire}
+      </Button>
+      <p className="mt-1 text-xs text-faint">{P.retire.retireHint}</p>
     </div>
   );
 }

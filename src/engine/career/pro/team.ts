@@ -9,7 +9,7 @@
  * under "pro:team:", so a draw added later never moves an earlier one.
  */
 
-import { CAREER_PRO, CAREER_PRO_TEAM } from "@/config/balance";
+import { CAREER_PRO, CAREER_PRO_RANKED, CAREER_PRO_TEAM } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { StatKey } from "../../types";
 import { ageOf, seasonYear } from "../development";
@@ -19,6 +19,7 @@ import type { ArchetypeId, SquadPlayer } from "../types";
 import { PRO_STAT_KEYS, proOverall, round2 } from "./attrs";
 import type { ProAmateurSide, ProOffer } from "./spineTypes";
 import type { ProPlayer, ProSave } from "./types";
+import { rankOf } from "./ranked";
 import { rankedOpensCups } from "./spineBridge";
 import { PRO_SELF_ID } from "./world";
 
@@ -152,5 +153,20 @@ export function amateurInviteFor(
     expiresDay: Math.min(224, day + CAREER_PRO_TEAM.inviteDays),
     status: "open",
     counterRisk: 0,
+  };
+}
+
+/**
+ * Polish: where he stands against what brings the first amateur call (the
+ * hub's prologue line reads it). The call comes once ranked opens the cups or
+ * his overall reaches `inviteOverall`; nothing here changes either threshold.
+ */
+export function firstCallOf(player: ProPlayer): { overall: number; needOverall: number; rankId: string; cupsRankId: string; rankOpens: boolean } {
+  return {
+    overall: Math.floor(proOverall(player.attrs)),
+    needOverall: CAREER_PRO_TEAM.inviteOverall,
+    rankId: rankOf(player.mmr).id,
+    cupsRankId: CAREER_PRO_RANKED.cupsRankId,
+    rankOpens: rankedOpensCups(player),
   };
 }

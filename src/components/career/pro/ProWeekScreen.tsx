@@ -118,7 +118,7 @@ export function ProWeekScreen() {
         </p>
         <p className="mt-3 text-xs text-sub">
           {W.form.confidence}: <span className="text-ink">{confidenceWord}</span>
-          {p.confidence !== 0 ? ` (${ratingBonusOf(p.confidence) > 0 ? "+" : ""}${ratingBonusOf(p.confidence)})` : ""} · {W.form.confidenceHint}
+          {p.confidence !== 0 ? ` (${W.form.bonus(`${ratingBonusOf(p.confidence) > 0 ? "+" : ""}${ratingBonusOf(p.confidence)}`)})` : ""} · {W.form.confidenceHint}
         </p>
       </Panel>
 

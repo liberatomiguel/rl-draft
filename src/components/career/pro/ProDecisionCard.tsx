@@ -14,7 +14,16 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { cx } from "@/lib/util";
 
-export function ProDecisionCard({ decision, onChoose }: { decision: ProDecision; onChoose: (choice: string | "instinct") => void }) {
+export function ProDecisionCard({
+  decision,
+  onChoose,
+  hideInstinct = false,
+}: {
+  decision: ProDecision;
+  onChoose: (choice: string | "instinct") => void;
+  /** The caller docks the instinct button itself (the phone's thumb zone). */
+  hideInstinct?: boolean;
+}) {
   const M = useCareerCopy().proMoments;
   const copy = useCopy();
   return (
@@ -45,12 +54,16 @@ export function ProDecisionCard({ decision, onChoose }: { decision: ProDecision;
           </li>
         ))}
       </ul>
-      <div className="mt-3">
-        <Button variant="ghost" size="sm" onClick={() => onChoose("instinct")}>
-          {M.instinct}
-        </Button>
-        <p className="mt-1 text-xs text-sub">{M.instinctHint}</p>
-      </div>
+      {hideInstinct ? (
+        <p className="mt-3 text-xs text-sub">{M.instinctHint}</p>
+      ) : (
+        <div className="mt-3">
+          <Button variant="ghost" size="sm" onClick={() => onChoose("instinct")}>
+            {M.instinct}
+          </Button>
+          <p className="mt-1 text-xs text-sub">{M.instinctHint}</p>
+        </div>
+      )}
     </Panel>
   );
 }

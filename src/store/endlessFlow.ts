@@ -18,6 +18,7 @@ import {
   majorHostsFor,
   eliteBonusFor,
   projectBidFor,
+  projectRecordsAfter,
   rivalProjectsPass,
   worldsStreakOf,
   worldWeekFor,
@@ -84,7 +85,7 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
   });
   save.world = res.world;
   // Last season's record stays one more season (who rests); this season's projects follow.
-  save.endless.projects = [...running, ...res.projects];
+  save.endless.projects = projectRecordsAfter(running, res.projects);
   save.endless.gap = Math.round(res.gap * 10) / 10;
   save.endless.strength = res.strength;
   save.endless.streak = streak;
@@ -133,7 +134,7 @@ export function endlessGenerationNews(save: CareerSave, lifted: readonly { playe
  * (the caller books it like any bid), so the user can refuse.
  */
 export function endlessProjectBid(save: CareerSave, day: number, windowIdx: number): TransferOffer | null {
-  if (!endlessOn(save, save.clock.seasonIndex) || !save.endless) return null;
+  if (save.proHost || !endlessOn(save, save.clock.seasonIndex) || !save.endless) return null;
   const key = `${save.clock.seasonIndex}:${windowIdx}`;
   if (save.endless.bidWindows?.includes(key)) return null;
   if ((save.bidsThisWindow ?? 0) >= CAREER_TRANSFER.maxBidsPerWindow) return null;

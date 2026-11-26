@@ -10,6 +10,26 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.3] — 2026-11-26 · Hotfix: the Pro career did not advance on rc.2, plus the browser pass on the new screens (staging)
+
+### Fixed
+- **On rc.2 a Pro career did not advance a single day**: every Continue or "play the coach's plan" tap did nothing. Root cause: the Pro's world runs on a hidden manager save (the host); with `FEATURES.board` on, that host received the board's season package decision, which holds the clock, and `settleHost` did not answer it. The Pro tests ran without the board flag and the integration ran the manager's soft-lock probe only, so nothing caught it after the fronts were merged. The board is now fully inert on the host (`CareerSave.proHost`, set at creation: no board, no manager record, no package, checkpoint, ultimatum, dismissal or offers), a rival project can never bid for the host's players, `settleHost` strips a board from a host made on rc.2 and parks any decision kind it does not know. Regression: `proAllFlags.test.ts`, with every staging flag on.
+- Board page: the confidence figure wrapped onto two lines at 375 px and the log's reasons were cut.
+- The season review now shows the board's verdict in a panel (objective met or missed, confidence, a link to the board); it only arrived as a mail.
+- Pro match: the series screen is the series alone, with a docked bar (on instinct, sim the rest of the series), a legend on the decision card, locked options that say why, and a result line that says what the choice gave or cost.
+- Pro card image: the legend line ran into the footer and lists were cut mid-row.
+
+### Verified
+- A browser pass (desktop browser at 375 px, partly 320 px and desktop width, PT and partly EN) of the real-organisation wizard, the board's package choice and page, a full first season at an underdog, and by generated saves an ultimatum, a dismissal with offers, accepting one and arriving, an endless season 8 with rival projects and a Legends Invitational played to a title; and of the Pro from creation to retirement and the card. No physical phone, no Safari.
+- Integration now runs the manager soft-lock probe and the Pro whole-career probe with every staging flag on together.
+
+### Not verified
+- Known and in progress: the first amateur invite comes around week 26 of the Pro's first season (about 25 identical weekly taps); gala and retirement have no screen of their own; the card keeps the first ten titles in date order; filler organisations in the endless seasons carry a number in their name; a sponsor offer can open over the board's decision on arrival at a club; the top-bar "Start Sunday" button does nothing on the HQ itself.
+- Not opened in a browser: an unsolicited approach, the takeover wizard in EN and at 320 px, the board-funded upgrade, Hard.
+- The board's stated chances and the Pro calibration, as in rc.2.
+
+---
+
 ## [2.2.0-rc.2] — 2026-11-26 · The big update, complete in function: real organisations and the board, endless round 2, the Pro career (staging)
 
 Branch `release/v2.2`: rc.1 plus the board front, the second endless round and one Matchday fix. Everything new sits behind its flag, on in the staging build only. Handoffs with every tunable, measurement and decision (to be numbered at the final integration): `docs/handoff-2.2/` (BOARD, endless, PROSPINE, proengine, proqa).

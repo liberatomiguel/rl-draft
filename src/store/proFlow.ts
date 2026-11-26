@@ -24,7 +24,7 @@
  * the same object), no throw for a reachable state.
  */
 
-import { CAREER_PRO, CAREER_PRO_ORG, CAREER_PRO_TEAM, CAREER_PRO_WEEK } from "@/config/balance";
+import { CAREER_PRO, CAREER_PRO_ORG, CAREER_PRO_PLAN, CAREER_PRO_TEAM, CAREER_PRO_WEEK } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import { buildSeriesBoxScore } from "@/engine/career/boxScore";
 import { dayOfWeekOf, isWindowStartWeek, weekOfDay, windowIndexOf, DAYS_PER_SEASON } from "@/engine/career/calendar";
@@ -43,7 +43,7 @@ import {
   renewalOfferFor,
 } from "@/engine/career/pro/offers";
 import { applyBlock, applyMatchXp, closeWeek, coachPlanFor } from "@/engine/career/pro/spineBridge";
-import { cardFromSave, encodeCard, type ProCard } from "@/engine/career/pro/card";
+import { cardFromSave, encodeCard, titlesForCard, type ProCard } from "@/engine/career/pro/card";
 import { canRetireByChoice, retireProSave } from "@/engine/career/pro/retire";
 import { rolloverProPlayer } from "@/engine/career/pro/weekFlow";
 import type {
@@ -61,7 +61,7 @@ import type { ProHonor, ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { PRO_SELF_ID, withProInWorld } from "@/engine/career/pro/world";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { TournamentState, TournamentTeam } from "@/engine/types";
-import { clockHoldOf, declineSponsorOffersFlow, reviewContractsFlow } from "./careerDecisions";
+import { clockHoldOf, declineSponsorOffersFlow, parkDecisionFlow, reviewContractsFlow } from "./careerDecisions";
 import {
   acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
@@ -79,7 +79,7 @@ import { startSundayFlow } from "./careerSunday";
 import { approveTrainingProposalFlow } from "./careerTraining";
 import { proHooks } from "./proHooks";
 import { decideProGameFlow, playProMatchdayFlow } from "./proMatch";
-import { awardLinesOf, factsAfterGames, nicknameAfter, seasonGalaOf } from "./proGala";
+import { awardLinesOf, factsAfterGames, galaReviewOf, growthReviewOf, nicknameAfter, seasonGalaOf } from "./proGala";
 import { decideSeatLineup, proStartsOnSeat, seatOrgOnHost, swapOnSeat, unseatOrgFromHost } from "./proSeat";
 
 // ---------------------------------------------------------------------------
@@ -121,10 +121,12 @@ function newHost(save: ProSave): CareerSave {
       difficulty: save.difficulty,
       rosterKey: "balanced",
       trainingMode: "auto",
+      proHost: true,
       prefs: { autoEnterUnofficials: false, autoTrain: true, matchdayMode: "quick", playbackDefault: "instant" },
     },
     save.careerSeed,
   );
+  host.proHost = true;
   host.squad = [proSquadPlayer(save.player, host.clock.seasonIndex)];
   host.starterIds = [PRO_SELF_ID, "", ""];
   syncSquadRoles(host);
@@ -175,6 +177,8 @@ export function settleHost(input: CareerSave): CareerSave {
   let host = input;
   if (host.finances.balance < CAREER_PRO_TEAM.hostFloor) host = { ...host, finances: { ...host.finances, balance: CAREER_PRO_TEAM.hostFloor } };
   if (host.pendingInsert) host = { ...host, pendingInsert: null };
+  // A host made before the board front existed (or by an older build) never carries a board: the front is inert on it.
+  if (!host.proHost || host.board || host.manager) host = { ...host, proHost: true, board: undefined, manager: undefined };
   for (let i = 0; i < 16; i++) {
     const hold = clockHoldOf(host);
     if (!hold) break;
@@ -205,7 +209,12 @@ export function settleHost(input: CareerSave): CareerSave {
       case "sponsor":
         next = declineSponsorOffersFlow(host).save;
         break;
+      case "board":
+        next = { ...host, board: undefined, manager: undefined };
+        break;
       default:
+        // Any decision this list does not know is parked, never left to hold the Pro's clock.
+        next = parkDecisionFlow(host, hold.id).save;
         break;
     }
     if (next === host) break;
@@ -240,8 +249,24 @@ export function proStopOf(save: ProSave): ProStop | null {
   const plays = save.stage === "amateur" || (save.stage === "org" && Boolean(save.orgShell));
   if (def && def.day === host.clock.day && !host.activeEvent && plays && !squadHoldFor(host)) return { kind: "matchday", eventName: def.name };
   // QA round: no week starts without its plan confirmed (one tap), unless he opted into the auto-plan.
-  if (!save.autoPlan && save.thisWeek?.key !== weekKeyOf(save)) return { kind: "weekPlan" };
+  if (!planAutoOf(save) && save.thisWeek?.key !== weekKeyOf(save)) return { kind: "weekPlan" };
   return null;
+}
+
+/**
+ * Polish: does Continue plan the week by itself? Yes once he has confirmed a
+ * plan (the very first week is always his to see), unless he chose to plan
+ * week by week; the explicit auto-plan opt-in always counts.
+ */
+export function planAutoOf(save: ProSave): boolean {
+  if (save.autoPlan) return true;
+  return !save.weeklyPlanning && save.thisWeek != null;
+}
+
+/** "Plan week by week" (true) or "play the coach's plan until something happens" (false), remembered in the save. */
+export function setProWeeklyPlanningFlow(save: ProSave, weekly: boolean): ProSave {
+  if (weekly) return { ...save, weeklyPlanning: true, autoPlan: false };
+  return { ...save, weeklyPlanning: false, autoPlan: true };
 }
 
 export const weekKeyOf = (s: { clock: { seasonIndex: number; day: number } }): string => `${s.clock.seasonIndex}:${weekOfDay(s.clock.day)}`;
@@ -542,7 +567,7 @@ export function noteTitle(save: ProSave, eventName: string, teamName: string, ti
   const facts = { ...(save.careerFacts ?? {}) };
   if (tier === "major" || tier === "worlds") facts.lanTitles = (facts.lanTitles ?? 0) + 1;
   if (tier === "worlds") facts.worldsTitles = (facts.worldsTitles ?? 0) + 1;
-  const out = { ...save, seasonSeries: ss, careerFacts: facts, careerTitles: [...(save.careerTitles ?? []), line].slice(-40) };
+  const out = { ...save, seasonSeries: ss, careerFacts: facts, careerTitles: [...(save.careerTitles ?? []), line].slice(-120) };
   return pushNews(out, "sideTitle", { side: teamName, event: eventName });
 }
 
@@ -817,12 +842,14 @@ function centreLocalScene(save: ProSave): ProSave {
 function afterArrival(save: ProSave, captured: { def: CareerEventDef; state: TournamentState }[]): ProSave {
   let out = centreLocalScene(expireOffers(save));
   if (dayOfWeekOf(out.clock.day) === 1) {
+    const warnedBefore = Boolean(out.player.burnout?.warned);
     out = mondayFor(closeTheWeek(out));
-    out = weekCloseNotice(out);
-    if (out.autoPlan && out.stage !== "retired") {
+    out = weekCloseNotice(out, warnedBefore);
+    if (planAutoOf(out) && out.stage !== "retired") {
       const pick = autoPlanOf(out);
       out = { ...out, thisWeek: { key: weekKeyOf(out), plan: pick.plan, source: pick.source } };
-      if (pick.source === "fallback") out = { ...out, notice: { kind: "planFellBack", energy: Math.round(out.player.energy) } };
+      // The burnout warning or a rank up said at this close is not hidden by the plan falling back.
+      if (pick.source === "fallback" && !out.notice) out = { ...out, notice: { kind: "planFellBack", energy: Math.round(out.player.energy) } };
     }
   }
   out = expiryNotice(out);
@@ -835,12 +862,17 @@ function afterArrival(save: ProSave, captured: { def: CareerEventDef; state: Tou
 }
 
 /** The week's close said something he must see: the burnout warning, or a burnout. */
-function weekCloseNotice(save: ProSave): ProSave {
+function weekCloseNotice(save: ProSave, warnedBefore = false): ProSave {
   const notes = save.lastWeekLog?.notes ?? [];
   const out = notes.find((n) => n.code === "burnedOut");
   if (out) return { ...save, notice: { kind: "burnedOut", weeks: out.n ?? 1 } };
   const warn = notes.find((n) => n.code === "burnoutWarning");
-  if (warn) return { ...save, notice: { kind: "burnoutWarning", energy: warn.n ?? Math.round(save.player.energy) } };
+  // A warning already standing is not said again each week (it would stop every Continue); a new one, or a worse one, is.
+  if (warn && !(warnedBefore && (warn.n ?? 0) >= CAREER_PRO_WEEK.lowEnergy)) return { ...save, notice: { kind: "burnoutWarning", energy: warn.n ?? Math.round(save.player.energy) } };
+  const rank = notes.find((n) => n.code === "rankUp");
+  if (rank?.ref) return { ...save, notice: { kind: "rankUp", rank: rank.ref } };
+  const mech = notes.find((n) => n.code === "mechanicUnlocked");
+  if (mech?.ref) return { ...save, notice: { kind: "mechanic", id: mech.ref } };
   return save;
 }
 
@@ -930,11 +962,27 @@ export function advanceProToNextStopFlow(input: ProSave): ProSave {
   }
   if (stop0) return advanceProDayFlow(save);
   const offers0 = save.offers.length;
+  // Polish: with the week planned by itself Continue still stops at least every 4 weeks, with a digest.
+  const start = { overall: Math.floor(proOverall(save.player.attrs)), mmr: Math.round(save.player.mmr), weekKey: weekKeyOf(save) };
+  let weeks = 0;
+  let lastKey = start.weekKey;
   for (let guard = 0; guard < DAYS_PER_SEASON + 7; guard++) {
     const before = seasonDayKey(save);
     save = advanceProDayFlow(save);
     if (seasonDayKey(save) === before) break;
     if (proStopOf(save) || save.report || save.notice || save.offers.length !== offers0) break;
+    const key = weekKeyOf(save);
+    if (key !== lastKey) {
+      lastKey = key;
+      weeks += 1;
+      if (weeks >= CAREER_PRO_PLAN.digestWeeks) {
+        save = {
+          ...save,
+          notice: { kind: "digest", weeks, overallFrom: start.overall, overallTo: Math.floor(proOverall(save.player.attrs)), mmrFrom: start.mmr, mmrTo: Math.round(save.player.mmr), energy: Math.round(save.player.energy) },
+        };
+        break;
+      }
+    }
   }
   return save;
 }
@@ -1003,11 +1051,26 @@ export function continueProSeasonFlow(input: ProSave): ProSave {
   return save.stage === "retired" ? syncPro(save) : afterArrival(syncPro(save), []);
 }
 
+/** The season-end screen was seen; it stays reachable from the history. */
+export function dismissProSeasonReviewFlow(save: ProSave): ProSave {
+  return save.pendingReview == null ? save : { ...save, pendingReview: null };
+}
+
 /** The gala of the season and the nickname: his honours, the news, the facts a season adds. */
 function seasonHonors(save: ProSave, line: ProSeasonLine): ProSave {
   const teamRef = save.orgShell || save.stage === "amateur" ? "user" : (save.contract?.orgRef ?? null);
   const gala = seasonGalaOf(save, teamRef);
   let out: ProSave = { ...save, honors: [...(save.honors as ProHonor[]), ...gala.honors] };
+  // Polish: what the season-end screen shows, kept for the history.
+  const seasonIndex = save.clock.seasonIndex;
+  const rated = (save.matchLog ?? []).filter((m) => m.seasonIndex === seasonIndex).map((m) => m.rating);
+  const review = {
+    seasonIndex,
+    gala: galaReviewOf(save, gala.awards, gala.honors),
+    growth: growthReviewOf(save, seasonIndex),
+    bestSeries: rated.length > 0 ? Math.round(Math.max(...rated) * 10) / 10 : null,
+  };
+  out = { ...out, seasonReviews: [...(out.seasonReviews ?? []), review].slice(-12), pendingReview: seasonIndex };
   for (const h of gala.honors) out = pushNews(out, h.place === "winner" ? "galaWon" : "galaNominee", { kind: h.kind, scope: h.scope, year: seasonYear(h.seasonIndex) });
   const facts = { ...(out.careerFacts ?? {}) };
   if (line.avgRating !== null && line.avgRating >= 7 && line.series >= 10) facts.steadySeasons = (facts.steadySeasons ?? 0) + 1;
@@ -1085,7 +1148,7 @@ export function proCardOf(save: ProSave): ProCard {
   }
   const card = cardFromSave(save, {
     orgs,
-    titles: save.careerTitles ?? [],
+    titles: titlesForCard(save.careerTitles ?? []),
     awards: awardLinesOf(save.honors as ProHonor[]),
     bestRating: best,
     seasons: Math.max(1, save.history.length),

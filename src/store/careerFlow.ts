@@ -4895,6 +4895,8 @@ export interface CreateCareerInput {
   trainingMode?: TrainingMode;
   /** v2.2 board front (FEATURES.realOrgStart): take over this world org instead of founding a club. */
   realOrgRef?: string;
+  /** v2.2: the hidden host of a Pro career (the board front is inert on it). */
+  proHost?: boolean;
 }
 
 /** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */

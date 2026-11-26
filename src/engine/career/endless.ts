@@ -570,3 +570,14 @@ export function majorHostsFor(seasonIndex: number, careerSeed: number, cities: n
     .map((x) => x.i);
   return order.slice(0, 4); // three Majors + the Worlds host
 }
+
+/**
+ * Polish: the project records a save keeps after a rollover: last season's
+ * (who rests) and this season's, one entry per org. An org that carries on
+ * keeps only its newest record, so an org never shows twice (one org runs one
+ * project at a time).
+ */
+export function projectRecordsAfter(running: readonly RivalProject[], fresh: readonly RivalProject[]): RivalProject[] {
+  const now = new Set(fresh.map((p) => p.orgRef));
+  return [...running.filter((r) => !now.has(r.orgRef)), ...fresh];
+}

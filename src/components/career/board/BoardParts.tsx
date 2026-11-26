@@ -112,7 +112,23 @@ export function BoardSeasonPanel({ save, C }: { save: CareerSave; C: CareerCopy 
       </Panel>
     );
   }
-  if (!dismissed && offers.length === 0) return null;
+  if (!dismissed && offers.length === 0) {
+    const pkg = board.season?.choice ? board.season.offers.find((o) => o.id === board.season?.choice) : null;
+    if (!pkg || board.season?.met === null || board.season?.met === undefined) return null;
+    const V = C.board.verdict;
+    return (
+      <Panel className="p-4 sm:p-5">
+        <h3 className="card-title">{V.title}</h3>
+        <p className={cx("mt-1.5 text-sm", board.season.met ? "text-good" : "text-bad")}>
+          {(board.season.met ? V.met : V.missed)(goalText(C, pkg.objective))}
+        </p>
+        <p className="mt-1 text-sm text-sub">{V.confidence(Math.round(board.confidence))}</p>
+        <AppLink href="/career/board" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
+          {V.open}
+        </AppLink>
+      </Panel>
+    );
+  }
   return (
     <Panel glow="orange" className="rise-in p-4 sm:p-5">
       <h3 className="card-title">{dismissed ? C.board.dismissed.title : C.board.approach.title}</h3>
@@ -139,7 +155,7 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
     <Panel className="p-4 sm:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="card-title">{C.board.confidence}</h3>
-        <span className="display text-2xl font-bold text-ink">{C.board.confidenceOf(c)}</span>
+        <span className="display shrink-0 whitespace-nowrap text-2xl font-bold text-ink">{C.board.confidenceOf(c)}</span>
       </div>
       <div className="relative mt-3 h-2 rounded-sm bg-white/10" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={c} aria-label={C.board.confidence}>
         <div className={cx("h-2 rounded-sm", c >= L.warn ? "bg-ink" : c >= L.ultimatum ? "bg-orange-bright" : "bg-bad")} style={{ width: `${c}%` }} />
@@ -156,7 +172,7 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
             <span className={cx("display w-10 shrink-0 font-bold", e.delta > 0 ? "text-good" : e.delta < 0 ? "text-bad" : "text-sub")}>
               {e.delta > 0 ? `+${e.delta}` : e.delta}
             </span>
-            <span className="min-w-0 flex-1 truncate text-ink">{C.board.reasons[e.reason] ?? e.reason}</span>
+            <span className="min-w-0 flex-1 text-ink">{C.board.reasons[e.reason] ?? e.reason}</span>
             <span className="text-xs text-faint">S{e.seasonIndex + 1}</span>
           </li>
         ))}
