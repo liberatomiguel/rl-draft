@@ -1044,6 +1044,8 @@ export function playArcCareer(cfg: {
   policyOverride?: Partial<Omit<ArcPolicy, "id">>;
   /** v2.2 board front: the package the bot takes each season (default expected). */
   boardPackage?: PackageId;
+  /** v2.2 board front: accept an unsolicited off-season approach when one comes. */
+  boardApproach?: boolean;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
@@ -1159,7 +1161,7 @@ export function playArcCareer(cfg: {
       // v2.0 (C1): a coach whose deal ends is renewed like a player (two seasons); refused (the bank), he leaves.
       if (coachLeavingAtRolloverOf(save)) save = renewCoachFlow(save, 2).save;
       save = reviewContractsFlow(save).save;
-      save = boardAutoAnswer(save, cfg.boardPackage); // v2.2 board front: a dismissal's job choice
+      save = boardAutoAnswer(save, cfg.boardPackage, cfg.boardApproach); // v2.2 board front: a dismissal's job choice (and an approach, opt-in)
       const hold = rolloverHoldOf(save);
       if (hold) {
         out.softlock = `season ${save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;

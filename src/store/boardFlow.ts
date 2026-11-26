@@ -540,10 +540,12 @@ export function boardDecisionOf(save: CareerSave): { id: string } | null {
 }
 
 /** For the measuring bot and tools: answer any board decision (a package; the best org offer, never "found"). */
-export function boardAutoAnswer(save: CareerSave, pkg: PackageId = "expected"): CareerSave {
+export function boardAutoAnswer(save: CareerSave, pkg: PackageId = "expected", acceptApproach = false): CareerSave {
   if (pendingPackageOf(save)) return chooseBoardPackageFlow(save, pkg).save;
   const jobs = pendingJobChoiceOf(save);
   if (jobs) return acceptJobOfferFlow(save, (jobs.find((o) => o.kind === "org") ?? jobs[0]).id).save;
+  const approach = save.phase === "seasonReview" && !save.manager?.accepted ? save.manager?.offers?.find((o) => o.reason === "approach") : undefined;
+  if (acceptApproach && approach) return acceptJobOfferFlow(save, approach.id).save;
   return save;
 }
 
