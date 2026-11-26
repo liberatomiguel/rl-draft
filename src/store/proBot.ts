@@ -11,13 +11,14 @@ import { weekOfDay } from "@/engine/career/calendar";
 import { ageOf } from "@/engine/career/development";
 import { proOverall } from "@/engine/career/pro/attrs";
 import { createProSave } from "@/engine/career/pro/create";
-import type { ProSave } from "@/engine/career/pro/types";
+import type { ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import type { CareerDifficulty } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 import {
   acceptProOfferFlow,
   advanceProDayFlow,
   canRequestProTransfer,
+  confirmProWeekFlow,
   counterProOfferFlow,
   ensureProHost,
   openProOffersOf,
@@ -79,6 +80,8 @@ export function proBotDecide(save: ProSave, opts: { counter?: boolean } = {}): P
   return out;
 }
 
+const CARELESS: ProWeekPlan = [{ kind: "content" }, { kind: "ranked" }, { kind: "content" }];
+
 export function playProBot(cfg: {
   region: Region;
   difficulty: CareerDifficulty;
@@ -87,8 +90,15 @@ export function playProBot(cfg: {
   startAge?: 13 | 14;
   counter?: boolean;
   onDay?: (save: ProSave) => void;
+  /** Battery: the hidden talent, fixed (instead of the seed's). */
+  talent?: number;
+  /** Battery: "careless" confirms content, ranked, content every Monday (no rest, no fallback). Default: the coach's plan. */
+  plan?: "managed" | "careless";
+  /** Battery: stop once he reaches this age (the peak and the first years of decline are in by then). */
+  stopAge?: number;
 }): ProBotRun {
   let save = newProBotSave(cfg.region, cfg.difficulty, cfg.seed, cfg.startAge ?? 13);
+  if (cfg.talent !== undefined) save = { ...save, player: { ...save.player, talent: cfg.talent } };
   const stuck: string[] = [];
   const stages: string[] = [save.stage];
   let firstOrgAge: number | null = null;
@@ -96,6 +106,10 @@ export function playProBot(cfg: {
   let days = 0;
   const lastSeason = cfg.seasons;
   for (let guard = 0; guard < cfg.seasons * 4000 && save.clock.seasonIndex < lastSeason && save.stage !== "retired"; guard++) {
+    if (cfg.stopAge !== undefined && ageOf(save.player.birthYear, save.clock.seasonIndex) >= cfg.stopAge && proStopOf(save)?.kind !== "seasonEnd") {
+      if (save.clock.day === 1) break;
+    }
+    if (proStopOf(save)?.kind === "weekPlan") save = confirmProWeekFlow(save, cfg.plan === "careless" ? CARELESS : "coach");
     save = proBotDecide(save, { counter: cfg.counter });
     if (save.stage !== stages[stages.length - 1]) stages.push(save.stage);
     if (save.stage === "org" && firstOrgAge === null) {
