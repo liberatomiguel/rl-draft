@@ -43,7 +43,7 @@ Competent bot on Expected. N = career-seasons at the starting club.
 
 ## Proposed (not done)
 
-- Underdog Normal: state one band lower ("expected" when the record says "within reach"). Or simply refit once more seeds exist. The cells with fewer than 40 records lean on the prior.
+- Underdog Normal hits more than stated: offer it the next harder objective (or refit with more seeds). Cells with fewer than 40 records lean on the prior.
 - Careless dismissals: lower `seasonRecovery.board` to 0.15 if Miguel wants them out by S4.
 
 ## Not verified
