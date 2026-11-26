@@ -1,81 +1,21 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-17**. Production **v2.0.24**; **v2.0.27** on staging (`feat/sell-trade`).
-> Decisions R1–R135. BALANCE_VERSION **34**. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-26**. Production **v2.0.36**; **2.2.0-rc.5** on staging (`release/v2.2`).
+> Decisions R1–R162. BALANCE_VERSION **51**. Gate: V2.2-STATUS.md. Feedback: CAREER-FEEDBACK-rc42.md.
 
-## Current candidate
+## v2.2 (staging only, each front behind its own flag)
 
-rc.42 refines the career cards over rc.41. Crests use manual combinations,
-two-colour kits and conditional third colours; existing IDs remain valid.
-Region cards show relative difficulty. HQ progression lists direct purchases;
-coach unlock emails point to Coaches. Shared Inbox glyphs and novelty markers
-remain, with the compact transfer wire below Inbox.
+**Real organisations and the board** (`realOrgStart`, `board`; R151–R154). A second wizard door takes over a real org (stature elite, contender, mid or underdog); the org leaves the world and a filler takes its place. Each season the board offers three packages; confidence moves with a logged reason, then warning, ultimatum and dismissal at a review. Dismissal never ends the save: up to three offers, a founded club, or an approach on a strong record. Stated chances are bands in words from measured records per stature; they hold within one band (underdog Normal is easier than stated). Dismissals: competent 1 in 30, careless 7 to 9 in 30.
 
-Training selections use green/blue/orange and a visible None state; attribute
-panels carry current values and context. HQ records overall/chemistry
-change for the active cycle beside scrims. Club puts trophies above framed
-Records beneath the identity banner in its larger left column; Reputation
-starts above Progression on the right, with aligned column endings. Club
-shares Profile achievement cards, with distinct career glyphs.
+**Endless variety** (`endlessVariety`, from season index 7; R155–R156). Drawn cups, a Legends Invitational, an Intercontinental, season hosts. Rival projects use the user's own toolbox and scale with the dynasty; elite promotions arrive stronger; a project may bid for the user's best starter. Worlds won by a 100+ team: 91 % to 64 %; the target of 3 AI sides within 3 points is missed (2.2 to 2.7). Per-season circuit formats are not built.
 
-Weekly Statement contains Net/week; Projected has its own card and Balance
-uses a bounded chart fitted to recorded balances. The three tiles share a
-baseline; Loans sits beneath left-column Progression. Next Season Books uses numeric tiles. Normal credit/spend
-offers arrive by email without popup/calendar hold; emergency notices use
-numeric tiles, visible deadline/repayment/risk and expandable secondary terms.
+**Pro, the player career** (`proCareer`; R157–R161; spec PRO-SPEC.md, §15 is its state). Own save `rocket-draft:pro:v1`; the world runs on a hidden host save, not `worldTick.ts`. Week, ranked, one decision a game, offers, rotation, aging, gala, nicknames, a shareable card. Peaks: average managed 92.1, high 97.2, careless 82.2. Out of band: Worlds played in 92 % of average careers. The board is inert on the host (R162).
 
-Bids and sponsors require accept/decline. Direct seeds with a coach receive
-Sunday briefings, including old saves already on Sunday. Contracted signings
-unlock at reputation 20 and keep the overall cap. My Deals includes overall
-and wage. Pass sits beside Continue.
+After any career engine or store change run the soft-lock probe (`P1_SOFT=1`) and the Pro probe (`PRO_CAREER=1`) with every staging flag on together, each alone.
 
-Pre-event tables read the actual prize/points settlement, above the direct-seed
-notice. Event columns share a baseline; placement, cash and points have icons.
-HQ's compact title ledger sits below Inbox, showing three entries and the user
-club. The full table is in Standings; both use separate entity/title filters. It
-starts with real pre-X Worlds and zero Majors, then stores each simulated
-Major/Worlds winner with its playing roster. Transfers/rollovers preserve it.
-Legacy saves disclose missing past individual records. Historical sources:
-CAREER-HONORS-SOURCES.md. Duds Cup joins the invitational rotation; 50/50 and
-Duds events use their supplied art and the Duds Melow invitation copy.
+## Earlier
 
-Every open week offers a community/invitational event, forecast in Calendar
-and Skip. Spectator Majors/Worlds remain visible and stop Skip on Sunday,
-including Worlds at season review. Coaches reduce the training-wear portion
-of absence risk by 20%; illness risk stays fixed. Absence notices name the
-cause and unavailable player; Market explicitly explains closed windows.
-
-rc.48 (R129, on the branch, not on staging): CAREER_TALENT.elite.gateShare 0, the reputation gate reads the overall alone; the elite price factor stays.
-rc.47 (R122–R128): contract-long sponsor goals, database-driven region moves, no Worlds in Season X, headline pop-ups, automatic sponsor bootcamps, contracted players listed below reputation 20, coach contracts with renewal and growth, profile XP from the career, lineup swaps at HQ, the redesigned coach market, sponsor contract, season review, calendar and title race, milestone moments. Engine notes: docs/handoff-2.0/C1.md; screens: G1.md. None of it is measured in a battery.
-
-v2.1.0-dev.2 (R139, branch, not on staging): Mundo vivo M1 behind `FEATURES.worldLife` (off = v2.0.35): AI scouting onto a reserve seat, Local stacks signed, org turnover, the local ceiling, coaches who age and retire (`engine/career/worldLife.ts`, rollover in careerFlow's `worldLifeRollover`). Probe: `WORLDLIFE=1` (`careerWorldLife.probe.test.ts`); results in docs/MUNDO-VIVO-M1.md.
-
-v2.1.0-dev.7 (R142, branch): Mundo vivo M2.1, behind the same flag: elite renewal holds each region's S6 count of active AI elite (`eliteRenewalPass` in worldLife.ts, `world.potentialLift` read by `playerViewById`). Probe: `WORLDTOP=1` (`careerWorldTop.probe.test.ts`); spec and results in docs/MUNDO-VIVO-M2-SPEC.md.
-v2.1.0-dev.8 (R143, branch): Mundo vivo M3 behind the same flag: the early regional ramp (`CAREER_REGION_FIELD.earlyShift` EU −5, NA −1.5, fading out by T10; `worldSim.earlyRegionShift`). Probe: `REGIONCURVE=1` (`careerRegionCurve.probe.test.ts`, calibrated `strong` bot); results in docs/MUNDO-VIVO-M3.md.
-
-v2.2.0-dev.1 (R150, branch `claude/pro-etapa2`): Pro slice 1 behind `FEATURES.proCareer` (staging only): the player career's creation, training growth and save (`engine/career/pro/`, `store/proStore.ts`, key `rocket-draft:pro:v1`, screens `/career/pro/**`). Spec and slices: docs/PRO-SPEC.md.
-rc.50 (R130–R132): a region short of organizations fills its events with local sides (the season-3 soft lock of rc.47–rc.49), one start rule for events, no silent failure of an action; mobile selector navigation, the guided tour per tab, cleaner copy, one analytics event per tournament. After any career engine or store change run the soft-lock probe (P1_SOFT=1, src/store/careerSoftlock.probe.test.ts) before staging.
-
-v2.0.27 (R135, closes ECO-06): the transfer list (ask 70–160 % of value, an org answers in 1–3 window days: paid, countered or nobody) and player-for-player trades with an AI org of the same region (answered in 1–3 days: agreed, countered in cash or refused; an agreed trade holds the clock as a "bid" decision). Window only, never the first window, never under the resale lock; a player under a season at the club is worth 60 % to a buyer. `engine/career/transferList.ts`; flows in careerFlow's "R135" section; `careerSellTrade.test.ts`; opt-in probe `SELLTRADE_PROBE=1` (`careerSellTrade.probe.test.ts`). Not measured in a battery.
-
-## Run and verify
-
-Dev: Home → Road to Worlds → wizard → HQ. Staging uses
-NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1. Production remains off
-until the approved cutover. Final regressions, static-export and browser
-evidence are recorded in CAREER-FEEDBACK-rc42.md. This release makes no new
-economy/growth/title-pacing claim.
-
-rc.46 prices and gates elite talent (CAREER_TALENT.elite; economy.eliteFactorFor, signingLevelOf).
-rc.45 adds four support-staff retainers (CAREER_STAFF; economy.staffOn, careerFlow.setStaffFlow,
-Finances and the ladder). rc.44 adds the dataset's real coaches to the coach market (market.staffCoachCandidatesFor),
-lifts ex-pros, pays the bench 60 % of series XP and slows the squad's decline (R118–R119).
-rc.43 retunes the middle of a career (R113–R117): Normal renewals back to ×2.5,
-regional +25 %, ordinary loan in a shallow red, chemistry bond 0.20, AI bid premium
-for youth and reach. rc.39's F6 balance otherwise remains apart from rc.40's explicit gates and rc.41's
-open-week cadence/coach wear modifier (R111). R100–R109 and report
-F6-EXPERIMENTOS.md Parts 7–8 remain the pacing evidence. RLCS 2027 lineups enter the
-first infinite season. The 4,914-career battery is in docs/battery-rc37.
+rc.42 and before (cards, Club, Finances, Inbox, calendar, title ledger): CHANGELOG and CAREER-FEEDBACK-rc42.md. rc.43–rc.50 (R113–R132): mid-career retune, coaches, elite pricing, staff retainers, the season-3 soft lock fix. v2.0.27 (R135): transfer list and player-for-player trades (`engine/career/transferList.ts`, `SELLTRADE_PROBE=1`). v2.1 (R139–R149): Mundo vivo M1, M2.1, M3 (`worldLife`), Matchday, the Etapa 1 gate (ETAPA-1-STATUS.md). v2.2.0-dev.1 (R150): Pro slice 1.
 
 ## System map
 
@@ -85,14 +25,13 @@ first infinite season. The 4,914-career battery is in docs/battery-rc37.
 | Fields/results/titles | worldSim/careerResults/honors → careerFlow → Event, Standings, CareerHonorsTable |
 | Training/coaches | development/training → careerTraining → Training, TrainingBlock |
 | Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, Toolbox |
-| Selling/trading | transferList/market → careerFlow (R135 section)/careerDecisions → Market (My Deals), ListPlayerSheet, TradeSheet, Squad, HQ NowTrade |
+| Selling/trading | transferList/market → careerFlow (R135 section)/careerDecisions → Market (My Deals), ListPlayerSheet, TradeSheet, Squad |
 | News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
 | Cloud save / files (2.0.26) | lib/careerCloud, lib/careerSaveFile → careerCloudStore, careerSaveTransfer → Saves, components/career/cloud |
+| Board / real orgs (v2.2) | orgProfile/seatSwap/board/boardTypes/manager/reputation → store/boardFlow → components/career/board (BoardScreen, TakeoverWizard), Wizard, `/career/board` |
+| Endless variety (v2.2) | engine/career/endless (`CAREER_ENDLESS`) → store/endlessFlow (news through communications) → OrgSheet, OrgMark, EventScreen |
+| Pro (v2.2) | engine/career/pro (week, ranked, moments, offers, aging, gala, nickname, card) → store/proFlow, proSeat, proMatch, proGala, proStore → components/career/pro (+ spine), `/career/pro/**` |
 
 ## Open and frozen contracts
 
-Gate 3b pacing/affordability and Miguel's playtest acceptance remain open;
-see ROADMAP-NEXT-2026-11-05.md and the rc.37 handoffs. No production deploy.
-Persist version **3**, saveVersion **5**, unchanged. New colour/weekly/title
-fields and R135's `transferList` / `tradeProposals` are additive. Permanent achievements survive save/season resets.
-Organization relocation as a player action, T1 and PvP remain deferred.
+Gate 3b pacing/affordability and Miguel's playtest acceptance remain open (ROADMAP-NEXT-2026-11-05.md). Persist version **3**, saveVersion **5**, unchanged; the Pro has its own key and the boards, endless and Pro fields are additive. Permanent achievements survive save/season resets. The Pro has no account copy yet. Organization relocation as a player action, T1 and PvP remain deferred.
