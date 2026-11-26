@@ -33,6 +33,9 @@ const listEn = (p: Record<string, string | number>): string => {
 };
 
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
+/** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
+const BOARD_BANDS_EN: Record<string, string> = { expected: "Expected", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
+
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
 
 /**
@@ -4048,7 +4051,7 @@ export const CAREER_EN = {
       title: "The board's offer for the season",
       body: "Pick how ambitious the season is. The budget is paid when you accept; the objective is fixed for the season.",
       name: { cautious: "Cautious", expected: "Expected", ambitious: "Ambitious" } as Record<string, string>,
-      chance: (pct: number) => `${pct}% likely`,
+      band: (key: string) => BOARD_BANDS_EN[key] ?? key,
       budget: (amount: string) => `Budget ${amount}`,
       noBudget: "No budget",
       bonus: (amount: string) => `Bonus ${amount} if met`,
@@ -4103,7 +4106,9 @@ export const CAREER_EN = {
           return "";
       }
     },
-    likely: (pct: number) => `${pct}% likely at the season's start`,
+    bandWord: (key: string) => BOARD_BANDS_EN[key] ?? key,
+    likely: (key: string) => `${BOARD_BANDS_EN[key] ?? key} at the season's start`,
+    bandNow: (key: string) => `Now: ${(BOARD_BANDS_EN[key] ?? key).toLowerCase()}`,
     notChosen: "Choose the season's package first.",
     budgetLine: (mult: number) => `Next season's budget: ×${mult.toFixed(2)}`,
     contract: (season: number) => `Contract until season ${season}`,
@@ -4113,7 +4118,7 @@ export const CAREER_EN = {
       title: "Ultimatum",
       body: "The board wants this by the end of the season. If it is not met, you leave the club at the season review.",
       progress: (done: number, target: number) => `${done} of ${target}`,
-      chance: (pct: number) => `${pct}% likely when set`,
+      chance: (key: string) => `${BOARD_BANDS_EN[key] ?? key} when set.`,
       met: "Answered. The board backs you again.",
     },
     dismissed: {
@@ -4164,11 +4169,11 @@ export const CAREER_EN = {
       body: {
         boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
         boardCheckpoint: (p: Record<string, string | number>) =>
-          `The board reviewed the split. Confidence ${Number(p.delta) >= 0 ? "rose" : "fell"} by ${Math.abs(Number(p.delta))} to ${p.confidence}.`,
+          `The board reviewed the split. Confidence ${Number(p.delta) >= 0 ? "rose" : "fell"} by ${Math.abs(Number(p.delta))} to ${p.confidence}.${p.band ? ` The season objective now reads as ${(BOARD_BANDS_EN[String(p.band)] ?? "").toLowerCase()}.` : ""}`,
         boardWarning: (p: Record<string, string | number>) =>
           `Board confidence is at ${p.confidence}. If it falls below ${p.line}, the board will set an ultimatum with a concrete mission.`,
         boardUltimatum: (p: Record<string, string | number>) =>
-          `The board has set a mission for the rest of the season; it is on the Board page. The board rates its chance at ${p.chance}%. If it is not met by the season review, your contract ends there.`,
+          `The board has set a mission for the rest of the season; it is on the Board page. The board rates it as ${(BOARD_BANDS_EN[String(p.band)] ?? "").toLowerCase()}. If it is not met by the season review, your contract ends there.`,
         boardUltimatumMet: (p: Record<string, string | number>) => `The mission is done. Confidence is back to ${p.confidence}.`,
         boardDismissed: (p: Record<string, string | number>) =>
           `${p.org} will not continue with you after this season. ${p.n} offers are waiting in the season review, one of them a new club of your own.`,

@@ -86,13 +86,30 @@ export function calibratedChance(
   return clamp(1 / (1 + Math.exp(-z)), 0.01, 0.99);
 }
 
-/** Every season goal with its chance for this squad (Worlds goals out in a season without Worlds), calibrated when a cell is given. */
+/**
+ * The chance a board states for a season goal: the measured record of that
+ * goal for clubs of this stature and difficulty (CAREER_BOARD.goalRates),
+ * shrunk toward the calibrated model (the prior). No record: the prior.
+ */
+export function measuredGoalChance(
+  spec: Pick<SeasonGoalSpec, "kind" | "count" | "place">,
+  prior: number,
+  cell: CalibrationCell | undefined,
+  rates: Record<string, Record<string, [number, number]> | undefined> = B.goalRates,
+): number {
+  if (!cell) return prior;
+  const rec = rates[`${cell.stature}/${cell.difficulty}`]?.[`${spec.kind}:${spec.count}:${spec.place ?? ""}`];
+  if (!rec) return prior;
+  return (rec[1] + B.goalRatesK * prior) / (rec[0] + B.goalRatesK);
+}
+
+/** Every season goal with its chance for this squad (Worlds goals out in a season without Worlds), the board's stated chance when a cell is given. */
 export function ratedGoals(input: ObjectiveInput): SeasonGoalSpec[] {
   const noWorlds = worldsCancelledIn(input.seasonIndex);
   return SEASON_GOAL_CANDIDATES.filter((c) => !noWorlds || (c.kind !== "worldsQualify" && c.kind !== "worldsFinish"))
     .map((c) => ({ ...c, chance: seasonGoalChance(c, input.level, input.cup) }))
     .filter((c) => Number.isFinite(c.chance) && c.chance > 0)
-    .map((c) => ({ ...c, chance: round3(calibratedChance(c.chance, input.cal)) }));
+    .map((c) => ({ ...c, chance: round3(measuredGoalChance(c, calibratedChance(c.chance, input.cal), input.cal)) }));
 }
 
 /** The goal nearest `aim` (the less ambitious on a tie), optionally under / over a chance. */
@@ -103,6 +120,16 @@ function nearest(pool: readonly SeasonGoalSpec[], aim: number, filter?: (c: Seas
     if (!best || Math.abs(c.chance - aim) < Math.abs(best.chance - aim) - 1e-9) best = c;
   }
   return best;
+}
+
+export type ChanceBand = "expected" | "reach" | "stretch" | "longShot";
+
+/** The words a calibrated chance is shown in (CAREER_BOARD.bands). */
+export function chanceBandOf(p: number, cuts: { expected: number; reach: number; stretch: number } = B.bands): ChanceBand {
+  if (p >= cuts.expected) return "expected";
+  if (p >= cuts.reach) return "reach";
+  if (p >= cuts.stretch) return "stretch";
+  return "longShot";
 }
 
 export function objectiveAimOf(pkg: PackageId, stature: ProfileKey, difficulty: CareerDifficulty): number {
@@ -208,7 +235,8 @@ export function legacyFor(last: { worlds: boolean; majors: number } | null, inpu
       : kind === "everyMajor"
         ? { kind: "majorFinish", count: 3, place: 1 }
         : { kind: "majorFinish", count: 2, place: 1 };
-  return { kind, objective: { ...spec, chance: round3(calibratedChance(seasonGoalChance(spec, input.level, input.cup), input.cal)) }, met: null };
+  const prior = calibratedChance(seasonGoalChance(spec, input.level, input.cup), input.cal);
+  return { kind, objective: { ...spec, chance: round3(measuredGoalChance(spec, prior, input.cal)) }, met: null };
 }
 
 // ---------------------------------------------------------------------------

@@ -26,7 +26,7 @@ vi.mock("@/config/balance", async (orig) => {
 });
 
 import type { PackageId } from "@/engine/career/boardTypes";
-import { calibratedChance, objectiveAimOf } from "@/engine/career/board";
+import { calibratedChance, chanceBandOf, objectiveAimOf } from "@/engine/career/board";
 import { realOrgChoicesFor } from "@/engine/career/orgProfile";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
 import type { CareerDifficulty, CareerSave, SeasonGoalSpec } from "@/engine/career/types";
@@ -146,6 +146,24 @@ function fit(rows: CalRow[]): { a: number; b: number; first: number } {
   return { a: r2(w[0]), b: r2(Math.max(0.2, w[1])), first: r2(w[2]) };
 }
 
+function goalRatesOf(rows: CalRow[]): Map<string, { n: number; met: number }> {
+  const m = new Map<string, { n: number; met: number }>();
+  for (const r of rows) {
+    const k = `${r.stature}|${r.diff}|${r.goal}`;
+    const t = m.get(k) ?? { n: 0, met: 0 };
+    t.n += 1;
+    t.met += r.met ? 1 : 0;
+    m.set(k, t);
+  }
+  return m;
+}
+
+function tableChance(t: Map<string, { n: number; met: number }>, r: CalRow, prior: number): number {
+  const k = Number(env.BOARD_TABLE_K ?? 8);
+  const x = t.get(`${r.stature}|${r.diff}|${r.goal}`);
+  return x ? (x.met + k * prior) / (x.n + k) : prior;
+}
+
 /** The shift-only fit (slope fixed at 1, the model's ordering kept): logit(p) = logit(model) + a + first·[first season]. */
 function fitShift(rows: CalRow[]): { a: number; b: number; first: number } {
   let a = 0;
@@ -199,6 +217,13 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         console.log(`${st}/${df} n=${xs.length} fit ${JSON.stringify(f)} | real by model band: ${line.filter(Boolean).join(", ")}`);
       }
     console.log("CALIBRATION " + JSON.stringify(out));
+    // The measured rate of each goal per cell, from the rows that name their goal: CAREER_BOARD.goalRates.
+    const rates: Record<string, Record<string, [number, number]>> = {};
+    for (const [k, t] of goalRatesOf(rows.filter((r) => r.goal))) {
+      const [st, df, goal] = k.split("|");
+      (rates[`${st}/${df}`] ??= {})[goal] = [t.n, t.met];
+    }
+    console.log("GOALRATES " + JSON.stringify(rates));
     return;
   }
   if (env.BOARD_EVAL_FROM) {
@@ -206,20 +231,31 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     const only = env.BOARD_EVAL_SEED ? `:${env.BOARD_EVAL_SEED}:` : null;
     const rows: CalRow[] = env.BOARD_EVAL_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => r.key && (!only || r.key.includes(only)));
     const table = env.BOARD_EVAL_CAL ? JSON.parse(env.BOARD_EVAL_CAL) : {};
+    // BOARD_EVAL_TABLE_FROM: the measured rate of each goal per stature × difficulty on the training rows
+    // (the evaluated seed left out), shrunk toward the fitted chance.
+    const goalTable = env.BOARD_EVAL_TABLE_FROM ? goalRatesOf(env.BOARD_EVAL_TABLE_FROM.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as CalRow[]).filter((r) => r.goal && (!only || !r.key!.includes(only)))) : null;
     const groups = new Map<string, CalRow[]>();
-    for (const r of rows) groups.set(r.key!, [...(groups.get(r.key!) ?? []), r]);
-    const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number }>();
+    // The key lacks the difficulty (both difficulties share region:seed:stature:season): group on both.
+    for (const r of rows) groups.set(`${r.key}:${r.diff}`, [...(groups.get(`${r.key}:${r.diff}`) ?? []), r]);
+    const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number; s1n: number; s1met: number; s1stated: number }>();
+    const picks: { cell: string; band: string; c: number; met: boolean }[] = [];
     for (const g of groups.values()) {
       const { stature, diff, first } = g[0];
       const cell = { stature: stature as never, difficulty: diff as CareerDifficulty, first };
-      const pool = g.map((r) => ({ r, c: calibratedChance(r.model, cell, table) }));
+      const pool = g.map((r) => ({ r, c: goalTable ? tableChance(goalTable, r, calibratedChance(r.model, cell, table)) : calibratedChance(r.model, cell, table) }));
       const near = (aim: number, f: (c: number) => boolean) => pool.filter((x) => f(x.c)).sort((x, y) => Math.abs(x.c - aim) - Math.abs(y.c - aim))[0];
       const ex = near(objectiveAimOf("expected", stature as never, diff as CareerDifficulty), () => true);
       if (!ex) continue;
       const ca = near(objectiveAimOf("cautious", stature as never, diff as CareerDifficulty), (c) => c > ex.c + 0.02) ?? ex;
       const am = near(objectiveAimOf("ambitious", stature as never, diff as CareerDifficulty), (c) => c < ex.c - 0.02) ?? ex;
       const k = `${stature}/${diff}`;
-      const t = cells.get(k) ?? { n: 0, stated: 0, met: 0, ca: 0, am: 0 };
+      const t = cells.get(k) ?? { n: 0, stated: 0, met: 0, ca: 0, am: 0, s1n: 0, s1met: 0, s1stated: 0 };
+      for (const x of [ex, ca, am]) picks.push({ cell: k, band: chanceBandOf(x.c), c: x.c, met: x.r.met });
+      if (first) {
+        t.s1n += 1;
+        t.s1met += ex.r.met ? 1 : 0;
+        t.s1stated += ex.c;
+      }
       t.n += 1;
       t.stated += ex.c;
       t.met += ex.r.met ? 1 : 0;
@@ -228,8 +264,30 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       cells.set(k, t);
     }
     for (const [k, t] of [...cells].sort()) {
-      console.log(`EVAL ${k.padEnd(16)} Expected stated ${Math.round((100 * t.stated) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (N=${t.n}) | Cautious ${Math.round((100 * t.ca) / t.n)}% / Ambitious ${Math.round((100 * t.am) / t.n)}%`);
+      console.log(`EVAL ${k.padEnd(16)} Expected stated ${Math.round((100 * t.stated) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (N=${t.n}) | Cautious ${Math.round((100 * t.ca) / t.n)}% / Ambitious ${Math.round((100 * t.am) / t.n)}% | S1 stated ${t.s1n ? Math.round((100 * t.s1stated) / t.s1n) : 0}% measured ${t.s1n ? Math.round((100 * t.s1met) / t.s1n) : 0}% (N=${t.s1n})`);
     }
+    // Bands: every picked objective (all three packages), grouped by stated band — the measured rate's band against it.
+    const order = ["longShot", "stretch", "reach", "expected"];
+    let same = 0, adj = 0, far = 0;
+    const bandGroups = new Map<string, { n: number; met: number; c: number }>();
+    for (const x of picks) {
+      const g = bandGroups.get(`${x.cell}|${x.band}`) ?? { n: 0, met: 0, c: 0 };
+      g.n += 1;
+      g.met += x.met ? 1 : 0;
+      g.c += x.c;
+      bandGroups.set(`${x.cell}|${x.band}`, g);
+    }
+    for (const [k, g] of [...bandGroups].sort()) {
+      const [cell, band] = k.split("|");
+      const mb = chanceBandOf(g.met / g.n);
+      const d = Math.abs(order.indexOf(mb) - order.indexOf(band));
+      if (d === 0) same += g.n;
+      else if (d === 1) adj += g.n;
+      else far += g.n;
+      console.log(`BAND ${cell.padEnd(16)} ${band.padEnd(8)} stated ${Math.round((100 * g.c) / g.n)}% measured ${Math.round((100 * g.met) / g.n)}% (${mb}, N=${g.n})`);
+    }
+    const tot = same + adj + far;
+    console.log(`BANDS same ${Math.round((100 * same) / tot)}% adjacent ${Math.round((100 * adj) / tot)}% two+ away ${Math.round((100 * far) / tot)}% (N=${tot} objectives)`);
     return;
   }
   if (env.BOARD_SUMMARY_FROM) {
@@ -280,7 +338,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       const ctx = overCtx(save);
       if (pool && pool.s === save.clock.seasonIndex) {
         const st = job.stature === "founded" && pool.stature === "owners" ? "owners" : pool.stature;
-        const key = `${job.region}:${job.seed}:${job.stature}:${save.clock.seasonIndex}`;
+        const key = `${job.region}:${job.seed}:${job.stature}:${save.clock.seasonIndex}:${job.diff}`;
         for (const g of pool.goals) cal.push({ stature: st, diff: job.diff, first: pool.first, model: g.chance, met: seasonGoalProgressOf(g, ctx).hit, key, goal: `${g.kind}:${g.count}:${g.place ?? ""}` });
       }
       const offers: Record<string, [number, boolean]> = {};
@@ -320,6 +378,35 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
 
 function summary(rows: CareerRow[]): void {
   const pc = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+  // Bands, per policy: every offered package's objective (seasons at the starting club), grouped by cell × stated band.
+  const order = ["longShot", "stretch", "reach", "expected"];
+  for (const pol of [...new Set(rows.map((r) => r.policy))]) {
+    const g = new Map<string, { n: number; met: number; c: number }>();
+    for (const c of rows.filter((r) => r.policy === pol))
+      for (const s of c.seasons) {
+        if (s.moved) break;
+        for (const [stated, met] of Object.values(s.offers)) {
+          const k = `${c.stature}/${c.diff}|${chanceBandOf(stated)}`;
+          const t = g.get(k) ?? { n: 0, met: 0, c: 0 };
+          t.n += 1;
+          t.met += met ? 1 : 0;
+          t.c += stated;
+          g.set(k, t);
+        }
+      }
+    let same = 0, adj = 0, far = 0;
+    for (const [k, t] of [...g].sort()) {
+      const [cell, band] = k.split("|");
+      const mb = chanceBandOf(t.met / t.n);
+      const d = Math.abs(order.indexOf(mb) - order.indexOf(band));
+      if (d === 0) same += t.n;
+      else if (d === 1) adj += t.n;
+      else far += t.n;
+      console.log(`BAND ${pol} ${cell.padEnd(16)} ${band.padEnd(8)} stated ${Math.round((100 * t.c) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (${mb}, N=${t.n})`);
+    }
+    const tot = same + adj + far;
+    console.log(`BANDS ${pol}: same ${Math.round((100 * same) / tot)}% adjacent ${Math.round((100 * adj) / tot)}% two+ away ${Math.round((100 * far) / tot)}% (N=${tot} objectives)`);
+  }
   for (const pol of [...new Set(rows.map((r) => r.policy))])
     for (const diff of [...new Set(rows.map((r) => r.diff))]) {
       console.log(`\n[${pol} ${diff}] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks`);
