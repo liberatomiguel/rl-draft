@@ -3733,6 +3733,170 @@ export const CAREER_EN = {
       allCareers: "All Pro careers",
     },
   },
+  // v2.2 board front: taking over a real org, the board, its objectives, confidence and job offers.
+  board: {
+    title: "Board",
+    kicker: "What the board expects this season, and how it rates your work.",
+    door: {
+      found: "Found a club",
+      foundBody: "Build your own organization from three unknown players.",
+      takeover: "Take over an organization",
+      takeoverBody: "Manage a real organization with its roster, money and a board that expects results.",
+    },
+    pick: {
+      title: "Take over an organization",
+      kicker: "Pick a region, then an organization as it stands in the first season.",
+      region: "Region",
+      orgs: "Organizations",
+      manager: "Manager name",
+      managerPlaceholder: "Your name",
+      difficulty: "Difficulty",
+      go: "Take the job",
+      squad: "Roster",
+      coach: (name: string, ovr: number) => `Coach ${name} (${ovr})`,
+      noCoach: "No coach",
+      rank: (rank: number, teams: number) => `Squad #${rank} of ${teams}`,
+      cash: "Starting cash",
+      budget: "Season budget",
+      wageRoom: "Wage room / week",
+      expected: "Board expects",
+      expectedRank: (rank: number) => `Top ${rank} in the region`,
+      missCost: "A missed objective",
+      missCostValue: (n: number) => `−${n} confidence`,
+      grace: (n: number) => (n === 1 ? "No ultimatum in season 1" : `No ultimatum for ${n} seasons`),
+      back: "Back",
+      empty: "No organization to take over in this region.",
+    },
+    stature: { elite: "Elite", contender: "Contender", mid: "Mid-table", underdog: "Underdog", owners: "Owners" } as Record<string, string>,
+    statureNote: {
+      elite: "Money and stars, little patience.",
+      contender: "A strong squad, a demanding board.",
+      mid: "Room to grow, a fair board.",
+      underdog: "Less money, more time.",
+      owners: "Your own club: the owners give you time.",
+    } as Record<string, string>,
+    packages: {
+      title: "The board's offer for the season",
+      body: "Pick how ambitious the season is. The budget is paid when you accept; the objective is fixed for the season.",
+      name: { cautious: "Cautious", expected: "Expected", ambitious: "Ambitious" } as Record<string, string>,
+      chance: (pct: number) => `${pct}% likely`,
+      budget: (amount: string) => `Budget ${amount}`,
+      noBudget: "No budget",
+      bonus: (amount: string) => `Bonus ${amount} if met`,
+      swing: (hit: number, miss: number) => `Confidence +${hit} if met, −${Math.abs(miss)} if missed`,
+      accept: "Accept",
+      recommended: "Recommended",
+    },
+    confidence: "Board confidence",
+    confidenceOf: (n: number) => `${n} / 100`,
+    band: (n: number): string => (n >= 80 ? "Strong" : n >= 40 ? "Steady" : n >= 25 ? "Under pressure" : "Critical"),
+    lines: (warn: number, ultimatum: number) => `Below ${warn} the board warns you. Below ${ultimatum}, after a warning, it sets an ultimatum.`,
+    log: "Why it moved",
+    logEmpty: "No change yet this season.",
+    reasons: {
+      objectiveMet: "Season objective met",
+      objectiveMissed: "Season objective missed",
+      objectiveOut: "Season objective out of reach",
+      onTrack: "Checkpoint: on track",
+      behind: "Checkpoint: behind",
+      secondaryMet: "Secondary objective met",
+      secondaryMissed: "Secondary objective missed",
+      legacyMet: "Legacy objective met",
+      titleMajor: "Major title",
+      titleWorlds: "Worlds title",
+      debt: "Deep debt",
+      ultimatumMet: "Ultimatum answered",
+    } as Record<string, string>,
+    objectives: "This season's objectives",
+    sporting: "Season objective",
+    secondary: "Secondary",
+    legacy: "Legacy",
+    legacyNote: "No penalty if missed.",
+    secondaryLabel: (kind: string, value: string): string => {
+      switch (kind) {
+        case "balance":
+          return "End the season with a positive balance";
+        case "wages":
+          return `Keep the wage bill under ${value} a week`;
+        case "youth":
+          return `Start a player under ${value} at the season's end`;
+        case "homeCore":
+          return `Reach a Major with ${value} home-region starters`;
+        default:
+          return "";
+      }
+    },
+    likely: (pct: number) => `${pct}% likely at the season's start`,
+    notChosen: "Choose the season's package first.",
+    budgetLine: (mult: number) => `Next season's budget: ×${mult.toFixed(2)}`,
+    contract: (season: number) => `Contract until season ${season}`,
+    protectedUntil: (season: number) => `Title protection through season ${season}: losses halved, no ultimatum.`,
+    freeze: "Hiring freeze: no signings in this window.",
+    ultimatum: {
+      title: "Ultimatum",
+      body: "The board wants this by the end of the season. If it is not met, you leave the club at the season review.",
+      progress: (done: number, target: number) => `${done} of ${target}`,
+      chance: (pct: number) => `${pct}% likely when set`,
+      met: "Answered. The board backs you again.",
+    },
+    dismissed: {
+      title: "You have been dismissed",
+      body: (org: string) => `${org} ends your contract at the season's end. Your record stays with you. Pick your next job to continue.`,
+      offers: "Job offers",
+      found: "Found a new club",
+      foundBody: (name: string) => `Start ${name} in your home region with three free agents and the founding budget.`,
+      accept: "Accept",
+      accepted: (org: string) => `You start at ${org} next season.`,
+    },
+    approach: {
+      title: "An approach",
+      body: (org: string) => `${org} want you as their manager next season. Your current club would continue without you.`,
+      accept: "Accept the job",
+      decline: "Stay",
+    },
+    offerLine: (stature: string, region: string, rank: number) => `${stature} · ${region} · squad #${rank}`,
+    managerRep: "Manager reputation",
+    spells: "Career",
+    spell: (org: string, from: number, to: string) => `${org}: season ${from + 1} to ${to}`,
+    now: "now",
+    openBoard: "Open the board",
+    boardFreezeError: "The board froze hiring for this window.",
+    mail: {
+      tpl: {
+        boardPackage: () => "The board's offer for the season",
+        boardCheckpoint: (p: Record<string, string | number>) => `Board review after split ${p.split}`,
+        boardWarning: () => "A warning from the board",
+        boardUltimatum: () => "Ultimatum from the board",
+        boardUltimatumMet: () => "The board backs you again",
+        boardDismissed: (p: Record<string, string | number>) => `${p.org} dismiss their manager`,
+        boardHighConfidence: () => "The board extends your contract",
+        boardFreeze: () => "Hiring freeze",
+        boardVerdict: () => "The board's season verdict",
+        boardApproach: (p: Record<string, string | number>) => `${p.org} make an approach`,
+        boardNewJob: (p: Record<string, string | number>) => `Welcome to ${p.org}`,
+      } as Record<string, (p: Record<string, string | number>) => string>,
+      body: {
+        boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
+        boardCheckpoint: (p: Record<string, string | number>) =>
+          `The board reviewed the split. Confidence ${Number(p.delta) >= 0 ? "rose" : "fell"} by ${Math.abs(Number(p.delta))} to ${p.confidence}.`,
+        boardWarning: (p: Record<string, string | number>) =>
+          `Board confidence is at ${p.confidence}. If it falls below ${p.line}, the board will set an ultimatum with a concrete mission.`,
+        boardUltimatum: (p: Record<string, string | number>) =>
+          `The board has set a mission for the rest of the season; it is on the Board page. The board rates its chance at ${p.chance}%. If it is not met by the season review, your contract ends there.`,
+        boardUltimatumMet: (p: Record<string, string | number>) => `The mission is done. Confidence is back to ${p.confidence}.`,
+        boardDismissed: (p: Record<string, string | number>) =>
+          `${p.org} will not continue with you after this season. ${p.n} offers are waiting in the season review, one of them a new club of your own.`,
+        boardHighConfidence: (p: Record<string, string | number>) =>
+          `Confidence stands at ${p.confidence}. The board raises next season's budget and extends your contract to season ${p.until}.`,
+        boardFreeze: (p: Record<string, string | number>) => `With confidence at ${p.confidence}, the board allows no signings in next season's first window.`,
+        boardVerdict: (p: Record<string, string | number>) =>
+          `The season objective was ${Number(p.met) ? "met" : "missed"}. Board confidence ends the season at ${p.confidence}.`,
+        boardApproach: (p: Record<string, string | number>) =>
+          `${p.org} (${p.region}) ask whether you would manage them next season. Answer in the season review.`,
+        boardNewJob: (p: Record<string, string | number>) => `You take over ${p.org}. ${p.left} continue in the league without you.`,
+      } as Record<string, (p: Record<string, string | number>) => string>,
+    },
+  },
 };
 
 export type CareerCopy = typeof CAREER_EN;

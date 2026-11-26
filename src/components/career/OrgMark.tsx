@@ -93,6 +93,8 @@ export function OrgMark({
   className?: string;
   loading?: "lazy" | "eager";
 }) {
+  // v2.2 board front: a manager who took over a real org wears its real logo.
+  if (orgRef === "user" && save.identity.realOrgRef) orgRef = save.identity.realOrgRef;
   if (orgRef === "user") {
     return (
       <UserCrest

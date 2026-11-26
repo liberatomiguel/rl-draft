@@ -232,7 +232,7 @@ function warnIfLow(save: CareerSave & { board: BoardState }): void {
   const board = save.board;
   if (board.confidence < B.confidence.warn && board.warnedSeason === null) {
     board.warnedSeason = save.clock.seasonIndex;
-    mail(save, "boardWarning", { confidence: board.confidence });
+    mail(save, "boardWarning", { confidence: board.confidence, line: B.confidence.ultimatum });
   }
 }
 
