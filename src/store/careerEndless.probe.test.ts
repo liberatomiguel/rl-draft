@@ -45,6 +45,9 @@ export interface EndlessSeason {
   /** Rival projects running this season (the front's own state; 0 when off). */
   projects?: number;
   projectLift?: string[];
+  strength?: number;
+  /** The user's consecutive Worlds titles going into the season (the dynasty the answer read). */
+  userStreak?: number;
   /** The user's lead over the three best AI sides at the season's Worlds. */
   worldsGap?: number[];
   legends?: { user: number; top: number; mean: number; place: string }[];
@@ -160,6 +163,8 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
             r.projects = fresh.length;
             r.projectLift = fresh.map((p) => `${p.region}:${p.ratingBefore}>${p.ratingAfter}`);
             r.gap = save.endless?.gap;
+            r.strength = save.endless?.strength ?? 0;
+            r.userStreak = save.endless?.streak?.ref === "user" ? save.endless.streak.titles : 0;
           },
         });
         for (const s of res.seasons) {

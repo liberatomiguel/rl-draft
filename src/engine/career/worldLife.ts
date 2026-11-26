@@ -174,7 +174,7 @@ function liftedPotential(id: string, careerSeed: number): number {
  */
 export function eliteRenewalPass(
   world: WorldState,
-  ctx: Ctx & { userSquadIds: readonly string[] },
+  ctx: Ctx & { userSquadIds: readonly string[]; potentialBonus?: number },
 ): { world: WorldState; lifted: { playerId: string; playerName: string; region: Region; orgName: string | null; potential: number }[] } {
   const E = L.eliteRenewal;
   const lifted: { playerId: string; playerName: string; region: Region; orgName: string | null; potential: number }[] = [];
@@ -205,7 +205,8 @@ export function eliteRenewalPass(
       .sort((a, b) => Number(orgOf.has(b.id)) - Number(orgOf.has(a.id)) || b.overall - a.overall || b.potential - a.potential || a.id.localeCompare(b.id))
       .slice(0, need);
     for (const v of picks) {
-      const potential = liftedPotential(v.id, ctx.careerSeed);
+      // v2.2 ENDLESS: a long dynasty lifts the new generation a little (new promotions only, capped at 99).
+      const potential = Math.min(99, liftedPotential(v.id, ctx.careerSeed) + (ctx.potentialBonus ?? 0));
       lifts[v.id] = { potential, peakAge: peakAgeWithRoom(v.peakAge, v.age, potential - v.overall) };
       if (!(v.id in delta)) delta[v.id] = 0; // off-script: the weekly world growth moves him from here
       lifted.push({ playerId: v.id, playerName: v.name, region, orgName: orgOf.get(v.id)?.name ?? null, potential });

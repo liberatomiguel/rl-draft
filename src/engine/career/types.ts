@@ -426,11 +426,11 @@ export interface WorldOrgState {
   /** v2.1 M1: seasons in a row ended outside the region's top (org turnover). */
   lowSeasons?: number;
   /**
-   * v2.2 ENDLESS: a rival project's performance centre this season, the same
-   * team-rating bonus the user's own centre gives (CAREER_GEAR perfCenter).
-   * Cleared at the next rollover unless the org runs a project again.
+   * v2.2 ENDLESS: a rival project's kit this season, items of the user's own
+   * toolbox (engine/career/endless KIT_ORDER; effects in projectKitEffect).
+   * Decided again at every rollover; absent = no project.
    */
-  projectBonus?: number;
+  projectKit?: { since: number; items: import("./endless").KitItem[] };
 }
 
 export interface WorldState {
@@ -1861,6 +1861,9 @@ export interface EndlessState {
   projects: RivalProject[];
   /** The dominance gap the projects answered (leader minus the next three), for the review and the probes. */
   gap?: number;
+  /** The answer's strength this season (0 = none) and the reigning champion's run it read. */
+  strength?: number;
+  streak?: { ref: string | null; titles: number };
   /** The season's drawn identity: indexes into the copy's host list (three Majors, then the Worlds). */
   hosts?: { season: number; cities: number[] };
 }
@@ -1872,8 +1875,10 @@ export interface RivalProject {
   orgName: string;
   region: Region;
   signed: { playerId: string; playerName: string; fromRef: string | null; fromName: string | null; outId: string }[];
-  /** The performance centre's team-rating bonus (0 = none this season). */
-  facility: number;
+  /** The season the project started (a core kept together runs up to CAREER_ENDLESS.projects.maxSeasons). */
+  since: number;
+  /** Its kit this season, from the user's own toolbox. */
+  items: import("./endless").KitItem[];
   ratingBefore: number;
   ratingAfter: number;
 }

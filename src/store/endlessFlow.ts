@@ -15,7 +15,9 @@ import {
   legendsWeekFor,
   legendTeamFor,
   majorHostsFor,
+  eliteBonusFor,
   rivalProjectsPass,
+  worldsStreakOf,
   worldWeekFor,
 } from "@/engine/career/endless";
 import { PARTNER_EVENT_NAMES } from "@/data/career/names";
@@ -64,6 +66,8 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
     titleKey: "endlessHosts",
     params: { season: seasonLabelFor(nextSeason), h1: cities[0], h2: cities[1], h3: cities[2], h4: cities[3] },
   });
+  const streak = worldsStreakOf(save.honors, nextSeason - 1);
+  const running = last.filter((p) => p.season === nextSeason - 1);
   const res = rivalProjectsPass(save.world, {
     careerSeed: save.careerSeed,
     seasonIndex: nextSeason,
@@ -71,34 +75,54 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
     userSquadIds: save.squad.map((p) => p.id),
     userRating: userRatingOf(save),
     userRegion: save.identity.region,
-    lastProjectRefs: last.filter((p) => p.season >= nextSeason - CAREER_ENDLESS.projects.seasons).map((p) => p.orgRef),
-    runningProjectRefs: last.filter((p) => p.season > nextSeason - CAREER_ENDLESS.projects.seasons && p.facility > 0).map((p) => p.orgRef),
+    running,
+    // An org whose project ended last season (not continued now) rests this one.
+    restingRefs: last.filter((p) => p.season === nextSeason - 2 && !running.some((r) => r.orgRef === p.orgRef)).map((p) => p.orgRef),
+    streak,
   });
   save.world = res.world;
-  // The running projects stay on the record (rotation, the review); only the new ones make the news.
-  save.endless.projects = [...last.filter((p) => p.season > nextSeason - CAREER_ENDLESS.projects.seasons), ...res.projects];
+  // Last season's record stays one more season (who rests); this season's projects follow.
+  save.endless.projects = [...running, ...res.projects];
   save.endless.gap = Math.round(res.gap * 10) / 10;
+  save.endless.strength = res.strength;
+  save.endless.streak = streak;
   for (const p of res.projects) {
     const mine = p.region === save.identity.region;
-    const [a, b, c] = p.signed.map((s) => s.playerName);
+    const before = running.find((r) => r.orgRef === p.orgRef);
+    const kit = p.items.join(",");
+    if (before) {
+      // A core kept together: news only when the kit grew or it signed again.
+      const added = p.items.filter((k) => !before.items.includes(k));
+      if (added.length === 0 && p.signed.length === 0) continue;
+      deliverNews(save, {
+        type: "milestone",
+        priority: mine ? 2 : 1,
+        titleKey: "endlessProjectGrows",
+        params: { org: p.orgName, region: p.region, kit: added.join(","), p1: p.signed[0]?.playerName ?? "", season: p.season - p.since + 1, after: p.ratingAfter.toFixed(1) },
+      });
+      continue;
+    }
+    const [a, b, c] = p.signed.map((x) => x.playerName);
     deliverNews(save, {
       type: "milestone",
       priority: mine ? 3 : 2,
       titleKey: "endlessProject",
-      params: {
-        org: p.orgName,
-        region: p.region,
-        p1: a ?? "",
-        p2: b ?? "",
-        p3: c ?? "",
-        n: p.signed.length,
-        from: p.signed[0]?.fromName ?? "",
-        before: p.ratingBefore.toFixed(1),
-        after: p.ratingAfter.toFixed(1),
-        fac: p.facility > 0 ? 1 : 0,
-      },
+      params: { org: p.orgName, region: p.region, p1: a ?? "", p2: b ?? "", p3: c ?? "", n: p.signed.length, kit, before: p.ratingBefore.toFixed(1), after: p.ratingAfter.toFixed(1) },
     });
   }
+}
+
+/** M2.1's extra ceiling for this rollover's new elite promotions (careerFlow's worldLifeRollover passes it on). */
+export function endlessEliteBonus(save: CareerSave, nextSeason: number): number {
+  if (!endlessOn(save, nextSeason)) return 0;
+  return eliteBonusFor(worldsStreakOf(save.honors, nextSeason - 1), nextSeason);
+}
+
+/** The arrival of a stronger elite generation, in the news (only when the dynasty lifted it). */
+export function endlessGenerationNews(save: CareerSave, lifted: readonly { playerName: string; region: string; potential: number }[], bonus: number): void {
+  if (bonus <= 0 || lifted.length === 0) return;
+  const best = [...lifted].sort((x, y) => y.potential - x.potential)[0];
+  deliverNews(save, { type: "milestone", priority: 2, titleKey: "endlessGeneration", params: { n: lifted.length, player: best.playerName, region: best.region } });
 }
 
 /** The season's open weeks (the Legends draw reads them). */

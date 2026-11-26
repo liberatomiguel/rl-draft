@@ -362,7 +362,7 @@ import {
   userCoachRollover,
   worldLifeOn,
 } from "@/engine/career/worldLife";
-import { endlessOffer, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
+import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -4634,7 +4634,9 @@ function worldLifeRollover(save: CareerSave, nextSeason: number, retiredNow: str
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prospectScouted", params: { org: sg.orgName, player: sg.playerName } });
   }
   // v2.1 M2.1 (R142): the world grows — a region short of its S6 elite promotes young AI prodigies.
-  const elite = eliteRenewalPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds });
+  const eliteBonus = endlessEliteBonus(save, nextSeason); // v2.2 ENDLESS: a long dynasty's stronger generation
+  const elite = eliteRenewalPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds, potentialBonus: eliteBonus });
+  endlessGenerationNews(save, elite.lifted, eliteBonus);
   save.world = elite.world;
   for (const p of elite.lifted.filter((x) => x.region === save.identity.region).slice(0, 2)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prodigyRises", params: { player: p.playerName, region: p.region } });

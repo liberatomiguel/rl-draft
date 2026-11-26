@@ -17,6 +17,16 @@ const ENDLESS_HOSTS_PT = [
 ] as const;
 const hostPt = (i: string | number | undefined): string => ENDLESS_HOSTS_PT[Number(i)] ?? "";
 /** v2.2 ENDLESS: "A", "A e B", "A, B e C". */
+/** v2.2 ENDLESS: o kit de um projeto rival, o mesmo do clube do manager (chaves: engine/career/endless KIT_ORDER). */
+const ENDLESS_KIT_PT: Record<string, string> = {
+  facilities: "um centro de performance",
+  coach: "o melhor coach da região",
+  bench: "um reserva no banco",
+  bootcamp: "um bootcamp",
+  psychologist: "um psicólogo",
+};
+const joinPt = (xs: string[]): string => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`);
+const kitPt = (kit: string | number | undefined): string => joinPt(String(kit ?? "").split(",").filter(Boolean).map((k) => ENDLESS_KIT_PT[k] ?? k));
 const listPt = (p: Record<string, string | number>): string => {
   const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
   return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`;
@@ -2318,6 +2328,8 @@ export const CAREER_PT: CareerCopy = {
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) desponta como prodígio`,
       // v2.2 ENDLESS
       endlessProject: (p: Record<string, string | number>) => `${p.org} monta o time em torno de ${listPt(p)}`,
+      endlessProjectGrows: (p: Record<string, string | number>) => `${p.org} segue montando, temporada ${p.season} do projeto`,
+      endlessGeneration: (p: Record<string, string | number>) => `Uma geração mais forte: ${p.player} (${p.region}) lidera ${p.n} novos prodígios`,
       endlessHosts: (p: Record<string, string | number>) => `${p.season}: os Majors vão para ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
@@ -2484,7 +2496,11 @@ export const CAREER_PT: CareerCopy = {
         `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
       // v2.2 ENDLESS: só o que o save mostra (as contratações e o rating antes e depois).
       endlessProject: (p: Record<string, string | number>) =>
-        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada.${Number(p.fac) ? " A org também abre um centro de performance para a temporada." : ""} No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada${p.kit ? ` e soma ${kitPt(p.kit)}, as mesmas ferramentas que o clube de um manager pode comprar` : ""}. No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+      endlessProjectGrows: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) mantém a base por mais uma temporada${p.p1 ? `, contrata ${p.p1}` : ""}${p.kit ? ` e soma ${kitPt(p.kit)}` : ""}. O rating do time está em ${p.after}.`,
+      endlessGeneration: (p: Record<string, string | number>) =>
+        `Os olheiros avaliam os prospectos de elite deste ano um pouco acima dos do ano passado. ${p.player} (${p.region}) encabeça um grupo de ${p.n} que pode chegar ao topo em uma ou duas temporadas.`,
       endlessHosts: (p: Record<string, string | number>) =>
         `As paradas do circuito em ${p.season} estão definidas: Majors em ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}, e o Mundial em ${hostPt(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
@@ -4079,5 +4095,7 @@ export const CAREER_PT: CareerCopy = {
   endless: {
     hosts: ENDLESS_HOSTS_PT as readonly string[],
     legendsNote: "Elencos históricos da RLCS no rating real do auge. Paga prêmio e reputação, sem Season Points.",
+    /** A linha da ficha da org para um projeto rival (o kit da temporada). */
+    projectKit: (season: number, kit: string) => `Projeto, temporada ${season}: ${kitPt(kit)}.`,
   },
 };
