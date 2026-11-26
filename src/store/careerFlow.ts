@@ -3904,7 +3904,8 @@ function userSeriesGate(save: CareerSave, t: TournamentState): "open" | "wait" |
   if (!userSeriesStopsAt(save, t)) return "play";
   const us = save.activeEvent?.userSeries;
   const pairing = upcomingUserPairing(t, save.difficulty);
-  if (!us || !pairing || us.roundKey !== pairing.roundKey) return "open";
+  if (!pairing) return "play"; // a playoff round without the user (his bracket waits): nothing to open, play it
+  if (!us || us.roundKey !== pairing.roundKey) return "open";
   return isSeriesOver(us.state) ? "play" : "wait";
 }
 
