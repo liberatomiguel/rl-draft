@@ -89,9 +89,17 @@ export function hostOf(save: ProSave): CareerSave | null {
   return { ...(save.host as ProHost), world: save.world, clock: save.clock, competition: save.competition } as CareerSave;
 }
 
+/** The host's own feed and mail are never shown (the Pro has his inbox): only the latest are kept, to keep the save small. */
+const HOST_FEED_KEEP = 20;
+
 function storeHost(save: ProSave, host: CareerSave): ProSave {
   const { world, clock, competition, ...rest } = host;
-  return { ...save, world, clock, competition, host: rest };
+  const trimmed: ProHost = {
+    ...rest,
+    news: rest.news.length > HOST_FEED_KEEP ? rest.news.slice(0, HOST_FEED_KEEP) : rest.news,
+    mail: rest.mail.length > HOST_FEED_KEEP ? rest.mail.slice(0, HOST_FEED_KEEP) : rest.mail,
+  };
+  return { ...save, world, clock, competition, host: trimmed };
 }
 
 function newHost(save: ProSave): CareerSave {
