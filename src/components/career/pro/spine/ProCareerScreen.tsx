@@ -133,6 +133,9 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
 
   if (save.stage === "retired") return <Retired save={save} />;
 
+  // Mid-series the screen is the series and nothing else: no week strip, no Continue bar over the options.
+  if (save.live && (stop?.kind === "matchday" || stop?.kind === "event")) return <ProLive save={save} eventName={stop.eventName} />;
+
   return (
     <div className="space-y-5">
       {save.stage === "ranked" && offers.length > 0 ? null : <p className="text-sm leading-snug text-sub">{status}</p>}
@@ -210,18 +213,22 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </p>
       </div>
 
-      <div>
+      {stop?.kind === "weekPlan" || stop?.kind === "seasonEnd" ? null : (
+        <>
         <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
           <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>
-            {stop?.kind === "weekPlan" ? P.weekStop.continueWithPlan : P.advance}
+            {P.advance}
           </Button>
           <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
             {P.oneDay}
           </Button>
         </div>
-        <p className="mt-3 text-xs leading-snug text-faint">{P.advanceHint}</p>
-        {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
-      </div>
+        <div>
+          <p className="text-xs leading-snug text-faint">{P.advanceHint}</p>
+          {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
+        </div>
+        </>
+      )}
 
       {canRetireProNow(save) && !save.retireOffer ? (
         <div>

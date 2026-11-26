@@ -3794,7 +3794,7 @@ export const CAREER_PT: CareerCopy = {
   /** v2.2 Pro, fatia 5: o lance de um jogo e as mecânicas assinatura (docs/PRO-SPEC.md §4.2, §6). */
   proMoments: {
     title: "A sua decisão",
-    kicker: "Um lance por jogo. A palavra ao lado de cada opção mostra como ela está para você agora.",
+    kicker: "Uma decisão por jogo. A palavra ao lado de cada opção diz quão provável é dar certo para você agora; a linha embaixo do nome é o atributo que ela testa. Opção travada é uma mecânica que você ainda não desbloqueou.",
     moment: {
       decider: "A decisão",
       overtimeWinner: "Overtime",
@@ -3821,7 +3821,7 @@ export const CAREER_PT: CareerCopy = {
       flipReset: "Flip reset",
     } as Record<string, string>,
     hints: { risky: "Arriscado", uncertain: "Incerto", likely: "Provável", mastered: "Você domina isso" } as Record<string, string>,
-    locked: (name: string) => `Precisa de ${name}`,
+    locked: (_name: string) => `Ainda não desbloqueada`,
     instinct: "No instinto",
     instinctHint: "O seu estilo faz a escolha. Não ajuda e não atrapalha.",
     result: {
@@ -4027,6 +4027,13 @@ export const CAREER_PT: CareerCopy = {
     },
     confidence: "Confiança da diretoria",
     confidenceOf: (n: number) => `${n} / 100`,
+    verdict: {
+      title: "O veredito da diretoria",
+      met: (goal: string) => `Objetivo cumprido: ${goal}.`,
+      missed: (goal: string) => `Objetivo perdido: ${goal}.`,
+      confidence: (n: number) => `A confiança da diretoria termina a temporada em ${n} / 100.`,
+      open: "Abrir a diretoria",
+    },
     band: (n: number): string => (n >= 80 ? "Forte" : n >= 40 ? "Estável" : n >= 25 ? "Sob pressão" : "Crítica"),
     lines: (warn: number, ultimatum: number) => `Abaixo de ${warn} a diretoria avisa. Abaixo de ${ultimatum}, depois de um aviso, ela dá um ultimato.`,
     log: "Por que mudou",
@@ -4188,8 +4195,8 @@ export const CAREER_PT: CareerCopy = {
     roles: { starter: "Titular", rotation: "Rotação", bench: "Banco", amateur: "Amador", none: "Sem time" } as Record<string, string>,
     live: {
       playGame: (n: number) => `Jogar o jogo ${n}`,
-      yourCall: (call: string, ok: boolean) => (ok ? `${call}: deu certo.` : `${call}: não deu certo.`),
-      instinctCall: (call: string, ok: boolean) => (ok ? `No instinto, ${call}: deu certo.` : `No instinto, ${call}: não deu certo.`),
+      yourCall: (call: string, ok: boolean) => (ok ? `${call}: deu certo. Um pequeno ganho na sua nota e nas chances do time neste jogo.` : `${call}: não deu certo. Um pequeno custo na sua nota e nas chances do time neste jogo.`),
+      instinctCall: (call: string, ok: boolean) => (ok ? `No instinto você foi de ${call}: deu certo, um pequeno ganho neste jogo.` : `No instinto você foi de ${call}: não deu certo, um pequeno custo neste jogo.`),
       simSeries: "Simular o resto da série",
       simEvent: "Simular o resto do evento",
       simHint: "Simular joga cada lance restante no instinto, que em média nem ajuda nem atrapalha.",
@@ -4208,8 +4215,8 @@ export const CAREER_PT: CareerCopy = {
     weekStop: {
       title: "Planeje esta semana",
       body: "Escolha os três blocos da semana antes que ela comece. O plano do técnico descansa você quando está cansado.",
-      coach: "Aceitar o plano do técnico",
-      repeat: "Repetir a semana passada",
+      coach: "Jogar o plano do técnico",
+      repeat: "Jogar a semana passada de novo",
       own: "Planejar eu mesmo",
       continueWithPlan: "Aceitar o plano e continuar",
       auto: "Planejar cada semana por mim até algo acontecer",

@@ -12,7 +12,7 @@ import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
-import { autoPlanOf, confirmProWeekFlow, proCoachPlanOf, setProAutoPlanFlow } from "@/store/proFlow";
+import { advanceProToNextStopFlow, autoPlanOf, confirmProWeekFlow, proCoachPlanOf, setProAutoPlanFlow } from "@/store/proFlow";
 import { useProStore } from "@/store/proStore";
 
 export function ProWeekGate({ save }: { save: ProSave }) {
@@ -34,11 +34,11 @@ export function ProWeekGate({ save }: { save: ProSave }) {
         ))}
       </ol>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button variant="primary" onClick={() => apply((s) => confirmProWeekFlow(s, "coach"))}>
+        <Button variant="primary" onClick={() => apply((s) => advanceProToNextStopFlow(confirmProWeekFlow(s, "coach")))}>
           {G.coach}
         </Button>
         {repeat ? (
-          <Button variant="secondary" onClick={() => apply((s) => confirmProWeekFlow(s, "repeat"))}>
+          <Button variant="secondary" onClick={() => apply((s) => advanceProToNextStopFlow(confirmProWeekFlow(s, "repeat")))}>
             {G.repeat}
           </Button>
         ) : null}
