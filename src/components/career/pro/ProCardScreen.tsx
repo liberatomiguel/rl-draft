@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
-import { allTimeRanking, decodeCard, legendNeighbours, type LegendNeighbours, type ProCard } from "@/engine/career/pro/card";
+import { allTimeRanking, decodeCard, parseAwardKey, legendNeighbours, type LegendNeighbours, type ProCard } from "@/engine/career/pro/card";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { CountryChip } from "@/components/ui/Badge";
@@ -142,7 +142,17 @@ export function ProCardScreen() {
   const C = useCareerCopy();
   const T = C.proCard;
   const hash = useSyncExternalStore(subscribeHash, hashNow, hashServer);
-  const card = useMemo(() => (hash.length > 1 ? decodeCard(hash) : null), [hash]);
+  const decoded = useMemo(() => (hash.length > 1 ? decodeCard(hash) : null), [hash]);
+  // The payload carries language-free keys (a nickname id, "mvp.world.2026"); the page speaks them.
+  const card = useMemo<ProCard | null>(() => {
+    if (!decoded) return null;
+    const awards = decoded.awards.map((line) => {
+      const k = parseAwardKey(line);
+      return k ? T.gala.line(T.gala.scopes[k.scope] ?? k.scope, T.gala.kinds[k.kind] ?? k.kind, k.year) : line;
+    });
+    const nickname = decoded.nickname ? (T.nicknames[decoded.nickname] ?? decoded.nickname) : null;
+    return { ...decoded, awards, nickname };
+  }, [decoded, T]);
   const [near, setNear] = useState<LegendNeighbours | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // Known only in the browser, so it is read after mount (the server render has no share sheet).

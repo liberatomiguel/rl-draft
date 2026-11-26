@@ -115,6 +115,8 @@ export interface ProPlayer {
   mechanicsBlocks?: number;
   /** 0-100, from scrims with a team (slices 3-4 read it). */
   chemistry?: number;
+  /** The scene nickname he wears (a NicknameId, nickname.ts), or none. */
+  nickname?: string;
   /** The highest overall he has reached (the card's "peak overall"). */
   peakOverall?: number;
   /** Slice 6: the seasons this Pro has been without a contract, in a row. */
@@ -138,6 +140,14 @@ export interface ProGrowthEntry {
   delta: number;
   /** Slice 6: a copy key that says why ("reflexes", "reads"...) for an age entry. */
   reason?: string;
+}
+
+/** One gala result of the Pro (gala.ts honorsOf). */
+export interface ProHonor {
+  kind: "mvp" | "breakout" | "teamOfSeason" | "mostDecisive";
+  scope: "region" | "world";
+  seasonIndex: number;
+  place: "winner" | "nominee";
 }
 
 export type ProBridge = { to: "manager" | "coach" | "legend"; atSeason: number };

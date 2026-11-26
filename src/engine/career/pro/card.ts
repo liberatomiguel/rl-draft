@@ -11,7 +11,7 @@ import { CAREER_PRO, CAREER_PRO_AGING as A } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { ArchetypeId } from "../types";
 import { proOverall, round2 } from "./attrs";
-import type { ProSave } from "./types";
+import type { ProHonor, ProSave } from "./types";
 
 export const CARD_VERSION = 1;
 
@@ -72,8 +72,24 @@ export function cardFromSave(save: ProSave, extras: CardExtras = {}): ProCard {
     titles: extras.titles ?? [],
     awards: extras.awards ?? [],
     bestRating: extras.bestRating ?? 0,
-    nickname: extras.nickname ?? null,
+    nickname: extras.nickname ?? p.nickname ?? null,
   });
+}
+
+/**
+ * The card's line for a gala win: a language-free key the page translates
+ * ("mvp.world.2026"). Only wins go on the card, never a nomination.
+ */
+export function awardKey(h: Pick<ProHonor, "kind" | "scope" | "seasonIndex" | "place">, year: number): string | null {
+  return h.place === "winner" ? `${h.kind}.${h.scope}.${year}` : null;
+}
+
+const AWARD_KEY = /^(mvp|breakout|teamOfSeason|mostDecisive)\.(region|world)\.(\d{4})$/;
+
+/** The parts of an award key, or null when the line is plain text. */
+export function parseAwardKey(line: string): { kind: string; scope: string; year: number } | null {
+  const m = AWARD_KEY.exec(line);
+  return m ? { kind: m[1], scope: m[2], year: Number(m[3]) } : null;
 }
 
 /** Clamp and clean every field; the one place a card gets its shape. */
