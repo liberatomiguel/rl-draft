@@ -5212,6 +5212,10 @@ export const CAREER_ENDLESS = {
     defenceFloor: 2,
     /** The reigning champion still "holds" (two titles or more: answered with no lead) within this of the top rating. */
     holdSlack: 1,
+    /**
+     * bigGap 2.5 / gapStep 0.75 measured harder (a 100.7 team won 6 of 12
+     * Worlds against 21 of 27 here, N = 3 careers): kept at 3 / 1.
+     */
     bigGap: 3,
     /** Past bigGap, each further point of lead adds one more project. */
     gapStep: 1,
