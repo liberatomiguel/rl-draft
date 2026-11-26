@@ -36,7 +36,7 @@ import { deliverMail } from "@/engine/career/communications";
 import { seasonYear } from "@/engine/career/development";
 import { moneyIndex, pushLedger, quantize, weeklyWageBill } from "@/engine/career/economy";
 import { bumpManagerRep, dismissalOffersFor, newManagerState, unsolicitedOfferFor } from "@/engine/career/manager";
-import { orgMoneyFor, profileOf, type ProfileKey } from "@/engine/career/orgProfile";
+import { orgMoneyFor, patienceOf, profileOf, type ProfileKey } from "@/engine/career/orgProfile";
 import { foundNewSeat, leaveSeat, takeOrgSeat } from "@/engine/career/seatSwap";
 import { seasonGoalProgressOf, seasonGoalChance } from "@/engine/career/seasonGoals";
 import { derivedFloat, streams } from "@/engine/career/seeds";
@@ -61,6 +61,11 @@ function today(save: CareerSave) {
 function mail(save: CareerSave, titleKey: string, params: Record<string, string | number> = {}, linkTo = "/career/board"): void {
   const item: Omit<MailItem, "id" | "seasonIndex" | "day" | "read"> = { kind: "club", titleKey, bodyKey: titleKey, params, fromKey: "board", linkTo };
   deliverMail(save, item);
+}
+
+/** The board's patience on this save (its stature × the difficulty): every loss is scaled by it. */
+function patienceNow(save: CareerSave & { board: BoardState }): number {
+  return patienceOf(save.board.stature, save.difficulty);
 }
 
 function weekWagesOf(save: CareerSave): number {
@@ -225,7 +230,7 @@ function chosenOf(board: BoardState): BoardPackage | null {
 }
 
 function debtCheck(save: CareerSave & { board: BoardState }): void {
-  if (save.finances.balance < -B.debt.weeks * Math.max(1, weekWagesOf(save))) applyConfidence(save.board, B.debt.cost, "debt", today(save));
+  if (save.finances.balance < -B.debt.weeks * Math.max(1, weekWagesOf(save))) applyConfidence(save.board, B.debt.cost, "debt", today(save), patienceNow(save));
 }
 
 function warnIfLow(save: CareerSave & { board: BoardState }): void {
@@ -253,9 +258,9 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
     const now = chanceNowOf(pkg.objective, progress, oi);
     if (progress.out && !season.outCharged) {
       season.outCharged = true;
-      applyConfidence(board, B.checkpoint.outCost, "objectiveOut", when);
+      applyConfidence(board, B.checkpoint.outCost, "objectiveOut", when, patienceNow(save));
     } else if (!progress.out) {
-      applyConfidence(board, checkpointDelta(season.startChance, now), now >= season.startChance ? "onTrack" : "behind", when);
+      applyConfidence(board, checkpointDelta(season.startChance, now), now >= season.startChance ? "onTrack" : "behind", when, patienceNow(save));
     }
   }
   debtCheck(save);
@@ -327,7 +332,7 @@ export function boardOnSeasonReview(save: CareerSave): void {
       majorsQualified: last?.seasonIndex === s ? last.majorsQualified : 0,
     });
     season.secondary.met = met;
-    applyConfidence(board, met ? B.secondary.hit : B.secondary.miss, met ? "secondaryMet" : "secondaryMissed", when);
+    applyConfidence(board, met ? B.secondary.hit : B.secondary.miss, met ? "secondaryMet" : "secondaryMissed", when, patienceNow(save));
     if (met) pay(save, quantize(week * B.secondary.bonusWeeks));
   }
 

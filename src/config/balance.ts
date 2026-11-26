@@ -4722,11 +4722,11 @@ export const CAREER_BOARD = {
    * "owners" = a founded club (D5: owners and investors, softer).
    */
   profiles: {
-    elite: { rep: 50, runwayWeeks: 14, grantWeeks: 14, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3 },
-    contender: { rep: 36, runwayWeeks: 16, grantWeeks: 12, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2 },
-    mid: { rep: 24, runwayWeeks: 18, grantWeeks: 10, wageRoom: 1.2, patience: 0.95, aimShift: 0, expectedRank: 8, gear: 1 },
-    underdog: { rep: 14, runwayWeeks: 22, grantWeeks: 8, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
-    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.6, aimShift: 0.04, expectedRank: 12, gear: 0 },
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 24, wageRoom: 1.25, patience: 1.3, aimShift: -0.12, expectedRank: 2, gear: 3 },
+    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.1, expectedRank: 4, gear: 2 },
+    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.95, aimShift: 0, expectedRank: 8, gear: 1 },
+    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
+    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.12, expectedRank: 12, gear: 0 },
   },
   /** Difficulty scales patience and the objective's band (never a hidden number). */
   difficulty: {

@@ -184,14 +184,16 @@ export function isProtected(board: BoardState, seasonIndex: number): boolean {
   return board.protectedUntil !== null && seasonIndex <= board.protectedUntil;
 }
 
-/** Apply one change with its reason (a loss is halved under a title's protection). Mutates. */
+/** Apply one change with its reason (a loss × patience, then halved under a title's protection). Mutates. */
 export function applyConfidence(
   board: BoardState,
   delta: number,
   reason: string,
   when: { seasonIndex: number; day: number },
+  /** Losses × this (the stature's and difficulty's patience; 1 when the delta already carries it). */
+  patience = 1,
 ): number {
-  let d = Math.round(delta);
+  let d = Math.round(delta < 0 ? delta * patience : delta);
   if (d < 0 && isProtected(board, when.seasonIndex)) d = Math.round(d / 2);
   if (d === 0) return 0;
   const before = board.confidence;
