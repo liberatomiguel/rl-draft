@@ -49,7 +49,3 @@ Competent bot on Expected. N = career-seasons at the starting club.
 ## Not verified
 
 The screens in a browser and at 320 px. Easy difficulty has no cells, so it reads the raw model.
-
-## Changelog root cause (round 2, kept)
-
-`agePassAndIntake` rebuilt the world without `formerSquad`, so a sold founder stopped resolving after the next rollover and his buyer fielded a stand-in. Fixed in every build.
