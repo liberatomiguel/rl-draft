@@ -250,7 +250,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const startBlock = eventStartBlockOf(save, def);
   const absent = startBlock === "absentNoReserve" ? uncoveredAbsenceOf(save) : null;
   const short = save.squad.length < (def.teamSize ?? 3) || absent !== null;
-  const smallField = useMemo(() => def.teamSize ? eventFieldFor(save, def).field : null, [save, def]);
+  const smallField = useMemo(() => def.teamSize || def.endless === "legends" ? eventFieldFor(save, def).field : null, [save, def]);
 
   const field = useMemo(
     () => smallField ? smallField.map(team => ({ ref: team.id, name: team.name, stars: team.id === "user" ? myStars : save.world.orgs[team.id]?.stars ?? 0, rating: Math.round(team.rating.total) })) :
@@ -386,6 +386,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       {field.length > 0 ? (
         <Panel className="rise-in flex min-w-0 flex-col p-4 sm:p-5" style={{ animationDelay: "80ms" }}>
           <p className="kicker mb-2.5">{C.event.fieldTitle}</p>
+          {def.endless === "legends" ? <p className="mb-2.5 text-xs text-sub">{C.endless.legendsNote}</p> : null}
           <div className={cx("grid flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-2", !isQualifier && "lg:grid-cols-4")}>
             {field.map((f) => {
               const isUser = f.ref === "user";

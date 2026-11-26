@@ -12,6 +12,8 @@
  * TeamLogo) as the single seam for career org marks.
  */
 
+import { lineupById } from "@/data";
+import { isLegendRef, LEGEND_REF_PREFIX } from "@/engine/career/endless";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
@@ -123,6 +125,9 @@ export function OrgMark({
       />
     );
   }
+  // v2.2 ENDLESS: a Legends side wears its org's crest of that era.
+  const legend = isLegendRef(orgRef) ? lineupById.get(orgRef.slice(LEGEND_REF_PREFIX.length)) : undefined;
+  if (legend) return <TeamLogo orgId={legend.orgId} loading={loading} seasonId={legend.seasonId} size={size} className={className} />;
   return (
     <TeamLogo
       orgId={orgRef}

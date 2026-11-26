@@ -1665,7 +1665,7 @@ export const CAREER_PRO = {
   attrMax: 99,
   attrMin: 30,
   /** The hidden talent (×XP): the mean of two seeded uniforms over this range. */
-  talentRange: [0.85, 1.15] as const,
+  talentRange: [0.78, 1.25] as const,
   /** The age of the peak (whole years, seeded), then the decline (slice 6). */
   peakAgeRange: [20, 24] as const,
   declineRateWeights: { slow: 0.3, normal: 0.5, fast: 0.2 } as Record<string, number>,
@@ -1674,21 +1674,21 @@ export const CAREER_PRO = {
      * Attribute points one focused training block adds at gap factor 1, age
      * ≤ 17, talent 1, no coach, full energy. A week has three blocks.
      */
-    perBlock: 0.7,
+    perBlock: 0.5,
     /** "Balanced" spreads a block over the six attributes at this total. */
     balancedShare: 0.9,
     /** Age multiplier: the first band whose maxAge ≥ age; past the bands, `beforePeak` until the peak age, `afterPeak` after it. */
     ageBands: [
       { maxAge: 17, mult: 1 },
-      { maxAge: 20, mult: 0.85 },
-      { maxAge: 23, mult: 0.6 },
+      { maxAge: 19, mult: 0.3 },
+      { maxAge: 21, mult: 0.1 },
     ],
-    beforePeak: 0.35,
-    afterPeak: 0.1,
+    beforePeak: 0.05,
+    afterPeak: 0.03,
     /** Distance to the ceiling: ((attrMax − attr) / gapRef) ^ gapExponent, never under gapFloor (99 stays reachable). */
     gapRef: 49,
-    gapExponent: 0.7,
-    gapFloor: 0.12,
+    gapExponent: 0.92,
+    gapFloor: 0.03,
     /** A coach of overall ≥ coachFull adds coachMax (linear from coachZero). Amateur sides have none. */
     coachZero: 60,
     coachFull: 95,
@@ -1707,6 +1707,364 @@ export const CAREER_PRO = {
   nameMin: 2,
   nameMax: 16,
 } as const;
+
+/**
+ * v2.2 Pro spine (PROSPINE, slice 3): the Pro in the calendar before an org.
+ * Starting points for the slice 7 battery; each comment says what it moves.
+ */
+export const CAREER_PRO_TEAM = {
+  /**
+   * A Pro without a side hears from an amateur side once ranked opens the
+   * cups (Grand Champion, CAREER_PRO_RANKED.cupsRankId) or, for one who skips
+   * ranked, once his overall reaches this.
+   */
+  inviteOverall: 54,
+  /** No amateur invite before this week of the first season (the ranked prologue). */
+  firstInviteWeek: 3,
+  /** The teammates' level when a side calls: the Pro's overall plus this (slightly under him: he is the side's best). */
+  teammateOffset: -1,
+  /** ± seeded spread of each teammate around that level. */
+  teammateSpread: 1.5,
+  /** Teammates' headroom (their potential = level + this); their growth is the host squad's training. */
+  teammateHeadroom: 5,
+  /** A better side calls when the Pro's overall is this far above his side's level. */
+  betterSideGap: 3,
+  /** Weeks between two calls from amateur sides (a declined call does not repeat every Monday). */
+  inviteEveryWeeks: 4,
+  /** Days an amateur invite stays open. */
+  inviteDays: 13,
+  /**
+   * His own match rating = the box score's rating + (his overall − the side's
+   * average) × this, within ± ratingEdgeCap. An 80 on a 90 side reads about
+   * one point under his mates (carried, visible); a star on a weak side stands out.
+   */
+  ratingEdgePerPoint: 0.12,
+  ratingEdgeCap: 1.5,
+  /** Series kept in the match log (offers and the lineup read the recent ones). */
+  matchLogCap: 30,
+  /** The "recent form" window (series). */
+  formWindow: 8,
+  /** Inbox length. */
+  newsCap: 60,
+  /** The host's balance never falls under this (the hidden manager never goes broke; nothing in the world reads it). */
+  hostFloor: 50_000_000,
+} as const;
+
+/**
+ * v2.2 Pro spine (PROSPINE, slice 4): orgs, contracts, the starting spot.
+ * Starting points for the slice 7 battery (target: first org at 15-16 on
+ * Normal for a sensibly trained Pro).
+ */
+export const CAREER_PRO_ORG = {
+  /** No org offer before this age; at minAge+1 (15) and up, the full chance. `youngChance` scales it at minAge. */
+  minAge: 14,
+  youngChance: 0.12,
+  /**
+   * The Pro's market value = overall + formWeight × (recent average − 6) +
+   * fameWeight × log10(1 + fans) + youthWeight × max(0, 20 − age).
+   */
+  formWeight: 1.5,
+  fameWeight: 0.6,
+  youthWeight: 0.4,
+  /** An org calls when his value reaches its weakest starter's overall minus this (rotation) ... */
+  rotationMargin: 6,
+  /** ... and promises a start when it reaches the weakest starter minus this. */
+  starterMargin: 1,
+  /** Per interested org, per window: the base chance, + perPoint per point of value over its bar, capped at maxChance. Easy ×1.2, Hard ×0.8. */
+  baseChance: 0.35,
+  perPoint: 0.06,
+  maxChance: 0.85,
+  difficultyChance: { easy: 1.2, normal: 1, hard: 0.8 } as Record<string, number>,
+  /** Offers per window at most. */
+  maxOffers: 3,
+  /** Salary per split = salaryBase + salaryPerValue × (value − 60) + salaryPerPrestige × prestige (whole hundreds). */
+  salaryBase: 2_000,
+  salaryPerValue: 450,
+  salaryPerPrestige: 1_500,
+  /** Splits per season (the salary is paid weekly: per split ÷ weeksPerSplit). */
+  weeksPerSplit: 10,
+  /** The counter-offer: +raise on the salary; the shown risk = counterRisk + counterRiskPerPrestige × prestige (a big org walks away more easily). */
+  counterRaise: 0.2,
+  counterRisk: 0.25,
+  counterRiskPerPrestige: 0.08,
+  /** Coach trust (0-100): at signing (a promised start adds trustPromised). */
+  trustStart: 50,
+  trustPromised: 10,
+  /** Per series: a rating ≥ goodRating adds trustGood, ≤ badRating takes trustBad. */
+  goodRating: 7.5,
+  badRating: 5,
+  trustGood: 3,
+  trustBad: 2,
+  /**
+   * Rotation ("the bench plays a little"): on a Monday on the bench, when his
+   * lineup score is within rotationGap of the weakest starter, the coach
+   * starts him for the week with this seeded chance (swapped back the next
+   * Monday unless the split's lineup keeps him).
+   */
+  rotationGap: 6,
+  rotationShare: 0.4,
+  /** A week on the bench training (doing what the coach asks) earns this back: the bench is recoverable. */
+  trustBenchWeek: 1,
+  /** Asking for a transfer costs this much trust. */
+  trustRequestCost: 10,
+  /** The lineup score: overall + formLineup × (recent average − 6) + trustLineup × (trust − 50) / 50. */
+  formLineup: 1,
+  trustLineup: 2,
+  /** A renewal is offered in the deal's last season (week renewalWeek) when trust ≥ renewTrust or he starts. */
+  renewalWeek: 23,
+  renewTrust: 40,
+  /** The renewal's raise over the current salary when his value grew. */
+  renewalRaise: 0.15,
+} as const;
+
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §4.3, §5): the week. Three blocks (Mon-Tue,
+ * Wed-Thu, Fri), energy, burnout, confidence. Starting points for the slice 7
+ * battery; each line says what it moves.
+ */
+export const CAREER_PRO_WEEK = {
+  /** Days from the week's first day to each block (Mon, Wed, Fri). Stamps the growth log. */
+  blockDays: [0, 2, 4] as const,
+  energyMax: 100,
+  /** Energy an activity costs. Moves how many blocks a week can train before the player is tired. */
+  cost: { train: 20, ranked: 15, scrim: 15, content: 10 } as const,
+  /** Energy a rest block gives back. Two trainings and one rest (−40 +35) nearly hold the line. */
+  restGain: 35,
+  /** Energy back when the week closes (the weekend's sleep). With the rest block it makes T-T-R a slow gain, T-T-T a fast drain. */
+  weekEndRecovery: 15,
+  /** Under this a block is a tired block: training at its rate (growth.energyFactorFor) and ranked skill drop; the burnout window opens. */
+  lowEnergy: 30,
+  /** A week that closes under this shows the burnout warning (a week before burnout can happen). */
+  warnBelow: 45,
+  /** The warning clears once the week closes at or above this. */
+  warnClear: 60,
+  /** At a week's close under lowEnergy, with the warning already shown a week earlier: chance = base + (lowEnergy − energy) × perPoint, capped. */
+  burnoutBase: 0.3,
+  burnoutPerPoint: 0.02,
+  burnoutMax: 0.85,
+  /** Weeks out (one or two, seeded) and the energy he comes back with. A burnout week plays as rest and trains nothing. */
+  burnoutWeeks: [1, 2] as const,
+  burnoutReturnEnergy: 60,
+  /** Ranked gives this share of a balanced training block (a little XP); a scrim, this share of a block on experience. */
+  rankedXpShare: 0.25,
+  scrimXpShare: 0.5,
+  /** Scrim chemistry with the team, per scrim (0-chemistryMax). Slices 3-4 feed it to the lineup. */
+  scrimChemistry: 6,
+  chemistryMax: 100,
+  /**
+   * Content (live, video): money and fame per block. Fame grows the next
+   * block's take by famePerFame (a bigger audience pays more), and the
+   * fameCap keeps the loop from running away.
+   */
+  content: { money: 150, moneyPerFame: 0.02, fame: 60, famePerFame: 0.04, fameCap: 250_000 },
+  /** Confidence: the mean of the last `window` match ratings, centred on `center`, one point per `perPoint` rating points, ±2. */
+  confidence: { window: 5, center: 6, perPoint: 1, max: 2 },
+  /** Confidence adds this much to the Pro's own match rating, per point (±0.3 at the extremes). */
+  ratingBonusPerConfidence: 0.15,
+  /** Ranked skill lost per energy point under lowEnergy (a tired player queues worse). */
+  tiredFormPerPoint: 0.1,
+  /** The coach's plan: rests first when the week starts under this, and rests the block before a LAN. */
+  coachRestBelow: 45,
+  lanRestDays: 7,
+  /**
+   * Match XP (growth.applyMatchXp): points per game = base × tier × rating ×
+   * opponent, spread over the six attributes by weight. Moves how much an
+   * official series is worth beside a week of training (a Worlds game with a
+   * 9 rating against a stronger team is worth roughly two training blocks).
+   */
+  matchXp: {
+    base: 1.0,
+    tier: { t3: 0.5, t2: 0.7, qualifier: 0.8, regional: 1.2, major: 1.7, worlds: 2.2 } as Record<string, number>,
+    tierDefault: 0.8,
+    /** 1 at a 6 rating, ±ratingPerPoint per point, bounded. */
+    ratingCenter: 6,
+    ratingPerPoint: 0.15,
+    ratingBounds: [0.4, 1.6] as const,
+    /** Playing up: +1 per opponentPerPoint overall points of the opponent above his own, bounded. */
+    opponentPerPoint: 40,
+    opponentBounds: [0.6, 1.6] as const,
+    /** Experience grows most from matches; the rest evenly. */
+    weights: { offense: 1, defense: 1, mechanics: 1, consistency: 1, experience: 2, clutch: 1 } as Record<string, number>,
+  },
+} as const;
+
+/**
+ * v2.2 Pro slice 2 (PRO-SPEC §7.1): the ranked ladder. A player has a MMR; his
+ * game is decided by the gap between the MMR his overall deserves
+ * (`skillTable`) and the MMR he holds. Moves how long Bronze to Grand
+ * Champion takes (calibrated with the bot in pro.test.ts).
+ */
+export const CAREER_PRO_RANKED = {
+  /** Games in one ranked block. */
+  gamesPerSession: 6,
+  /** MMR per game won or lost (no streak bonus: the table below is the pace). */
+  step: 10,
+  /** Logistic scale of a game: 200 MMR below the skill MMR = ~73% to win. Smaller = a steeper, more deterministic ladder. */
+  spread: 200,
+  /** The MMR a given overall deserves: linear between rows, flat beyond. A Pro starts at ~50 overall = ~1000 MMR (Silver). */
+  skillTable: [
+    [40, 500],
+    [50, 1000],
+    [53, 1500],
+    [55, 2000],
+    [57, 2400],
+    [66, 2800],
+    [99, 3100],
+  ] as readonly (readonly [number, number])[],
+  /** Confidence adds this many overall points of effective skill per point (a player in form queues better). */
+  confidenceSkill: 0.8,
+  mmrMin: 0,
+  mmrMax: 3200,
+  /** Rank thresholds in MMR; the tier splits into `divisions` (I to III) except the last. */
+  tiers: [
+    { id: "bronze", min: 0 },
+    { id: "silver", min: 850 },
+    { id: "gold", min: 1150 },
+    { id: "platinum", min: 1450 },
+    { id: "diamond", min: 1750 },
+    { id: "champion", min: 2050 },
+    { id: "grand-champion", min: 2350 },
+    { id: "supersonic-legend", min: 2750 },
+  ] as readonly { id: string; min: number }[],
+  divisions: 3,
+  /** Grand Champion (and above) opens the community cup invitations (PRO-SPEC §7.1). */
+  cupsRankId: "grand-champion",
+  /** Sessions kept for the panel. */
+  logCap: 8,
+} as const;
+
+/**
+ * v2.2 Pro slice 5 (PRO-SPEC §4.2, §6): signature mechanics and the one
+ * decision per game. The bounds are the spec's table; the rest says what each
+ * number moves.
+ */
+export const CAREER_PRO_MOMENTS = {
+  /**
+   * Signature mechanics, unlocked in this order by mechanics training: each
+   * needs `blocks` mechanics blocks done and the Mechanics attribute at
+   * `mechanics`. Moves how soon the extra option shows in a match.
+   */
+  mechanics: [
+    { id: "wavedash", mechanics: 55, blocks: 4 },
+    { id: "speedflip", mechanics: 60, blocks: 10 },
+    { id: "airDribble", mechanics: 66, blocks: 18 },
+    { id: "ceilingShot", mechanics: 72, blocks: 28 },
+    { id: "doubleTap", mechanics: 78, blocks: 40 },
+    { id: "mustyFlick", mechanics: 84, blocks: 54 },
+    { id: "flipReset", mechanics: 90, blocks: 70 },
+  ] as readonly { id: string; mechanics: number; blocks: number }[],
+  /** The spec's limits: a decision moves the team's rating in that game by at most teamPerGame, all of a series' decisions by at most teamPerSeries, and the Pro's own rating by at most ratingPerGame. */
+  bounds: { teamPerGame: 0.5, teamPerSeries: 1.0, ratingPerGame: 1.5 },
+  /**
+   * The chance a call comes off: base of the option + (attribute − attrCenter)
+   * × perAttr + confidence × perConfidence − tiredness, kept in floor..ceil.
+   * Moves how much the Pro's attribute decides the call.
+   */
+  chance: { attrCenter: 70, perAttr: 0.008, perConfidence: 0.04, tiredBelow: 50, perTiredPoint: 0.002, floor: 0.12, ceil: 0.9 },
+  /**
+   * The options. `base` = chance at the centre attribute; `up` / `down` = the
+   * team rating (per game) and own rating a success adds and a miss takes.
+   * The safe call has low variance and about zero EV; the bold one pays when
+   * the attribute is high and costs when it is not; a mechanic's call pays most
+   * and its base rises with how advanced the mechanic is (`perTier` per step).
+   */
+  options: {
+    safe: { base: 0.62, up: { team: 0.12, rating: 0.4 }, down: { team: 0.18, rating: 0.5 } },
+    bold: { base: 0.42, up: { team: 0.5, rating: 1.3 }, down: { team: 0.25, rating: 0.9 } },
+    mechanic: { base: 0.34, perTier: 0.02, up: { team: 0.5, rating: 1.5 }, down: { team: 0.2, rating: 0.8 } },
+  },
+  /** Hint words from the chance: under risky = "risky", under uncertain = "uncertain", under likely = "likely", else "mastered". */
+  hints: { risky: 0.35, uncertain: 0.55, likely: 0.75 },
+  /** "On instinct" picks this kind of call by style; the rest ("allround") picks one of the available at random. */
+  instinct: {
+    mechanical: "mechanic",
+    anchor: "safe",
+    playmaker: "safe",
+    icecold: "bold",
+    veteranmind: "safe",
+    allround: "any",
+  } as Record<string, string>,
+} as const;
+
+/**
+ * v2.2 Pro slice 6 (PRO-SPEC §4.1, §7.6, §9): the decline, the end and the
+ * card. Nobody falls off a cliff: a season costs 0.5 to 1.5 overall at most.
+ */
+export const CAREER_PRO_AGING = {
+  /** Seasons after his peak age before the decline starts (the plateau). */
+  graceYears: 1,
+  /** Overall points lost in the first season of decline, by his hidden decline rate. */
+  declineBase: { slow: 0.5, normal: 0.8, fast: 1.1 } as Record<string, number>,
+  /** The loss grows by this share of the base for each further season. */
+  perYear: 0.12,
+  /** The spec's range for one season's overall loss, and the seeded wobble around the curve (±). */
+  min: 0.5,
+  max: 1.5,
+  jitter: 0.08,
+  /** Who carries the loss: the physical attributes more, the read of the game least. */
+  weights: { mechanics: 1.3, offense: 1.1, defense: 1.0, consistency: 1.0, clutch: 0.35, experience: 0.15 } as Record<string, number>,
+  /** Extra seasons before the attribute starts to fall: experience and clutch hold longer. */
+  holdYears: { experience: 3, clutch: 2 } as Record<string, number>,
+  /** No single attribute loses more than this in a season. */
+  maxPerStat: 3,
+  /** The copy key that says why each attribute fell. */
+  reasons: {
+    mechanics: "reflexes",
+    offense: "pace",
+    defense: "reactions",
+    consistency: "stamina",
+    clutch: "nerve",
+    experience: "reads",
+  } as Record<string, string>,
+  /** Retirement: the yearly chance by age (the rest 0), and the age after which it is certain. */
+  retireChance: { 28: 0.1, 29: 0.2, 30: 0.35, 31: 0.55 } as Record<number, number>,
+  retireForcedAge: 32,
+  /** By choice from this age on (so a misclick at 14 cannot end a career). */
+  choiceMinAge: 18,
+  /** A year without a contract OFFERS the end (never forces it) from this age. */
+  noContractSeasons: 1,
+  noContractMinAge: 20,
+  /** The card: caps on the lists it carries, so a payload stays small. */
+  card: { maxList: 10, maxText: 40, legendsEachSide: 2 },
+} as const;
+
+/**
+ * v2.2 Pro slice 7 (PRO-SPEC §8): the end-of-season gala and the scene
+ * nicknames. Scores only rank candidates; an award needs the data that
+ * supports it (a floor on games, a gain, a rating).
+ */
+export const CAREER_PRO_GALA = {
+  /** Players named per award (the winner plus the nominees behind him). */
+  nominees: 3,
+  /** The team of the season has this many players (a 3v3 side). */
+  teamSize: 3,
+  /** MVP score = overall × overallW + team result (0-1) × resultW + (average rating − 6) × ratingW when a box score exists. */
+  mvp: { overallW: 1, resultW: 25, ratingW: 3, minOverall: 70 },
+  /** Breakout: age at most maxAge in at most maxSeasonsPro seasons, with an overall gain of at least minGain; score = gain × gainW + overall × overallW + result × resultW. */
+  breakout: { maxAge: 20, maxSeasonsPro: 2, minGain: 2, gainW: 3, overallW: 0.3, resultW: 8 },
+  /** Most decisive needs a box-score line: at least minGames, and (series MVPs + deciding moments) per game of at least minShare. */
+  decisive: { minGames: 10, minShare: 0.3, mvpW: 10, momentW: 10, ratingW: 2 },
+} as const;
+
+/**
+ * Nickname milestones (verifiable totals the save keeps). At most one is
+ * active; the first earned in this order is chosen, and an earned one is kept
+ * until a better-ranked one is earned.
+ */
+export const CAREER_PRO_NICKNAMES = [
+  { id: "theWall", fact: "saves", min: 400 },
+  { id: "mrLan", fact: "lanTitles", min: 2 },
+  { id: "theCloser", fact: "decidingWins", min: 5 },
+  { id: "iceCold", fact: "clutchGames", min: 15 },
+  { id: "theChamp", fact: "worldsTitles", min: 1 },
+  { id: "oneClub", fact: "seasonsAtOrg", min: 5 },
+  { id: "theMaestro", fact: "assists", min: 300 },
+  { id: "theFinisher", fact: "goals", min: 400 },
+  { id: "theBulldozer", fact: "demos", min: 250 },
+  { id: "comebackKid", fact: "comebackWins", min: 4 },
+  { id: "mrSteady", fact: "steadySeasons", min: 3 },
+  { id: "theProdigy", fact: "prodigy", min: 1 },
+] as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
@@ -4887,6 +5245,15 @@ export const FEATURES = {
    */
   board: STAGING_BUILD || process.env.NEXT_PUBLIC_BOARD === "1",
   /**
+   * v2.2 ENDLESS (CAREER_ENDLESS, engine/career/endless.ts): the infinite
+   * seasons answer a dominant team (rival projects), the cups stop repeating
+   * (a wider Invitational field, a drawn bracket, the Legends invitational)
+   * and each season has its own hosts. A save gets it from its next season
+   * rollover (`save.endless`). Off: nothing of it runs and careers are byte
+   * for byte as before. ON in the staging build only; probes: NEXT_PUBLIC_ENDLESS_VARIETY=1.
+   */
+  endlessVariety: STAGING_BUILD || process.env.NEXT_PUBLIC_ENDLESS_VARIETY === "1",
+  /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
    * staging build (NEXT_PUBLIC_NOINDEX=1); never in the production deploy or
@@ -4938,4 +5305,66 @@ export const CLOUD_SYNC = {
   /** v2.0.26: a tab that was hidden for at least this long asks the account
    *  again when it returns (another device may have played meanwhile). */
   careerRecheckAfterMs: 60_000,
+} as const;
+
+/**
+ * v2.2 ENDLESS (FEATURES.endlessVariety, engine/career/endless.ts,
+ * docs/handoff-2.2/endless.md): the infinite seasons once a team dominates.
+ */
+export const CAREER_ENDLESS = {
+  /** Rival projects and Legends start here (the first season with no dataset lineups to anchor). */
+  fromSeasonIndex: 7,
+  projects: {
+    /** Regions that can run a project (the leader's region answers first). */
+    regions: ["NA", "EU", "SAM", "MENA", "OCE"] as const,
+    /** The leader's team rating (as the matches read it) minus the next three sides' mean: below this, no project. */
+    dominanceFloor: 1.5,
+    /** Each further step of dominance adds one project (one region). */
+    dominanceStep: 0.75,
+    maxProjects: 4,
+    /** A project is one of the region's best N AI orgs (not the leader, not last season's project). */
+    candidateOrgs: 4,
+    /** Signings per project: buysBase, +1 per two levels, +1 from importGap; capped. */
+    buysBase: 1,
+    maxBuys: 3,
+    /** A signing beats the weakest starter by at least this overall. */
+    minEdge: 1,
+    /** From this dominance the projects sign from every region (the world's best players). */
+    importGap: 2.5,
+    /** The project also hires its region's best AI coach (a swap). */
+    coachSwap: true,
+    /** An AI leader (no user dynasty) needs this bigger lead before the world answers it. */
+    aiLeaderFloor: 3,
+    /**
+     * From this project level the org also opens a performance centre for the
+     * season: the team-rating bonus of the user's own (CAREER_GEAR perfCenter).
+     */
+    facilityFromLevel: 2,
+    /**
+     * A project keeps its performance centre this many seasons (its signings
+     * stay anyway), then the org sits one out. 2 measured no better than 1
+     * (Worlds share of a 101 team 85 % against 75 %, N = 40 each, within noise).
+     */
+    seasons: 1,
+  },
+  cups: {
+    /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
+    keepTop: 2,
+    poolSize: 12,
+  },
+  legends: {
+    /** The all-time lineups (by peak team rating) a Legends field is drawn from; seven distinct orgs a cup. */
+    poolSize: 18,
+    /** Legends weeks per endless season (open weeks, drawn by seed). */
+    perSeason: 2,
+    /** The invitation needs the starters' average overall at this level (and the Invitational's reputation). */
+    minStarterOverall: 93,
+  },
+  world: {
+    /** Intercontinental Invitational weeks per endless season (open weeks the Legends did not take). */
+    perSeason: 2,
+    /** Each other region sends its best N by Season Points (rating breaks ties); seven are drawn. */
+    perRegion: 2,
+    regions: ["NA", "EU", "SAM", "MENA", "OCE", "APAC"] as const,
+  },
 } as const;

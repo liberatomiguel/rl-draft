@@ -10,12 +10,13 @@
  * reachable for a good seed run well, which is Miguel's rule (P7).
  */
 
-import { CAREER_PRO } from "@/config/balance";
+import { CAREER_PRO, CAREER_PRO_WEEK } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { StatKey, Stats } from "../../types";
 import { ageOf } from "../development";
-import { PRO_STAT_KEYS, round2 } from "./attrs";
+import { PRO_STAT_KEYS, proOverall, round2 } from "./attrs";
 import type { ProGrowthEntry, ProPlayer, ProSave, ProTrainingFocus } from "./types";
+import { withRating } from "./form";
 import { withProInWorld } from "./world";
 
 export { PRO_STAT_KEYS, proOverall, round2 } from "./attrs";
@@ -125,4 +126,58 @@ export function weakestStat(attrs: Stats): StatKey {
   let best: StatKey = PRO_STAT_KEYS[0];
   for (const k of PRO_STAT_KEYS) if (attrs[k] < attrs[best]) best = k;
   return best;
+}
+
+/** The explained entries of an attribute change: one per attribute that rose (or fell, with a reason). */
+export function diffGrowth(
+  before: Stats,
+  after: Stats,
+  source: ProGrowthEntry["source"],
+  at: { seasonIndex: number; day: number },
+  reason?: string,
+): ProGrowthEntry[] {
+  const out: ProGrowthEntry[] = [];
+  for (const k of PRO_STAT_KEYS) {
+    const delta = round2(after[k] - before[k]);
+    if (delta !== 0) out.push({ seasonIndex: at.seasonIndex, day: at.day, source, stat: k, delta, ...(reason ? { reason } : {}) });
+  }
+  return out;
+}
+
+export interface MatchXpInput {
+  /** The Pro's own rating of the game, 0-10. */
+  rating: number;
+  /** The opposing team's overall (the scale of a player's overall). */
+  opponentStrength: number;
+  /** An EventTier ("worlds", "major", ...); an unknown one pays tierDefault. */
+  tier: string;
+  seasonIndex: number;
+  day: number;
+}
+
+/** The multipliers of one game's XP, for the log and the tests. */
+export function matchXpFactors(player: ProPlayer, input: MatchXpInput) {
+  const X = CAREER_PRO_WEEK.matchXp;
+  const tier = X.tier[input.tier] ?? X.tierDefault;
+  const rating = clamp(1 + (input.rating - X.ratingCenter) * X.ratingPerPoint, X.ratingBounds[0], X.ratingBounds[1]);
+  const opponent = clamp(1 + (input.opponentStrength - proOverall(player.attrs)) / X.opponentPerPoint, X.opponentBounds[0], X.opponentBounds[1]);
+  return { tier, rating, opponent };
+}
+
+/**
+ * XP from one official game (PRO-SPEC §4.1): more from a Major or the Worlds,
+ * from a high rating and from a stronger opponent. Also records the rating,
+ * which moves confidence. Energy plays no part (a match is played as he is).
+ */
+export function applyMatchXp(player: ProPlayer, input: MatchXpInput): { player: ProPlayer; growth: ProGrowthEntry[] } {
+  const X = CAREER_PRO_WEEK.matchXp;
+  const f = matchXpFactors(player, input);
+  const age = proAgeOf(player, input.seasonIndex);
+  const total = X.base * f.tier * f.rating * f.opponent * player.talent * ageFactorFor(age, player.peakAge);
+  const weightSum = PRO_STAT_KEYS.reduce((a, k) => a + (X.weights[k] ?? 1), 0);
+  const gains: Partial<Record<StatKey, number>> = {};
+  for (const k of PRO_STAT_KEYS) gains[k] = ((total * (X.weights[k] ?? 1)) / weightSum) * gapFactorFor(player.attrs[k]);
+  const attrs = applyGains(player.attrs, gains);
+  const growth = diffGrowth(player.attrs, attrs, "match", input);
+  return { player: withRating({ ...player, attrs }, input.rating), growth };
 }

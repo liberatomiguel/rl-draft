@@ -54,7 +54,7 @@ export function ProSavesScreen() {
               save={save}
               onResume={() => {
                 selectSlot(slot);
-                router.push("/career/pro/player");
+                router.push("/career/pro/career");
               }}
               onDelete={() => setConfirmSlot(slot)}
             />

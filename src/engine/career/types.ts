@@ -430,6 +430,12 @@ export interface WorldOrgState {
   coachSince?: number;
   /** v2.1 M1: seasons in a row ended outside the region's top (org turnover). */
   lowSeasons?: number;
+  /**
+   * v2.2 ENDLESS: a rival project's performance centre this season, the same
+   * team-rating bonus the user's own centre gives (CAREER_GEAR perfCenter).
+   * Cleared at the next rollover unless the org runs a project again.
+   */
+  projectBonus?: number;
 }
 
 export interface WorldState {
@@ -575,6 +581,11 @@ export interface CareerEventDef {
    * champion); "single" = 8-team single elimination (unofficial cups).
    */
   format: CareerEventFormat;
+  /**
+   * v2.2 ENDLESS: "cup" = the Invitational's drawn field and bracket;
+   * "legends" = the Legends invitational (all-time rosters). Absent = as before.
+   */
+  endless?: "cup" | "legends" | "world";
 }
 
 /** v2.0 (R40): the tournament shapes a career event can take. */
@@ -1855,6 +1866,37 @@ export interface CareerSave {
   board?: import("./boardTypes").BoardState;
   /** v2.2 board front: the manager's own reputation, record and job offers. Optional, additive. */
   manager?: import("./boardTypes").ManagerState;
+  /**
+   * v2.2 ENDLESS (FEATURES.endlessVariety): the front's state, set at the
+   * first season rollover with the flag on (a running season never changes).
+   * Optional and additive: absent = the front never ran for this save.
+   */
+  endless?: EndlessState | null;
+}
+
+/** v2.2 ENDLESS: what the front keeps between seasons. */
+export interface EndlessState {
+  /** The first season the front applies to (the rollover that set it). */
+  fromSeason: number;
+  /** This season's rival projects (rebuilt at each rollover; last season's sit the next one out). */
+  projects: RivalProject[];
+  /** The dominance gap the projects answered (leader minus the next three), for the review and the probes. */
+  gap?: number;
+  /** The season's drawn identity: indexes into the copy's host list (three Majors, then the Worlds). */
+  hosts?: { season: number; cities: number[] };
+}
+
+/** v2.2 ENDLESS: one AI org's project for a season. */
+export interface RivalProject {
+  season: number;
+  orgRef: string;
+  orgName: string;
+  region: Region;
+  signed: { playerId: string; playerName: string; fromRef: string | null; fromName: string | null; outId: string }[];
+  /** The performance centre's team-rating bonus (0 = none this season). */
+  facility: number;
+  ratingBefore: number;
+  ratingAfter: number;
 }
 
 /** Slot metadata rendered by the saves picker without hydrating full saves. */
