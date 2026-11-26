@@ -12,18 +12,20 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.4 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
+- **Staging = 2.2.0-rc.5 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
   the big update, each part behind its own staging-only flag: the Pro player
   career to retirement (`proCareer`), a start at a real organisation
   (`realOrgStart`), the board with confidence, dismissal and job offers
   (`board`), endless variety rounds 1 and 2 (`endlessVariety`).
-  BALANCE_VERSION 50. What each front shipped, measured and left open:
-  `docs/handoff-2.2/`; decisions there are not numbered yet. **Open before a
-  gate:** the board's stated chances (hit 47 % where 63 % is stated, small N),
-  Worlds reached by 92 % of average Pro careers (spec: about 40 %), no full browser
-  check of the board, real-organisation and endless screens nor of the Pro's
-  match, gala and card; per-season circuit formats were judged unsafe and are
-  not built.
+  BALANCE_VERSION 51. Gate document, numbers and probe commands:
+  **`V2.2-STATUS.md`** (decisions R151 to R162, DESIGN-DECISIONS #186;
+  handoffs in `docs/handoff-2.2/`). **Open before the gate:** the board's
+  stated chances are now bands in words and hold within one band of the
+  measured rate (underdog Normal is easier than stated); Worlds reached by
+  92 % of average Pro careers (spec: about 40 %); a final browser pass is
+  running (no full check of the board, real-organisation and endless screens
+  nor of the Pro's match, gala and card); per-season circuit formats were
+  judged unsafe and are not built.
 - **rc.6 (24/11/2026)** below it, integration of five lines on top of
   rc.5 (`3914518`, the phone redesign):
   - **Phone redesign (rc.5):** every screen has its own layout under 640px

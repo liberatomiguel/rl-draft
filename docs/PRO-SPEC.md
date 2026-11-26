@@ -258,3 +258,12 @@ possível, não garantido; 0 soft lock; o Manager de seed fixa igual ao rc.5.
 - **P10** ponte aprovada como ideia → §8. **Aberto:** a saída Manager na
   v2.2 ou na Etapa 3? Recomendo Etapa 3, junto com a carreira de coach.
 - **Modo expresso:** fora.
+
+## 15. Estado (26/11)
+
+- **Entregue (rc.5, staging, `proCareer`):** as fatias 1 a 7. Gala e apelido entraram (aberto do §14); a saída Manager da ponte segue para a Etapa 3 (só existe a saída Legend).
+- **Difere da spec:** (a) o mundo roda num save hospedeiro oculto, não em `worldTick.ts` (R157); (b) sem ponte para o Manager; (c) o prêmio "mais decisivo" nunca é dado, porque o fluxo real não registra lances decisivos; (d) depois da primeira semana o Continue joga o plano do técnico e para a cada 4 semanas, em vez de parar toda segunda; (e) a dificuldade muda o duelo pela vaga e os resultados, nunca o talento.
+- **Contra o §4.1** (bots no fluxo real, NA/EU/SAM; N 12 no médio gerido, 6 nos outros): médio gerido 92,1 (meta 90–93), alto gerido 97,2 (96–99), médio descuidado 82,2 (82–86); fora da meta, baixo gerido 85,3 sem meta escrita.
+- **Contra o §13:** primeira org aos 15 (dentro); 0 soft lock e o Manager de seed fixa idêntico ao rc.6 (dentro); título possível, não garantido (alto gerido 33 % de Worlds ganhos). **Fora:** Worlds jogado em 92 % das carreiras médias (meta cerca de 40 %).
+- **Também fora da faixa:** o talento alto segura 98–99 até os 25–28; cerca de 13 títulos por carreira na média gerida. Decisão do Miguel (R161).
+- **Não verificado:** a passada final no navegador, o cartão baixado, as telas novas em PT e a 320 px; gala e apelido só contra dados de teste.
