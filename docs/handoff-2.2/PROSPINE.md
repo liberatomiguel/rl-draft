@@ -14,7 +14,6 @@ Branch `v22/pro-spine`, behind `FEATURES.proCareer`. Round 1 is in release/v2.2.
 
 - R-PROSPINE-6: temporary org seat.
 - R-PROSPINE-7: bottom-half orgs offer a start, top-half a rotation spot; at 15-16, one start offer once he reaches a bottom-half org's bar.
-- R-PROSPINE-8: a double-elimination round he sits out plays in quick mode.
 - R-PROSPINE-9: the Monday plan gate (Continue accepts the plan shown).
 
 ## Tunables
@@ -45,5 +44,5 @@ No browser check. Calibration: Normal peaks run high. On the seat the org plays 
 
 ## For Miguel
 
-1. careerFlow (not fixed): in double-elimination playoffs the custom mode's gate stalls on a round without the user. The manager's custom mode can hang there.
+1. Fixed in round 3 (careerFlow `userSeriesGate`). Changelog root cause: in double-elimination playoffs `userHasPendingSeries` stays true for a round with no user series (his bracket waits), so the custom-mode gate returned "open", `openUserSeriesOn` found no pairing and `stepEventRound` made no progress. The gate now returns "play" when no pairing exists. Regression test: `careerMatchdayIdleRound.test.ts`. The Pro flow's quick-mode workaround is removed.
 2. Bronze to Grand Champion spans overall 47-57 (pro-engine's table).
