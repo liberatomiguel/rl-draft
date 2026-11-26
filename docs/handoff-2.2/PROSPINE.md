@@ -1,43 +1,49 @@
-# PROSPINE handoff (Pro slices 3 and 4)
+# PROSPINE handoff (Pro slices 3-4, round 2, QA round)
 
-Branch `v22/pro-spine`, behind `FEATURES.proCareer`; merged `v22/pro-engine` (slice 2, 9e4299a).
+Branch `v22/pro-spine`, behind `FEATURES.proCareer`. Round 1 is in release/v2.2.
 
-## What shipped
+## Shipped in round 2
 
-- `store/proFlow.ts`: the Pro on the real calendar (cups, Open Qualifier, regionals, Majors, Worlds, AI transfers, Mundo vivo, rollover). Week blocks land Tue/Thu/Fri, the week closes Monday, through pro-engine's functions behind one adapter (`pro/spineBridge.ts`). `proStore.playWeek` now runs the calendar to next Monday or a matchday.
-- `pro/team.ts`: a local amateur side (two teammates near his level) takes the `"user"` seat; better sides call later. Its events come back as a match report, revealed game by game, with his box-score line and 0-10 rating.
-- `pro/offers.ts`, `pro/lineup.ts`: window offers from real orgs of his region with a reason quoting save data, stored once, expiring with the window; one counter with the risk shown; signing puts `pro:self` in `playerIds`/`reserveIds`, the displaced starter goes to the bench or free agency. Split lineups (overall, form, coach trust), rotation starts, transfer request, renewal or free agency. His org's AI series reach the report through a read-only hook.
-- Screens `/career/pro/career` (Today, Team, Offers, Inbox); copy group `proWorld` EN/PT.
+- **He plays his series** (`store/proMatch.ts`): the host's Matchday custom mode runs his side's series one game at a time, with one decision a game (`buildDecision`, `resolveDecision`, `EMPTY_LEDGER` per series). The team edge plays that game through the Matchday engine; his rating is `finalProRating` on the box line. On instinct, sim the series or the event. Benched: simmed, short report. Needs `FEATURES.matchdayDecisions`, otherwise the event is simmed.
+- **Org seat** (`store/proSeat.ts`): under contract his org takes the host's user seat, leaving `world.orgs` with its points, seeding and fields remapped. It returns to its ref at the stint's end and around every rollover, players' growth as drift. No filler, no duplicate.
+- **The end**: `rolloverProPlayer` at rollovers, retirement by age, by choice or after a season without contract, `bridge` legend; the card from orgs, titles, gala award keys, nickname, best season. Season rows: team, role, games, average, titles.
+- **Gala, nicknames** (`store/proGala.ts`): every rostered player plus his box line; no deciding-moment data, so "most decisive" is never given.
+- **QA fixes**: Continue stops every Monday for the plan (one tap, or the auto-plan opt-in) and for offers arriving or two days from expiry, burnout warning and burnout, matchdays, a contract ending, season end. Today says what last week did and why it stopped. A plan that would tire him falls back to the coach's. Rotation: one event in three, stated on the offer and the Team tab with a countdown, role review after 6 series. Orgs the dataset ends next season make no offer; near the end they say "uncertain". No invites under contract or from a side declined this season. The card counts every org. The planner says why it stopped.
 
 ## Decisions
 
-- **R-PROSPINE-1** Fallback, not extraction: the world parts of `processDayArrival` are interleaved with save bookkeeping, and the Pro also needs the event machinery. His world runs on a hidden host CareerSave sharing his world/clock/competition; `settleHost` answers manager-only decisions, money is floored. careerFlow got one import and one hook line in `resolveAiEvent`. No `worldTick.ts`.
-- **R-PROSPINE-2** The host squad always holds `pro:self`: the AI market, aging and world growth never touch him.
-- **R-PROSPINE-3** Matches are played, then revealed (no decision exists before slice 5). The amateur seat can step for real (host custom mode); the org stage cannot yet.
-- **R-PROSPINE-4** A "1 season" deal signed after the preseason window runs through the next season.
-- **R-PROSPINE-5** Amateur invites open at ranked's GC or overall 54.
+- R-PROSPINE-6: temporary org seat.
+- R-PROSPINE-7: bottom-half orgs offer a start, top-half a rotation spot; at 15-16, one start offer once he reaches a bottom-half org's bar.
+- R-PROSPINE-8: a double-elimination round he sits out plays in quick mode.
+- R-PROSPINE-9: the Monday plan gate (Continue accepts the plan shown).
 
 ## Tunables
 
-`CAREER_PRO_TEAM`: inviteOverall 54, firstInviteWeek 3, teammateOffset -1, teammateSpread 1.5, teammateHeadroom 5, betterSideGap 3, inviteEveryWeeks 4, inviteDays 13, ratingEdgePerPoint 0.12, ratingEdgeCap 1.5, matchLogCap 30, formWindow 8, newsCap 60, hostFloor 50M.
-`CAREER_PRO_ORG`: minAge 14, youngChance 0.12, formWeight 1.5, fameWeight 0.6, youthWeight 0.4, rotationMargin 6, starterMargin 1, baseChance 0.35, perPoint 0.06, maxChance 0.85, difficultyChance 1.2/1/0.8, maxOffers 3, salaryBase 2000, salaryPerValue 450, salaryPerPrestige 1500, weeksPerSplit 10, counterRaise 0.2, counterRisk 0.25 (+0.08/prestige), trustStart 50, trustPromised 10, goodRating 7.5, badRating 5, trustGood 3, trustBad 2, rotationGap 6, rotationShare 0.4, trustBenchWeek 1, trustRequestCost 10, formLineup 1, trustLineup 2, renewalWeek 23, renewTrust 40, renewalRaise 0.15.
-No existing value changed; BALANCE_VERSION untouched.
+- `CAREER_PRO_ORG`: topStarterMargin 2, youthStarterAge 16, rotationEvery 3, reviewAfter 6, promoteRating 6.8.
+- `CAREER_PRO_TEAM`: inviteDays 14 (was 13), expiryWarnDays 2.
+- **Changed**, `CAREER_PRO_RANKED.skillTable`: `[66,2800]` became `[65,2550],[78,2800]`.
+
+Overall at each rank floor now: Silver 47, Gold 51, Platinum 53, Diamond 54, Champion 55, Grand Champion 57 (unchanged), SSL 75 (was 65).
 
 ## Measured
 
-- Manager identity (`PROSPINE_ID=1`, NA Normal, seed 4242, 3 seasons): same sha256 before and after the hook, flags off and all staging flags on, observer on or off.
-- `P1_SOFT=1` NA,SAM, 4 seasons, both policies: 0 findings.
-- Pro bot (`PRO_BOT=1`, NA/EU/SAM × Normal/Hard, 5 seasons): no throw, no stuck day, never two rosters; first org at 15-16 in all six; overall about 55/63/70/75/78 at 13-17.
+- Whole-career probe, all staging flags, 13 to retirement, after the QA fixes:
+
+  | Run | First org | Starter seasons | Peak (age) | Worlds | Titles | Retired |
+  |---|---|---|---|---|---|---|
+  | NA Normal | 14 | 15 | 99.0 (27) | 3 | 22 | 30 |
+  | EU Normal | 15 | 15 | 98.3 (27) | 3 | 10 | 30 |
+  | SAM Normal | 15 | 14 | 94.4 (28) | 3 | 10 | 30 |
+  | NA Hard | 15 | 15 | 90.7 (21) | 2 | 4 | 31 |
+
+- In all four runs: no throw, no stuck step, one roster at a time, every season closed with its line, and the card round-tripped.
+- Manager identity (flags on, 3 seasons): same sha256 as the rc.6 baseline (48046fa1...).
 
 ## Not verified
 
-- No browser check (dev servers not allowed): screens only server-render in a test; phone layout unchecked.
-- Peak calibration, Hard vs Normal, the "80 on a 90 org" feel (formula only).
-- The week planner stops at a matchday without saying why.
-- pro-engine's `weekFlow.playProWeek` is now used only by its test.
+No browser check. Calibration: Normal peaks run high. On the seat the org plays as the host team (no coach modifier), not as `orgTeamFor`.
 
 ## For Miguel
 
-1. Org series are watched, not played step by step, until slice 5.
-2. NA's weakest starters sit near 80: a 15-year-old signs as rotation and plays rotation weeks. Faster growth or weaker first suitors?
-3. An org that leaves the historical dataset makes him a free agent.
+1. careerFlow (not fixed): in double-elimination playoffs the custom mode's gate stalls on a round without the user. The manager's custom mode can hang there.
+2. Bronze to Grand Champion spans overall 47-57 (pro-engine's table).
