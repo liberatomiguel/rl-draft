@@ -17,6 +17,16 @@ const ENDLESS_HOSTS_EN = [
 ] as const;
 const hostEn = (i: string | number | undefined): string => ENDLESS_HOSTS_EN[Number(i)] ?? "";
 /** v2.2 ENDLESS: "A", "A and B", "A, B and C". */
+/** v2.2 ENDLESS: a rival project's kit, the user's own toolbox by name (keys: engine/career/endless KIT_ORDER). */
+const ENDLESS_KIT_EN: Record<string, string> = {
+  facilities: "a performance centre",
+  coach: "the region's best coach",
+  bench: "a reserve on the bench",
+  bootcamp: "a bootcamp",
+  psychologist: "a team psychologist",
+};
+const joinEn = (xs: string[]): string => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+const kitEn = (kit: string | number | undefined): string => joinEn(String(kit ?? "").split(",").filter(Boolean).map((k) => ENDLESS_KIT_EN[k] ?? k));
 const listEn = (p: Record<string, string | number>): string => {
   const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
   return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
@@ -2347,6 +2357,8 @@ export const CAREER_EN = {
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) breaks out as a prodigy`,
       // v2.2 ENDLESS
       endlessProject: (p: Record<string, string | number>) => `${p.org} build around ${listEn(p)}`,
+      endlessProjectGrows: (p: Record<string, string | number>) => `${p.org} keep building, season ${p.season} of the project`,
+      endlessGeneration: (p: Record<string, string | number>) => `A stronger generation: ${p.player} (${p.region}) leads ${p.n} new prodigies`,
       endlessHosts: (p: Record<string, string | number>) => `${p.season}: the Majors go to ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives: ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
@@ -2514,7 +2526,11 @@ export const CAREER_EN = {
         `Scouts across ${p.region} agree: ${p.player} has a ceiling among the best in the world. Give him a season or two.`,
       // v2.2 ENDLESS: what the save shows, nothing more (the signings and the rating before and after).
       endlessProject: (p: Record<string, string | number>) =>
-        `${p.org} (${p.region}) signs ${listEn(p)} for the new season.${Number(p.fac) ? " The org also opens a performance centre for the season." : ""} On paper the team rating goes from ${p.before} to ${p.after}.`,
+        `${p.org} (${p.region}) signs ${listEn(p)} for the new season${p.kit ? ` and adds ${kitEn(p.kit)}, the same tools a manager's club can buy` : ""}. On paper the team rating goes from ${p.before} to ${p.after}.`,
+      endlessProjectGrows: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) keep the core together for another season${p.p1 ? `, sign ${p.p1}` : ""}${p.kit ? ` and add ${kitEn(p.kit)}` : ""}. The team rating stands at ${p.after}.`,
+      endlessGeneration: (p: Record<string, string | number>) =>
+        `The scouts rate this year's elite prospects a little higher than the last. ${p.player} (${p.region}) heads a group of ${p.n} who could reach the very top in a season or two.`,
       endlessHosts: (p: Record<string, string | number>) =>
         `The circuit's ${p.season} stops are set: Majors in ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}, and the World Championship in ${hostEn(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
@@ -4363,6 +4379,8 @@ export const CAREER_EN = {
   endless: {
     hosts: ENDLESS_HOSTS_EN as readonly string[],
     legendsNote: "All-time RLCS rosters at their real peak ratings. Prize money and reputation, no Season Points.",
+    /** The org sheet's line for a rival project (its kit this season). */
+    projectKit: (season: number, kit: string) => `Project, season ${season}: ${kitEn(kit)}.`,
   },
 };
 

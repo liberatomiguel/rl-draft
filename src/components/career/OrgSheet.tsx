@@ -63,6 +63,7 @@ export function OrgSheet({
               {" · "}
               {C.orgSheet.prestige(org.prestige)}
             </p>
+            {org.projectKit ? <p className="mt-1 text-xs text-sub">{C.endless.projectKit(save.clock.seasonIndex - org.projectKit.since + 1, org.projectKit.items.join(","))}</p> : null}
           </div>
         </div>
 

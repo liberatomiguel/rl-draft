@@ -5350,36 +5350,53 @@ export const CAREER_ENDLESS = {
   projects: {
     /** Regions that can run a project (the leader's region answers first). */
     regions: ["NA", "EU", "SAM", "MENA", "OCE"] as const,
-    /** The leader's team rating (as the matches read it) minus the next three sides' mean: below this, no project. */
-    dominanceFloor: 1.5,
-    /** Each further step of dominance adds one project (one region). */
-    dominanceStep: 0.75,
-    maxProjects: 4,
-    /** A project is one of the region's best N AI orgs (not the leader, not last season's project). */
+    /**
+     * Round 2 (26/11): the answer scales with the dynasty. The leader's team
+     * rating (as the matches read it) minus the next three sides' mean is the
+     * gap. The world answers at dominanceFloor, or at defenceFloor when the
+     * leader also holds the Worlds title. Strength = its consecutive Worlds
+     * titles (at least 1), +1 from bigGap, capped at maxProjects; the same
+     * rule for the user and for an AI side.
+     */
+    dominanceFloor: 2.5,
+    defenceFloor: 2,
+    /** The reigning champion still "holds" (two titles or more: answered with no lead) within this of the top rating. */
+    holdSlack: 1,
+    /**
+     * bigGap 2.5 / gapStep 0.75 measured harder (a 100.7 team won 6 of 12
+     * Worlds against 21 of 27 here, N = 3 careers): kept at 3 / 1.
+     */
+    bigGap: 3,
+    /** Past bigGap, each further point of lead adds one more project. */
+    gapStep: 1,
+    maxProjects: 5,
+    /** Kit items (KIT_ORDER: facilities, coach, bench, bootcamp, psychologist) at strength 1; +1 per step. */
+    kitBase: 3,
+    /** A project is one of the region's best N AI orgs (not the leader, not a resting org). */
     candidateOrgs: 4,
-    /** Signings per project: buysBase, +1 per two levels, +1 from importGap; capped. */
-    buysBase: 1,
+    /** Signings for a new project (maxBuys once it signs worldwide), and the top-up of a continued one. */
+    buysBase: 2,
     maxBuys: 3,
+    topUpBuys: 1,
     /** A signing beats the weakest starter by at least this overall. */
     minEdge: 1,
-    /** From this dominance the projects sign from every region (the world's best players). */
-    importGap: 2.5,
-    /** The project also hires its region's best AI coach (a swap). */
-    coachSwap: true,
-    /** An AI leader (no user dynasty) needs this bigger lead before the world answers it. */
-    aiLeaderFloor: 3,
-    /**
-     * From this project level the org also opens a performance centre for the
-     * season: the team-rating bonus of the user's own (CAREER_GEAR perfCenter).
-     */
-    facilityFromLevel: 2,
-    /**
-     * A project keeps its performance centre this many seasons (its signings
-     * stay anyway), then the org sits one out. 2 measured no better than 1
-     * (Worlds share of a 101 team 85 % against 75 %, N = 40 each, within noise).
-     */
-    seasons: 1,
+    /** From this strength the projects sign from every region (the world's best players). */
+    importFromStrength: 2,
+    /** A project's core stays together this many seasons while the answer lasts, then the org rests a season. */
+    maxSeasons: 3,
   },
+  /**
+   * M2.1 in a long dynasty: from `fromTitles` consecutive Worlds, the season's
+   * new elite promotions get `perTitle` more potential per further title, up
+   * to `max` (new players only; capped at 99).
+   */
+  eliteGeneration: { fromTitles: 2, perTitle: 1, max: 2 },
+  /**
+   * Lever (c): during a user dynasty (this many consecutive Worlds) the
+   * strongest project bids for the user's best starter through the ordinary
+   * bid decision; one a window at most, a per-day roll inside the window.
+   */
+  projectBid: { fromTitles: 2, dailyChance: 0.15 },
   cups: {
     /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
     keepTop: 2,
