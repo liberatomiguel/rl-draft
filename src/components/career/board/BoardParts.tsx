@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { CAREER_BOARD } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import { missionProgressOf } from "@/engine/career/board";
+import { chanceBandOf, missionProgressOf } from "@/engine/career/board";
 import type { BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
 import type { CareerSave, SeasonGoalSpec } from "@/engine/career/types";
@@ -22,7 +22,6 @@ import { Panel } from "@/components/ui/Panel";
 import { useCareerStore } from "@/store/careerStore";
 import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
 
-const pct = (x: number) => Math.round(x * 100);
 const option = (active: boolean) =>
   cx("panel w-full text-left transition-colors", active ? "panel-glow-orange" : "hover:!border-line-strong");
 
@@ -49,7 +48,7 @@ export function BoardPackageChoice({ save, C }: { save: CareerSave; C: CareerCop
               <span className="text-xs text-sub">{o.id === "expected" ? K.recommended : ""}</span>
             </span>
             <span className="mt-1 block text-sm text-ink">
-              {goalText(C, o.objective)} · {K.chance(pct(o.objective.chance))}
+              {goalText(C, o.objective)} · {K.band(chanceBandOf(o.objective.chance))}
             </span>
             {pick === o.id ? (
               <span className="mt-1 block text-xs text-sub">
@@ -218,7 +217,7 @@ export function ObjectivesPanel({ save, C }: { save: CareerSave; C: CareerCopy }
               return row(
                 `${C.board.sporting} · ${C.board.packages.name[pkg.id]}`,
                 goalText(C, pkg.objective),
-                C.board.likely(pct(pkg.objective.chance)),
+                season.bandNow ? `${C.board.likely(chanceBandOf(pkg.objective.chance))} · ${C.board.bandNow(season.bandNow)}` : C.board.likely(chanceBandOf(pkg.objective.chance)),
                 season.met !== null ? status(season.met) : `${p.done}/${p.target}`,
               );
             })()
@@ -235,7 +234,7 @@ export function ObjectivesPanel({ save, C }: { save: CareerSave; C: CareerCopy }
         {u
           ? (() => {
               const m = missionProgressOf(u, save.eventResults);
-              return row(C.board.ultimatum.title, goalText(C, u.objective), `${C.board.ultimatum.body} ${C.board.ultimatum.chance(pct(u.objective.chance))}`, u.status === "met" ? C.board.ultimatum.met : C.board.ultimatum.progress(m.done, m.target));
+              return row(C.board.ultimatum.title, goalText(C, u.objective), `${C.board.ultimatum.body} ${C.board.ultimatum.chance(chanceBandOf(u.objective.chance))}`, u.status === "met" ? C.board.ultimatum.met : C.board.ultimatum.progress(m.done, m.target));
             })()
           : null}
       </ul>

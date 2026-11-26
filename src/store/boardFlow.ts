@@ -20,6 +20,7 @@ import {
   applyConfidence,
   boardPackagesFor,
   chanceNowOf,
+  chanceBandOf,
   checkpointDelta,
   legacyFor,
   missionProgressOf,
@@ -283,10 +284,13 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
   const pkg = chosenOf(board);
   const when = today(save);
   const before = board.confidence;
+  let bandNow: string | null = null;
   if (pkg && season.startChance !== null) {
     const oi = objectiveInputOf(save);
     const progress = seasonGoalProgressOf(pkg.objective, progressCtx(save));
     const now = chanceNowOf(pkg.objective, progress, oi);
+    bandNow = chanceBandOf(now);
+    season.bandNow = bandNow;
     if (progress.out && !season.outCharged) {
       season.outCharged = true;
       applyConfidence(board, B.checkpoint.outCost, "objectiveOut", when, patienceNow(save));
@@ -301,10 +305,10 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
     const mission = ultimatumMissionFor(week, objectiveInputOf(save));
     if (mission) {
       board.ultimatum = { issuedSeason: save.clock.seasonIndex, issuedDay: save.clock.day, fromWeek: week, objective: mission, status: "open" };
-      mail(save, "boardUltimatum", { kind: mission.kind, count: mission.count, place: mission.place ?? 0, chance: Math.round(mission.chance * 100) });
+      mail(save, "boardUltimatum", { kind: mission.kind, count: mission.count, place: mission.place ?? 0, band: chanceBandOf(mission.chance) });
     }
   }
-  if (board.confidence !== before && !board.ultimatum) mail(save, "boardCheckpoint", { split, confidence: board.confidence, delta: board.confidence - before });
+  if (board.confidence !== before && !board.ultimatum) mail(save, "boardCheckpoint", { split, confidence: board.confidence, delta: board.confidence - before, ...(bandNow ? { band: bandNow } : {}) });
 }
 
 // ---------------------------------------------------------------------------

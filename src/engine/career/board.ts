@@ -105,6 +105,16 @@ function nearest(pool: readonly SeasonGoalSpec[], aim: number, filter?: (c: Seas
   return best;
 }
 
+export type ChanceBand = "expected" | "reach" | "stretch" | "longShot";
+
+/** The words a calibrated chance is shown in (CAREER_BOARD.bands). */
+export function chanceBandOf(p: number, cuts: { expected: number; reach: number; stretch: number } = B.bands): ChanceBand {
+  if (p >= cuts.expected) return "expected";
+  if (p >= cuts.reach) return "reach";
+  if (p >= cuts.stretch) return "stretch";
+  return "longShot";
+}
+
 export function objectiveAimOf(pkg: PackageId, stature: ProfileKey, difficulty: CareerDifficulty): number {
   return clamp(
     B.baseAim + B.packages[pkg].aimShift + profileOf(stature).aimShift + (B.difficulty[difficulty]?.aimShift ?? 0),

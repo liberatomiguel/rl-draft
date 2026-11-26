@@ -53,6 +53,8 @@ export interface BoardSeason {
   startChance: number | null;
   /** Split checkpoints already run (1, 2). */
   checkpoints: number[];
+  /** The objective's band at the last checkpoint (the Board page's "now"). */
+  bandNow?: string;
   /** "out" already charged (once a season). */
   outCharged?: boolean;
   /** Settled at the review: met / missed (null before). */

@@ -11,6 +11,9 @@
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
+/** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
+const BOARD_BANDS_PT: Record<string, string> = { expected: "Esperado", reach: "Ao alcance", stretch: "Um desafio", longShot: "Uma aposta" };
+
 const ENDLESS_HOSTS_PT = [
   "Londres", "Paris", "Copenhague", "Estocolmo", "Boston", "Dallas",
   "Los Angeles", "São Paulo", "Riad", "Sydney", "Tóquio", "Madri",
@@ -4019,7 +4022,7 @@ export const CAREER_PT: CareerCopy = {
       title: "A proposta da diretoria para a temporada",
       body: "Escolha o tamanho da ambição. A verba é paga quando você aceita; o objetivo fica fixo na temporada.",
       name: { cautious: "Cauteloso", expected: "Esperado", ambitious: "Ambicioso" } as Record<string, string>,
-      chance: (pct: number) => `${pct}% de chance`,
+      band: (key: string) => BOARD_BANDS_PT[key] ?? key,
       budget: (amount: string) => `Verba ${amount}`,
       noBudget: "Sem verba",
       bonus: (amount: string) => `Bônus de ${amount} se cumprir`,
@@ -4074,7 +4077,9 @@ export const CAREER_PT: CareerCopy = {
           return "";
       }
     },
-    likely: (pct: number) => `${pct}% de chance no início da temporada`,
+    bandWord: (key: string) => BOARD_BANDS_PT[key] ?? key,
+    likely: (key: string) => `${BOARD_BANDS_PT[key] ?? key} no início da temporada`,
+    bandNow: (key: string) => `Agora: ${(BOARD_BANDS_PT[key] ?? key).toLowerCase()}`,
     notChosen: "Escolha primeiro o pacote da temporada.",
     budgetLine: (mult: number) => `Verba da próxima temporada: ×${mult.toFixed(2)}`,
     contract: (season: number) => `Contrato até a temporada ${season}`,
@@ -4084,7 +4089,7 @@ export const CAREER_PT: CareerCopy = {
       title: "Ultimato",
       body: "A diretoria quer isto até o fim da temporada. Se não cumprir, você deixa o clube na revisão da temporada.",
       progress: (done: number, target: number) => `${done} de ${target}`,
-      chance: (pct: number) => `${pct}% de chance quando foi dado`,
+      chance: (key: string) => `${BOARD_BANDS_PT[key] ?? key} quando foi dado.`,
       met: "Respondido. A diretoria volta a apoiar você.",
     },
     dismissed: {
@@ -4135,11 +4140,11 @@ export const CAREER_PT: CareerCopy = {
       body: {
         boardPackage: () => "Três pacotes estão na sua mesa: cauteloso, esperado e ambicioso. Mais ambição traz mais verba e um bônus maior, e custa mais confiança se o objetivo não for cumprido. O relógio espera a sua escolha.",
         boardCheckpoint: (p: Record<string, string | number>) =>
-          `A diretoria revisou o split. A confiança ${Number(p.delta) >= 0 ? "subiu" : "caiu"} ${Math.abs(Number(p.delta))} e está em ${p.confidence}.`,
+          `A diretoria revisou o split. A confiança ${Number(p.delta) >= 0 ? "subiu" : "caiu"} ${Math.abs(Number(p.delta))} e está em ${p.confidence}.${p.band ? ` O objetivo da temporada agora está na faixa "${BOARD_BANDS_PT[String(p.band)] ?? ""}".` : ""}`,
         boardWarning: (p: Record<string, string | number>) =>
           `A confiança da diretoria está em ${p.confidence}. Se cair abaixo de ${p.line}, a diretoria vai dar um ultimato com uma missão concreta.`,
         boardUltimatum: (p: Record<string, string | number>) =>
-          `A diretoria definiu uma missão para o resto da temporada; ela está na página da Diretoria. A diretoria estima a chance em ${p.chance}%. Se não for cumprida até a revisão da temporada, o seu contrato termina ali.`,
+          `A diretoria definiu uma missão para o resto da temporada; ela está na página da Diretoria. A diretoria a classifica como "${BOARD_BANDS_PT[String(p.band)] ?? ""}". Se não for cumprida até a revisão da temporada, o seu contrato termina ali.`,
         boardUltimatumMet: (p: Record<string, string | number>) => `A missão foi cumprida. A confiança voltou a ${p.confidence}.`,
         boardDismissed: (p: Record<string, string | number>) =>
           `A ${p.org} não seguirá com você depois desta temporada. ${p.n} propostas esperam na revisão da temporada, uma delas um novo clube seu.`,

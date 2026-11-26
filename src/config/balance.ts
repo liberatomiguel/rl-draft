@@ -5186,6 +5186,13 @@ export const CAREER_BOARD = {
     underdog: { normal: { a: 1.84, b: 1, first: 0.57 }, hard: { a: -0.72, b: 1, first: 0.84 } },
     owners: { normal: { a: -0.78, b: 1, first: -0.34 }, hard: { a: -1.64, b: 1, first: -0.51 } },
   } as Record<string, Record<string, { a: number; b: number; first: number }>>,
+  /**
+   * The player never sees a board objective's percentage: a band in words
+   * from the calibrated chance (≥ expected, ≥ reach, ≥ stretch, else a long
+   * shot). Cut points chosen on the held-out battery (BOARD_EVAL) so an
+   * objective rarely lands two bands from its measured rate.
+   */
+  bands: { expected: 0.65, reach: 0.45, stretch: 0.25 },
   /** Confidence lines. */
   confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },
   /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */
