@@ -37,3 +37,11 @@ Branch `v22/pro-qa` (from `release/v2.2`). Dev server on 3217 from the worktree,
 ## Not reached
 
 Seasons 1 to 7 played in two careers (about 3 matchdays read in full; the rest by Continue). Not seen: a benched report ("You did not play"), a renewal offer, transfer request button used, burnout from the planner (seen on Today and week, not played through), MVP line, Worlds, awards on the card, the card with titles, Web Share, the PT card page, 320 px of the Offers and Team tabs, the real download file (button clicked, no error, file not opened).
+
+## Rounds 2 and 3 (rc.2 merged; Pro playable, board, real-org start, endless)
+
+Played in the browser at 375/320/desktop, PT and EN. Fixtures: `src/store/proQaFixtures.probe.test.ts` (PRO_QA_DUMP=1) and `src/store/careerQaFixtures.probe.test.ts` (CAREER_QA_DUMP=1, 84 s) write the persisted store JSON to `public/qa-fixtures/` (git-ignored); inject under `rocket-draft:pro:v1` / `rocket-draft:career:v1`.
+
+Fixed: plan gate buttons play the week in one tap (it was accept then Continue, 2 taps a week); no duplicate Continue bar at the gate or season end; the live series screen is the series alone with a docked No-instinto / Play game / Sim bar; decision legend and locked-option text; call result says what it costs; card image no longer runs the legend into the footer (it now truncates lists with an ellipsis); board confidence figure wrapped at 375; the season review now shows the board's verdict.
+
+Not fixed (engine/store): see the final report: card titles keep the first 10 chronologically (Worlds titles dropped); gala exists only as inbox lines; org names with a numeric suffix ("Team Carnaval 8"); project list holds duplicate entries.
