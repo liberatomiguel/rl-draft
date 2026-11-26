@@ -12,7 +12,7 @@ vi.mock("@/config/balance", async (orig) => {
 
 import { CAREER_BOARD } from "@/config/balance";
 import { buildWorldAtCreation, computeStars } from "@/engine/career/worldSim";
-import { realOrgChoicesFor } from "@/engine/career/orgProfile";
+import { realOrgChoicesFor, rosterCountryOf } from "@/engine/career/orgProfile";
 import type { CareerSave } from "@/engine/career/types";
 import { advanceDayFlow, createCareerSave, enterSeasonReview, rolloverToNextSeason, type CreateCareerInput } from "./careerFlow";
 import { pendingDecisionsOf, rolloverHoldOf } from "./careerDecisions";
@@ -20,6 +20,8 @@ import {
   acceptJobOfferFlow,
   boardAutoAnswer,
   boardOnSplitBoundary,
+  boardUpgradeOptionsOf,
+  chooseBoardUpgradeFlow,
   chooseBoardPackageFlow,
   pendingJobChoiceOf,
   pendingPackageOf,
@@ -163,8 +165,11 @@ describe("warning, ultimatum, dismissal, offers", () => {
     expect(offers.every((o) => o.ref !== pick.ref)).toBe(true);
     save.flags[`contractsReviewed:1`] = true;
     expect(rolloverHoldOf(save)?.kind).toBe("board");
-    const target = offers.find((o) => o.kind === "org")!;
+    // A move into another region (the "best elsewhere" offer): the local-scene origin does not travel.
+    const target = offers.find((o) => o.kind === "org" && o.region !== "EU") ?? offers.find((o) => o.kind === "org")!;
+    save.competition.localOrigin = { rating: 70, seasonIndex: 1 } as NonNullable<CareerSave["competition"]["localOrigin"]>;
     const oldSquad = save.squad.filter((p) => p.contractEndSeason >= 2).map((p) => p.id);
+    const oldStarters = save.starterIds.filter((id) => oldSquad.includes(id));
     save = acceptJobOfferFlow(save, target.id).save;
     expect(rolloverHoldOf(save)?.kind).not.toBe("board");
     save.flags[`contractsReviewed:1`] = true;
@@ -172,14 +177,44 @@ describe("warning, ultimatum, dismissal, offers", () => {
     expect(next.identity.realOrgRef).toBe(target.ref);
     expect(next.world.orgs[target.ref!]).toBeUndefined();
     expect(next.world.orgs[pick.ref]).toBeDefined();
-    // The club left behind is an AI side again (its real lineup's anchor pass may pull its history back in).
+    // The club left behind keeps the squad the user built: its anchor pass no longer pulls history back.
     expect(next.world.orgs[pick.ref].region).toBe("EU");
+    expect(next.world.userBuiltRefs).toContain(pick.ref);
+    for (const id of oldStarters) expect(next.world.orgs[pick.ref].playerIds).toContain(id);
     expect(next.squad.some((p) => oldSquad.includes(p.id))).toBe(false);
+    if (target.region !== "EU") {
+      expect(next.identity.region).toBe(target.region);
+      expect(next.competition.localOrigin).toBeUndefined();
+    }
     expect(next.board!.confidence).toBe(CAREER_BOARD.confidence.start);
     expect(next.board!.startSeason).toBe(2);
     expect(next.manager!.spells.map((s) => s.left ?? "now")).toEqual(["dismissed", "now"]);
     expect(pendingPackageOf(next)).toHaveLength(3);
   }, 120_000);
+});
+
+describe("takeover identity and the board's upgrade", () => {
+  it("the manager's flag comes from the roster, never a hard-coded country", () => {
+    for (const region of ["NA", "EU", "SAM"] as const) for (const c of choices(region)) expect(c.country).toMatch(/^[A-Z]{2}$/);
+    expect(choices("SAM").filter((c) => c.country === "BR").length).toBeGreaterThan(0);
+    expect(rosterCountryOf([undefined, undefined], "SAM")).toBe("BR");
+  });
+
+  it("top confidence funds one upgrade the manager picks: paid by the board, once", () => {
+    const pick = choices("NA")[0];
+    let save = boardAutoAnswer(createCareerSave(input("NA", pick.ref), SEED));
+    save.board!.upgrade = { offeredSeason: 0 };
+    const options = boardUpgradeOptionsOf(save);
+    expect(options.length).toBeGreaterThan(0);
+    const before = save.finances.balance;
+    const first = options[0];
+    save = chooseBoardUpgradeFlow(save, first.id).save;
+    // An installation is paid outright (grant = price); a staff role's season of retainer lands as cash for its Mondays.
+    expect(save.finances.balance).toBe(first.id === "gear" ? before : before + first.cost);
+    expect(save.board!.upgrade!.taken).toBeDefined();
+    expect(boardUpgradeOptionsOf(save)).toEqual([]);
+    expect(chooseBoardUpgradeFlow(save, first.id).error).toBe("none");
+  });
 });
 
 describe("older saves", () => {

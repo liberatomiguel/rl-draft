@@ -24,6 +24,7 @@ import {
   legacyFor,
   missionProgressOf,
   newBoardState,
+  ratedGoals,
   secondaryFor,
   secondaryMet,
   stretchFor,
@@ -44,7 +45,10 @@ import { windowIndexOf, weekOfDay } from "@/engine/career/calendar";
 import { fillerOrgName } from "@/engine/career/worldSim";
 import type { CareerSave, MailItem } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
-import { fieldDrawOf, sponsorLevelOf, type CreateCareerInput, type FlowResult } from "./careerFlow";
+import { buyGearFlow, fieldDrawOf, setStaffFlow, sponsorLevelOf, type CreateCareerInput, type FlowResult } from "./careerFlow";
+import { CAREER_STAFF } from "@/config/balance";
+import { gearNextItem, gearPriceFor, staffOn, staffPerSplitFor, type GearItemId } from "@/engine/career/economy";
+import type { StaffId } from "@/engine/career/types";
 import { initialTrainingState } from "./careerTraining";
 
 const B = CAREER_BOARD;
@@ -73,7 +77,14 @@ function weekWagesOf(save: CareerSave): number {
 }
 
 function objectiveInputOf(save: CareerSave): ObjectiveInput {
-  return { level: sponsorLevelOf(save), cup: fieldDrawOf(save), seasonIndex: save.clock.seasonIndex };
+  const input: ObjectiveInput = { level: sponsorLevelOf(save), cup: fieldDrawOf(save), seasonIndex: save.clock.seasonIndex };
+  if (save.board) input.cal = { stature: save.board.stature, difficulty: save.difficulty, first: save.clock.seasonIndex === save.board.startSeason };
+  return input;
+}
+
+/** For the probe's calibration: the season's every goal at its RAW model chance (no cell). */
+export function boardRawGoalsOf(save: CareerSave): ReturnType<typeof ratedGoals> {
+  return ratedGoals({ level: sponsorLevelOf(save), cup: fieldDrawOf(save), seasonIndex: save.clock.seasonIndex });
 }
 
 /** The wage ceiling in this season's money (the board sized it in its own season's). */
@@ -178,6 +189,8 @@ export function boardOnSeasonStart(save: CareerSave): void {
     save.manager ??= newManagerState(save.clock.seasonIndex, save.identity.orgName, save.identity.realOrgRef);
   }
   const board = save.board;
+  // A move into another region: the old region's local-scene origin does not travel (read afresh, as a new career).
+  if (board.regionChangedAt === save.clock.seasonIndex) delete save.competition.localOrigin;
   board.weekWages = weekWagesOf(save);
   // A fresh season: the board forgives part of the gap below its starting view.
   const gap = B.confidence.start - board.confidence;
@@ -406,6 +419,10 @@ export function boardOnSeasonReview(save: CareerSave): void {
 
   // 7. What the confidence earns or costs next season (nothing paid is taken back).
   const c = board.confidence;
+  if (c >= B.confidence.top && !board.upgrade) {
+    board.upgrade = { offeredSeason: s };
+    mail(save, "boardUpgrade", { confidence: c });
+  }
   if (c >= B.confidence.high) {
     board.budgetMult = Math.min(B.budget.max, board.budgetMult + B.budget.step);
     manager.contractUntil = Math.max(manager.contractUntil, s + 1) + B.contract.extendSeasons;
@@ -483,6 +500,7 @@ export function boardSeatAtRollover(save: CareerSave, nextSeason: number): void 
   const clock = save.clock;
   save.clock = { seasonIndex: nextSeason, day: 1 };
   const leftName = save.identity.orgName;
+  const leftRegion = save.identity.region;
   leaveSeat(save, true);
   const taken = offer.kind === "org" && offer.ref ? takeOrgSeat(save, offer.ref) : foundNewSeat(save, offer.name);
   const seat = taken ?? foundNewSeat(save, offer.name);
@@ -497,7 +515,7 @@ export function boardSeatAtRollover(save: CareerSave, nextSeason: number): void 
   manager.offers = null;
   manager.accepted = null;
   manager.contractUntil = nextSeason + B.contract.startSeasons - 1;
-  save.board = { ...boardFor(save, seat.stature, nextSeason), log: [] };
+  save.board = { ...boardFor(save, seat.stature, nextSeason), log: [], ...(save.identity.region !== leftRegion ? { regionChangedAt: nextSeason } : {}) };
   save.training = initialTrainingState(save.difficulty, save.training?.mode);
   save.seq += 1;
   mail(save, "boardNewJob", { org: save.identity.orgName, left: leftName });
@@ -527,4 +545,42 @@ export function boardAutoAnswer(save: CareerSave, pkg: PackageId = "expected"): 
   const jobs = pendingJobChoiceOf(save);
   if (jobs) return acceptJobOfferFlow(save, (jobs.find((o) => o.kind === "org") ?? jobs[0]).id).save;
   return save;
+}
+
+// ---------------------------------------------------------------------------
+// The high-confidence reward: one board-funded upgrade the manager picks
+// ---------------------------------------------------------------------------
+
+export interface BoardUpgradeOption {
+  /** "gear" = the next installation of the ladder; else a support-staff role (a season's retainer paid). */
+  id: "gear" | StaffId;
+  /** The gear item's id, for the label. */
+  item?: string;
+  cost: number;
+}
+
+/** What the board would fund now: the next installation and the staff roles not yet retained, as the toolbox sells them. */
+export function boardUpgradeOptionsOf(save: CareerSave): BoardUpgradeOption[] {
+  if (!boardOn(save) || !save.board.upgrade || save.board.upgrade.taken || save.phase !== "running") return [];
+  const out: BoardUpgradeOption[] = [];
+  const next = gearNextItem(save.finances.gear);
+  if (next && save.reputation >= next.repGate) out.push({ id: "gear", item: next.id, cost: gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex) });
+  for (const id of CAREER_STAFF.order) {
+    if (staffOn(save.finances.gear, id) || save.reputation < CAREER_STAFF.roles[id].repGate) continue;
+    out.push({ id, cost: quantize(staffPerSplitFor(id, save.clock.seasonIndex) * 3) });
+  }
+  return out;
+}
+
+/** The board pays for the pick (the grant lands first, then the toolbox's own purchase runs). Once per tenure. */
+export function chooseBoardUpgradeFlow(input: CareerSave, id: BoardUpgradeOption["id"]): FlowResult {
+  const option = boardUpgradeOptionsOf(input).find((o) => o.id === id);
+  if (!option) return { save: input, error: "none" };
+  let save = structuredClone(input) as CareerSave & { board: BoardState };
+  save.finances = pushLedger(save.finances, { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), day: save.clock.day, kind: "boardGrant", amount: option.cost, refName: option.item ?? option.id });
+  const bought = id === "gear" ? buyGearFlow(save, option.item as GearItemId) : setStaffFlow(save, id, true);
+  if (bought.error) return { save: input, error: bought.error };
+  save = bought.save as CareerSave & { board: BoardState };
+  save.board.upgrade = { ...save.board.upgrade!, taken: option.item ?? option.id };
+  return { save };
 }

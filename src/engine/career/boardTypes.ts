@@ -102,6 +102,10 @@ export interface BoardState {
   freeze: { seasonIndex: number; windowIdx: number } | null;
   /** Dismissal served at this season's review (the move happens at the rollover). */
   dismissedSeason: number | null;
+  /** The season a move changed the manager's region (the rollover drops the old region's local-scene origin). */
+  regionChangedAt?: number;
+  /** The one-time board-funded upgrade: offered at top confidence (a season), then what was picked. */
+  upgrade?: { offeredSeason: number; taken?: string };
 }
 
 export interface JobOffer {

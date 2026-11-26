@@ -18,7 +18,7 @@ import type { Region } from "@/engine/types";
 import { formatMoney } from "@/lib/format";
 import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
-import { composeCrestId, WIZARD_CREST_IDS } from "@/components/career/UserCrest";
+import { proceduralCrestFor } from "@/components/career/OrgMark";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -82,9 +82,11 @@ function OrgOption({ c, active, onPick }: { c: RealOrgChoice; active: boolean; o
             {c.players.map((p) => `${p.name} ${p.overall}`).join(" · ")}
           </p>
           <p className="mt-1 text-xs text-sub">{c.coach ? P.coach(c.coach.name, c.coach.overall) : P.noCoach}</p>
+          {c.money.weekWages > 0 ? <p className="mt-1 text-xs text-sub">{C.board.budgetCovers(Math.round(c.money.grant / c.money.weekWages))}</p> : null}
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
             <Fig label={P.cash} value={formatMoney(c.money.startCash)} />
             <Fig label={P.budget} value={formatMoney(c.money.grant)} />
+            <Fig label={C.board.wageBill} value={formatMoney(c.money.weekWages)} />
             <Fig label={P.wageRoom} value={formatMoney(c.money.wageRoom)} />
             <Fig label={P.expected} value={P.expectedRank(c.expectedRank)} />
             <Fig label={P.missCost} value={P.missCostValue(c.missCost)} />
@@ -116,6 +118,7 @@ export function TakeoverWizard({ onBack, onCreated }: { onBack: () => void; onCr
 
   const go = () => {
     if (!chosen) return;
+    const crest = proceduralCrestFor(chosen.ref, chosen.name);
     const slot = slots.findIndex((s) => !s);
     if (slot === -1) {
       setFull(true);
@@ -128,10 +131,11 @@ export function TakeoverWizard({ onBack, onCreated }: { onBack: () => void; onCr
           orgName: chosen.name,
           abbrev: abbrevFor(chosen.name),
           managerName: manager.trim() || P.managerPlaceholder,
-          country: "US",
+          // The roster's nationality; the org's procedural crest (the real logo shows wherever it exists).
+          country: chosen.country,
           region,
-          crestId: composeCrestId({ shape: WIZARD_CREST_IDS[0] }),
-          colors: { primary: "#f97316", secondary: "#ffffff" },
+          crestId: crest.crestId,
+          colors: crest.colors,
           buffType: "offense",
         },
         difficulty,

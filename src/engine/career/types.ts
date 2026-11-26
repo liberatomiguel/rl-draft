@@ -507,6 +507,12 @@ export interface WorldState {
    * Optional, additive: absent = a founded club.
    */
   userOrgRef?: string;
+  /**
+   * v2.2 board front: real clubs the user managed and left — the preseason
+   * anchor pass no longer pulls their dataset roster back over the squad he
+   * built. Optional, additive.
+   */
+  userBuiltRefs?: string[];
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */

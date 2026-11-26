@@ -51,14 +51,44 @@ export interface ObjectiveInput {
   level: TeamLevel;
   cup?: FieldDraw | null;
   seasonIndex: number;
+  /**
+   * The board's calibration cell (CAREER_BOARD.calibration): the season-goal
+   * curves were fitted on founded careers before the staging flags moved the
+   * field, so the board states the chance measured for its stature,
+   * difficulty and stage. Absent = the raw model chance.
+   */
+  cal?: CalibrationCell;
 }
 
-/** Every season goal with its chance for this squad (Worlds goals out in a season without Worlds). */
+export interface CalibrationCell {
+  stature: ProfileKey;
+  difficulty: CareerDifficulty;
+  /** The board's first season (a takeover's first, a founded club's founding season). */
+  first: boolean;
+}
+
+const logit = (p: number) => Math.log(p / (1 - p));
+
+/**
+ * The measured chance for a model chance: logit(p) = a + b·logit(model) (+ first
+ * in a first season), fitted per stature × difficulty on BOARD_CAL (careerBoard.probe).
+ */
+export function calibratedChance(model: number, cell: CalibrationCell | undefined): number {
+  if (!cell || !(model > 0)) return model;
+  const row = (B.calibration as Record<string, Record<string, { a: number; b: number; first: number }> | undefined>)[cell.stature]?.[cell.difficulty];
+  if (!row) return model;
+  const x = logit(clamp(model, 0.01, 0.99));
+  const z = row.a + row.b * x + (cell.first ? row.first : 0);
+  return clamp(1 / (1 + Math.exp(-z)), 0.01, 0.99);
+}
+
+/** Every season goal with its chance for this squad (Worlds goals out in a season without Worlds), calibrated when a cell is given. */
 export function ratedGoals(input: ObjectiveInput): SeasonGoalSpec[] {
   const noWorlds = worldsCancelledIn(input.seasonIndex);
   return SEASON_GOAL_CANDIDATES.filter((c) => !noWorlds || (c.kind !== "worldsQualify" && c.kind !== "worldsFinish"))
-    .map((c) => ({ ...c, chance: round3(seasonGoalChance(c, input.level, input.cup)) }))
-    .filter((c) => Number.isFinite(c.chance) && c.chance > 0);
+    .map((c) => ({ ...c, chance: seasonGoalChance(c, input.level, input.cup) }))
+    .filter((c) => Number.isFinite(c.chance) && c.chance > 0)
+    .map((c) => ({ ...c, chance: round3(calibratedChance(c.chance, input.cal)) }));
 }
 
 /** The goal nearest `aim` (the less ambitious on a tie), optionally under / over a chance. */
@@ -174,7 +204,7 @@ export function legacyFor(last: { worlds: boolean; majors: number } | null, inpu
       : kind === "everyMajor"
         ? { kind: "majorFinish", count: 3, place: 1 }
         : { kind: "majorFinish", count: 2, place: 1 };
-  return { kind, objective: { ...spec, chance: round3(seasonGoalChance(spec, input.level, input.cup)) }, met: null };
+  return { kind, objective: { ...spec, chance: round3(calibratedChance(seasonGoalChance(spec, input.level, input.cup), input.cal)) }, met: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +270,7 @@ export function chanceNowOf(
   if (n <= 1) return spec.chance;
   const p = perEventChance(spec, n, input);
   const left = Math.min(progress.left, n);
-  return round3(binomialTail(left, progress.target - progress.done, p));
+  return round3(calibratedChance(binomialTail(left, progress.target - progress.done, p), input.cal));
 }
 
 export function checkpointDelta(startChance: number, nowChance: number): number {
@@ -260,7 +290,7 @@ export function ultimatumMissionFor(week: number, input: ObjectiveInput): Season
     if (left <= 0) return;
     const p = perEventChance({ kind, place }, eventsOf(kind), input);
     for (let k = 1; k <= left; k++) {
-      const spec: SeasonGoalSpec = { kind, count: k, chance: round3(binomialTail(left, k, p)) };
+      const spec: SeasonGoalSpec = { kind, count: k, chance: round3(calibratedChance(binomialTail(left, k, p), input.cal)) };
       if (place !== undefined) spec.place = place;
       if (spec.chance > 0) pool.push(spec);
     }

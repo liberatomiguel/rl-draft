@@ -4113,6 +4113,14 @@ export const CAREER_EN = {
     now: "now",
     openBoard: "Open the board",
     boardFreezeError: "The board froze hiring for this window.",
+    wageBill: "Wage bill / week",
+    budgetCovers: (weeks: number) => `The season budget covers ${weeks} weeks of the wage bill. Prizes and sponsors pay the rest.`,
+    upgrade: {
+      title: "The board funds an upgrade",
+      body: "Confidence is high, so the board pays for one upgrade of your choice. It is paid in full; a staff role is paid for one season.",
+      pick: "Fund it",
+      taken: (name: string) => `Funded by the board: ${name}.`,
+    },
     mail: {
       tpl: {
         boardPackage: () => "The board's offer for the season",
@@ -4126,6 +4134,7 @@ export const CAREER_EN = {
         boardVerdict: () => "The board's season verdict",
         boardApproach: (p: Record<string, string | number>) => `${p.org} make an approach`,
         boardNewJob: (p: Record<string, string | number>) => `Welcome to ${p.org}`,
+        boardUpgrade: () => "The board will fund an upgrade",
       } as Record<string, (p: Record<string, string | number>) => string>,
       body: {
         boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
@@ -4146,6 +4155,7 @@ export const CAREER_EN = {
         boardApproach: (p: Record<string, string | number>) =>
           `${p.org} (${p.region}) ask whether you would manage them next season. Answer in the season review.`,
         boardNewJob: (p: Record<string, string | number>) => `You take over ${p.org}. ${p.left} continue in the league without you.`,
+        boardUpgrade: (p: Record<string, string | number>) => `With confidence at ${p.confidence}, the board will pay for one upgrade. Pick it on the Board page.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
     },
   },

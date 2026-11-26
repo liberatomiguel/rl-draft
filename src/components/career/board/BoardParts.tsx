@@ -20,7 +20,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { useCareerStore } from "@/store/careerStore";
-import { pendingJobChoiceOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
+import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
 
 const pct = (x: number) => Math.round(x * 100);
 const option = (active: boolean) =>
@@ -224,11 +224,43 @@ export function ObjectivesPanel({ save, C }: { save: CareerSave; C: CareerCopy }
           : null}
       </ul>
       <div className="mt-3 grid gap-1 text-xs text-sub">
+        {pkg ? (
+          <p className="text-ink">
+            {C.board.packages.budget(formatMoney(pkg.grant))} · {C.board.wageBill} {formatMoney(board.weekWages)}
+            {board.weekWages > 0 ? ` · ${C.board.budgetCovers(Math.round(pkg.grant / board.weekWages))}` : ""}
+          </p>
+        ) : null}
         <p>{C.board.budgetLine(board.budgetMult)}</p>
         {board.protectedUntil !== null && board.protectedUntil >= save.clock.seasonIndex ? <p>{C.board.protectedUntil(board.protectedUntil + 1)}</p> : null}
         {board.freeze && board.freeze.seasonIndex === save.clock.seasonIndex ? <p className="text-orange-bright">{C.board.freeze}</p> : null}
         {save.manager ? <p>{C.board.contract(save.manager.contractUntil + 1)}</p> : null}
       </div>
+    </Panel>
+  );
+}
+
+/** The one-time board-funded upgrade (top confidence): the next installation or a staff role, as the toolbox sells them. */
+export function BoardUpgradePanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const choose = useCareerStore((s) => s.chooseBoardUpgrade);
+  const up = save.board?.upgrade;
+  if (!up) return null;
+  const rung = C.ladder.rung as Record<string, string>;
+  if (up.taken) return <p className="text-sm text-good">{C.board.upgrade.taken(rung[up.taken] ?? up.taken)}</p>;
+  const options = boardUpgradeOptionsOf(save);
+  if (options.length === 0) return null;
+  return (
+    <Panel glow="blue" className="p-4 sm:p-5">
+      <h3 className="card-title">{C.board.upgrade.title}</h3>
+      <p className="mt-1 text-sm text-sub">{C.board.upgrade.body}</p>
+      <ul className="mt-3 border-t border-line">
+        {options.map((o) => (
+          <li key={o.id} className="flex min-h-11 items-center gap-3 border-b border-line py-2">
+            <span className="min-w-0 flex-1 truncate text-sm text-ink">{rung[o.item ?? o.id] ?? o.id}</span>
+            <span className="text-xs text-sub">{formatMoney(o.cost)}</span>
+            <Button variant="secondary" size="sm" onClick={() => choose(o.id)}>{C.board.upgrade.pick}</Button>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

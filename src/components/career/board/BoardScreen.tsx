@@ -8,7 +8,7 @@ import type { CareerSave } from "@/engine/career/types";
 import { useCareerSave } from "@/components/career/careerUi";
 import { AppLink } from "@/components/ui/AppLink";
 import { useMounted } from "@/store/useMounted";
-import { BoardPackageChoice, BoardSeasonPanel, ConfidencePanel, ManagerPanel, ObjectivesPanel } from "./BoardParts";
+import { BoardPackageChoice, BoardSeasonPanel, BoardUpgradePanel, ConfidencePanel, ManagerPanel, ObjectivesPanel } from "./BoardParts";
 
 export function BoardScreen() {
   const mounted = useMounted();
@@ -25,6 +25,7 @@ export function BoardScreen() {
       {!board ? <p className="text-sm text-sub">{C.board.logEmpty}</p> : null}
       <BoardPackageChoice save={save} C={C} />
       <BoardSeasonPanel save={save} C={C} />
+      <BoardUpgradePanel save={save} C={C} />
       {board ? <ConfidencePanel board={board} C={C} /> : null}
       <ObjectivesPanel save={save} C={C} />
       <ManagerPanel save={save} C={C} />

@@ -165,6 +165,18 @@ export function orgMoneyFor(stature: ProfileKey, weekWages: number, difficulty: 
   };
 }
 
+/** The region's usual nationality when the roster has none on record. */
+const REGION_COUNTRY: Record<Region, string> = { NA: "US", EU: "FR", SAM: "BR", MENA: "SA", OCE: "AU", APAC: "JP", SSA: "ZA" };
+
+/** The most common country among a roster (ties: the first seen), else the region's. */
+export function rosterCountryOf(countries: readonly (string | undefined)[], region: Region): string {
+  const n = new Map<string, number>();
+  for (const c of countries) if (c) n.set(c.toUpperCase(), (n.get(c.toUpperCase()) ?? 0) + 1);
+  let best: string | null = null;
+  for (const [c, k] of n) if (best === null || k > n.get(best)!) best = c;
+  return best ?? REGION_COUNTRY[region];
+}
+
 export interface RealOrgChoice {
   ref: string;
   name: string;
@@ -175,6 +187,8 @@ export interface RealOrgChoice {
   rating: number;
   prestige: number;
   players: { id: string; name: string; overall: number; age: number }[];
+  /** The roster's most common nationality (ISO alpha-2), else the region's usual one: the manager's flag. */
+  country: string;
   coach: { name: string; overall: number } | null;
   money: OrgMoney;
   /** The finish the board expects (its region rank). */
@@ -208,6 +222,7 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       rating: Math.round(ratingOf(org) * 10) / 10,
       prestige: org.prestige,
       players: squad.map((s) => ({ id: s.id, name: s.name, overall: Math.round(s.overall), age: seasonYear(ctx.seasonIndex) - s.birthYear })),
+      country: rosterCountryOf(squad.map((s) => s.country), region),
       coach: coach ? { name: coach.name, overall: coach.overall } : null,
       money: orgMoneyFor(stature, week, ctx.difficulty, ctx.seasonIndex),
       expectedRank: p.expectedRank,

@@ -4084,6 +4084,14 @@ export const CAREER_PT: CareerCopy = {
     now: "agora",
     openBoard: "Abrir a diretoria",
     boardFreezeError: "A diretoria congelou as contratações nesta janela.",
+    wageBill: "Folha / semana",
+    budgetCovers: (weeks: number) => `A verba da temporada cobre ${weeks} semanas da folha. Prêmios e patrocínios pagam o resto.`,
+    upgrade: {
+      title: "A diretoria paga uma melhoria",
+      body: "A confiança está alta, então a diretoria paga uma melhoria à sua escolha. É paga por inteiro; um cargo da equipe de apoio é pago por uma temporada.",
+      pick: "Pagar",
+      taken: (name: string) => `Paga pela diretoria: ${name}.`,
+    },
     mail: {
       tpl: {
         boardPackage: () => "A proposta da diretoria para a temporada",
@@ -4097,6 +4105,7 @@ export const CAREER_PT: CareerCopy = {
         boardVerdict: () => "O veredito da diretoria na temporada",
         boardApproach: (p: Record<string, string | number>) => `A ${p.org} faz uma sondagem`,
         boardNewJob: (p: Record<string, string | number>) => `Bem-vindo à ${p.org}`,
+        boardUpgrade: () => "A diretoria vai pagar uma melhoria",
       } as Record<string, (p: Record<string, string | number>) => string>,
       body: {
         boardPackage: () => "Três pacotes estão na sua mesa: cauteloso, esperado e ambicioso. Mais ambição traz mais verba e um bônus maior, e custa mais confiança se o objetivo não for cumprido. O relógio espera a sua escolha.",
@@ -4117,6 +4126,7 @@ export const CAREER_PT: CareerCopy = {
         boardApproach: (p: Record<string, string | number>) =>
           `A ${p.org} (${p.region}) pergunta se você comandaria o time na próxima temporada. Responda na revisão da temporada.`,
         boardNewJob: (p: Record<string, string | number>) => `Você assume a ${p.org}. A ${p.left} segue na liga sem você.`,
+        boardUpgrade: (p: Record<string, string | number>) => `Com a confiança em ${p.confidence}, a diretoria vai pagar uma melhoria. Escolha na página da Diretoria.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
     },
   },

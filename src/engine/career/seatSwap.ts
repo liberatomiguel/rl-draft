@@ -102,6 +102,7 @@ export function leaveSeat(save: CareerSave, leaveBehind: boolean): string | null
       ...(victim?.rating !== undefined ? { rating: victim.rating } : {}),
     };
     world.freeAgentIds = world.freeAgentIds.filter((id) => !starters.includes(id));
+    if (save.identity.realOrgRef && !(world.userBuiltRefs ?? []).includes(ref)) world.userBuiltRefs = [...(world.userBuiltRefs ?? []), ref];
     leftRef = ref;
   } else {
     toFreeAgency(world, save.squad.map((p) => p.id));

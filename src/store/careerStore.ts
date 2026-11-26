@@ -24,7 +24,7 @@
  * news after each action).
  */
 
-import { acceptJobOfferFlow, chooseBoardPackageFlow, declineJobOfferFlow } from "./boardFlow";
+import { acceptJobOfferFlow, chooseBoardPackageFlow, chooseBoardUpgradeFlow, declineJobOfferFlow, type BoardUpgradeOption } from "./boardFlow";
 import type { PackageId } from "@/engine/career/boardTypes";
 import { create } from "zustand";
 import { asCareerSwitch, onLocalCareerReplaced } from "@/lib/localOwner";
@@ -360,6 +360,7 @@ interface CareerStoreState {
   chooseBoardPackage: (id: PackageId) => void;
   acceptJobOffer: (id: string) => void;
   declineJobOffer: () => void;
+  chooseBoardUpgrade: (id: BoardUpgradeOption["id"]) => void;
   /** rc.34 (Miguel, 31/10): a short squad sits this regional out (the hold's third answer). */
   skipShortSquadEvent: () => void;
   /** rc.34 (UX-06): the manager OPENED these "New" items (engine/career/careerNew keys). */
@@ -761,6 +762,7 @@ export const useCareerStore = create<CareerStoreState>()(
         chooseBoardPackage: (id) => withResult((s) => chooseBoardPackageFlow(s, id)),
         acceptJobOffer: (id) => withResult((s) => acceptJobOfferFlow(s, id)),
         declineJobOffer: () => withResult(declineJobOfferFlow),
+        chooseBoardUpgrade: (id) => withResult((s) => chooseBoardUpgradeFlow(s, id)),
         skipShortSquadEvent: () => withResult(skipShortSquadEventFlow),
         // rc.34 (UX-06): a light write — only the save's seen state moves (no flow, no toasts).
         markCareerSeen: (keys) => {

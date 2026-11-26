@@ -5124,6 +5124,13 @@ export const CAREER_BOARD = {
    * (a fresh season): one bad year costs, a run of them dismisses. Owners forgive more.
    */
   seasonRecovery: { board: 0.25, owners: 0.5 },
+  /**
+   * The board states MEASURED chances: logit(p) = a + b·logit(model) (+ first
+   * in the board's first season), per stature × difficulty, fitted on
+   * BOARD_PROBE=1 BOARD_CAL_OUT (careerBoard.probe.test.ts, BOARD_FIT_FROM).
+   * A missing cell reads the raw model.
+   */
+  calibration: {} as Record<string, Record<string, { a: number; b: number; first: number }>>,
   /** Confidence lines. */
   confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },
   /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */
