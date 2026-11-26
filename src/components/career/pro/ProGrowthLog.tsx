@@ -24,9 +24,9 @@ export function ProGrowthLog({ log }: { log: ProGrowthEntry[] }) {
         <ul className="space-y-1.5 text-sm">
           {rows.map((e, i) => (
             <li key={`${e.seasonIndex}:${e.day}:${e.stat}:${e.source}:${i}`} className="flex items-baseline justify-between gap-3 border-b border-line pb-1.5">
-              <span className="min-w-0 truncate">
+              <span className="min-w-0">
                 <span className={e.delta >= 0 ? "text-ink" : "text-bad"}>{C.log.line(copy.STAT_LABELS[e.stat], e.delta)}</span>
-                <span className="ml-2 text-xs text-sub">{C.log.source[e.source] ?? e.source}</span>
+                <span className="ml-2 text-xs text-sub">{(e.reason && C.log.reasons[e.reason]) || C.log.source[e.source] || e.source}</span>
               </span>
               <span className="shrink-0 text-xs text-faint">{C.log.day(e.seasonIndex, e.day)}</span>
             </li>

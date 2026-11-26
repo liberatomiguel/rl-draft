@@ -3734,6 +3734,15 @@ export const CAREER_PT: CareerCopy = {
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
       day: (season: number, day: number) => `Temporada ${season + 1}, dia ${day}`,
+      /** Por que um atributo caiu com a idade (a chave de motivo numa entrada "age"). */
+      reasons: {
+        reflexes: "Os seus reflexos começam a cair.",
+        pace: "Você chega um passo atrás na bola.",
+        reactions: "O seu tempo de reação na defesa está caindo.",
+        stamina: "Séries longas custam mais do que custavam.",
+        nerve: "Os grandes momentos pesam um pouco mais em você.",
+        reads: "A sua leitura de jogo cai, devagar.",
+      } as Record<string, string>,
     },
     form: {
       confidence: "Confiança",
@@ -3795,6 +3804,36 @@ export const CAREER_PT: CareerCopy = {
               : `Próxima: ${name}. Treine mecânica mais uma vez.`,
       all: "Todas as mecânicas assinatura estão desbloqueadas.",
     },
+  },
+
+  /** v2.2 Pro, fatia 6: a página do cartão final (docs/PRO-SPEC.md §9). */
+  proCard: {
+    kicker: "Cartão da carreira Pro",
+    peak: "Overall de pico",
+    seasons: (n: number) => `${n} ${n === 1 ? "temporada" : "temporadas"}`,
+    orgs: "Orgs",
+    titles: "Títulos",
+    awards: "Prêmios",
+    bestRating: "Melhor nota de temporada",
+    none: "Nenhum ainda",
+    nickname: "Conhecido como",
+    legends: {
+      title: "Entre os jogadores reais",
+      between: (peak: string, above: string, below: string) => `Um overall de pico de ${peak} fica entre ${above} e ${below} no ranking histórico das melhores cartas.`,
+      below: (peak: string, name: string) => `Um overall de pico de ${peak} fica logo abaixo de ${name} no ranking histórico das melhores cartas.`,
+      above: (peak: string, name: string) => `Um overall de pico de ${peak} fica acima da melhor carta de qualquer jogador real, logo acima de ${name}.`,
+      place: (n: number, of: number) => `Posição ${n} de ${of}`,
+      loading: "Lendo o ranking...",
+    },
+    download: "Baixar imagem",
+    share: "Compartilhar",
+    copyLink: "Copiar link",
+    copied: "Link copiado",
+    shareText: (name: string) => `A carreira Pro de ${name} no Rocket Draft`,
+    invalidTitle: "Este cartão não pode ser lido",
+    invalidBody: "O link está incompleto ou foi editado. Peça o link de novo, ou comece a sua carreira.",
+    start: "Começar uma carreira Pro",
+    own: "Compartilhar o meu cartão",
   },
 
   /** v2.2 Pro, a carreira de jogador (docs/PRO-SPEC.md, R150). Só no staging (FEATURES.proCareer). */

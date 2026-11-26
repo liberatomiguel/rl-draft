@@ -3762,6 +3762,15 @@ export const CAREER_EN = {
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
       day: (season: number, day: number) => `Season ${season + 1}, day ${day}`,
+      /** Why an attribute fell with age (the reason key on an "age" entry). */
+      reasons: {
+        reflexes: "Your reflexes are starting to go.",
+        pace: "You are a step slower to the ball.",
+        reactions: "Your reaction time on defense is slipping.",
+        stamina: "Long series cost more than they used to.",
+        nerve: "Big moments take a little more out of you.",
+        reads: "Your read of the game slips, slowly.",
+      } as Record<string, string>,
     },
     form: {
       confidence: "Confidence",
@@ -3823,6 +3832,36 @@ export const CAREER_EN = {
               : `Next: ${name}. Train mechanics once more.`,
       all: "Every signature mechanic is unlocked.",
     },
+  },
+
+  /** v2.2 Pro slice 6: the final card page (docs/PRO-SPEC.md §9). */
+  proCard: {
+    kicker: "Pro career card",
+    peak: "Peak overall",
+    seasons: (n: number) => `${n} ${n === 1 ? "season" : "seasons"}`,
+    orgs: "Orgs",
+    titles: "Titles",
+    awards: "Awards",
+    bestRating: "Best season rating",
+    none: "None yet",
+    nickname: "Known as",
+    legends: {
+      title: "Among the real players",
+      between: (peak: string, above: string, below: string) => `A peak overall of ${peak} sits between ${above} and ${below} in the all-time ranking of best cards.`,
+      below: (peak: string, name: string) => `A peak overall of ${peak} sits just under ${name} in the all-time ranking of best cards.`,
+      above: (peak: string, name: string) => `A peak overall of ${peak} is above every real player's best card, just over ${name}.`,
+      place: (n: number, of: number) => `Place ${n} of ${of}`,
+      loading: "Reading the ranking...",
+    },
+    download: "Download image",
+    share: "Share",
+    copyLink: "Copy link",
+    copied: "Link copied",
+    shareText: (name: string) => `${name}'s Pro career in Rocket Draft`,
+    invalidTitle: "This card cannot be read",
+    invalidBody: "The link is incomplete or was edited. Ask for the link again, or start your own career.",
+    start: "Start a Pro career",
+    own: "Share my card",
   },
 
   /** v2.2 Pro, the player career (docs/PRO-SPEC.md, R150). Staging only (FEATURES.proCareer). */

@@ -12,6 +12,7 @@ import { CAREER_PRO } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { PRO_STAT_KEYS, proAgeOf, proOverall } from "@/engine/career/pro/growth";
+import { cardFromSave, encodeCard } from "@/engine/career/pro/card";
 import { rankOf } from "@/engine/career/pro/ranked";
 import { buttonClass } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
@@ -103,6 +104,12 @@ export function ProPlayerScreen() {
         <p className="mt-2 max-w-2xl text-sm leading-snug text-sub">{C.pro.player.nextBody}</p>
         <AppLink href="/career/pro/week" className={`${buttonClass("primary", "md")} mt-4`}>
           {C.proWeek.openWeek}
+        </AppLink>
+        <AppLink
+          href={`/career/pro/card#${encodeCard(cardFromSave(save))}`}
+          className="ml-4 inline-block text-sm font-semibold text-blue-bright hover:underline"
+        >
+          {C.proCard.own}
         </AppLink>
       </div>
     </div>
