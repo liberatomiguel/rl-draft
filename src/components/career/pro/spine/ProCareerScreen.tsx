@@ -213,7 +213,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </p>
       </div>
 
-      {stop?.kind === "weekPlan" ? null : (
+      {stop?.kind === "weekPlan" || stop?.kind === "seasonEnd" ? null : (
         <>
         <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
           <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>

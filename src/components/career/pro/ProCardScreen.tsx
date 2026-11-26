@@ -64,12 +64,12 @@ function drawCard(
   g.fill();
   g.stroke();
 
-  let y = 140;
+  let y = 120;
   g.textBaseline = "alphabetic";
   g.fillStyle = orange;
   g.font = `700 30px ${fonts.display}`;
   g.fillText(t.kicker.toUpperCase(), 96, y);
-  y += 96;
+  y += 90;
   g.fillStyle = ink;
   g.font = `700 92px ${fonts.display}`;
   g.fillText(card.name.toUpperCase(), 96, y);
@@ -78,46 +78,53 @@ function drawCard(
   g.font = `400 34px ${fonts.text}`;
   g.fillText([t.style, card.country, t.seasons].filter(Boolean).join("  ·  "), 96, y);
   if (card.nickname) {
-    y += 48;
+    y += 46;
     g.fillStyle = ink;
     g.fillText(`${t.nickname}: ${card.nickname}`, 96, y);
   }
 
   // The one figure that matters: the peak overall on the paper slab.
-  y += 60;
+  y += 52;
   g.fillStyle = "#f3efe6";
-  g.fillRect(96, y, W - 192, 190);
+  g.fillRect(96, y, W - 192, 160);
   g.fillStyle = "#0a0e17";
   g.font = `700 150px ${fonts.display}`;
-  g.fillText(card.peak.toFixed(1), 128, y + 148);
+  g.fillText(card.peak.toFixed(1), 128, y + 126);
   g.font = `600 30px ${fonts.display}`;
   g.fillText(t.peak.toUpperCase(), W - 128 - g.measureText(t.peak.toUpperCase()).width, y + 60);
-  y += 190 + 70;
+  y += 160 + 60;
 
-  const block = (label: string, items: string[]) => {
+  const block = (label: string, items: string[], maxRows = 3) => {
     g.fillStyle = sub;
     g.font = `600 26px ${fonts.display}`;
     g.fillText(label.toUpperCase(), 96, y);
-    y += 40;
+    y += 36;
     g.fillStyle = ink;
-    g.font = `400 32px ${fonts.text}`;
+    g.font = `400 30px ${fonts.text}`;
     const text = items.length > 0 ? items.join("  ·  ") : t.none;
-    for (const row of wrap(g, text, W - 192).slice(0, 3)) {
+    const rows = wrap(g, text, W - 192);
+    const shown = rows.slice(0, maxRows);
+    // A list that does not fit says so instead of ending mid-row.
+    if (rows.length > maxRows) shown[maxRows - 1] = `${shown[maxRows - 1].replace(/[\s·]+$/, "")} …`;
+    for (const row of shown) {
       g.fillText(row, 96, y);
-      y += 42;
+      y += 38;
     }
-    y += 22;
+    y += 16;
   };
-  block(t.orgs, card.orgs);
+  block(t.orgs, card.orgs, 2);
   block(t.titles, card.titles);
   block(t.awards, card.awards);
-  block(t.bestRating, card.bestRating > 0 ? [card.bestRating.toFixed(1)] : []);
+  block(t.bestRating, card.bestRating > 0 ? [card.bestRating.toFixed(1)] : [], 1);
 
+  // The comparison sits above the footer at a fixed place, so a long card never runs into it.
   g.fillStyle = sub;
   g.font = `400 28px ${fonts.text}`;
-  for (const row of wrap(g, lines.legends, W - 192).slice(0, 4)) {
-    g.fillText(row, 96, y);
-    y += 38;
+  const legendRows = wrap(g, lines.legends, W - 192).slice(0, 3);
+  let ly = H - 96 - 56 - legendRows.length * 34;
+  for (const row of legendRows) {
+    g.fillText(row, 96, ly);
+    ly += 34;
   }
   g.fillStyle = orange;
   g.font = `700 30px ${fonts.display}`;
