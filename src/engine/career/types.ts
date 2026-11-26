@@ -1878,6 +1878,8 @@ export interface CareerSave {
    * Optional and additive: absent = the front never ran for this save.
    */
   endless?: EndlessState | null;
+  /** v2.2: the hidden manager save a Pro career runs his world on: the board and the endless bids never touch it. */
+  proHost?: boolean;
 }
 
 /** v2.2 ENDLESS: what the front keeps between seasons. */
