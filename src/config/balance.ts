@@ -5080,11 +5080,11 @@ export const CAREER_BOARD = {
    * "owners" = a founded club (D5: owners and investors, softer).
    */
   profiles: {
-    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.12, expectedRank: 2, gear: 3 },
-    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.1, expectedRank: 4, gear: 2 },
-    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0.12, expectedRank: 8, gear: 1 },
-    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.12, expectedRank: 12, gear: 0 },
-    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.2, expectedRank: 12, gear: 0 },
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3 },
+    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2 },
+    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0, expectedRank: 8, gear: 1 },
+    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
+    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.08, expectedRank: 12, gear: 0 },
   },
   /** Difficulty scales patience and the objective's band (never a hidden number). */
   difficulty: {
@@ -5130,7 +5130,15 @@ export const CAREER_BOARD = {
    * BOARD_PROBE=1 BOARD_CAL_OUT (careerBoard.probe.test.ts, BOARD_FIT_FROM).
    * A missing cell reads the raw model.
    */
-  calibration: {} as Record<string, Record<string, { a: number; b: number; first: number }>>,
+  // Fitted 26/11 on 30 competent careers × 6 seasons (NA/EU/SAM, seed 9000, every staging flag on),
+  // every season goal settled against the season (about 510-620 goals a cell). Easy has no cell (raw model).
+  calibration: {
+    elite: { normal: { a: 1.87, b: 0.33, first: 0.43 }, hard: { a: 0.57, b: 0.3, first: 1.01 } },
+    contender: { normal: { a: 1.65, b: 0.25, first: 0.39 }, hard: { a: 0.56, b: 0.36, first: 0.4 } },
+    mid: { normal: { a: 0.62, b: 0.29, first: 0.19 }, hard: { a: -0.57, b: 0.36, first: 0.26 } },
+    underdog: { normal: { a: 0.91, b: 0.48, first: 0.8 }, hard: { a: -1.43, b: 0.66, first: 3.1 } },
+    owners: { normal: { a: -1.2, b: 0.62, first: -0.25 }, hard: { a: -2.63, b: 0.54, first: -1.95 } },
+  } as Record<string, Record<string, { a: number; b: number; first: number }>>,
   /** Confidence lines. */
   confidence: { start: 75, warn: 40, ultimatum: 25, high: 80, top: 90 },
   /** A Major or Worlds title: the rest of the season and the next protected (losses halved, no ultimatum). */

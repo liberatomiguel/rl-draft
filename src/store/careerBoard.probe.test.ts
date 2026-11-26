@@ -123,7 +123,19 @@ function fit(rows: CalRow[]): { a: number; b: number; first: number } {
     const D = det(H);
     if (Math.abs(D) < 1e-12) break;
     const d = [0, 1, 2].map((k) => det(H.map((row, i) => row.map((v, j) => (j === k ? g[i] : v)))) / D);
-    w = w.map((v, i) => v + Math.max(-2, Math.min(2, d[i])));
+    // Backtracking: halve the step until the log-likelihood improves (plain Newton oscillates here).
+    const ll = (v: number[]) => rows.reduce((n, r) => {
+      const z = v[0] + v[1] * lg(r.model) + v[2] * (r.first ? 1 : 0);
+      return n + (r.met ? -Math.log1p(Math.exp(-z)) : -Math.log1p(Math.exp(z)));
+    }, 0);
+    const base = ll(w);
+    let step = 1;
+    let cand = w.map((v, i) => v + d[i]);
+    while (ll(cand) < base && step > 1e-4) {
+      step /= 2;
+      cand = w.map((v, i) => v + step * d[i]);
+    }
+    w = cand;
     if (Math.max(...d.map(Math.abs)) < 1e-6) break;
   }
   const r2 = (x: number) => Math.round(x * 100) / 100;
