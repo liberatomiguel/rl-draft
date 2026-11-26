@@ -40,6 +40,11 @@ with the root cause — that section doubles as the project's bugfix log.
 - `endless.projects` kept last season's record beside this season's for an organisation that continued its project. One record per organisation.
 - The organisation on the Pro's seat keeps its coach, and its Majors and Worlds go back under its own name when it leaves the seat (the world's champion record read "user").
 
+### Verified
+- Full suite: 3203 passed, 0 failed (62 opt-in probes skipped). Typecheck clean.
+- With every staging flag on together (world life, the three Matchday flags, endless variety, board, real-organisation start, Pro), each run alone: the Pro whole-career probe (NA, EU, SAM Normal and NA Hard, 13 to retirement at 30 to 31: no throw, no stuck day, every season closed, the card round-trips); the manager soft-lock probe in full (14 careers, 7 regions, 7 seasons, 0 findings); the board's takeover, dismissal and job-offer check (2 of 2).
+- To look at: the probe's NA and EU Normal runs returned the same career line (same seed, peak 99.0 at 25, 10 Worlds, 32 titles), so the region may not reach the Pro in that probe; if the battery shares it, its EU cells repeat NA.
+
 ### Not verified
 - **Out of band, left as is for Miguel to judge:** 92 % of average managed Pro careers play a Worlds at least once (the spec said about 40 %; a 90+ player lifts any side into the field, and how much one player moves a team is engine-wide); a high talent holds 98 to 99 until 25 to 28 instead of declining from 24; regional titles run about 13 a career for the average managed profile.
 - The battery ran without the board and real-organisation flags; the all-flags run (NA, EU, SAM, Normal, 13 to retirement: no throw, no stuck day) used the numbers before the last low-talent adjustment.
