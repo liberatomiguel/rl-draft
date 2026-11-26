@@ -103,7 +103,8 @@ function boardFor(save: CareerSave, stature: ProfileKey, startSeason: number, co
 function offerSeason(save: CareerSave & { board: BoardState }): void {
   const board = save.board;
   const s = save.clock.seasonIndex;
-  if (board.season?.seasonIndex === s || save.squad.length === 0) return;
+  // A squad short of three (contracts ran out at the rollover) is not judged yet: the offer waits for it.
+  if (board.season?.seasonIndex === s || save.squad.length < 3) return;
   const input = objectiveInputOf(save);
   const week = weekWagesOf(save);
   const grantBase = board.kind === "owners" ? 0 : quantize(Math.min(week, wageRoomNow(board, s)) * profileOf(board.stature).grantWeeks);
@@ -159,6 +160,13 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
   if (!FEATURES.board) return;
   save.board = boardFor(save, stature, 0);
   save.manager = newManagerState(0, save.identity.orgName, save.identity.realOrgRef);
+  offerSeason(save as CareerSave & { board: BoardState });
+}
+
+/** Hook: every day's arrival, before anything else: a season whose squad was short at the rollover gets its offer once it has three. */
+export function boardOnDayArrival(save: CareerSave): void {
+  if (!boardOn(save) || save.phase !== "running") return;
+  if (save.board.season?.seasonIndex === save.clock.seasonIndex) return;
   offerSeason(save as CareerSave & { board: BoardState });
 }
 

@@ -27,7 +27,7 @@
  * changes when things surface, never how they roll.
  */
 
-import { boardOnCreate, boardOnSeasonReview, boardOnSeasonStart, boardOnSplitBoundary, boardSeatAtRollover, boardHiringFrozen } from "./boardFlow";
+import { boardOnCreate, boardOnDayArrival, boardOnSeasonReview, boardOnSeasonStart, boardOnSplitBoundary, boardSeatAtRollover, boardHiringFrozen } from "./boardFlow";
 import { emptyCompetition as emptyCompetitionState } from "@/engine/career/competition";
 import {
   CAREER_MATCHDAY,
@@ -1184,6 +1184,7 @@ function stampBlockbusterRefusal(save: CareerSave, offer: TransferOffer): void {
 
 export function processDayArrival(input: CareerSave): CareerSave {
   const save = clone(input);
+  boardOnDayArrival(save); // v2.2 board front: the season's offer once the squad has three players
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
   const dow = dayOfWeekOf(day);

@@ -133,7 +133,7 @@ export function takeoverSquadOf(ref: string, stature: ProfileKey, ctx: SquadCtx)
       role: "starter",
       salaryPerSplit: ask,
       prizeSharePct: 0,
-      contractEndSeason: ctx.seasonIndex + 1 + (i % 2),
+      contractEndSeason: ctx.seasonIndex + 2 + (i % 2),
       trainingFocus: "auto",
       trainingIntensity: "normal",
       scoutLevel: 2,

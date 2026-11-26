@@ -58,7 +58,7 @@ export function ratedGoals(input: ObjectiveInput): SeasonGoalSpec[] {
   const noWorlds = worldsCancelledIn(input.seasonIndex);
   return SEASON_GOAL_CANDIDATES.filter((c) => !noWorlds || (c.kind !== "worldsQualify" && c.kind !== "worldsFinish"))
     .map((c) => ({ ...c, chance: round3(seasonGoalChance(c, input.level, input.cup)) }))
-    .filter((c) => c.chance > 0);
+    .filter((c) => Number.isFinite(c.chance) && c.chance > 0);
 }
 
 /** The goal nearest `aim` (the less ambitious on a tie), optionally under / over a chance. */
@@ -95,7 +95,8 @@ export interface PackageInput extends ObjectiveInput {
 export function boardPackagesFor(input: PackageInput): BoardPackage[] {
   const pool = ratedGoals(input);
   const patience = patienceOf(input.stature, input.difficulty);
-  const expected = nearest(pool, objectiveAimOf("expected", input.stature, input.difficulty))!;
+  // Never an empty objective: a season with no rated goal (a squad that cannot play) asks to play a Sunday regional.
+  const expected = nearest(pool, objectiveAimOf("expected", input.stature, input.difficulty)) ?? { kind: "regionalReach" as const, count: 1, chance: 0.5 };
   const cautious =
     nearest(pool, objectiveAimOf("cautious", input.stature, input.difficulty), (c) => c.chance > expected.chance + 0.02) ?? expected;
   const ambitious =
