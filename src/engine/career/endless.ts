@@ -16,14 +16,17 @@
  * Pure and rng-free: every roll is a derived float of (careerSeed, key), so
  * nothing here consumes a stream the rest of the career reads.
  */
-import { CAREER_ENDLESS as E, CAREER_GEAR, CAREER_SEASONS, FEATURES } from "@/config/balance";
+import { CAREER_ENDLESS as E, CAREER_GEAR, CAREER_SEASONS, CAREER_TRANSFER, FEATURES } from "@/config/balance";
 import { coachById, lineupById, lineups, seasonById, specialCards, subById } from "@/data";
 import { assembleTournamentTeam, playerMemberFromPick } from "@/engine/teams";
 import type { Region, TournamentTeam } from "../types";
+import { windowCloseDayFor } from "./calendar";
 import { playerViewById } from "./development";
+import { marketValueFor, quantize } from "./economy";
+import { bidPremiumFor, resaleLocked, valueInputOf } from "./market";
 import { careerMatchProfile } from "./difficulty";
 import { derivedFloat, streams } from "./seeds";
-import type { CareerDifficulty, CareerEventDef, CareerPlayerView, EndlessState, RivalProject, WorldOrgState, WorldState } from "./types";
+import type { CareerDifficulty, CareerEventDef, CareerPlayerView, EndlessState, RivalProject, SquadPlayer, TransferOffer, WorldOrgState, WorldState } from "./types";
 import { orgTeamFor } from "./worldSim";
 
 /** The front is live for this save from `endless.fromSeason` on (set at a rollover, so a running season never changes). */
@@ -133,11 +136,12 @@ export function worldsStreakOf(
  * rating lead adds one, capped. Without dominance there is no answer, and a
  * broken dynasty starts again from the bottom. The kit follows the strength.
  */
-export function projectStrengthFor(gap: number, defendingTitles: number): number {
+export function projectStrengthFor(gap: number, defendingTitles: number, holding = false): number {
   const P = E.projects;
-  const answered = gap >= P.dominanceFloor || (defendingTitles >= 1 && gap >= P.defenceFloor);
+  // A running dynasty (two titles or more) is answered while it holds the top; a first defence needs a lead.
+  const answered = gap >= P.dominanceFloor || (defendingTitles >= 1 && gap >= P.defenceFloor) || (defendingTitles >= 2 && holding);
   if (!answered) return 0;
-  return Math.min(P.maxProjects, Math.max(1, defendingTitles) + (gap >= P.bigGap ? 1 : 0));
+  return Math.min(P.maxProjects, Math.max(1, defendingTitles) + (gap >= P.bigGap ? 1 + Math.floor((gap - P.bigGap) / P.gapStep) : 0));
 }
 
 /** The kit at a strength, in KIT_ORDER: `kitBase` items for one project, one more per step. */
@@ -174,9 +178,18 @@ export function rivalProjectsPass(
   const teamCtx = { world, seasonIndex: ctx.seasonIndex, careerSeed: ctx.careerSeed, difficulty: ctx.difficulty };
   const ratings = new Map<string, number>();
   for (const ref of Object.keys(world.orgs).sort()) ratings.set(ref, matchRating(orgTeamFor(ref, teamCtx)));
-  const { leader, gap } = dominanceOf([{ id: "user", rating: ctx.userRating }, ...[...ratings].map(([id, rating]) => ({ id, rating }))]);
-  const defending = leader !== null && ctx.streak.ref === leader ? ctx.streak.titles : 0;
-  const strength = endlessYear(ctx.seasonIndex) ? projectStrengthFor(gap, defending) : 0;
+  const sides = [{ id: "user", rating: ctx.userRating }, ...[...ratings].map(([id, rating]) => ({ id, rating }))];
+  const top = dominanceOf(sides);
+  // The side the world answers: the reigning champion while it still sits near the top (a dynasty is
+  // answered even when last season's answer closed the gap), else the leader. The same rule for the user and an AI.
+  const topRating = Math.max(...sides.map((x) => x.rating));
+  const champ = ctx.streak.titles >= 1 ? sides.find((x) => x.id === ctx.streak.ref) : undefined;
+  const holding = !!champ && champ.rating >= topRating - P.holdSlack;
+  const leader = holding ? champ!.id : top.leader;
+  const next3 = holding ? sides.filter((x) => x.id !== champ!.id).sort((a, b) => b.rating - a.rating).slice(0, 3) : [];
+  const gap = holding ? Math.max(0, champ!.rating - next3.reduce((n, x) => n + x.rating, 0) / Math.max(1, next3.length)) : top.gap;
+  const defending = holding ? ctx.streak.titles : 0;
+  const strength = endlessYear(ctx.seasonIndex) ? projectStrengthFor(gap, defending, holding) : 0;
   if (strength === 0) return { world, projects: [], gap, leader, strength };
   const items = kitFor(strength);
   const imports = strength >= P.importFromStrength;
@@ -329,6 +342,52 @@ export function eliteBonusFor(streak: { titles: number }, seasonIndex: number): 
 }
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
+
+/**
+ * Lever (c): during a user dynasty a rival project bids for one of the
+ * user's stars, through the ordinary bid decision (refusable like any bid).
+ * At most one a window (the caller tracks it), on a per-day roll. The fee is
+ * the ordinary AI bid at the top of its range (a rich project). Null = no bid.
+ */
+export function projectBidFor(ctx: {
+  squad: readonly SquadPlayer[];
+  projects: readonly RivalProject[];
+  seasonIndex: number;
+  windowIdx: number;
+  day: number;
+  careerSeed: number;
+  growthModel: number;
+  pendingTargetIds: readonly string[];
+  /** The user's consecutive Worlds titles going into the season (the dynasty). */
+  userTitles: number;
+}): TransferOffer | null {
+  const B = E.projectBid;
+  if (!FEATURES.endlessVariety || ctx.userTitles < B.fromTitles || ctx.projects.length === 0) return null;
+  if (derivedFloat(ctx.careerSeed, streams.gen("endlessBidDay", `${ctx.seasonIndex}:${ctx.day}`)) >= B.dailyChance) return null;
+  const pending = new Set(ctx.pendingTargetIds);
+  const target = ctx.squad
+    .filter((p) => p.role === "starter" && !pending.has(p.id) && !resaleLocked(p, ctx.seasonIndex, ctx.day))
+    .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id))[0];
+  if (!target) return null;
+  const bidder = [...ctx.projects].sort((a, b) => b.ratingAfter - a.ratingAfter || a.orgRef.localeCompare(b.orgRef))[0];
+  const input = valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel);
+  const fee = quantize(marketValueFor(input) * bidPremiumFor(input) * CAREER_TRANSFER.aiBidRange[1]);
+  return {
+    id: `bid:${ctx.seasonIndex}:${ctx.day}:${target.id}`,
+    direction: "out",
+    playerId: target.id,
+    playerName: target.name,
+    fee,
+    salaryPerSplit: 0,
+    lengthSeasons: 2,
+    role: "starter",
+    otherRef: bidder.orgRef,
+    status: "pending",
+    resolveSeason: ctx.seasonIndex,
+    resolveDay: windowCloseDayFor(ctx.windowIdx as 0 | 1 | 2 | 3),
+    factors: [],
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Cups: the Invitational's field and the bracket draw

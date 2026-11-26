@@ -3,7 +3,8 @@
  * rules live in engine/career/endless.ts; careerFlow calls these with one-line
  * hooks (the rollover, the Saturday offer, the cup's bracket).
  */
-import { CAREER_CALENDAR, CAREER_ENDLESS, FEATURES } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_ENDLESS, CAREER_TRANSFER, FEATURES } from "@/config/balance";
+import { growthModelOf } from "@/engine/career/development";
 import { seasonLabelFor, weekAt } from "@/engine/career/calendar";
 import { deliverNews } from "@/engine/career/communications";
 import {
@@ -16,12 +17,13 @@ import {
   legendTeamFor,
   majorHostsFor,
   eliteBonusFor,
+  projectBidFor,
   rivalProjectsPass,
   worldsStreakOf,
   worldWeekFor,
 } from "@/engine/career/endless";
 import { PARTNER_EVENT_NAMES } from "@/data/career/names";
-import type { CareerEventDef, CareerSave } from "@/engine/career/types";
+import type { CareerEventDef, CareerSave, TransferOffer } from "@/engine/career/types";
 import { userTeamFor } from "@/engine/career/worldSim";
 import { createPlayoffs } from "@/engine/playoffs";
 import type { TournamentState } from "@/engine/types";
@@ -123,6 +125,32 @@ export function endlessGenerationNews(save: CareerSave, lifted: readonly { playe
   if (bonus <= 0 || lifted.length === 0) return;
   const best = [...lifted].sort((x, y) => y.potential - x.potential)[0];
   deliverNews(save, { type: "milestone", priority: 2, titleKey: "endlessGeneration", params: { n: lifted.length, player: best.playerName, region: best.region } });
+}
+
+/**
+ * Lever (c): a project's bid for one of the user's stars, at most one a
+ * window, only during a user dynasty. It enters the ordinary bid decision
+ * (the caller books it like any bid), so the user can refuse.
+ */
+export function endlessProjectBid(save: CareerSave, day: number, windowIdx: number): TransferOffer | null {
+  if (!endlessOn(save, save.clock.seasonIndex) || !save.endless) return null;
+  const key = `${save.clock.seasonIndex}:${windowIdx}`;
+  if (save.endless.bidWindows?.includes(key)) return null;
+  if ((save.bidsThisWindow ?? 0) >= CAREER_TRANSFER.maxBidsPerWindow) return null;
+  const streak = save.endless.streak;
+  const bid = projectBidFor({
+    squad: save.squad,
+    projects: save.endless.projects.filter((p) => p.season === save.clock.seasonIndex),
+    seasonIndex: save.clock.seasonIndex,
+    windowIdx,
+    day,
+    careerSeed: save.careerSeed,
+    growthModel: growthModelOf(save.world),
+    pendingTargetIds: save.pendingOffers.filter((o) => o.status === "pending" && o.direction === "out").map((o) => o.playerId),
+    userTitles: streak?.ref === "user" ? streak.titles : 0,
+  });
+  if (bid) save.endless.bidWindows = [...(save.endless.bidWindows ?? []).slice(-7), key];
+  return bid;
 }
 
 /** The season's open weeks (the Legends draw reads them). */

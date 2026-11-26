@@ -1861,6 +1861,8 @@ export interface EndlessState {
   projects: RivalProject[];
   /** The dominance gap the projects answered (leader minus the next three), for the review and the probes. */
   gap?: number;
+  /** Lever (c): the windows ("season:window") a project already bid in (one a window). */
+  bidWindows?: string[];
   /** The answer's strength this season (0 = none) and the reigning champion's run it read. */
   strength?: number;
   streak?: { ref: string | null; titles: number };

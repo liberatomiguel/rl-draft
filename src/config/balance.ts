@@ -5209,11 +5209,15 @@ export const CAREER_ENDLESS = {
      * rule for the user and for an AI side.
      */
     dominanceFloor: 2.5,
-    defenceFloor: 1,
-    bigGap: 3.5,
-    maxProjects: 4,
+    defenceFloor: 2,
+    /** The reigning champion still "holds" (two titles or more: answered with no lead) within this of the top rating. */
+    holdSlack: 1,
+    bigGap: 3,
+    /** Past bigGap, each further point of lead adds one more project. */
+    gapStep: 1,
+    maxProjects: 5,
     /** Kit items (KIT_ORDER: facilities, coach, bench, bootcamp, psychologist) at strength 1; +1 per step. */
-    kitBase: 2,
+    kitBase: 3,
     /** A project is one of the region's best N AI orgs (not the leader, not a resting org). */
     candidateOrgs: 4,
     /** Signings for a new project (maxBuys once it signs worldwide), and the top-up of a continued one. */
@@ -5233,6 +5237,12 @@ export const CAREER_ENDLESS = {
    * to `max` (new players only; capped at 99).
    */
   eliteGeneration: { fromTitles: 2, perTitle: 1, max: 2 },
+  /**
+   * Lever (c): during a user dynasty (this many consecutive Worlds) the
+   * strongest project bids for the user's best starter through the ordinary
+   * bid decision; one a window at most, a per-day roll inside the window.
+   */
+  projectBid: { fromTitles: 2, dailyChance: 0.15 },
   cups: {
     /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
     keepTop: 2,

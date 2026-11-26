@@ -362,7 +362,7 @@ import {
   userCoachRollover,
   worldLifeOn,
 } from "@/engine/career/worldLife";
-import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
+import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessProjectBid, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -1598,7 +1598,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
   // ============ WINDOW DAYS: incoming-bid roll (v0.3, any day) =============
   const dayWindowIdx = windowIndexOf(week);
   if (dayWindowIdx !== null && save.phase === "running" && save.squad.length > 0) {
-    const bid = incomingBidForDay({
+    const bid = endlessProjectBid(save, day, dayWindowIdx) ?? incomingBidForDay({
       world: save.world,
       squad: save.squad,
       seasonIndex,
