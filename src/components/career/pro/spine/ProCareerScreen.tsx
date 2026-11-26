@@ -126,7 +126,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm leading-snug text-sub">{status}</p>
+      {save.stage === "ranked" && offers.length > 0 ? null : <p className="text-sm leading-snug text-sub">{status}</p>}
 
       {stop?.kind === "seasonEnd" ? (
         <Panel className="p-5">
@@ -159,7 +159,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </button>
       ) : null}
 
-      {!stop ? (
+      {!stop && !save.report ? (
         <div>
           <p className="kicker mb-1">{P.next}</p>
           <p className="text-sm text-ink">
@@ -198,6 +198,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
           {P.oneDay}
         </Button>
         <p className="w-full text-xs leading-snug text-faint">{P.advanceHint}</p>
+        {offers.length > 0 ? <p className="w-full text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
       </div>
 
       {save.history.length > 0 ? (

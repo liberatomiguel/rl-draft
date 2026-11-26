@@ -3947,6 +3947,7 @@ export const CAREER_PT: CareerCopy = {
     advance: "Continuar",
     advanceHint: "Avança dia a dia e para quando algo precisa de você: dia de jogo, súmula, proposta, fim da temporada.",
     oneDay: "Um dia",
+    offerOpenHint: "Você tem uma proposta aberta. Ela fecha na data dela se você seguir sem responder.",
     playMatchday: (name: string) => `Jogar ${name}`,
     continueEvent: (name: string) => `Continuar ${name}`,
     seasonEnd: "A temporada acabou",
@@ -4003,6 +4004,7 @@ export const CAREER_PT: CareerCopy = {
       level: (n: number) => `Nível do time ${n}`,
       sideBody: (level: number) => `Dois jogadores em torno de ${level}. Você jogaria todas as copas e o Open Qualifier com eles.`,
       expires: (season: number, week: number) => `Aberta até a temporada ${season}, semana ${week}`,
+      leavesSide: (side: string) => `Aceitar significa sair de ${side}.`,
       accept: "Aceitar",
       counter: "Contraproposta",
       decline: "Recusar",
@@ -4030,7 +4032,7 @@ export const CAREER_PT: CareerCopy = {
     history: {
       title: "Temporadas",
       line: (age: number, from: number, to: number) => `${age} anos: overall de ${from} para ${to}`,
-      series: (n: number, won: number, avg: string) => `${n} séries, ${won} vencidas, média ${avg}`,
+      series: (n: number, won: number, avg: string) => n === 0 ? "Nenhuma série jogada" : `${n} ${n === 1 ? "série" : "séries"}, ${won} vencidas, nota média ${avg}`,
     },
     news: {
       amateurInvite: (p: Record<string, string | number>) => `O ${p.side} quer você na escalação.`,

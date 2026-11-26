@@ -3975,6 +3975,7 @@ export const CAREER_EN = {
     advance: "Continue",
     advanceHint: "Moves day by day and stops when something needs you: a matchday, a report, an offer, the end of the season.",
     oneDay: "One day",
+    offerOpenHint: "You have an open offer. It closes on its date if you keep going without answering.",
     playMatchday: (name: string) => `Play ${name}`,
     continueEvent: (name: string) => `Continue ${name}`,
     seasonEnd: "The season is over",
@@ -4031,6 +4032,7 @@ export const CAREER_EN = {
       level: (n: number) => `Team level ${n}`,
       sideBody: (level: number) => `Two players around ${level}. You would play every cup and the Open Qualifier with them.`,
       expires: (season: number, week: number) => `Open until season ${season}, week ${week}`,
+      leavesSide: (side: string) => `Accepting means leaving ${side}.`,
       accept: "Accept",
       counter: "Counter",
       decline: "Decline",
@@ -4058,7 +4060,7 @@ export const CAREER_EN = {
     history: {
       title: "Seasons",
       line: (age: number, from: number, to: number) => `Age ${age}: overall ${from} to ${to}`,
-      series: (n: number, won: number, avg: string) => `${n} series, ${won} won, average ${avg}`,
+      series: (n: number, won: number, avg: string) => n === 0 ? "No series played" : `${n} series, ${won} won, average rating ${avg}`,
     },
     news: {
       amateurInvite: (p: Record<string, string | number>) => `${p.side} want you in their lineup.`,
