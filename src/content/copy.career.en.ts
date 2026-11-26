@@ -10,6 +10,18 @@
  * Tone: broadcast desk / post-match analysis — clean esports language.
  */
 
+/** v2.2 ENDLESS: the host cities a season draws its Majors and Worlds from (indexes are stored in the save). */
+const ENDLESS_HOSTS_EN = [
+  "London", "Paris", "Copenhagen", "Stockholm", "Boston", "Dallas",
+  "Los Angeles", "São Paulo", "Riyadh", "Sydney", "Tokyo", "Madrid",
+] as const;
+const hostEn = (i: string | number | undefined): string => ENDLESS_HOSTS_EN[Number(i)] ?? "";
+/** v2.2 ENDLESS: "A", "A and B", "A, B and C". */
+const listEn = (p: Record<string, string | number>): string => {
+  const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
+  return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
+};
+
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
 
@@ -2329,6 +2341,9 @@ export const CAREER_EN = {
       prospectScouted: (p: Record<string, string | number>) => `${p.org} signs prospect ${p.player} for its bench`,
       // v2.1 M2.1 (R142): the world grows.
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) breaks out as a prodigy`,
+      // v2.2 ENDLESS
+      endlessProject: (p: Record<string, string | number>) => `${p.org} build around ${listEn(p)}`,
+      endlessHosts: (p: Record<string, string | number>) => `${p.season}: the Majors go to ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives: ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -2493,6 +2508,11 @@ export const CAREER_EN = {
         `${p.org} adds ${p.player} as its reserve. He starts once he is better than one of the starters.`,
       prodigyRises: (p: Record<string, string | number>) =>
         `Scouts across ${p.region} agree: ${p.player} has a ceiling among the best in the world. Give him a season or two.`,
+      // v2.2 ENDLESS: what the save shows, nothing more (the signings and the rating before and after).
+      endlessProject: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) signs ${listEn(p)} for the new season. On paper the team rating goes from ${p.before} to ${p.after}.`,
+      endlessHosts: (p: Record<string, string | number>) =>
+        `The circuit's ${p.season} stops are set: Majors in ${hostEn(p.h1)}, ${hostEn(p.h2)} and ${hostEn(p.h3)}, and the World Championship in ${hostEn(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>
@@ -3728,6 +3748,11 @@ export const CAREER_EN = {
       nextBody: "This is slice 1 on staging: your player and the save. The week, ranked sessions and the first community cups arrive in the next slices.",
       allCareers: "All Pro careers",
     },
+  },
+  /** v2.2 ENDLESS: the front's own strings. */
+  endless: {
+    hosts: ENDLESS_HOSTS_EN as readonly string[],
+    legendsNote: "All-time RLCS rosters at their real peak ratings. Prize money and reputation, no Season Points.",
   },
 };
 

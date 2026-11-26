@@ -362,6 +362,7 @@ import {
   userCoachRollover,
   worldLifeOn,
 } from "@/engine/career/worldLife";
+import { endlessOffer, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -432,7 +433,7 @@ function clone(save: CareerSave): CareerSave {
 export function nameOfRef(save: CareerSave, ref: string): string {
   if (ref === "user") return save.identity.orgName;
   // rc.33 (RTW-03): an org that left the world keeps its name in old results and the wire.
-  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed, save.world.nameBankVersion) : (datasetOrgName(ref) ?? ref));
+  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed, save.world.nameBankVersion) : (legendNameOf(ref) ?? datasetOrgName(ref) ?? ref));
 }
 
 /**
@@ -777,7 +778,7 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
     }
     return def;
   }
-  const cup = unofficialOfferFor(seasonIndex, week, { userTeamRating: approxUserRating(save), rep: save.reputation, t3EntriesThisSplit: save.t3EntriesThisSplit, careerSeed: save.careerSeed, region: save.identity.region });
+  const cup = endlessOffer(save, unofficialOfferFor(seasonIndex, week, { userTeamRating: approxUserRating(save), rep: save.reputation, t3EntriesThisSplit: save.t3EntriesThisSplit, careerSeed: save.careerSeed, region: save.identity.region }), approxUserRating(save));
   if (cup && day >= save.clock.day && day === cup.day && !save.eventResults.some(r => r.eventId === cup.id) && !save.flags[`unofficialPassed:${cup.id}`]) return cup;
   return null;
 }
@@ -1525,12 +1526,12 @@ export function processDayArrival(input: CareerSave): CareerSave {
 
     if (!save.pendingEventDef && (cal.kind === "open" || cal.kind === "preseason")) {
       const userRating = approxUserRating(save);
-      const offer = unofficialOfferFor(seasonIndex, week, {
+      const offer = endlessOffer(save, unofficialOfferFor(seasonIndex, week, {
         userTeamRating: userRating,
         rep: save.reputation,
         t3EntriesThisSplit: save.t3EntriesThisSplit,
         careerSeed: save.careerSeed, region: save.identity.region,
-      });
+      }), userRating);
       if (offer) {
         save.unofficialOffer = offer;
         // R133: the partner's championship week opens with the desk's build-up.
@@ -3661,7 +3662,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
-  const tournament = initFieldTournament(field, def.format, rng);
+  const tournament = withEndlessDraw(initFieldTournament(field, def.format, rng), def, save.careerSeed);
   save.activeEvent = {
     def,
     rngState: rng.state,
@@ -4841,6 +4842,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   save.finances.freeBootcampsUsedThisSeason = 0;
   // rc.34 review: a camp bought in W31–32 is last season's — the new season's first split may run one.
   save.finances.bootcampUsedThisSplit = false;
+  endlessRollover(save, nextSeason); // v2.2 ENDLESS: rival projects, the season's hosts
   save.world = computeStars(save.world, {
     seasonIndex: nextSeason,
     careerSeed: save.careerSeed,

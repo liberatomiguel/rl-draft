@@ -10,6 +10,18 @@
 
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
 
+/** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
+const ENDLESS_HOSTS_PT = [
+  "Londres", "Paris", "Copenhague", "Estocolmo", "Boston", "Dallas",
+  "Los Angeles", "São Paulo", "Riad", "Sydney", "Tóquio", "Madri",
+] as const;
+const hostPt = (i: string | number | undefined): string => ENDLESS_HOSTS_PT[Number(i)] ?? "";
+/** v2.2 ENDLESS: "A", "A e B", "A, B e C". */
+const listPt = (p: Record<string, string | number>): string => {
+  const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
+  return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`;
+};
+
 /** rc.33 review: quanto tempo o parceiro de resgate paga (rc.34: o investidor, CAREER_LOAN.investor.weeks, recebido) — nada quando não se sabe. */
 const partnerRunPt = (weeks?: string | number): string => (Number(weeks) > 0 ? ` por ${weeks} semanas` : "");
 
@@ -2304,6 +2316,9 @@ export const CAREER_PT: CareerCopy = {
       prospectScouted: (p: Record<string, string | number>) => `${p.org} contrata o prospecto ${p.player} para o banco`,
       // v2.1 M2.1 (R142): o mundo cresce.
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) desponta como prodígio`,
+      // v2.2 ENDLESS
+      endlessProject: (p: Record<string, string | number>) => `${p.org} monta o time em torno de ${listPt(p)}`,
+      endlessHosts: (p: Record<string, string | number>) => `${p.season}: os Majors vão para ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -2467,6 +2482,11 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} contrata ${p.player} como reserva. Ele vira titular quando for melhor que um dos titulares.`,
       prodigyRises: (p: Record<string, string | number>) =>
         `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
+      // v2.2 ENDLESS: só o que o save mostra (as contratações e o rating antes e depois).
+      endlessProject: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada. No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+      endlessHosts: (p: Record<string, string | number>) =>
+        `As paradas do circuito em ${p.season} estão definidas: Majors em ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}, e o Mundial em ${hostPt(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
@@ -3700,5 +3720,10 @@ export const CAREER_PT: CareerCopy = {
       nextBody: "Esta é a fatia 1 no staging: o seu jogador e o save. A semana, as sessões de ranqueado e as primeiras copas da comunidade chegam nas próximas fatias.",
       allCareers: "Todas as carreiras Pro",
     },
+  },
+  /** v2.2 ENDLESS: os textos da frente. */
+  endless: {
+    hosts: ENDLESS_HOSTS_PT as readonly string[],
+    legendsNote: "Elencos históricos da RLCS no rating real do auge. Paga prêmio e reputação, sem Season Points.",
   },
 };

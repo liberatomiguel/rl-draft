@@ -4770,6 +4770,15 @@ export const FEATURES = {
    */
   proCareer: STAGING_BUILD || process.env.NEXT_PUBLIC_PRO_CAREER === "1",
   /**
+   * v2.2 ENDLESS (CAREER_ENDLESS, engine/career/endless.ts): the infinite
+   * seasons answer a dominant team (rival projects), the cups stop repeating
+   * (a wider Invitational field, a drawn bracket, the Legends invitational)
+   * and each season has its own hosts. A save gets it from its next season
+   * rollover (`save.endless`). Off: nothing of it runs and careers are byte
+   * for byte as before. ON in the staging build only; probes: NEXT_PUBLIC_ENDLESS_VARIETY=1.
+   */
+  endlessVariety: STAGING_BUILD || process.env.NEXT_PUBLIC_ENDLESS_VARIETY === "1",
+  /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
    * staging build (NEXT_PUBLIC_NOINDEX=1); never in the production deploy or
@@ -4821,4 +4830,46 @@ export const CLOUD_SYNC = {
   /** v2.0.26: a tab that was hidden for at least this long asks the account
    *  again when it returns (another device may have played meanwhile). */
   careerRecheckAfterMs: 60_000,
+} as const;
+
+/**
+ * v2.2 ENDLESS (FEATURES.endlessVariety, engine/career/endless.ts,
+ * docs/handoff-2.2/endless.md): the infinite seasons once a team dominates.
+ */
+export const CAREER_ENDLESS = {
+  /** Rival projects and Legends start here (the first season with no dataset lineups to anchor). */
+  fromSeasonIndex: 7,
+  projects: {
+    /** Regions that can run a project (the leader's region answers first). */
+    regions: ["NA", "EU", "SAM", "MENA", "OCE"] as const,
+    /** The leader's team rating (as the matches read it) minus the next three sides' mean: below this, no project. */
+    dominanceFloor: 1.5,
+    /** Each further step of dominance adds one project (one region). */
+    dominanceStep: 0.75,
+    maxProjects: 4,
+    /** A project is one of the region's best N AI orgs (not the leader, not last season's project). */
+    candidateOrgs: 4,
+    /** Signings per project: buysBase, +1 per two levels, +1 from importGap; capped. */
+    buysBase: 1,
+    maxBuys: 3,
+    /** A signing beats the weakest starter by at least this overall. */
+    minEdge: 1,
+    /** From this dominance the projects sign from every region (the world's best players). */
+    importGap: 2.5,
+    /** The project also hires its region's best AI coach (a swap). */
+    coachSwap: true,
+  },
+  cups: {
+    /** The Invitational always invites the points table's top N; the rest are drawn from the next places. */
+    keepTop: 2,
+    poolSize: 12,
+  },
+  legends: {
+    /** The all-time lineups (by peak team rating) a Legends field is drawn from; seven distinct orgs a cup. */
+    poolSize: 18,
+    /** Legends weeks per endless season (open weeks, drawn by seed). */
+    perSeason: 2,
+    /** The invitation needs the starters' average overall at this level (and the Invitational's reputation). */
+    minStarterOverall: 93,
+  },
 } as const;

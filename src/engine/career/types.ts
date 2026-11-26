@@ -564,6 +564,11 @@ export interface CareerEventDef {
    * champion); "single" = 8-team single elimination (unofficial cups).
    */
   format: CareerEventFormat;
+  /**
+   * v2.2 ENDLESS: "cup" = the Invitational's drawn field and bracket;
+   * "legends" = the Legends invitational (all-time rosters). Absent = as before.
+   */
+  endless?: "cup" | "legends";
 }
 
 /** v2.0 (R40): the tournament shapes a career event can take. */
@@ -1833,6 +1838,36 @@ export interface CareerSave {
 
   /** Stamped by the STORE on each persist (engine never reads the clock). */
   lastPlayedAt: number;
+
+  /**
+   * v2.2 ENDLESS (FEATURES.endlessVariety): the front's state, set at the
+   * first season rollover with the flag on (a running season never changes).
+   * Optional and additive: absent = the front never ran for this save.
+   */
+  endless?: EndlessState | null;
+}
+
+/** v2.2 ENDLESS: what the front keeps between seasons. */
+export interface EndlessState {
+  /** The first season the front applies to (the rollover that set it). */
+  fromSeason: number;
+  /** This season's rival projects (rebuilt at each rollover; last season's sit the next one out). */
+  projects: RivalProject[];
+  /** The dominance gap the projects answered (leader minus the next three), for the review and the probes. */
+  gap?: number;
+  /** The season's drawn identity: indexes into the copy's host list (three Majors, then the Worlds). */
+  hosts?: { season: number; cities: number[] };
+}
+
+/** v2.2 ENDLESS: one AI org's project for a season. */
+export interface RivalProject {
+  season: number;
+  orgRef: string;
+  orgName: string;
+  region: Region;
+  signed: { playerId: string; playerName: string; fromRef: string | null; fromName: string | null; outId: string }[];
+  ratingBefore: number;
+  ratingAfter: number;
 }
 
 /** Slot metadata rendered by the saves picker without hydrating full saves. */
