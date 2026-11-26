@@ -4228,7 +4228,7 @@ export const CAREER_EN = {
       cancel: "Not yet",
       goodbyeTitle: (name: string) => `${name} retires`,
       careerLine: (from: number, to: number, seasons: number, series: number, won: number) => `Ages ${from} to ${to}, ${seasons} ${seasons === 1 ? "season" : "seasons"}, ${series} series played and ${won} won.`,
-      peak: (p: string) => `Peak overall: ${p}`,
+      peak: (_p: string) => "Peak overall",
       orgs: "Orgs",
       titles: "Titles",
       awards: "Awards",

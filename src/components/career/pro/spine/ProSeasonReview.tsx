@@ -27,7 +27,7 @@ export function ProSeasonReviewPanel({ save, season, onClose }: { save: ProSave;
     <Panel className="space-y-4 p-4 sm:p-5">
       <div>
         <p className="kicker">{R.title(season + 1)}</p>
-        <h3 className="display mt-1 text-lg font-bold uppercase leading-none text-ink">{R.teamLine(line.team ?? "-", R.roles[line.role ?? "none"] ?? "")}</h3>
+        <h3 className="display mt-1 text-lg font-bold uppercase leading-none text-ink">{line.team ? R.teamLine(line.team, R.roles[line.role ?? "none"] ?? "") : (R.roles[line.role ?? "none"] ?? R.roles.none)}</h3>
         <p className="mt-2 text-sm text-sub">{R.overall(Math.floor(line.overallStart), Math.floor(line.overallEnd))}</p>
         <p className="mt-1 text-sm text-ink">
           {line.series > 0 ? R.line(line.series, line.seriesWon, line.games ?? 0, line.avgRating === null ? "-" : line.avgRating.toFixed(1)) : R.noSeries}

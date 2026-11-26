@@ -4199,7 +4199,7 @@ export const CAREER_PT: CareerCopy = {
       cancel: "Agora não",
       goodbyeTitle: (name: string) => `${name} se aposenta`,
       careerLine: (from: number, to: number, seasons: number, series: number, won: number) => `Dos ${from} aos ${to} anos, ${seasons} ${seasons === 1 ? "temporada" : "temporadas"}, ${series} séries jogadas e ${won} vencidas.`,
-      peak: (p: string) => `Overall de pico: ${p}`,
+      peak: (_p: string) => "Overall de pico",
       orgs: "Orgs",
       titles: "Títulos",
       awards: "Prêmios",

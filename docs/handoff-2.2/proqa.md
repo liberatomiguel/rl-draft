@@ -45,3 +45,11 @@ Played in the browser at 375/320/desktop, PT and EN. Fixtures: `src/store/proQaF
 Fixed: plan gate buttons play the week in one tap (it was accept then Continue, 2 taps a week); no duplicate Continue bar at the gate or season end; the live series screen is the series alone with a docked No-instinto / Play game / Sim bar; decision legend and locked-option text; call result says what it costs; card image no longer runs the legend into the footer (it now truncates lists with an ellipsis); board confidence figure wrapped at 375; the season review now shows the board's verdict.
 
 Not fixed (engine/store): see the final report: card titles keep the first 10 chronologically (Worlds titles dropped); gala exists only as inbox lines; org names with a numeric suffix ("Team Carnaval 8"); project list holds duplicate entries.
+
+## Polish round (items 1-10)
+
+Shipped in `1b21b55` and `1e70c80` (the latter alone: board inert on the Pro host through `CareerSave.proHost`; Pro did not advance with FEATURES.board on). New small balance block `CAREER_PRO_PLAN { digestWeeks: 4 }` (balance.ts; BALANCE_VERSION fingerprint test fails until the orchestrator bumps it). New tests: `proPolish.test.ts`, `proAllFlags.test.ts`; `proQa.test.ts` rewritten for the new Continue.
+
+- Continue plays the coach's plan after the first confirmed plan (`planAutoOf`, `weeklyPlanning` remembered in the save), stops every 4 weeks with a digest notice and for rank up, mechanic, offers, burnout. A standing burnout warning is not said every week; the plan falling back no longer hides it.
+- Prologue line (`firstCallOf`), season review screen (`seasonReviews`, `pendingReview`, from the history), goodbye screen with confirm for retirement by choice, last-season warning (`retirementOutlookOf`), card titles ranked and collapsed (`titlesForCard`; `careerTitles` keeps 120), numbers with meaning, filler names with a word instead of a number when the endless front is on (`exhaustedBankName`), takeover door title and "n of 18", board before the sponsor popup, toast hidden under an open dialog (globals.css), one record per org in `endless.projects` (it was last season's record next to this one, not two projects).
+- Not browser-checked: retirement by choice confirm, the sponsor/board ordering, the PT versions of the new screens, 320 px of the review and goodbye.
