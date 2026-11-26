@@ -98,11 +98,11 @@ export function ProCareerScreen() {
               setTab(t.id);
               if (t.id === "inbox" && unread > 0) apply(markProNewsReadFlow);
             }}
-            className={`relative -mb-px min-h-11 flex-1 border-b-2 px-2 text-sm font-semibold ${tab === t.id ? "border-orange text-ink" : "border-transparent text-sub hover:text-ink"}`}
+            className={`relative -mb-px min-h-11 min-w-0 flex-1 border-b-2 px-2 text-sm font-semibold max-[359px]:px-0.5 max-[359px]:text-xs ${tab === t.id ? "border-orange text-ink" : "border-transparent text-sub hover:text-ink"}`}
             aria-current={tab === t.id ? "page" : undefined}
           >
             {P.tabs[t.id]}
-            {t.badge > 0 ? <span className="ml-1.5 rounded-full bg-blue-bright/20 px-1.5 text-xs text-blue-bright">{t.badge}</span> : null}
+            {t.badge > 0 ? <span className="ml-1 rounded-full bg-blue-bright/20 px-1.5 text-xs text-blue-bright max-[359px]:ml-0.5 max-[359px]:px-1">{t.badge}</span> : null}
           </button>
         ))}
       </nav>
@@ -135,7 +135,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
     ? {
         cups: RANKS.find((r) => r.id === callInfo.cupsRankId)?.label ?? callInfo.cupsRankId,
         rank: `${rk.label}${rk.division ? ` ${"I".repeat(rk.division)}` : ""}`,
-        overall: callInfo.overall,
+        overall: Math.floor(proOverall(save.player.attrs) * 10) / 10,
         need: callInfo.needOverall,
       }
     : null;

@@ -34,7 +34,7 @@ const listEn = (p: Record<string, string | number>): string => {
 
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
-const BOARD_BANDS_EN: Record<string, string> = { expected: "Expected", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
+const BOARD_BANDS_EN: Record<string, string> = { expected: "Likely", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
 
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
 
