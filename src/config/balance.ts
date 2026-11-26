@@ -1824,6 +1824,59 @@ export const CAREER_PRO_RANKED = {
   logCap: 8,
 } as const;
 
+/**
+ * v2.2 Pro slice 5 (PRO-SPEC §4.2, §6): signature mechanics and the one
+ * decision per game. The bounds are the spec's table; the rest says what each
+ * number moves.
+ */
+export const CAREER_PRO_MOMENTS = {
+  /**
+   * Signature mechanics, unlocked in this order by mechanics training: each
+   * needs `blocks` mechanics blocks done and the Mechanics attribute at
+   * `mechanics`. Moves how soon the extra option shows in a match.
+   */
+  mechanics: [
+    { id: "wavedash", mechanics: 55, blocks: 4 },
+    { id: "speedflip", mechanics: 60, blocks: 10 },
+    { id: "airDribble", mechanics: 66, blocks: 18 },
+    { id: "ceilingShot", mechanics: 72, blocks: 28 },
+    { id: "doubleTap", mechanics: 78, blocks: 40 },
+    { id: "mustyFlick", mechanics: 84, blocks: 54 },
+    { id: "flipReset", mechanics: 90, blocks: 70 },
+  ] as readonly { id: string; mechanics: number; blocks: number }[],
+  /** The spec's limits: a decision moves the team's rating in that game by at most teamPerGame, all of a series' decisions by at most teamPerSeries, and the Pro's own rating by at most ratingPerGame. */
+  bounds: { teamPerGame: 0.5, teamPerSeries: 1.0, ratingPerGame: 1.5 },
+  /**
+   * The chance a call comes off: base of the option + (attribute − attrCenter)
+   * × perAttr + confidence × perConfidence − tiredness, kept in floor..ceil.
+   * Moves how much the Pro's attribute decides the call.
+   */
+  chance: { attrCenter: 70, perAttr: 0.008, perConfidence: 0.04, tiredBelow: 50, perTiredPoint: 0.002, floor: 0.12, ceil: 0.9 },
+  /**
+   * The options. `base` = chance at the centre attribute; `up` / `down` = the
+   * team rating (per game) and own rating a success adds and a miss takes.
+   * The safe call has low variance and about zero EV; the bold one pays when
+   * the attribute is high and costs when it is not; a mechanic's call pays most
+   * and its base rises with how advanced the mechanic is (`perTier` per step).
+   */
+  options: {
+    safe: { base: 0.62, up: { team: 0.12, rating: 0.4 }, down: { team: 0.18, rating: 0.5 } },
+    bold: { base: 0.42, up: { team: 0.5, rating: 1.3 }, down: { team: 0.25, rating: 0.9 } },
+    mechanic: { base: 0.34, perTier: 0.02, up: { team: 0.5, rating: 1.5 }, down: { team: 0.2, rating: 0.8 } },
+  },
+  /** Hint words from the chance: under risky = "risky", under uncertain = "uncertain", under likely = "likely", else "mastered". */
+  hints: { risky: 0.35, uncertain: 0.55, likely: 0.75 },
+  /** "On instinct" picks this kind of call by style; the rest ("allround") picks one of the available at random. */
+  instinct: {
+    mechanical: "mechanic",
+    anchor: "safe",
+    playmaker: "safe",
+    icecold: "bold",
+    veteranmind: "safe",
+    allround: "any",
+  } as Record<string, string>,
+} as const;
+
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
   attrOffsetCap: 6,

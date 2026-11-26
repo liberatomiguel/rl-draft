@@ -3742,6 +3742,61 @@ export const CAREER_PT: CareerCopy = {
     },
   },
 
+  /** v2.2 Pro, fatia 5: o lance de um jogo e as mecânicas assinatura (docs/PRO-SPEC.md §4.2, §6). */
+  proMoments: {
+    title: "A sua decisão",
+    kicker: "Um lance por jogo. A palavra ao lado de cada opção mostra como ela está para você agora.",
+    moment: {
+      decider: "A decisão",
+      overtimeWinner: "Overtime",
+      lateGoal: "No fim do jogo",
+      comeback: "Correndo atrás",
+      cleanSheet: "Segurando a vantagem",
+      saveMarathon: "Sob pressão",
+      hatTrick: "Numa boa sequência",
+      demoBlitz: "Ganhando no físico",
+    } as Record<string, string>,
+    calls: {
+      holdForSupport: "Segurar e esperar o apoio",
+      takeTheShot: "Chutar de primeira",
+      stayBack: "Ficar atrás e segurar a linha",
+      challengeEarly: "Ir na bola cedo",
+      resetPlay: "Reiniciar a jogada",
+      keepPushing: "Continuar pressionando",
+      wavedash: "Wavedash",
+      speedflip: "Speedflip",
+      airDribble: "Air dribble",
+      ceilingShot: "Ceiling shot",
+      doubleTap: "Double tap",
+      mustyFlick: "Musty flick",
+      flipReset: "Flip reset",
+    } as Record<string, string>,
+    hints: { risky: "Arriscado", uncertain: "Incerto", likely: "Provável", mastered: "Você domina isso" } as Record<string, string>,
+    locked: (name: string) => `Precisa de ${name}`,
+    instinct: "No instinto",
+    instinctHint: "O seu estilo faz a escolha. Não ajuda e não atrapalha.",
+    result: {
+      success: (call: string) => `${call} deu certo.`,
+      miss: (call: string) => `${call} não funcionou.`,
+      instinct: (call: string) => `No instinto você foi de: ${call}.`,
+      team: (n: number) => `Nota do time neste jogo ${n >= 0 ? "+" : ""}${n.toFixed(2)}`,
+      own: (n: number) => `A sua nota ${n >= 0 ? "+" : ""}${n.toFixed(2)}`,
+    },
+    mechanics: {
+      title: "Mecânicas assinatura",
+      owned: "Desbloqueadas",
+      next: (name: string, blocks: number, mech: number) =>
+        blocks > 0 && mech > 0
+          ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica e ${mech} de Mecânica.`
+          : blocks > 0
+            ? `Próxima: ${name}. Mais ${blocks} blocos de mecânica.`
+            : mech > 0
+              ? `Próxima: ${name}. Mais ${mech} de Mecânica.`
+              : `Próxima: ${name}. Treine mecânica mais uma vez.`,
+      all: "Todas as mecânicas assinatura estão desbloqueadas.",
+    },
+  },
+
   /** v2.2 Pro, a carreira de jogador (docs/PRO-SPEC.md, R150). Só no staging (FEATURES.proCareer). */
   pro: {
     door: {

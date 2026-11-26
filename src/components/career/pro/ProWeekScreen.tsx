@@ -9,12 +9,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { CAREER_PRO_WEEK } from "@/config/balance";
+import { CAREER_PRO_WEEK, RANKS } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { useCopy } from "@/content/copy";
 import { PRO_STAT_KEYS, proOverall } from "@/engine/career/pro/growth";
 import { ratingBonusOf } from "@/engine/career/pro/form";
-import type { ProActivity, ProTrainingFocus, ProWeekPlan } from "@/engine/career/pro/types";
+import { nextMechanic } from "@/engine/career/pro/mechanics";
+import type { ProActivity, ProPlayer, ProTrainingFocus, ProWeekPlan } from "@/engine/career/pro/types";
 import { coachPlanFor, isBurnedOut, previewWeek, repeatPlanFor, type BlockPreview } from "@/engine/career/pro/week";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
@@ -167,18 +168,45 @@ export function ProWeekScreen() {
           </p>
           <ul className="mt-3 space-y-1.5 text-sm leading-snug text-ink">
             {lastWeek.notes.map((n, i) => (
-              <li key={`${n.code}:${i}`}>{W.notes[n.code]?.(n.n, n.ref) ?? n.code}</li>
+              <li key={`${n.code}:${i}`}>{W.notes[n.code]?.(n.n, noteRef(n.code, n.ref, C.proMoments.calls)) ?? n.code}</li>
             ))}
             {lastWeek.growth.length === 0 ? <li className="text-sub">{W.result.noGrowth}</li> : null}
           </ul>
         </Panel>
       ) : null}
 
+      <MechanicsLine player={p} />
+
       <div className="mt-8 grid gap-8 border-t border-line pt-6 lg:grid-cols-2">
         <ProRankedPanel player={p} />
         <ProGrowthLog log={save.growthLog} />
       </div>
     </div>
+  );
+}
+
+/** The name a note quotes: a mechanic's name, or a rank's. */
+function noteRef(code: string, ref: string | undefined, calls: Record<string, string>): string | undefined {
+  if (!ref) return ref;
+  if (code === "mechanicUnlocked") return calls[ref] ?? ref;
+  if (code === "rankUp" || code === "rankDown") return RANKS.find((r) => r.id === ref)?.label ?? ref;
+  return ref;
+}
+
+/** The mechanics he has and the one he is chasing. */
+function MechanicsLine({ player }: { player: ProPlayer }) {
+  const M = useCareerCopy().proMoments;
+  const next = nextMechanic(player);
+  return (
+    <section className="mt-6" aria-label={M.mechanics.title}>
+      <p className="kicker mb-2">{M.mechanics.title}</p>
+      {player.mechanics.length > 0 ? (
+        <p className="text-sm text-ink">{player.mechanics.map((id) => M.calls[id] ?? id).join(" · ")}</p>
+      ) : null}
+      <p className="mt-1 text-sm text-sub">
+        {next ? M.mechanics.next(M.calls[next.id] ?? next.id, next.blocksLeft, next.mechanicsLeft) : M.mechanics.all}
+      </p>
+    </section>
   );
 }
 

@@ -3770,6 +3770,61 @@ export const CAREER_EN = {
     },
   },
 
+  /** v2.2 Pro slice 5: the decision of a game and the signature mechanics (docs/PRO-SPEC.md §4.2, §6). */
+  proMoments: {
+    title: "Your call",
+    kicker: "One call a game. The word beside each option is how it looks for you right now.",
+    moment: {
+      decider: "The decider",
+      overtimeWinner: "Overtime",
+      lateGoal: "Late in the game",
+      comeback: "Chasing the game",
+      cleanSheet: "Holding the lead",
+      saveMarathon: "Under pressure",
+      hatTrick: "On a run",
+      demoBlitz: "Winning the physical game",
+    } as Record<string, string>,
+    calls: {
+      holdForSupport: "Hold for support",
+      takeTheShot: "Take the shot",
+      stayBack: "Stay back and hold the line",
+      challengeEarly: "Challenge early",
+      resetPlay: "Reset the play",
+      keepPushing: "Keep pushing",
+      wavedash: "Wavedash",
+      speedflip: "Speedflip",
+      airDribble: "Air dribble",
+      ceilingShot: "Ceiling shot",
+      doubleTap: "Double tap",
+      mustyFlick: "Musty flick",
+      flipReset: "Flip reset",
+    } as Record<string, string>,
+    hints: { risky: "Risky", uncertain: "Uncertain", likely: "Likely", mastered: "You own this" } as Record<string, string>,
+    locked: (name: string) => `Needs ${name}`,
+    instinct: "On instinct",
+    instinctHint: "Your style makes the call. It does not help you and it does not hurt you.",
+    result: {
+      success: (call: string) => `${call} came off.`,
+      miss: (call: string) => `${call} did not work.`,
+      instinct: (call: string) => `On instinct you went for: ${call}.`,
+      team: (n: number) => `Team rating this game ${n >= 0 ? "+" : ""}${n.toFixed(2)}`,
+      own: (n: number) => `Your rating ${n >= 0 ? "+" : ""}${n.toFixed(2)}`,
+    },
+    mechanics: {
+      title: "Signature mechanics",
+      owned: "Unlocked",
+      next: (name: string, blocks: number, mech: number) =>
+        blocks > 0 && mech > 0
+          ? `Next: ${name}. ${blocks} more mechanics blocks and ${mech} more Mechanics.`
+          : blocks > 0
+            ? `Next: ${name}. ${blocks} more mechanics blocks.`
+            : mech > 0
+              ? `Next: ${name}. ${mech} more Mechanics.`
+              : `Next: ${name}. Train mechanics once more.`,
+      all: "Every signature mechanic is unlocked.",
+    },
+  },
+
   /** v2.2 Pro, the player career (docs/PRO-SPEC.md, R150). Staging only (FEATURES.proCareer). */
   pro: {
     door: {

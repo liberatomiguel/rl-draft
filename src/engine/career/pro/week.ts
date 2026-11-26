@@ -15,6 +15,7 @@ import { clamp } from "@/lib/util";
 import type { StatKey } from "../../types";
 import { deriveSeed } from "../seeds";
 import { PRO_STAT_KEYS, round2 } from "./attrs";
+import { syncMechanics } from "./mechanics";
 import { applyGains, blockGains, diffGrowth, trainBlock, weakestStat } from "./growth";
 import { expectedSessionDelta, playRankedSession, rankOf, rankedXp } from "./ranked";
 import type { ProActivity, ProGrowthEntry, ProPlayer, ProStage, ProWeekNote, ProWeekPlan } from "./types";
@@ -106,7 +107,9 @@ export function applyBlock(player: ProPlayer, activity: ProActivity, ctx: WeekCt
         energy: Math.max(0, player.energy - W.cost.train),
         mechanicsBlocks: (player.mechanicsBlocks ?? 0) + (activity.focus === "mechanics" ? 1 : 0),
       };
-      return { player: next, growth: diffGrowth(player.attrs, next.attrs, "training", at), notes };
+      const synced = syncMechanics(next);
+      for (const id of synced.unlocked) notes.push({ code: "mechanicUnlocked", ref: id });
+      return { player: synced.player, growth: diffGrowth(player.attrs, next.attrs, "training", at), notes };
     }
     case "ranked": {
       const before = rankOf(player.mmr);
