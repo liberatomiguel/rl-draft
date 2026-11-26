@@ -23,6 +23,7 @@ import { ageOf, playerViewById } from "../development";
 import { derivedFloat } from "../seeds";
 import type { WorldOrgState, WorldState } from "../types";
 import { worldLifeOn } from "../worldLife";
+import { orgHistoryOverAt } from "../worldSim";
 import { proOverall, round2 } from "./attrs";
 import type { ProMatchLogEntry, ProOffer, ProOfferReason, ProRole } from "./spineTypes";
 import type { ProSave } from "./types";
@@ -63,6 +64,12 @@ export function orgBarOf(org: WorldOrgState, ctx: ViewCtx): number {
 export function orgLevelOf(org: WorldOrgState, ctx: ViewCtx): number {
   const ids = org.playerIds;
   return round2(ids.reduce((s, id) => s + overallOf(id, ctx), 0) / Math.max(1, ids.length));
+}
+
+/** Its future is in doubt: the dataset ends it within two seasons, or Mundo vivo's turnover is one bad season away. */
+export function orgFutureUncertain(org: WorldOrgState, seasonIndex: number): boolean {
+  const T = CAREER_WORLD_LIFE.orgTurnover;
+  return orgHistoryOverAt(org.ref, seasonIndex + 2) || (worldLifeOn(seasonIndex) && org.prestige <= T.maxPrestige && (org.lowSeasons ?? 0) >= T.seasons - 1);
 }
 
 /** The counter-offer's shown risk of the org walking away (a bigger org walks more easily). */
@@ -118,6 +125,8 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
     .sort()
     .map((ref) => save.world.orgs[ref])
     .filter((o) => o.region === save.player.region && o.ref !== ctx.currentOrg && !o.playerIds.includes(PRO_SELF_ID) && !o.reserveIds?.includes(PRO_SELF_ID))
+    // QA round: an org the dataset ends after this season does not sign him (it would fold under him).
+    .filter((o) => !orgHistoryOverAt(o.ref, seasonIndex + 1))
     .map((org) => ({ org, level: orgLevelOf(org, view), bar: orgBarOf(org, view) }))
     .sort((a, b) => a.level - b.level || a.org.ref.localeCompare(b.org.ref));
   const half = Math.ceil(region.length / 2);
@@ -166,6 +175,7 @@ export function orgOffersFor(save: Pick<ProSave, "player" | "clock" | "careerSee
       expiresDay: ctx.windowEndDay,
       status: "open",
       counterRisk: counterRiskFor(org.prestige),
+      ...(orgFutureUncertain(org, seasonIndex) ? { uncertain: true } : {}),
     } satisfies ProOffer;
   });
 }

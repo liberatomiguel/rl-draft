@@ -113,7 +113,7 @@ export function sideLevelOf(teammates: readonly Pick<SquadPlayer, "overall">[], 
  */
 export function amateurInviteFor(
   save: Pick<ProSave, "careerSeed" | "clock" | "player" | "world" | "stage" | "offers">,
-  ctx: { week: number; currentLevel: number | null; seq: number },
+  ctx: { week: number; currentLevel: number | null; seq: number; currentRef?: string | null },
 ): ProOffer | null {
   const { seasonIndex, day } = save.clock;
   if (save.stage !== "ranked" && save.stage !== "freeAgent" && save.stage !== "amateur") return null;
@@ -127,8 +127,12 @@ export function amateurInviteFor(
     if (since < CAREER_PRO_TEAM.inviteEveryWeeks * 7) return null;
   }
   if (save.offers.some((o) => o.kind === "amateur" && o.status === "open")) return null;
-  const k = Math.floor(derivedFloat(save.careerSeed, `pro:team:side:${seasonIndex}:${ctx.week}`) * 8) % 8;
-  const ref = localRef(save.player.region, SIDE_SEASON_OFFSET + seasonIndex, k);
+  // QA round: a side he declined (or let lapse) this season does not call again; the next slot of the pool does.
+  const turnedDown = new Set(save.offers.filter((o) => o.kind === "amateur" && o.madeSeason === seasonIndex && o.status !== "open").map((o) => o.ref));
+  const k0 = Math.floor(derivedFloat(save.careerSeed, `pro:team:side:${seasonIndex}:${ctx.week}`) * 8) % 8;
+  let ref = localRef(save.player.region, SIDE_SEASON_OFFSET + seasonIndex, k0);
+  for (let i = 1; i < 8 && (turnedDown.has(ref) || ref === ctx.currentRef); i++) ref = localRef(save.player.region, SIDE_SEASON_OFFSET + seasonIndex, (k0 + i) % 8);
+  if (turnedDown.has(ref) || ref === ctx.currentRef) return null;
   const level = round2(overall + CAREER_PRO_TEAM.teammateOffset);
   const age = ageOf(save.player.birthYear, seasonIndex);
   return {

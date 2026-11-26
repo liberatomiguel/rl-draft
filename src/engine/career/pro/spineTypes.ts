@@ -67,6 +67,8 @@ export interface ProOffer {
   expiresSeason: number;
   expiresDay: number;
   status: ProOfferStatus;
+  /** QA round: the org's future is in doubt (the dataset or Mundo vivo may end it soon); the offer says so. */
+  uncertain?: boolean;
   /** The one counter-offer: shown risk (0-1) and how it went. */
   counterRisk: number;
   counter?: "improved" | "walked";
@@ -146,6 +148,7 @@ export interface ProNewsItem {
 
 /** What the Advance stops at (proFlow.proStopOf). */
 export type ProStop =
+  | { kind: "weekPlan" }
   | { kind: "matchday"; eventName: string }
   | { kind: "event"; eventName: string }
   | { kind: "seasonEnd" }
@@ -180,6 +183,18 @@ export interface ProSpineFields {
   guaranteeOffers?: boolean;
   /** Days the batched advance already stopped on (a stop is shown once). */
   seenStopKey?: string;
+  /** QA round: the week's plan as confirmed (one tap on Monday, or the auto-plan), and how it was chosen. */
+  thisWeek?: { key: string; plan: ProWeekPlan; source: "coach" | "own" | "repeat" | "fallback" } | null;
+  /** QA round: Continue plans each week by itself (the saved plan, the coach's when it would tire him) until something happens. */
+  autoPlan?: boolean;
+  /** QA round: why the last Continue stopped when it was none of the stops (an offer about to expire, the burnout warning, a contract ending, the plan falling back). */
+  notice?: ProNotice | null;
+  /** QA round: offers already warned about before they expire. */
+  warnedOffers?: string[];
+  /** QA round: events his org has played while he sat on the bench (every rotationEvery-th he starts). */
+  rotationTurn?: number;
+  /** QA round: the coach's review of a rotation role: series left before it, and how they went. */
+  roleReview?: { left: number; ratingSum: number; n: number } | null;
   /** The starter a rotation start benched for this week (swapped back next Monday). */
   rotatedOut?: string | null;
   /** The week's three blocks, played on their days (null = the coach's plan each week). */
@@ -200,6 +215,16 @@ export interface ProWeekLog {
   /** Energy after each block played, then after the close. */
   energyTrace: number[];
 }
+
+/** QA round: a reason the batched Continue stopped that is not a stop of its own. */
+export type ProNotice =
+  | { kind: "offerExpiring"; name: string; days: number }
+  | { kind: "burnoutWarning"; energy: number }
+  | { kind: "burnedOut"; weeks: number }
+  | { kind: "contractEnding"; org: string; renewal: boolean }
+  | { kind: "planFellBack"; energy: number }
+  | { kind: "rolePromoted"; org: string }
+  | { kind: "roleKept"; org: string };
 
 /** The series he is playing now (round 2): the next game's decision, the series ledger, the games so far. */
 export interface ProLiveSeries {

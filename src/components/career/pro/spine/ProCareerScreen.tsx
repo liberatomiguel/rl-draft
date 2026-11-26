@@ -39,6 +39,7 @@ import { activeProSave, useProStore } from "@/store/proStore";
 import { useMounted } from "@/store/useMounted";
 import { ProInbox } from "./ProInbox";
 import { ProLive } from "./ProLive";
+import { ProLastWeek, ProWeekGate } from "./ProWeekGate";
 import { ProOffers } from "./ProOffers";
 import { ProReport } from "./ProReport";
 import { ProTeam } from "./ProTeam";
@@ -136,7 +137,11 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
     <div className="space-y-5">
       {save.stage === "ranked" && offers.length > 0 ? null : <p className="text-sm leading-snug text-sub">{status}</p>}
 
+      <ProLastWeek save={save} />
+
       {save.retireOffer ? <RetireOffer /> : null}
+
+      {stop?.kind === "weekPlan" ? <ProWeekGate save={save} /> : null}
 
       {stop?.kind === "seasonEnd" ? (
         <Panel className="p-5">
@@ -199,7 +204,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
             </li>
           ))}
         </ol>
-        <p className="mt-1 text-xs text-faint">{save.weekPlan ? P.yourPlan : P.coachPlan}</p>
+        <p className="mt-1 text-xs text-faint">{save.thisWeek?.source === "fallback" ? P.notices.planFellBack(Math.round(save.player.energy)) : save.thisWeek?.source === "own" || save.thisWeek?.source === "repeat" ? P.yourPlan : P.coachPlan}</p>
         <p className={isBurnedOut(save.player) ? "mt-2 text-sm text-orange-bright" : "mt-2 text-sm text-sub"}>
           {isBurnedOut(save.player) ? C.proWeek.warn.burnedOut : `${C.proWeek.energy}: ${Math.round(save.player.energy)}`}
         </p>
@@ -208,7 +213,7 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
       <div>
         <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
           <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>
-            {P.advance}
+            {stop?.kind === "weekPlan" ? P.weekStop.continueWithPlan : P.advance}
           </Button>
           <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
             {P.oneDay}

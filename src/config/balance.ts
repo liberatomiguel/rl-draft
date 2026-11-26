@@ -1731,8 +1731,10 @@ export const CAREER_PRO_TEAM = {
   betterSideGap: 3,
   /** Weeks between two calls from amateur sides (a declined call does not repeat every Monday). */
   inviteEveryWeeks: 4,
-  /** Days an amateur invite stays open. */
-  inviteDays: 13,
+  /** Days an amateur invite stays open (QA: at least two weeks). */
+  inviteDays: 14,
+  /** Continue stops this many days before an open offer expires (once per offer). */
+  expiryWarnDays: 2,
   /**
    * His own match rating = the box score's rating + (his overall − the side's
    * average) × this, within ± ratingEdgeCap. An 80 on a 90 side reads about
@@ -1807,6 +1809,15 @@ export const CAREER_PRO_ORG = {
    */
   rotationGap: 6,
   rotationShare: 0.4,
+  /**
+   * QA round: a rotation player on the seat starts one event in this many
+   * (the offer and the Team tab say it), and the coach reviews the role after
+   * reviewAfter series he played: an average of promoteRating or better makes
+   * him a starter.
+   */
+  rotationEvery: 3,
+  reviewAfter: 6,
+  promoteRating: 6.8,
   /** A week on the bench training (doing what the coach asks) earns this back: the bench is recoverable. */
   trustBenchWeek: 1,
   /** Asking for a transfer costs this much trust. */
@@ -1912,7 +1923,9 @@ export const CAREER_PRO_RANKED = {
     [53, 1500],
     [55, 2000],
     [57, 2400],
-    [66, 2800],
+    // QA round (PROSPINE): SSL (2750) at about overall 75, pro level; it sat at 65. Bronze to GC unchanged.
+    [65, 2550],
+    [78, 2800],
     [99, 3100],
   ] as readonly (readonly [number, number])[],
   /** Confidence adds this many overall points of effective skill per point (a player in form queues better). */

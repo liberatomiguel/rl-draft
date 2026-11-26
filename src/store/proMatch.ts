@@ -17,7 +17,7 @@
  * production) every event is simmed the same way.
  */
 
-import { CAREER_PRO_TEAM } from "@/config/balance";
+import { CAREER_PRO_ORG, CAREER_PRO_TEAM } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import { buildGameBoxScore } from "@/engine/career/boxScore";
 import { isSeriesOver, type SeriesState } from "@/engine/match";
@@ -38,7 +38,8 @@ import {
   stepEventRound,
   userSeriesTeamsOf,
 } from "./careerFlow";
-import { bookLines, bookSeries, hostOf, noteTitle, placementOf, proStopOf, storeHost } from "./proFlow";
+import { bookLines, bookSeries, endRotation, hostOf, noteTitle, placementOf, proStopOf, pushNews, seatOfPro, storeHost } from "./proFlow";
+import { swapOnSeat } from "./proSeat";
 
 const withMode = (host: CareerSave, mode: "quick" | "custom"): CareerSave =>
   host.prefs.matchdayMode === mode && host.prefs.matchdayStopAt === "every" ? host : { ...host, prefs: { ...host.prefs, matchdayMode: mode, matchdayStopAt: "every" } };
@@ -81,7 +82,34 @@ function closeEvent(save: ProSave): ProSave {
   let out = save.report && save.report.eventId === ev.def.id ? { ...save, report: { ...save.report, placement } } : save;
   out = storeHost({ ...out, live: null }, withMode(finishEvent(host), "quick"));
   if (placement === "champion") out = noteTitle(out, ev.def.name, teamNameOf(save, host), ev.def.tier);
-  return out;
+  // A rotation start lasts the event: the starter he replaced takes his seat back.
+  return out.rotatedOut ? endRotation(out) : out;
+}
+
+/**
+ * QA round: a Pro on the bench of his org starts one event in
+ * CAREER_PRO_ORG.rotationEvery, in place of the weakest starter (the offer
+ * and the Team tab state the share). Counted per event of the org.
+ */
+export function rotationStartFor(save: ProSave): ProSave {
+  if (!save.orgShell || !save.contract || seatOfPro(save) !== "reserve") return save;
+  const turn = (save.rotationTurn ?? 0) + 1;
+  if (turn % CAREER_PRO_ORG.rotationEvery !== 0) return { ...save, rotationTurn: turn };
+  const host = hostOf(save)!;
+  const weakest = host.squad
+    .filter((p) => host.starterIds.includes(p.id) && p.id !== PRO_SELF_ID)
+    .sort((a, b) => a.overall - b.overall || a.id.localeCompare(b.id))[0];
+  if (!weakest) return { ...save, rotationTurn: turn };
+  const swapped = swapOnSeat(save, weakest.id, PRO_SELF_ID);
+  if (swapped === save) return { ...save, rotationTurn: turn };
+  return pushNews({ ...swapped, rotationTurn: turn, rotatedOut: weakest.id }, "rotationStart", { org: save.contract.orgName, player: weakest.name });
+}
+
+/** Events until his next rotation start (null when he starts, or has no org seat). */
+export function rotationCountdownOf(save: ProSave): number | null {
+  if (!save.orgShell || seatOfPro(save) !== "reserve") return null;
+  const every = CAREER_PRO_ORG.rotationEvery;
+  return every - ((save.rotationTurn ?? 0) % every);
 }
 
 /** The whole event without his calls (benched, or no Matchday engine): simmed, then the short report. */
@@ -155,6 +183,8 @@ export function playProMatchdayFlow(input: ProSave): ProSave {
   let save = input;
   let host = hostOf(save)!;
   if (!host.activeEvent) {
+    save = rotationStartFor(save);
+    host = hostOf(save)!;
     host = startEvent(withMode(host, "custom"), true);
     if (!host.activeEvent) return input;
     save = storeHost({ ...save, report: null, live: null }, host);
