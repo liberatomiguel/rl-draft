@@ -10,6 +10,26 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.1] — 2026-11-26 · First staging cut of the big update: the Pro player career, playable to retirement, and the endless seasons' variety (staging)
+
+Branch `release/v2.2`, cut from staging rc.6. Partial on purpose (Miguel asked to play what is ready): the board and real-organisation start, the second endless round and the Pro calibration are still on their branches. Handoffs with every tunable and decision (to be numbered at the final integration): `docs/handoff-2.2/`.
+
+### Added
+- **Pro, the player career, slices 2 to 7** (behind `FEATURES.proCareer`, staging only; spec `docs/PRO-SPEC.md`): the week in three blocks with energy, burnout and a coach's plan; ranked with the Draft's ranks; the Pro in the real world and calendar on an amateur side, then offers from real organisations with a role, a reason and one counter-offer; a starting spot decided by the coach, a rotation role that plays one event in three and is reviewed after six series; his side's series played game by game with one decision a game, signature mechanics opening options; match XP; aging with a reason for every change, retirement by age or by choice, the end-of-season gala, nicknames, and a final card on its own page (`/career/pro/card`, payload in the URL hash).
+- **Endless variety, round 1** (behind `FEATURES.endlessVariety`, staging only, from the seventh season): rival projects that gather talent when one side pulls away, each announced in the news; Invitationals with a drawn field and bracket; a Legends Invitational against all-time rosters for squads at 93+; an Intercontinental Invitational; host cities announced each season.
+
+### Balance
+- **BALANCE_VERSION 48**: the Pro blocks (`CAREER_PRO_*`), the Pro growth recalibration on the pure modules, `CAREER_ENDLESS`.
+
+### Not verified
+- Pro on the real flow peaks too high and wins too much on Normal (four whole-career bot runs: peaks 94 to 99 at 27 to 28, 10 to 22 titles; the spec asks 90 to 93 at 20 to 24 for an average talent): the calibration battery is running.
+- A 100+ manager team still wins 75 to 88 % of its Worlds with the endless round 1 on (6 careers an arm); round 2 is running.
+- Pro screens: played seven seasons in a desktop browser at 320 px, 375 px and desktop width before the playable series existed; the match decisions, the gala, retirement and the card with honours have not been opened in a browser. No physical phone, no Safari. PT copy unread by a native speaker.
+- Known on staging since rc.3, fix in progress: with Matchday in custom mode, a double-elimination round where the user's side has no series can stop the event from advancing.
+- The full suite was last run on the Pro branch that this cut equals except for this entry and the version (3170 passed); the soft-lock probe was run narrowed (NA and SAM, four seasons, 0 findings), not in full.
+
+---
+
 ## [2.1.0-rc.6] — 2026-11-24 · Everything on the staging line together: the phone redesign, the Etapa 1 gate, the Daily's best draft, the friend duel, Pro slice 1 (staging)
 
 Branch `claude/staging-integration`, cut from `origin/staging` rc.5 (`3914518`, the phone redesign, kept whole) with five lines merged in: `main` v2.0.36, the Etapa 1 gate close, `claude/daily-optimal`, `claude/friend-challenge`, `claude/pro-etapa2`. Published to `staging` only; production stays on v2.0.36.
