@@ -26,7 +26,7 @@ vi.mock("@/config/balance", async (orig) => {
 });
 
 import type { PackageId } from "@/engine/career/boardTypes";
-import { calibratedChance, objectiveAimOf } from "@/engine/career/board";
+import { calibratedChance, chanceBandOf, objectiveAimOf } from "@/engine/career/board";
 import { realOrgChoicesFor } from "@/engine/career/orgProfile";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
 import type { CareerDifficulty, CareerSave, SeasonGoalSpec } from "@/engine/career/types";
@@ -208,7 +208,8 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     const table = env.BOARD_EVAL_CAL ? JSON.parse(env.BOARD_EVAL_CAL) : {};
     const groups = new Map<string, CalRow[]>();
     for (const r of rows) groups.set(r.key!, [...(groups.get(r.key!) ?? []), r]);
-    const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number }>();
+    const cells = new Map<string, { n: number; stated: number; met: number; ca: number; am: number; s1n: number; s1met: number; s1stated: number }>();
+    const picks: { cell: string; band: string; c: number; met: boolean }[] = [];
     for (const g of groups.values()) {
       const { stature, diff, first } = g[0];
       const cell = { stature: stature as never, difficulty: diff as CareerDifficulty, first };
@@ -219,7 +220,13 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       const ca = near(objectiveAimOf("cautious", stature as never, diff as CareerDifficulty), (c) => c > ex.c + 0.02) ?? ex;
       const am = near(objectiveAimOf("ambitious", stature as never, diff as CareerDifficulty), (c) => c < ex.c - 0.02) ?? ex;
       const k = `${stature}/${diff}`;
-      const t = cells.get(k) ?? { n: 0, stated: 0, met: 0, ca: 0, am: 0 };
+      const t = cells.get(k) ?? { n: 0, stated: 0, met: 0, ca: 0, am: 0, s1n: 0, s1met: 0, s1stated: 0 };
+      for (const x of [ex, ca, am]) picks.push({ cell: k, band: chanceBandOf(x.c), c: x.c, met: x.r.met });
+      if (first) {
+        t.s1n += 1;
+        t.s1met += ex.r.met ? 1 : 0;
+        t.s1stated += ex.c;
+      }
       t.n += 1;
       t.stated += ex.c;
       t.met += ex.r.met ? 1 : 0;
@@ -228,8 +235,30 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
       cells.set(k, t);
     }
     for (const [k, t] of [...cells].sort()) {
-      console.log(`EVAL ${k.padEnd(16)} Expected stated ${Math.round((100 * t.stated) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (N=${t.n}) | Cautious ${Math.round((100 * t.ca) / t.n)}% / Ambitious ${Math.round((100 * t.am) / t.n)}%`);
+      console.log(`EVAL ${k.padEnd(16)} Expected stated ${Math.round((100 * t.stated) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (N=${t.n}) | Cautious ${Math.round((100 * t.ca) / t.n)}% / Ambitious ${Math.round((100 * t.am) / t.n)}% | S1 stated ${t.s1n ? Math.round((100 * t.s1stated) / t.s1n) : 0}% measured ${t.s1n ? Math.round((100 * t.s1met) / t.s1n) : 0}% (N=${t.s1n})`);
     }
+    // Bands: every picked objective (all three packages), grouped by stated band — the measured rate's band against it.
+    const order = ["longShot", "stretch", "reach", "expected"];
+    let same = 0, adj = 0, far = 0;
+    const bandGroups = new Map<string, { n: number; met: number; c: number }>();
+    for (const x of picks) {
+      const g = bandGroups.get(`${x.cell}|${x.band}`) ?? { n: 0, met: 0, c: 0 };
+      g.n += 1;
+      g.met += x.met ? 1 : 0;
+      g.c += x.c;
+      bandGroups.set(`${x.cell}|${x.band}`, g);
+    }
+    for (const [k, g] of [...bandGroups].sort()) {
+      const [cell, band] = k.split("|");
+      const mb = chanceBandOf(g.met / g.n);
+      const d = Math.abs(order.indexOf(mb) - order.indexOf(band));
+      if (d === 0) same += g.n;
+      else if (d === 1) adj += g.n;
+      else far += g.n;
+      console.log(`BAND ${cell.padEnd(16)} ${band.padEnd(8)} stated ${Math.round((100 * g.c) / g.n)}% measured ${Math.round((100 * g.met) / g.n)}% (${mb}, N=${g.n})`);
+    }
+    const tot = same + adj + far;
+    console.log(`BANDS same ${Math.round((100 * same) / tot)}% adjacent ${Math.round((100 * adj) / tot)}% two+ away ${Math.round((100 * far) / tot)}% (N=${tot} objectives)`);
     return;
   }
   if (env.BOARD_SUMMARY_FROM) {
