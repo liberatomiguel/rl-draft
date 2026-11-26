@@ -27,6 +27,7 @@
  * changes when things surface, never how they roll.
  */
 
+import { boardOnCreate, boardOnDayArrival, boardOnSeasonReview, boardOnSeasonStart, boardOnSplitBoundary, boardSeatAtRollover, boardHiringFrozen } from "./boardFlow";
 import { emptyCompetition as emptyCompetitionState } from "@/engine/career/competition";
 import {
   CAREER_MATCHDAY,
@@ -362,7 +363,7 @@ import {
   userCoachRollover,
   worldLifeOn,
 } from "@/engine/career/worldLife";
-import { endlessOffer, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
+import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessProjectBid, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -1185,6 +1186,7 @@ function stampBlockbusterRefusal(save: CareerSave, offer: TransferOffer): void {
 
 export function processDayArrival(input: CareerSave): CareerSave {
   const save = clone(input);
+  boardOnDayArrival(save); // v2.2 board front: the season's offer once the squad has three players
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
   const dow = dayOfWeekOf(day);
@@ -1598,7 +1600,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
   // ============ WINDOW DAYS: incoming-bid roll (v0.3, any day) =============
   const dayWindowIdx = windowIndexOf(week);
   if (dayWindowIdx !== null && save.phase === "running" && save.squad.length > 0) {
-    const bid = incomingBidForDay({
+    const bid = endlessProjectBid(save, day, dayWindowIdx) ?? incomingBidForDay({
       world: save.world,
       squad: save.squad,
       seasonIndex,
@@ -2772,6 +2774,7 @@ function warnRunway(save: CareerSave, net: number): void {
 function runSplitBoundary(save: CareerSave): void {
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
+  boardOnSplitBoundary(save, week); // v2.2 board front (store/boardFlow)
   // rc.34 (S6): the founding partner's handover steps once a split.
   stepFoundingHandover(save);
   // v2.0 (C1): the coach's renewal notice, in his deal's last season.
@@ -3904,7 +3907,8 @@ function userSeriesGate(save: CareerSave, t: TournamentState): "open" | "wait" |
   if (!userSeriesStopsAt(save, t)) return "play";
   const us = save.activeEvent?.userSeries;
   const pairing = upcomingUserPairing(t, save.difficulty);
-  if (!us || !pairing || us.roundKey !== pairing.roundKey) return "open";
+  if (!pairing) return "play"; // a playoff round without the user (his bracket waits): nothing to open, play it
+  if (!us || us.roundKey !== pairing.roundKey) return "open";
   return isSeriesOver(us.state) ? "play" : "wait";
 }
 
@@ -4549,6 +4553,7 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
   };
   save.history.push(record);
   save.phase = "seasonReview";
+  boardOnSeasonReview(save); // v2.2 board front (store/boardFlow)
 
   // Timeline complete (2026 done without the title) → Final Whistle.
   if (
@@ -4634,7 +4639,9 @@ function worldLifeRollover(save: CareerSave, nextSeason: number, retiredNow: str
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prospectScouted", params: { org: sg.orgName, player: sg.playerName } });
   }
   // v2.1 M2.1 (R142): the world grows — a region short of its S6 elite promotes young AI prodigies.
-  const elite = eliteRenewalPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds });
+  const eliteBonus = endlessEliteBonus(save, nextSeason); // v2.2 ENDLESS: a long dynasty's stronger generation
+  const elite = eliteRenewalPass(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, userSquadIds: userIds, potentialBonus: eliteBonus });
+  endlessGenerationNews(save, elite.lifted, eliteBonus);
   save.world = elite.world;
   for (const p of elite.lifted.filter((x) => x.region === save.identity.region).slice(0, 2)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prodigyRises", params: { player: p.playerName, region: p.region } });
@@ -4788,6 +4795,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     string,
     string,
   ];
+  boardSeatAtRollover(save, nextSeason); // v2.2 board front: an accepted job offer moves the manager
 
   // 3. Sponsors (only once the org has earned standing — no day-1
   //    sponsorship). rc.34 (ECO-04): a deal signed since rc.34 runs on to its
@@ -4854,6 +4862,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   if (worldLifeOn(nextSeason)) save.competition.localCap = localCapsFor(save.world);
   // rc.36 (UX-02): the season's goal, once the new season's world and clock are set.
   attachSeasonGoal(save, nextSeason, lastGoalMet);
+  boardOnSeasonStart(save); // v2.2 board front (store/boardFlow)
   if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
   // v2.0 (C1): a running deal's free bootcamp covers the new season's first split.
   startSponsorBootcamp(save);
@@ -4884,6 +4893,8 @@ export interface CreateCareerInput {
   rosterKey: "prospects" | "journeymen" | "balanced";
   /** rc.34 (DEV-03): an explicit training mode over the preset's (tools, the arc bot). */
   trainingMode?: TrainingMode;
+  /** v2.2 board front (FEATURES.realOrgStart): take over this world org instead of founding a club. */
+  realOrgRef?: string;
 }
 
 /** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */
@@ -5115,6 +5126,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     seq: 0,
     lastPlayedAt: 0,
   };
+  boardOnCreate(save, input); // v2.2 board front (store/boardFlow)
   attachSeasonGoal(save, 0, null);
 
   return processDayArrival(save);
@@ -5742,6 +5754,7 @@ export function signPlayerFlow(
     releaseId?: string;
   },
 ): FlowResult {
+  if (boardHiringFrozen(input)) return { save: input, error: "boardFreeze" }; // v2.2 board front: the board's hiring freeze
   const planned = signingPlanFor(input, playerId, opts);
   if ("error" in planned) return { save: input, error: planned.error };
   const { view, pack, leaver, severance, fromRef, talk } = planned.plan;

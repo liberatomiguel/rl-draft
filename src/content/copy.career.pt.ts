@@ -17,6 +17,16 @@ const ENDLESS_HOSTS_PT = [
 ] as const;
 const hostPt = (i: string | number | undefined): string => ENDLESS_HOSTS_PT[Number(i)] ?? "";
 /** v2.2 ENDLESS: "A", "A e B", "A, B e C". */
+/** v2.2 ENDLESS: o kit de um projeto rival, o mesmo do clube do manager (chaves: engine/career/endless KIT_ORDER). */
+const ENDLESS_KIT_PT: Record<string, string> = {
+  facilities: "um centro de performance",
+  coach: "o melhor coach da região",
+  bench: "um reserva no banco",
+  bootcamp: "um bootcamp",
+  psychologist: "um psicólogo",
+};
+const joinPt = (xs: string[]): string => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`);
+const kitPt = (kit: string | number | undefined): string => joinPt(String(kit ?? "").split(",").filter(Boolean).map((k) => ENDLESS_KIT_PT[k] ?? k));
 const listPt = (p: Record<string, string | number>): string => {
   const xs = [p.p1, p.p2, p.p3].filter((x) => x !== undefined && x !== "").map(String);
   return xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`;
@@ -528,6 +538,7 @@ export const CAREER_PT: CareerCopy = {
       sponsor: "Propostas de patrocínio",
       sunday: "Começar o domingo",
       follow: "Sem você",
+      board: "A diretoria",
     },
     noticeTitle: "Um aviso precisa de você",
     noticeBody: "Leia e confirme o aviso: o relógio anda depois disso.",
@@ -1798,6 +1809,8 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (ECO-04): a Bold deal's milestone payment and a missed goal's fine instalment.
       sponsorMilestone: "Marco do patrocinador",
       sponsorFine: "Multa do patrocinador",
+      boardGrant: "Verba da diretoria",
+      boardBonus: "Bônus da diretoria",
     },
     sponsors: "Patrocinadores",
     sponsorTier: (t: number) => `Nível ${t}`,
@@ -2318,6 +2331,8 @@ export const CAREER_PT: CareerCopy = {
       prodigyRises: (p: Record<string, string | number>) => `${p.player} (${p.region}) desponta como prodígio`,
       // v2.2 ENDLESS
       endlessProject: (p: Record<string, string | number>) => `${p.org} monta o time em torno de ${listPt(p)}`,
+      endlessProjectGrows: (p: Record<string, string | number>) => `${p.org} segue montando, temporada ${p.season} do projeto`,
+      endlessGeneration: (p: Record<string, string | number>) => `Uma geração mais forte: ${p.player} (${p.region}) lidera ${p.n} novos prodígios`,
       endlessHosts: (p: Record<string, string | number>) => `${p.season}: os Majors vão para ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region}: ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
@@ -2484,7 +2499,11 @@ export const CAREER_PT: CareerCopy = {
         `Os olheiros de ${p.region} concordam: ${p.player} tem teto entre os melhores do mundo. Dê a ele uma ou duas temporadas.`,
       // v2.2 ENDLESS: só o que o save mostra (as contratações e o rating antes e depois).
       endlessProject: (p: Record<string, string | number>) =>
-        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada.${Number(p.fac) ? " A org também abre um centro de performance para a temporada." : ""} No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+        `${p.org} (${p.region}) contrata ${listPt(p)} para a nova temporada${p.kit ? ` e soma ${kitPt(p.kit)}, as mesmas ferramentas que o clube de um manager pode comprar` : ""}. No papel, o rating do time vai de ${p.before} para ${p.after}.`,
+      endlessProjectGrows: (p: Record<string, string | number>) =>
+        `${p.org} (${p.region}) mantém a base por mais uma temporada${p.p1 ? `, contrata ${p.p1}` : ""}${p.kit ? ` e soma ${kitPt(p.kit)}` : ""}. O rating do time está em ${p.after}.`,
+      endlessGeneration: (p: Record<string, string | number>) =>
+        `Os olheiros avaliam os prospectos de elite deste ano um pouco acima dos do ano passado. ${p.player} (${p.region}) encabeça um grupo de ${p.n} que pode chegar ao topo em uma ou duas temporadas.`,
       endlessHosts: (p: Record<string, string | number>) =>
         `As paradas do circuito em ${p.season} estão definidas: Majors em ${hostPt(p.h1)}, ${hostPt(p.h2)} e ${hostPt(p.h3)}, e o Mundial em ${hostPt(p.h4)}.`,
       rookieClass: (p: Record<string, string | number>) =>
@@ -3952,6 +3971,181 @@ export const CAREER_PT: CareerCopy = {
       allCareers: "Todas as carreiras Pro",
     },
   },
+  // v2.2 board front: assumir uma organização real, a diretoria, seus objetivos, confiança e propostas de emprego.
+  board: {
+    title: "Diretoria",
+    kicker: "O que a diretoria espera desta temporada e como ela avalia o seu trabalho.",
+    door: {
+      found: "Fundar um clube",
+      foundBody: "Monte a sua própria organização com três jogadores desconhecidos.",
+      takeover: "Assumir uma organização",
+      takeoverBody: "Comande uma organização real, com o elenco, o dinheiro e uma diretoria que cobra resultados.",
+    },
+    pick: {
+      title: "Assumir uma organização",
+      kicker: "Escolha uma região e depois uma organização como ela está na primeira temporada.",
+      region: "Região",
+      orgs: "Organizações",
+      manager: "Nome do técnico",
+      managerPlaceholder: "Seu nome",
+      difficulty: "Dificuldade",
+      go: "Aceitar o cargo",
+      squad: "Elenco",
+      coach: (name: string, ovr: number) => `Coach ${name} (${ovr})`,
+      noCoach: "Sem coach",
+      rank: (rank: number, teams: number) => `Elenco nº ${rank} de ${teams}`,
+      cash: "Caixa inicial",
+      budget: "Verba da temporada",
+      wageRoom: "Teto salarial / semana",
+      expected: "A diretoria espera",
+      expectedRank: (rank: number) => `Top ${rank} da região`,
+      missCost: "Um objetivo perdido",
+      missCostValue: (n: number) => `−${n} de confiança`,
+      grace: (n: number) => (n === 1 ? "Sem ultimato na temporada 1" : `Sem ultimato por ${n} temporadas`),
+      back: "Voltar",
+      empty: "Nenhuma organização para assumir nesta região.",
+    },
+    stature: { elite: "Elite", contender: "Candidato", mid: "Meio de tabela", underdog: "Azarão", owners: "Donos" } as Record<string, string>,
+    statureNote: {
+      elite: "Dinheiro e estrelas, pouca paciência.",
+      contender: "Um elenco forte, uma diretoria exigente.",
+      mid: "Espaço para crescer, uma diretoria justa.",
+      underdog: "Menos dinheiro, mais tempo.",
+      owners: "O seu próprio clube: os donos dão tempo.",
+    } as Record<string, string>,
+    packages: {
+      title: "A proposta da diretoria para a temporada",
+      body: "Escolha o tamanho da ambição. A verba é paga quando você aceita; o objetivo fica fixo na temporada.",
+      name: { cautious: "Cauteloso", expected: "Esperado", ambitious: "Ambicioso" } as Record<string, string>,
+      chance: (pct: number) => `${pct}% de chance`,
+      budget: (amount: string) => `Verba ${amount}`,
+      noBudget: "Sem verba",
+      bonus: (amount: string) => `Bônus de ${amount} se cumprir`,
+      swing: (hit: number, miss: number) => `Confiança +${hit} se cumprir, −${Math.abs(miss)} se perder`,
+      accept: "Aceitar",
+      recommended: "Recomendado",
+    },
+    confidence: "Confiança da diretoria",
+    confidenceOf: (n: number) => `${n} / 100`,
+    band: (n: number): string => (n >= 80 ? "Forte" : n >= 40 ? "Estável" : n >= 25 ? "Sob pressão" : "Crítica"),
+    lines: (warn: number, ultimatum: number) => `Abaixo de ${warn} a diretoria avisa. Abaixo de ${ultimatum}, depois de um aviso, ela dá um ultimato.`,
+    log: "Por que mudou",
+    logEmpty: "Nenhuma mudança nesta temporada ainda.",
+    reasons: {
+      objectiveMet: "Objetivo da temporada cumprido",
+      objectiveMissed: "Objetivo da temporada perdido",
+      objectiveOut: "Objetivo da temporada fora de alcance",
+      onTrack: "Revisão: no caminho",
+      behind: "Revisão: atrasado",
+      secondaryMet: "Objetivo secundário cumprido",
+      secondaryMissed: "Objetivo secundário perdido",
+      legacyMet: "Objetivo de legado cumprido",
+      titleMajor: "Título de Major",
+      titleWorlds: "Título mundial",
+      debt: "Dívida profunda",
+      ultimatumMet: "Ultimato respondido",
+      newSeason: "Nova temporada: a diretoria alivia a avaliação",
+    } as Record<string, string>,
+    objectives: "Objetivos da temporada",
+    sporting: "Objetivo da temporada",
+    secondary: "Secundário",
+    legacy: "Legado",
+    legacyNote: "Sem punição se não cumprir.",
+    secondaryLabel: (kind: string, value: string): string => {
+      switch (kind) {
+        case "balance":
+          return "Terminar a temporada com saldo positivo";
+        case "wages":
+          return `Manter a folha abaixo de ${value} por semana`;
+        case "youth":
+          return `Ter um titular com menos de ${value} anos no fim da temporada`;
+        case "homeCore":
+          return `Chegar a um Major com ${value} titulares da região`;
+        default:
+          return "";
+      }
+    },
+    likely: (pct: number) => `${pct}% de chance no início da temporada`,
+    notChosen: "Escolha primeiro o pacote da temporada.",
+    budgetLine: (mult: number) => `Verba da próxima temporada: ×${mult.toFixed(2)}`,
+    contract: (season: number) => `Contrato até a temporada ${season}`,
+    protectedUntil: (season: number) => `Proteção pelo título até a temporada ${season}: perdas pela metade, sem ultimato.`,
+    freeze: "Contratações congeladas: nenhuma contratação nesta janela.",
+    ultimatum: {
+      title: "Ultimato",
+      body: "A diretoria quer isto até o fim da temporada. Se não cumprir, você deixa o clube na revisão da temporada.",
+      progress: (done: number, target: number) => `${done} de ${target}`,
+      chance: (pct: number) => `${pct}% de chance quando foi dado`,
+      met: "Respondido. A diretoria volta a apoiar você.",
+    },
+    dismissed: {
+      title: "Você foi demitido",
+      body: (org: string) => `A ${org} encerra o seu contrato no fim da temporada. O seu histórico continua com você. Escolha o próximo emprego para continuar.`,
+      offers: "Propostas de emprego",
+      found: "Fundar um novo clube",
+      foundBody: (name: string) => `Comece a ${name} na sua região com três agentes livres e a verba de fundação.`,
+      accept: "Aceitar",
+      accepted: (org: string) => `Você começa na ${org} na próxima temporada.`,
+    },
+    approach: {
+      title: "Uma sondagem",
+      body: (org: string) => `A ${org} quer você como técnico na próxima temporada. O seu clube atual continuaria sem você.`,
+      accept: "Aceitar o cargo",
+      decline: "Ficar",
+    },
+    offerLine: (stature: string, region: string, rank: number) => `${stature} · ${region} · elenco nº ${rank}`,
+    managerRep: "Reputação do técnico",
+    spells: "Carreira",
+    spell: (org: string, from: number, to: string) => `${org}: temporada ${from + 1} a ${to}`,
+    now: "agora",
+    openBoard: "Abrir a diretoria",
+    boardFreezeError: "A diretoria congelou as contratações nesta janela.",
+    wageBill: "Folha / semana",
+    budgetCovers: (weeks: number) => `A verba da temporada cobre ${weeks} semanas da folha. Prêmios e patrocínios pagam o resto.`,
+    upgrade: {
+      title: "A diretoria paga uma melhoria",
+      body: "A confiança está alta, então a diretoria paga uma melhoria à sua escolha. É paga por inteiro; um cargo da equipe de apoio é pago por uma temporada.",
+      pick: "Pagar",
+      taken: (name: string) => `Paga pela diretoria: ${name}.`,
+    },
+    mail: {
+      tpl: {
+        boardPackage: () => "A proposta da diretoria para a temporada",
+        boardCheckpoint: (p: Record<string, string | number>) => `Revisão da diretoria após o split ${p.split}`,
+        boardWarning: () => "Um aviso da diretoria",
+        boardUltimatum: () => "Ultimato da diretoria",
+        boardUltimatumMet: () => "A diretoria volta a apoiar você",
+        boardDismissed: (p: Record<string, string | number>) => `A ${p.org} demite o técnico`,
+        boardHighConfidence: () => "A diretoria renova o seu contrato",
+        boardFreeze: () => "Contratações congeladas",
+        boardVerdict: () => "O veredito da diretoria na temporada",
+        boardApproach: (p: Record<string, string | number>) => `A ${p.org} faz uma sondagem`,
+        boardNewJob: (p: Record<string, string | number>) => `Bem-vindo à ${p.org}`,
+        boardUpgrade: () => "A diretoria vai pagar uma melhoria",
+      } as Record<string, (p: Record<string, string | number>) => string>,
+      body: {
+        boardPackage: () => "Três pacotes estão na sua mesa: cauteloso, esperado e ambicioso. Mais ambição traz mais verba e um bônus maior, e custa mais confiança se o objetivo não for cumprido. O relógio espera a sua escolha.",
+        boardCheckpoint: (p: Record<string, string | number>) =>
+          `A diretoria revisou o split. A confiança ${Number(p.delta) >= 0 ? "subiu" : "caiu"} ${Math.abs(Number(p.delta))} e está em ${p.confidence}.`,
+        boardWarning: (p: Record<string, string | number>) =>
+          `A confiança da diretoria está em ${p.confidence}. Se cair abaixo de ${p.line}, a diretoria vai dar um ultimato com uma missão concreta.`,
+        boardUltimatum: (p: Record<string, string | number>) =>
+          `A diretoria definiu uma missão para o resto da temporada; ela está na página da Diretoria. A diretoria estima a chance em ${p.chance}%. Se não for cumprida até a revisão da temporada, o seu contrato termina ali.`,
+        boardUltimatumMet: (p: Record<string, string | number>) => `A missão foi cumprida. A confiança voltou a ${p.confidence}.`,
+        boardDismissed: (p: Record<string, string | number>) =>
+          `A ${p.org} não seguirá com você depois desta temporada. ${p.n} propostas esperam na revisão da temporada, uma delas um novo clube seu.`,
+        boardHighConfidence: (p: Record<string, string | number>) =>
+          `A confiança está em ${p.confidence}. A diretoria aumenta a verba da próxima temporada e renova o seu contrato até a temporada ${p.until}.`,
+        boardFreeze: (p: Record<string, string | number>) => `Com a confiança em ${p.confidence}, a diretoria não permite contratações na primeira janela da próxima temporada.`,
+        boardVerdict: (p: Record<string, string | number>) =>
+          `O objetivo da temporada foi ${Number(p.met) ? "cumprido" : "perdido"}. A confiança da diretoria termina a temporada em ${p.confidence}.`,
+        boardApproach: (p: Record<string, string | number>) =>
+          `A ${p.org} (${p.region}) pergunta se você comandaria o time na próxima temporada. Responda na revisão da temporada.`,
+        boardNewJob: (p: Record<string, string | number>) => `Você assume a ${p.org}. A ${p.left} segue na liga sem você.`,
+        boardUpgrade: (p: Record<string, string | number>) => `Com a confiança em ${p.confidence}, a diretoria vai pagar uma melhoria. Escolha na página da Diretoria.`,
+      } as Record<string, (p: Record<string, string | number>) => string>,
+    },
+  },
   proWorld: {
     title: "Carreira",
     tabs: { today: "Hoje", team: "Time", offers: "Propostas", inbox: "Caixa" } as Record<string, string>,
@@ -4156,5 +4350,7 @@ export const CAREER_PT: CareerCopy = {
   endless: {
     hosts: ENDLESS_HOSTS_PT as readonly string[],
     legendsNote: "Elencos históricos da RLCS no rating real do auge. Paga prêmio e reputação, sem Season Points.",
+    /** A linha da ficha da org para um projeto rival (o kit da temporada). */
+    projectKit: (season: number, kit: string) => `Projeto, temporada ${season}: ${kitPt(kit)}.`,
   },
 };

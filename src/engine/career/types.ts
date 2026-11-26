@@ -47,6 +47,11 @@ export interface CareerIdentity {
   colors: CareerColors;
   /** The org's chosen identity buff (fed to the team assembler as orgOverride). */
   buffType: StatKey;
+  /**
+   * v2.2 board front (FEATURES.realOrgStart): the dataset org the manager
+   * runs (its real logo and name). Absent = a founded club. Optional, additive.
+   */
+  realOrgRef?: string;
 }
 
 export type ManagementStyle = "handsOn" | "balanced" | "delegate";
@@ -426,11 +431,11 @@ export interface WorldOrgState {
   /** v2.1 M1: seasons in a row ended outside the region's top (org turnover). */
   lowSeasons?: number;
   /**
-   * v2.2 ENDLESS: a rival project's performance centre this season, the same
-   * team-rating bonus the user's own centre gives (CAREER_GEAR perfCenter).
-   * Cleared at the next rollover unless the org runs a project again.
+   * v2.2 ENDLESS: a rival project's kit this season, items of the user's own
+   * toolbox (engine/career/endless KIT_ORDER; effects in projectKitEffect).
+   * Decided again at every rollover; absent = no project.
    */
-  projectBonus?: number;
+  projectKit?: { since: number; items: import("./endless").KitItem[] };
 }
 
 export interface WorldState {
@@ -496,6 +501,18 @@ export interface WorldState {
    * career. Optional and additive.
    */
   proSelf?: FormerSquadPlayer;
+  /**
+   * v2.2 board front: the dataset org whose seat the user holds — it never
+   * enters the world as an AI side while he runs it (worldSim.realOrgIntake).
+   * Optional, additive: absent = a founded club.
+   */
+  userOrgRef?: string;
+  /**
+   * v2.2 board front: real clubs the user managed and left — the preseason
+   * anchor pass no longer pulls their dataset roster back over the squad he
+   * built. Optional, additive.
+   */
+  userBuiltRefs?: string[];
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */
@@ -705,7 +722,9 @@ export type LedgerKind =
   | "bankPayment" // v2.0: weekly instalment / early pay-down
   | "insert" // v2.0 (R33): a mid-week decision's money effect
   | "sponsorMilestone" // rc.34 (ECO-04): a Bold deal's milestone payment, the day its first goal is reached
-  | "sponsorFine"; // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
+  | "sponsorFine" // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
+  | "boardGrant" // v2.2 board front: the board's seasonal budget (the package chosen)
+  | "boardBonus"; // v2.2 board front: an objective met
 
 export interface LedgerEntry {
   id: string;
@@ -1846,6 +1865,14 @@ export interface CareerSave {
   lastPlayedAt: number;
 
   /**
+   * v2.2 board front (FEATURES.board): the board (or the owners of a founded
+   * club), its objectives and confidence. Optional, additive: absent = no
+   * board yet (an older save starts one at its next rollover).
+   */
+  board?: import("./boardTypes").BoardState;
+  /** v2.2 board front: the manager's own reputation, record and job offers. Optional, additive. */
+  manager?: import("./boardTypes").ManagerState;
+  /**
    * v2.2 ENDLESS (FEATURES.endlessVariety): the front's state, set at the
    * first season rollover with the flag on (a running season never changes).
    * Optional and additive: absent = the front never ran for this save.
@@ -1861,6 +1888,11 @@ export interface EndlessState {
   projects: RivalProject[];
   /** The dominance gap the projects answered (leader minus the next three), for the review and the probes. */
   gap?: number;
+  /** Lever (c): the windows ("season:window") a project already bid in (one a window). */
+  bidWindows?: string[];
+  /** The answer's strength this season (0 = none) and the reigning champion's run it read. */
+  strength?: number;
+  streak?: { ref: string | null; titles: number };
   /** The season's drawn identity: indexes into the copy's host list (three Majors, then the Worlds). */
   hosts?: { season: number; cities: number[] };
 }
@@ -1872,8 +1904,10 @@ export interface RivalProject {
   orgName: string;
   region: Region;
   signed: { playerId: string; playerName: string; fromRef: string | null; fromName: string | null; outId: string }[];
-  /** The performance centre's team-rating bonus (0 = none this season). */
-  facility: number;
+  /** The season the project started (a core kept together runs up to CAREER_ENDLESS.projects.maxSeasons). */
+  since: number;
+  /** Its kit this season, from the user's own toolbox. */
+  items: import("./endless").KitItem[];
   ratingBefore: number;
   ratingAfter: number;
 }

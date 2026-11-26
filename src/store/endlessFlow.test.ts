@@ -84,4 +84,32 @@ describe("endless flow (flag on)", () => {
       expect(result.rows.every((r) => r.points === 0)).toBe(true);
     }
   });
+
+  it("lever (c): during a user dynasty a project bids once a window for the best starter, and the bid can be refused", { timeout: 120_000 }, () => {
+    const base = flow.createCareerSave(
+      { identity: { orgName: "Test Org", abbrev: "TST", region: "EU", managerName: "M", crestId: "c1", colors: { primary: "#000000", secondary: "#ffffff" } } as CareerSave["identity"], difficulty: "normal", rosterKey: "balanced" },
+      778,
+    );
+    const save = structuredClone(base);
+    const orgRef = Object.values(save.world.orgs).find((o) => o.region === "EU")!.ref;
+    const project = { season: save.clock.seasonIndex, since: save.clock.seasonIndex, orgRef, orgName: "P", region: "EU" as const, signed: [], items: [], ratingBefore: 90, ratingAfter: 95 };
+    save.endless = { fromSeason: 0, projects: [project], streak: { ref: "user", titles: 2 } };
+    let bid = null as ReturnType<EndlessFlow["endlessProjectBid"]>;
+    let days = 0;
+    for (let d = 1; d <= 60 && !bid; d++, days++) bid = ef.endlessProjectBid(save, d, 0);
+    expect(bid).toBeTruthy();
+    expect(bid!.otherRef).toBe(orgRef);
+    const best = [...save.squad].filter((p) => p.role === "starter").sort((a, b) => b.overall - a.overall)[0];
+    expect(bid!.playerId).toBe(best.id);
+    // One a window.
+    for (let d = days + 1; d <= days + 60; d++) expect(ef.endlessProjectBid(save, d, 0)).toBeNull();
+    // Refusable through the ordinary decision: the player stays.
+    save.pendingOffers.push(bid!);
+    const refused = flow.declineBidFlow(save, bid!.id);
+    expect(refused.squad.some((p) => p.id === best.id)).toBe(true);
+    // No dynasty, no project bid.
+    const calm = structuredClone(base);
+    calm.endless = { fromSeason: 0, projects: [project], streak: { ref: "user", titles: 1 } };
+    for (let d = 1; d <= 60; d++) expect(ef.endlessProjectBid(calm, d, 1)).toBeNull();
+  });
 });

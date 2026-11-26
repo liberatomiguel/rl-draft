@@ -162,15 +162,8 @@ function runToNextSeries(input: ProSave): ProSave {
     if (isEventPaused(host)) return { ...save, live: null };
     const us = pendingUserSeriesOf(host);
     if (us && !isSeriesOver(us.state)) return prepareDecision(save, host);
-    let next = stepEventRound(host);
-    if (next === host || !progressed(host, next)) {
-      // A double-elimination round he sits out (his bracket waits) holds the custom mode's gate open with no
-      // series to open (careerFlow's userSeriesGate, a latent stall): that round is played in quick mode.
-      next = stepEventRound(withMode(host, "quick"));
-      if (!progressed(host, next)) return save;
-      save = bookSeries(storeHost(save, withMode(next, "custom")), ev.def, next.activeEvent!.tournament, "user", teamNameOf(save, host));
-      continue;
-    }
+    const next = stepEventRound(host);
+    if (next === host || !progressed(host, next)) return save;
     save = storeHost(save, next);
   }
   return save;

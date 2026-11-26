@@ -19,8 +19,9 @@ function fnv(text: string): string {
 }
 
 const BASE: Record<string, string[]> = {
-  "NA:9100": ["253a6ec2", "80862c81", "bf73aae2"],
-  "SAM:17019": ["22963bf6", "83cd4ad8", "2d62e841"],
+  // v2.2 BOARD: refreshed for the formerSquad fix in agePassAndIntake (every build): seasons 2-3 moved.
+  "NA:9100": ["253a6ec2", "e352c27c", "ca70537c"],
+  "SAM:17019": ["22963bf6", "f8a4104b", "7f738f22"],
 };
 
 describe("endless variety off = the base career", () => {
@@ -39,7 +40,7 @@ describe("endless variety off = the base career", () => {
         seasons: 3,
         budgetMs: 110_000,
         onSeason(moment, save) {
-          if (moment === "end") hashes.push(fnv(JSON.stringify({ ...save, lastPlayedAt: 0 })));
+          if (moment === "end") hashes.push(fnv(JSON.stringify({ ...save, lastPlayedAt: 0, createdAtAppVersion: "2.1.0-rc.6" })));
         },
       });
       if (process.env.ENDLESS_PRINT_BASE === "1") console.log(`BASE ${key} ${JSON.stringify(hashes)}`);

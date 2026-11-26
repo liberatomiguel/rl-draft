@@ -114,7 +114,7 @@ import {
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
 import { intakeSeasonIdFor } from "./calendar";
-import { invitationalRefsFor, isLegendRef, LEGEND_REF_PREFIX, legendTeamFor } from "./endless";
+import { invitationalRefsFor, isLegendRef, LEGEND_REF_PREFIX, legendTeamFor, projectKitEffect } from "./endless";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -853,6 +853,8 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
     world: ctx.world,
   };
   const isFiller = !orgById.has(orgRef);
+  // v2.2 ENDLESS: a rival project's kit (the user's own toolbox); absent = as before.
+  const kit = org.projectKit ? projectKitEffect(org.projectKit.items) : null;
 
   const memberViews: MemberView[] = org.playerIds.map((pid, slot) => {
     const view: CareerPlayerView =
@@ -863,7 +865,7 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
     return {
       name: view.name,
       overall: view.overall,
-      stats: statsFromView(view),
+      stats: statsFromView(view, kit?.statBonus ?? undefined),
       lineupId: orgRef,
       orgId: orgRef,
       country: view.country,
@@ -904,12 +906,13 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
           buffType: pickStat(
             derivedFloat(ctx.careerSeed, streams.gen("fillerOrgBuff", orgRef)),
           ),
-          buffLevel: "~",
+          buffLevel: kit?.buffLevel ?? "~",
         }
       : undefined,
     specialIds: [],
-    // v2.2 ENDLESS: a rival project's performance centre (absent = as before).
-    ...(org.projectBonus ? { ratingBonus: org.projectBonus } : {}),
+    ...(kit && kit.ratingBonus ? { ratingBonus: kit.ratingBonus } : {}),
+    ...(kit?.buffLevel && !isFiller ? { orgBuffLevel: kit.buffLevel } : {}),
+    ...(kit?.bench ? projectSubOf(org, viewCtx) : {}),
     difficulty: ctx.difficulty,
     // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
     difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
@@ -934,6 +937,15 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
     capped = assembleTournamentTeam({ ...input, ratingBonus: bonus });
   }
   return capped;
+}
+
+/** v2.2 ENDLESS: a project's bench, its best reserve as the side's sub (the user's bench does the same). */
+function projectSubOf(org: WorldOrgState, viewCtx: { careerSeed: number; seasonIndex: number; world: WorldState }): { sub?: { name: string; overall: number; lineupId: string; orgId: string; country?: string; region?: Region } } {
+  const best = (org.reserveIds ?? [])
+    .map((id) => playerViewById(id, viewCtx))
+    .filter((v): v is CareerPlayerView => v !== null)
+    .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id))[0];
+  return best ? { sub: { name: best.name, overall: best.overall, lineupId: org.ref, orgId: org.ref, country: best.country, region: best.region } } : {};
 }
 
 /**
@@ -1872,6 +1884,12 @@ export function agePassAndIntake(
     // v2.1 M2.1 (R142): the elite renewal's baseline and promoted prodigies outlive the rollover.
     ...(world.eliteBaseline ? { eliteBaseline: { ...world.eliteBaseline } } : {}),
     ...(world.potentialLift ? { potentialLift: { ...world.potentialLift } } : {}),
+    // v2.2 board front: the seat the user holds stays his through the rollover.
+    ...(world.userOrgRef ? { userOrgRef: world.userOrgRef } : {}),
+    ...(world.userBuiltRefs ? { userBuiltRefs: [...world.userBuiltRefs] } : {}),
+    // v2.2 (fix): former founders keep resolving after a rollover; the base dropped them here,
+    // so a sold founder's buyer fielded a stand-in from the next season on.
+    ...(world.formerSquad ? { formerSquad: { ...world.formerSquad } } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {
@@ -2387,6 +2405,7 @@ export function realOrgIntake(
   for (const lineup of lineups) {
     if (lineup.seasonId !== seasonId || lineup.rareSpawn || lineup.national) continue;
     if (next.orgs[lineup.orgId] || seen.has(lineup.orgId)) continue;
+    if (lineup.orgId === world.userOrgRef) continue; // v2.2 board: the user's own seat never re-enters as an AI side
     seen.add(lineup.orgId);
     const weakestFirst = (a: WorldOrgState, b: WorldOrgState) =>
       (a.rating ?? 0) - (b.rating ?? 0) || a.ref.localeCompare(b.ref);

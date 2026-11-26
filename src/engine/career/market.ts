@@ -698,15 +698,20 @@ export function aiWindowMoves(
 
   if (ctx.isPreseason && (!ctx.infinite || intakeSeasonIdFor(ctx.seasonIndex) !== null)) {
     // --- Anchor pass: history wants its rosters back -----------------------
+    // v2.2 board front: the squad of a club the user managed is off the script (neither pulled in nor out).
+    const built = new Set((next.userBuiltRefs ?? []).flatMap((ref) => next.orgs[ref]?.playerIds ?? []));
     for (const anchor of anchorLineupsFor(ctx.seasonIndex)) {
       const org = next.orgs[anchor.orgId];
       if (!org) continue;
+      // v2.2 board front: a club the user managed keeps the squad he built (its history broke with him).
+      if (next.userBuiltRefs?.includes(anchor.orgId)) continue;
       const fidelity = isTopOrg(next, anchor.orgId)
         ? CAREER_WORLD.anchorFidelityTop
         : CAREER_WORLD.anchorFidelity;
       for (const playerId of anchor.playerIds) {
         if (org.playerIds.includes(playerId)) continue;
         if (userOwned.has(playerId)) continue; // the user broke this slot
+        if (built.has(playerId)) continue;
         if (next.retiredIds.includes(playerId)) continue;
         const view = viewOf(playerId);
         if (!view) continue; // not debuted yet / unresolvable
