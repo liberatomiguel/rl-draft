@@ -1874,9 +1874,9 @@ export function agePassAndIntake(
     ...(world.potentialLift ? { potentialLift: { ...world.potentialLift } } : {}),
     // v2.2 board front: the seat the user holds stays his through the rollover.
     ...(world.userOrgRef ? { userOrgRef: world.userOrgRef } : {}),
-    // v2.2 board front (fix, FEATURES.board only so flag-off stays byte-identical): former founders keep
-    // resolving after a rollover; the base dropped them here (a sold founder's buyer then fields a stand-in).
-    ...(FEATURES.board && world.formerSquad ? { formerSquad: { ...world.formerSquad } } : {}),
+    // v2.2 (fix): former founders keep resolving after a rollover; the base dropped them here,
+    // so a sold founder's buyer fielded a stand-in from the next season on.
+    ...(world.formerSquad ? { formerSquad: { ...world.formerSquad } } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {

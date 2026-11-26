@@ -10,7 +10,9 @@ import { FEATURES } from "@/config/balance";
 import type { CareerSave } from "@/engine/career/types";
 import { playArcCareer } from "./careerArcBot";
 
-const BASE_DIGESTS: string[] = ["a42a77a750681368", "bce87b43a025194f"];
+// Base cfcf1cd gave ["a42a77a750681368", "bce87b43a025194f"]; season 2 moved only by the formerSquad fix
+// (agePassAndIntake keeps world.formerSquad in every build since v2.2), checked by toggling that one line.
+const BASE_DIGESTS: string[] = ["a42a77a750681368", "67050fa1fe0b28fe"];
 
 describe("flags off", () => {
   it("plays exactly as the base commit", () => {
