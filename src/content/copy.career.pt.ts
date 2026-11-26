@@ -3734,7 +3734,7 @@ export const CAREER_PT: CareerCopy = {
         age: "Idade",
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
-      day: (season: number, day: number) => `Temporada ${season + 1}, dia ${day}`,
+      day: (season: number, week: number) => `Temporada ${season + 1}, semana ${week}`,
       /** Por que um atributo caiu com a idade (a chave de motivo numa entrada "age"). */
       reasons: {
         reflexes: "Os seus reflexos começam a cair.",
@@ -3927,7 +3927,8 @@ export const CAREER_PT: CareerCopy = {
       mmr: "MMR",
       unranked: "Sem rank",
       nextTitle: "O que vem a seguir",
-      nextBody: "Planeje a semana, jogue ranqueado e veja o registro do que mudou. Times amadores e orgs chegam nas próximas fatias.",
+      nextBody: "A tela da carreira cuida do calendário, das partidas e das propostas. A tela da semana define o seu treino e mostra por que os atributos mudaram.",
+      openCareer: "Abrir a carreira",
       allCareers: "Todas as carreiras Pro",
     },
   },
@@ -4022,6 +4023,7 @@ export const CAREER_PT: CareerCopy = {
       status: { accepted: "Aceita", declined: "Recusada", expired: "Expirou", withdrawn: "Retirada" } as Record<string, string>,
     },
     inbox: {
+      when: (season: number, week: number) => `T${season} · sem ${week}`,
       title: "Caixa de entrada",
       none: "Nada ainda.",
       scene: "Pela cena",
@@ -4054,7 +4056,7 @@ export const CAREER_PT: CareerCopy = {
       renewed: (p: Record<string, string | number>) => `Você renovou com a ${p.org}.`,
       contractEnded: (p: Record<string, string | number>) => `Seu contrato com a ${p.org} acabou. Você é agente livre.`,
       orgGone: (p: Record<string, string | number>) => `A ${p.org} saiu da cena. Você é agente livre.`,
-      seasonDone: (p: Record<string, string | number>) => `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
+      seasonDone: (p: Record<string, string | number>) => Number(p.series) === 0 ? `A temporada ${p.season} acabou sem nenhuma série jogada.` : `A temporada ${p.season} acabou: ${p.series} séries jogadas, nota média ${p.avg}.`,
       sideTitle: (p: Record<string, string | number>) => `O ${p.side} venceu ${p.event}.`,
     } as Record<string, (p: Record<string, string | number>) => string>,
   },

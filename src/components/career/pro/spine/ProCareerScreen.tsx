@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { weekOfDay, dayOfWeekOf } from "@/engine/career/calendar";
 import { proOverall } from "@/engine/career/pro/attrs";
+import { isBurnedOut } from "@/engine/career/pro/week";
 import type { ProSave } from "@/engine/career/pro/types";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
@@ -188,6 +189,9 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
           ))}
         </ol>
         <p className="mt-1 text-xs text-faint">{save.weekPlan ? P.yourPlan : P.coachPlan}</p>
+        <p className={isBurnedOut(save.player) ? "mt-2 text-sm text-orange-bright" : "mt-2 text-sm text-sub"}>
+          {isBurnedOut(save.player) ? C.proWeek.warn.burnedOut : `${C.proWeek.energy}: ${Math.round(save.player.energy)}`}
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line pt-5">

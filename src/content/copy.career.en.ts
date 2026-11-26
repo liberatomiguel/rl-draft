@@ -3762,7 +3762,7 @@ export const CAREER_EN = {
         age: "Age",
       } as Record<string, string>,
       line: (stat: string, delta: number) => `${stat} ${delta > 0 ? "+" : ""}${delta.toFixed(2)}`,
-      day: (season: number, day: number) => `Season ${season + 1}, day ${day}`,
+      day: (season: number, week: number) => `Season ${season + 1}, week ${week}`,
       /** Why an attribute fell with age (the reason key on an "age" entry). */
       reasons: {
         reflexes: "Your reflexes are starting to go.",
@@ -3955,7 +3955,8 @@ export const CAREER_EN = {
       mmr: "MMR",
       unranked: "Unranked",
       nextTitle: "What comes next",
-      nextBody: "Plan the week, play ranked and watch the log of what moved. Amateur teams and orgs come in the next slices.",
+      nextBody: "The career screen runs your calendar, matches and offers. The week screen sets your training and shows why your attributes moved.",
+      openCareer: "Open career",
       allCareers: "All Pro careers",
     },
   },
@@ -4050,6 +4051,7 @@ export const CAREER_EN = {
       status: { accepted: "Accepted", declined: "Declined", expired: "Expired", withdrawn: "Withdrawn" } as Record<string, string>,
     },
     inbox: {
+      when: (season: number, week: number) => `S${season} · wk ${week}`,
       title: "Inbox",
       none: "Nothing yet.",
       scene: "Around the scene",
@@ -4082,7 +4084,7 @@ export const CAREER_EN = {
       renewed: (p: Record<string, string | number>) => `You renewed with ${p.org}.`,
       contractEnded: (p: Record<string, string | number>) => `Your contract with ${p.org} ended. You are a free agent.`,
       orgGone: (p: Record<string, string | number>) => `${p.org} left the scene. You are a free agent.`,
-      seasonDone: (p: Record<string, string | number>) => `Season ${p.season} is over: ${p.series} series played, average rating ${p.avg}.`,
+      seasonDone: (p: Record<string, string | number>) => Number(p.series) === 0 ? `Season ${p.season} is over with no series played.` : `Season ${p.season} is over: ${p.series} series played, average rating ${p.avg}.`,
       sideTitle: (p: Record<string, string | number>) => `${p.side} won ${p.event}.`,
     } as Record<string, (p: Record<string, string | number>) => string>,
   },

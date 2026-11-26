@@ -6,6 +6,7 @@
  */
 
 import { useCareerCopy } from "@/content/careerCopy";
+import { weekOfDay } from "@/engine/career/calendar";
 import { useCopy } from "@/content/copy";
 import { PRO_STAT_KEYS } from "@/engine/career/pro/growth";
 import type { ProGrowthEntry } from "@/engine/career/pro/types";
@@ -55,7 +56,7 @@ export function ProGrowthLog({ log }: { log: ProGrowthEntry[] }) {
                 <span className={e.delta >= 0 ? "text-ink" : "text-bad"}>{all ? C.projected.allStats(e.delta) : C.log.line(copy.STAT_LABELS[e.stat], e.delta)}</span>
                 <span className="ml-2 text-xs text-sub">{(e.reason && C.log.reasons[e.reason]) || C.log.source[e.source] || e.source}</span>
               </span>
-              <span className="shrink-0 text-xs text-faint">{C.log.day(e.seasonIndex, e.day)}</span>
+              <span className="shrink-0 text-xs text-faint">{C.log.day(e.seasonIndex, weekOfDay(e.day))}</span>
             </li>
           ))}
         </ul>
