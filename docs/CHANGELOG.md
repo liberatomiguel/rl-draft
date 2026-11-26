@@ -10,6 +10,32 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.5] — 2026-11-26 · The gate candidate: board objectives in bands that hold, the final browser pass, decisions R151 to R162 (staging)
+
+What to play, the numbers and what Miguel decides: `docs/V2.2-STATUS.md`.
+
+### Changed
+- **A board objective shows a band in words, not a percentage** (R154): Likely (65 % or more), Within reach (45 to 65 %), A stretch (25 to 45 %), A long shot (under 25 %), on the package choice, the Board page and the checkpoint and ultimatum mail, EN and PT.
+- **The stated chance of a board objective is that goal's measured record** for clubs of its stature and difficulty, blended toward the calibrated model (`CAREER_BOARD.goalRates`, `goalRatesK` 8). The raw model misjudged by stature and a single shift did not hold on new seeds.
+- Pro: the prologue line shows the overall with one decimal (the call threshold is 50.8); the season review's Continue is docked on a phone; the hub's tabs fit at 320 px.
+
+### Balance
+- **BALANCE_VERSION 51.** Board objectives, held out (seeds not used in the fit; 120 careers, competent bot on the expected package; N 35 to 36 career-seasons a cell), stated → measured: Normal elite 52 → 61, contender 52 → 44, mid-table 60 → 61, underdog 63 → 92, founded 70 → 61; Hard 52 → 43, 55 → 69, 58 → 61, 62 → 50, 65 → 58. Eight of ten cells within 12 points; over 1077 objectives the measured rate is in the stated band 65 % of the time, in a neighbouring band 34 %, two or more away 1 %. Cautious is easier than Ambitious in every cell (61 to 100 % against 28 to 64 %).
+- Dismissals in six seasons (30 careers a row): competent 1 on Normal and 1 on Hard; careless 7 and 9, in seasons 4 to 6. No soft lock in the 120 careers.
+
+### Added
+- Decisions R151 to R162 (`ROAD-TO-WORLDS-DECISIONS.md`), #186 (`DESIGN-DECISIONS.md`), `docs/V2.2-STATUS.md`, `PRO-SPEC.md` §15, the career status and its system map.
+- `proRegion.test.ts`: two Pros on one seed, NA and EU, each in his own region's scene (the probe's matching NA and EU lines were one seed's 99-rated talent winning every regional in both regions, not a region bug; the probe's seeds now differ by region).
+
+### Not verified
+- Out of band and left for the gate: an underdog on Normal meets its expected objective 92 % of the time against 63 % stated; careless managers are dismissed late and seldom at mid-table and underdog clubs; Easy has no calibration cells; season 1 alone has N 6 a cell.
+- Pro pacing by hand (375 px, PT): first amateur invite at week 9 after 6 taps, first match at 8 taps, but about 68 taps for the first season and about 154 to the first organisation offer (season 3, age 15, a rotation role). There is no "play the whole season on the coach's plan".
+- Known, not fixed: the Pro card lists amateur sides among his organisations; the hub shows the energy twice under a burnout warning; on an event page at 375 px a long event name hides the date in the top bar (shared screen); the top-bar "Start Sunday" does nothing on the HQ.
+- Not opened in a browser: the rotation-to-starter moment, an unsolicited approach, the checkpoint and ultimatum mails as rendered, signing a player in the manager regression walk (the market was closed), the new filler names. No physical phone, no Safari.
+- The Pro items of rc.4 (Worlds reached by 92 % of average careers, the high-talent plateau).
+
+---
+
 ## [2.2.0-rc.4] — 2026-11-26 · The Pro calibrated on the real flow, and the polish from the browser pass (staging)
 
 ### Changed

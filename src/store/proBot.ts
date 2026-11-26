@@ -121,6 +121,8 @@ export function playProBot(cfg: {
     if (proStopOf(save)?.kind === "weekPlan") save = confirmProWeekFlow(save, cfg.plan === "careless" ? CARELESS : "coach");
     save = proBotDecide(save, { counter: cfg.counter });
     if (save.stage !== stages[stages.length - 1]) stages.push(save.stage);
+    // A decision can end the career (the end offered after a season without a contract): a retired save has no next day.
+    if (save.stage === "retired") break;
     if (save.stage === "org" && firstOrgAge === null) {
       firstOrgAge = ageOf(save.player.birthYear, save.clock.seasonIndex);
       firstOrgSeason = save.clock.seasonIndex;
