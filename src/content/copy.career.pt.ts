@@ -12,7 +12,7 @@ import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
-const BOARD_BANDS_PT: Record<string, string> = { expected: "Esperado", reach: "Ao alcance", stretch: "Um desafio", longShot: "Uma aposta" };
+const BOARD_BANDS_PT: Record<string, string> = { expected: "Provável", reach: "Ao alcance", stretch: "Um desafio", longShot: "Muito difícil" };
 
 const ENDLESS_HOSTS_PT = [
   "Londres", "Paris", "Copenhague", "Estocolmo", "Boston", "Dallas",

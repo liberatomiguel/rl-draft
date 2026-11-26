@@ -66,9 +66,11 @@ export function ProSeasonReviewPanel({ save, season, onClose }: { save: ProSave;
         </ul>
       </div>
 
-      <Button variant="primary" size="lg" className="max-sm:w-full" onClick={onClose}>
-        {R.close}
-      </Button>
+      <div className="action-dock">
+        <Button variant="primary" size="lg" className="max-sm:w-full" onClick={onClose}>
+          {R.close}
+        </Button>
+      </div>
     </Panel>
   );
 }
