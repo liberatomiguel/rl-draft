@@ -8,7 +8,7 @@
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CAREER_DIFFICULTY, CAREER_PRO } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
@@ -51,6 +51,7 @@ export function ProWizardScreen() {
   const [region, setRegion] = useState<Region>("SAM");
   const [startAge, setStartAge] = useState<ProStartAge>(13);
   const [style, setStyle] = useState<ArchetypeId>("allround");
+  const created = useRef(false);
   const [difficulty, setDifficulty] = useState<CareerDifficulty>(CAREER_DIFFICULTY.defaultPreset);
 
   if (!mounted) return <div className="min-h-[60vh]" aria-busy />;
@@ -64,7 +65,8 @@ export function ProWizardScreen() {
   const canCreate = clean !== null && slot >= 0;
 
   const create = () => {
-    if (!canCreate) return;
+    if (!canCreate || created.current) return;
+    created.current = true;
     createPro(slot, { name: clean, country, region, startAge, archetype: style, difficulty });
     router.push("/career/pro/career");
   };

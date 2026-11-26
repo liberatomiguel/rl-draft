@@ -319,6 +319,9 @@ export function ProCardScreen() {
       <p className="mt-2 min-h-5 text-xs text-sub" role="status">
         {notice}
       </p>
+      <AppLink href="/career/pro" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
+        {T.start}
+      </AppLink>
     </div>
   );
 }

@@ -194,15 +194,17 @@ function Today({ save, onTab }: { save: ProSave; onTab: (t: Tab) => void }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-line pt-5">
-        <Button variant="primary" size="lg" onClick={() => apply(advanceProToNextStopFlow)}>
-          {P.advance}
-        </Button>
-        <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
-          {P.oneDay}
-        </Button>
-        <p className="w-full text-xs leading-snug text-faint">{P.advanceHint}</p>
-        {offers.length > 0 ? <p className="w-full text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
+      <div>
+        <div className="action-dock flex items-center gap-2 sm:border-t sm:border-line sm:pt-5">
+          <Button variant="primary" size="lg" className="max-sm:flex-1" onClick={() => apply(advanceProToNextStopFlow)}>
+            {P.advance}
+          </Button>
+          <Button variant="secondary" size="lg" onClick={() => apply(advanceProDayFlow)}>
+            {P.oneDay}
+          </Button>
+        </div>
+        <p className="mt-3 text-xs leading-snug text-faint">{P.advanceHint}</p>
+        {offers.length > 0 ? <p className="mt-2 text-xs leading-snug text-orange-bright">{P.offerOpenHint}</p> : null}
       </div>
 
       {save.history.length > 0 ? (
