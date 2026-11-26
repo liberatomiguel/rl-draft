@@ -6,7 +6,6 @@
  * takes one counter, with the risk of the org walking away shown first.
  */
 
-import { CAREER_PRO_ORG } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { weekOfDay } from "@/engine/career/calendar";
 import type { ProOffer } from "@/engine/career/pro/spineTypes";
@@ -15,6 +14,7 @@ import { formatMoney } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { acceptProOfferFlow, counterProOfferFlow, declineProOfferFlow, openProOffersOf, proOfferBlockOf } from "@/store/proFlow";
+import { rotationEveryFor } from "@/store/proMatch";
 import { useProStore } from "@/store/proStore";
 
 export function ProOffers({ save }: { save: ProSave }) {
@@ -91,7 +91,7 @@ function OfferCard({ save, offer: o }: { save: ProSave; offer: ProOffer }) {
         </Button>
       </div>
       {o.kind !== "amateur" && !o.counter ? <p className="mt-2 text-xs text-faint">{O.counterRisk(Math.round(o.counterRisk * 100))}</p> : null}
-      {o.kind !== "amateur" ? <p className="mt-2 text-xs leading-snug text-sub">{o.role === "rotation" ? O.rotationMeans(CAREER_PRO_ORG.rotationEvery) : O.starterMeans}</p> : null}
+      {o.kind !== "amateur" ? <p className="mt-2 text-xs leading-snug text-sub">{o.role === "rotation" ? O.rotationMeans(rotationEveryFor(save.difficulty)) : O.starterMeans}</p> : null}
       {o.uncertain ? <p className="mt-2 text-xs leading-snug text-bad">{O.uncertain}</p> : null}
     </Panel>
   );

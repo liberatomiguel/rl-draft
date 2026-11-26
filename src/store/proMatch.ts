@@ -94,7 +94,7 @@ function closeEvent(save: ProSave): ProSave {
 export function rotationStartFor(save: ProSave): ProSave {
   if (!save.orgShell || !save.contract || seatOfPro(save) !== "reserve") return save;
   const turn = (save.rotationTurn ?? 0) + 1;
-  if (turn % CAREER_PRO_ORG.rotationEvery !== 0) return { ...save, rotationTurn: turn };
+  if (turn % rotationEveryFor(save.difficulty) !== 0) return { ...save, rotationTurn: turn };
   const host = hostOf(save)!;
   const weakest = host.squad
     .filter((p) => host.starterIds.includes(p.id) && p.id !== PRO_SELF_ID)
@@ -105,10 +105,15 @@ export function rotationStartFor(save: ProSave): ProSave {
   return pushNews({ ...swapped, rotationTurn: turn, rotatedOut: weakest.id }, "rotationStart", { org: save.contract.orgName, player: weakest.name });
 }
 
+/** One event in this many for a rotation player, by difficulty (CAREER_PRO_ORG.byDifficulty). */
+export function rotationEveryFor(difficulty: string): number {
+  return (CAREER_PRO_ORG.byDifficulty[difficulty] ?? CAREER_PRO_ORG.byDifficulty.normal).rotationEvery;
+}
+
 /** Events until his next rotation start (null when he starts, or has no org seat). */
 export function rotationCountdownOf(save: ProSave): number | null {
   if (!save.orgShell || seatOfPro(save) !== "reserve") return null;
-  const every = CAREER_PRO_ORG.rotationEvery;
+  const every = rotationEveryFor(save.difficulty);
   return every - ((save.rotationTurn ?? 0) % every);
 }
 
