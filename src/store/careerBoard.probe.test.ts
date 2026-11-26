@@ -378,6 +378,35 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
 
 function summary(rows: CareerRow[]): void {
   const pc = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+  // Bands, per policy: every offered package's objective (seasons at the starting club), grouped by cell × stated band.
+  const order = ["longShot", "stretch", "reach", "expected"];
+  for (const pol of [...new Set(rows.map((r) => r.policy))]) {
+    const g = new Map<string, { n: number; met: number; c: number }>();
+    for (const c of rows.filter((r) => r.policy === pol))
+      for (const s of c.seasons) {
+        if (s.moved) break;
+        for (const [stated, met] of Object.values(s.offers)) {
+          const k = `${c.stature}/${c.diff}|${chanceBandOf(stated)}`;
+          const t = g.get(k) ?? { n: 0, met: 0, c: 0 };
+          t.n += 1;
+          t.met += met ? 1 : 0;
+          t.c += stated;
+          g.set(k, t);
+        }
+      }
+    let same = 0, adj = 0, far = 0;
+    for (const [k, t] of [...g].sort()) {
+      const [cell, band] = k.split("|");
+      const mb = chanceBandOf(t.met / t.n);
+      const d = Math.abs(order.indexOf(mb) - order.indexOf(band));
+      if (d === 0) same += t.n;
+      else if (d === 1) adj += t.n;
+      else far += t.n;
+      console.log(`BAND ${pol} ${cell.padEnd(16)} ${band.padEnd(8)} stated ${Math.round((100 * t.c) / t.n)}% measured ${Math.round((100 * t.met) / t.n)}% (${mb}, N=${t.n})`);
+    }
+    const tot = same + adj + far;
+    console.log(`BANDS ${pol}: same ${Math.round((100 * same) / tot)}% adjacent ${Math.round((100 * adj) / tot)}% two+ away ${Math.round((100 * far) / tot)}% (N=${tot} objectives)`);
+  }
   for (const pol of [...new Set(rows.map((r) => r.policy))])
     for (const diff of [...new Set(rows.map((r) => r.diff))]) {
       console.log(`\n[${pol} ${diff}] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks`);
