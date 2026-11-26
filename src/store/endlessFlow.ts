@@ -18,6 +18,7 @@ import {
   majorHostsFor,
   eliteBonusFor,
   projectBidFor,
+  projectRecordsAfter,
   rivalProjectsPass,
   worldsStreakOf,
   worldWeekFor,
@@ -84,7 +85,7 @@ export function endlessRollover(save: CareerSave, nextSeason: number): void {
   });
   save.world = res.world;
   // Last season's record stays one more season (who rests); this season's projects follow.
-  save.endless.projects = [...running, ...res.projects];
+  save.endless.projects = projectRecordsAfter(running, res.projects);
   save.endless.gap = Math.round(res.gap * 10) / 10;
   save.endless.strength = res.strength;
   save.endless.streak = streak;

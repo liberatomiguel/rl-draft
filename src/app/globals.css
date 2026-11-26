@@ -2390,3 +2390,8 @@ html.reduce-fx .card-float {
   /* HQ's wire: the headline and two rows; the board's closing row opens the rest. */
   .hq-wire .wire-rows > :nth-child(n + 3) { display: none; }
 }
+
+/* v2.2: a new-mail toast never sits over an open dialog (it returns when the dialog closes). */
+body:has([role="dialog"][aria-modal="true"]) .toast-stack {
+  display: none;
+}

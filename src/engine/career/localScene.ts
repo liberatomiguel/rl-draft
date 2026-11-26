@@ -15,7 +15,7 @@
  * Pure TS: names and offsets come from `derivedFloat` (no Rng cursor).
  */
 
-import { CAREER_UNOFFICIAL } from "@/config/balance";
+import { CAREER_UNOFFICIAL, FEATURES } from "@/config/balance";
 import { orgNamePoolFor, playerNamePoolFor } from "./names";
 import { createRng } from "@/lib/rng";
 import type { Region } from "../types";
@@ -69,6 +69,21 @@ export function localOverflowRefs(region: Region, seasonIndex: number, count: nu
   return out;
 }
 
+const ORG_SUFFIXES = ["United", "Gaming", "Esports", "Club", "Collective", "Union", "Crew", "Society", "Legion", "Project", "Works", "Syndicate"] as const;
+
+/**
+ * Polish: the name a side takes when its bank has run out. Before, it was
+ * numbered ("Team Carnaval 8"). With the endless front on, a word is added
+ * instead ("Team Carnaval United"); the number stays only past every suffix.
+ * Existing names (flag off, or saves made before) are untouched.
+ */
+export function exhaustedBankName(base: string, n: number): string {
+  if (!FEATURES.endlessVariety) return `${base} ${n}`;
+  const suffix = ORG_SUFFIXES[(n - 1) % ORG_SUFFIXES.length];
+  const round = Math.floor((n - 1) / ORG_SUFFIXES.length);
+  return round === 0 ? `${base} ${suffix}` : `${base} ${suffix} ${round + 1}`;
+}
+
 /** Team name — regional bank pick by hash; two teams in one pool never share a name. */
 export function localTeamName(ref: string, careerSeed: number, nameBankVersion?: number): string {
   const parsed = parseLocalRef(ref);
@@ -101,7 +116,7 @@ export function localTeamName(ref: string, careerSeed: number, nameBankVersion?:
     for (; step < bank.length + CAREER_UNOFFICIAL.localScenePool && !name; step++) {
       if (!taken.has(at(step))) name = at(step);
     }
-    name ||= `${at(k)} ${k + 1}`;
+    name ||= exhaustedBankName(at(k), k + 1);
     taken.add(name);
   }
   return name;

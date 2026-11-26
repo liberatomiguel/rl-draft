@@ -218,7 +218,7 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       region,
       stature,
       rank: i + 1,
-      teams: list.length + 1,
+      teams: list.length,
       rating: Math.round(ratingOf(org) * 10) / 10,
       prestige: org.prestige,
       players: squad.map((s) => ({ id: s.id, name: s.name, overall: Math.round(s.overall), age: seasonYear(ctx.seasonIndex) - s.birthYear })),

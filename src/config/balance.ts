@@ -5418,3 +5418,6 @@ export const CAREER_ENDLESS = {
     regions: ["NA", "EU", "SAM", "MENA", "OCE", "APAC"] as const,
   },
 } as const;
+
+/** v2.2 PROQA polish: the Pro's Continue plans the week by itself after his first confirmed plan, and stops at least this often with a digest. */
+export const CAREER_PRO_PLAN = { digestWeeks: 4 } as const;
