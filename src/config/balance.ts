@@ -1709,6 +1709,115 @@ export const CAREER_PRO = {
 } as const;
 
 /**
+ * v2.2 Pro spine (PROSPINE, slice 3): the Pro in the calendar before an org.
+ * Starting points for the slice 7 battery; each comment says what it moves.
+ */
+export const CAREER_PRO_TEAM = {
+  /**
+   * A Pro without a side hears from an amateur side once ranked opens the
+   * cups (Grand Champion, CAREER_PRO_RANKED.cupsRankId) or, for one who skips
+   * ranked, once his overall reaches this.
+   */
+  inviteOverall: 54,
+  /** No amateur invite before this week of the first season (the ranked prologue). */
+  firstInviteWeek: 3,
+  /** The teammates' level when a side calls: the Pro's overall plus this (slightly under him: he is the side's best). */
+  teammateOffset: -1,
+  /** ± seeded spread of each teammate around that level. */
+  teammateSpread: 1.5,
+  /** Teammates' headroom (their potential = level + this); their growth is the host squad's training. */
+  teammateHeadroom: 5,
+  /** A better side calls when the Pro's overall is this far above his side's level. */
+  betterSideGap: 3,
+  /** Weeks between two calls from amateur sides (a declined call does not repeat every Monday). */
+  inviteEveryWeeks: 4,
+  /** Days an amateur invite stays open. */
+  inviteDays: 13,
+  /**
+   * His own match rating = the box score's rating + (his overall − the side's
+   * average) × this, within ± ratingEdgeCap. An 80 on a 90 side reads about
+   * one point under his mates (carried, visible); a star on a weak side stands out.
+   */
+  ratingEdgePerPoint: 0.12,
+  ratingEdgeCap: 1.5,
+  /** Series kept in the match log (offers and the lineup read the recent ones). */
+  matchLogCap: 30,
+  /** The "recent form" window (series). */
+  formWindow: 8,
+  /** Inbox length. */
+  newsCap: 60,
+  /** The host's balance never falls under this (the hidden manager never goes broke; nothing in the world reads it). */
+  hostFloor: 50_000_000,
+} as const;
+
+/**
+ * v2.2 Pro spine (PROSPINE, slice 4): orgs, contracts, the starting spot.
+ * Starting points for the slice 7 battery (target: first org at 15-16 on
+ * Normal for a sensibly trained Pro).
+ */
+export const CAREER_PRO_ORG = {
+  /** No org offer before this age; at minAge+1 (15) and up, the full chance. `youngChance` scales it at minAge. */
+  minAge: 14,
+  youngChance: 0.12,
+  /**
+   * The Pro's market value = overall + formWeight × (recent average − 6) +
+   * fameWeight × log10(1 + fans) + youthWeight × max(0, 20 − age).
+   */
+  formWeight: 1.5,
+  fameWeight: 0.6,
+  youthWeight: 0.4,
+  /** An org calls when his value reaches its weakest starter's overall minus this (rotation) ... */
+  rotationMargin: 6,
+  /** ... and promises a start when it reaches the weakest starter minus this. */
+  starterMargin: 1,
+  /** Per interested org, per window: the base chance, + perPoint per point of value over its bar, capped at maxChance. Easy ×1.2, Hard ×0.8. */
+  baseChance: 0.35,
+  perPoint: 0.06,
+  maxChance: 0.85,
+  difficultyChance: { easy: 1.2, normal: 1, hard: 0.8 } as Record<string, number>,
+  /** Offers per window at most. */
+  maxOffers: 3,
+  /** Salary per split = salaryBase + salaryPerValue × (value − 60) + salaryPerPrestige × prestige (whole hundreds). */
+  salaryBase: 2_000,
+  salaryPerValue: 450,
+  salaryPerPrestige: 1_500,
+  /** Splits per season (the salary is paid weekly: per split ÷ weeksPerSplit). */
+  weeksPerSplit: 10,
+  /** The counter-offer: +raise on the salary; the shown risk = counterRisk + counterRiskPerPrestige × prestige (a big org walks away more easily). */
+  counterRaise: 0.2,
+  counterRisk: 0.25,
+  counterRiskPerPrestige: 0.08,
+  /** Coach trust (0-100): at signing (a promised start adds trustPromised). */
+  trustStart: 50,
+  trustPromised: 10,
+  /** Per series: a rating ≥ goodRating adds trustGood, ≤ badRating takes trustBad. */
+  goodRating: 7.5,
+  badRating: 5,
+  trustGood: 3,
+  trustBad: 2,
+  /**
+   * Rotation ("the bench plays a little"): on a Monday on the bench, when his
+   * lineup score is within rotationGap of the weakest starter, the coach
+   * starts him for the week with this seeded chance (swapped back the next
+   * Monday unless the split's lineup keeps him).
+   */
+  rotationGap: 6,
+  rotationShare: 0.4,
+  /** A week on the bench training (doing what the coach asks) earns this back: the bench is recoverable. */
+  trustBenchWeek: 1,
+  /** Asking for a transfer costs this much trust. */
+  trustRequestCost: 10,
+  /** The lineup score: overall + formLineup × (recent average − 6) + trustLineup × (trust − 50) / 50. */
+  formLineup: 1,
+  trustLineup: 2,
+  /** A renewal is offered in the deal's last season (week renewalWeek) when trust ≥ renewTrust or he starts. */
+  renewalWeek: 23,
+  renewTrust: 40,
+  /** The renewal's raise over the current salary when his value grew. */
+  renewalRaise: 0.15,
+} as const;
+
+/**
  * v2.2 Pro slice 2 (PRO-SPEC §4.3, §5): the week. Three blocks (Mon-Tue,
  * Wed-Thu, Fri), energy, burnout, confidence. Starting points for the slice 7
  * battery; each line says what it moves.
