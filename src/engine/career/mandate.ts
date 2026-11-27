@@ -231,7 +231,10 @@ function squadGoalFor(save: IssueSave, issues: OrgIssue[], tier: Stature, demand
     const weakest = Math.min(...starters.map((p) => p.overall));
     const cap = signCapOf(save);
     const bar = Math.min(cap, M.squad.barMax[tier] ?? 99, Math.max(M.squad.tierBar[tier] ?? 80, Math.round(weakest) + M.squad.signOver));
-    return { area: "squad", kind, value: bar, baselineIds: save.squad.map((p) => p.id), ...issue };
+    // rc.7 (browser pass): a signing has to improve the three. With every starter at or over the
+    // capped bar (Gentle Mates 2027: 96 / 95 / 94 against an elite bar of 93) the board asked the
+    // best squad in the world to sign someone worse; it asks to keep the core instead.
+    if (bar > Math.round(weakest)) return { area: "squad", kind, value: bar, baselineIds: save.squad.map((p) => p.id), ...issue };
   }
   // Keep the core: the best starters stay through the season.
   const core = [...starters].sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id)).slice(0, M.squad.core);

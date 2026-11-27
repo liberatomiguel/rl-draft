@@ -151,6 +151,11 @@ describe("a 2027 takeover (the default era)", () => {
       expect(m.seasonIndex).toBe(era);
       expect(m.issues.length).toBeGreaterThan(0);
       expect(m.money.amount).toBeGreaterThan(0);
+      // rc.7: a signing goal asks for someone better than the weakest starter (the top squads keep their core).
+      if (m.squad.kind === "signStarter") {
+        const weakest = Math.min(...save.squad.filter((p) => save.starterIds.includes(p.id)).map((p) => Math.round(p.overall)));
+        expect(m.squad.value, c.name).toBeGreaterThan(weakest);
+      }
       expect(mandateParams(save, m).season).toBe(1);
       expect(save.mail.some((x) => x.titleKey === "boardWelcome")).toBe(true);
       for (const lang of ["en", "pt"] as const) expect(mailText(save, "boardMandate", lang).body).not.toMatch(/undefined|NaN/);
