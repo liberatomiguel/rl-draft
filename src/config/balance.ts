@@ -1093,6 +1093,28 @@ export const DUEL = {
   maxEntries: 6,
 } as const;
 
+// rc9 duel: team against team (DESIGN-DECISIONS #225-#229). The draft keeps the
+// DUEL special table above; these are the rules the challenger sets and the
+// match both friends watch.
+export const DUEL_MATCH = {
+  /** Rerolls for the whole draft: what the challenger can pick, and the default. */
+  rerollPresets: [0, 3, 7] as readonly number[],
+  defaultRerolls: 7,
+  /** Hard cap a link may carry (a hand-built link cannot ask for more). */
+  maxRerolls: 15,
+  defaultShowOverall: true,
+  /** The series is a best of 7, played as a playoff series (experience counts, for both). */
+  bestOf: 7,
+  /** Difficulty profile the series reads: the same for both sides, no opponent shift. */
+  matchDifficulty: "normal",
+  /** Longest name a link carries (UTF-16 units after trimming). */
+  maxNameLength: 16,
+  /** Longest link code `parseDuelCode` reads (worst case built from the longest ids is far below). */
+  maxCodeLength: 1600,
+  /** An offer with no pickable card is skipped on its own; this stops a pool that can never fill. */
+  maxBlockedSkips: 400,
+} as const;
+
 /**
  * Login streak (v2.0; rc.20: the 30-day calendar). The first open of a UTC day
  * counts (no run needed). XP per day grows with the streak up to `perDayMax`;

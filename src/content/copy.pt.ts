@@ -2261,6 +2261,37 @@ export const PT: Copy = {
     stepperTag: "Duelo",
   },
 
+  // rc.9 (#225-#229): as palavras do duelo time contra time (engine/duelViews.ts).
+  // rc9 duel
+  DUEL_MATCH_UI: {
+    modeClassic: "Draft clássico",
+    modeQuick: "Draft rápido",
+    rerollsNone: "Sem rerolls",
+    rerolls: (n: number) => (n === 1 ? "1 reroll" : `${n} rerolls`),
+    overallShown: "Overalls visíveis",
+    overallHidden: "Overalls escondidos",
+    bestOf: (n: number) => `Melhor de ${n}`,
+    sideChallenger: "Desafiante",
+    sideOpponent: "Adversário",
+    seriesWon: (name: string) => `${name} leva a série`,
+    gameLabel: (n: number) => `Jogo ${n}`,
+    overtime: "Prorrogação",
+    overtimeShort: "PRO",
+    goldenGoal: "Gol de ouro",
+    regulationEnds: "Fim do tempo normal",
+    exhibition: "Amistoso: o duelo não paga XP, rating nem cartas.",
+    staleVersion: "Este link foi feito em outra versão do jogo, então os boards ou o resultado podem ser diferentes.",
+    newMatch: "Nova partida",
+    errors: {
+      missing: "O link não tem nenhum duelo.",
+      malformed: "O link está incompleto ou foi cortado.",
+      tampered: "O link foi editado depois de criado.",
+      unsupported: "Este link é do duelo antigo entre amigos, que não existe mais.",
+      unknownCards: "O link tem cartas que esta versão do jogo não conhece.",
+      region: "A região do link não pode ser draftada nesta versão.",
+    } as Record<string, string>,
+  },
+
   // v2.2: o kit de compartilhamento (folha, imagens, posts, convite, "Com os amigos" no Início).
   SHARE_UI: {
     titleRun: "Compartilhe a sua campanha",
