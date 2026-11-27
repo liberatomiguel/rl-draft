@@ -10,6 +10,44 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.6] — 2026-11-27 · The established organisation: its own rules, its own screens (staging)
+
+Miguel's brief of 27/11: taking over a real organisation has to read as a consolidated org, with its own goals, budget, progression and screens, not as the founded club's ladder. Spec and handoffs: `docs/handoff-2.2/ORGMODE-*.md`. What to play and what Miguel decides: `docs/V2.2-STATUS.md`. Decisions R163 to R172, DESIGN-DECISIONS #187 to #201.
+
+### Added
+- **The way in.** `/career/new` opens on two cards side by side, "Found a club" and "Take over an organization", each with its art, three facts and its action. The pick is a list of the region's orgs by tier with a dossier of the selected one: the three starters as the game's own cards, the coach, what you inherit (cash, season budget, wages against the ceiling, installations, retained staff) and what the board expects. An arrival screen follows the takeover. The Pro door is off this screen (`/career/pro/new` stays reachable by address on staging).
+- **Standing** (R163, R167). In an established org the reputation number is the org's Standing on four tiers (Underdog, Mid-table, Contender, Elite). Nothing is locked behind it. The tier sets the signing pull (players up to 86 / 90 / 95 / 99) and can change at the season review: a promotion needs the standing above the tier's line (35 / 50 / 85) and the season's objective met; a tier is lost under its floor (18 / 28 / 40). A change moves the budget base and the wage ceiling (up 20 %, down 10 %), with a board mail and a news line.
+- **Operations** (R164). Installations, staff and bootcamps are all on the shelf from day one, by department. The org arrives with what its tier owns (elite: three installations, analyst and psychologist; contender: two and the analyst; mid: one and the assistant; underdog: none). The board signs off capital projects: an installation needs confidence 50, the performance centre 65, none during a hiring freeze. Finances and the HQ show operations in place of the unlock ladder.
+- **The season budget as a plan** (R165, R169, R170). Finances opens on the board's budget: one bar of the season's money split into spent, committed and free, the lines by department, income received and contracted, the projection for the season's end, the wage bill against the ceiling. `seasonBudgetOf` and `operationsOf` are pure views (`engine/career/budget.ts`, `established.ts`).
+- **The board's screens.** The season plan is three cards with the board's proposal marked, each with its objective as a sentence ("top 4 at 2 of the 3 Majors"), its band in words, budget, bonus and confidence at stake, under the board's brief (why it asks this, from last season). `/career/board` is rebuilt around the season's objective, with confidence and its log, the standing track, the manager and the season's money. The season review shows the verdict, a tier change, a dismissal with its offers as org rows, an approach.
+- **A sponsor from day one** (R168): an established org's sponsor desk opens when the season plan is accepted, at its own sponsor level.
+
+### Changed
+- **The budget is the org's** (R165): fixed at the takeover and moved by the tier and the board's confidence; it no longer follows the current wage bill, so cutting wages does not cut next season's budget.
+- **Objectives by tier** (R166): a tier is asked for its own competitions (elite: Majors and Worlds; contender: Major qualification and finishes; mid: Major qualification and regional finishes; underdog: regional finishes). An established org is never asked for a Community Cup or for more than 5 regionals, and the three plans are always three different goals in order of difficulty.
+- **Permanent career achievements belong to the founded road** (R171, Miguel decides the final rule): a career in an established org earns none of them (taking over an elite org gave "reach 50 reputation" at once). A manager dismissed into a founded club earns them there, counted from the founding. Titles, the trophy room and Season XP from results are untouched.
+- Wording: in an established org every screen says Standing (PT "Prestígio") where the founded club says reputation; the manager's own reputation keeps its name.
+
+### Balance
+- **BALANCE_VERSION 52.** The board's stated chances refitted on the new rules (90 competent careers × 6 seasons, seeds 9000, 12000, 12101; each season keyed by the tier the board held in it). Held out (seeds 30000 and 30101, 120 careers), Expected, stated → measured: Normal elite 56 → 43, contender 53 → 72, mid 58 → 58, underdog 63 → 65, founded 69 → 81; Hard 44 → 57, 55 → 41, 58 → 73, 62 → 27, 59 → 58. Bands over the three plans: same band 69 %, a neighbouring band 29 %, two or more away 3 % (rc.5: 65 / 34 / 1). Competent dismissals 0 in 60; careless 11 in 60, in seasons 4 to 6.
+- Tier changes, competent bot, 6 careers a cell: contender to elite 6/6 Normal and 5/6 Hard (seasons 2 to 4); mid to contender 5/6 and 5/6; underdog to mid 6/6 and 3/6. No relegation in 120 careers.
+- **Elite budget 16 → 22 weeks**, and every tier's weeks now multiply the whole running bill (staff and upkeep included): with the Expected plan the budget and the starting cash cover the season's committed costs for every org of NA, EU and SAM before any sponsor income (smallest margin: elite $13k, contender $5k, mid $6k, underdog $2k). Before, an elite org opened its first day $47k to $264k short.
+
+### Fixed
+- **A takeover's squad cards showed a procedural crest** instead of the org's logo. Root cause: a takeover stores a procedural crest in `identity.crestId`, and four screens (HQ squad cards, Club, the top bar, Saves) drew it directly instead of going through `OrgMark`. One component (`UserOrgMark`) now draws the player's mark everywhere; a test fails if a screen draws the crest directly.
+- **"Win 2 Majors" read "Win a Major"** on the HQ's stretch goal (EN and PT, founded clubs too). Root cause: `C.goals.season` returned from its first-place branch before reading the count.
+- `/career/new?start=quick` stayed on the door when the takeover was on.
+- The board's brief never showed: the first helper read `brief.kind`, the engine writes `brief.reason`.
+
+### Not verified
+- After the day-one sponsor and the budget change (round 2), a 30-career check on one seed: no soft lock, bands 71 / 25 / 4, competent dismissals 2 in 30 (0 in 30 before, same seed). Not re-measured on the larger battery.
+- Two cells stay more than 15 points off: contender Normal (easier than stated) and underdog Hard (harder: 27 % against 62 %, N 26). Easy has no cells.
+- No relegation has happened in any probe (unit and flow tests only). The sponsor desk after a job-offer move and the achievement baseline after a dismissal are covered by code paths and pure tests, not by a played career.
+- Browser: the hiring-freeze state, the season review in PT, a relegation, an accepted job offer, the board flag off. No physical phone, no Safari.
+- The established economy ends season 6 with a median $210k in cash (elite $672k, mostly Major prizes): whether that leaves the budget a real constraint is Miguel's call at the gate.
+
+---
+
 ## [2.2.0-rc.5] — 2026-11-26 · The gate candidate: board objectives in bands that hold, the final browser pass, decisions R151 to R162 (staging)
 
 What to play, the numbers and what Miguel decides: `docs/V2.2-STATUS.md`.

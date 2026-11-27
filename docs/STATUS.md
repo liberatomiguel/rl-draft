@@ -12,12 +12,14 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.5 (26/11/2026)**, branch `release/v2.2`: rc.6 plus
+- **Staging = 2.2.0-rc.6 (27/11/2026)**, branch `release/v2.2` (rc.6 redoes
+  the takeover of a real org: standing, operations, the org's budget, new
+  screens; BALANCE_VERSION 52): the 2.1 rc.6 plus
   the big update, each part behind its own staging-only flag: the Pro player
   career to retirement (`proCareer`), a start at a real organisation
   (`realOrgStart`), the board with confidence, dismissal and job offers
   (`board`), endless variety rounds 1 and 2 (`endlessVariety`).
-  BALANCE_VERSION 51. Gate document, numbers and probe commands:
+  Gate document, numbers and probe commands:
   **`V2.2-STATUS.md`** (decisions R151 to R162, DESIGN-DECISIONS #186;
   handoffs in `docs/handoff-2.2/`). **Open before the gate:** the board's
   stated chances are now bands in words and hold within one band of the

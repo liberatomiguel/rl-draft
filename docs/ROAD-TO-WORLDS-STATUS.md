@@ -1,11 +1,11 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-26**. Production **v2.0.36**; **2.2.0-rc.5** on staging (`release/v2.2`).
-> Decisions R1–R162. BALANCE_VERSION **51**. Gate: V2.2-STATUS.md. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-27**. Production **v2.0.36**; **2.2.0-rc.6** on staging (`release/v2.2`).
+> Decisions R1–R172. BALANCE_VERSION **52**. Gate: V2.2-STATUS.md. Feedback: CAREER-FEEDBACK-rc42.md.
 
 ## v2.2 (staging only, each front behind its own flag)
 
-**Real organisations and the board** (`realOrgStart`, `board`; R151–R154). A second wizard door takes over a real org (stature elite, contender, mid or underdog); the org leaves the world and a filler takes its place. Each season the board offers three packages; confidence moves with a logged reason, then warning, ultimatum and dismissal at a review. Dismissal never ends the save: up to three offers, a founded club, or an approach on a strong record. Stated chances are bands in words from measured records per stature; they hold within one band (underdog Normal is easier than stated). Dismissals: competent 1 in 30, careless 7 to 9 in 30.
+**Real organisations and the board** (`realOrgStart`, `board`; R151–R154, R163–R172). `/career/new` opens on two doors: found a club, or take over a real org. An established org (`establishedOf`: `identity.realOrgRef` set) has its own rules: the reputation number is its Standing on four tiers (underdog, mid, contender, elite), nothing is locked behind it, the tier sets the signing cap and changes at the season review (promotion needs the line and the objective met); installations, staff and camps are all on the shelf (Operations), with the board's sign-off for capital projects; the org arrives with its tier's structure and a sponsor desk on day one; the season budget is fixed at the takeover, covers the season's committed costs, and is read as a plan (`seasonBudgetOf`). Each season the board offers three plans with objectives picked for the tier and a brief; confidence moves with a logged reason, then warning, ultimatum and dismissal at a review. Dismissal never ends the save. Stated chances are bands in words, refitted on the rc.6 rules (same band 69 %). Permanent achievements are not earned in an established org (R171, Miguel decides). A founded club keeps the ladder and every earlier rule.
 
 **Endless variety** (`endlessVariety`, from season index 7; R155–R156). Drawn cups, a Legends Invitational, an Intercontinental, season hosts. Rival projects use the user's own toolbox and scale with the dynasty; elite promotions arrive stronger; a project may bid for the user's best starter. Worlds won by a 100+ team: 91 % to 64 %; the target of 3 AI sides within 3 points is missed (2.2 to 2.7). Per-season circuit formats are not built.
 
@@ -28,7 +28,7 @@ rc.42 and before (cards, Club, Finances, Inbox, calendar, title ledger): CHANGEL
 | Selling/trading | transferList/market → careerFlow (R135 section)/careerDecisions → Market (My Deals), ListPlayerSheet, TradeSheet, Squad |
 | News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
 | Cloud save / files (2.0.26) | lib/careerCloud, lib/careerSaveFile → careerCloudStore, careerSaveTransfer → Saves, components/career/cloud |
-| Board / real orgs (v2.2) | orgProfile/seatSwap/board/boardTypes/manager/reputation → store/boardFlow → components/career/board (BoardScreen, TakeoverWizard), Wizard, `/career/board` |
+| Board / real orgs (v2.2) | orgProfile/seatSwap/board/boardTypes/manager/reputation, established (standing, operations, sign-off, signing cap), budget (`seasonBudgetOf`) → store/boardFlow, takeoverPreview → components/career/takeover (WayInDoor, TakeoverPick, ArrivalSplash), board (BoardScreen, BoardParts, StandingTrack, briefLines), finances (SeasonBudget, Operations), hub/OperationsBlock, `/career/board` |
 | Endless variety (v2.2) | engine/career/endless (`CAREER_ENDLESS`) → store/endlessFlow (news through communications) → OrgSheet, OrgMark, EventScreen |
 | Pro (v2.2) | engine/career/pro (week, ranked, moments, offers, aging, gala, nickname, card) → store/proFlow, proSeat, proMatch, proGala, proStore → components/career/pro (+ spine), `/career/pro/**` |
 
