@@ -365,94 +365,92 @@ export function SquadScreen() {
               </span>
             ) : null}
           </div>
+
+          {/* rc9 (Miguel, 27/11): the bench and the coach stay in the squad's
+              board, and the coach is a card like the players, not loose text. */}
+          <div data-tour="squad-bench" className="mt-5 grid grid-cols-1 gap-x-3 gap-y-5 border-t border-line pt-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
+              <p className="kicker mb-2.5">{C.squad.bench}</p>
+              {bench.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {bench.map((p) => (
+                    <PlayerCardTile
+                      rarityFrame
+                      key={p.id}
+                      name={p.name}
+                      overall={p.overall}
+                      age={squadAge(save, p)}
+                      band={potBandOfSquad(save, p)}
+                      archetype={p.archetype}
+                      country={p.country}
+                      region={p.region}
+                      size="sm"
+                      selected={selected === p.id}
+                      onClick={() => onTileClick(p.id)}
+                      footer={
+                        <span className="flex items-center justify-between gap-2">
+                          <span>{wageLabel(C, p.salaryPerSplit)}</span>
+                          {FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : null}
+                        </span>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                // Empty: what it means, and where to find one.
+                <div>
+                  <p className="max-w-md text-sm text-sub">{C.squad.emptySub}</p>
+                  <AppLink href="/career/market" className="mt-2 inline-flex min-h-8 items-center text-xs text-blue-bright transition-colors hover:text-ink">
+                    {C.nav.market}
+                  </AppLink>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-2.5 flex items-baseline justify-between gap-3">
+                <p className="kicker">{C.squad.coachSlot}</p>
+                <AppLink
+                  href="/career/market#coaches"
+                  className="text-xs text-blue-bright transition-colors hover:text-ink"
+                >
+                  {C.market.coaches}
+                </AppLink>
+              </div>
+              {save.coach ? (
+                <PlayerCardTile
+                  rarityFrame
+                  size="sm"
+                  name={save.coach.name}
+                  overall={save.coach.overall}
+                  footer={
+                    <span className="block space-y-2">
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
+                        <Badge tone="blue">
+                          {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
+                        </Badge>
+                      </span>
+                      <CoachEffectLines coach={save.coach} />
+                    </span>
+                  }
+                />
+              ) : (
+                <p className="text-sm text-sub">{C.squad.emptyCoach}</p>
+              )}
+              {/* The staff around him: the gear ladder, and the psychologist when hired. */}
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                <AppLink href="/career/finances" className="text-sub transition-colors hover:text-ink">
+                  {C.finances.gearLadder}
+                </AppLink>
+                {save.finances.gear.psychologist ? (
+                  <Badge tone="good">{C.finances.psychologist}</Badge>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </Panel>
-
-      {/* ==================== bench and coach: a board each ==================== */}
-      <div data-tour="squad-bench" className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <Panel className="p-4 sm:p-5">
-          <div className="card-head">
-            <h2 className="card-title">{C.squad.bench}</h2>
-          </div>
-          {bench.length > 0 ? (
-            bench.map((p) => (
-              <PlayerCardTile
-                rarityFrame
-                key={p.id}
-                name={p.name}
-                overall={p.overall}
-                age={squadAge(save, p)}
-                band={potBandOfSquad(save, p)}
-                archetype={p.archetype}
-                country={p.country}
-                region={p.region}
-                size="sm"
-                selected={selected === p.id}
-                onClick={() => onTileClick(p.id)}
-                className="mb-2 last:mb-0"
-                footer={
-                  <span className="flex items-center justify-between gap-2">
-                    <span>{wageLabel(C, p.salaryPerSplit)}</span>
-                    {FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : null}
-                  </span>
-                }
-              />
-            ))
-          ) : (
-            // Empty: what it means, and where to find one. No box inside the board.
-            <div>
-              <p className="text-sm text-sub">{C.squad.emptySub}</p>
-              <AppLink href="/career/market" className="mt-3 inline-flex min-h-8 items-center text-xs text-blue-bright transition-colors hover:text-ink">
-                {C.nav.market}
-              </AppLink>
-            </div>
-          )}
-        </Panel>
-
-        <Panel className="p-4 sm:p-5">
-          <div className="card-head">
-            <h2 className="card-title">{C.squad.coachSlot}</h2>
-            <AppLink
-              href="/career/market#coaches"
-              className="text-xs text-blue-bright transition-colors hover:text-ink"
-            >
-              {C.market.coaches}
-            </AppLink>
-          </div>
-          {save.coach ? (
-            <div>
-              {/* The coach as a name and his figure, then what he brings. */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="display truncate text-lg font-bold leading-tight text-ink">{save.coach.name}</p>
-                  <p className="mt-1 text-xs text-sub">{wageLabel(C, save.coach.salaryPerSplit)}</p>
-                </div>
-                <div className="shrink-0 text-right leading-none">
-                  <p className="display text-2xl font-bold tabular-nums text-ink">{save.coach.overall}</p>
-                  <p className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</p>
-                </div>
-              </div>
-              <p className="mt-3">
-                <Badge tone="blue">
-                  {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
-                </Badge>
-              </p>
-              <CoachEffectLines coach={save.coach} className="mt-3" />
-            </div>
-          ) : (
-            <p className="text-sm text-sub">{C.squad.emptyCoach}</p>
-          )}
-          {/* The staff around him: the gear ladder, and the psychologist when hired. */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-xs">
-            <AppLink href="/career/finances" className="text-sub transition-colors hover:text-ink">
-              {C.finances.gearLadder}
-            </AppLink>
-            {save.finances.gear.psychologist ? (
-              <Badge tone="good">{C.finances.psychologist}</Badge>
-            ) : null}
-          </div>
-        </Panel>
-      </div>
 
       {/* ==================== contracts ==================== */}
       <Panel data-tour="squad-contracts" className="p-4 sm:p-5">
