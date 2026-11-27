@@ -106,6 +106,40 @@ BoardSeason.brief?: SeasonBrief; BoardState.tierChange?: TierChange
 
 ## Measured
 
+### After the refit (the current numbers)
+
+`calibration` and `goalRates` were refitted on the rc.6 rules (commit `5653a98`). The fit used 90 competent careers × 6 seasons: seeds 9000, 12000 and 12101, NA / EU / SAM, Normal and Hard, the four tiers plus founded, every staging flag on including endless. That is 3 of rc.5's 6 fit seeds; the count matches rc.5's ~88 careers, and the full list would have doubled the run. `goalRatesK` stays 8, since the fit does not estimate it.
+
+Every goal row is keyed by the tier the board held **that season**, so a promoted club's later seasons fit its new tier's cell. The probe's own summary now groups the same way (commit `effcdca`, see below). The underdog cells are thin (21 seasons in Normal, 25 in Hard), because underdogs that win are promoted out of the cell; those cells lean on the prior.
+
+**Held out**, seeds 30000 and 30101, 120 careers: 60 competent on Expected and 60 careless (`badSponsor` on Ambitious), 6 seasons, every staging flag on. Competent Expected, stated → measured; N = career-seasons in which the board held that tier:
+
+| Tier (that season) | Normal | Hard |
+|---|---|---|
+| Elite | 56 → 43 (76) | 44 → 57 (58) |
+| Contender | 53 → **72** (25) | 55 → 41 (34) |
+| Mid | 58 → 58 (26) | 58 → 73 (26) |
+| Underdog | 63 → 65 (17) | 62 → **27** (26) |
+| Founded | 69 → 81 (36) | 59 → 58 (36) |
+
+- **Still more than 15 points off:** contender Normal (+19, N = 25) and underdog Hard (−35, N = 26). Mid Hard is at +15, on the line. No second fitting round was run, as instructed.
+- **Bands** (all three plans): competent 69 % same band, 29 % adjacent, 3 % two or more away (N = 1080). rc.5 was 65 / 34 / 1; before the refit 50 / 36 / 14. Careless: 18 / 61 / 22 (N = 1077; rc.5: 35 % same band, 34 % two or more away).
+- **Cautious / Ambitious measured**, competent. Normal: elite 67 / 30, contender 68 / 36, mid 69 / 46, underdog 88 / 29, founded 94 / 31. Hard: elite 69 / 29, contender 53 / 35, mid 85 / 46, underdog 46 / 27, founded 58 / 33.
+- **Dismissals:** competent **0 / 60** (before the refit: 4 / 30, all SAM). Careless 11 / 60 (rc.5: 16 / 60). By starting tier, Normal: elite 1 (S4), contender 4 (S4-S6). Hard: elite 3 (S5-S6), contender 1, mid 1 (S5), underdog 1 (S6).
+- **SAM:** the competent SAM careers (12) had no dismissal, so the SAM dismissals of the first measurement do not remain for a competent manager. Careless dismissals are still mostly SAM: 7 of 11 (NA 3, EU 1).
+- **Career ends:** 2 insolvencies, both careless: NA Hard mid at S5, and a SAM Normal elite dismissed at S4 that founded a club and went broke there at S6. 0 soft locks in 120 careers.
+- **Cash at S6** (median, by starting tier), competent Normal / Hard: elite $672k / $689k, contender $782k / $210k, mid $710k / $117k, underdog $206k / $85k, founded $69k / $34k.
+- **Tier changes per starting tier**, competent, 6 careers per cell (promotions; no relegation in 120 careers):
+  - elite: 0;
+  - contender → elite: Normal 6 / 6 (S2-S3), Hard 5 / 6 (S2-S4);
+  - mid → contender: 5 / 6 in both difficulties (Normal S2-S4, Hard S2-S5);
+  - underdog → mid: Normal 6 / 6 (S2-S5, four go further), Hard 3 / 6 (S3-S5).
+  - Careless: contender → elite 4 / 6 and 6 / 6; mid 3 / 6 Normal, 0 / 6 Hard; underdog 1 / 6 Normal, 0 / 6 Hard.
+- **Probe change.** `SeasonRow.tier` records the tier the board held for the season's offer. The summary groups the stated → measured, plan and band columns by it, and counts the seasons after a job move instead of stopping there. Dismissals, cash, S1 hit and tier changes stay by starting tier. Rows from an older `BOARD_OUT` (no tier) read as before. The calibration rows (`BOARD_CAL_OUT`) and the offline evaluation already keyed by the season's tier and did not change.
+- **Time.** About 2 h 15 min for 210 careers, run as 11 slices of 6.5-8.7 minutes each with the 2-minute gaps, against a 75-minute budget.
+
+### Before the refit (first measurement, rc.5 `goalRates`)
+
 **BOARD_PROBE**, competent bot (`tuned` on Expected), every staging flag on, NA / EU / SAM, Normal and Hard, 6 seasons, seed 30000 (one of rc.5's two held-out seeds), 30 careers (3 per cell). N = career-seasons at the starting club, so 18 per cell; 3 careers per cell is a small sample. The "before" is `BOARD.md` (rc.5, seeds 30000 and 30101, N = 35-36).
 
 | Cell | Normal: stated → measured, rc.6 (rc.5) | Hard: stated → measured, rc.6 (rc.5) |
@@ -151,7 +185,8 @@ BoardSeason.brief?: SeasonBrief; BoardState.tierChange?: TierChange
 
 - **No screen was opened in a browser.** The edits to Market, Finances, the toolbox sheet, the HQ error banner, the season review's verdict line and the news feed were typechecked and linted only.
 - **A relegation never happened** in the 30 probe careers; it is covered by unit and flow tests only.
-- **The drifted cells** (mid and underdog Expected 22-44 % measured against 54-62 % stated) need the integrator's decision: refit `goalRates` on rc.6 careers, or choose easier tier goals. The probe's sample is 3 careers per cell, one seed.
+- **Two cells stay more than 15 points off after the refit:** contender Normal (stated 53, measured 72) and underdog Hard (62 → 27). The underdog Hard fit cell has 25 seasons.
+- **The fit used 3 of rc.5's 6 fit seeds** (9000, 12000, 12101). Seeds 15000, 20000 and 20101 were not played.
 - **Easy difficulty** was not measured.
 - **`seasonBudgetOf.spent` and `income`** are complete only from `ledgerFromWeek`; no test plays a full season to compare them with the ledger's whole-season totals.
 - **The tier's goal preference on seasons 3 and later** (the E4 test covers seasons 0 to 2 across every org of NA, EU and SAM).
