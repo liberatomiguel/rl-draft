@@ -41,7 +41,8 @@ Miguel's brief of 27/11: taking over a real organisation has to read as a consol
 - The board's brief never showed: the first helper read `brief.kind`, the engine writes `brief.reason`.
 
 ### Not verified
-- The competent bot is dismissed 3 times in 60 careers on the shipped rules, against 0 in 60 before round 2. Three cases do not say whether round 2 caused it; not investigated.
+- The competent bot is dismissed 3 times in 60 careers on the shipped rules, against 0 in 60 before round 2, all three in SAM. Three cases do not say whether round 2 caused it, nor whether SAM is an effect or chance; not investigated.
+- Season-6 cash is lower than in the run before round 2 in all 8 established cells (contender Normal $782k → $398k, mid Normal $710k → $520k), although the elite budget grew. The cause is not established (candidates: fines from the day-one sponsor deal, the cap on non-earned income, the bot spending more); a ledger probe on one elite and one mid career would settle it.
 - Three cells are 15 points or more off on the shipped rules: underdog Normal (easier: 92 % against 65 %, N 12), underdog Hard (harder: 45 % against 62 %, N 22) and mid Normal (harder: 44 % against 59 %, N 32). The calibration was fitted before round 2 and not refitted after it. Easy has no cells.
 - No relegation has happened in any probe (unit and flow tests only). The sponsor desk after a job-offer move and the achievement baseline after a dismissal are covered by code paths and pure tests, not by a played career.
 - Browser: the hiring-freeze state, the season review in PT, a relegation, an accepted job offer, the board flag off. No physical phone, no Safari.

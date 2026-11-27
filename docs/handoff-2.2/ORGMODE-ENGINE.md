@@ -353,9 +353,9 @@ Fast-forwarded to `release/v2.2` (c49bd8f, with UI-A, UI-B and UI-C). Commits: `
 - The day-one sponsor desk after a job-offer move is covered by the code path (the plan acceptance), not by a dedicated test.
 - `achievementBase` on a dismissal into a founded club was tested on the pure function, not through a played dismissal.
 
-## Held out on the shipped rules (integrator, 27/11, after round 2)
+## Appendix: raw probe summary of the shipped-rules run
 
-`BOARD_PROBE`, every staging flag on, NA / EU / SAM, Normal and Hard, 6 seasons, seeds 30000 and 30101, competent and careless, 120 careers in 6 slices, no soft lock. No refit after it: `CAREER_BOARD.calibration` is still the one fitted before round 2. Summary printed with `BOARD_SUMMARY_FROM` (stated → measured and bands keyed by the tier the board held that season; dismissals, cash and tier changes by starting tier).
+The `BOARD_SUMMARY_FROM` output behind "rc.6 as shipped" in the Measured section (seeds 30000 and 30101, 120 careers).
 
 ```
 TIERS competent normal elite     careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers elite,elite,elite,elite,elite,elite
@@ -401,5 +401,3 @@ BANDS careless: same 25% adjacent 57% two+ away 18% (N=1077 objectives)
   underdog  | 62% → 6% (N=36) | 17% / 0% | 0% (N=6) | 2/6 (6,6) | $56k | 0
   founded   | 60% → 67% (N=39) | 67% / 49% | 0% (N=6) | 0/6 (-) | $98k | 0
 ```
-
-Read against the refit run on the same seeds (section "After the refit"): bands 69 / 29 / 3 → 73 / 27 / 1; competent dismissals 0 in 60 → 3 in 60 (not investigated); underdog Hard Expected 27 % → 45 % measured against 62 % stated; underdog Normal now 92 % against 65 % (N 12); mid Normal 44 % against 59 %.
