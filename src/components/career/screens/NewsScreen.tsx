@@ -13,7 +13,8 @@
 import { useRouter } from "next/navigation";
 import { LoanSummary } from "../finances/LoanSummary";
 import { useEffect, useState } from "react";
-import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
+import { type CareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import type { MailItem, MailKind } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -63,7 +64,7 @@ const viewOfHash = (hash: string): DeskView => (VIEWS as string[]).includes(hash
 
 // The desk's job: read what reached the club. One decision here: which message to open (and act on).
 export function NewsScreen() {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
   const lang = useSettings((s) => s.lang);

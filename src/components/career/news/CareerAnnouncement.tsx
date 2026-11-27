@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { CareerSave, NewsItem } from "@/engine/career/types";
 import { ladderOf } from "@/engine/career/ladder";
 import { toolboxUnannouncedOf, toolboxNewKey } from "@/engine/career/careerNew";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { moneyNoticeOf } from "@/store/careerFlow";
 import { pendingDecisionsOf } from "@/store/careerDecisions";
@@ -50,7 +50,7 @@ export function CareerAnnouncement() {
   const save = useCareerStore(selectActiveSave);
   const mark = useCareerStore(s => s.markCareerAnnounced);
   const setAutoAdvance = useCareerStore(s => s.setAutoAdvance);
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const lang = useSettings(s => s.lang);
   const reports = useSettings(s => s.careerTrainingReports);
   const scrimPlaying = useCareerStore(s => Boolean(s.scrimPlayback));
@@ -141,7 +141,7 @@ export function CareerAnnouncement() {
  * backdrop keeps Modal's exact classes so the lite-fx fallbacks still match.
  */
 function AnnouncementShell({ label, onClose, tone, masthead, date, children }: { label: string; onClose: () => void; tone: "news" | "unlock"; masthead: React.ReactNode; date?: string; children: React.ReactNode }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const host = useMounted() ? document.body : null;
   const panelRef = useRef<HTMLDivElement>(null);
   usePageScrollLock(host !== null);

@@ -15,7 +15,7 @@ import { BoardSeasonPanel } from "@/components/career/board/BoardParts";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CareerSave } from "@/engine/career/types";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { useProfileStore } from "@/store/profileStore";
@@ -59,7 +59,7 @@ const GRADE_STAMP: Record<string, string> = {
 export function SeasonScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const router = useRouter();
   const continueToNextSeason = useCareerStore((s) => s.continueToNextSeason);
   const continueInfinite = useCareerStore((s) => s.continueInfinite);
@@ -518,7 +518,7 @@ function SnapshotRow({
   name: string;
   points: number;
 }) {
-  const copy = useCareerCopy();
+  const copy = useActiveCareerCopy();
   const isUser = orgRef === "user";
   return (
     <li

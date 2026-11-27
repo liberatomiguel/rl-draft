@@ -47,7 +47,8 @@ import {
   HourglassIcon,
   HeartPulseIcon,
 } from "@/components/ui/icons";
-import { type CareerCopy, useCareerCopy } from "@/content/careerCopy";
+import { type CareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { DiscordIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
@@ -156,7 +157,7 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
 const dialogOpen = (): boolean => document.querySelector('[role="dialog"]') !== null;
 
 export function CareerTour() {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const pathname = usePathname();
   const save = useCareerSave();
   const markFlag = useCareerStore((s) => s.markFlag);
