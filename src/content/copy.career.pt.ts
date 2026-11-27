@@ -4475,7 +4475,7 @@ export const CAREER_PT: CareerCopy = {
       inherit: "O que você herda",
       cash: "Caixa",
       budget: "Orçamento da temporada",
-      budgetNote: "A verba do plano esperado",
+      budgetNote: "A verba da diretoria para a temporada",
       wages: "Salários por semana",
       ceiling: (amount: string) => `Teto ${amount}`,
       overCeiling: "Acima do teto da diretoria",

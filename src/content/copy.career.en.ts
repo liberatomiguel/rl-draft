@@ -4504,7 +4504,7 @@ export const CAREER_EN = {
       inherit: "What you inherit",
       cash: "Cash",
       budget: "Season budget",
-      budgetNote: "The expected plan's grant",
+      budgetNote: "The board's grant for the season",
       wages: "Weekly wages",
       ceiling: (amount: string) => `Ceiling ${amount}`,
       overCeiling: "Over the board's ceiling",
