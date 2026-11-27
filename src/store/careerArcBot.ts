@@ -78,6 +78,7 @@ import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisi
 import { boardAutoAnswer, mandateOf } from "./boardFlow";
 import type { BoardMandate, PackageId } from "@/engine/career/boardTypes";
 import { billsOf, squadProgressOf, transferMoneyOf } from "@/engine/career/mandate";
+import { seasonBudgetOf } from "@/engine/career/budget";
 import { recordSundayBriefingFlow, sundayStopHolds } from "./careerSunday";
 import {
   approveTrainingProposalFlow,
@@ -805,11 +806,15 @@ function mandateMarket(save: CareerSave, policy: ArcPolicy, t: Tally, pool: Cand
   }
   if (!out || keep.has(out.id) || !list.length) return save;
   const leaving = out;
-  // The board's ask never sinks the books: the move keeps eight weeks of payroll and a weekly net at or above zero.
+  // The board's ask never sinks the books: the season's projected end (contracted income only, the sponsor through its
+  // own last Monday) still holds four weeks of payroll after the fee and the new wage, and the weekly net stays >= 0.
+  const budget = seasonBudgetOf(save);
   const safe = (x: Candidate) => {
     const stmt = statementOf(save);
     const cost = x.cost + severanceOf(leaving);
-    return save.finances.balance - cost >= 8 * stmt.payroll && stmt.net - weeklyOf(x.salaryPerSplit - leaving.salaryPerSplit) >= 0;
+    const extra = weeklyOf(x.salaryPerSplit - leaving.salaryPerSplit);
+    const end = (budget?.projectedEnd ?? save.finances.balance) - cost - Math.max(0, extra) * (budget?.mondaysLeft ?? 0);
+    return end >= 4 * stmt.payroll && save.finances.balance - cost >= 8 * stmt.payroll && stmt.net - extra >= 0;
   };
   const c = list.find((x) => safe(x) && affordable(save, x.cost + severanceOf(leaving), x.salaryPerSplit - leaving.salaryPerSplit, policy));
   if (!c) return save;
