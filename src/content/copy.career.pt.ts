@@ -3119,7 +3119,8 @@ export const CAREER_PT: CareerCopy = {
         case "majorQualify":
           return count === 1 ? "Classifique-se para um Major" : count === 3 ? "Classifique-se para os três Majors" : `Classifique-se para ${count} Majors`;
         case "majorFinish":
-          if (place <= 1) return "Vença um Major";
+          // rc.6 (R172): uma contagem acima de um se perdia ("Vença um Major" para dois títulos).
+          if (place <= 1) return count === 1 ? "Vença um Major" : `Vença ${count} Majors`;
           return count === 1 ? `Um top ${place} em Major` : `Top ${place} em ${count} Majors`;
         case "worldsQualify":
           return "Classifique-se para o Worlds";
@@ -4202,6 +4203,9 @@ export const CAREER_PT: CareerCopy = {
       lastRank: (n: number) => `Última temporada: #${n} na região.`,
       bestFinish: (tier: string, place: number) => `Melhor resultado na última temporada: ${place <= 1 ? "título" : `top ${place}`} ${tier === "worlds" ? "no Worlds" : tier === "major" ? "em um Major" : "em um regional"}.`,
     },
+    // rc.6 (R172): a meta da temporada na HQ enquanto o plano da org consolidada espera.
+    planPending: "O plano da temporada da diretoria espera a sua resposta. A meta da temporada é o plano que você aceitar.",
+    planOpen: "Abrir o plano da temporada",
     // rc.6: um jogador acima do alcance de uma org consolidada.
     signCapLock: (cap: number) => `Acima do alcance da org: ela contrata até ${cap}`,
     approval: {

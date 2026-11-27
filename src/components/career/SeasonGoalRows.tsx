@@ -12,11 +12,19 @@ import { CAREER_SEASON_GOAL } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { SeasonGoalLabel, SeasonGoalRowView, SeasonGoalsView } from "@/engine/career/seasonGoals";
 import { cx } from "@/lib/util";
+import { goalTotalOf } from "@/engine/career/board";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 
-/** The words of a goal: the season's own, rc.35's split model, or a legacy key. */
-export function seasonGoalText(label: SeasonGoalLabel, C: CareerCopy): string {
+/**
+ * The words of a goal: the season's own, rc.35's split model, or a legacy key.
+ * rc.6 (R172) `totals`: an established org's board reads its goals with the
+ * season's total, as the plan card does ("Win 2 of the 3 Majors").
+ */
+export function seasonGoalText(label: SeasonGoalLabel, C: CareerCopy, totals = false): string {
+  if (label.scope === "season" && totals) {
+    return C.goals.seasonTotal(label.kind, label.count, label.place, goalTotalOf(label.kind)) || C.goals.season(label.kind, label.count, label.place);
+  }
   if (label.scope === "season") return C.goals.season(label.kind, label.count, label.place);
   if (label.scope === "split") return C.goals.model(label.kind, label.count, label.place);
   const suffix = label.key.split(".").pop() ?? label.key;
@@ -139,12 +147,14 @@ function GoalRow({
   seasonIndex,
   primary,
   showStatus = true,
+  totals = false,
 }: {
   row: SeasonGoalRowView;
   C: CareerCopy;
   seasonIndex: number;
   primary: boolean;
   showStatus?: boolean;
+  totals?: boolean;
 }) {
   const family = familyOf(row.label);
   const status = statusOf(row);
@@ -191,7 +201,7 @@ function GoalRow({
             primary ? "text-base leading-tight text-ink" : "text-sm leading-tight text-sub",
           )}
         >
-          {seasonGoalText(row.label, C)}
+          {seasonGoalText(row.label, C, totals)}
         </p>
         {p ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -226,12 +236,15 @@ export function SeasonGoalRows({
   seasonIndex,
   showWhy = true,
   showStatus = true,
+  totals = false,
 }: {
   view: SeasonGoalsView;
   C: CareerCopy;
   seasonIndex: number;
   showWhy?: boolean;
   showStatus?: boolean;
+  /** rc.6 (R172): read the goals with the season's totals (an established org's board). */
+  totals?: boolean;
 }) {
   const b = view.basis;
   const chips: string[] = [];
@@ -243,9 +256,9 @@ export function SeasonGoalRows({
   }
   return (
     <div className="space-y-3">
-      <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary showStatus={showStatus} />
+      <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary showStatus={showStatus} totals={totals} />
       <div className="border-t border-line/60 pt-3">
-        <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} showStatus={showStatus} />
+        <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} showStatus={showStatus} totals={totals} />
       </div>
       {showWhy ? (
         <div className="space-y-1.5 border-t border-line/60 pt-2.5">

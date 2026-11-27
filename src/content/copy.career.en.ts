@@ -3147,7 +3147,8 @@ export const CAREER_EN = {
         case "majorQualify":
           return count === 1 ? "Qualify for a Major" : count === 3 ? "Qualify for all three Majors" : `Qualify for ${count} Majors`;
         case "majorFinish":
-          if (place <= 1) return "Win a Major";
+          // rc.6 (R172): a count above one was dropped ("Win a Major" for two titles).
+          if (place <= 1) return count === 1 ? "Win a Major" : `Win ${count} Majors`;
           return count === 1 ? `A Major top ${place}` : `Top ${place} at ${count} Majors`;
         case "worldsQualify":
           return "Qualify for Worlds";
@@ -4231,6 +4232,9 @@ export const CAREER_EN = {
       lastRank: (n: number) => `Last season: #${n} in the region.`,
       bestFinish: (tier: string, place: number) => `Best finish last season: ${place <= 1 ? "won" : `top ${place}`} at ${tier === "worlds" ? "Worlds" : tier === "major" ? "a Major" : "a regional"}.`,
     },
+    // rc.6 (R172): HQ's season goal while an established org's plan is pending.
+    planPending: "The board's season plan is waiting for your answer. The season goal is the plan you accept.",
+    planOpen: "Open the season plan",
     // rc.6: a market row above an established org's signing pull.
     signCapLock: (cap: number) => `Above this org's pull: it signs up to ${cap}`,
     approval: {

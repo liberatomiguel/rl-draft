@@ -36,6 +36,7 @@ import { MilestoneMoment } from "../event/MilestoneMoment";
 import { SeasonStatistics } from "../SeasonStatistics";
 import { SeasonOutlook } from "@/components/career/finances/SeasonOutlook";
 import { SeasonGoalRows, seasonGoalText } from "@/components/career/SeasonGoalRows";
+import { establishedOf } from "@/engine/career/established";
 import { seasonGoalsViewOf } from "@/engine/career/seasonGoals";
 
 // Duplicated from ClubScreen (not exported there) — keep the two in sync.
@@ -100,7 +101,7 @@ export function SeasonScreen() {
   const goals = save.seasonGoals;
   // rc.36 (UX-02): one view for the season's plan, rc.35's split model and a legacy key.
   const goalsView = seasonGoalsViewOf(save);
-  const goalLabel = goalsView ? seasonGoalText(goalsView.target.label, C) : null;
+  const goalLabel = goalsView ? seasonGoalText(goalsView.target.label, C, establishedOf(save)) : null;
 
   const worldsChampionLine =
     !wonWorlds && last?.worldsChampionName ? (
@@ -250,7 +251,7 @@ export function SeasonScreen() {
           {goalsView && goals?.targetMet !== null ? (
             <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3.5">
               <p className="kicker mb-2.5">{C.hub.seasonGoal}</p>
-              <SeasonGoalRows view={goalsView} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} />
+              <SeasonGoalRows view={goalsView} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} totals={establishedOf(save)} />
             </div>
           ) : null}
         </Panel>
