@@ -25,9 +25,17 @@ import { selectHardUnlocked, selectLegacyUnlocked, useProfileStore } from "@/sto
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { ShareSheet } from "./ShareSheet";
+import { useReferral } from "./useReferral";
+import { cosmeticById } from "@/data/cosmetics";
+import { FRIENDS_GOAL, PARTY_LEADER_ID } from "@/lib/referral";
 
 export function FriendsSection() {
-  const { SHARE_UI: S, HOME } = useCopy();
+  const { SHARE_UI: S, HOME, COSMETICS } = useCopy();
+  // Friends who came through the player's links (signed in, production build).
+  const referral = useReferral(true);
+  const bannerName = cosmeticById.has(PARTY_LEADER_ID)
+    ? ((COSMETICS.items as Record<string, { name: string } | undefined>)[PARTY_LEADER_ID]?.name ?? null)
+    : null;
   const locale = useUiLocale();
   const router = useRouter();
   const settings = useProfileStore((s) => s.settings);
@@ -90,6 +98,11 @@ export function FriendsSection() {
           <div>
             <h3 className="display text-lg uppercase leading-none text-ink">{S.inviteRowTitle}</h3>
             <p className="mt-2 max-w-md text-sm leading-snug text-sub">{S.inviteRowDesc}</p>
+            {referral.signedIn && referral.count !== null ? (
+              <p className="mt-2 text-sm leading-snug text-ink">
+                {bannerName ? S.referralGoal(referral.count, FRIENDS_GOAL, bannerName) : S.referralCount(referral.count)}
+              </p>
+            ) : null}
           </div>
           <Button variant="secondary" className="self-start max-sm:w-full" onClick={() => setInviteOpen(true)}>
             {S.inviteButton}

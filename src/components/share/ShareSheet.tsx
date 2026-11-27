@@ -17,6 +17,9 @@ import { useCopy } from "@/content/copy";
 import { trackEvent } from "@/lib/analytics";
 import { markShared } from "@/lib/share/shareMarks";
 import { useOverlayHold } from "@/store/overlayHoldStore";
+import { useSignInDialog } from "@/store/signInDialog";
+import { withReferral } from "@/lib/referral";
+import { useReferral } from "./useReferral";
 import type { ShareFormat } from "@/lib/share/runImage";
 import {
   canNativeShare,
@@ -66,8 +69,12 @@ function displayUrl(url: string): string {
 const canvasToBlob = (canvas: HTMLCanvasElement) =>
   new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 
-export function ShareSheet({ open, onClose, title, surface, gameMode, text, url, formats, fileName = "rocket-draft", hint }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, title, surface, gameMode, text, url: baseUrl, formats, fileName = "rocket-draft", hint }: ShareSheetProps) {
   const { SHARE_UI: S } = useCopy();
+  // v2.2: a signed-in player's links carry their code (friends who play count for them).
+  const referral = useReferral(open);
+  const url = withReferral(baseUrl, referral.code);
+  const showSignIn = useSignInDialog((s) => s.show);
   const offered = (["post", "story"] as const).filter((f) => formats?.[f]);
   const [format, setFormat] = useState<ShareFormat>(offered[0] ?? "post");
   const [previews, setPreviews] = useState<Partial<Record<ShareFormat, string>>>({});
@@ -269,6 +276,21 @@ export function ShareSheet({ open, onClose, title, surface, gameMode, text, url,
           <p className="mt-1 break-all text-xs text-blue-bright">{displayUrl(url)}</p>
         </div>
         {hint ? <p className="text-sm leading-snug text-sub">{hint}</p> : null}
+        {referral.enabled && !referral.signedIn ? (
+          <p className="text-sm leading-snug text-sub">
+            {S.referralSignedOut}{" "}
+            <button
+              type="button"
+              className="font-semibold text-blue-bright underline-offset-4 hover:underline"
+              onClick={() => {
+                onClose();
+                showSignIn();
+              }}
+            >
+              {S.referralSignIn}
+            </button>
+          </p>
+        ) : null}
       </div>
     </Modal>
   );

@@ -74,6 +74,7 @@ import { uid } from "@/lib/util";
 import { noteRunReset, registerSessionProps, takeRunResets, trackEvent, trackOnboardingStep } from "@/lib/analytics";
 import { registerRunStore } from "./lazyRunStore";
 import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
+import { claimPendingReferral } from "@/lib/referral";
 import { selectChallengesUnlocked, useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
@@ -606,6 +607,8 @@ export const useRunStore = create<RunStore>()(
         const { run } = get();
         if (!run || !run.tournament || run.phase === "results") return;
         if (run.tournament.stage !== "finished") return;
+        // v2.2 share kit: a browser that came through a friend's link counts once it plays.
+        void claimPendingReferral("draft");
 
         const rng = createRng(run.rngState);
         const profile = useProfileStore.getState();

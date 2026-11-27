@@ -809,3 +809,50 @@ export async function deleteCareerSave(
     return { status: "error", ...failure(e instanceof Error ? e.message : String(e), "delete failed") };
   }
 }
+
+// --- Friends brought to play (v2.2 share kit, docs/sql/v2.2-referrals.sql) ---
+// Every failure reads as "nothing" (null / "error"): a build that runs before
+// the SQL is applied, offline or signed out simply counts nothing.
+
+/** The signed-in player's code (the server makes it on the first call). */
+export async function fetchReferralCode(userId: string): Promise<string | null> {
+  try {
+    const c = await client();
+    if (!c) return null;
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return null;
+    const { data, error } = await c.rpc("referral_code").setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error || typeof data !== "string" || !/^[a-z0-9]{8}$/.test(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** A new browser's first play after arriving through `code` (signed in or not). */
+export async function claimReferral(code: string, deviceId: string): Promise<"counted" | "refused" | "error"> {
+  try {
+    const c = await client();
+    if (!c) return "error";
+    const { data, error } = await c.rpc("claim_referral", { p_code: code, p_device: deviceId });
+    if (error) return "error";
+    return data === true ? "counted" : "refused";
+  } catch {
+    return "error";
+  }
+}
+
+/** Friends counted for the signed-in player's code. */
+export async function fetchReferralCount(userId: string): Promise<number | null> {
+  try {
+    const c = await client();
+    if (!c) return null;
+    const auth = await ownToken(c, userId);
+    if (!("token" in auth)) return null;
+    const { data, error } = await c.rpc("my_referral_count").setHeader("Authorization", `Bearer ${auth.token}`);
+    if (error || typeof data !== "number" || !Number.isInteger(data) || data < 0) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}

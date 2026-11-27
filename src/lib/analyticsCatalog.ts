@@ -218,6 +218,18 @@ export const EVENT_CATALOG = {
     format: "string?",
     gameMode: "string",
   }),
+  /**
+   * Share kit (v2.2, `lib/referral.ts`): a browser that arrived through a
+   * share link with a player's code played for the first time and its claim
+   * settled. `result` = counted | refused (own code, daily cap, already
+   * counted, unknown code); `via` = draft | career (= `gameMode`). Never the
+   * code or the device id.
+   */
+  referral_claimed: spec("shared", "critical", {
+    result: "string",
+    via: "string",
+    gameMode: "string",
+  }),
   /** The daily quiz ended (solved or out of guesses). Clues shown = attempts − 1. */
   quiz_played: spec("draft", "standard", {
     solved: "boolean",

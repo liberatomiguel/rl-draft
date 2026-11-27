@@ -35,7 +35,11 @@
   invitation; images in Post (1200 x 630) and Story (1080 x 1920) drawn in the
   game's material; WhatsApp, X, Reddit, Telegram, copy image, native share;
   "With friends" on the Home (duel in one click, invite). Event
-  `content_shared`; links carry `utm_medium=share`. Decisions #202 to #206.
+  `content_shared`; links carry `utm_medium=share`. Decisions #202 to #208.
+  Ambassador title on the first share. Friends brought to play are counted on
+  the server (`docs/sql/v2.2-referrals.sql`, **not applied yet: Miguel's
+  step**; inert on staging, accounts off); 5 = mark `share-friends-5` for the
+  Party Leader banner (art pending, PENDING-COSMETICS.md).
   Not checked on a physical phone (native share sheet, Instagram story).
 - **rc.6 (24/11/2026)** below it, integration of five lines on top of
   rc.5 (`3914518`, the phone redesign):

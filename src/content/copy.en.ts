@@ -1037,7 +1037,14 @@ export const PRIVACY = {
       body: [
         "You can play forever without an account. Sign-in is entirely optional. If you choose to sign in, you do it with your email: we send a one-time code to your inbox, with no password to store.",
         "When you are signed in, your game progress (the same data listed above) is backed up to our database (Supabase) so it syncs across devices and powers the leaderboards. Your email is used only to sign you in. It is never shown publicly or sold. Your full progress, including your collection and achievements, stays private to your account; the public leaderboards only ever show the display name you choose and your scores.",
-        "You can change your display name, sign out, or permanently delete your account and all of its cloud data at any time from your Profile. Deleting your account removes your email and progress from our database right away. Until you choose to sign in, nothing is sent to a server.",
+        "You can change your display name, sign out, or permanently delete your account and all of its cloud data at any time from your Profile. Deleting your account removes your email and progress from our database right away. Until you choose to sign in, nothing is sent to a server, apart from the one-time count of an invite link (below).",
+      ],
+    },
+    {
+      title: "Invite links",
+      body: [
+        "When you are signed in, the links you share from the game carry a short code tied to your account, so the game can count the friends who start playing through them.",
+        "When a browser that never played Rocket Draft opens such a link and finishes its first run or career event, it sends that code once, with a random identifier the game made for that browser, so each browser counts only once. No name, email or IP address is stored with it. The account behind the code sees only how many friends joined, never who.",
       ],
     },
     {
@@ -2298,6 +2305,12 @@ export const SHARE_UI = {
   inviteRowTitle: "Bring your friends",
   inviteRowDesc: "Send the game to your group. The Daily is the same draft for everyone, so you can compare results every day.",
   inviteButton: "Invite friends",
+  referralSignedOut: "Sign in and every friend who plays through your links counts for you.",
+  referralSignIn: "Sign in",
+  referralCount: (n: number) =>
+    n === 0 ? "No friend has played through your links yet." : n === 1 ? "1 friend played through your links." : `${n} friends played through your links.`,
+  referralGoal: (n: number, goal: number, banner: string) =>
+    n >= goal ? `${n} friends played through your links: the ${banner} banner is yours.` : `${n}/${goal} friends for the ${banner} banner.`,
 };
 
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.

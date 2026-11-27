@@ -3,8 +3,15 @@
 Atualizado em 12/11/2026, rc.51. Este é o ponto de entrada para retomar as
 pendências; não marcar como concluído apenas porque o código foi publicado.
 
-- [ ] **Banner "Party Leader" (v2.2, kit de compartilhamento): arte do Miguel
-  + decisão da contagem.** Proposta de 27/11: o banner de quem trouxe **5
+- [ ] **Aplicar `docs/sql/v2.2-referrals.sql` no Supabase de produção**
+  (Miguel). Cria `referral_codes` e `referrals` e as funções `referral_code`,
+  `claim_referral` e `my_referral_count`. Aditivo e idempotente; rollback no
+  cabeçalho do arquivo. Sem ele o jogo funciona igual e só não conta nada. Só
+  vale para o público quando a contagem (código no cliente) chegar à `main`.
+  Registrar projeto, data e resultado.
+
+- [ ] **Banner "Party Leader" (v2.2, kit de compartilhamento): arte do Miguel.**
+  Contagem decidida em 27/11: pelo servidor (DESIGN-DECISIONS #208). Proposta de 27/11: o banner de quem trouxe **5
   pessoas** para jogar (tier épico, prioridade 59, id
   `share-banner-party-leader`, arte `party-leader`). Ideia da arte para o
   arquivo de banners: o "party" do Rocket League, cinco vagas de jogador lado a
@@ -20,7 +27,10 @@ pendências; não marcar como concluído apenas porque o código foi publicado.
   mas dá para burlar jogando o próprio link em outro navegador. Ao ganhar, o
   perfil grava a marca `share-friends-5` (mesma lista sincronizada das marcas de
   run). A entrada no catálogo só entra junto com a arte (o teste de cosméticos
-  exige o arquivo).
+  exige o arquivo). Ao entrar, basta a linha
+  `banner("share-banner-party-leader", "epic", 59, { type: "run-mark", markId: "share-friends-5" }, { art: "party-leader", ... })`
+  e o nome / descrição em `COSMETICS.items` (EN e PT); a Home passa a mostrar
+  "N/5 amigos para o banner Party Leader" sozinha.
 
 - [x] **Title "Ambassador" (v2.2).** Incomum, cinza, ganho no primeiro
   compartilhamento por qualquer canal (marca `share-first`).

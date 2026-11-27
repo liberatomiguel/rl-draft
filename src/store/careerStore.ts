@@ -156,6 +156,7 @@ import {
 } from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
 import { reportingJSONStorage, reportingMigrate, reportMigration, reportSaveError } from "./persistStorage";
+import { claimPendingReferral } from "@/lib/referral";
 
 /** A popup toast mirrored from a new mail/news item (session-only). */
 export interface CareerToast {
@@ -686,7 +687,11 @@ export const useCareerStore = create<CareerStoreState>()(
         seriesAdjust: (change) => withSave((s) => userSeriesAdjustFlow(s, change)),
         seriesSub: (outId, inId) => withSave((s) => userSeriesSubFlow(s, outId, inId)),
         delegateSeries: () => withSave(delegateUserSeriesFlow),
-        completeEvent: () => withSave(finishEvent),
+        completeEvent: () => {
+          withSave(finishEvent);
+          // v2.2 share kit: a browser that came through a friend's link counts once it plays.
+          void claimPendingReferral("career");
+        },
         passUnofficial: () => withSave(declineUnofficial),
         acceptUnofficial: () =>
           withSave((s) => {

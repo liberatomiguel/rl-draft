@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { FEATURES } from "@/config/balance";
 import { useCopy, useUiLocale } from "@/content/copy";
 import { cx } from "@/lib/util";
+import { captureReferralFromLocation } from "@/lib/referral";
 import { sfx } from "@/lib/sfx";
 import { clearRunInProgress } from "@/store/lazyRunStore";
 import { useSettings } from "@/store/settingsStore";
@@ -108,6 +109,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Wire the account session once (no-op when accounts are disabled) — v1.4.
   useEffect(() => useAccountStore.getState().init(), []);
+
+  // v2.2 share kit: a friend's link (`?ref=`) on a browser that never played is
+  // kept until its first finished run or career event (lib/referral).
+  useEffect(() => captureReferralFromLocation(), []);
 
   // v2.0: count today's login and roll the mission periods once the persisted
   // profile is loaded (never on the server; idempotent per UTC day).

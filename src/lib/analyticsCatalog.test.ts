@@ -67,6 +67,7 @@ describe("the catalogue", () => {
         "quality_save_error",
         "quality_slow_advance",
         "quiz_played",
+        "referral_claimed",
         "rank_up",
         "research_invite",
         "run_abandoned",

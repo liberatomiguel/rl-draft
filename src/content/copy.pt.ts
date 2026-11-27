@@ -1343,7 +1343,14 @@ export const PT: Copy = {
         body: [
           "Você pode jogar pra sempre sem conta. O login é totalmente opcional. Se escolher entrar, é com o seu email: enviamos um código de uso único pra sua caixa de entrada, sem senha pra guardar.",
           "Quando você está logado, seu progresso de jogo (os mesmos dados listados acima) é salvo no nosso banco de dados (Supabase) pra sincronizar entre dispositivos e habilitar os rankings. Seu email é usado só pra te logar. Nunca é mostrado publicamente nem vendido. Todo o seu progresso, incluindo coleção e conquistas, fica privado na sua conta; os rankings públicos só mostram o nome de exibição que você escolher e suas pontuações.",
-          "Você pode trocar o nome de exibição, sair da conta ou excluir permanentemente a conta e todos os dados na nuvem a qualquer momento no seu Perfil. Excluir a conta remove seu email e progresso do nosso banco na hora. Até você escolher entrar, nada é enviado a um servidor.",
+          "Você pode trocar o nome de exibição, sair da conta ou excluir permanentemente a conta e todos os dados na nuvem a qualquer momento no seu Perfil. Excluir a conta remove seu email e progresso do nosso banco na hora. Até você escolher entrar, nada é enviado a um servidor, além da contagem única de um link de convite (abaixo).",
+        ],
+      },
+      {
+        title: "Links de convite",
+        body: [
+          "Quando você está logado, os links que você compartilha pelo jogo levam um código curto ligado à sua conta, para o jogo contar os amigos que começam a jogar por eles.",
+          "Quando um navegador que nunca jogou Rocket Draft abre um desses links e termina a primeira run ou o primeiro evento da carreira, ele envia esse código uma vez, com um identificador aleatório que o jogo criou para aquele navegador, para cada navegador contar uma vez só. Nenhum nome, email ou endereço IP é guardado junto. A conta dona do código vê apenas quantos amigos entraram, nunca quem.",
         ],
       },
       {
@@ -2299,6 +2306,12 @@ export const PT: Copy = {
     inviteRowTitle: "Chame os amigos",
     inviteRowDesc: "Mande o jogo para o seu grupo. O Desafio Diário é o mesmo draft para todo mundo, então dá para comparar todo dia.",
     inviteButton: "Convidar amigos",
+    referralSignedOut: "Entre na sua conta e cada amigo que jogar pelos seus links conta para você.",
+    referralSignIn: "Entrar",
+    referralCount: (n: number) =>
+      n === 0 ? "Nenhum amigo jogou pelos seus links ainda." : n === 1 ? "1 amigo jogou pelos seus links." : `${n} amigos jogaram pelos seus links.`,
+    referralGoal: (n: number, goal: number, banner: string) =>
+      n >= goal ? `${n} amigos jogaram pelos seus links: o banner ${banner} é seu.` : `${n}/${goal} amigos para o banner ${banner}.`,
   },
 
   /** T1 (v2.0): títulos da aba das páginas de URL única (sem espelho /pt). */
