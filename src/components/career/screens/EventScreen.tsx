@@ -29,6 +29,7 @@
 
 import { EventRewardsTable } from "../event/EventRewardsTable";
 import { MilestoneMoment } from "../event/MilestoneMoment";
+import { CareerShareButton } from "@/components/career/share/CareerShareButton";
 import { NowSunday } from "../hub/SundayCard";
 import { sundayAheadOf } from "@/store/careerSunday";
 import { EventBrand, eventBrandIdOf } from "../event/EventBrand";
@@ -1326,9 +1327,15 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
               </Button>
             </div>
           ) : (
-            <Button variant="primary" size="lg" className="mt-6 w-full sm:w-auto" onClick={confirm}>
-              {def.tier === "worlds" ? C.event.continueToReview : C.event.continueToHq}
-            </Button>
+            <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+              <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={confirm}>
+                {def.tier === "worlds" ? C.event.continueToReview : C.event.continueToHq}
+              </Button>
+              {/* v2.2 share kit: a title is the moment to post the club (the card counts it already). */}
+              {isChamp ? (
+                <CareerShareButton save={save} size="lg" className="w-full sm:w-auto" label={C.share.buttonTitle} pendingTitle={def.tier} />
+              ) : null}
+            </div>
           )}
         </div>
       </Panel>

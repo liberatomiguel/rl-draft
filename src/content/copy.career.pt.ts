@@ -2996,6 +2996,40 @@ export const CAREER_PT: CareerCopy = {
     defendTitle: "Defender o título",
   },
 
+  // v2.2: o cartão de compartilhamento da carreira (components/career/share).
+  share: {
+    button: "Compartilhar carreira",
+    buttonTitle: "Compartilhar o título",
+    sheetTitle: "Compartilhe a sua carreira",
+    kicker: "Road to Worlds",
+    manager: (name: string) => `Manager ${name}`,
+    meta: (region: string, season: string) => `${region} · ${season}`,
+    headlineWorlds: (n: number) => (n > 1 ? `${n}× campeões mundiais` : "Campeões mundiais"),
+    headlineMajors: (n: number) => (n > 1 ? `${n}× campeões de Major` : "Campeões de Major"),
+    headlineRegionals: (n: number) => (n > 1 ? `${n} títulos regionais` : "Campeões regionais"),
+    headlineTitles: (n: number) => (n > 1 ? `${n} títulos` : "O primeiro troféu"),
+    headlineNone: "A estrada começa",
+    sentenceTitles: (titles: number, w: number, l: number) =>
+      `${titles} ${titles === 1 ? "título" : "títulos"} até aqui, ${w}-${l} em séries.`,
+    sentenceNone: (w: number, l: number) => `${w}-${l} em séries. O primeiro troféu ainda está por vir.`,
+    shelfWorlds: "Mundiais",
+    shelfMajors: "Majors",
+    shelfRegionals: "Regionais",
+    shelfOther: "Outros títulos",
+    figSeries: "Séries",
+    figPrize: "Premiação",
+    starters: "Os três titulares",
+    coach: (name: string) => `Técnico ${name}`,
+    pitch: "Comande a sua org da RLCS",
+    textWorlds: (org: string, n: number) =>
+      `${org} ${n > 1 ? `já ganhou o Mundial ${n} vezes` : "é campeã mundial"} no Road to Worlds, o modo carreira da RLCS do Rocket Draft. Monte a sua org do zero:`,
+    textTitles: (org: string, n: number) =>
+      `${org}: ${n} ${n === 1 ? "título" : "títulos"} até aqui no Road to Worlds, o modo carreira da RLCS do Rocket Draft. Comande a sua org:`,
+    textNone: (org: string) =>
+      `Estou comandando a ${org} no Road to Worlds, o modo carreira da RLCS do Rocket Draft. Monte a sua org e me encontre no Mundial:`,
+    hint: "O link abre o Road to Worlds. O seu save fica neste aparelho.",
+  },
+
   cloud: {
     synced: (when: string) => `Salvo na sua conta · ${when}`,
     pending: "Alterações aguardando para serem salvas na sua conta",

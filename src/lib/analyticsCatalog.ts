@@ -204,6 +204,20 @@ export const EVENT_CATALOG = {
     /** The link was made on another BALANCE_VERSION (the offers may differ). */
     staleVersion: "boolean?",
   }),
+  /**
+   * Share kit (v2.2, `components/share/ShareSheet`): something left the game
+   * through a share sheet. `surface` = run | daily | duel | career | invite;
+   * `channel` = native | whatsapp | x | reddit | telegram | copyImage |
+   * copyText | download; `format` = post | story (absent for a link-only
+   * share). One event per action the player took, never per sheet opened. The
+   * visit it brings back carries utm_medium=share and utm_campaign=<surface>.
+   */
+  content_shared: spec("shared", "critical", {
+    surface: "string",
+    channel: "string",
+    format: "string?",
+    gameMode: "string",
+  }),
   /** The daily quiz ended (solved or out of guesses). Clues shown = attempts − 1. */
   quiz_played: spec("draft", "standard", {
     solved: "boolean",

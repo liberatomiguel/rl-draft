@@ -28,6 +28,13 @@
   running (no full check of the board, real-organisation and endless screens
   nor of the Pro's match, gala and card); per-season circuit formats were
   judged unsafe and are not built.
+- **Share kit (27/11/2026, on staging with rc.6, branch `claude/share-boost`):**
+  one share sheet for runs, the Daily, duels, Road to Worlds careers and an
+  invitation; images in Post (1200 x 630) and Story (1080 x 1920) drawn in the
+  game's material; WhatsApp, X, Reddit, Telegram, copy image, native share;
+  "With friends" on the Home (duel in one click, invite). Event
+  `content_shared`; links carry `utm_medium=share`. Decisions #202 to #206.
+  Not checked on a physical phone (native share sheet, Instagram story).
 - **rc.6 (24/11/2026)** below it, integration of five lines on top of
   rc.5 (`3914518`, the phone redesign):
   - **Phone redesign (rc.5):** every screen has its own layout under 640px

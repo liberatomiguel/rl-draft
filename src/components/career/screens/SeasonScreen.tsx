@@ -23,6 +23,7 @@ import { ResearchInvite } from "@/components/ResearchInvite";
 import { CAREER_SEASONS } from "@/config/balance";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
+import { CareerShareButton } from "@/components/career/share/CareerShareButton";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -413,19 +414,24 @@ export function SeasonScreen() {
             >
               {C.ceremonies.retire}
             </Button>
+            {/* v2.2 share kit: the season's close is the moment to post the club. */}
+            {!isInsolvent ? <CareerShareButton save={save} label={wonWorlds ? C.share.buttonTitle : undefined} /> : null}
           </>
         ) : (
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={blocked}
-            onClick={() => {
-              continueToNextSeason();
-              router.push("/career");
-            }}
-          >
-            {C.ceremonies.rolloverCta} · {seasonLabelFor(save.clock.seasonIndex + 1)}
-          </Button>
+          <>
+            <Button
+              variant="primary"
+              size="lg"
+              disabled={blocked}
+              onClick={() => {
+                continueToNextSeason();
+                router.push("/career");
+              }}
+            >
+              {C.ceremonies.rolloverCta} · {seasonLabelFor(save.clock.seasonIndex + 1)}
+            </Button>
+            <CareerShareButton save={save} size="lg" />
+          </>
         )}
       </div>
 

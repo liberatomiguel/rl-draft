@@ -3022,6 +3022,40 @@ export const CAREER_EN = {
     defendTitle: "Defend the title",
   },
 
+  // v2.2 share kit: the career's share card (components/career/share).
+  share: {
+    button: "Share career",
+    buttonTitle: "Share the title",
+    sheetTitle: "Share your career",
+    kicker: "Road to Worlds",
+    manager: (name: string) => `Manager ${name}`,
+    meta: (region: string, season: string) => `${region} · ${season}`,
+    headlineWorlds: (n: number) => (n > 1 ? `${n}× World champions` : "World champions"),
+    headlineMajors: (n: number) => (n > 1 ? `${n}× Major champions` : "Major champions"),
+    headlineRegionals: (n: number) => (n > 1 ? `${n} regional titles` : "Regional champions"),
+    headlineTitles: (n: number) => (n > 1 ? `${n} titles` : "First silverware"),
+    headlineNone: "The road begins",
+    sentenceTitles: (titles: number, w: number, l: number) =>
+      `${titles} ${titles === 1 ? "title" : "titles"} so far, ${w}-${l} in series.`,
+    sentenceNone: (w: number, l: number) => `${w}-${l} in series. The first trophy is still out there.`,
+    shelfWorlds: "Worlds",
+    shelfMajors: "Majors",
+    shelfRegionals: "Regionals",
+    shelfOther: "Other titles",
+    figSeries: "Series",
+    figPrize: "Prize money",
+    starters: "Starting three",
+    coach: (name: string) => `Coach ${name}`,
+    pitch: "Run your own RLCS org",
+    textWorlds: (org: string, n: number) =>
+      `${org} ${n > 1 ? `have won the Worlds ${n} times` : "are world champions"} in Road to Worlds, the RLCS career mode on Rocket Draft. Build your own org from nothing:`,
+    textTitles: (org: string, n: number) =>
+      `${org}: ${n} ${n === 1 ? "title" : "titles"} so far in Road to Worlds, the RLCS career mode on Rocket Draft. Run your own org:`,
+    textNone: (org: string) =>
+      `I'm running ${org} in Road to Worlds, the RLCS career mode on Rocket Draft. Build your own org and meet me at the Worlds:`,
+    hint: "The link opens Road to Worlds. Your save stays on this device.",
+  },
+
   cloud: {
     synced: (when: string) => `Saved in your account · ${when}`,
     pending: "Changes waiting to be saved in your account",

@@ -45,6 +45,7 @@ import { OperationsSummary } from "@/components/career/finances/Operations";
 import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserOrgMark } from "@/components/career/OrgMark";
+import { CareerShareButton } from "@/components/career/share/CareerShareButton";
 import { unlockTrack, useCareerSave, userStars } from "@/components/career/careerUi";
 
 // ---------------------------------------------------------------------------
@@ -229,6 +230,8 @@ export function ClubScreen() {
               {/* rc.36 (POL-02, Miguel on rc.35): the stars only — no "0.5-star org" text (its words stay the stars' accessible name). */}
               <TeamStars stars={stars} size="md" label={copy.club.starLabel(stars)} />
             </div>
+            {/* v2.2 share kit: the club's card, post or story. */}
+            <CareerShareButton save={save} size="sm" className="mt-4" />
           </div>
         </div>
         <dl
