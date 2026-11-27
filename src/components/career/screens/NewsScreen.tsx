@@ -30,6 +30,7 @@ import { formatDateTiny } from "@/components/career/dateText";
 import { resolveMail } from "@/components/career/news/newsText";
 import { withMoneyParams } from "@/components/career/hub/hubShared";
 import { LockerTalkAnswers } from "@/components/career/locker/LockerTalkAnswers"; // v2.3 LOCKER
+import { MediaOfferAnswers } from "@/components/career/media/MediaOfferAnswers"; // v2.3 MEDIA
 import { FanFeedView } from "@/components/career/feed/FanFeedView"; // v2.3 UI
 import { FEATURES } from "@/config/balance"; // v2.3 UI
 
@@ -307,6 +308,7 @@ function MailReader({ item, C, D, currentSeason }: { item: MailItem; C: CareerCo
         <p className="mt-4 max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
       ) : null}
       <LockerTalkAnswers item={item} C={C} /> {/* v2.3 LOCKER */}
+      <MediaOfferAnswers item={item} C={C} /> {/* v2.3 MEDIA */}
       {item.linkTo ? (
         <Button variant="secondary" className="mt-5" onClick={() => router.push(item.linkTo!)}>
           {C.mail.open}

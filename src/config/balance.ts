@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 54; // v2.3 wave 1: 53 -> 54, only because CAREER_FEED and CAREER_LOCKER joined the export (no gameplay number moves)
+export const BALANCE_VERSION = 55; // v2.3 wave 2 MEDIA: 54 -> 55, only because CAREER_MEDIA joined the export (no gameplay number moves)
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5444,6 +5444,8 @@ export const FEATURES = {
 
   /** v2.3 LOCKER: player morale, talks and promises (CAREER_LOCKER, engine/career/lockerRoom.ts). Off = no save field, no effect. Staging only; probes: NEXT_PUBLIC_LOCKER_ROOM=1. */
   lockerRoom: STAGING_BUILD || process.env.NEXT_PUBLIC_LOCKER_ROOM === "1",
+  /** v2.3 MEDIA: media days (CAREER_MEDIA, engine/career/mediaDays.ts). Off = no save field, no effect. Staging only; probes: NEXT_PUBLIC_MEDIA_DAYS=1. */
+  mediaDays: STAGING_BUILD || process.env.NEXT_PUBLIC_MEDIA_DAYS === "1", // v2.3 MEDIA
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
@@ -5584,3 +5586,5 @@ export const CAREER_PRO_PLAN = { digestWeeks: 4 } as const;
 export * from "./balance.fanFeed"; // v2.3 FEED
 
 export * from "./balance.lockerRoom"; // v2.3 LOCKER
+
+export * from "./balance.mediaDays"; // v2.3 MEDIA

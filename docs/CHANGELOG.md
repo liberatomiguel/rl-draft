@@ -46,6 +46,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [v2.3.0-dev, front MEDIA] — 2026-11-27 · Media days: a brand pays for a named player to be away a few days (branch v23/media-days, FEATURES.mediaDays, staging only)
+
+### Added
+- Media days (R205–R209, `engine/career/mediaDays.ts`, tunables in `config/balance.mediaDays.ts` as `CAREER_MEDIA`, store side `store/mediaDaysFlow.ts`). On a weekly tick a seeded roll may bring an offer: a fictional brand, a named player, 2 to 4 days, cash. One optional save field, `mediaDays`.
+- The offer is inbox mail stating the dates, the cash and the event(s) he would miss. It never holds the clock and lapses as declined the day before the first away day. `MediaOfferAnswers` (accept, decline) is the minimum the reader needs; **not mounted and not seen in a browser** (the one line to mount it is in `docs/handoff-2.3/MEDIA.md`).
+- Accepting books the cash once, on the ledger line "Media day" (new ledger kind `mediaDay`, brand as the reference) on the first away day, and rules the player out of a committed event inside the days through the existing absence system (`pendingUnavailability`, new reason `media`).
+- A club is never offered a date that leaves it without three players for one of its events (a starter's seat needs a registered reserve).
+- With the locker room on, sending the same player again inside six weeks costs him 6 morale (new reason `mediaFatigue`, shown in the mood mail and his last change; the offer warns about it).
+- A bank of 15 fictional brands (parodies) in `copy.career.media.en.ts` / `.pt.ts`, spread into the career copy as `media`; a test checks it against the real names it plays on.
+
+### Changed
+- `FEATURES.mediaDays` (staging build or `NEXT_PUBLIC_MEDIA_DAYS=1`). Off: nothing runs and nothing is written; a six-week walk is byte-identical with and without the hook.
+- `lockerRoom.ts` gains `nudgeMorale` and the reason `mediaFatigue`; `absenceReasons` and the ledger labels gain `media` / `mediaDay`.
+
+### Balance
+- BALANCE_VERSION 55: the new `CAREER_MEDIA` group only; no existing gameplay number moves. The cash is one week of the sponsor tier the reputation reaches (`tierValuePerWeek`) x 0.8 / 1 / 1.2 for 2 / 3 / 4 days, +/- 15 %. **Not measured in a battery.**
+
+---
+
 ## [v2.3.0-dev, front LOCKER] — 2026-11-27 · The locker room: player morale, talks and promises (branch v23/locker-room, FEATURES.lockerRoom, staging only)
 
 ### Added

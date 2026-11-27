@@ -54,7 +54,8 @@ export type MoraleReason =
   | "refused"
   | "agreedSale"
   | "settling"
-  | "inherited";
+  | "inherited"
+  | "mediaFatigue"; // v2.3 MEDIA
 
 export interface LockerDate {
   seasonIndex: number;
@@ -559,6 +560,23 @@ export function answerLockerTalk(
   const talk = step.st.talks.find((t) => t.id === talkId)!;
   const effect = applyAnswer(step, talk, answer, ctx.squad);
   return { ...step.finish(), effect };
+}
+
+/**
+ * v2.3 MEDIA (M4): move one player's morale by `delta` for a reason the mood
+ * mail and his `last` change show (a media day repeated inside the fatigue
+ * window). Pure; the input state is cloned. A change of mood becomes a note.
+ */
+export function nudgeMorale(
+  input: LockerRoomState,
+  ctx: { clock: LockerDate; careerSeed: number },
+  playerId: string,
+  delta: number,
+  reason: MoraleReason,
+): LockerStepResult {
+  const step = new Step(structuredClone(input), ctx.clock, ctx.careerSeed);
+  step.move(playerId, delta, reason);
+  return step.finish();
 }
 
 // ---------------------------------------------------------------------------

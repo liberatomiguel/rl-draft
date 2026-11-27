@@ -12,6 +12,7 @@ import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career
 import { CAREER_FEED_PT } from "./copy.career.feed.pt"; // v2.3 FEED
 
 import { CAREER_LOCKER_PT } from "./copy.career.locker.pt"; // v2.3 LOCKER
+import { CAREER_MEDIA_PT } from "./copy.career.media.pt"; // v2.3 MEDIA
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
@@ -448,7 +449,7 @@ export const CAREER_PT: CareerCopy = {
       `Só ${n} de 3 vagas preenchidas. Assine um terceiro jogador antes de ${event}: um agente livre pode entrar hoje, com ou sem janela.`,
     // rc.39 F6 (R103): titular indisponível e sem reserva — a mesma pausa, com o texto certo.
     squadShortAbsentTitle: "Sem substituto",
-    absenceReasons: { fatigue: "excesso de carga de treino", illness: "problemas de saúde", fitness: "falta de condições físicas" },
+    absenceReasons: { fatigue: "excesso de carga de treino", illness: "problemas de saúde", fitness: "falta de condições físicas", media: "um dia de mídia" }, // v2.3 MEDIA
     squadShortAbsentBody: (player: string, event: string, reason?: string) =>
       `${player} não poderá jogar ${event} por ${reason ?? "falta de condições físicas"}. Não há um substituto para ocupar sua vaga. Contrate um substituto durante a janela de transferências ou fique fora deste campeonato.`,
     squadShortAbsentSkip: "Ficar fora deste evento",
@@ -1818,6 +1819,7 @@ export const CAREER_PT: CareerCopy = {
       sponsorFine: "Multa do patrocinador",
       boardGrant: "Verba da diretoria",
       boardBonus: "Bônus da diretoria",
+      mediaDay: "Dia de mídia", // v2.3 MEDIA
     },
     sponsors: "Patrocinadores",
     sponsorTier: (t: number) => `Nível ${t}`,
@@ -4749,4 +4751,5 @@ export const CAREER_PT: CareerCopy = {
     projectKit: (season: number, kit: string) => `Projeto, temporada ${season}: ${kitPt(kit)}.`,
   },
   locker: CAREER_LOCKER_PT, // v2.3 LOCKER
+  media: CAREER_MEDIA_PT, // v2.3 MEDIA
 };

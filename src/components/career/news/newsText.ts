@@ -236,9 +236,9 @@ export function resolveMail(item: MailItem, career: CareerCopy): ResolvedMail {
   const newsTitles = career.news.tpl as unknown as TplMap;
   const newsBodies = career.news.body as unknown as TplMap;
   // v2.2 board front: the board's mail lives in its own copy group.
-  const title = titles[item.titleKey]?.(p) ?? newsTitles[newsKey]?.(p) ?? career.board.mail.tpl[item.titleKey]?.(p) ?? career.locker.mail.tpl[item.titleKey]?.(p) /* v2.3 LOCKER */ ?? item.titleKey;
+  const title = titles[item.titleKey]?.(p) ?? newsTitles[newsKey]?.(p) ?? career.board.mail.tpl[item.titleKey]?.(p) ?? career.locker.mail.tpl[item.titleKey]?.(p) /* v2.3 LOCKER */ ?? career.media.mail.tpl[item.titleKey]?.(p) /* v2.3 MEDIA */ ?? item.titleKey;
   const bodyKey = item.bodyKey ?? item.titleKey;
-  const message = bodies[bodyKey]?.(p) ?? newsBodies[newsKey]?.(p) ?? career.board.mail.body[bodyKey]?.(p) ?? career.locker.mail.body[bodyKey]?.(p) /* v2.3 LOCKER */ ?? title;
+  const message = bodies[bodyKey]?.(p) ?? newsBodies[newsKey]?.(p) ?? career.board.mail.body[bodyKey]?.(p) ?? career.locker.mail.body[bodyKey]?.(p) /* v2.3 LOCKER */ ?? career.media.mail.body[bodyKey]?.(p) /* v2.3 MEDIA */ ?? title;
   const from =
     (career.mail.from as Record<string, string>)[item.fromKey] ?? career.mail.from.board;
   const kindLabel =
