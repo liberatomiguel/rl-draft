@@ -183,6 +183,10 @@ compartilhamento estão feias, poluídas, amontoadas. melhorar a hierarquia.
 seria legal aplicar o banner do perfil de maneira discreta na imagem, para
 deixar mais personalizada. um novo cosmético para isso talvez?"
 
-### Waiting on Miguel
-The friend duel ("jogar um draft simples não é interessante o suficiente para
-desafiar alguém"): a new concept goes to him before any build.
+### DUEL: team against team (engine in wave 1, screens in wave 2)
+The rc.6 friend duel (same seed, standings compared) is replaced; Miguel:
+"jogar um draft simples não é interessante o suficiente para desafiar alguém".
+Approved 27/11: "pode ser o time x time. seria legal um modo com por exemplo 7
+rerolls (overalls visíveis ou não), seed fixo. os jogos depois precisam ter o
+tempo, como na carreira, para ser mais emocionante. com opção de nova partida
+depois de terminar."
