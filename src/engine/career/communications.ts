@@ -10,7 +10,7 @@ type MailDraft = Omit<MailItem, "id" | "seasonIndex" | "day" | "read">;
 const PUBLIC_KEYS = new Set([
   "beat", "beatArchive", "beatPreempted", "transfer", "transferFee", "transferFa",
   "userSigned", "userSold", "userReleased", "result", "resultUser", "seasonChampion",
-  "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
+  "windowOpen", "windowClose", "windowClosing", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
   "worldsCancelled", "orgRelocates",
   // rc.6 (ORGMODE E1): an established org changes tier.
   "orgTierUp", "orgTierDown",
