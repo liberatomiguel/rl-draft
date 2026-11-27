@@ -25,6 +25,7 @@ import { raceLineOf, raceTableOf } from "@/components/career/careerUi";
 import { defaultRaceKind } from "@/components/career/hub/RaceBlock";
 import { toolboxNameOf } from "@/components/career/hub/ToolboxBlock";
 import { AppLink } from "@/components/ui/AppLink";
+import { boardGlanceNoteOf } from "@/components/career/board/BoardScreen";
 
 type Tone = "ink" | "good" | "bad" | "warn" | "sub";
 
@@ -82,6 +83,31 @@ function Cell({
         </span>
         <span className={cx("mt-1.5 block truncate text-xs", TONE[noteTone], noteTone !== "sub" && "font-semibold")}>{note}</span>
       </span>
+    </AppLink>
+  );
+}
+
+/** rc.6 (ORGMODE UI-B): the board as one figure (confidence) and its line (the plan, an ultimatum, the objective), opening the Board page. */
+function BoardRow({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const c = Math.round(save.board?.confidence ?? 0);
+  const note = boardGlanceNoteOf(save, C);
+  const tone: Tone = note.tone;
+  return (
+    <AppLink href="/career/board" className="flex min-h-16 items-center gap-3 border-b border-line px-3 py-2.5">
+      <span className="min-w-0 flex-1">
+        <span className="display block truncate text-xs font-semibold uppercase tracking-[0.06em] text-sub">
+          {save.board?.kind === "owners" ? C.board.glance.ownersTitle : C.board.glance.title}
+        </span>
+        <span className={cx("mt-1.5 block truncate text-xs", TONE[tone], tone !== "sub" && "font-semibold")}>{note.text}</span>
+      </span>
+      <span className="shrink-0 text-right leading-none">
+        <span className="display block text-xl font-bold tabular-nums text-ink">
+          {c}
+          <span className="ml-1 text-xs font-semibold text-faint">{C.board.outOf}</span>
+        </span>
+        <span className="mt-1 block text-[11px] text-faint">{C.board.band(c)}</span>
+      </span>
+      <Chevron />
     </AppLink>
   );
 }
@@ -172,6 +198,7 @@ export function HubGlance({
           className="border-b border-line"
         />
       </div>
+      {save.board ? <BoardRow save={save} C={C} /> : null}
       <AppLink href="/career/finances#career-ladder" data-tour="hub-progress" className="flex min-h-12 items-center gap-3 px-3 py-2.5">
         <span className="min-w-0 flex-1">
           <span className="kicker block">{L.title} · {L.rep(rep)}</span>

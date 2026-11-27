@@ -18,7 +18,7 @@ import { UserOrgMark } from "@/components/career/OrgMark";
 import { Button } from "@/components/ui/Button";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { takeoverViewOf } from "@/store/takeoverPreview";
-import { briefLineOf } from "./briefLine";
+import { briefLinesOf } from "@/components/career/board/briefLines";
 
 export function ArrivalSplash({ onDone }: { onDone: () => void }) {
   const C = useCareerCopy();
@@ -34,7 +34,7 @@ export function ArrivalSplash({ onDone }: { onDone: () => void }) {
 
   const view = takeoverViewOf(save);
   const plan = view.proposed;
-  const brief = briefLineOf(C, view.brief);
+  const brief = briefLinesOf(C, view.brief, save.identity.orgName);
   const id = save.identity;
 
   return createPortal(
@@ -57,7 +57,7 @@ export function ArrivalSplash({ onDone }: { onDone: () => void }) {
         {plan || brief ? (
           <div className="rise-in mt-6 max-w-xl" style={{ animationDelay: "0.45s" }}>
             <p className="text-xs text-sub">{S.ask}</p>
-            {brief ? <p className="mt-1.5 text-[15px] leading-snug text-ink">{brief}</p> : null}
+            {brief ? <p className="mt-1.5 text-[15px] leading-snug text-ink">{brief.reason}</p> : null}
             {plan ? (
               <p className="mt-1.5 text-[15px] leading-snug text-ink">{S.askLine(goalText(C, plan.objective), C.board.bandWord(plan.band))}</p>
             ) : null}

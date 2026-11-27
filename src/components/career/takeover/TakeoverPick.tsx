@@ -42,7 +42,7 @@ import { useCareerStore } from "@/store/careerStore";
 import type { CreateCareerInput } from "@/store/careerFlow";
 import { takeoverPreviewOf, type TakeoverPreview } from "@/store/takeoverPreview";
 import { ArrivalSplash } from "./ArrivalSplash";
-import { briefLineOf } from "./briefLine";
+import { briefLinesOf } from "@/components/career/board/briefLines";
 
 const REGIONS: Region[] = ["EU", "NA", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const TIERS: Stature[] = ["elite", "contender", "mid", "underdog"];
@@ -164,7 +164,7 @@ function Dossier({
   const plan = preview.proposed;
   const ceiling = preview.wageCeiling;
   const over = ceiling !== null && preview.weekWages > ceiling;
-  const brief = briefLineOf(C, preview.brief);
+  const brief = briefLinesOf(C, preview.brief, c.name);
   const itemNames = [
     ...preview.gear.map((g) => C.finances.gear[g]),
   ];
@@ -241,7 +241,7 @@ function Dossier({
 
       {/* What the board expects: the proposed plan's objective is the sentence that matters. */}
       <h4 className="card-title mt-7">{D.board}</h4>
-      {brief ? <p className="mt-2 text-sm text-ink">{brief}</p> : null}
+      {brief ? <p className="mt-2 text-sm text-ink">{brief.reason}</p> : null}
       {plan ? (
         <>
           <p className="display mt-3 text-2xl uppercase leading-tight text-ink">{goalText(C, plan.objective)}</p>
