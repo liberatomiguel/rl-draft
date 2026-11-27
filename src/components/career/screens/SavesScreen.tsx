@@ -11,6 +11,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
+import { FEATURES } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
@@ -317,9 +318,10 @@ function EmptySlot({
           </svg>
         </span>
         <span className="display text-base font-bold uppercase tracking-wide text-ink">
-          {C.saves.empty}
+          {/* rc.6 (UI-A): with the takeover on, the slot opens the door (two ways in). */}
+          {FEATURES.realOrgStart ? C.saves.newCareer : C.saves.empty}
         </span>
-        <span className="text-xs text-sub">{C.wizard.title}</span>
+        <span className="text-xs text-sub">{FEATURES.realOrgStart ? C.takeover.door.savesHint : C.wizard.title}</span>
       </button>
       {cloud ? <CloudStatusLine cloud={cloud} occupied={false} /> : null}
       <input

@@ -43,6 +43,8 @@ const ALLOWED = new Set([
   "components/career/screens/WizardScreen.tsx",
   "components/career/wizard/CrestStep.tsx",
   "components/career/wizard/FoundingSplash.tsx",
+  // The door's art: the crest builder's own crests, not the player's.
+  "components/career/takeover/WayInDoor.tsx",
 ]);
 
 function walk(dir: string, out: string[] = []): string[] {

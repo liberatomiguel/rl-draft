@@ -173,33 +173,43 @@ function EmptyRow({ href, icon, text, hint }: { href: string; icon: React.ReactN
   );
 }
 
-function SquadCard({
+/**
+ * A squad card (HQ). rc.6 (UI-A): exported, and a card with no `onOpen` is a
+ * plain face (the takeover's dossier and arrival show the org's starters with
+ * the game's own card, read from the save the takeover creates).
+ */
+export function SquadCard({
   save,
   p,
   C,
-  isNew,
+  isNew = false,
   onOpen,
+  className,
 }: {
   save: CareerSave;
   p: SquadPlayer;
   C: CareerCopy;
-  isNew: boolean;
-  onOpen: () => void;
+  isNew?: boolean;
+  onOpen?: () => void;
+  className?: string;
 }) {
   const eta = squadTrainingEta(save, p);
   const phase = agePhase(save, p);
   const band = potBandOfSquad(save, p);
   const ovr = Math.round(p.overall);
   const { text: contract, warns } = contractLabelOf(save, p, C);
+  const Shell: React.ElementType = onOpen ? "button" : "div";
   return (
-    <button
-      type="button"
+    <Shell
+      type={onOpen ? "button" : undefined}
       onClick={onOpen}
-      aria-label={`${p.name} · ${ovr}`}
+      aria-label={onOpen ? `${p.name} · ${ovr}` : undefined}
       className={cx(
-        "card-frame flex min-h-60 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5",
+        "card-frame flex min-h-60 min-w-0 flex-col p-3 text-left transition-transform duration-200",
+        onOpen && "hover:-translate-y-0.5",
         `card-${baseRarityOf(ovr)}`,
         "mobile-squad-card",
+        className,
       )}
     >
       <span className="relative flex w-16 shrink-0 flex-col items-start justify-between gap-2 sm:w-full sm:flex-row sm:gap-1">
@@ -242,7 +252,7 @@ function SquadCard({
           </span>
         </span>
       </span>
-    </button>
+    </Shell>
   );
 }
 
