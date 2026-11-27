@@ -162,7 +162,7 @@ function MissionList({ slot, period, dense }: { slot: MissionSlotState; period: 
               </span>
               <span className="display shrink-0 text-xs font-bold text-orange-bright">{M.xp(MISSIONS[period].xp[def.tier])}</span>
             </div>
-            {!dense ? <p className="mt-0.5 text-[11px] text-faint">{item.desc}</p> : null}
+            {!dense && item.desc ? <p className="mt-0.5 text-[11px] text-faint">{item.desc}</p> : null}
             <div className="mt-1.5 flex items-center gap-2">
               <ProgressBar value={progress / def.target} tone={done ? "good" : "blue"} className="h-1.5 flex-1" />
               <span className="text-[10px] font-semibold text-faint">{M.progress(progress, def.target)}</span>

@@ -261,8 +261,7 @@ export default function ProfilePage() {
               top already says the rank and how far the next one is. */}
           <PhoneFold label={P.seasonTrack}>
             <Panel strong className="p-4 sm:p-5">
-              <h3 className="phone-fold-head display text-lg uppercase leading-none text-ink">{P.seasonTrack}</h3>
-              <p className="mb-4 mt-1.5 text-sm leading-snug text-sub">{P.seasonTrackHint}</p>
+              <h3 className="phone-fold-head card-title mb-4">{P.seasonTrack}</h3>
               <SeasonRankTrack xp={profile.xp} peakRankId={profile.season.peakRankId} />
             </Panel>
           </PhoneFold>
