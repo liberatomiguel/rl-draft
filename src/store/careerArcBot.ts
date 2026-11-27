@@ -805,7 +805,13 @@ function mandateMarket(save: CareerSave, policy: ArcPolicy, t: Tally, pool: Cand
   }
   if (!out || keep.has(out.id) || !list.length) return save;
   const leaving = out;
-  const c = list.find((x) => affordable(save, x.cost + severanceOf(leaving), x.salaryPerSplit - leaving.salaryPerSplit, policy));
+  // The board's ask never sinks the books: the move keeps eight weeks of payroll and a weekly net at or above zero.
+  const safe = (x: Candidate) => {
+    const stmt = statementOf(save);
+    const cost = x.cost + severanceOf(leaving);
+    return save.finances.balance - cost >= 8 * stmt.payroll && stmt.net - weeklyOf(x.salaryPerSplit - leaving.salaryPerSplit) >= 0;
+  };
+  const c = list.find((x) => safe(x) && affordable(save, x.cost + severanceOf(leaving), x.salaryPerSplit - leaving.salaryPerSplit, policy));
   if (!c) return save;
   const released = releasePlayerFlow(save, leaving.id);
   if (released.error) return save;
