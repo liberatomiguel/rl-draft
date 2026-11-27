@@ -46,6 +46,9 @@ with the root cause — that section doubles as the project's bugfix log.
 ### Added
 - **Duel front, engine (`rc9/duel`, #225-#229):** the friend duel becomes team against team. New `engine/duelRules.ts`, `duelDraft.ts`, `duelMatch.ts`, `duelLink.ts`, `duelViews.ts` (+ `duelTestKit.ts` for tests) and `DUEL_MATCH` in balance: rules the challenger sets (mode, rerolls 0/3/7, overalls, region, seed), boards that depend only on (seed, slot, board index), a best-of-7 on the game's own series engine with a clock timeline and running team stats per game, format-2 links (challenge and reply), `duelRematch` and the view functions. Copy group `DUEL_MATCH_UI` (EN/PT). The old standings duel (`engine/duel.ts` and its screens) is untouched and deprecated until the screens are rebuilt.
 
+### Fixed
+- **BUGS front: no live defect found among the five survey reports.** The sponsor goal that read as reset or out of reach was fixed in v2.0.34 (root cause there: `rolloverToNextSeason` emptied the results a contract goal counts). New regression over every signing week (`sponsorDeals.test.ts`). Challenge resets replaying the same teams is intended (fixed seed).
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.
