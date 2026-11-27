@@ -10,7 +10,34 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [Unreleased: 2.2 ORGMODE 2027, front MANDATE] — 2026-11-27 · The board's mandate (branch `v22/mandate`)
+## [2.2.0-rc.7] — 2026-11-27 · Take over an organisation in RLCS 2027, under the board's mandate (staging)
+
+Miguel on rc.6 (27/11): the takeover started in 2020 with few orgs and not the ones people want, it reused the founded club's progression, and it let the player choose his goals. This rc is the second pass, stages 1 and 2 of `docs/handoff-2.2/ORGMODE-2027-SPEC.md`: the two fronts below (ERA, MANDATE), merged with the share kit, plus what the integration's browser pass found. Founding a club is unchanged. BALANCE_VERSION 55. Decisions R173 to R180.
+
+### Changed (integration)
+- **A real player's decline never starts before 24 to 27 in a 2027 world** (R180, `lateArcPeakOf`, `CAREER_ERA.longCareers.declineFromAgeWeights`).
+- **The mandate asks for a signing only when it would improve the three.** With every starter at or over the tier's capped bar the board asks to keep the core.
+- **A takeover adds no generic team where the region stays at its floor without the org** (EU and NA in RLCS 2027).
+- **The sponsor's deal is a house problem only 56 days from its end** (`issues.sponsorEndingDays`).
+- The pick screen names the season ("as they stand in RLCS 2027") and no longer promises three plans under the mandate.
+
+### Fixed
+- **Stars of 21 to 23 began RLCS 2027 "in decline".** Root cause: a real player's arc dates his peak by his best dataset card; with the dataset ending at the start, that is only his latest card, and R175 took every real player off his cards. 19 of the 36 real players rated 88+ started past their plateau.
+- **Gentle Mates (96 / 95 / 94) was asked to "sign a starter of 93 or better".** Root cause: at high demand the default squad goal was a signing, and the bar's cap per tier sat under the weakest starter.
+- **A takeover in Europe put a generic team in the taken org's seat** although the region has 24 real orgs. Root cause: `takeOrgSeat` always refilled the seat, a rule written for regions of exactly 16.
+- **The sponsor signed on day one showed as "the sponsorship is ending".** Root cause: the issue compared seasons only, and a one-season deal ends in the season it is signed.
+- **The owner's welcome said "played 1 seasons, the first in RLCS 2027".** Root cause: one sentence for every count; an org with one season now reads "new to the RLCS".
+
+### Measured
+- Suite green; `P1_SOFT` 0 findings (a 2027 takeover in NA, EU, SAM and MENA, autopilot and tuned, 7 seasons; founded SAM and NA, 7 seasons); `BOARD_SOFT` 2 / 2 at 2020 and at 2027.
+- The fronts' own numbers (below and in their handoffs) predate the integration changes.
+
+### Not verified
+- The R175 shares (active after 3, 6, 8 seasons; real players in the top 30) and the mandate's met rates were not re-measured after R180 and the signing-goal change.
+- The economy of a 2027 takeover (elite and contender end season 3 near $2M; money reads the era, R174) and the takeover's title chances in the stronger 2027 world.
+- `?era=N` exists only in the staging build (not seen on the dev server); the review and the season-2 pop-up in a played game; a physical phone, Safari.
+
+## [2.2.0-rc.7 · front MANDATE] — 2026-11-27 · The board's mandate
 
 Miguel's brief of 27/11: taking over an org, the player does not choose his goals; he is told the demand level and receives one pop-up with his goals and what he gains or loses, money, signings and classification, by mail too, with a welcome mail. Spec: `docs/handoff-2.2/ORGMODE-2027-SPEC.md` (stage 2). Handoff: `ORGMODE-2027-MANDATE.md`. Decisions R177 to R179. BALANCE_VERSION 54.
 
@@ -28,7 +55,8 @@ Miguel's brief of 27/11: taking over an org, the player does not choose his goal
 
 ### Balance
 - `CAREER_BOARD.mandate` (demand, terms, issue thresholds, the money and squad goals' figures). BALANCE_VERSION 53 → 54.
-## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
+
+## [2.2.0-rc.7 · front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027
 
 ### Added
 - Start era (R173): `startSeasonIndex` on the save (optional), `eraStart` on the world, `engine/career/era.ts` (`careerSeasonOf`, `clampStartEra`, `retirementTableOf`, `takeoverStartEraFor`).
