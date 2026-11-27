@@ -10,6 +10,12 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.3.0-dev]
+
+### Fixed
+
+- A batched Skip or the autoplay sailed past the close of a transfer window with no stop and no notice. Root cause: `isStopState` and `CareerAutopilot` only knew the Monday a window OPENS; nothing marked the Monday its last week begins, and the only warning was the passive "closes in N days" on two screens. Now both stop once on that Monday (`isWindowLastWeekStart`, never a clock hold) and a "Transfer window closes in 6 days" news item with a body says what lapses (R200).
+
 ## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
 
 ### Added

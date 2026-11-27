@@ -2352,6 +2352,7 @@ export const CAREER_PT: CareerCopy = {
         `Semana de scrims (${({ easy: "fácil", even: "equilibrado", hard: "difícil" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,
       windowOpen: () => `Janela de transferências aberta: os telefones ligados`,
       windowClose: () => `Janela fechada. Os elencos são o que são.`,
+      windowClosing: (p: Record<string, string | number>) => `A janela de transferências fecha em ${p.n} dias`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas pelas regiões`,
       debtCleared: () => `Empréstimo emergencial quitado: a org anda livre`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} anuncia parceria com ${p.name}`,
@@ -2515,6 +2516,7 @@ export const CAREER_PT: CareerCopy = {
         `A idade cobra a mecânica primeiro. ${p.player} está adaptando o próprio jogo: a experiência segue pagando.`,
       windowOpen: () =>
         `Agentes atendendo, taxas circulando, elencos destravados. Negócios resolvem com o passar dos dias; a janela não espera.`,
+      windowClosing: () => `Última semana da janela. Propostas de troca sem resposta e jogadores no mercado caducam quando ela fechar; contrate, venda ou retire antes disso.`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) =>
         `${p.n} trocas registradas antes da janela fechar. O plantão completo, taxas, agentes livres, todas as regiões, está no QG.`,
       debtCleared: () =>

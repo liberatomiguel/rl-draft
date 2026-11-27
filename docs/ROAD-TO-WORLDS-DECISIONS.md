@@ -2820,3 +2820,9 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 
 - **Decidido:** a tela de escolha monta o mundo em `CAREER_ERA.takeoverDefaultStart` (6); no build de staging `?era=N` (0–6) troca a era para teste até existir o seletor (etapa 4). Org que volta é marcada no dossiê ("De volta, vista pela última vez em RLCS 2026"). O técnico de uma org na onda de 2027 é o da lineup de 2027.
 - **Não feito:** as telas da diretoria (contrato "até a temporada N", registro "S7 · W3") ainda mostram o índice absoluto +1; é a UI do front MANDATE.
+
+## R200 — 27 de novembro de 2026: o Skip e o autoplay param na última semana da janela (v2.3.0-dev)
+
+- **Decidido:** na segunda-feira em que uma janela de transferências entra na última semana, o Avançar em lote para uma vez (como a abertura da janela, protegido por `day !== startedAtDay`, então o segundo toque segue) e o autoplay também. É parada do lote, nunca trava do relógio. Nessa segunda sai uma notícia "A janela de transferências fecha em N dias" (chave `windowClosing`, pública) com corpo dizendo o que caduca (propostas sem resposta, jogadores no mercado). Predicado puro: `isWindowLastWeekStart(day)` em `calendar.ts`.
+- **Janela de uma semana (Worlds, S31):** o predicado é falso; a segunda de abertura já é a parada e não há aviso de fechamento (a opção mais simples).
+- **Não feito:** regras de expiração de lances/trocas e a contagem das telas ficam como estavam.

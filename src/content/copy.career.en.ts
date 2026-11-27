@@ -2378,6 +2378,7 @@ export const CAREER_EN = {
         `Scrim week (${({ easy: "easy", even: "even", hard: "hard" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,
       windowOpen: () => `Transfer window opens: the phones are on`,
       windowClose: () => `Window shut. Rosters are what they are.`,
+      windowClosing: (p: Record<string, string | number>) => `Transfer window closes in ${p.n} days`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves across the regions`,
       debtCleared: () => `Emergency loan repaid: the org walks free`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} announces ${p.name} partnership`,
@@ -2542,6 +2543,7 @@ export const CAREER_EN = {
         `Age comes for the mechanics first. ${p.player} is adapting his game: experience keeps paying.`,
       windowOpen: () =>
         `Agents answering, fees moving, rosters unlocked. Deals resolve as the days advance; the window won't wait.`,
+      windowClosing: () => `Last week of the window. Trade proposals still waiting for an answer and players on the market lapse when it shuts; sign, sell or withdraw before then.`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) =>
         `${p.n} moves logged before the window shut. The full wire, fees, free agents, every region, is on the HQ.`,
       debtCleared: () =>

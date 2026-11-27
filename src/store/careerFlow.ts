@@ -110,6 +110,7 @@ import {
   firstDayOfWeek,
   isTwoDayEvent,
   isWindowStartWeek,
+  isWindowLastWeekStart, // v2.3 SKIP
   isWindowWeek,
   officialEventDefsForWeek,
   worldsCancelledIn,
@@ -1394,6 +1395,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.bidsThisWindow = 0;
         save.lastBidDay = -99;
       }
+      // v2.3 SKIP (R200): the last week begins; one notice per window.
+      if (isWindowLastWeekStart(day)) pushNews(save, { type: "window", priority: 1, titleKey: "windowClosing", params: { n: windowCloseDayFor(windowIdx) - day } });
       const { world, transfers } = aiWindowMoves(save.world, {
         seasonIndex,
         windowIdx,
@@ -5247,6 +5250,8 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   ) {
     return true;
   }
+  // v2.3 SKIP (R200): a transfer window enters its last week; one stop, never a hold.
+  if (day !== startedAtDay && isWindowLastWeekStart(day)) return true;
   if (day >= DAYS_PER_SEASON) return true;
   return false;
 }
