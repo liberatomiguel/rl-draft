@@ -2889,3 +2889,34 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Treino:** fator linear 0,94 (moral 0) a 1,06 (moral 100) no ganho bruto de todo tick que lê `growthCtxOf` (treino, scrims, XP de partida); nunca no declínio, então nenhum efeito de moral baixa overall ou potencial gravado. Moral neutra não entra no contexto: o tick é o antigo bit a bit.
 - **Partida:** `CAREER_LOCKER.matchEffect` existe e vale 0; `matchMoraleEffectOf` não está ligado em lugar nenhum.
 - **Outros números:** título regional, Major ou Worlds +6 para o elenco, top 4 sem título num Major ou Worlds +3, a partir do 3º evento seguido eliminado na Swiss −2 cada, listado −10, resposta seca −5, deriva semanal de 1 em direção a 50 (não para quem está emburrado no banco). Os cinco humores cortam em 20/40/60/80. Mudança de humor vira um e-mail por motivo, com os nomes e o humor novo. **Não medido:** nenhum desses números passou por bateria.
+
+## R205 — 27 de novembro de 2026: a oferta é um e-mail com resposta, nunca segura o calendário e vence como recusada (v2.3.0-dev, MEDIA)
+
+- **O mecanismo é o do vestiário (R190):** uma oferta de dia de mídia vira e-mail (`mediaOffer`) com os botões aceitar e recusar sob a mensagem. Não é decisão da fila do relógio (`careerDecisions`), então não segura o calendário. Sem resposta, vence como recusada no dia seguinte ao prazo (o prazo é o dia antes do primeiro dia fora). Recusar e vencer mudam só o status da oferta.
+- **Os fatos vêm do save antes e depois de cada escrita** (como R192): `mediaDaysAfter(prev, next)` roda nas duas escritas da store (`withSave`, `withResult`), sem tocar em `careerFlow.ts`. Flag desligada: nada roda e nada é escrito. Ligada, `save.mediaDays` nasce na primeira oferta.
+- **Lacuna de UI, dita:** os botões (`MediaOfferAnswers`) precisam de uma linha em `NewsScreen.tsx`, arquivo que outra sessão edita agora; sem ela a oferta aparece como e-mail comum, sem botões, e vence sozinha. **Não visto em navegador.**
+
+## R206 — 27 de novembro de 2026: quando, para quem e em quais dias (v2.3.0-dev, MEDIA)
+
+- **Quando:** a cada tick semanal (uma segunda cruzada) um sorteio com semente (`careerSeed`, temporada, semana absoluta). Chance = `min(0,20; 0,03 + 0,0015 × reputação)`, vezes `1 + 0,5 × min(1, seguidores / 4000)` com o feed ligado: 3 % / 10,5 % / 18 % por semana com reputação 0 / 50 / 100. Nunca antes da semana 3, uma oferta aberta por vez, e 2 semanas de intervalo depois de cada oferta.
+- **Quem:** um jogador do elenco, sorteado com peso `overall²` (o nome mais procurado). **Dias:** 2 a 4 dias; o primeiro dia fica de 2 a 6 dias depois da segunda do sorteio; tudo dentro da mesma temporada. Até 6 tentativas de (jogador, datas); se nenhuma passa pela regra do R207, não há oferta.
+- **A marca** é um índice no banco de 15 paródias (`copy.career.media.*`); nunca uma empresa real (um teste confere contra a lista dos nomes reais parodiados).
+
+## R207 — 27 de novembro de 2026: usa o sistema de ausência existente, e o time nunca fica curto (v2.3.0-dev, MEDIA)
+
+- **O sistema existente é `pendingUnavailability`** (o de doença e fadiga: um jogador fora de um evento, com a nota que nomeia causa e jogador). Aceitar, com um evento do clube já comprometido dentro dos dias, grava `{ playerId, eventId, reason: "media" }`; o lobby, o HQ e `userTeamForEvent` já leem isso. Sem evento nos dias, não há o que vetar: o jogador só fica registrado como fora (`awayOn`) e o dinheiro entra.
+- **"Evento do clube"** = o que `userEventDefOnDay` diz que ocupa o dia, só oficiais (qualifier, regional, Major, Worlds); copas t2/t3 e formatos 1v1/2v2 não contam. Um Major ou Worlds com campo já decidido sem o clube não conta; campo ainda indefinido conta (o lado seguro).
+- **M3, `leavesEnough`:** com o jogador fora restam pelo menos 3, e se ele é titular existe reserva registrada e livre (a regra `reserveCovers`). Um evento que já tem outro ausente (a rolagem de doença) ou outra viagem marcada recusa a data. Um clube de 3 jogadores nunca recebe data com evento; datas sem evento continuam possíveis.
+- **Limite conhecido:** a rolagem de doença roda na segunda da semana do evento e pode cair depois do aceite. Se ela pega outro jogador para o mesmo evento e a viagem ainda não foi paga, a viagem é cancelada (e-mail `mediaCalledOff`, nada pago). Se vender ou liberar o jogador antes do primeiro dia, o mesmo.
+
+## R208 — 27 de novembro de 2026: o dinheiro, modesto, e o que não foi medido (v2.3.0-dev, MEDIA)
+
+- **Valor:** `tierValuePerWeek` do tier de patrocínio que a reputação alcança (os mesmos `repGate`), na temporada e dificuldade do save, que já é o ganho semanal de um patrocinador típico nessa reputação. Vezes `weeks` (1) × 0,8 / 1 / 1,2 para 2 / 3 / 4 dias, ± 15 % semeado, quantizado. Temporada 1, Normal: cerca de $750 (tier 1) a $9.350 (tier 4, 4 dias).
+- **Lançamento:** um tipo novo de lançamento, `mediaDay` ("Dia de mídia", com a marca como referência), no primeiro dia fora e uma vez só (o trecho `paid` do trip). Fica de fora do teto de renda "outra" dos inserts de propósito: não consome vaga de insert.
+- **Não medido:** nenhum número passou por bateria; só a conta contra o `tierValuePerWeek`. A oferta mostra o valor antes de aceitar; o jogador decide.
+
+## R209 — 27 de novembro de 2026: repetir o mesmo jogador cansa, só com o vestiário ligado (v2.3.0-dev, MEDIA)
+
+- **Regra:** uma segunda viagem do mesmo jogador até 6 semanas depois da primeira (contadas da semana do primeiro dia fora) tira 6 de moral dele pela API da onda 1 (`nudgeMorale`, motivo novo `mediaFatigue`: "ele foi enviado a outro dia de mídia logo depois do último"). O motivo aparece no e-mail de humor, quando o humor muda de faixa, e em `lockerRoom.players[id].last` e no log.
+- **Aviso na oferta:** a oferta já diz que repetir pesa, mas só com o vestiário ligado (sem custo, sem aviso). Com o vestiário desligado nada é escrito em `lockerRoom`.
+- **Efeito colateral aceito:** o vestiário da onda 1 conta um evento sem ele no time como "banco" (R191); um dia de mídia que o tira de um evento entra nessa conta como qualquer outra ausência.

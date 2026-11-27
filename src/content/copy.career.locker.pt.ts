@@ -39,6 +39,7 @@ const REASONS_PT: Record<string, string> = {
   agreedSale: "o clube aceitou liberá-lo",
   settling: "a poeira baixou com o tempo",
   inherited: "o técnico anterior deixou o clima pesado",
+  mediaFatigue: "ele foi enviado a outro dia de mídia logo depois do último", // v2.3 MEDIA
 };
 
 const changesOf = (p: P, moods: Record<string, string>): string =>

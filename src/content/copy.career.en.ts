@@ -13,6 +13,7 @@ import { CAREER_FEED_EN } from "./copy.career.feed.en"; // v2.3 FEED
  */
 
 import { CAREER_LOCKER_EN } from "./copy.career.locker.en"; // v2.3 LOCKER
+import { CAREER_MEDIA_EN } from "./copy.career.media.en"; // v2.3 MEDIA
 
 /** v2.2 ENDLESS: the host cities a season draws its Majors and Worlds from (indexes are stored in the save). */
 const ENDLESS_HOSTS_EN = [
@@ -470,7 +471,7 @@ export const CAREER_EN = {
       `Only ${n} of 3 seats are filled. Sign a third player before ${event}: a free agent can join today, window or not.`,
     // rc.39 F6 (R103): a starter ruled out and no reserve — the same hold, worded for it.
     squadShortAbsentTitle: "No substitute",
-    absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues" },
+    absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues", media: "a media day" }, // v2.3 MEDIA
     squadShortAbsentBody: (player: string, event: string, reason?: string) =>
       `${player} cannot play ${event} due to ${reason ?? "fitness issues"}. There is no substitute to take his place. Sign a substitute during a transfer window or sit this tournament out.`,
     squadShortAbsentSkip: "Sit this event out",
@@ -1846,6 +1847,7 @@ export const CAREER_EN = {
       // v2.2 board front: the board's seasonal budget and an objective's bonus.
       boardGrant: "Board budget",
       boardBonus: "Board bonus",
+      mediaDay: "Media day", // v2.3 MEDIA
     },
     sponsors: "Sponsors",
     sponsorTier: (t: number) => `Tier ${t}`,
@@ -4785,6 +4787,7 @@ export const CAREER_EN = {
     projectKit: (season: number, kit: string) => `Project, season ${season}: ${kitEn(kit)}.`,
   },
   locker: CAREER_LOCKER_EN, // v2.3 LOCKER
+  media: CAREER_MEDIA_EN, // v2.3 MEDIA
 };
 
 export type CareerCopy = typeof CAREER_EN;

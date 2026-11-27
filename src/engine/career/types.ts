@@ -737,7 +737,8 @@ export type LedgerKind =
   | "sponsorMilestone" // rc.34 (ECO-04): a Bold deal's milestone payment, the day its first goal is reached
   | "sponsorFine" // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
   | "boardGrant" // v2.2 board front: the board's seasonal budget (the package chosen)
-  | "boardBonus"; // v2.2 board front: an objective met
+  | "boardBonus" // v2.2 board front: an objective met
+  | "mediaDay"; // v2.3 MEDIA: a brand's media day
 
 export interface LedgerEntry {
   id: string;
@@ -1819,7 +1820,7 @@ export interface CareerSave {
    */
   soldOn?: Record<string, { seasonIndex: number; day: number }>;
   /** A starter is unavailable for this event (random event, sub steps in). */
-  pendingUnavailability: { playerId: string; eventId: string; reason?: "fatigue" | "illness" } | null;
+  pendingUnavailability: { playerId: string; eventId: string; reason?: "fatigue" | "illness" | "media" } | null; // v2.3 MEDIA: "media"
   /**
    * rc.36 (SUN-01, R88): Saturday → HQ → Sunday — the Sunday ahead and its
    * briefing (engine/career/sunday.ts). Optional, additive: absent = none.
@@ -1857,6 +1858,8 @@ export interface CareerSave {
   honorsComplete?: boolean;
   /** v2.3 FEED: the fan feed's series log, the manager's posts and followers (FEATURES.fanFeed). Optional, additive. */
   fanFeed?: import("./fanFeedTypes").FanFeedSave; // v2.3 FEED
+  /** v2.3 MEDIA: media day offers, trips and the fatigue record (FEATURES.mediaDays). Optional, additive. */
+  mediaDays?: import("./mediaDays").MediaDaysState; // v2.3 MEDIA
   /**
    * rc.37 (F1): the user's titles per season (regional, Major or Worlds),
    * counted when he wins them — the renewal title raise's window reads it
