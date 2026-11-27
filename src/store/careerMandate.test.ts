@@ -25,6 +25,8 @@ import { createCareerSave, type CreateCareerInput } from "./careerFlow";
 import { pendingDecisionsOf } from "./careerDecisions";
 import { acknowledgeMandateFlow, boardDecisionOf, mandateOf, pendingMandateOf, pendingPackageOf } from "./boardFlow";
 import { playArcCareer } from "./careerArcBot";
+import { LAST_START_ERA } from "@/engine/career/era";
+import { mandateParams } from "./boardFlow";
 
 const SEED = 4242;
 
@@ -133,4 +135,25 @@ describe("a season under the mandate", () => {
     // The next season's mandate says what last season's was.
     expect(budgetBefore).toBeGreaterThan(0);
   }, 300_000);
+});
+
+describe("a 2027 takeover (the default era)", () => {
+  it("the mandate starts on the career's first season: welcome, mail numbered season 1, amounts in the era's money, and the issues read", () => {
+    const era = LAST_START_ERA;
+    const world = computeStars(buildWorldAtCreation(SEED, era), { seasonIndex: era, careerSeed: SEED, difficulty: "normal" });
+    const choices = realOrgChoicesFor("EU", { careerSeed: SEED, seasonIndex: era, difficulty: "normal", world });
+    for (const c of choices.slice(0, 6)) {
+      const save = createCareerSave({ ...input("EU", c.ref), startSeasonIndex: era }, SEED);
+      expect(save.clock.seasonIndex).toBe(era);
+      expect(save.board!.startSeason).toBe(era);
+      const m = pendingMandateOf(save)!;
+      expect(m, c.name).not.toBeNull();
+      expect(m.seasonIndex).toBe(era);
+      expect(m.issues.length).toBeGreaterThan(0);
+      expect(m.money.amount).toBeGreaterThan(0);
+      expect(mandateParams(save, m).season).toBe(1);
+      expect(save.mail.some((x) => x.titleKey === "boardWelcome")).toBe(true);
+      for (const lang of ["en", "pt"] as const) expect(mailText(save, "boardMandate", lang).body).not.toMatch(/undefined|NaN/);
+    }
+  }, 120_000);
 });

@@ -29,6 +29,7 @@ import { seasonBudgetOf } from "@/engine/career/budget";
 import { weekOfDay } from "@/engine/career/calendar";
 import { promoteLineOf, STANDING_TIERS, standingOf } from "@/engine/career/established";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
+import { careerSeasonOf } from "@/engine/career/era";
 import type { CareerSave, SeasonGoalSpec } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -484,7 +485,9 @@ export function AlsoAsked({ save, C }: { save: CareerSave; C: CareerCopy }) {
 }
 
 /** Confidence: the large figure, the meter with its two labelled lines, the state sentence, the log. */
-export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy }) {
+export function ConfidencePanel({ board, C, save }: { board: BoardState; C: CareerCopy; save?: CareerSave }) {
+  // v2.2 MANDATE (after ERA): "S1 · W3" is the career's season, not the era index (a 2027 takeover starts at index 6).
+  const seasonNo = (s: number) => (save ? careerSeasonOf(save, s) : s) + 1;
   const L = CAREER_BOARD.confidence;
   const c = Math.round(board.confidence);
   const fill = c >= L.warn ? "bg-ink" : c >= L.ultimatum ? "bg-orange-bright" : "bg-bad";
@@ -522,7 +525,7 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
               {e.delta > 0 ? `+${e.delta}` : e.delta < 0 ? `−${Math.abs(e.delta)}` : "0"}
             </span>
             <span className="min-w-0 flex-1 leading-snug text-ink">{C.board.reasons[e.reason] ?? e.reason}</span>
-            <span className="shrink-0 text-xs tabular-nums text-faint">{C.board.logWhen(e.seasonIndex + 1, weekOfDay(e.day))}</span>
+            <span className="shrink-0 text-xs tabular-nums text-faint">{C.board.logWhen(seasonNo(e.seasonIndex), weekOfDay(e.day))}</span>
           </li>
         ))}
       </ul>
@@ -583,7 +586,7 @@ export function ManagerPanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
       <p className="mt-1 text-sm text-sub">{save.identity.managerName}</p>
       <div className="stat-trio mt-3 grid grid-cols-3 gap-4 border-t border-line pt-3">
         {[
-          { label: C.board.contractLabel, value: C.board.contractValue(m.contractUntil + 1) },
+          { label: C.board.contractLabel, value: C.board.contractValue(careerSeasonOf(save, m.contractUntil) + 1) },
           { label: C.board.reputationLabel, value: String(Math.round(m.reputation)) },
           { label: C.board.clubsLabel, value: String(clubs) },
         ].map((f) => (
@@ -597,7 +600,7 @@ export function ManagerPanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <ul className="mt-3 border-t border-line">
           {m.spells.map((s, i) => (
             <li key={i} className="flex min-h-10 items-center border-b border-line py-1.5 text-sm text-ink last:border-b-0">
-              {C.board.spell(s.orgName, s.fromSeason, s.toSeason !== undefined ? String(s.toSeason + 1) : C.board.now)}
+              {C.board.spell(s.orgName, careerSeasonOf(save, s.fromSeason), s.toSeason !== undefined ? String(careerSeasonOf(save, s.toSeason) + 1) : C.board.now)}
             </li>
           ))}
         </ul>
@@ -684,7 +687,7 @@ export function BoardTerms({ save, C }: { save: CareerSave; C: CareerCopy }) {
   if (!board) return null;
   const lines: { text: string; tone?: string }[] = [];
   if (board.freeze && board.freeze.seasonIndex === save.clock.seasonIndex) lines.push({ text: C.board.freeze, tone: "text-orange-bright" });
-  if (board.protectedUntil !== null && board.protectedUntil >= save.clock.seasonIndex) lines.push({ text: C.board.protectedUntil(board.protectedUntil + 1) });
+  if (board.protectedUntil !== null && board.protectedUntil >= save.clock.seasonIndex) lines.push({ text: C.board.protectedUntil(careerSeasonOf(save, board.protectedUntil) + 1) });
   if (Math.abs(board.budgetMult - 1) > 0.005) lines.push({ text: C.board.budgetLine(board.budgetMult) });
   if (!lines.length) return null;
   return (

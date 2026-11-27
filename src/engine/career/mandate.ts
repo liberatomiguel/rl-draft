@@ -144,7 +144,9 @@ export function orgIssuesOf(save: IssueSave, opts: { all?: boolean } = {}): OrgI
 
   // The sponsor.
   const ends = save.sponsor?.terms?.endsOn;
-  if (!save.sponsor) out.push({ kind: "noSponsor", severity: sev("noSponsor"), value: 0 });
+  // On the board's first day the sponsor desk opens with the mandate: no sponsor yet is not a problem then.
+  const deskDay = board && save.clock.seasonIndex === board.startSeason && save.clock.day <= 7;
+  if (!save.sponsor && !deskDay) out.push({ kind: "noSponsor", severity: sev("noSponsor"), value: 0 });
   else if (ends && ends.seasonIndex <= s) out.push({ kind: "sponsorEnding", severity: sev("sponsorEnding"), value: 0 });
 
   out.sort((a, b) => b.severity - a.severity || a.kind.localeCompare(b.kind));
@@ -228,7 +230,7 @@ function squadGoalFor(save: IssueSave, issues: OrgIssue[], tier: Stature, demand
   if (kind === "signStarter" && starters.length) {
     const weakest = Math.min(...starters.map((p) => p.overall));
     const cap = signCapOf(save);
-    const bar = Math.min(cap, Math.max(M.squad.tierBar[tier] ?? 80, Math.round(weakest) + M.squad.signOver));
+    const bar = Math.min(cap, M.squad.barMax[tier] ?? 99, Math.max(M.squad.tierBar[tier] ?? 80, Math.round(weakest) + M.squad.signOver));
     return { area: "squad", kind, value: bar, baselineIds: save.squad.map((p) => p.id), ...issue };
   }
   // Keep the core: the best starters stay through the season.

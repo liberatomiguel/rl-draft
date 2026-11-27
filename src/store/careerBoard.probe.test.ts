@@ -86,8 +86,12 @@ interface CalRow {
   goal?: string;
 }
 
+// v2.2 MANDATE (after ERA): BOARD_ERA=N plays the takeovers from that start era (founded clubs start at 0).
+const ERA = Number(process.env.BOARD_ERA ?? 0);
+
 function input(region: Region, difficulty: CareerDifficulty, realOrgRef?: string): CreateCareerInput {
   return {
+    ...(realOrgRef && ERA ? { startSeasonIndex: ERA } : {}),
     identity: { orgName: "Probe", abbrev: "PRB", managerName: "Bot", country: "US", region, crestId: "shield", colors: { primary: "#f97316", secondary: "#ffffff" }, buffType: "offense" },
     difficulty,
     rosterKey: "balanced",
@@ -313,8 +317,8 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     for (const diff of diffs)
       for (let k = 0; k < seeds; k++) {
         const seed = seed0 + k * 101;
-        const world = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: diff });
-        const choices = realOrgChoicesFor(region, { careerSeed: seed, seasonIndex: 0, difficulty: diff, world });
+        const world = computeStars(buildWorldAtCreation(seed, ERA), { seasonIndex: ERA, careerSeed: seed, difficulty: diff });
+        const choices = realOrgChoicesFor(region, { careerSeed: seed, seasonIndex: ERA, difficulty: diff, world });
         for (const policy of policies)
           for (const st of statures) {
             if (st === "founded") jobs.push({ region, diff, policy, seed, ref: null, stature: st });

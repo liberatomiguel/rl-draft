@@ -5407,6 +5407,8 @@ export const CAREER_BOARD = {
       /** A signing at least this far over the weakest starter, never under the tier's bar nor over its pull. */
       signOver: 2,
       tierBar: { underdog: 76, mid: 80, contender: 84, elite: 88 } as Record<string, number>,
+      /** The bar never asks more than this (a 2027 elite's weakest starter is 91-93: weakest + 2 asked for a 95). */
+      barMax: { underdog: 82, mid: 86, contender: 90, elite: 93 } as Record<string, number>,
       /** The age goal: the starters' average at or under the current one minus this. */
       ageCut: 1,
       /** The prospect's events in the starting three. */

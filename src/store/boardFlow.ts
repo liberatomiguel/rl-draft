@@ -49,6 +49,7 @@ import {
 } from "@/engine/career/mandate";
 import { goalTotalOf } from "@/engine/career/board";
 import { deliverMail, deliverNews } from "@/engine/career/communications";
+import { careerSeasonOf } from "@/engine/career/era";
 import { grantBaseNow, wageCeilingOf } from "@/engine/career/budget";
 import { applyTierChange, establishedOf, gateRepOf, standingChangeFor, structureWeeklyOf } from "@/engine/career/established";
 import { seasonYear } from "@/engine/career/development";
@@ -205,7 +206,7 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
     ...(mandate ? { mandate } : {}),
   };
   if (!mandate) {
-    mail(save, "boardPackage", { season: s + 1 });
+    mail(save, "boardPackage", { season: careerSeasonOf(save, s) + 1 });
     return;
   }
   // The season's transfer money is kept from today (the ledger tail is shorter than a season).
@@ -238,7 +239,7 @@ function welcomeMail(save: CareerSave): void {
 export function mandateParams(save: CareerSave, m: BoardMandate): Record<string, string | number> {
   const o = m.classification.objective;
   return {
-    season: m.seasonIndex + 1,
+    season: careerSeasonOf(save, m.seasonIndex) + 1,
     org: save.identity.orgName,
     demand: m.demand,
     clsKind: o.kind,
@@ -652,7 +653,7 @@ export function boardOnSeasonReview(save: CareerSave): void {
   if (c >= B.confidence.high) {
     board.budgetMult = Math.min(B.budget.max, board.budgetMult + B.budget.step);
     manager.contractUntil = Math.max(manager.contractUntil, s + 1) + B.contract.extendSeasons;
-    mail(save, "boardHighConfidence", { confidence: c, until: manager.contractUntil + 1 });
+    mail(save, "boardHighConfidence", { confidence: c, until: careerSeasonOf(save, manager.contractUntil) + 1 });
   } else if (c < B.confidence.warn) {
     board.budgetMult = Math.max(B.budget.min, board.budgetMult - B.budget.step);
   }

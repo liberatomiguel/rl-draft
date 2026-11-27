@@ -125,7 +125,7 @@ export function BoardScreen() {
           <div className="contents lg:block lg:space-y-5">
             <div className="order-2 space-y-5">
               <BoardUpgradePanel save={save} C={C} />
-              <ConfidencePanel board={board} C={C} />
+              <ConfidencePanel board={board} C={C} save={save} />
             </div>
             <div className="order-3">
               <StandingTrack save={save} C={C} />
