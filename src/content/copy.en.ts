@@ -971,6 +971,16 @@ export const STAT_LABELS: Record<string, string> = {
   clutch: "Clutch",
 };
 
+// rc9: the three-letter stat code for a compact tag ("++DEF").
+export const STAT_SHORT: Record<string, string> = {
+  offense: "OFF",
+  defense: "DEF",
+  mechanics: "MEC",
+  consistency: "CON",
+  experience: "EXP",
+  clutch: "CLU",
+};
+
 export const SPECIAL_TYPE_LABELS: Record<string, string> = {
   moment: "Moment",
   major_mvp: "Major MVP",
@@ -2354,6 +2364,7 @@ export const EN = {
   HOWTO,
   NARRATION,
   STAT_LABELS,
+  STAT_SHORT,
   SPECIAL_TYPE_LABELS,
   RARITY_LABELS,
   EFFECT_LABELS,

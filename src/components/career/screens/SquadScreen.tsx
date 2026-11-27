@@ -424,15 +424,21 @@ export function SquadScreen() {
                   className="flex-1"
                   name={save.coach.name}
                   overall={save.coach.overall}
+                  aside={
+                    // His speciality as a compact code ("++DEF"); the full words are its label.
+                    <span
+                      title={`${C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} ${save.coach.bonusLevel}`}
+                      aria-label={`${C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} ${save.coach.bonusLevel}`}
+                    >
+                      <Badge tone="blue">
+                        {save.coach.bonusLevel}
+                        {t.STAT_SHORT[save.coach.bonusType] ?? t.STAT_LABELS[save.coach.bonusType]}
+                      </Badge>
+                    </span>
+                  }
                   footer={
                     <span className="block">
-                      <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
-                        {/* His speciality as a quiet line, not a tag: the name leads the card. */}
-                        <span className="text-blue-bright">
-                          {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
-                        </span>
-                      </span>
+                      <span className="block">{wageLabel(C, save.coach.salaryPerSplit)}</span>
                       <CoachEffectLines coach={save.coach} compact className="mt-1.5" />
                     </span>
                   }

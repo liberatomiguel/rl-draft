@@ -1281,6 +1281,16 @@ export const PT: Copy = {
     clutch: "Clutch",
   },
 
+  // rc9: a sigla de três letras do atributo, para a tag compacta ("++DEF").
+  STAT_SHORT: {
+    offense: "ATQ",
+    defense: "DEF",
+    mechanics: "MEC",
+    consistency: "CON",
+    experience: "EXP",
+    clutch: "CLU",
+  },
+
   SPECIAL_TYPE_LABELS: {
     moment: "Momento",
     major_mvp: "MVP de Major",
