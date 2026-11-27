@@ -689,6 +689,22 @@ export function projectedArcOf(
   return { potential: projected, peakAge: peakAgeWithRoom(peakAge, age, projected - base) };
 }
 
+/**
+ * v2.2 ORGMODE-2027 (E3, R180): in a world built at the last era a real
+ * player's decline never starts before an age drawn per (seed, player) from
+ * CAREER_ERA.longCareers.declineFromAgeWeights. Every reader starts the
+ * decline at `peakAge + plateauYears` (the plateau is the profile's), so the
+ * view's peak age is the one lever: it moves to (that age − his plateau) when
+ * later. His dataset arc dates the peak by his best card, which past the end
+ * of the dataset is only the last thing the data saw.
+ */
+export function lateArcPeakOf(playerId: string, careerSeed: number, peakAge: number): number {
+  const weights = CAREER_ERA.longCareers.declineFromAgeWeights;
+  const ages = Object.keys(weights).map(Number).sort((a, b) => a - b);
+  const from = weightedFrom(derivedFloat(careerSeed, streams.gen("eraDecline", playerId)), ages, (a) => weights[a] ?? 0);
+  return Math.max(peakAge, from - developmentProfileOf(playerId, careerSeed).plateauYears);
+}
+
 /** v2.2 ORGMODE-2027: per start era, the best sub overall of each person in its free-agent window (memoized). */
 const eraSubAnchors = new Map<number, Map<string, number>>();
 function eraSubAnchorOf(playerId: string, start: number): number | null {
@@ -758,7 +774,10 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
   let potential = dev01 ? derivePotentialV2(playerId, ctx.careerSeed) : derivePotential(playerId, ctx.careerSeed, overall);
   let peakAge = dev01 ? developmentProfileOf(playerId, ctx.careerSeed).peakAge : derivePeakAge(playerId, ctx.careerSeed);
   // v2.2 ORGMODE-2027 (E3): past the end of the dataset a young real player's ceiling is projected.
-  if (dev01 && lastEraRulesOn(ctx.world)) ({ potential, peakAge } = projectedArcOf(playerId, ctx.careerSeed, ctx.world.eraStart!, potential, peakAge));
+  if (dev01 && lastEraRulesOn(ctx.world)) {
+    ({ potential, peakAge } = projectedArcOf(playerId, ctx.careerSeed, ctx.world.eraStart!, potential, peakAge));
+    peakAge = lateArcPeakOf(playerId, ctx.careerSeed, peakAge);
+  }
   return {
     id: playerId,
     kind: "real",

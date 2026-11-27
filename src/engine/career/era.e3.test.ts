@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_AGE, CAREER_ERA } from "@/config/balance";
-import { ageOf, deriveBirthYear, derivePotentialV2, playerViewById, retirementChanceFor } from "./development";
+import { ageOf, deriveBirthYear, derivePotentialV2, developmentPhaseOf, developmentProfileOf, playerViewById, retirementChanceFor } from "./development";
 import { LAST_START_ERA, lastEraRulesOn, retirementTableOf } from "./era";
 import { buildWorldAtCreation } from "./worldSim";
 
@@ -51,6 +51,26 @@ describe("E3 in a last-era world", () => {
     }
     expect(young).toBeGreaterThan(50);
     if (CAREER_ERA.lastEraRules) expect(raised).toBeGreaterThan(young / 2);
+  });
+
+  it("R180: no real player starts the last era past his plateau before the youngest decline age; other eras keep the dataset arc", () => {
+    if (!CAREER_ERA.lastEraRules) return;
+    const youngest = Math.min(...Object.keys(CAREER_ERA.longCareers.declineFromAgeWeights).map(Number));
+    let moved = 0;
+    for (const id of reals) {
+      const v = playerViewById(id, ctx)!;
+      const profile = developmentProfileOf(id, SEED);
+      expect(v.peakAge + profile.plateauYears, id).toBeGreaterThanOrEqual(youngest);
+      if (v.age < youngest) expect(developmentPhaseOf(v.age, { peakAge: v.peakAge, plateauYears: profile.plateauYears }), id).not.toBe("declining");
+      if (v.peakAge > profile.peakAge) moved++;
+    }
+    expect(moved).toBeGreaterThan(20);
+    // A world built at an earlier era reads the dataset arc untouched.
+    const earlier = buildWorldAtCreation(SEED, 3);
+    const eCtx = { careerSeed: SEED, seasonIndex: 3, world: earlier };
+    for (const id of Object.values(earlier.orgs).flatMap((o) => o.playerIds).filter((i) => !i.startsWith("fic:"))) {
+      expect(playerViewById(id, eCtx)!.peakAge, id).toBe(developmentProfileOf(id, SEED).peakAge);
+    }
   });
 
   it("the long window: nobody retires before 26, the season at 32 is the last", () => {

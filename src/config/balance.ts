@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 54;
+export const BALANCE_VERSION = 55;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1193,6 +1193,16 @@ export const CAREER_ERA = {
     retireMinAge: 26,
     retireMaxAge: 32,
     retirementByAge: { 26: 0.05, 27: 0.1, 28: 0.15, 29: 0.25, 30: 0.4, 31: 0.6, 32: 1 } as Record<number, number>,
+    /**
+     * R180 (integration, rc.7): in such a world a real player's decline never
+     * starts before an age drawn per career seed from these weights. His real
+     * arc dates his peak by his best card, so with the dataset ending at the
+     * start 19 of the 36 real players rated 88+ began RLCS 2027 already past
+     * their plateau (Vatira and Daniel at 21, Firstkiller at 23). His peak age
+     * moves to (this age − his plateau) when that is later; the top value
+     * minus the shortest plateau stays inside CAREER_DEV.realPeakAgeRange.
+     */
+    declineFromAgeWeights: { 24: 0.2, 25: 0.3, 26: 0.3, 27: 0.2 } as Record<number, number>,
   },
 } as const;
 

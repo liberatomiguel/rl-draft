@@ -264,7 +264,7 @@ function Dossier({
         <div className="mt-7">
           <MandateDossier m={preview.mandate} C={C} />
           <p className="mt-3 text-xs text-sub">
-            {D.grace(c.graceSeasons)}. {D.boardNote}
+            {D.grace(c.graceSeasons)}. {D.mandateNote}
           </p>
         </div>
       ) : null}
@@ -423,7 +423,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
 
   return (
     <div ref={topRef} className="mx-auto max-w-6xl scroll-mt-16 px-3 py-4 sm:px-4 sm:py-6">
-      <SectionTitle title={P.title} kicker={P.kicker} className={cx(phoneStep === "dossier" && "max-lg:hidden")} />
+      <SectionTitle title={P.title} kicker={P.kicker(seasonLabelFor(era))} className={cx(phoneStep === "dossier" && "max-lg:hidden")} />
 
       <div className={cx("mt-5 grid grid-cols-1 gap-6 lg:mt-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start", phoneStep === "dossier" && "max-lg:mt-0")}>
         {/* ---- The list (a step of its own on a phone) ---- */}
@@ -451,7 +451,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
           </div>
 
           <div ref={listRef} className="mt-4" role="radiogroup" aria-label={P.orgs}>
-            {choices.length === 0 ? <p className="py-6 text-sm text-sub">{P.empty}</p> : null}
+            {choices.length === 0 ? <p className="py-6 text-sm text-sub">{P.empty(seasonLabelFor(era))}</p> : null}
             {choices.length > 0 && choices.length < 4 ? <p className="mb-3 text-xs text-sub">{P.fewOrgs(choices.length)}</p> : null}
             {groups.map((g) => (
               <section key={g.tier} className="mb-5 last:mb-0" aria-label={C.board.stature[g.tier]}>
@@ -493,7 +493,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
               managerDefault={managerDefault}
             />
           ) : (
-            <div className="panel p-6 text-sm text-sub">{choices.length === 0 ? P.empty : P.none}</div>
+            <div className="panel p-6 text-sm text-sub">{choices.length === 0 ? P.empty(seasonLabelFor(era)) : P.none}</div>
           )}
           {full ? <p className="mt-3 text-sm text-bad">{C.takeover.door.slotsFull}</p> : null}
           <div className="sticky bottom-0 z-10 mt-4 hidden items-center justify-between gap-3 border-t border-line bg-bg py-3 lg:flex">
