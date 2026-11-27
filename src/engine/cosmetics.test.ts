@@ -69,11 +69,17 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
 
   // rc.51 (the review of 11/11): + Hypernova and Creator badges; the Staff title
   // is gone and 8 titles join; 9 banners join.
-  it("the official list: 37 badges, 45 titles (v2.0.13: + Insomniac), 27 banners", () => {
+  it("the official list: 37 badges, 46 titles (v2.0.13: + Insomniac, v2.2: + Ambassador), 27 banners", () => {
     const count = (kind: string) => COSMETICS.filter((c) => c.kind === kind).length;
     expect(count("badge")).toBe(37);
-    expect(count("title")).toBe(45);
+    expect(count("title")).toBe(46);
     expect(count("banner")).toBe(27);
+  });
+
+  it("v2.2: the first share (the `share-first` mark) earns Ambassador, and nothing else", () => {
+    const ids = (marks: string[]) => earned(facts({ careerMarks: marks })).filter((id) => id.startsWith("share-"));
+    expect(ids([])).toEqual([]);
+    expect(ids(["share-first"])).toEqual(["share-title-ambassador"]);
   });
 
   it("every challenge-perfect source points at a real challenge", () => {
