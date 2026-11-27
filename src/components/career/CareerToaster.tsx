@@ -14,7 +14,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { CAREER_NEWS } from "@/config/balance";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -33,7 +33,7 @@ const TOAST_MS = 5200;
 
 export function CareerToaster() {
   const mounted = useMounted();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const dismiss = useCareerStore(s => s.dismissToast);
   const toasts = useCareerStore((s) => s.toasts);
   if (!mounted || toasts.length === 0) return null;
@@ -54,7 +54,7 @@ export function CareerToaster() {
 }
 
 function Toast({ toast }: { toast: CareerToast }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const router = useRouter();
   const dismiss = useCareerStore((s) => s.dismissToast);
 

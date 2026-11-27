@@ -69,7 +69,8 @@ function CrestArt() {
 
 function LogoArt() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-3 sm:gap-x-4" aria-hidden>
+    // rc.6 (UI-C phone pass): one row on a phone; at 320 px the sixth logo wrapped and the window clipped both rows.
+    <div className="flex flex-nowrap items-center justify-center gap-x-2 px-2 sm:flex-wrap sm:gap-x-4 sm:gap-y-2 sm:px-3 max-[359px]:[&>*:nth-child(n+6)]:hidden" aria-hidden>
       {leadingOrgs().map((orgId) => (
         <TeamLogo key={orgId} orgId={orgId} size="md" loading="eager" className="max-sm:!h-8 max-sm:!w-8 lg:!h-12 lg:!w-12" />
       ))}

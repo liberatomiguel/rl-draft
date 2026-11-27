@@ -198,7 +198,8 @@ function OfferRow({ save, o, C, onAccept, label }: { save: CareerSave; o: JobOff
     <li className="flex min-h-16 items-center gap-3 border-b border-line py-2.5 last:border-b-0">
       {o.ref ? <OrgMark save={save} orgRef={o.ref} size="md" /> : null}
       <span className="min-w-0 flex-1">
-        <span className="display block truncate text-lg font-bold uppercase leading-none text-ink">{o.name}</span>
+        {/* rc.6 (UI-C phone pass): two lines on a phone; one truncated line left "TEAM V..." at 375 px. */}
+        <span className="display break-words text-base font-bold uppercase leading-tight text-ink line-clamp-2 sm:block sm:truncate sm:text-lg sm:leading-none">{o.name}</span>
         <span className="mt-1 block text-xs text-sub">
           <span className="font-semibold text-ink">{C.board.stature[o.stature] ?? o.stature}</span> · {o.region}
           {o.rank ? <> · {C.board.dismissed.rankLine(o.rank)}</> : null}
@@ -509,13 +510,13 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
 }
 
 /** An established org's standing: the four tiers, the marker, the next tier's line, the relegation line. */
-export function StandingTrack({ save, C }: { save: CareerSave; C: CareerCopy }) {
+export function StandingTrack({ save, C, note, className }: { save: CareerSave; C: CareerCopy; note?: string; className?: string }) {
   const st = standingOf(save);
   if (!st) return null;
   const S = C.board.standing;
   const pos = (n: number) => `${Math.max(0, Math.min(100, n))}%`;
   return (
-    <section className="panel p-4 sm:p-5">
+    <section className={cx("panel p-4 sm:p-5", className)}>
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="card-title">{S.title}</h3>
         <p className="display text-3xl font-bold leading-none tabular-nums text-ink">{st.value}</p>
@@ -544,6 +545,8 @@ export function StandingTrack({ save, C }: { save: CareerSave; C: CareerCopy }) 
         <li className="text-ink">{st.next ? S.next(S.tier[st.next.tier] ?? st.next.tier, promoteLineOf(st.next.tier)) : S.top}</li>
         {st.relegationLine !== null ? <li className="text-sub">{S.relegation(st.relegationLine)}</li> : null}
       </ul>
+      {/* rc.6 (ORGMODE UI-C): the Club page says what a promotion changes. */}
+      {note ? <p className="mt-3 border-t border-line pt-3 text-sm leading-snug text-sub">{note}</p> : null}
     </section>
   );
 }

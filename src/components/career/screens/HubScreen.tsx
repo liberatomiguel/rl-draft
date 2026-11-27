@@ -28,7 +28,7 @@ import { CareerHonorsTable } from "../CareerHonorsTable";
 import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
-import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
+import type { CareerCopy } from "@/content/careerCopy";
 import { SavesNotice } from "@/components/career/hub/SavesNotice";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
@@ -52,6 +52,9 @@ import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
 import { ToolboxBlock } from "@/components/career/hub/ToolboxBlock";
+import { OperationsBlock } from "@/components/career/hub/OperationsBlock";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
+import { establishedOf } from "@/engine/career/established";
 import { SeasonGoalBlock } from "@/components/career/hub/SeasonGoalBlock";
 import { ICON_TONE, MailKindIcon } from "../news/MailKindIcon";
 import { resolveMail } from "@/components/career/news/newsText";
@@ -74,7 +77,7 @@ type DatesCopy = CareerCopy["dates"];
 // HQ's job: show where the season stands today. The one decision made here: play or advance the day (the day card).
 export function HubScreen() {
   const copy = useCopy();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const CHEM = copy.CHEM_TIERS;
   const D = C.dates;
   const lang = useSettings((s) => s.lang);
@@ -172,7 +175,8 @@ export function HubScreen() {
 
           {/* 6 — progression + toolbox in one section (rc.35; UX-01f, 5-A, 7-A; UX-06a's unlock modal) */}
           <div data-tour="hub-progress" className={cx("order-6 max-sm:hidden", RAIL_SECTION)}>
-            <ToolboxBlock save={save} C={C} />
+            {/* rc.6 (ORGMODE UI-C): an established org runs operations; a founded club climbs the ladder. */}
+            {establishedOf(save) ? <OperationsBlock save={save} C={C} /> : <ToolboxBlock save={save} C={C} />}
           </div>
 
           {/* 7 — season goal (rc.36, UX-02: progress, deadline and the board's reasons) */}

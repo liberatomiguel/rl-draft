@@ -9,6 +9,8 @@
  * Empty slot → "Found a new org" CTA into the wizard.
  */
 
+import { establishedOf } from "@/engine/career/established";
+import type { CareerSave } from "@/engine/career/types";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { FEATURES } from "@/config/balance";
@@ -204,7 +206,8 @@ function SlotCard({
           good={meta.balance >= 0}
           bad={meta.balance < 0}
         />
-        <MetaRow label={C.common.rep} value={String(Math.round(meta.reputation))} />
+        {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing. */}
+        <MetaRow label={establishedOf({ identity: { realOrgRef: meta.realOrgRef } as CareerSave["identity"] }) ? C.orgmode.standing : C.common.rep} value={String(Math.round(meta.reputation))} />
         <MetaRow label={copy.SETUP.difficulty} value={copy.DIFFICULTY_LABELS[meta.difficulty].label} />
         <MetaRow
           label={C.saves.lastPlayed}

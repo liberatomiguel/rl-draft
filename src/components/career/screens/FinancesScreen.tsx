@@ -32,7 +32,7 @@ import {
   CAREER_SPONSOR,
   CAREER_STAFF,
 } from "@/config/balance";
-import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
+import type { CareerCopy } from "@/content/careerCopy";
 import { RESCUE_PARTNER_BRAND, sponsorBrandById } from "@/data/career/sponsors";
 import {
   bankInstalmentsLeft,
@@ -112,6 +112,9 @@ import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
 import { ladderOf, ladderRungs, type LadderRungId } from "@/engine/career/ladder";
 import { Children, isValidElement, type ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { OperationsBoard } from "@/components/career/finances/Operations";
+import { SeasonBudget } from "@/components/career/finances/SeasonBudget";
+import { useActiveCareerCopy, useOrgCareerCopy } from "@/components/career/orgCopy";
 
 type LedgerFilter = "all" | "in" | "out";
 type StepStatus = "owned" | "next" | "locked";
@@ -125,7 +128,7 @@ function errorTextFor(C: CareerCopy, key: string): string {
 }
 
 function FinanceErrorNotice({ className }: { className?: string }) {
-  const C = useCareerCopy();
+  const C = useOrgCareerCopy(useCareerSave());
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
   if (!lastError) return null;
@@ -176,7 +179,7 @@ function PayDown({
   /** rc.34: what the next breach would do — the flow's nextBreachParamsOf (a new loan, a top-up, the end). */
   next: Record<string, string | number>;
 }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const [raw, setRaw] = useState<number | null>(null);
 
   // ECO-02 (R46): the quote is what the flow settles (debtPaymentFor) — a
@@ -247,7 +250,7 @@ function AmountStepper({
   downDisabled: boolean;
   upDisabled: boolean;
 }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -289,7 +292,7 @@ function AmountStepper({
  * next instalment (min(remaining, weekly)), its date, and how many are left.
  */
 function BankSchedule({ loan, clock }: { loan: BankLoanState; clock: { seasonIndex: number; day: number } }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
   const next = nextPaydayFor(clock);
   const due = Math.min(loan.remaining, loan.weeklyPayment);
@@ -329,7 +332,7 @@ function BankLoanRequest({
   /** rc.37 F2: the bank's own suggestion on these books (careerFlow.creditOfferOf; null = none needed). */
   suggested?: CreditOffer | null;
 }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const takeBankLoan = useCareerStore((s) => s.takeBankLoan);
   const limit = bankLoanLimitFor(rep, seasonIndex);
   const minAmount = bankMinAmountFor(seasonIndex);
@@ -384,7 +387,7 @@ function BankLoanRequest({
 
 /** The Monday breakdown, line by line (positive in, negative out). */
 function StatementLines({ st }: { st: WeeklyStatement }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const rows: { key: keyof typeof C.finances.line; amount: number }[] = [
     { key: "sponsorBase", amount: st.sponsorBase },
     { key: "foundingPartner", amount: st.foundingPartner },
@@ -563,7 +566,8 @@ function Price({ value, base, tone = "ink" }: { value: string; base?: string | n
 export function FinancesScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const C = useCareerCopy();
+  // rc.6 (ORGMODE UI-C): an established org reads its Standing where a founded club reads reputation.
+  const C = useOrgCareerCopy(save);
   const D = C.dates;
   const lang = useSettings((s) => s.lang);
 
@@ -863,6 +867,9 @@ export function FinancesScreen() {
 
       <FinanceErrorNotice className="rise-in" />
 
+      {/* rc.6 (ORGMODE UI-C): an established org's season budget leads the screen. */}
+      {established ? <SeasonBudget save={save} C={C} className="rise-in" /> : null}
+
       {/* The books as ONE strip of three figures (the 1px gaps are its
           dividers): what is in the bank, what a Monday does to it, where that
           leaves it. Each cell is the figure first and large, its label under
@@ -934,7 +941,11 @@ export function FinancesScreen() {
         {/* Phone: money first (sponsors, the ledger, the loans), the ladder after
             them (it is the longest board of the screen and was pushing them down). */}
         <div className="flex min-w-0 flex-col gap-4 max-sm:order-2 lg:col-span-3">
-        {/* ================= THE GEAR LADDER (centerpiece) ================= */}
+        {/* rc.6 (ORGMODE UI-C): an established org runs Operations; a founded club climbs the ladder. */}
+        {established ? (
+          <OperationsBoard save={save} C={C} primaryAllowed={!sponsorPending} className="rise-in" />
+        ) : (
+        /* ================= THE GEAR LADDER (centerpiece) ================= */
         <Panel id="career-ladder" data-tour="finances-progress" className="rise-in scroll-mt-20 p-4 sm:p-5" style={{ animationDelay: "60ms" }}>
           {/* The board's title, and the one number that opens its rows: reputation. */}
           <div className="card-head">
@@ -1051,6 +1062,7 @@ export function FinancesScreen() {
           <Button variant="ghost" size="sm" className="-ml-3.5 mt-2" onClick={() => setLadderOpen(true)}>{C.ladder.seeMore}</Button>
           <Modal open={ladderOpen} title={C.ladder.title} onClose={() => setLadderOpen(false)}><LadderGrid rungs={ladderOf(save)} C={C} /></Modal>
         </Panel>
+        )}
 
         </div>
 
@@ -1250,7 +1262,9 @@ export function FinancesScreen() {
               </div>
             ) : null}
 
-            {!save.sponsor && (!save.sponsorOffers || save.sponsorOffers.length === 0) ? (
+            {established && !save.sponsor && (!save.sponsorOffers || save.sponsorOffers.length === 0) ? (
+              <p className="text-sm text-sub">{C.orgmode.budget.sponsorNone}</p>
+            ) : !save.sponsor && (!save.sponsorOffers || save.sponsorOffers.length === 0) ? (
               <div>
                 <p className="text-sm text-sub">
                   {C.finances.lockedAtRep(CAREER_SPONSOR.firstOfferRepGate)}

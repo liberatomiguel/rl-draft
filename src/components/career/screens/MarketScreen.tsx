@@ -26,7 +26,8 @@ import {
   CAREER_UNLOCKS,
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
-import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
+import { type CareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import {
   payrollProjection,
   repNeededForOverall,
@@ -133,7 +134,7 @@ function errorTextFor(C: CareerCopy, key: string): string {
 }
 
 function MarketErrorNotice({ className }: { className?: string }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
   // rc.36 (front S2): a refused offer is answered in the talk itself (SalaryNegotiator's send row).
@@ -208,7 +209,7 @@ export function MarketScreen() {
   const [coachType, setCoachType] = useState<"all" | "generated" | "dataset" | "real">("all");
   const save = useCareerSave();
   const t = useCopy();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
 
   const signPlayer = useCareerStore((s) => s.signPlayer);
@@ -1021,9 +1022,11 @@ export function MarketScreen() {
                 <span className="self-center" title={C.market.lockedHint}>
                   <Badge tone="neutral">
                     🔒{" "}
-                    {C.market.lockedAtRep(
-                      repNeededForOverall(signingLevelOf(target.view)),
-                    )}
+                    {establishedOf(save)
+                      ? C.board.signCapLock(signCapOf(save))
+                      : C.market.lockedAtRep(
+                          repNeededForOverall(signingLevelOf(target.view)),
+                        )}
                   </Badge>
                 </span>
               ) : (

@@ -37,7 +37,7 @@ import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_QUALIFIER, CAREER_SUNDAY, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { isTwoDayEvent, isWindowWeek, regionalForQualifier, weekOfDay } from "@/engine/career/calendar";
 import { nextPlayoffPairings } from "@/engine/playoffs";
 import { prizeFor, pointsFor } from "@/engine/career/economy";
@@ -151,7 +151,7 @@ export function EventScreen() {
 function EventScreenContent() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const router = useRouter();
   const simEvent = useCareerStore((s) => s.simEvent);
   const startChampionshipSunday = useCareerStore((s) => s.startChampionshipSunday);
@@ -223,7 +223,7 @@ function EventScreenContent() {
 // ---------------------------------------------------------------------------
 
 function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
   const router = useRouter();
   const enterEventAction = useCareerStore((s) => s.enterEvent);
@@ -514,7 +514,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
 function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const rosterOpen = useEventRosterOpen();
   const copy = useCopy();
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const T = copy.TOURNAMENT_UI;
   const playEventRound = useCareerStore((s) => s.playEventRound);
   const simEvent = useCareerStore((s) => s.simEvent);
@@ -1119,7 +1119,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
 // ---------------------------------------------------------------------------
 
 function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
   const router = useRouter();
   const completeEvent = useCareerStore((s) => s.completeEvent);

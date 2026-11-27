@@ -17,7 +17,8 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
+import { standingOf } from "@/engine/career/established";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -69,7 +70,8 @@ const TABS: { key: string; href: string; group: number }[] = [
 
 export function CareerTopBar() {
   const save = useCareerSave();
-  const copy = useCareerCopy();
+  const copy = useActiveCareerCopy();
+  const standingTier = save ? (standingOf(save)?.tier ?? null) : null;
   const router = useRouter();
   const pathname = usePathname();
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
@@ -223,7 +225,11 @@ export function CareerTopBar() {
           </div>
           <div>
             <div className="kicker leading-none text-faint">{copy.common.rep}</div>
-            <div className="display text-base font-bold leading-tight tabular-nums text-ink">{Math.round(save.reputation)}</div>
+            <div className="display text-base font-bold leading-tight tabular-nums text-ink">
+              {Math.round(save.reputation)}
+              {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing, read with its tier. */}
+              {standingTier ? <span className="ml-1.5 text-xs font-semibold uppercase text-sub">{copy.board.standing.tier[standingTier] ?? standingTier}</span> : null}
+            </div>
           </div>
         </div>
 
