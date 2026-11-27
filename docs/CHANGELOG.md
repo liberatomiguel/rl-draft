@@ -10,6 +10,22 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## rc.9 (unreleased)
+
+### LEGACY front (the draft's absurd losses and the final overall)
+
+#### Balance
+- **Upset guard for Region-only runs** (`DRAFT_UPSET_GUARD`, DESIGN-DECISIONS #220, #221). A regional rival's hidden lift (region boost + field depth) fades out of the player's series between a shown gap of 5 and 10. MENA Legacy runs that ended on a loss to a rival shown 8+ below: 42.3% to 1.6% (2,880 tournaments); every region × difficulty title rate within 1 point of rc.8 after the boost retune that rides on the guard (MENA Hard +0.3, Legacy +0.5, OCE Hard +0.1, Legacy +1.5). Worldwide, the Daily, challenges, the duel's worldwide links and the career are bit-identical. `enabled: false` restores rc.8 exactly.
+
+#### Added
+- `engine/overallBreakdown.ts`: the team overall as parts that sum to the shown number (players, staff, org, chemistry, specials, then the curve, the 99 cap, the rounding), with EN/PT labels (#222). The screens use it in wave 2.
+- `run_completed` carries the player's series (`engine/runSeriesFacts.ts`, #224).
+- `difficulty.matrix.test.ts`: `SIM_TAIL=1` (series by shown gap, run-ending losses, strong-team run outcomes, worst cases), `SIM_GUARD`, `SIM_GUARD_PARAMS`.
+
+#### Fixed
+- A team shown 10-14 below the player won 27.5% of its series in MENA Legacy. Root cause: `REGION_LOCK.fieldDepth` lifts every rival by half its gap to the best team, so the weakest-looking rivals carried the largest hidden lift (up to +13 over the shown overall), and nothing on screen said so.
+- The Review and Results breakdown did not add up to the team overall above 94 (three 99 cards read 97). Root cause: the superteam curve, the 99 cap and the rounding were applied but never listed. The breakdown now has those lines (engine side; the screen lands in wave 2).
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

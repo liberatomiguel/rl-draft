@@ -49,6 +49,7 @@ import { liveAchievements, teamAchievements } from "@/engine/achievements";
 import { capEntries, duelEntryFromResults, duelTournamentSeed, duelVerdict, type DuelLink } from "@/engine/duel";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
+import { runSeriesFacts } from "@/engine/runSeriesFacts";
 import { buildUserTeam } from "@/engine/teams";
 import {
   initTournament,
@@ -554,6 +555,8 @@ export const useRunStore = create<RunStore>()(
             ? regionOpponentBoost(run.regionLock, run.difficulty)
             : run.daily?.opponentShift ?? 0,
           opponentFieldDepth: run.regionLock ? regionFieldDepth(run.regionLock, run.difficulty) : 0,
+          // rc9 LEGACY: the upset guard reads the hidden region lift (#220).
+          regionLock: Boolean(run.regionLock),
         });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },
@@ -771,6 +774,8 @@ export const useRunStore = create<RunStore>()(
             ratingAfter: after.mmr,
             rankId: rankAfter.id,
             rankUp: rankAfter.index > rankForXp(profile.xp).index,
+            // rc9 LEGACY: the player's series, so losses to visibly weaker sides can be measured.
+            ...runSeriesFacts(run.tournament),
           });
           trackAlbumsCompleted(albumsBefore);
           trackOnboardingStep("run_completed");

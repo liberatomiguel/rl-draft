@@ -351,6 +351,7 @@ export const REGION_LOCK = {
     NA: { easy: 0.8, normal: 1.15, hard: 2.55, legacy: 2.15 },
     // v2.0.10: Normal 1.45 -> 0.95 and Hard 2.9 -> 2.4 because the field is now
     // deepened (`fieldDepth`), which is where the difficulty moved to.
+    // rc9 LEGACY: with DRAFT_UPSET_GUARD on, regionOpponentBoost adds its boostDelta (#221).
     MENA: { easy: -0.15, normal: 0.95, hard: 2.4, legacy: 4.05 },
     OCE: { easy: 0.45, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
@@ -378,6 +379,38 @@ export const REGION_LOCK = {
   regions: ["NA", "EU", "SAM", "MENA", "OCE"] as readonly Region[],
 } as const;
 
+// rc9 LEGACY
+/**
+ * UPSET GUARD (rc.9, DESIGN-DECISIONS #220). In a Region-only Draft run every
+ * opponent plays above the overall the screens show (REGION_LOCK boost + field
+ * depth; up to +12 in MENA Legacy, where a team shown 10-14 below the player
+ * took 27% of its series). The guard fades that hidden part out of the
+ * player's series as the SHOWN gap grows: full below `startGap`, gone at
+ * `fullGap` and beyond, linear between. So a team shown `fullGap`+ below you
+ * plays exactly at its number (plus the difficulty's own shift, as worldwide).
+ * AI-vs-AI series, worldwide runs, Daily, challenges and the career never
+ * carry the hidden part (TournamentTeam.regionLift), so they are untouched.
+ * `enabled: false` = no field stamped, bit-identical to rc.8.
+ */
+export const DRAFT_UPSET_GUARD = {
+  enabled: true,
+  startGap: 5,
+  fullGap: 10,
+  /** Share of the hidden lift kept however large the shown gap (0 = all of it fades). */
+  floorKeep: 0,
+  /**
+   * Added to REGION_LOCK.opponentRatingBoost while the guard is on (#221). The
+   * weak-looking rivals stop winning, so the title rate comes back through the
+   * strong ones. Paired sweep, 2,880 tournaments per cell, live reset profile:
+   * title rate guard off / guard on without delta / with delta. Every other
+   * cell moved by less than its noise (about one point) and keeps its boost.
+   */
+  boostDelta: {
+    MENA: { hard: 0.3, legacy: 0.5 },
+    OCE: { hard: 0.1, legacy: 1.5 },
+  } as Partial<Record<Region, Partial<Record<Difficulty, number>>>>,
+};
+
 /** Region-only field depth for a run (0 = none; see REGION_LOCK.fieldDepth). */
 export function regionFieldDepth(region: Region, difficulty: Difficulty): number {
   return REGION_LOCK.fieldDepth[region]?.[difficulty] ?? 0;
@@ -385,7 +418,9 @@ export function regionFieldDepth(region: Region, difficulty: Difficulty): number
 
 /** Region-only opponent boost for a run (0 when the region has no mode). */
 export function regionOpponentBoost(region: Region, difficulty: Difficulty): number {
-  return REGION_LOCK.opponentRatingBoost[region]?.[difficulty] ?? 0;
+  const base = REGION_LOCK.opponentRatingBoost[region]?.[difficulty] ?? 0;
+  // rc9 LEGACY: the guard's retune rides on top, only while the guard is on (#221).
+  return DRAFT_UPSET_GUARD.enabled ? base + (DRAFT_UPSET_GUARD.boostDelta[region]?.[difficulty] ?? 0) : base;
 }
 
 // ---------------------------------------------------------------------------

@@ -129,6 +129,24 @@ export const EVENT_CATALOG = {
     ratingAfter: "number",
     rankId: "string",
     rankUp: "boolean",
+    // rc9 LEGACY: the player's series (engine/runSeriesFacts.ts). "Shown" = the
+    // overall the screens print; "strength" = what the rival actually played at.
+    seriesWon: "number",
+    seriesLost: "number",
+    /** Average shown overall of every rival met. */
+    oppOverallAvg: "number",
+    /** Series lost to a rival shown at least 5 / 8 / 10 below the player. */
+    lostToLowerBy5: "number",
+    lostToLowerBy8: "number",
+    lostToLowerBy10: "number",
+    /** Largest shown gap among the lost series (null = none lost). */
+    worstLossGap: "number?",
+    /** The series that ended the run (all null for the champion). */
+    endOppOverall: "number?",
+    endOppStrength: "number?",
+    endGap: "number?",
+    endScore: "string?",
+    endRound: "string?",
   }),
   /** A run was left for good before its results screen (a restart is a counter, not an event). */
   run_abandoned: spec("draft", "standard", {
