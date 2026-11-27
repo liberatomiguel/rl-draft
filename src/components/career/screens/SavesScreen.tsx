@@ -13,11 +13,10 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import type { CareerSlotMeta } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { TeamStars } from "@/components/career/TeamStars";
-import { UserCrest } from "@/components/career/UserCrest";
+import { UserOrgMark } from "@/components/career/OrgMark";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -30,7 +29,7 @@ import { importSaveFile, type SaveFileImportError } from "@/store/careerSaveTran
 import { CloudStatusLine } from "@/components/career/cloud/CloudStatusLine";
 import { downloadSlotFile } from "@/components/career/cloud/downloadSave";
 import { ProDoor } from "@/components/career/pro/ProDoor";
-import { slotMetaFor, useCareerStore } from "@/store/careerStore";
+import { slotMetaFor, useCareerStore, type CareerSlotView } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 
 export function SavesScreen() {
@@ -155,7 +154,7 @@ function SlotCard({
   onExport,
   cloud,
 }: {
-  meta: CareerSlotMeta;
+  meta: CareerSlotView;
   delay: number;
   onResume: () => void;
   onDelete: () => void;
@@ -176,7 +175,7 @@ function SlotCard({
       {/* Org-colored glow — each slot card wears its own identity */}
 
       <div className="relative mb-3 flex items-start gap-3">
-        <UserCrest crestId={meta.crestId} colors={meta.colors} abbrev={meta.abbrev} size="lg" />
+        <UserOrgMark identity={meta} seasonIndex={meta.seasonIndex} size="lg" />
         <div className="min-w-0 flex-1">
           <p className="display truncate text-lg font-bold uppercase tracking-wide text-ink">
             {meta.orgName}

@@ -16,7 +16,7 @@ import { lineupById } from "@/data";
 import { isLegendRef, LEGEND_REF_PREFIX } from "@/engine/career/endless";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
-import type { CareerSave } from "@/engine/career/types";
+import type { CareerIdentity, CareerSave } from "@/engine/career/types";
 import { seasonIdFor } from "@/engine/career/calendar";
 import {
   UserCrest,
@@ -82,6 +82,49 @@ export function proceduralCrestFor(ref: string, name?: string): {
   };
 }
 
+/** What the player's own org wears: the crest it was founded with, or the real org's logo (rc.6, UI-A). */
+export type UserOrgIdentity = Pick<CareerIdentity, "crestId" | "colors" | "abbrev"> & { realOrgRef?: string };
+
+/**
+ * rc.6 (UI-A, the logo bug): the ONE place that decides the player's own mark.
+ * An established org (`realOrgRef`, a takeover or an accepted job) wears its
+ * real logo; a founded club its crest. `identity.crestId` on a takeover is a
+ * procedural crest kept for old readers, so nothing may draw it directly
+ * (`userOrgMark.test.ts` lists the call sites).
+ */
+export function userMarkOf(identity: UserOrgIdentity): { kind: "logo"; orgId: string } | { kind: "crest" } {
+  return identity.realOrgRef ? { kind: "logo", orgId: identity.realOrgRef } : { kind: "crest" };
+}
+
+export function UserOrgMark({
+  identity,
+  seasonIndex,
+  size = "sm",
+  className,
+  loading,
+}: {
+  identity: UserOrgIdentity;
+  /** The career season (the era of the logo); omitted = the org's current logo. */
+  seasonIndex?: number;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
+  loading?: "lazy" | "eager";
+}) {
+  const mark = userMarkOf(identity);
+  if (mark.kind === "logo") {
+    return (
+      <TeamLogo
+        orgId={mark.orgId}
+        loading={loading}
+        seasonId={seasonIndex === undefined ? undefined : seasonIdFor(Math.min(seasonIndex, 5))}
+        size={size}
+        className={className}
+      />
+    );
+  }
+  return <UserCrest crestId={identity.crestId} colors={identity.colors} abbrev={identity.abbrev} size={size} className={className} />;
+}
+
 export function OrgMark({
   save,
   orgRef,
@@ -95,18 +138,9 @@ export function OrgMark({
   className?: string;
   loading?: "lazy" | "eager";
 }) {
-  // v2.2 board front: a manager who took over a real org wears its real logo.
-  if (orgRef === "user" && save.identity.realOrgRef) orgRef = save.identity.realOrgRef;
+  // v2.2 board front: a manager who took over a real org wears its real logo (UserOrgMark decides).
   if (orgRef === "user") {
-    return (
-      <UserCrest
-        crestId={save.identity.crestId}
-        colors={save.identity.colors}
-        abbrev={save.identity.abbrev}
-        size={SIZE_TO_CREST[size]}
-        className={className}
-      />
-    );
+    return <UserOrgMark identity={save.identity} seasonIndex={save.clock.seasonIndex} size={SIZE_TO_CREST[size]} className={className} loading={loading} />;
   }
   if (orgRef.startsWith("fill:") || isLocalRef(orgRef)) {
     const org = save.world.orgs[orgRef];

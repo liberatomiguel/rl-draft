@@ -50,7 +50,7 @@ import {
 import { PhaseChip } from "@/components/career/PhaseChip";
 import { PlayerSheet, type PlayerSheetData } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
-import { UserCrest } from "@/components/career/UserCrest";
+import { UserOrgMark } from "@/components/career/OrgMark";
 import { AppLink } from "@/components/ui/AppLink";
 import { NewTag } from "@/components/ui/NewDot";
 import { TrendDownIcon, TrendUpIcon, WhistleIcon } from "@/components/ui/icons";
@@ -206,7 +206,7 @@ function SquadCard({
         <span className="display text-4xl font-bold leading-none text-ink" title={C.common.ovr}>
           {ovr}
         </span>
-        <UserCrest crestId={save.identity.crestId} colors={save.identity.colors} size="sm" />
+        <UserOrgMark identity={save.identity} seasonIndex={save.clock.seasonIndex} size="sm" />
       </span>
       <span className="relative block min-w-0 flex-1 sm:mt-auto sm:w-full sm:pt-5">
         <span className="flex min-w-0 items-center gap-1">
