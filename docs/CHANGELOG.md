@@ -31,6 +31,7 @@ Miguel's brief of 27/11: taking over a real organisation has to read as a consol
 ### Balance
 - **BALANCE_VERSION 52.** The board's stated chances refitted on the new rules (90 competent careers × 6 seasons, seeds 9000, 12000, 12101; each season keyed by the tier the board held in it). Held out (seeds 30000 and 30101, 120 careers), Expected, stated → measured: Normal elite 56 → 43, contender 53 → 72, mid 58 → 58, underdog 63 → 65, founded 69 → 81; Hard 44 → 57, 55 → 41, 58 → 73, 62 → 27, 59 → 58. Bands over the three plans: same band 69 %, a neighbouring band 29 %, two or more away 3 % (rc.5: 65 / 34 / 1). Competent dismissals 0 in 60; careless 11 in 60, in seasons 4 to 6.
 - Tier changes, competent bot, 6 careers a cell: contender to elite 6/6 Normal and 5/6 Hard (seasons 2 to 4); mid to contender 5/6 and 5/6; underdog to mid 6/6 and 3/6. No relegation in 120 careers.
+- **Held out again on the shipped rules** (after the day-one sponsor and the budget change; same seeds 30000 and 30101, 120 careers, no soft lock), Expected, stated → measured: Normal elite 55 → 51, contender 53 → 63, mid 59 → 44, underdog 65 → 92 (N 12: an underdog leaves its tier by season 2), founded 69 → 81; Hard 44 → 52, 55 → 48, 57 → 57, 62 → 45, 59 → 58. Bands: same 73 %, neighbouring 27 %, two or more away 1 % (N 1080). Competent dismissals 3 in 60 (mid Normal in season 6, elite Hard in season 4, contender Hard in season 6); careless 15 in 60, seasons 4 to 6. Tier: contender to elite 6/6 and 5/6 (seasons 2 to 3), mid promoted in 4/6 and 4/6, underdog in 6/6 and 4/6 (two of six Normal underdogs end season 6 as elite); no relegation. Season-6 cash, competent, median Normal / Hard: elite $627k / $509k, contender $398k / $131k, mid $520k / $79k, underdog $83k / $47k, founded $69k / $34k.
 - **Elite budget 16 → 22 weeks**, and every tier's weeks now multiply the whole running bill (staff and upkeep included): with the Expected plan the budget and the starting cash cover the season's committed costs for every org of NA, EU and SAM before any sponsor income (smallest margin: elite $13k, contender $5k, mid $6k, underdog $2k). Before, an elite org opened its first day $47k to $264k short.
 
 ### Fixed
@@ -40,11 +41,11 @@ Miguel's brief of 27/11: taking over a real organisation has to read as a consol
 - The board's brief never showed: the first helper read `brief.kind`, the engine writes `brief.reason`.
 
 ### Not verified
-- After the day-one sponsor and the budget change (round 2), a 30-career check on one seed: no soft lock, bands 71 / 25 / 4, competent dismissals 2 in 30 (0 in 30 before, same seed). Not re-measured on the larger battery.
-- Two cells stay more than 15 points off: contender Normal (easier than stated) and underdog Hard (harder: 27 % against 62 %, N 26). Easy has no cells.
+- The competent bot is dismissed 3 times in 60 careers on the shipped rules, against 0 in 60 before round 2. Three cases do not say whether round 2 caused it; not investigated.
+- Three cells are 15 points or more off on the shipped rules: underdog Normal (easier: 92 % against 65 %, N 12), underdog Hard (harder: 45 % against 62 %, N 22) and mid Normal (harder: 44 % against 59 %, N 32). The calibration was fitted before round 2 and not refitted after it. Easy has no cells.
 - No relegation has happened in any probe (unit and flow tests only). The sponsor desk after a job-offer move and the achievement baseline after a dismissal are covered by code paths and pure tests, not by a played career.
 - Browser: the hiring-freeze state, the season review in PT, a relegation, an accepted job offer, the board flag off. No physical phone, no Safari.
-- The established economy ends season 6 with a median $210k in cash (elite $672k, mostly Major prizes): whether that leaves the budget a real constraint is Miguel's call at the gate.
+- The established economy ends season 6 with cash to spare on Normal (median: elite $627k, mid $520k, contender $398k, mostly prizes) and much less on Hard (mid $79k, underdog $47k): whether that leaves the budget a real constraint is Miguel's call at the gate.
 
 ---
 

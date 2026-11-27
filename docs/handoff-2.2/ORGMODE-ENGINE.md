@@ -309,3 +309,54 @@ Fast-forwarded to `release/v2.2` (c49bd8f, with UI-A, UI-B and UI-C). Commits: `
 - The two dismissals in the sanity run (2 / 30 against 0 / 30) are within the noise of 3 careers per cell, but a larger run did not confirm that.
 - The day-one sponsor desk after a job-offer move is covered by the code path (the plan acceptance), not by a dedicated test.
 - `achievementBase` on a dismissal into a founded club was tested on the pure function, not through a played dismissal.
+
+## Held out on the shipped rules (integrator, 27/11, after round 2)
+
+`BOARD_PROBE`, every staging flag on, NA / EU / SAM, Normal and Hard, 6 seasons, seeds 30000 and 30101, competent and careless, 120 careers in 6 slices, no soft lock. No refit after it: `CAREER_BOARD.calibration` is still the one fitted before round 2. Summary printed with `BOARD_SUMMARY_FROM` (stated → measured and bands keyed by the tier the board held that season; dismissals, cash and tier changes by starting tier).
+
+```
+TIERS competent normal elite     careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers elite,elite,elite,elite,elite,elite
+TIERS competent normal contender careers 6 | promotions 6 (seasons 3,2,2,3,2,2) | relegations 0 (seasons -) | first promotion by S3 in 6/6 | end tiers elite,elite,elite,elite,elite,elite
+TIERS competent normal mid       careers 6 | promotions 8 (seasons 2,3,2,3,2,3,2,3) | relegations 0 (seasons -) | first promotion by S2 in 4/6 | end tiers elite,elite,elite,mid,elite,mid
+TIERS competent normal underdog  careers 6 | promotions 13 (seasons 2,5,2,3,4,2,2,3,2,3,5,2,4) | relegations 0 (seasons -) | first promotion by S2 in 6/6 | end tiers contender,elite,mid,contender,elite,contender
+TIERS competent hard elite     careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers elite,elite,elite,elite,elite,elite
+TIERS competent hard contender careers 6 | promotions 5 (seasons 3,2,2,2,2) | relegations 0 (seasons -) | first promotion by S3 in 5/6 | end tiers elite,elite,elite,elite,contender,elite
+TIERS competent hard mid       careers 6 | promotions 6 (seasons 3,2,4,3,5,4) | relegations 0 (seasons -) | first promotion by S4 in 4/6 | end tiers mid,contender,elite,mid,elite,contender
+TIERS competent hard underdog  careers 6 | promotions 5 (seasons 3,2,3,2,3) | relegations 0 (seasons -) | first promotion by S3 in 4/6 | end tiers mid,mid,underdog,underdog,mid,contender
+TIERS careless normal elite     careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers elite,elite,elite,elite,elite,elite
+TIERS careless normal contender careers 6 | promotions 3 (seasons 2,2,5) | relegations 0 (seasons -) | first promotion by S5 in 3/6 | end tiers elite,contender,elite,contender,contender,elite
+TIERS careless normal mid       careers 6 | promotions 2 (seasons 3,2) | relegations 0 (seasons -) | first promotion by S3 in 2/6 | end tiers mid,mid,contender,mid,mid,contender
+TIERS careless normal underdog  careers 6 | promotions 1 (seasons 2) | relegations 0 (seasons -) | first promotion by S2 in 1/6 | end tiers underdog,mid,underdog,underdog,underdog,underdog
+TIERS careless hard elite     careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers elite,elite,elite,elite,elite,elite
+TIERS careless hard contender careers 6 | promotions 5 (seasons 2,2,2,3,2) | relegations 0 (seasons -) | first promotion by S3 in 5/6 | end tiers contender,elite,elite,elite,elite,elite
+TIERS careless hard mid       careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers mid,mid,mid,mid,mid,mid
+TIERS careless hard underdog  careers 6 | promotions 0 (seasons -) | relegations 0 (seasons -) | first promotion by S- in 0/6 | end tiers underdog,underdog,underdog,underdog,underdog,underdog
+BANDS competent: same 73% adjacent 27% two+ away 1% (N=1080 objectives)
+BANDS careless: same 25% adjacent 57% two+ away 18% (N=1077 objectives)
+[competent normal] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks
+  elite     | 55% → 51% (N=73) | 60% / 33% | 83% (N=6) | 0/6 (-) | $627k | 0
+  contender | 53% → 63% (N=27) | 59% / 37% | 83% (N=6) | 0/6 (-) | $398k | 0
+  mid       | 59% → 44% (N=32) | 53% / 31% | 67% (N=6) | 1/6 (6) | $520k | 0
+  underdog  | 65% → 92% (N=12) | 92% / 33% | 83% (N=6) | 0/6 (-) | $83k | 0
+  founded   | 69% → 81% (N=36) | 94% / 31% | 50% (N=6) | 0/6 (-) | $69k | 0
+[competent hard] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks
+  elite     | 44% → 52% (N=56) | 71% / 43% | 83% (N=6) | 1/6 (4) | $509k | 0
+  contender | 55% → 48% (N=29) | 62% / 34% | 83% (N=6) | 1/6 (6) | $131k | 0
+  mid       | 57% → 57% (N=35) | 74% / 46% | 100% (N=6) | 0/6 (-) | $79k | 0
+  underdog  | 62% → 45% (N=22) | 50% / 32% | 83% (N=6) | 0/6 (-) | $47k | 0
+  founded   | 59% → 58% (N=38) | 58% / 32% | 17% (N=6) | 0/6 (-) | $34k | 0
+[careless normal] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks
+  elite     | 56% → 41% (N=44) | 50% / 30% | 50% (N=6) | 2/6 (6,5) | $1351k | 0
+  contender | 53% → 48% (N=29) | 34% / 14% | 17% (N=6) | 3/6 (4,5,4) | $1704k | 0
+  mid       | 58% → 31% (N=36) | 47% / 11% | 33% (N=6) | 0/6 (-) | $367k | 0
+  underdog  | 65% → 26% (N=34) | 35% / 9% | 33% (N=6) | 0/6 (-) | $324k | 0
+  founded   | 68% → 65% (N=37) | 78% / 35% | 0% (N=6) | 0/6 (-) | $182k | 0
+[careless hard] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks
+  elite     | 44% → 42% (N=53) | 55% / 25% | 33% (N=6) | 3/6 (6,4,6) | $1631k | 0
+  contender | 50% → 65% (N=17) | 88% / 53% | 67% (N=6) | 3/6 (6,6,6) | $1915k | 0
+  mid       | 58% → 38% (N=34) | 59% / 12% | 17% (N=6) | 2/6 (5,6) | $92k | 0
+  underdog  | 62% → 6% (N=36) | 17% / 0% | 0% (N=6) | 2/6 (6,6) | $56k | 0
+  founded   | 60% → 67% (N=39) | 67% / 49% | 0% (N=6) | 0/6 (-) | $98k | 0
+```
+
+Read against the refit run on the same seeds (section "After the refit"): bands 69 / 29 / 3 → 73 / 27 / 1; competent dismissals 0 in 60 → 3 in 60 (not investigated); underdog Hard Expected 27 % → 45 % measured against 62 % stated; underdog Normal now 92 % against 65 % (N 12); mid Normal 44 % against 59 %.
