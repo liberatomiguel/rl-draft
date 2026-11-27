@@ -239,6 +239,8 @@ export interface ResolvedMail {
   body: string;
   from: string;
   kindLabel: string;
+  /** The text alone, without the greeting and sign-off `body` wraps it in (the reader shows the sender in its head). */
+  message: string;
 }
 
 export function resolveMail(item: MailItem, career: CareerCopy): ResolvedMail {
@@ -258,5 +260,5 @@ export function resolveMail(item: MailItem, career: CareerCopy): ResolvedMail {
   const kindLabel =
     (career.mail.kinds as Record<string, string>)[item.kind] ?? item.kind;
   const body = `${career.mail.greeting}\n\n${message}\n\n${career.mail.signoff}\n${from}`;
-  return { title, body, from, kindLabel };
+  return { title, body, from, kindLabel, message };
 }

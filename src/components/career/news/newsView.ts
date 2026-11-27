@@ -7,7 +7,7 @@
  */
 
 import { rocketStreetSigns } from "@/engine/career/rocketStreet";
-import type { CareerSave, NewsItem } from "@/engine/career/types";
+import type { CareerSave, MailItem, NewsItem } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 
 /** News about the user's own org (its crest leads the row). */
@@ -179,4 +179,23 @@ export function leadStoryOf(save: CareerSave, minPriority: number, maxAgeDays: n
  */
 export function rocketStreetNews(item: NewsItem): boolean {
   return rocketStreetSigns(item);
+}
+
+/** rc9 CLUB-NEWS: the mail that waits for an answer (an offer to accept or refuse, a deal to pick). The store keeps no "answered" flag, so this marks the kind, not the state. */
+const REPLY_KEYS = new Set([
+  "incomingBid",
+  "listingOffer",
+  "listingCounter",
+  "tradeAgreed",
+  "tradeCountered",
+  "blockbusterBid",
+  "emergencyBid",
+  "sponsorOffers",
+  "sponsorDecision",
+  "creditOffer",
+  "mediaOffer",
+]);
+
+export function mailNeedsReply(item: MailItem): boolean {
+  return REPLY_KEYS.has(item.titleKey) || (item.bodyKey !== undefined && REPLY_KEYS.has(item.bodyKey));
 }
