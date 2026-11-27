@@ -630,6 +630,76 @@ export function seedInheritedLockerRoom(
   return st;
 }
 
+// ---------------------------------------------------------------------------
+// v2.3 UI (wave 2): read-only views for the screens. Pure; no rule or number
+// changes (R201–R204).
+// ---------------------------------------------------------------------------
+
+/** Days from `from` to `to` (negative once passed). */
+export function lockerDaysBetween(from: LockerDate, to: LockerDate): number {
+  return absDay(to) - absDay(from);
+}
+
+export interface PromiseProgress {
+  kind: PromiseKind;
+  /** minutes: starts so far, starts needed, events of the promise, events still to play. */
+  started: number;
+  need: number;
+  of: number;
+  eventsLeft: number;
+  /** minutes: one more event on the bench breaks it. Never true for `stay`. */
+  atRisk: boolean;
+  deadline: LockerDate;
+  inherited: boolean;
+}
+
+/** U1/U2: where an open promise stands ("1 of 3 starts, 2 events left"). */
+export function promiseProgressOf(p: LockerPromise): PromiseProgress {
+  const need = p.need ?? L.promise.minutesNeed;
+  const of = p.of ?? L.promise.minutesOf;
+  const started = p.started ?? 0;
+  const seen = p.seen ?? 0;
+  const benched = seen - started;
+  return {
+    kind: p.kind,
+    started,
+    need,
+    of,
+    eventsLeft: Math.max(0, of - seen),
+    atRisk: p.kind === "minutes" && benched >= of - need,
+    deadline: p.deadline,
+    inherited: Boolean(p.inherited),
+  };
+}
+
+/** U1: the latest changes to one player's morale, newest first. */
+export function playerLockerLogOf(state: LockerRoomState | null | undefined, playerId: string, limit = 4): LockerLogEntry[] {
+  return (state?.log ?? []).filter((e) => e.playerId === playerId).slice(0, limit);
+}
+
+/** U2: the squad's mood — the mood of its average morale (no state = neutral). */
+export function squadMoodOf(state: LockerRoomState | null | undefined, squadIds: readonly string[]): MoodId {
+  if (squadIds.length === 0) return moodOf(L.neutral);
+  const sum = squadIds.reduce((s, id) => s + moraleOf(state, id), 0);
+  return moodOf(Math.round(sum / squadIds.length));
+}
+
+/** U2: the manager's word as the room reads it. */
+export type WordStanding = "fresh" | "trusted" | "damaged";
+export function wordStandingOf(word: { kept: number; broken: number }): WordStanding {
+  if (word.kept === 0 && word.broken === 0) return "fresh";
+  return credibilityOf(word) >= 0.5 ? "trusted" : "damaged";
+}
+
+/**
+ * U2 (HQ): what needs the manager now — the talks waiting (a transfer
+ * request is one) and the minutes promises one bench away from breaking.
+ */
+export function lockerAttentionOf(save: { squad: { id: string }[]; lockerRoom?: LockerRoomState | null }): { talks: LockerTalk[]; atRisk: LockerPromise[] } {
+  const issues = lockerIssuesOf(save);
+  return { talks: issues.talks, atRisk: issues.promises.filter((p) => promiseProgressOf(p).atRisk) };
+}
+
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }

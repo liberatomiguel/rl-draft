@@ -16,6 +16,19 @@ with the root cause — that section doubles as the project's bugfix log.
 
 - A batched Skip or the autoplay sailed past the close of a transfer window with no stop and no notice. Root cause: `isStopState` and `CareerAutopilot` only knew the Monday a window OPENS; nothing marked the Monday its last week begins, and the only warning was the passive "closes in N days" on two screens. Now both stop once on that Monday (`isWindowLastWeekStart`, never a clock hold) and a "Transfer window closes in 6 days" news item with a body says what lapses (R200).
 
+## [2.3.0-dev, front UI] — 2026-11-27 · The locker room and the fan feed on screen (branch v23/ui-stories)
+
+### Added
+- The locker room on the Squad screen (R202, `FEATURES.lockerRoom`): each starter card shows his mood (a face and a word); a "Locker room" board with the first open talk, one row per player (his framed overall, name, the last thing that moved him, his mood), the manager's word as two figures, and the open promises with progress and deadline ("1 of 3 starts, 2 events left"). A tap on a player opens why: his last changes with reasons, his promise, his talk.
+- The talk as a conversation (R201, `locker/LockerTalk.tsx`, replaces the wave-1 buttons in the inbox too): who, the staff's report, two or three answers with what each commits the manager to, the default marked; after the tap, the answer, his mood and where the promise lives.
+- HQ: a "Locker room" card under the decision block only when a talk waits or a promise is one bench from breaking; a "Post after the series" card (R203) with three tones, the post previewed before it goes out, Post and Skip. Neither holds the clock.
+- The desk's fourth view, Fans (R203, `FEATURES.fanFeed`): followers, then the posts; the manager's posts and the receipts stand out (DESIGN-DECISIONS #222); empty state for a save with no series yet.
+- Read-only selectors in `lockerRoom.ts` (`promiseProgressOf`, `playerLockerLogOf`, `squadMoodOf`, `wordStandingOf`, `lockerAttentionOf`, `lockerDaysBetween`) and `managerPostDraftOf` in `fanFeed.ts`, tested in `lockerRoom.view.test.ts`. No rule or number changed.
+- `careerStore.postToFeed` wires `postToFeedFlow` (wave 1 left it unwired). Copy: `locker.ui.*` and `feed.ui.*`, EN and PT.
+
+### Changed
+- The desk's tab strip scrolls sideways on a phone when the fan feed is on (DESIGN-DECISIONS #223).
+
 ## [2.3.0-dev, front FEED] — 2026-11-27 · The fan feed: rules and text, no screen yet (branch v23/fan-feed)
 
 ### Added

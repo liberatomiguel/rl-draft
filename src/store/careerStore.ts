@@ -28,6 +28,8 @@ import { acceptJobOfferFlow, chooseBoardPackageFlow, chooseBoardUpgradeFlow, dec
 import type { PackageId } from "@/engine/career/boardTypes";
 import { answerLockerTalkFlow, lockerRoomAfter } from "./lockerRoomFlow"; // v2.3 LOCKER
 import type { TalkAnswer } from "@/engine/career/lockerRoom"; // v2.3 LOCKER
+import { postToFeedFlow } from "./fanFeedFlow"; // v2.3 UI
+import type { FanTone } from "@/engine/career/fanFeedTypes"; // v2.3 UI
 import { create } from "zustand";
 import { asCareerSwitch, onLocalCareerReplaced } from "@/lib/localOwner";
 import { careerAchievementById } from "@/data/career/achievements";
@@ -375,6 +377,7 @@ interface CareerStoreState {
   markMailRead: (mailId: string) => void;
   markAllMailRead: () => void;
   answerLockerTalk: (talkId: string, answer: TalkAnswer) => void; // v2.3 LOCKER
+  postToFeed: (tone: FanTone | "skip") => void; // v2.3 UI
   clearError: () => void;
 }
 
@@ -821,6 +824,7 @@ export const useCareerStore = create<CareerStoreState>()(
             { allowEnded: true },
           ),
         answerLockerTalk: (talkId, answer) => withResult((s) => answerLockerTalkFlow(s, talkId, answer)), // v2.3 LOCKER
+        postToFeed: (tone) => withSave((s) => postToFeedFlow(s, tone)), // v2.3 UI
         markMailRead: (mailId) =>
           withSave(
             (s) => {

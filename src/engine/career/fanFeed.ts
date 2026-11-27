@@ -252,6 +252,14 @@ export const windowFor = (eligible: number): number => Math.max(0, Math.min(CARE
 const authorSeed = (save: CareerSave, id: string, part: string): number => deriveSeed(save.careerSeed, streams.gen("fanFeed", `${id}:${part}`));
 
 /**
+ * v2.3 UI (U5): the manager's post as it would read, before it is sent — the
+ * same copy key and slots the feed gives it once posted. Pure.
+ */
+export function managerPostDraftOf(save: Pick<CareerSave, "identity">, opponentName: string, tone: FanTone): Pick<FeedPost, "variant" | "slots"> {
+  return { variant: MANAGER_POST_KEYS[tone], slots: { opponent: opponentName, org: save.identity.orgName } };
+}
+
+/**
  * The feed, newest first. `limit` caps what is returned (default CAREER_FEED.limit);
  * the whole history is walked either way so a post never changes with the cap.
  * Nothing here reads the clock, and nothing is stored.

@@ -2889,3 +2889,26 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Treino:** fator linear 0,94 (moral 0) a 1,06 (moral 100) no ganho bruto de todo tick que lê `growthCtxOf` (treino, scrims, XP de partida); nunca no declínio, então nenhum efeito de moral baixa overall ou potencial gravado. Moral neutra não entra no contexto: o tick é o antigo bit a bit.
 - **Partida:** `CAREER_LOCKER.matchEffect` existe e vale 0; `matchMoraleEffectOf` não está ligado em lugar nenhum.
 - **Outros números:** título regional, Major ou Worlds +6 para o elenco, top 4 sem título num Major ou Worlds +3, a partir do 3º evento seguido eliminado na Swiss −2 cada, listado −10, resposta seca −5, deriva semanal de 1 em direção a 50 (não para quem está emburrado no banco). Os cinco humores cortam em 20/40/60/80. Mudança de humor vira um e-mail por motivo, com os nomes e o humor novo. **Não medido:** nenhum desses números passou por bateria.
+
+## R201 — 27 de novembro de 2026: a conversa mostra quem, e a comissão relata o que ele disse (v2.3.0-dev, UI)
+
+- **Decidido:** a conversa (`locker/LockerTalk.tsx`) tem a cara do jogador (o overall na moldura de raridade do Draft, como a linha do reserva no QG), o nome, o humor e o prazo; depois "A comissão relata" com o texto do e-mail; depois as respostas, cada uma com o que compromete o técnico; a neutra leva a etiqueta "Se você não responder". Respondida, a conversa fica na tela com a resposta, o humor dele agora e onde a promessa mora (o vestiário, no Elenco).
+- **Por quê:** o wave 2 pede "quem fala, o que diz", mas HISTORIAS-SPEC proíbe frase inventada na boca de um pro de verdade. A fala é relatada pela comissão (o texto da onda 1), nunca entre aspas na voz dele.
+- **Um toque responde.** O texto da conversa já avisa que promessa é lembrada; não há confirmação extra.
+
+## R202 — 27 de novembro de 2026: onde o vestiário aparece, e o que o QG mostra (v2.3.0-dev, UI)
+
+- **Elenco:** o humor no rodapé de cada card titular e um bloco "Vestiário" na coluna principal: a primeira conversa aberta por inteiro (as outras viram linhas que abrem a ficha do jogador), uma linha por jogador (cara, nome, o último motivo como frase, humor), a palavra do técnico (cumpridas e quebradas como números) e as promessas abertas com progresso e prazo. Tocar num jogador abre a ficha "por quê" (as últimas 4 mudanças com motivo e valor, a promessa, a conversa).
+- **QG:** um cartão "Vestiário" logo abaixo do bloco de decisão, só quando há conversa esperando (um pedido de transferência é uma conversa) ou promessa `minutes` a um banco de quebrar. No desktop a primeira conversa se responde ali; no celular (QG é resumo, DESIGN.md "Phone") cada conversa é uma linha que leva ao vestiário. Nunca entra na fila de decisões e nunca segura o relógio (R190).
+- **Seletores novos, puros e testados** em `lockerRoom.ts` (`promiseProgressOf`, `playerLockerLogOf`, `squadMoodOf`, `wordStandingOf`, `lockerAttentionOf`, `lockerDaysBetween`): só leitura, nenhuma regra ou número mudou. "Em risco" = mais um evento no banco quebra a promessa. "Palavra arranhada" = credibilidade abaixo de 0,5.
+
+## R203 — 27 de novembro de 2026: a torcida é uma aba da mesa, e o post do técnico um cartão do QG (v2.3.0-dev, UI)
+
+- **Torcida:** quarta aba em Caixa de entrada (`#fans`), só com `FEATURES.fanFeed`. Seguidores como o número da aba; depois os posts, mais novo primeiro (handle, texto, evento, semana, curtidas), os 12 primeiros e "Ver todos os N". O post do técnico é um quadro com a marca do clube e o tom; o print leva etiqueta vermelha e cita o post que ele responde; a resposta da torcida diz "Respondendo ao seu post". Save sem série registrada: estado vazio.
+- **Post do técnico:** cartão do QG depois de uma série do clube (`pendingFeedPostOf`): a série numa linha, os três tons com a dica, o texto do post aparece ao escolher o tom (`managerPostDraftOf`, o mesmo texto que o feed mostra depois), "Postar" e "Pular". Postado, o cartão mostra o post e o caminho para a torcida até sair da tela. Não está no `EventScreen` (outra sessão). `postToFeed` entrou na `careerStore` (uma linha, `withSave`).
+- **No celular** a faixa de abas rola de lado quando a torcida está ligada (a aba aberta fica centralizada); com a flag desligada a faixa é a de antes.
+
+## R204 — 27 de novembro de 2026: o que foi visto, e como (v2.3.0-dev, UI)
+
+- **Visto no navegador** (dev, flags ligadas) a 1280, 375 e 320 px, em EN e PT, nos estados listados em `docs/handoff-2.3/UI.md`. Os estados com promessa, conversa, palavra arranhada, print e posts foram montados à mão no localStorage de uma carreira rápida (um script descartável fora do repo), não jogados semana a semana.
+- **Flag desligada:** servidor reiniciado com `NEXT_PUBLIC_LOCKER_ROOM=0` e `NEXT_PUBLIC_FAN_FEED=0` sobre o mesmo save com estado: nada renderiza, o invólucro do QG fica `display: none` (`empty:hidden`), a aba Torcida some e `#fans` cai na caixa de entrada.
