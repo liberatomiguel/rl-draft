@@ -198,7 +198,8 @@ function OfferRow({ save, o, C, onAccept, label }: { save: CareerSave; o: JobOff
     <li className="flex min-h-16 items-center gap-3 border-b border-line py-2.5 last:border-b-0">
       {o.ref ? <OrgMark save={save} orgRef={o.ref} size="md" /> : null}
       <span className="min-w-0 flex-1">
-        <span className="display block truncate text-lg font-bold uppercase leading-none text-ink">{o.name}</span>
+        {/* rc.6 (UI-C phone pass): two lines on a phone; one truncated line left "TEAM V..." at 375 px. */}
+        <span className="display break-words text-base font-bold uppercase leading-tight text-ink line-clamp-2 sm:block sm:truncate sm:text-lg sm:leading-none">{o.name}</span>
         <span className="mt-1 block text-xs text-sub">
           <span className="font-semibold text-ink">{C.board.stature[o.stature] ?? o.stature}</span> · {o.region}
           {o.rank ? <> · {C.board.dismissed.rankLine(o.rank)}</> : null}
