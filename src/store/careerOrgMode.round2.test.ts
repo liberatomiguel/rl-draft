@@ -39,14 +39,22 @@ function choices(region: R, difficulty: CareerDifficulty) {
 }
 
 describe("R168: the sponsor desk on day one", () => {
-  it("the season plan comes first, the sponsor desk opens once it is accepted, and the autopilot never stalls", () => {
+  // rc9 org (R221): the org arrives with a deal in force; the desk opens only when the org has none
+  // (an rc.8 save loaded without one, or after a deal ends).
+  it("the season plan comes first, the deal in force keeps the desk closed, a dealless org gets its desk, and the autopilot never stalls", () => {
     const pick = choices("SAM", "normal")[0];
     const save = createCareerSave(input("SAM", "normal", pick.ref), SEED);
     expect(pendingDecisionsOf(save)[0]?.kind).toBe("board");
     expect(save.sponsorOffers ?? []).toHaveLength(0);
+    expect(save.sponsor?.terms?.inherited).toBe(true);
     const planned = chooseBoardPackageFlow(save, "expected").save;
-    expect(planned.sponsorOffers?.length).toBeGreaterThanOrEqual(2);
-    expect(pendingDecisionsOf(planned).some((d) => d.kind === "sponsor")).toBe(true);
+    expect(planned.sponsorOffers ?? []).toHaveLength(0);
+    expect(pendingDecisionsOf(planned).some((d) => d.kind === "sponsor")).toBe(false);
+    const dealless = structuredClone(save);
+    dealless.sponsor = null;
+    const plannedDealless = chooseBoardPackageFlow(dealless, "expected").save;
+    expect(plannedDealless.sponsorOffers?.length).toBeGreaterThanOrEqual(2);
+    expect(pendingDecisionsOf(plannedDealless).some((d) => d.kind === "sponsor")).toBe(true);
     // Advance is never a dead button: the autopilot answers the plan and the desk, and the clock moves.
     let s: CareerSave = save;
     for (let i = 0; i < 20; i++) s = advanceDayFlow(boardAutoAnswer(s));
@@ -72,8 +80,9 @@ describe("R169: the Expected plan funds the season it asks for", () => {
           const offers = pendingPackageOf(save)!;
           expect(offers.map((o) => o.id)).toEqual(["expected"]);
           const b = seasonBudgetOf(chooseBoardPackageFlow(save, "expected").save)!;
-          expect(b.incomeToCome.sponsor, c.name).toBe(0);
-          expect(b.free, `${difficulty} ${region} ${c.name} (${c.stature})`).toBeGreaterThanOrEqual(0);
+          // rc9 org (R221): the deal in force pays from day one; the claim is still read before any sponsor money.
+          const fixed = save.sponsor?.terms?.fixedPaid ? save.sponsor.terms.fixed : 0;
+          expect(b.free - b.incomeToCome.sponsor - fixed, `${difficulty} ${region} ${c.name} (${c.stature})`).toBeGreaterThanOrEqual(0);
           n += 1;
         }
     expect(n).toBeGreaterThan(60);

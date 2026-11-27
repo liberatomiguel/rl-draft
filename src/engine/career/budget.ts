@@ -195,3 +195,93 @@ export function seasonBudgetOf(save: CareerSave): SeasonBudget | null {
     ledgerFromWeek,
   };
 }
+
+// ---------------------------------------------------------------------------
+// rc9 org (R223): one truth for the money
+// ---------------------------------------------------------------------------
+
+/**
+ * Why the Finances screen read two figures that did not match: the season
+ * budget (`allocation`, the board's payment, 1.3M) and the cash (`balance`,
+ * 1.8M) are not two pots. The board pays its budget INTO the cash once, when
+ * the mandate is read; the cash also holds what the org had before that
+ * payment (its runway at the takeover, last season's money after it) and
+ * moves every week with income and spending. So
+ *
+ *   cash = openingCash + allocation + netSince
+ *
+ * and the gap between the two figures is `openingCash + netSince`. Every
+ * figure below is read from the same books, so they reconcile by construction:
+ *
+ *   projectedEnd = cash + incomeToCome.total − commitments.total
+ *   freeToSpend  = projectedEnd − keepBack.amount
+ */
+
+export interface SeasonMoney {
+  seasonIndex: number;
+  /** Cash today (the balance). */
+  cash: number;
+  /** What the rest of the season still commits, by line (the Monday statement × the Mondays left). */
+  commitments: { payroll: number; coach: number; retainers: number; upkeep: number; loan: number; total: number };
+  /** Income still contracted this season (the sponsor's weekly pay through its last Monday, the fanbase). Prizes and sales are not counted. */
+  incomeToCome: { sponsor: number; fanbase: number; total: number };
+  /** The cash at the season's end at this pace. */
+  projectedEnd: number;
+  /**
+   * What the board's plan keeps back from the season's end: the money goal's cash floor, or the
+   * part of the end that the net-spend cap does not let the transfer market reach. 0 with no plan line.
+   */
+  keepBack: { amount: number; reason: "cashFloor" | "transferCap" | "none" };
+  /** What the manager can spend this season and still meet the plan (negative: the plan is already short). */
+  freeToSpend: number;
+  /** The board's budget this season: paid (in the cash) or proposed (paid when the mandate is read). */
+  budget: { amount: number; paid: boolean };
+  /**
+   * Budget to cash: cash = opening + allocation + netSince. Null when the opening is not known (an
+   * older save whose ledger no longer holds the board's payment).
+   */
+  bridge: { opening: number; allocation: number; netSince: number } | null;
+  /** The one sentence that explains the gap between the budget and the cash (the copy's key). */
+  gap: "pending" | "carried" | "carriedAndSpent" | "carriedAndEarned" | "spent" | "earned" | "same" | "unknown";
+}
+
+/** An established org's money as one summary whose figures reconcile (null without a board). */
+export function seasonMoneyOf(save: CareerSave): SeasonMoney | null {
+  const b = seasonBudgetOf(save);
+  const board = save.board;
+  if (!b || !board) return null;
+  const s = save.clock.seasonIndex;
+  const season = board.season?.seasonIndex === s ? board.season : null;
+  const cash = save.finances.balance;
+  const c = b.committed;
+  const commitments = { payroll: c.wages, coach: c.coach, retainers: c.staff, upkeep: c.upkeep, loan: c.loan, total: b.committedTotal };
+  const incomeToCome = { sponsor: b.incomeToCome.sponsor, fanbase: b.incomeToCome.fanbase, total: b.incomeToCome.sponsor + b.incomeToCome.fanbase };
+  const projectedEnd = cash + incomeToCome.total - commitments.total;
+
+  const money = season?.mandate?.money;
+  let keepBack: SeasonMoney["keepBack"] = { amount: 0, reason: "none" };
+  if (money?.kind === "cashFloor") keepBack = { amount: money.amount, reason: "cashFloor" };
+  else if (money?.kind === "netSpend") {
+    const t = save.finances.transferTally;
+    const net = t && t.seasonIndex === s ? t.out - t.in : 0;
+    const room = Math.max(0, money.amount - net);
+    keepBack = { amount: Math.max(0, projectedEnd - room), reason: "transferCap" };
+  }
+  const freeToSpend = projectedEnd - keepBack.amount;
+
+  const pending = season !== null && season.choice === null;
+  const proposed = pending ? (season!.offers.find((o) => o.id === "expected") ?? season!.offers[0])?.grant ?? 0 : 0;
+  const budget = { amount: pending ? proposed : b.allocation, paid: !pending };
+  const opening = season?.openingCash;
+  const bridge = opening === undefined ? null : { opening, allocation: b.allocation, netSince: cash - opening - b.allocation };
+
+  let gap: SeasonMoney["gap"];
+  if (pending) gap = "pending";
+  else if (!bridge) gap = "unknown";
+  else {
+    const carried = Math.abs(bridge.opening) > 0;
+    const moved = bridge.netSince === 0 ? 0 : Math.sign(bridge.netSince);
+    gap = carried ? (moved < 0 ? "carriedAndSpent" : moved > 0 ? "carriedAndEarned" : "carried") : moved < 0 ? "spent" : moved > 0 ? "earned" : "same";
+  }
+  return { seasonIndex: s, cash, commitments, incomeToCome, projectedEnd, keepBack, freeToSpend, budget, bridge, gap };
+}

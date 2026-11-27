@@ -166,6 +166,10 @@ import {
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { capitalRefusalOf, establishedOf, gateRepOf, signCapOf, signableFor } from "@/engine/career/established";
+// rc9 org (R220, R221, R225): the established org's catalogue names, the inherited deal's renewal, the load repair.
+import { orgItemOfFounded } from "@/engine/career/orgCatalogue";
+import { renewInheritedBrand } from "@/engine/career/sponsorDeals";
+import { repairEstablishedOnLoad } from "./orgFlow";
 import {
   cycleEndedTodayOf,
   initialTrainingState,
@@ -580,7 +584,8 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
   // rc.6 (ORGMODE E1): an established org has nothing to unlock but the sponsor levels (they scale).
   const established = establishedOf(save);
   for (const [gate, key] of crossings) {
-    if (established && !key.startsWith("sponsors")) continue;
+    // rc9 org (R220): nothing unlocks at an established org, sponsor levels included (its tier mail says what changed).
+    if (established) continue;
     if (repBefore < gate && save.reputation >= gate) {
       pushNews(save, { type: "org", priority: 2, titleKey: "unlock", params: { name: key } });
       pushMail(save, {
@@ -2333,6 +2338,7 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
     linkTo: "/career/finances",
   });
   offerSponsorDecision(save, demote, s.terms.finedSeason);
+  renewInheritedBrand(save.sponsorOffers, s); // rc9 org (R221): an inherited deal's end is its renewal
 }
 
 function ingestResult(save: CareerSave, result: CompactEventResult): void {
@@ -6467,7 +6473,7 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
     day: save.clock.day,
     kind: "facility",
     amount: -cost,
-    refName: itemId,
+    refName: establishedOf(save) ? (orgItemOfFounded(itemId) ?? itemId) : itemId, // rc9 org (R220): the facility's name
   });
   save.finances.gear[itemId] = true;
   pushNews(save, { type: "org", priority: 2, titleKey: "gearBought", params: { name: itemId } });
@@ -7378,6 +7384,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairWeekendState(save); // rc.36 (SUN-01): every load, idempotent, no version bump
   repairFollowState(save); // rc.36 (SUN-03): every load, idempotent, no version bump
   repairCommunicationsOnLoad(save);
+  repairEstablishedOnLoad(save); // rc9 org (R225): every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {

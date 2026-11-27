@@ -41,6 +41,17 @@ const listEn = (p: Record<string, string | number>): string => {
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
 const swingEn = (hit: string | number | undefined, miss: string | number | undefined): string => (hit === undefined ? "" : ` (+${hit} / −${Math.abs(Number(miss))} confidence)`);
 const BOARD_BANDS_EN: Record<string, string> = { expected: "Likely", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
+// rc9 org (R222): the owner's letter on a tier change, by the tier the org reaches: where it stands, then what changes.
+const OWNER_UP_EN: Record<string, string> = {
+  mid: "We are no longer the side people expect to beat. Better players will take our calls now, and the board will want us in the regional fight every split.",
+  contender: "People in the scene count us among the contenders now. Players who turned us down a year ago are listening, and the board will look at Majors, not just regionals.",
+  elite: "We are one of the orgs the rest of the scene measures itself against. Any player will listen to us now, and the board will judge the season by titles.",
+};
+const OWNER_DOWN_EN: Record<string, string> = {
+  contender: "We are not at the very top any more. A few of the names we chase will wait for a bigger offer, and the board will ask for Majors rather than titles.",
+  mid: "We have dropped back into the pack. The best free agents will look elsewhere first, and the board has eased what it asks of us.",
+  underdog: "We are back to being the side nobody fears. The market will be harder, and the board knows it: it asks less of us this time.",
+};
 
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
 
@@ -4533,6 +4544,10 @@ export const CAREER_EN = {
         boardUpgrade: () => "The board will fund an upgrade",
         boardTierUp: (p: Record<string, string | number>) => `${p.org} move up a tier`,
         boardTierDown: (p: Record<string, string | number>) => `${p.org} drop a tier`,
+        // rc9 org (R222, R221): the owner's letter on a tier change; the deal in force on the takeover day.
+        ownerTierUp: () => "Where we stand now",
+        ownerTierDown: () => "Where we stand now",
+        sponsorInherited: (p: Record<string, string | number>) => `${p.name}: the deal you inherit`,
         orgTierUp: (p: Record<string, string | number>) => `${p.org} rise to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier`,
         orgTierDown: (p: Record<string, string | number>) => `${p.org} drop to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier`,
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -4568,6 +4583,12 @@ export const CAREER_EN = {
           `The org's standing lifts it to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier. The budget base and the wage ceiling rise with it, and so does the board's ask.`,
         boardTierDown: (p: Record<string, string | number>) =>
           `The org's standing drops it to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier. The budget base and the wage ceiling fall with it, and the board eases its ask.`,
+        ownerTierUp: (p: Record<string, string | number>) =>
+          `${p.manager}, I have just come out of the season review. ${OWNER_UP_EN[String(p.to)] ?? ""} Enjoy it for a day, then we go again.`,
+        ownerTierDown: (p: Record<string, string | number>) =>
+          `${p.manager}, the review is done and I will not dress it up. ${OWNER_DOWN_EN[String(p.to)] ?? ""} You still have my backing. Show me next season what this squad can do.`,
+        sponsorInherited: (p: Record<string, string | number>) =>
+          `${p.org} already play under a deal with ${p.name}. It was signed before you arrived and runs until week ${p.endWeek} of season ${p.endSeason}. It pays ${p.base} every Monday${p.bonus ? `, and ${p.bonus} if its goal is met` : ""}.${Number(p.fines) ? " Miss the goal and the brand charges a fine." : ""} The goal is on the Finances desk. When the deal ends, ${p.name} will talk to you about a renewal.`,
         orgTierUp: (p: Record<string, string | number>) => `${p.org} move up a tier in the scene after their season.`,
         orgTierDown: (p: Record<string, string | number>) => `${p.org} drop a tier in the scene after their season.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -4719,18 +4740,19 @@ export const CAREER_EN = {
     },
     ops: {
       title: "Operations",
-      body: "What the org runs and what it can add. Money decides; the board signs off each installation.",
+      // rc9 org (R220): facilities you upgrade, departments with people, the event camp.
+      body: "The org's facilities and departments. Upgrades are capital projects: the board signs each one off.",
       running: "Running costs",
       perWeek: (amount: string) => `${amount} / week`,
-      dept: { facilities: "Facilities", staff: "Staff", camps: "Bootcamps" } as Record<string, string>,
+      dept: { facilities: "Facilities", staff: "Departments", camps: "Event camp" } as Record<string, string>,
       deptNote: {
-        facilities: "Capital projects. Each purchase needs the board's sign-off.",
-        staff: "Retainers paid every Monday. Hire and release as you see fit.",
+        facilities: "Each level is a capital project the board signs off.",
+        staff: "Each department's people are paid every Monday. Staff it or close it as you see fit.",
         camps: "One camp a split, its edge carried into competition.",
       } as Record<string, string>,
       state: {
-        owned: "Owned",
-        retained: "Retained",
+        owned: "Built",
+        retained: "Staffed",
         available: "Available",
         needsApproval: "Needs sign-off",
         frozen: "Frozen",
@@ -4741,25 +4763,25 @@ export const CAREER_EN = {
       frozen: "The board froze capital spending for this window.",
       cantAfford: "Not enough money above the floor.",
       upkeep: (amount: string) => `Upkeep ${amount} a week`,
-      buy: "Buy",
-      hire: "Hire",
-      release: "Release",
+      buy: "Upgrade",
+      hire: "Staff it",
+      release: "Close",
       run: "Run the camp",
-      saves: (split: string) => `Releasing saves ${split} a split`,
-      releaseTitle: (name: string) => `Release: ${name}`,
+      saves: (split: string) => `Closing it saves ${split} a split`,
+      releaseTitle: (name: string) => `Close: ${name}`,
       releaseBody: (split: string, week: string) =>
-        `The retainer stops from the next Monday: the org saves ${split} a split (${week} a week). You can hire the role again later at the going rate.`,
-      releaseConfirm: "Release",
+        `The department's pay stops from the next Monday: the org saves ${split} a split (${week} a week). You can staff it again later at the going rate.`,
+      releaseConfirm: "Close it",
       keep: "Keep",
       campUsed: "Used this split",
       campActive: (date: string) => `Running until ${date}`,
       campReady: "Ready to run",
-      allOwned: "Every installation is in place",
-      next: "Next purchase",
+      allOwned: "Every facility is fully built",
+      next: "Next upgrade",
       open: "Open operations",
-      facilitiesOwned: (owned: number, total: number) => `${owned} of ${total} owned`,
-      staffNone: "No staff retained",
-      facilitiesNone: "No installation yet",
+      facilitiesOwned: (owned: number, total: number) => `${owned} of ${total} levels built`,
+      staffNone: "No department staffed",
+      facilitiesNone: "No facility level built yet",
       staffList: (names: string) => names,
     },
     club: {
@@ -4767,21 +4789,69 @@ export const CAREER_EN = {
         `A promotion raises the budget base and the wage ceiling by ${pct}%, raises what the board expects, and lets the org sign players up to ${cap}.`,
       top: (pct: number) => `At the top tier the board expects titles. A drop cuts the budget base and the wage ceiling by ${pct}%.`,
       opsTitle: "Operations",
-      opsBody: "Installations, staff and camps. They are bought and run in Finances.",
+      opsBody: "Facilities, departments and the event camp. They are upgraded and run in Finances.",
       opsOpen: "Open in Finances",
     },
     /** The founded club's reputation wording, as an established org reads it (same paths as the copy). */
     words: {
       common: { rep: "Standing", reputation: "Standing" },
+      // rc9 org (R222): the standing is felt, not counted: no figure in an established org's lines.
       goals: {
-        reward: (n: number) => `+${n} standing at review`,
-        missCost: (n: number) => `Miss it: −${n} standing`,
+        reward: (n: number): string => (n > 0 ? "Lifts the org's standing at the review" : "No standing at stake"),
+        missCost: (n: number): string => (n > 0 ? "Miss it and the org's standing slips" : "No standing at stake"),
         noCost: "No standing at stake",
-        repRisk: (n: number) => `The org's standing expects it (−${n} if missed)`,
+        repRisk: (n: number): string => (n > 0 ? "The org's standing expects it, and slips if it is missed" : "The org's standing expects it"),
       },
-      inserts: { fx: { rep: (n: number) => `${n > 0 ? "+" : ""}${n} standing`, repLabel: "Standing" } },
+      inserts: { fx: { rep: (n: number): string => (n > 0 ? "Standing rises" : n < 0 ? "Standing slips" : "Standing holds"), repLabel: "Standing" } },
       event: { digestRep: "Standing" },
-      hub: { edgesEmpty: "No edges yet: the coach, installations and staff are bought in Finances." },
+      hub: { edgesEmpty: "No edges yet: the coach, the facilities and the departments are run in Finances." },
+      // rc9 org (R220): the founded shelf's names, as the org catalogue names them (every screen and mail that still reads the founded ids).
+      club: {
+        unlockables: {
+          peripherals: "Training centre, level 1",
+          monitors: "Training centre, level 2",
+          pcs: "Training centre, level 3",
+          perfCenter: "Performance centre",
+          bootcamp1: "Event bootcamp",
+          bootcamp2: "Event bootcamp",
+          psychologist: "Sports psychology",
+          assistant: "Player development",
+          analyst: "Analysis department",
+          physio: "Health and conditioning",
+          brand: "Commercial department",
+        },
+      },
+      ladder: {
+        rung: {
+          peripherals: "Training centre, level 1",
+          monitors: "Training centre, level 2",
+          pcs: "Training centre, level 3",
+          perfCenter: "Performance centre",
+          bootcamp1: "Event bootcamp",
+          bootcamp2: "Event bootcamp",
+          psychologist: "Sports psychology",
+          assistant: "Player development",
+          analyst: "Analysis department",
+          physio: "Health and conditioning",
+          brand: "Commercial department",
+        },
+        hint: {
+          peripherals: "Faster training gains",
+          monitors: "Faster training gains",
+          pcs: "Training and a team buff",
+          perfCenter: "The top training and team buff",
+          bootcamp1: "Chemistry and a rating edge",
+          bootcamp2: "Chemistry and a rating edge",
+          psychologist: "+5 Clutch, +5 Consistency",
+          assistant: "Reserves learn more from events",
+          analyst: "A rating edge in playoffs",
+          physio: "Less wear risk before events",
+          brand: "Sponsor offers worth more",
+        },
+      },
+      toolbox: {
+        refusal: { maxed: "Every facility is fully built.", locked: "Not available at this org." },
+      },
       market: {
         filterSignable: "Signable at this org's pull",
         lockedHint: "Players above this level will not join the org at its current standing.",
@@ -4796,12 +4866,36 @@ export const CAREER_EN = {
           `Credit sized by the org's standing: ${weeks} weekly instalments, ${pct}% interest. No emergency loan is left: breaking the floor ends the career.`,
         bankLockedRep: "The bank lends once the org's standing rises a little.",
         deal: { boldLocked: "Bold deals come with a higher standing." },
+        // rc9 org (R220): the founded installations and roles, as the org catalogue names them.
+        gear: { peripherals: "Training centre, level 1", monitors: "Training centre, level 2", pcs: "Training centre, level 3", perfCenter: "Performance centre" },
+        gearDesc: {
+          peripherals: "The org's practice rooms and scrim set-up. +5% training.",
+          monitors: "A second practice room and a full-time scrim schedule. +5% training.",
+          pcs: "The training centre at full size, with its own servers. +10% training and a team edge.",
+          perfCenter: "Analysts' room, gym and review theatre under one roof. +15% training, the top team edge.",
+        },
+        psychologist: "Sports psychology",
+        staff: {
+          assistant: { title: "Player development", desc: "Coaches the reserves: a reserve earns 80% of the team's series experience instead of 60%." },
+          analyst: { title: "Analysis department", desc: "Scouts every playoff opponent: +0.75 team rating in each playoff round." },
+          physio: { title: "Health and conditioning", desc: "Manages the training load: a quarter less risk of a player missing an event from wear." },
+          brand: { title: "Commercial department", desc: "Sells the org to brands: new sponsor offers are worth 15% more." },
+        },
+        bootcampT1: "Event bootcamp",
+        bootcampT2: "Event bootcamp",
+        line: { psychologist: "Sports psychology", staff: "Departments" },
       },
       news: {
         feed: { subject: { rep: "Standing" } },
+        // rc9 org (R220): a facility upgrade and the event camp, in the org's words.
+        tpl: {
+          gearBought: (p: Record<string, string | number>) => `${p.name}: the upgrade is done`,
+          bootcampRun: () => "Event bootcamp concluded",
+        },
         body: {
           unlock: (p: Record<string, string | number>) => `The org's standing brings a new sponsor level: ${p.name}.`,
           repDown: (p: Record<string, string | number>) => `Expectations were stated and missed; ${p.org}'s standing takes the hit. Results win it back.`,
+          gearBought: (p: Record<string, string | number>) => `${p.name} is open. The players train in it from this week.`,
         },
       },
       mail: {
@@ -4810,9 +4904,114 @@ export const CAREER_EN = {
         },
       },
       tour: {
-        hub: { progress: { title: "Operations", body: "Results move the org's standing. Installations, staff and camps are on the shelf from day one: money and the board decide." } },
-        finances: { progress: { title: "Run the org", body: "Installations, staff and bootcamps make the squad grow and play better. The board signs off each installation." } },
+        hub: { progress: { title: "Operations", body: "The org arrives with the facilities and departments of its tier. Upgrade a facility or staff a department when the money and the board allow it." } },
+        finances: { progress: { title: "Run the org", body: "Facilities and departments make the squad grow and play better. The board signs off each facility upgrade." } },
       },
+    },
+    // rc9 org (R220): the org catalogue (engine/career/orgCatalogue.ts), named and explained.
+    org: {
+      name: {
+        trainingCentre: "Training centre",
+        performanceCentre: "Performance centre",
+        deptDevelopment: "Player development",
+        deptAnalysis: "Analysis department",
+        deptPsychology: "Sports psychology",
+        deptHealth: "Health and conditioning",
+        deptCommercial: "Commercial department",
+        eventCamp: "Event bootcamp",
+      } as Record<string, string>,
+      about: {
+        trainingCentre: "Where the squad practises every day: rooms, scrim set-up and servers.",
+        performanceCentre: "Analysts, gym and review theatre under one roof. The board's flagship project.",
+        deptDevelopment: "Coaches who work with the reserves between events.",
+        deptAnalysis: "Analysts who break down every playoff opponent.",
+        deptPsychology: "A psychologist who works with the players before deciding games.",
+        deptHealth: "Staff who manage the training load and the players' health.",
+        deptCommercial: "People who sell the org to brands.",
+        eventCamp: "The squad under one roof before a run of events.",
+      } as Record<string, string>,
+      /** What each department does in the game, with the engine's figures. */
+      deptEffect: {
+        deptDevelopment: (pct: number) => `A reserve earns ${pct}% of the team's series experience`,
+        deptAnalysis: (rating: number) => `+${rating} team rating in each playoff round`,
+        deptPsychology: (clutch: number, consistency: number) => `+${clutch} Clutch and +${consistency} Consistency`,
+        deptHealth: (pct: number) => `${pct}% less risk of a player missing an event from wear`,
+        deptCommercial: (pct: number) => `New sponsor offers are worth ${pct}% more`,
+      },
+      levelEffect: (training: number, buff: number, rating: number) =>
+        [training > 0 ? `+${training}% training` : "", buff > 0 ? `+${buff} team buff level${buff === 1 ? "" : "s"}` : "", rating > 0 ? `+${rating} team rating` : ""].filter(Boolean).join(", "),
+      level: (n: number, max: number) => `Level ${n} of ${max}`,
+      levelName: (name: string, n: number) => `${name}, level ${n}`,
+      notBuilt: "Not built",
+      standard: "In place when you arrived",
+      aboveStandard: "Built under your management",
+      upgradeTo: (n: number) => `Upgrade to level ${n}`,
+      complete: "Fully built",
+      staffed: "Staffed",
+      vacant: "Nobody in post",
+      staffIt: "Staff the department",
+      closeIt: "Close the department",
+      perWeek: (amount: string) => `${amount} a week`,
+      campFree: "Paid by the sponsor",
+      boardSigns: (need: number) => `The board signs this off at confidence ${need}`,
+    },
+    // rc9 org (R222): the standing as a word and what it changes, never a figure.
+    sense: {
+      drift: {
+        rising: "The scene rates the org above its tier. A season that meets the board's objective moves it up at the review.",
+        steady: "The org holds its place in the scene.",
+        slipping: "The org is slipping below its tier. Another weak season drops it at the review.",
+      } as Record<string, string>,
+      pull: (cap: number) => `Players rated up to ${cap} will join`,
+      expects: {
+        elite: "The board judges the season by Majors and Worlds.",
+        contender: "The board expects Majors and a run at Worlds.",
+        mid: "The board expects the regional fight and a Major when it comes.",
+        underdog: "The board expects the org to grow in the regionals.",
+      } as Record<string, string>,
+      patience: {
+        demanding: "A missed goal costs a lot of the board's confidence.",
+        measured: "The board weighs a missed goal against the season.",
+        forgiving: "The board gives the project time.",
+      } as Record<string, string>,
+    },
+    // rc9 org (R223): one summary of the money whose figures add up (budget.orgMoneyOf).
+    money: {
+      title: "The season's money",
+      cash: "Cash today",
+      commitments: "Still to pay this season",
+      payroll: "Squad wages",
+      coach: "Coach",
+      retainers: "Departments",
+      upkeep: "Facility upkeep",
+      loan: "Loan repayments",
+      incomeToCome: "Income still contracted",
+      sponsor: "Sponsor",
+      fanbase: "Fanbase",
+      projectedEnd: "At the season's end",
+      projectedNote: "At this pace, before prizes and player sales",
+      keepBack: {
+        cashFloor: (amount: string) => `The board's plan keeps ${amount} in the bank at the season's end`,
+        transferCap: (amount: string) => `The board's net transfer limit leaves ${amount} out of reach`,
+        none: () => "The board's plan sets no line on the cash",
+      } as Record<string, (amount: string) => string>,
+      freeToSpend: "Free to spend",
+      freeNote: "What you can spend this season and still meet the board's plan",
+      short: "Short of the plan",
+      budgetPaid: "The board's budget, paid into the cash",
+      budgetProposed: "The board's budget, paid when you read the mandate",
+      gap: {
+        pending: (budget: string) => `The board pays its ${budget} into the cash when you read the mandate.`,
+        carried: (budget: string, opening: string) => `The cash holds the board's ${budget} and the ${opening} the org already had.`,
+        carriedAndSpent: (budget: string, opening: string, net: string) =>
+          `The cash holds the board's ${budget} and the ${opening} the org already had, less ${net} spent since.`,
+        carriedAndEarned: (budget: string, opening: string, net: string) =>
+          `The cash holds the board's ${budget} and the ${opening} the org already had, plus ${net} taken in since.`,
+        spent: (budget: string, _opening: string, net: string) => `The cash is the board's ${budget}, less ${net} spent since.`,
+        earned: (budget: string, _opening: string, net: string) => `The cash is the board's ${budget}, plus ${net} taken in since.`,
+        same: (budget: string) => `The cash is the board's ${budget}, untouched so far.`,
+        unknown: () => "The board paid its budget into the cash at the season's start. The cash has moved with the season's income and spending since.",
+      } as Record<string, (budget: string, opening: string, net: string) => string>,
     },
   },
   proWorld: {

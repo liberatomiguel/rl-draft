@@ -1131,6 +1131,10 @@ export interface SponsorTerms {
    * the rollover without their placement tables. Absent = nothing carried.
    */
   carriedResults?: CompactEventResult[];
+  // rc9 org (R221): an established org's deal in force on the takeover day (signed before the manager
+  // arrived), and the offer that renews it when it ends. Optional, additive.
+  inherited?: boolean;
+  renewal?: boolean;
 }
 
 export interface CoachState {

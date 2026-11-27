@@ -306,3 +306,55 @@ export function operationsOf(save: CareerSave, opts: { floor?: number } = {}): O
     });
   return { facilities, staff, camps };
 }
+
+// ---------------------------------------------------------------------------
+// rc9 org (R222): Standing without a number
+// ---------------------------------------------------------------------------
+
+/** Where the org stands against its tier's lines, as a feeling and not a figure. */
+export type StandingDrift = "rising" | "steady" | "slipping";
+
+export interface StandingSense {
+  tier: Stature;
+  /** rising: over the next tier's line (a promotion at the review if the season's objective is met); slipping: under its own floor. */
+  drift: StandingDrift;
+  /** The best signing level a new player joins at: the tier's pull (the market's own rule). */
+  signCap: number;
+  /** The competitions the board measures a season of this tier by (CAREER_BOARD.objectiveKinds). */
+  expects: readonly string[];
+  /** How hard a missed goal lands: the tier's patience read as a word. */
+  patience: "forgiving" | "measured" | "demanding";
+  /** The tier above and below (null at the ends), for "what a promotion or a drop changes". */
+  up: Stature | null;
+  down: Stature | null;
+}
+
+/**
+ * The Standing as an established org lives it: the tier as a word, what it
+ * means in the market and at the board, and which way it is drifting. No
+ * number: the reputation stays the engine's. Null for a founded club (it
+ * keeps its number).
+ */
+export function standingSenseOf(save: SaveLike): StandingSense | null {
+  const tier = tierOf(save);
+  if (!tier) return null;
+  const view = standingViewFor(tier, save.reputation);
+  const i = STANDING_TIERS.indexOf(tier);
+  const drift: StandingDrift =
+    view.next && save.reputation >= view.next.line ? "rising" : view.relegationLine !== null && save.reputation < view.relegationLine ? "slipping" : "steady";
+  const p = B.profiles[tier].patience;
+  return {
+    tier,
+    drift,
+    signCap: B.profiles[tier].signCap,
+    expects: B.objectiveKinds[tier] ?? [],
+    patience: p >= 1.2 ? "demanding" : p >= 1 ? "measured" : "forgiving",
+    up: STANDING_TIERS[i + 1] ?? null,
+    down: i > 0 ? STANDING_TIERS[i - 1] : null,
+  };
+}
+
+/** The reputation figure a screen may print: a founded club's number, nothing for an established org. */
+export function reputationFigureOf(save: SaveLike): number | null {
+  return establishedOf(save) ? null : Math.round(save.reputation);
+}

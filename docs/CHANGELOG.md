@@ -25,6 +25,24 @@ with the root cause — that section doubles as the project's bugfix log.
 - Toast titles and bodies were never clamped. Root cause: a `block` class beside `line-clamp-*` overrode the `-webkit-box` display the clamp needs.
 - Tracking utilities on display text never applied. Root cause: the unlayered `.display` rule set 0.02em and beat every layered `tracking-*` utility; tracking is now set by role.
 
+### ORG front (established orgs; `realOrgStart`, `board`; R220-R225)
+
+**Added**
+- The established org's own catalogue (`engine/career/orgCatalogue.ts`): facilities with levels (training centre 1-3, performance centre), departments with people (development, analysis, psychology, health, commercial) and the event bootcamp, each mapped onto an engine effect that already existed, so balance does not move. Actions in `store/orgFlow.ts` (`upgradeFacilityFlow`, `setDepartmentFlow`, `runEventCampFlow`).
+- A sponsor deal in force on the takeover day, of the tier's profile, with its mail; its end brings the same brand back for the renewal.
+- `standingSenseOf` / `reputationFigureOf`: the standing as a word with its effects, no figure; the owner's letter when the tier changes at the review (EN and PT).
+- `seasonMoneyOf`: one money summary for an established org whose figures reconcile by construction, with the sentence that explains budget against cash. `BoardSeason.openingCash` (optional).
+- The takeover preview and the pick's choices carry the org's structure, deal, standing sense and money in the catalogue's terms.
+
+**Changed**
+- An established org has no ladder, no toolbox unlocks and no unlock news (sponsor levels included); founded-shelf names are renamed for it through `orgmode.words`; the board's tier mail is the owner's letter.
+
+**Fixed**
+- The unlock modal ("Novas possibilidades") announced founded-club items in a takeover save. Root cause: the toolbox keys (`tb:*`) were never marked seen when the announcements initialised, and an established org has the whole shelf open, so every unowned installation queued a notice.
+- Finances showed a 1.3M budget over 1.8M of cash with no link between them. Root cause: the board's budget is paid into the cash once, and the screen compared a payment against a balance that also holds the money the org already had and the season's movement since.
+
+---
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

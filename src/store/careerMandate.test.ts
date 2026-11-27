@@ -72,7 +72,7 @@ describe("a takeover's first day", () => {
     expect(save.mail.some((m) => m.titleKey === "boardPackage")).toBe(false);
   });
 
-  it("the mandate holds the clock and the sponsor desk waits for it; reading it pays the budget and opens the desk", () => {
+  it("the mandate holds the clock; reading it pays the budget; the org's deal in force keeps the desk closed (rc9 R221)", () => {
     expect(pendingMandateOf(save)).not.toBeNull();
     expect(boardDecisionOf(save)?.id).toBe("board:mandate:0");
     expect(pendingDecisionsOf(save).some((d) => d.kind === "board" && d.holds)).toBe(true);
@@ -83,7 +83,9 @@ describe("a takeover's first day", () => {
     expect(read.finances.balance).toBe(before + grant);
     expect(pendingMandateOf(read)).toBeNull();
     expect(mandateOf(read)?.acknowledged).toBe(true);
-    expect(read.sponsorOffers?.length ?? 0).toBeGreaterThan(0);
+    // rc9 org (R221): the org arrives with a deal in force, so no desk opens with the mandate.
+    expect(read.sponsor?.terms?.inherited).toBe(true);
+    expect(read.sponsorOffers ?? null).toBeNull();
     expect(read.seasonGoals?.plan?.target.kind).toBe(mandateOf(read)!.classification.objective.kind);
     expect(acknowledgeMandateFlow(read).error).toBe("none");
   });
