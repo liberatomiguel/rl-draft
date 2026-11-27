@@ -146,6 +146,8 @@ describe("a 2027 takeover (the default era)", () => {
       const save = createCareerSave({ ...input("EU", c.ref), startSeasonIndex: era }, SEED);
       expect(save.clock.seasonIndex).toBe(era);
       expect(save.board!.startSeason).toBe(era);
+      // rc.7: EU has 24 real orgs in RLCS 2027, so the taken seat is not refilled with a generic team.
+      expect(Object.keys(save.world.orgs).filter((r) => r.startsWith("fill:EU:")), c.name).toEqual([]);
       const m = pendingMandateOf(save)!;
       expect(m, c.name).not.toBeNull();
       expect(m.seasonIndex).toBe(era);
