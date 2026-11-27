@@ -4200,7 +4200,7 @@ export const CAREER_EN = {
         facts: [
           { label: "You start with", value: "Three unknowns" },
           { label: "You chase", value: "Reputation" },
-          { label: "The hard part", value: "Growing" },
+          { label: "The challenge", value: "Growing" },
         ],
         action: "Found a club",
       },
@@ -4210,7 +4210,7 @@ export const CAREER_EN = {
         facts: [
           { label: "You start with", value: "A real roster" },
           { label: "You chase", value: "The board's objectives" },
-          { label: "The hard part", value: "Keeping the job" },
+          { label: "The challenge", value: "Keeping the job" },
         ],
         action: "Choose an organization",
       },
@@ -4232,6 +4232,7 @@ export const CAREER_EN = {
       back: "Back",
       allOrgs: "All organizations",
       go: (org: string) => `Take over ${org}`,
+      goShort: "Take over",
       loading: "Reading the file",
     },
     dossier: {

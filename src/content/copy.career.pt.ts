@@ -4171,7 +4171,7 @@ export const CAREER_PT: CareerCopy = {
         facts: [
           { label: "Você começa com", value: "Três desconhecidos" },
           { label: "Você busca", value: "Reputação" },
-          { label: "O difícil", value: "Crescer" },
+          { label: "O desafio", value: "Crescer" },
         ],
         action: "Fundar um clube",
       },
@@ -4181,7 +4181,7 @@ export const CAREER_PT: CareerCopy = {
         facts: [
           { label: "Você começa com", value: "Um elenco real" },
           { label: "Você busca", value: "As metas da diretoria" },
-          { label: "O difícil", value: "Manter o cargo" },
+          { label: "O desafio", value: "Manter o cargo" },
         ],
         action: "Escolher uma org",
       },
@@ -4203,6 +4203,7 @@ export const CAREER_PT: CareerCopy = {
       back: "Voltar",
       allOrgs: "Todas as orgs",
       go: (org: string) => `Assumir a ${org}`,
+      goShort: "Assumir",
       loading: "Lendo o dossiê",
     },
     dossier: {

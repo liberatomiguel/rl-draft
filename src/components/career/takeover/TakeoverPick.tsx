@@ -174,9 +174,9 @@ function Dossier({
     <div className="panel p-4 sm:p-6">
       {/* Who: the logo, the name, its tier and place, the tier's one line. */}
       <div className="flex items-center gap-4">
-        <TeamLogo orgId={c.ref} size="xl" loading="eager" className="max-sm:!h-[4.5rem] max-sm:!w-[4.5rem]" />
+        <TeamLogo orgId={c.ref} size="xl" loading="eager" className="max-sm:!h-14 max-sm:!w-14" />
         <div className="min-w-0">
-          <h3 className="display text-3xl uppercase leading-[0.95] text-ink [overflow-wrap:anywhere] sm:text-4xl">{c.name}</h3>
+          <h3 className="display text-[1.6rem] uppercase leading-[0.95] text-ink [overflow-wrap:break-word] sm:text-4xl">{c.name}</h3>
           <p className="mt-2 text-sm text-ink">
             <span className="font-semibold">{C.board.stature[c.stature]}</span>
             <span className="text-sub"> · {copy.SETUP.regionNames[c.region]} · {P.rank(c.rank, c.teams)}</span>
@@ -332,9 +332,15 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
   const topRef = useRef<HTMLDivElement>(null);
 
   const world = useMemo(() => computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" }), [seed]);
+  // Only the regions with an organization to take over get a tab (APAC and SSA have none in the first season).
+  const regions = useMemo(
+    () => REGIONS.filter((r) => realOrgChoicesFor(r, { careerSeed: seed, seasonIndex: 0, difficulty: "normal", world }).length > 0),
+    [seed, world],
+  );
+  const regionShown = regions.includes(region) ? region : (regions[0] ?? region);
   const choices = useMemo(
-    () => realOrgChoicesFor(region, { careerSeed: seed, seasonIndex: 0, difficulty, world }),
-    [region, seed, difficulty, world],
+    () => realOrgChoicesFor(regionShown, { careerSeed: seed, seasonIndex: 0, difficulty, world }),
+    [regionShown, seed, difficulty, world],
   );
   // The region's first organization reads until the player picks (the desktop dossier is never empty).
   const chosen = choices.find((c) => c.ref === pick) ?? choices[0] ?? null;
@@ -378,24 +384,25 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
 
   const action = chosen ? (
     <Button variant="primary" size="lg" disabled={arrived} onClick={go} className="max-sm:flex-1">
-      <span className="truncate">{P.go(chosen.name)}</span>
+      <span className="truncate sm:hidden">{P.goShort}</span>
+      <span className="truncate max-sm:hidden">{P.go(chosen.name)}</span>
     </Button>
   ) : null;
 
   return (
     <div ref={topRef} className="mx-auto max-w-6xl scroll-mt-16 px-3 py-4 sm:px-4 sm:py-6">
-      <SectionTitle title={P.title} kicker={P.kicker} />
+      <SectionTitle title={P.title} kicker={P.kicker} className={cx(phoneStep === "dossier" && "max-lg:hidden")} />
 
-      <div className="mt-5 grid gap-6 lg:mt-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start">
+      <div className={cx("mt-5 grid grid-cols-1 gap-6 lg:mt-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start", phoneStep === "dossier" && "max-lg:mt-0")}>
         {/* ---- The list (a step of its own on a phone) ---- */}
-        <div className={cx(phoneStep === "dossier" && "max-lg:hidden")}>
+        <div className={cx("min-w-0", phoneStep === "dossier" && "max-lg:hidden")}>
           <div className="phone-tabs flex border-b border-line" role="tablist" aria-label={P.regions}>
-            {REGIONS.map((r) => (
+            {regions.map((r) => (
               <button
                 key={r}
                 type="button"
                 role="tab"
-                aria-selected={region === r}
+                aria-selected={regionShown === r}
                 title={copy.SETUP.regionNames[r]}
                 onClick={() => {
                   setRegion(r);
@@ -403,7 +410,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
                 }}
                 className={cx(
                   "display -mb-px flex min-h-11 flex-1 items-center justify-center border-b-2 px-1 text-sm font-semibold uppercase tracking-[0.04em] transition-colors",
-                  region === r ? "border-orange text-ink" : "border-transparent text-sub hover:text-ink",
+                  regionShown === r ? "border-orange text-ink" : "border-transparent text-sub hover:text-ink",
                 )}
               >
                 {r}
@@ -439,8 +446,8 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
         </div>
 
         {/* ---- The dossier (the next step on a phone) ---- */}
-        <div className={cx(phoneStep === "list" && "max-lg:hidden")}>
-          <Button variant="ghost" size="sm" className="mb-3 lg:hidden" onClick={() => setPhoneStep("list")}>
+        <div className={cx("min-w-0", phoneStep === "list" && "max-lg:hidden")}>
+          <Button variant="ghost" size="sm" className="mb-2 lg:hidden" onClick={() => setPhoneStep("list")}>
             {P.allOrgs}
           </Button>
           {chosen && preview ? (
