@@ -1021,9 +1021,11 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   for (const bid of save.pendingOffers.filter((o) => o.status === "pending" && o.direction === "out")) {
     const net = statementOf(save).net;
     const tight = net < 0 && save.finances.balance / -net < 8;
-    // v2.2 MANDATE: a bid for a reserve while the sales goal is open is taken; a player the squad goal names stays.
+    // v2.2 MANDATE: a bid for a reserve while the sales goal is open is taken; a player the squad goal names stays,
+    // unless the books are tight: survival first (keeping the core while the cash ran out took two 2027 careers to
+    // insolvency in the probe, NA Hard mid and underdog, seed 30000).
     const forSale = salesGoal?.kind === "sales" && salesGoal.met === null && !save.starterIds.includes(bid.playerId) && transferMoneyOf(save).in < salesGoal.amount;
-    const sellable = !keeps.has(bid.playerId) && (forSale || (policy.bids === "whenTight" && tight));
+    const sellable = (!keeps.has(bid.playerId) || tight) && (forSale || (policy.bids === "whenTight" && tight));
     const sold = sellable && !save.activeEvent ? acceptBidFlow(save, bid.id) : null;
     if (sold && !sold.error) t.sales += 1;
     save = sold && !sold.error ? sold.save : declineBidFlow(save, bid.id);
