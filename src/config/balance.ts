@@ -5340,7 +5340,7 @@ export const CAREER_BOARD = {
       prospectAge: 20,
       severity: {
         dealsEnding: 0.9, wageBill: 0.85, shortCash: 0.8, weakLink: 0.7, agingCore: 0.6, lowChemistry: 0.55,
-        noCoach: 0.5, costlyBench: 0.45, sponsorEnding: 0.4, prospectBenched: 0.35, noSponsor: 0.3, dealsSoon: 0.25, wageRoom: 0.2,
+        noCoach: 0.5, noReserve: 0.48, costlyBench: 0.45, sponsorEnding: 0.4, prospectBenched: 0.35, noSponsor: 0.3, dealsSoon: 0.25, wageRoom: 0.2,
       } as Record<string, number>,
     },
     /** The money goals' figures, in weeks of the running bill (wages + structure). */

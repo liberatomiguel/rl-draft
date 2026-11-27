@@ -140,6 +140,7 @@ export function orgIssuesOf(save: IssueSave, opts: { all?: boolean } = {}): OrgI
   if (costly) out.push({ kind: "costlyBench", severity: sev("costlyBench"), value: Math.round((100 * costly.salaryPerSplit) / avgStarterWage), playerId: costly.id, playerName: costly.name });
   const prospect = bench.filter((p) => ageIn(p, s) <= I.prospectAge).sort((a, b) => b.potential - a.potential)[0];
   if (prospect) out.push({ kind: "prospectBenched", severity: sev("prospectBenched"), value: ageIn(prospect, s), playerId: prospect.id, playerName: prospect.name });
+  if (bench.length === 0) out.push({ kind: "noReserve", severity: sev("noReserve"), value: 0 });
 
   // The sponsor.
   const ends = save.sponsor?.terms?.endsOn;

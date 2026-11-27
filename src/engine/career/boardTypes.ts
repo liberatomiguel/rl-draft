@@ -90,6 +90,7 @@ export type OrgIssueKind =
   | "lowChemistry" // the starters do not play together yet
   | "noCoach" // no head coach
   | "costlyBench" // a reserve paid like a starter
+  | "noReserve" // nobody on the bench: an absent starter leaves a seat empty
   | "sponsorEnding" // the sponsor deal ends this season
   | "prospectBenched" // a young prospect outside the starting three
   | "noSponsor" // no sponsor under contract

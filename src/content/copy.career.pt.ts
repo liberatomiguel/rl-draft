@@ -4295,6 +4295,7 @@ export const CAREER_PT: CareerCopy = {
         lowChemistry: "Sem entrosamento",
         noCoach: "Sem técnico",
         costlyBench: "Um banco caro",
+        noReserve: "Sem reserva",
         sponsorEnding: "O patrocínio acaba",
         prospectBenched: "Uma promessa no banco",
         noSponsor: "Sem patrocinador",
@@ -4319,6 +4320,8 @@ export const CAREER_PT: CareerCopy = {
             return "Ninguém comanda os treinos do elenco.";
           case "costlyBench":
             return `${name ?? "O reserva"} recebe ${value}% do salário de um titular no banco.`;
+          case "noReserve":
+            return "Ninguém no banco: um titular ausente deixa uma vaga vazia.";
           case "sponsorEnding":
             return "O contrato do patrocinador termina nesta temporada.";
           case "prospectBenched":

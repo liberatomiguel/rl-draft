@@ -4324,6 +4324,7 @@ export const CAREER_EN = {
         lowChemistry: "No chemistry yet",
         noCoach: "No head coach",
         costlyBench: "A costly bench",
+        noReserve: "No reserve",
         sponsorEnding: "The sponsor deal ends",
         prospectBenched: "A prospect on the bench",
         noSponsor: "No sponsor",
@@ -4348,6 +4349,8 @@ export const CAREER_EN = {
             return "Nobody runs the squad's training.";
           case "costlyBench":
             return `${name ?? "The reserve"} earns ${value}% of a starter's wage from the bench.`;
+          case "noReserve":
+            return "Nobody on the bench: an absent starter leaves a seat empty.";
           case "sponsorEnding":
             return "The sponsor's deal runs out this season.";
           case "prospectBenched":
