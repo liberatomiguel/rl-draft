@@ -6,7 +6,7 @@
 > Pre-season board rewards are one band per player; peak-rank rewards are cumulative.
 > `exclusive: true` is the visibility flag for legacy/manual items (hidden unless owned), distinct from the **Exclusive rarity**, reserved for manual grants above Epic and below Legendary.
 
-Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 banners.
+Total: **110** items — 0 avatars · 37 badges · 0 frames · 46 titles · 27 banners.
 
 ## Avatars (0)
 
@@ -46,7 +46,7 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 | `creator` | Creator / Creator | Exclusive | Manual grant: creator | yes | art `public/badges/creator.svg` | Reserved for the creator of Rocket Draft. |
 | `50-50-staff` | 50/50 Staff / 50/50 Staff | Exclusive | Manual grant: 50-50-staff | yes | art `public/badges/50-50-staff.svg` | Manually granted to the 50/50 staff. |
 | `early-supporter` | Early Supporter / Early Supporter | Exclusive | Manual grant: early-supporter | yes | art `public/badges/early-supporter.svg` | Played from the very start and helped spread the word. |
-| `supporter` | Supporter / Supporter | Exclusive | Manual grant: supporter | yes | art `public/badges/supporter.svg` | Backed Rocket Draft when it was just getting started. |
+| `supporter` | Special Supporter / Special Supporter | Exclusive | Manual grant: supporter | yes | art `public/badges/supporter.svg` | Backed Rocket Draft when it was just getting started. |
 | `contributor` | Contributor / Contributor | Exclusive | Manual grant: contributor | yes | art `public/badges/contributor.svg` | Helped build the game: data, art, testing or ideas. |
 | `verified-pro` | Verified Pro / Verified Pro | Exclusive | Manual grant: pro | yes | art `public/badges/verified-pro.svg` | A verified RLCS professional plays here too. |
 | `dynasty` | Dynasty / Dynasty | Legendary | One season: peak ≥ Supersonic Legend, 3 career Worlds, 25 Legacy titles |  | art `public/badges/dynasty.svg` | One season: Supersonic Legend, three Worlds titles and 25 Legacy wins. |
@@ -60,7 +60,7 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 | Id | Name (EN / PT) | Tier | Unlock | Exclusive | Look | Description (EN) |
 |---|---|---|---|---|---|---|
 
-## Titles (44)
+## Titles (46)
 
 | Id | Name (EN / PT) | Tier | Unlock | Exclusive | Look | Description (EN) |
 |---|---|---|---|---|---|---|
@@ -74,6 +74,7 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 | `login-title-the-regular` | The Regular / The Regular | Common | Login streak 3 days |  | #a3adbd | Three days in a row. A habit in the making. |
 | `legacy-title-ps-diamond` | Pre-Season Diamond / Pre-Season Diamond | Uncommon | Pre-season peak rank ≥ Diamond | yes | #a3adbd | Reached Diamond in the pre-season. |
 | `legacy-title-ps-platinum` | Pre-Season Platinum / Pre-Season Platinum | Uncommon | Pre-season peak rank ≥ Platinum | yes | #a3adbd | Reached Platinum in the pre-season. |
+| `share-title-ambassador` | Ambassador / Ambassador | Uncommon | Share a run, your career or an invitation (mark `share-first`) |  | #a3adbd | Took Rocket Draft out into the world: a run, a career or an invitation. |
 | `run-title-technician` | Technician / Technician | Uncommon | Win a worldwide Classic run with three players, coach and substitute from the same country (mark `run-one-flag`) |  | #a3adbd | Won a worldwide Classic run with players, coach and substitute from one country. |
 | `quiz-title-rl-nerd` | RL Nerd / RL Nerd | Uncommon | 10 daily quizzes solved |  | #a3adbd | Ten daily quizzes solved. |
 | `rank-title-playmaker` | Playmaker / Playmaker | Uncommon | Season 1: reach Gold |  | #a3adbd | Reached Gold in Season 1. |
@@ -102,10 +103,11 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 | `login-title-daily-driver` | Daily Driver / Daily Driver | Epic | Login streak 30 days |  | #ff5f6d → #ffc371 → #fff0a8 | Thirty days in a row. |
 | `grant-title-creator` | Creator / Creator | Exclusive | Manual grant: creator | yes | #e23cff → #f6b3ff | Reserved for the creator of Rocket Draft. |
 | `grant-title-early-supporter` | Early Supporter / Early Supporter | Exclusive | Manual grant: early-supporter | yes | #ff9ec0 → #ffd1e1 | Played from the very start and helped spread the word. |
-| `grant-title-supporter` | Supporter / Supporter | Exclusive | Manual grant: supporter | yes | #e8356d → #ff7aa2 | Backed Rocket Draft when it was just getting started. |
+| `grant-title-supporter` | Special Supporter / Special Supporter | Exclusive | Manual grant: supporter | yes | #e8356d → #ff7aa2 | Backed Rocket Draft when it was just getting started. |
 | `grant-title-contributor` | Contributor / Contributor | Exclusive | Manual grant: contributor | yes | #19d290 → #7ef0c0 | Helped build the game: data, art, testing or ideas. |
 | `grant-title-pro` | Pro Player / Pro Player | Exclusive | Manual grant: pro | yes | #aef7ff → #e0fbff | A verified RLCS professional plays here too. |
 | `legacy-title-ps-board-champion` | Pre-Season Leaderboard Champion / Pre-Season Leaderboard Champion | Legendary | Pre-season board #1 | yes | #ffffff → #fff4d6 → #ffe6f3 | The first name at the top of the first board. |
+| `grant-title-insomniac` | Insomniac / Insomniac | Legendary | Manual grant: insomniac | yes | #ffffff → #fff4d6 → #ffe6f3 | The first to reach Supersonic Legend in Season 1. Nobody saw them sleep. |
 | `legacy-title-ps-supersonic-legend` | Pre-Season Supersonic Legend / Pre-Season Supersonic Legend | Legendary | Pre-season peak rank ≥ Supersonic Legend | yes | #ffffff → #fff4d6 → #ffe6f3 | Supersonic Legend before the first season even started. |
 | `rank-title-rocket-demigod` | Rocket Demigod / Rocket Demigod | Legendary | Season 1: reach Supersonic Legend |  | #ffffff → #fff4d6 → #ffe6f3 | Supersonic Legend in Season 1. |
 
@@ -178,8 +180,9 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 - **Manual grant: contributor** → badge: Contributor, title: Contributor
 - **Manual grant: creator** → badge: Creator, title: Creator
 - **Manual grant: early-supporter** → badge: Early Supporter, title: Early Supporter
+- **Manual grant: insomniac** → title: Insomniac
 - **Manual grant: pro** → badge: Verified Pro, title: Pro Player
-- **Manual grant: supporter** → badge: Supporter, title: Supporter
+- **Manual grant: supporter** → badge: Special Supporter, title: Special Supporter
 - **One season: peak ≥ Supersonic Legend, 3 career Worlds, 25 Legacy titles** → badge: Dynasty
 - **Pre-season board #1** → badge: Season Champion, title: Pre-Season Leaderboard Champion
 - **Pre-season board #11–50** → badge: Season Finalist, title: Pre-Season Leaderboard Contender
@@ -206,6 +209,7 @@ Total: **108** items — 0 avatars · 37 badges · 0 frames · 44 titles · 27 b
 - **Season 1: reach Platinum** → banner: Slipstream
 - **Season 1: reach Silver** → title: Challenger
 - **Season 1: reach Supersonic Legend** → banner: Cosmic Ascension, title: Rocket Demigod
+- **Share a run, your career or an invitation (mark `share-first`)** → title: Ambassador
 - **Three stars on `ch-gauntlet-eu-crown`** → title: Crown Taker
 - **Three stars on `ch-gauntlet-world-tour`** → title: Globetrotter, banner: World Class
 - **Three stars on `ch-homegrown`** → title: Homegrown

@@ -15,6 +15,8 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useCopy } from "@/content/copy";
 import { trackEvent } from "@/lib/analytics";
+import { markShared } from "@/lib/share/shareMarks";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import type { ShareFormat } from "@/lib/share/runImage";
 import {
   canNativeShare,
@@ -77,6 +79,8 @@ export function ShareSheet({ open, onClose, title, surface, gameMode, text, url,
   // The share sheet exists only in the browser: read after mount.
   const native = useSyncExternalStore(noSubscribe, canNativeShare, () => false);
   const hasImage = offered.length > 0;
+  // Unlock pop-ups (the Ambassador title on a first share) wait until the sheet closes.
+  useOverlayHold("ceremony", open);
 
   // A new subject (another run, another career) draws again.
   const formatsRef = useRef(formats);
@@ -115,8 +119,11 @@ export function ShareSheet({ open, onClose, title, surface, gameMode, text, url,
   }, [notice]);
 
   const track = useCallback(
-    (channel: ShareChannel) =>
-      trackEvent("content_shared", { surface, channel, format: hasImage ? format : null, gameMode }),
+    (channel: ShareChannel) => {
+      trackEvent("content_shared", { surface, channel, format: hasImage ? format : null, gameMode });
+      // The Ambassador title (v2.2): any channel counts, once, forever.
+      markShared();
+    },
     [surface, format, hasImage, gameMode],
   );
 
