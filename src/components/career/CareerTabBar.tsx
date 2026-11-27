@@ -50,12 +50,14 @@ const PRIMARY: { key: TabKey; href: string; icon: (p: { className?: string }) =>
 ];
 
 /** The sheet's rows, in the top bar's order. */
-const MORE: { key: "calendar" | "finances" | "standings" | "news" | "club" | "saves"; href: string }[] = [
+const ALL_MORE: { key: "calendar" | "finances" | "standings" | "news" | "club" | "board" | "saves"; href: string }[] = [
   { key: "calendar", href: "/career/calendar" },
   { key: "finances", href: "/career/finances" },
   { key: "standings", href: "/career/standings" },
   { key: "news", href: "/career/news" },
   { key: "club", href: "/career/club" },
+  // rc9 ORG-UI (#276): the board beside the club, for a save that has one.
+  { key: "board", href: "/career/board" },
   { key: "saves", href: "/career/saves" },
 ];
 
@@ -67,13 +69,17 @@ export function CareerTabBar({
   pathname,
   hasNew,
   unreadMail,
+  hasBoard = false,
 }: {
   pathname: string;
   /** The top bar's "new" dots, by tab key. */
   hasNew: (key: string) => boolean;
   unreadMail: number;
+  /** The save has a board (its page gets a row in More). */
+  hasBoard?: boolean;
 }) {
   const C = useCareerCopy();
+  const MORE = ALL_MORE.filter((t) => t.key !== "board" || hasBoard);
   const [more, setMore] = useState(false);
   const isOn = (href: string) => (href === "/career" ? pathname === "/career" : pathname.startsWith(href));
   const moreOn = MORE.some((t) => isOn(t.href));

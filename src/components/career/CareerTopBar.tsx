@@ -18,7 +18,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useActiveCareerCopy } from "@/components/career/orgCopy";
-import { standingOf } from "@/engine/career/established";
+import { reputationFigureOf, standingOf } from "@/engine/career/established";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -62,6 +62,8 @@ const TABS: { key: string; href: string; group: number }[] = [
   { key: "standings", href: "/career/standings", group: 2 },
   { key: "news", href: "/career/news", group: 3 },
   { key: "club", href: "/career/club", group: 3 },
+  // rc9 ORG-UI (#276): the board beside the club, for a save that has one (Miguel: "escondido").
+  { key: "board", href: "/career/board", group: 3 },
   // v2.0.30: the way back to the three slots (switch career, or pick one the
   // account brought from another device). Before, the picker only showed when
   // no career was active.
@@ -98,6 +100,8 @@ export function CareerTopBar() {
 
   if (!save) return null;
 
+  const repFigure = reputationFigureOf(save);
+  const tabs = TABS.filter((t) => t.key !== "board" || Boolean(save.board));
   const clock = clockLabel(save);
   // R40 review: no spoiler while the event screen still reveals Saturday.
   const kind = visibleContinueKind(save, revealHeldEventId);
@@ -228,9 +232,8 @@ export function CareerTopBar() {
           <div>
             <div className="kicker leading-none">{copy.common.rep}</div>
             <div className="display mt-1 text-[15px] font-semibold leading-tight tabular-nums text-ink">
-              {Math.round(save.reputation)}
-              {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing, read with its tier. */}
-              {standingTier ? <span className="ml-1.5 text-xs text-sub">{copy.board.standing.tier[standingTier] ?? standingTier}</span> : null}
+              {/* rc9 ORG-UI (#275): an established org's standing is a word (its tier), never a figure. */}
+              {repFigure !== null ? repFigure : standingTier ? (copy.board.standing.tier[standingTier] ?? standingTier) : null}
             </div>
           </div>
         </div>
@@ -277,10 +280,10 @@ export function CareerTopBar() {
       </div>
 
       <nav data-tour="career-nav" className="mx-auto hidden max-w-6xl flex-wrap items-stretch px-3 sm:flex sm:px-4">
-        {TABS.map((tab, i) => {
+        {tabs.map((tab, i) => {
           const active =
             tab.href === "/career" ? pathname === "/career" : pathname.startsWith(tab.href);
-          const startsGroup = i > 0 && TABS[i - 1].group !== tab.group;
+          const startsGroup = i > 0 && tabs[i - 1].group !== tab.group;
           return (
             <AppLink
               key={tab.key}
@@ -311,7 +314,7 @@ export function CareerTopBar() {
         })}
       </nav>
     </div>
-    <CareerTabBar pathname={pathname} hasNew={(key) => Boolean(tabHasNew(key))} unreadMail={unreadMail} />
+    <CareerTabBar pathname={pathname} hasNew={(key) => Boolean(tabHasNew(key))} unreadMail={unreadMail} hasBoard={Boolean(save.board)} />
     </>
   );
 }
