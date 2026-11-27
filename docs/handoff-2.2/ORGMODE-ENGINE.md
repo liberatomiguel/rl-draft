@@ -191,3 +191,121 @@ Every goal row is keyed by the tier the board held **that season**, so a promote
 - **`seasonBudgetOf.spent` and `income`** are complete only from `ledgerFromWeek`; no test plays a full season to compare them with the ledger's whole-season totals.
 - **The tier's goal preference on seasons 3 and later** (the E4 test covers seasons 0 to 2 across every org of NA, EU and SAM).
 - **Job offers** into another org use the new org's stature and inherited structure, as the code says; only `BOARD_SOFT`'s two careers played one.
+
+## Round 2 (after the integrator's browser pass on a True Neutral takeover)
+
+Fast-forwarded to `release/v2.2` (c49bd8f, with UI-A, UI-B and UI-C). Commits: `8cd2101` (items 1-3), `568720b` (item 4), `cf73c60` (item 5), and this doc. `BALANCE_VERSION` stays 52 (fingerprint updated).
+
+### 1. A sponsor from day one (R168)
+
+- `openEstablishedSponsorDesk(save)` (careerFlow) opens the split boundary's three-offer decision at the org's own standing, with no reputation gate. It runs in `chooseBoardPackageFlow` once the season plan is accepted (so the plan is first, then the sponsor), at creation when the board flag is off, and never when a deal or a decision is already on the desk. A job-offer move starts with a new plan, so it opens the desk the same way.
+- Why the plan acceptance: an open sponsor decision sorts before every other decision (`careerDecisions.groupOf`: −1), so raising the desk at creation would have put it ahead of the plan.
+- `boardAutoAnswer` now signs the safest offer (`safestSponsorOfferOf`, the desk's own deadline rule) for an established org. Without it an autopilot built on `boardAutoAnswer` stalled on day 1, because the desk holds the clock. The arc bot answers the desk with its own sponsor policy. A founded club still waits for its reputation.
+
+### 2. The board's budget covers the season it asks for (R169)
+
+- Cause: the elite profile funded 10 + 16 + 1 (upfront) = 27 weeks of the squad-and-coach bill for a 31-Monday season, and no profile counted the inherited staff or the upkeep.
+- Fix: the board's cash and budget weeks now multiply the org's whole running bill (`structureWeeklyOf`: the retained staff, the psychologist and the installations' upkeep), and elite `grantWeeks` goes from 16 to 22. Nothing else changed; the wage ceiling stays weeks of the wage bill. Cautious (×0.85) and Ambitious (×1.2) stay below and above Expected.
+- Test: `careerOrgMode.round2.test.ts` walks every org of NA, EU and SAM on Normal and Hard at season 0 (more than 60 orgs). On the Expected plan, before any sponsor income, `free` must be at or above 0. Lowest margins: elite $13k, contender $5k, mid $6k, underdog $2k.
+
+| Org (seed 4242, season 0) | Tier | Normal: cash after plan / committed / free, before → after | Hard: free, before → after |
+|---|---|---|---|
+| Team BDS (EU) | elite | $1629k / $1892k / −$264k → $2014k / $1892k / **+$121k** | −$300k → +$139k |
+| Team Vitality (EU) | elite | $474k / $566k / −$93k → $602k / $566k / **+$36k** | −$103k → +$41k |
+| NRG (NA) | elite | $768k / $904k / −$136k → $961k / $904k / **+$58k** | −$153k → +$66k |
+| True Neutral (SAM) | elite | $163k / $210k / −$47k → $222k / $210k / **+$13k** | −$50k → +$15k |
+| FURIA (SAM) | contender | $180k / $178k / +$2k → $189k / $178k / **+$11k** | +$4k → +$13k |
+| Top Blokes (EU) | mid | $272k / $260k / +$12k → $276k / $260k / **+$17k** | +$15k → +$19k |
+| Team Singularity (EU) | underdog | $70k / $66k / +$4k → $70k / $66k / **+$4k** | +$5k → +$5k |
+
+"Cash after plan" is the balance once the Expected plan's budget is paid; "committed" is the rest of the season's wages, coach, staff and upkeep.
+
+- **Is the established economy too rich? (a reading for Miguel; nothing rebalanced.)**
+  - Refit held-out run, 48 established competent careers: S6 cash median $210k (p25 $98k, p75 $672k); 33 of 48 end above their S1 cash. The 12 founded careers: S6 median $42k.
+  - By tier at S6: elite $672k, contender $269k, mid $233k, underdog $168k.
+  - In weeks of their own bill this is modest: an elite's weekly bill is $6k to $60k at the takeover, so $672k is about 10 to 15 weeks of a typical elite bill.
+  - Round 2 run (seed 30000, 24 established careers): S6 median $131k, 10 of 24 end above their S1 cash, 1 ends negative.
+  - My reading: richer than a founded club in dollars, not in weeks of its own bill. The cash the elite holds comes mostly from Majors' prizes, not from the board.
+
+### 3. `seasonBudgetOf` and `operationsOf` (R170)
+
+- **Fanbase:** 0 received and 0 contracted is correct. `CAREER_ECONOMY.passivePerRepPoint` is 0, so the Monday fanbase line pays nothing in any career; the weekly statement's moving money is payroll, staff, upkeep and the sponsor.
+- **Sponsor:** received = sponsorBase (the deal's weekly pay), bonus, signing, milestone and the founding partner. The contracted line now stops at the deal's `terms.endsOn`, where it used to run to the season's end.
+- **Prizes:** prize net of the players' share. **Sales:** transferIn.
+- **Camps:** `operationsOf` returns only the camp the flow runs (an established org runs the structured tier, `bootcamp2`). A run the sponsor pays for is priced 0 and marked `free`, so it is never `cantAfford`.
+
+### 4. Permanent achievements belong to the founded road (R171)
+
+- **Rule:** while `establishedOf(save)` holds at the check, `evaluateCareerAchievements` returns nothing, `careerCosmeticMarks` returns nothing, and `worldsWonOnAfter` adds no difficulty.
+- **Founding after a dismissal:** `foundNewSeat` calls `startAchievementBaseline`, which records `save.achievementBase` (the lifetime stats and the season) and clears the one-shot markers. From then on every stat condition and every "N seasons" condition counts from the founding; reputation reads the founded club's own (it starts at 5). Nothing from the established seasons is retroactive.
+- **Untouched:** titles, the trophy room, the manager's record and Season XP from results.
+- **Club page:** the achievements board stays (it is the account's collection), with one line saying they are earned on the founded road (`achievements.foundedOnly`, EN and PT).
+- Tests: `careerOrgMode.round2.test.ts`.
+
+| Achievement | Condition | Established org | Club founded after a dismissal |
+|---|---|---|---|
+| car-first-sponsor | flag achSponsorSigned | not earned | earned again; marker cleared at the founding |
+| car-bank-cleared | flag achBankCleared | not earned | same |
+| car-first-qualifier | flag achQualifierAdvanced | not earned | same |
+| car-rep-50 | reputation ≥ 50 | not earned (an elite starts on 50) | the founded club's own reputation (starts at 5) |
+| car-rep-100 | reputation ≥ 100 | not earned | same |
+| car-three-seasons | season ≥ 3 | not earned | 3 seasons since the founding |
+| car-seven-seasons | season ≥ 6 | not earned | 6 seasons since the founding |
+| car-major-qualified | majorsQualified ≥ 1 | not earned | counted since the founding |
+| car-first-regional | titlesRegional ≥ 1 | not earned | counted since the founding |
+| car-five-regionals | titlesRegional ≥ 5 | not earned | counted since the founding |
+| car-worlds-qualified | worldsQualified ≥ 1 | not earned | counted since the founding |
+| car-worlds-regular | worldsQualified ≥ 3 | not earned | counted since the founding |
+| car-first-major | titlesMajor ≥ 1 | not earned | counted since the founding |
+| car-three-majors | titlesMajor ≥ 3 | not earned | counted since the founding |
+| car-first-worlds | titlesWorlds ≥ 1 | not earned | counted since the founding |
+| car-two-worlds | titlesWorlds ≥ 2 | not earned | counted since the founding |
+| car-three-worlds | titlesWorlds ≥ 3 | not earned | counted since the founding |
+| car-worlds-underdog | flag achUnderdogGap ≥ 3 | not earned | marker cleared at the founding |
+| car-worlds-homegrown | flag achWorldsHomegrown | not earned | marker cleared |
+| car-worlds-unchanged | flag cosDayOne | not earned | marker cleared |
+| car-perfect-season | flag cosRegionalDynasty | not earned | marker cleared |
+| car-all-difficulties | Worlds won on Easy, Normal and Hard (account memory) | an established Worlds title adds no difficulty | a founded Worlds title adds its difficulty |
+| Cosmetic marks: car-four-seasons, car-major-berth, car-day-one, car-regional-dynasty | seasons, Major berth, the two flags | none | from the founding |
+
+**Proposal, not built:** takeover-mode achievements for a later patch, so the established road has its own collection.
+
+1. **Steady hands:** meet the board's Expected plan three seasons in a row at one org.
+2. **Moving up:** take an org up a Standing tier.
+3. **Underdog to Elite:** take an underdog to Elite at the same org.
+4. **Back from the brink:** answer an ultimatum and meet the next season's plan.
+5. **On budget:** meet the plan with `free` at or above 0 at the season's end and the wage bill under the ceiling.
+6. **Headhunted:** receive an approach from a bigger org.
+7. **The rebuild:** take over an org ranked 10th or lower in its region and finish top 3 there within three seasons.
+8. **Three boards:** manage three different real organizations.
+
+### 5. HQ's season goal block (R172)
+
+- While an established org's plan is pending, the block shows one line and the link to the plan (`board.planPending`, `board.planOpen`), not the season goal the founded rules set.
+- After the choice, the target and the stretch read with the season's totals, as the plan card does (`SeasonGoalRows` `totals`). For example "Vença 2 dos 3 Majors" for a Win-a-Major plan's stretch. The season review reads them the same way.
+- **Bug fix:** `C.goals.season` dropped the count of a `majorFinish` with place 1 ("Win a Major" for two titles, the "(0/2)" mismatch) in EN and PT. Root cause: the place-1 branch returned before the count was read.
+- Test: `seasonGoalCounts.test.ts` walks every counted goal in both languages and both functions.
+
+### 6. Checks (each alone, lock protocol, staging flags on for the probes)
+
+- **Full suite:** 252 files passed, 40 skipped; **3251 tests passed, 0 failed**, 62 skipped.
+- **`P1_SOFT`** (SAM and NA, 7 seasons, autopilot and tuned): 4 careers, 656 lobbies, **0 findings**.
+- **`BOARD_SOFT`:** **2 / 2 passed**.
+- **`BOARD_PROBE` sanity**, 30 competent careers (seed 30000, Normal and Hard), compared with the same seed in the refit's held-out run:
+
+  | Measure | Refit held-out, seed 30000 | Round 2 |
+  |---|---|---|
+  | Bands (same / adjacent / two or more away) | 67 / 27 / 6 % | **71 / 25 / 4 %** |
+  | Dismissals | 0 / 30 | **2 / 30** (a mid in Normal at S6, a contender in Hard at S6) |
+  | Soft locks | 0 | 0 |
+
+  Stated → measured, round 2. Normal: elite 55 → 61, contender 53 → 62, mid 59 → 35 (N = 17), underdog 66 → 83 (N = 6), founded 69 → 89. Hard: elite 44 → 48, contender 54 → 73, mid 56 → 58, underdog 61 → 55, founded 59 → 67.
+
+  Founded careers are identical to the previous run (their path did not change). For established careers, the day-one sponsor deal changes every career's random path, so cells of 3 careers move by chance; no refit was done.
+
+### Not verified (round 2)
+
+- No screen opened in a browser: the HQ pending line, the Club page line, the season review's totals.
+- The two dismissals in the sanity run (2 / 30 against 0 / 30) are within the noise of 3 careers per cell, but a larger run did not confirm that.
+- The day-one sponsor desk after a job-offer move is covered by the code path (the plan acceptance), not by a dedicated test.
+- `achievementBase` on a dismissal into a founded club was tested on the pure function, not through a played dismissal.
