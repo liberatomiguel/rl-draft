@@ -147,7 +147,7 @@ export function orgIssuesOf(save: IssueSave, opts: { all?: boolean } = {}): OrgI
   // On the board's first day the sponsor desk opens with the mandate: no sponsor yet is not a problem then.
   const deskDay = board && save.clock.seasonIndex === board.startSeason && save.clock.day <= 7;
   if (!save.sponsor && !deskDay) out.push({ kind: "noSponsor", severity: sev("noSponsor"), value: 0 });
-  else if (ends && ends.seasonIndex <= s) out.push({ kind: "sponsorEnding", severity: sev("sponsorEnding"), value: 0 });
+  else if (ends && (ends.seasonIndex < s || (ends.seasonIndex === s && ends.day - save.clock.day <= I.sponsorEndingDays))) out.push({ kind: "sponsorEnding", severity: sev("sponsorEnding"), value: 0 });
 
   out.sort((a, b) => b.severity - a.severity || a.kind.localeCompare(b.kind));
   return opts.all ? out : out.slice(0, I.max);

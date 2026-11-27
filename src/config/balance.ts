@@ -5398,6 +5398,8 @@ export const CAREER_BOARD = {
       benchShare: 0.6,
       /** A prospect this young or younger outside the starting three. */
       prospectAge: 20,
+      /** rc.7: the sponsor's deal is a problem only this many days from its end (a one-season deal read as ending on the day it was signed). */
+      sponsorEndingDays: 56,
       severity: {
         dealsEnding: 0.9, wageBill: 0.85, shortCash: 0.8, weakLink: 0.7, agingCore: 0.6, lowChemistry: 0.55,
         noCoach: 0.5, noReserve: 0.48, costlyBench: 0.45, sponsorEnding: 0.4, prospectBenched: 0.35, noSponsor: 0.3, dealsSoon: 0.25, wageRoom: 0.2,
