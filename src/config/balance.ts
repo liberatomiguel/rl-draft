@@ -5129,7 +5129,7 @@ export const CAREER_BOARD = {
   // (the tier's pull, replacing the reputation formula); staff = the support staff the org arrives
   // with (retainers the manager may cut). "owners" never reads either (a founded club keeps the ladder).
   profiles: {
-    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3, signCap: 99, staff: ["analyst", "psychologist"] },
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3, signCap: 99, staff: ["analyst", "psychologist"] },
     contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2, signCap: 95, staff: ["analyst"] },
     mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0, expectedRank: 8, gear: 1, signCap: 90, staff: ["assistant"] },
     underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0, signCap: 86, staff: [] },

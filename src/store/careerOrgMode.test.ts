@@ -95,7 +95,7 @@ describe("E2: the structure, any order, the board's sign-off", () => {
     expect(ops.facilities.find((f) => f.id === "peripherals")?.state).toBe("owned");
     expect(ops.staff.find((f) => f.id === "assistant")?.state).toBe("retained");
     expect(ops.facilities.find((f) => f.id === "perfCenter")?.confidence).toBe(CAREER_BOARD.approval.flagship);
-    expect(ops.camps).toHaveLength(2);
+    expect(ops.camps.map((c) => c.id)).toEqual(["bootcamp2"]); // R170: only the camp the flow runs
     expect(operationsOf(createCareerSave(input("EU"), SEED))).toBeNull();
   });
 

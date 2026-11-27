@@ -138,7 +138,8 @@ describe("taking over a real org", () => {
 describe("warning, ultimatum, dismissal, offers", () => {
   it("never dismisses in the grace season; a failed ultimatum later dismisses at the review with offers, and the move keeps the old club alive", () => {
     const pick = choices("EU")[3];
-    let save = boardAutoAnswer(createCareerSave(input("EU", pick.ref), SEED));
+    // rc.6 (R168): the second answer signs the day-one sponsor desk the plan opened.
+    let save = boardAutoAnswer(boardAutoAnswer(createCareerSave(input("EU", pick.ref), SEED)));
     // Season 0: confidence on the floor, warned — but no ultimatum in the grace season.
     save.board!.confidence = 5;
     save.board!.warnedSeason = 0;

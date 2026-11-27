@@ -10,6 +10,14 @@
  * The ledger keeps its last CAREER_SAVE.ledgerTailCap entries, which is less
  * than a full season of Monday lines: `ledgerFromWeek` says from which week
  * this season's "spent" and "income" are complete (1 = the whole season).
+ *
+ * rc.6 (R170), the income lines against the ledger: sponsor = sponsorBase (the
+ * deal's weekly pay), sponsorBonus, sponsorSigning, sponsorMilestone and the
+ * founding partner; prizes = prize net of playerShare; fanbase = the Monday
+ * fanbase line, which is 0 in every career while
+ * CAREER_ECONOMY.passivePerRepPoint is 0 (the line exists, it pays nothing);
+ * sales = transferIn. The contracted projection counts the deal's base for its
+ * own Mondays (through `terms.endsOn`) and the fanbase for the Mondays left.
  */
 
 import { CAREER_CALENDAR } from "@/config/balance";
@@ -149,8 +157,11 @@ export function seasonBudgetOf(save: CareerSave): SeasonBudget | null {
     loan: Math.min(st.bankPayment * mondaysLeft, save.finances.bankLoan?.remaining ?? 0),
   };
   const committedTotal = committed.wages + committed.coach + committed.staff + committed.upkeep + committed.loan;
+  // rc.6 (R170): a deal pays through its `endsOn` Monday, so a deal that ends this season counts its own Mondays only.
+  const ends = save.sponsor?.terms?.endsOn;
+  const sponsorMondays = ends && ends.seasonIndex === s ? Math.max(0, Math.min(mondaysLeft, weekOfDay(ends.day) - week)) : mondaysLeft;
   const incomeToCome: Record<IncomeLine, number> = {
-    sponsor: (st.sponsorBase + st.foundingPartner) * mondaysLeft,
+    sponsor: st.sponsorBase * sponsorMondays + st.foundingPartner * mondaysLeft,
     prizes: 0,
     fanbase: st.fanbase * mondaysLeft,
     sales: 0,

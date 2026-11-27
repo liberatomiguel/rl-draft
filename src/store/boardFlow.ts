@@ -38,7 +38,7 @@ import {
 import type { BoardPackage, BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
 import { deliverMail, deliverNews } from "@/engine/career/communications";
 import { grantBaseNow, wageCeilingOf } from "@/engine/career/budget";
-import { applyTierChange, establishedOf, gateRepOf, standingChangeFor } from "@/engine/career/established";
+import { applyTierChange, establishedOf, gateRepOf, standingChangeFor, structureWeeklyOf } from "@/engine/career/established";
 import { seasonYear } from "@/engine/career/development";
 import { pushLedger, quantize, weeklyWageBill } from "@/engine/career/economy";
 import { bumpManagerRep, dismissalOffersFor, newManagerState, unsolicitedOfferFor } from "@/engine/career/manager";
@@ -50,7 +50,8 @@ import { windowIndexOf, weekOfDay } from "@/engine/career/calendar";
 import { fillerOrgName } from "@/engine/career/worldSim";
 import type { CareerSave, MailItem } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
-import { buyGearFlow, fieldDrawOf, setStaffFlow, sponsorLevelOf, type CreateCareerInput, type FlowResult } from "./careerFlow";
+import { buyGearFlow, chooseSponsorFlow, fieldDrawOf, openEstablishedSponsorDesk, setStaffFlow, sponsorLevelOf, type CreateCareerInput, type FlowResult } from "./careerFlow";
+import { safestSponsorOfferOf } from "@/engine/career/sponsorDeals";
 import { CAREER_STAFF } from "@/config/balance";
 import { gearNextItem, gearPriceFor, staffOn, staffPerSplitFor, type GearItemId } from "@/engine/career/economy";
 import type { StaffId } from "@/engine/career/types";
@@ -103,7 +104,9 @@ export function wageRoomNow(board: BoardState, seasonIndex: number): number {
 
 function boardFor(save: CareerSave, stature: ProfileKey, startSeason: number, confidence?: number): BoardState {
   const week = weekWagesOf(save);
-  const money = orgMoneyFor(stature, week, save.difficulty, startSeason);
+  // rc.6 (R169): an established org's budget base is weeks of its whole running bill (wages + structure).
+  const running = establishedOf(save) && stature !== "owners" ? week + structureWeeklyOf(save.finances.gear, startSeason) : week;
+  const money = orgMoneyFor(stature, week, save.difficulty, startSeason, running);
   return newBoardState({
     kind: stature === "owners" ? "owners" : "board",
     stature,
@@ -202,7 +205,11 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
       save.training = initialTrainingState(input.difficulty, input.trainingMode);
     }
   }
-  if (!FEATURES.board) return;
+  if (!FEATURES.board) {
+    // rc.6 (R168): no board, so no plan to wait for: the established org's sponsor desk opens now.
+    openEstablishedSponsorDesk(save);
+    return;
+  }
   save.board = boardFor(save, stature, 0);
   save.manager = newManagerState(0, save.identity.orgName, save.identity.realOrgRef);
   offerSeason(save as CareerSave & { board: BoardState });
@@ -257,6 +264,8 @@ export function chooseBoardPackageFlow(input: CareerSave, id: PackageId): FlowRe
   if (pkg.grant > 0) {
     save.finances = pushLedger(save.finances, { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), day: save.clock.day, kind: "boardGrant", amount: pkg.grant });
   }
+  // rc.6 (R168): an established org's sponsor desk opens once the plan is set (plan first, then sponsor).
+  openEstablishedSponsorDesk(save);
   // The board's objective is the season goal's target: one goal card, one settlement (seasonGoals).
   if (save.seasonGoals) {
     const oi = objectiveInputOf(save);
@@ -609,6 +618,12 @@ export function boardDecisionOf(save: CareerSave): { id: string } | null {
 /** For the measuring bot and tools: answer any board decision (a package; the best org offer, never "found"). */
 export function boardAutoAnswer(save: CareerSave, pkg: PackageId = "expected", acceptApproach = false): CareerSave {
   if (pendingPackageOf(save)) return chooseBoardPackageFlow(save, pkg).save;
+  // rc.6 (R168): an established org's sponsor desk opens with the plan; the autopilot signs its safest offer.
+  if (establishedOf(save) && !save.sponsor && save.sponsorOffers && save.sponsorOffers.length > 0 && save.phase === "running") {
+    const pick = safestSponsorOfferOf(save.sponsorOffers) ?? save.sponsorOffers[0];
+    const signed = chooseSponsorFlow(save, pick.sponsorId);
+    if (!signed.error) return signed.save;
+  }
   const jobs = pendingJobChoiceOf(save);
   if (jobs) return acceptJobOfferFlow(save, (jobs.find((o) => o.kind === "org") ?? jobs[0]).id).save;
   const approach = save.phase === "seasonReview" && !save.manager?.accepted ? save.manager?.offers?.find((o) => o.reason === "approach") : undefined;

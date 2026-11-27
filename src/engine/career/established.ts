@@ -21,9 +21,13 @@
 import { CAREER_BOARD, CAREER_GEAR, CAREER_STAFF, FEATURES } from "@/config/balance";
 import type { BoardState, Stature, TierChange } from "./boardTypes";
 import { windowIndexOf, weekOfDay } from "./calendar";
+import { sponsorFreeBootcampsOf } from "./sponsorDeals";
 import {
   bootcampCostFor,
+  bootcampTierFor,
   gearPriceFor,
+  gearUpkeepPerSplit,
+  staffWeeklyOf,
   moneyIndex,
   psychologistPerSplitFor,
   signableOverallCap,
@@ -186,6 +190,16 @@ export function inheritedGearFor(tier: Stature): GearState {
   };
 }
 
+/**
+ * rc.6 (R169): what the org's structure bills a Monday on top of the squad and
+ * the coach: the retained staff, the psychologist and the installations'
+ * upkeep (the Monday funnel's own lines). The board's money weeks multiply
+ * wages + this, so an org that arrives with staff is funded for it.
+ */
+export function structureWeeklyOf(gear: GearState, seasonIndex: number): number {
+  return staffWeeklyOf(gear, seasonIndex) + (gear.psychologist ? weeklyOf(psychologistPerSplitFor(seasonIndex)) : 0) + weeklyOf(gearUpkeepPerSplit(gear, seasonIndex));
+}
+
 // ---------------------------------------------------------------------------
 // The board's sign-off (E2)
 // ---------------------------------------------------------------------------
@@ -232,6 +246,8 @@ export interface OperationItem {
   confidence: number | null;
   /** A camp already used this split or running now (the camp's slot is spent). */
   note?: "used" | "active";
+  /** A camp the sponsor deal pays for (its price is 0). */
+  free?: boolean;
 }
 
 export interface Operations {
@@ -276,11 +292,17 @@ export function operationsOf(save: CareerSave, opts: { floor?: number } = {}): O
   };
   const staff = [staffRow("psychologist"), ...CAREER_STAFF.order.map((id) => staffRow(id))];
 
-  const camps: OperationItem[] = CAREER_GEAR.bootcamp.map((camp) => {
-    const id = camp.tier === 2 ? ("bootcamp2" as const) : ("bootcamp1" as const);
-    const price = bootcampCostFor(camp.tier, s);
-    const note = fin.bootcampSharp > 0 ? ("active" as const) : fin.bootcampUsedThisSplit ? ("used" as const) : undefined;
-    return { id, state: afford(price) ? "available" : "cantAfford", price, upkeep: 0, effect: id, confidence: null, ...(note ? { note } : {}) };
-  });
+  // rc.6 (R170): only the camp the flow runs (an established org runs the top tier bootcampTierFor opens);
+  // a sponsor-paid run left this season costs nothing, so it is never `cantAfford`.
+  const tier = bootcampTierFor(gateRepOf(save));
+  const camps: OperationItem[] = CAREER_GEAR.bootcamp
+    .filter((camp) => camp.tier === tier)
+    .map((camp) => {
+      const id = camp.tier === 2 ? ("bootcamp2" as const) : ("bootcamp1" as const);
+      const free = fin.freeBootcampsUsedThisSeason < sponsorFreeBootcampsOf(save.sponsor);
+      const price = free ? 0 : bootcampCostFor(camp.tier, s);
+      const note = fin.bootcampSharp > 0 ? ("active" as const) : fin.bootcampUsedThisSplit ? ("used" as const) : undefined;
+      return { id, state: afford(price) ? "available" : "cantAfford", price, upkeep: 0, effect: id, confidence: null, ...(note ? { note } : {}), ...(free ? { free: true } : {}) };
+    });
   return { facilities, staff, camps };
 }

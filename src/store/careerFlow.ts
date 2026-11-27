@@ -1907,6 +1907,19 @@ function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
  * Surface sponsor offers once the org has earned some standing (no day-1
  * sponsorship, v0.1 adjustment). Called at split boundaries and rollover.
  */
+/**
+ * rc.6 (ORGMODE R168): an established org opens its sponsor desk on day one,
+ * at its own standing (the split boundary's three-offer decision, no
+ * reputation gate). Called once the board's season plan is accepted (so the
+ * plan comes first), at creation when there is no board, and never when a
+ * deal or a decision is already on the desk. Mutates.
+ */
+export function openEstablishedSponsorDesk(save: CareerSave): void {
+  if (!establishedOf(save) || save.phase === "ended" || save.sponsor) return;
+  if (save.sponsorOffers && save.sponsorOffers.length > 0) return;
+  offerSponsorDecision(save, false);
+}
+
 function maybeOfferSponsors(save: CareerSave): void {
   if (save.sponsor) return;
   if (save.sponsorOffers && save.sponsorOffers.length > 0) return;

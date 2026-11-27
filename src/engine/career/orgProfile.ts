@@ -13,12 +13,12 @@
  * market's own asks; `realOrgChoicesFor` is the wizard's pick screen.
  */
 
-import { CAREER_BOARD, CAREER_ECONOMY, CAREER_SEASONS } from "@/config/balance";
+import { CAREER_BOARD, CAREER_ECONOMY, CAREER_SEASONS, FEATURES } from "@/config/balance";
 import { coachById, lineups } from "@/data";
 import type { Region } from "../types";
 import { playerViewById, seasonYear } from "./development";
 import { coachWageFor, computeSalaryAsk, gearOwned, moneyIndex, quantize, weeklyWageBill } from "./economy";
-import { inheritedGearFor, standingViewFor, type StandingView } from "./established";
+import { inheritedGearFor, standingViewFor, structureWeeklyOf, type StandingView } from "./established";
 import { sponsorLadderLevelFor } from "./ladder";
 import { askInputOf } from "./market";
 import { coachBonusLevelFor } from "./training";
@@ -155,14 +155,20 @@ export interface OrgMoney {
   wageRoom: number;
 }
 
-/** The money a stature means for a squad's weekly wage bill (in the season's money). */
-export function orgMoneyFor(stature: ProfileKey, weekWages: number, difficulty: CareerDifficulty, seasonIndex: number): OrgMoney {
+/**
+ * The money a stature means for a squad's weekly wage bill (in the season's money).
+ * rc.6 (R169): `weekRunning` is the org's whole weekly running bill (wages + the
+ * structure it arrives with: staff, psychologist, upkeep); the cash and the
+ * budget are weeks of it. The wage ceiling stays weeks of the wage bill.
+ * Omitted = the wage bill (a founded club, the flag off).
+ */
+export function orgMoneyFor(stature: ProfileKey, weekWages: number, difficulty: CareerDifficulty, seasonIndex: number, weekRunning = weekWages): OrgMoney {
   const p = profileOf(stature);
   const floor = CAREER_ECONOMY.startingBudget[difficulty] * moneyIndex(seasonIndex);
   return {
     weekWages,
-    startCash: quantize(Math.max(floor, weekWages * p.runwayWeeks)),
-    grant: quantize(weekWages * p.grantWeeks),
+    startCash: quantize(Math.max(floor, weekRunning * p.runwayWeeks)),
+    grant: quantize(weekRunning * p.grantWeeks),
     wageRoom: quantize(weekWages * p.wageRoom),
   };
 }
@@ -238,7 +244,13 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       players: squad.map((s) => ({ id: s.id, name: s.name, overall: Math.round(s.overall), age: seasonYear(ctx.seasonIndex) - s.birthYear })),
       country: rosterCountryOf(squad.map((s) => s.country), region),
       coach: coach ? { name: coach.name, overall: coach.overall } : null,
-      money: orgMoneyFor(stature, week, ctx.difficulty, ctx.seasonIndex),
+      money: orgMoneyFor(
+        stature,
+        week,
+        ctx.difficulty,
+        ctx.seasonIndex,
+        FEATURES.realOrgStart ? week + structureWeeklyOf(inheritedGearFor(stature), ctx.seasonIndex) : week,
+      ),
       expectedRank: p.expectedRank,
       missCost: Math.round(Math.abs(CAREER_BOARD.packages.expected.miss) * patienceOf(stature, ctx.difficulty)),
       graceSeasons: CAREER_BOARD.graceSeasons.board,
