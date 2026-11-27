@@ -3,19 +3,18 @@
 /**
  * v2.3 MEDIA (wave 2): the answers under a media day offer in the inbox
  * reader: accept and decline while it is open, the outcome once it is closed.
- * The same minimum as the locker room's `LockerTalkAnswers` (the inbox mail
- * has no actions). Not seen in a browser. It is NOT mounted yet: the reader
- * (`screens/NewsScreen.tsx`, MailReader) needs one line,
- * `<MediaOfferAnswers item={item} C={C} />`, next to `<LockerTalkAnswers />`.
+ * Mounted in `screens/NewsScreen.tsx` (MailReader) next to `LockerTalkAnswers`
+ * and dressed the same: the rule above, full-width option rows, the hint in
+ * the faint line, the outcome in ink (v2.3 FIX, seen in a browser).
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
 import type { MailItem } from "@/engine/career/types";
-import { Button } from "@/components/ui/Button";
 import { useCareerSave } from "@/components/career/careerUi";
 import { useCareerStore } from "@/store/careerStore";
 import { FEATURES } from "@/config/balance";
 import { formatMoney } from "@/lib/format";
+import { cx } from "@/lib/util";
 
 export function MediaOfferAnswers({ item, C }: { item: MailItem; C: CareerCopy }) {
   const save = useCareerSave();
@@ -27,18 +26,32 @@ export function MediaOfferAnswers({ item, C }: { item: MailItem; C: CareerCopy }
   const M = C.media;
   const params = (item.params ?? {}) as Record<string, string | number>;
   const label = (key: "accept" | "decline") => M.answers[key]({ ...params, cash: formatMoney(offer.cash) });
-  if (offer.status !== "open") return <p className="mt-5 text-sm text-sub">{M.closed[offer.status]?.(params) ?? ""}</p>;
-  return (
-    <div className="mt-5 space-y-2">
-      <div className="flex flex-col items-start gap-2">
-        <Button variant="secondary" onClick={() => answer(offer.id, true)}>
-          {label("accept")}
-        </Button>
-        <Button variant="secondary" onClick={() => answer(offer.id, false)}>
-          {label("decline")}
-        </Button>
+  if (offer.status !== "open") {
+    return (
+      <div className="mt-5 border-t border-line pt-4">
+        <p className="text-sm text-ink">{M.closed[offer.status]?.(params) ?? ""}</p>
       </div>
-      <p className="text-xs text-sub">{M.hint}</p>
+    );
+  }
+  const rowClass = cx(
+    "flex min-h-11 w-full flex-col items-start rounded-[7px] border border-line bg-white/[0.03] px-3.5 py-3 text-left transition-colors",
+    "hover:border-blue/60 hover:bg-blue/10",
+  );
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      <ul className="grid grid-cols-1 gap-2">
+        <li>
+          <button type="button" className={rowClass} onClick={() => answer(offer.id, true)}>
+            <span className="text-sm font-semibold text-ink">{label("accept")}</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" className={rowClass} onClick={() => answer(offer.id, false)}>
+            <span className="text-sm font-semibold text-ink">{label("decline")}</span>
+          </button>
+        </li>
+      </ul>
+      <p className="mt-2 text-xs text-faint">{M.hint}</p>
     </div>
   );
 }

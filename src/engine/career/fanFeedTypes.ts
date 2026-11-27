@@ -43,7 +43,7 @@ export interface FeedPost {
   /** Stable: the event the post answers (the same save always yields the same ids). */
   id: string;
   kind: FeedKind;
-  /** The copy key ("seriesWon.3"; "managerPost.humble" for the manager's own). */
+  /** The copy key ("seriesWon.3"; "managerPost.7" for the manager's own, one per tone x result). */
   variant: string;
   slots: FeedSlots;
   author: { type: "fan"; handle: string } | { type: "manager" };
@@ -79,6 +79,12 @@ export interface FeedManagerPost {
   opponentName: string;
   seasonIndex: number;
   week: number;
+  /**
+   * v2.3 FIX: the series the post reacted to, kept so its text is written
+   * about a result that already happened. Absent on a post made before this
+   * field existed: it reads as a win (the series ring is looked up first).
+   */
+  result?: { won: boolean; us: number; them: number; event: string };
   /** Settled by a later series against that opponent (a provocative post only). */
   settled?:
     | { kind: "receipt"; seriesN: number; seasonIndex: number; week: number; event: string; us: number; them: number }

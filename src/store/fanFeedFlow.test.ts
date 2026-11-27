@@ -149,6 +149,8 @@ describe("postToFeedFlow: the one action", () => {
     const p = feedOf(next).posts[0];
     expect(p).toMatchObject({ tone: "confident", opponentRef: "b", opponentName: "Team b", seriesN: 2, seasonIndex: save.clock.seasonIndex });
     expect(typeof p.week).toBe("number");
+    // v2.3 FIX: it remembers the result it reacted to (the second series is a loss)
+    expect(p.result).toMatchObject({ won: false });
     expect(pendingFeedPostOf(next)).toBeNull();
     // only fanFeed differs, and the input was not mutated
     expect({ ...next, fanFeed: undefined }).toEqual({ ...save, fanFeed: undefined });

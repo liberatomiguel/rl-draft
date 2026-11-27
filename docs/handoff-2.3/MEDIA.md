@@ -11,7 +11,7 @@ Decisions R205-R209 in `ROAD-TO-WORLDS-DECISIONS.md`.
 | Rules (pure, seeded): roll, who, cash, days, M3 check, lapse, accept, decline, fatigue record | `src/engine/career/mediaDays.ts` |
 | Tunables (`CAREER_MEDIA`) | `src/config/balance.mediaDays.ts` |
 | Store side: weekly roll, lapse, pay, absence, accept / decline | `src/store/mediaDaysFlow.ts` |
-| Accept / decline under the offer (minimum component, **not mounted, not seen in a browser**) | `src/components/career/media/MediaOfferAnswers.tsx` |
+| Accept / decline under the offer (mounted in the inbox reader, seen in a browser, v2.3 FIX) | `src/components/career/media/MediaOfferAnswers.tsx` |
 | Strings (EN, PT), 15 fictional brands | `src/content/copy.career.media.en.ts`, `.pt.ts` |
 
 ## Rules as built
@@ -61,20 +61,19 @@ is measured in a battery.**
 No change to `careerFlow.ts`, `calendar.ts`, `sunday.ts`, `board.ts`, `mandate.ts`, the event screens,
 `components/career/locker/*`, `SquadScreen`, `NewsScreen`, `HubScreen` or `hub/NowCards`.
 
-## The UI gap (tell Miguel)
+## The inbox answers (mounted at integration, seen in v2.3 FIX)
 
-The existing mail path renders the offer (title, dates, cash, event) but has no buttons, and
-`LockerTalkAnswers` is bound to locker talks. `MediaOfferAnswers` is written and takes the same props; it
-needs one line in `screens/NewsScreen.tsx`, in `MailReader` next to `<LockerTalkAnswers />`:
+`MediaOfferAnswers` is mounted in `screens/NewsScreen.tsx` (`MailReader`) next to `<LockerTalkAnswers />`. It was
+restyled after a browser look to match the locker talk beside it (rule above, full-width option rows, faint hint,
+outcome in ink). An unanswered offer lapses as declined.
 
-```tsx
-import { MediaOfferAnswers } from "@/components/career/media/MediaOfferAnswers"; // v2.3 MEDIA
-...
-<MediaOfferAnswers item={item} C={C} /> {/* v2.3 MEDIA */}
-```
-
-Until it is mounted, accept and decline exist only as the store action `answerMediaOffer(offerId, accept)`
-(tested); an unanswered offer lapses as declined. Not seen in a browser.
+Seen on a real played career with the chance forced to 100 % (the temporary tunable edit was reverted, not committed):
+open offer at 1280 PT and EN, 375 PT and EN (no sideways scroll); closed accepted at 375 PT and 1280 EN; closed
+declined at 1280 PT and EN; closed lapsed at 1280 EN; Finances ledger line "Dia de mídia · Uberly Rides +$450" on the
+first away day (read from the page text and the balance chart, PT). The absence notice ("Pombo cannot play ... due to a
+media day", HQ decision card, EN 1280) was seen with `pendingUnavailability` written by hand into the save: in play an
+offer rolls on Monday and can only name an event the club is already committed to (a Major or Worlds, or a regional
+it qualified for earlier), and none came up in nine played weeks.
 
 ## Tests (all green, one file at a time)
 
@@ -98,7 +97,7 @@ Until it is mounted, accept and decline exist only as the store action `answerMe
 
 ## Not verified
 
-- No browser: the mail, the buttons (not even mounted), the absence notice and the Finances line were never seen.
+- Not seen: an offer that really names an event he would miss (the "He would miss X" line), the accepted-over-an-event absence produced by the engine, the 320 px width, the fatigue mail.
 - No full suite, no build, no soft-lock probe, no battery: no number is measured.
 - Writes that bypass the store's `withSave` / `withResult` (bots, probes) do not run media days.
 - A random illness roll that lands after the accept for the same event cancels the trip (R207); a player sold before the

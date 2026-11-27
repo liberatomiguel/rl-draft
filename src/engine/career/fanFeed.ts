@@ -14,8 +14,8 @@ import { CAREER_FEED } from "@/config/balance";
 import { createRng } from "@/lib/rng";
 import type { TournamentState } from "../types";
 import { handleFrom } from "./fanHandles";
-import { FEED_VARIANTS, MANAGER_POST_KEYS, type VariantDef } from "./fanFeedVariants";
-import type { FanTone, FeedClaim, FeedKind, FeedPost, FeedSeries, FeedSlots } from "./fanFeedTypes";
+import { FEED_VARIANTS, type SeriesResult, type VariantDef } from "./fanFeedVariants";
+import type { FanTone, FeedClaim, FeedKind, FeedManagerPost, FeedPost, FeedSeries, FeedSlots } from "./fanFeedTypes";
 import { deriveSeed, streams } from "./seeds";
 import type { CareerEventDef, CareerSave } from "./types";
 import { weekOfDay } from "./calendar";
@@ -139,6 +139,8 @@ interface Candidate {
   slots: FeedSlots;
   ctx: FeedCtx;
   tone?: FanTone;
+  /** A manager's post or reply: the result of the series it came after (v2.3 FIX). */
+  result?: SeriesResult;
 }
 
 /** "$1.2M" / "$350k". */
@@ -210,10 +212,11 @@ function candidatesOf(save: CareerSave): Candidate[] {
 
   // The manager's posts, the fans' answer, and the receipt.
   for (const p of feed?.posts ?? []) {
-    const slots: FeedSlots = { opponent: p.opponentName, org, week: String(p.week) };
+    const { result, slots: seriesSlots } = postFactsOf(p, feed?.series ?? []);
+    const slots: FeedSlots = { ...seriesSlots, opponent: p.opponentName, org, week: String(p.week) };
     const ctx = ctxAt(save, ledger, p.seasonIndex, p.week);
-    out.push({ id: `post:${p.seriesN}`, kind: "managerPost", seasonIndex: p.seasonIndex, week: p.week, rank: 4, slots, ctx, tone: p.tone });
-    out.push({ id: `reply:${p.seriesN}`, kind: "managerReply", seasonIndex: p.seasonIndex, week: p.week, rank: 5, slots, ctx, tone: p.tone });
+    out.push({ id: `post:${p.seriesN}`, kind: "managerPost", seasonIndex: p.seasonIndex, week: p.week, rank: 4, slots, ctx, tone: p.tone, result });
+    out.push({ id: `reply:${p.seriesN}`, kind: "managerReply", seasonIndex: p.seasonIndex, week: p.week, rank: 5, slots, ctx, tone: p.tone, result });
     if (p.settled?.kind === "receipt") {
       const r = p.settled;
       out.push({
@@ -239,10 +242,31 @@ function candidatesOf(save: CareerSave): Candidate[] {
 // Variants and the window
 // ---------------------------------------------------------------------------
 
-/** The variants a candidate may use: its slots all present, its claim supported, its tone. */
-export function eligibleVariants(kind: Exclude<FeedKind, "managerPost">, slots: FeedSlots, ctx: FeedCtx, tone?: FanTone): VariantDef[] {
+/**
+ * v2.3 FIX: what a manager's post reacted to. The stored result first, then
+ * the series ring; a post that has neither (made before the field existed and
+ * already out of the ring) reads as a win with no score or event to name.
+ */
+function postFactsOf(p: FeedManagerPost, series: readonly FeedSeries[]): { result: SeriesResult; slots: FeedSlots } {
+  const r = p.result ?? series.find((s) => s.n === p.seriesN);
+  if (!r) return { result: "won", slots: {} };
+  return { result: r.won ? "won" : "lost", slots: { score: scoreOf(r.us, r.them), event: r.event } };
+}
+
+/** The variants a candidate may use: its slots all present, its claim supported, its tone, its result. */
+export function eligibleVariants(
+  kind: FeedKind,
+  slots: FeedSlots,
+  ctx: FeedCtx,
+  tone?: FanTone,
+  result: SeriesResult = "won",
+): VariantDef[] {
   return FEED_VARIANTS[kind].filter(
-    (v) => v.needs.every((s) => slots[s] !== undefined) && (!v.claim || claimHolds(v.claim, ctx, slots)) && (!v.tone || v.tone === tone),
+    (v) =>
+      v.needs.every((s) => slots[s] !== undefined) &&
+      (!v.claim || claimHolds(v.claim, ctx, slots)) &&
+      (!v.tone || v.tone === tone) &&
+      (!v.result || v.result === result),
   );
 }
 
@@ -251,12 +275,25 @@ export const windowFor = (eligible: number): number => Math.max(0, Math.min(CARE
 
 const authorSeed = (save: CareerSave, id: string, part: string): number => deriveSeed(save.careerSeed, streams.gen("fanFeed", `${id}:${part}`));
 
+/** The manager's own post: one variant of tone x result, picked by the series so the preview and the feed agree. */
+function managerPostVariant(careerSeed: number, seriesN: number, slots: FeedSlots, tone: FanTone, result: SeriesResult): string | null {
+  const eligible = eligibleVariants("managerPost", slots, { ledger: 0, regionalChampion: false }, tone, result);
+  if (eligible.length === 0) return null;
+  return createRng(deriveSeed(careerSeed, streams.gen("fanFeed", `post:${seriesN}:v`))).pick(eligible).key;
+}
+
 /**
- * v2.3 UI (U5): the manager's post as it would read, before it is sent — the
- * same copy key and slots the feed gives it once posted. Pure.
+ * v2.3 UI (U5) + FIX: the manager's post as it would read, before it is sent:
+ * the same copy key and slots the feed gives it once posted, written about the
+ * series just played (its result, score and event). Pure.
  */
-export function managerPostDraftOf(save: Pick<CareerSave, "identity">, opponentName: string, tone: FanTone): Pick<FeedPost, "variant" | "slots"> {
-  return { variant: MANAGER_POST_KEYS[tone], slots: { opponent: opponentName, org: save.identity.orgName } };
+export function managerPostDraftOf(
+  save: Pick<CareerSave, "identity" | "careerSeed">,
+  series: Pick<FeedSeries, "n" | "opponentName" | "us" | "them" | "won" | "event">,
+  tone: FanTone,
+): Pick<FeedPost, "variant" | "slots"> {
+  const slots: FeedSlots = { opponent: series.opponentName, org: save.identity.orgName, score: scoreOf(series.us, series.them), event: series.event };
+  return { variant: managerPostVariant(save.careerSeed, series.n, slots, tone, series.won ? "won" : "lost") ?? "", slots };
 }
 
 /**
@@ -275,9 +312,11 @@ export function fanFeedFor(save: CareerSave, opts: { limit?: number } = {}): Fee
     let variant: string;
     if (c.kind === "managerPost") {
       if (!c.tone) continue;
-      variant = MANAGER_POST_KEYS[c.tone];
+      const key = managerPostVariant(save.careerSeed, Number(c.id.slice("post:".length)), c.slots, c.tone, c.result ?? "won");
+      if (!key) continue;
+      variant = key;
     } else {
-      const eligible = eligibleVariants(c.kind, c.slots, c.ctx, c.tone);
+      const eligible = eligibleVariants(c.kind, c.slots, c.ctx, c.tone, c.result);
       if (eligible.length === 0) continue;
       const history = recentVariants.get(c.kind) ?? [];
       const recent = history.slice(history.length - windowFor(eligible.length));

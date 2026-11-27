@@ -8,7 +8,7 @@
  * series simply replaces it (`pendingFeedPostOf`). Nothing with the flag off.
  */
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { FEATURES } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { managerPostDraftOf, scoreOf } from "@/engine/career/fanFeed";
@@ -27,6 +27,7 @@ const TONES: FanTone[] = ["humble", "confident", "provocative"];
 
 export function NowFeedPost({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const post = useCareerStore((s) => s.postToFeed);
+  const uid = useId();
   const [tone, setTone] = useState<FanTone | null>(null);
   /** The post just sent, kept on screen with a way to the feed. */
   const [sent, setSent] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function NowFeedPost({ save, C }: { save: CareerSave; C: CareerCopy }) {
     );
   }
   if (!series) return null;
-  const draft = tone ? feedTextOf(managerPostDraftOf(save, series.opponentName, tone), F) : null;
+  const draft = tone ? feedTextOf(managerPostDraftOf(save, series, tone), F) : null;
 
   return (
     <Panel className="p-4 sm:p-5">
@@ -63,6 +64,8 @@ export function NowFeedPost({ save, C }: { save: CareerSave; C: CareerCopy }) {
             type="button"
             role="radio"
             aria-checked={tone === t}
+            aria-label={F.tones[t].label}
+            aria-describedby={`${uid}-${t}`}
             onClick={() => setTone(t)}
             className={cx(
               "flex min-h-11 flex-col items-start rounded-[7px] border px-3.5 py-2.5 text-left transition-colors",
@@ -70,7 +73,7 @@ export function NowFeedPost({ save, C }: { save: CareerSave; C: CareerCopy }) {
             )}
           >
             <span className="display text-sm font-bold uppercase tracking-[0.04em] text-ink">{F.tones[t].label}</span>
-            <span className="mt-0.5 text-xs leading-snug text-sub">{F.tones[t].hint}</span>
+            <span id={`${uid}-${t}`} className="mt-0.5 text-xs leading-snug text-sub">{F.tones[t].hint}</span>
           </button>
         ))}
       </div>
