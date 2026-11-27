@@ -23,7 +23,7 @@ import { achievementStyle } from "@/components/achievementStyle";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { CareerLifetimeStats } from "@/engine/career/types";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { useCopy } from "@/content/copy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -38,7 +38,10 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { REGION_BADGE } from "@/components/regionStyle";
-import { FEATURES } from "@/config/balance";
+import { CAREER_BOARD, FEATURES } from "@/config/balance";
+import { establishedOf, standingOf } from "@/engine/career/established";
+import { StandingTrack } from "@/components/career/board/BoardParts";
+import { OperationsSummary } from "@/components/career/finances/Operations";
 import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserOrgMark } from "@/components/career/OrgMark";
@@ -134,7 +137,7 @@ const TROPHY_TINT: Record<string, string> = {
 export function ClubScreen() {
   // Job: the club's record (who it is, what it has won, how far its reputation has come). The one thing to read for a decision: what the next reputation gate unlocks.
   const achievements = useCareerStore((s) => s.achievements);
-  const copy = useCareerCopy();
+  const copy = useActiveCareerCopy();
   // rc.36 (UX-05, #155): the achievements' words live in the core copy (one source with the general list).
   const { ACH_UI } = useCopy();
   const mounted = useMounted();
@@ -169,6 +172,15 @@ export function ClubScreen() {
   const unlockLabels = copy.club.unlockables as Record<string, string>;
   // Rep-bar tick marks: every distinct gate on a 0..100 scale.
   const gateTicks = [...new Set(track.map((e) => e.gate))].filter((g) => g > 0 && g < 100);
+
+  // rc.6 (ORGMODE UI-C): what a promotion changes, from the board's own numbers.
+  const established = establishedOf(save);
+  const standing = standingOf(save);
+  const promotionNote = !standing
+    ? undefined
+    : standing.next
+      ? copy.orgmode.club.promotes(Math.round((CAREER_BOARD.standing.budgetStep.up - 1) * 100), CAREER_BOARD.profiles[standing.next.tier].signCap)
+      : copy.orgmode.club.top(Math.round((1 - CAREER_BOARD.standing.budgetStep.down) * 100));
 
   const stats: CareerLifetimeStats = save.stats;
   const titlesTotal =
@@ -332,6 +344,13 @@ export function ClubScreen() {
         {/* Secondary column: reputation and the Progression Track (the unlock
             ladder, never hidden) on one board, the track as a plain list. */}
         <div data-tour="club-progress" className="min-w-0 max-md:order-2 md:col-span-2">
+          {/* rc.6 (ORGMODE UI-C): an established org shows its Standing and its Operations; nothing here is unlocked. */}
+          {established ? (
+            <div className="flex min-w-0 flex-col gap-4">
+              <StandingTrack save={save} C={copy} note={promotionNote} />
+              <OperationsSummary save={save} C={copy} />
+            </div>
+          ) : (
           <Panel className="p-4 sm:p-5">
             <div className="card-head"><h3 className="card-title">{copy.club.reputation}</h3></div>
             <p className="display mt-3 text-5xl font-extrabold leading-none text-ink">
@@ -403,6 +422,7 @@ export function ClubScreen() {
               </ul>
             </div>
           </Panel>
+          )}
         </div>
       </div>
 

@@ -24,6 +24,10 @@ import { trainingBlockOf } from "@/store/careerTraining";
 import { raceLineOf, raceTableOf } from "@/components/career/careerUi";
 import { defaultRaceKind } from "@/components/career/hub/RaceBlock";
 import { toolboxNameOf } from "@/components/career/hub/ToolboxBlock";
+import { nextPurchaseLineOf } from "@/components/career/hub/OperationsBlock";
+import { runningCostOf } from "@/components/career/finances/operationsView";
+import { operationsOf } from "@/engine/career/established";
+import { backerLineOf } from "@/store/careerFlow";
 import { AppLink } from "@/components/ui/AppLink";
 import { boardGlanceNoteOf } from "@/components/career/board/BoardScreen";
 
@@ -157,6 +161,10 @@ export function HubGlance({
   );
   const next = useMemo(() => ladderOf(save).find((r) => r.status === "locked") ?? null, [save]);
   const rep = Math.round(save.reputation);
+  const ops = useMemo(() => {
+    const o = operationsOf(save, { floor: backerLineOf(save).floor });
+    return o ? { running: runningCostOf(o), next: nextPurchaseLineOf(save, C) } : null;
+  }, [save, C]);
 
   return (
     <div className={cx("panel overflow-hidden sm:hidden", className)}>
@@ -199,6 +207,18 @@ export function HubGlance({
         />
       </div>
       {save.board ? <BoardRow save={save} C={C} /> : null}
+      {/* rc.6 (ORGMODE UI-C): an established org's row is its operations and the next purchase, not the ladder. */}
+      {ops ? (
+        <AppLink href="/career/finances#career-operations" data-tour="hub-progress" className="flex min-h-12 items-center gap-3 px-3 py-2.5">
+          <span className="min-w-0 flex-1">
+            <span className="kicker block">{C.orgmode.ops.title} · {C.orgmode.ops.perWeek(formatMoney(ops.running, { compact: true }))}</span>
+            <span className={cx("mt-1 block truncate text-xs", ops.next.tone === "good" ? "font-semibold text-good" : ops.next.tone === "warn" ? "text-orange-bright" : "text-sub")}>
+              {ops.next.name ? `${C.orgmode.ops.next}: ${ops.next.name} · ${ops.next.line}` : ops.next.line}
+            </span>
+          </span>
+          <Chevron />
+        </AppLink>
+      ) : (
       <AppLink href="/career/finances#career-ladder" data-tour="hub-progress" className="flex min-h-12 items-center gap-3 px-3 py-2.5">
         <span className="min-w-0 flex-1">
           <span className="kicker block">{L.title} · {L.rep(rep)}</span>
@@ -212,6 +232,7 @@ export function HubGlance({
         </span>
         <Chevron />
       </AppLink>
+      )}
     </div>
   );
 }
