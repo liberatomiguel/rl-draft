@@ -52,6 +52,7 @@ import { LaunchNotice } from "@/components/screens/LaunchNotice";
 import { SEASON } from "@/config/season";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { MissionsPanel } from "@/components/MissionsPanel";
+import { FriendsSection } from "@/components/share/FriendsSection";
 
 // The home stays off the dataset (#60): the quiz builds its puzzle from it, so
 // its panel loads when the modal opens, and the run store (dataset + engine)
@@ -426,6 +427,9 @@ export default function HomeMenu() {
             </div>
           )}
         </section>
+
+        {/* ---- WITH FRIENDS (v2.2 share kit): the duel and the invitation. ------- */}
+        {playtest ? null : <FriendsSection />}
 
         {/* ---- YOU --------------------------------------------------------------- */}
         {/* YOUR PROGRESS is one stat strip: four cells on a single board, the

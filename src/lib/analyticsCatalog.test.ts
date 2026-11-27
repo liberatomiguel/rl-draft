@@ -55,6 +55,7 @@ describe("the catalogue", () => {
         "career_transfer",
         "challenge_played",
         "collection_milestone",
+        "content_shared",
         "daily_insight",
         "friend_duel",
         "mission_completed",

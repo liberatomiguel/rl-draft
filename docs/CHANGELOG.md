@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-dev] — 2026-11-27 · Share kit: share a run, a career, invite friends (staging)
+
+Miguel's brief of 27/11: more ways to spread the game (share a run, share a Road to Worlds career, invite friends, play with a friend) and share images and texts that look better and make people want to post them. Spec in code: `src/lib/share/`, `src/components/share/`, `src/components/career/share/`.
+
+### Added
+- **One share sheet for every surface** (`ShareSheet`): the image in two formats, **Post** (1200 × 630, for X, Discord, WhatsApp, Reddit) and **Story** (1080 × 1920, for Instagram, TikTok and WhatsApp status), drawn on open; the system share sheet with the image attached (phones), WhatsApp, X, Reddit and Telegram links, copy image (paste into Discord), copy text and link, download. The text that goes with the post is shown before it leaves.
+- **New run image.** Drawn in the game's own material (DESIGN.md): the placement on the paper slab, one sentence on how the run went ("Undefeated", "Out to Vitality (2-4) in the Grand Final"), the road through the bracket as a square per series, three figures (team OVR, chemistry, Swiss record) and the drafted roster as the game's cards (rarity frames, special photos, flags, org crests). A title run gets the gold frame. Works for Classic, Quick, the Daily (its number on the image, a square grid in the post) and a duel run (the post carries the duel link, so the friend plays the same draft).
+- **Share a Road to Worlds career.** "Share career" on the Club screen and at the season review, "Share the title" on the event screen after a title. The card: the crest and the club's name, the manager, region and season, the headline on the slab (World champions, Major champions...), the trophy shelf (Worlds in trophy gold) and the starting three as cards wearing the club's crest. A club that has won the Worlds gets the gold frame. The link opens the career landing page.
+- **"With friends" on the Home**: a friend duel in one click (Classic, the last difficulty and overall setting, a fresh seed; the link goes out from the results) and "Invite friends" (the game's pitch and link, no account needed).
+- Analytics: `content_shared` (critical) with `surface` (run, daily, duel, career, invite), `channel` and `format`. Share links go to rocketdraft.app with `utm_medium=share` and `utm_campaign=<surface>`.
+
+### Changed
+- The old share preview (Rajdhani canvas, X and download only) is gone with `lib/shareCard.ts`; the run's Share button opens the new sheet.
+- Share posts rewritten (EN and PT): they say what happened and end on a challenge ("Think you can beat it?", "Your turn:").
+
 ## [2.2.0-rc.6] — 2026-11-27 · The established organisation: its own rules, its own screens (staging)
 
 Miguel's brief of 27/11: taking over a real organisation has to read as a consolidated org, with its own goals, budget, progression and screens, not as the founded club's ladder. Spec and handoffs: `docs/handoff-2.2/ORGMODE-*.md`. What to play and what Miguel decides: `docs/V2.2-STATUS.md`. Decisions R163 to R172, DESIGN-DECISIONS #187 to #201.
