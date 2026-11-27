@@ -106,7 +106,50 @@ BoardSeason.brief?: SeasonBrief; BoardState.tierChange?: TierChange
 
 ## Measured
 
-### After the refit (the current numbers)
+### rc.6 as shipped: held out on the round-2 rules (the current numbers)
+
+Engine `a5703a0`. Same battery as after the refit: seeds 30000 and 30101, 120 careers (60 competent on Expected, 60 careless `badSponsor` on Ambitious), NA / EU / SAM, Normal and Hard, 6 seasons, every staging flag on. Run as 6 single slices under the lock; the first five each waited the protocol's full 30 minutes on a busy port 3210 or a held lock, then went ahead. No refit.
+
+Competent Expected, stated → measured; N = the seasons the board held that tier. In brackets, the refit's held-out run (before round 2):
+
+| Tier (that season) | Normal | Hard |
+|---|---|---|
+| Elite | 55 → 51 (73) [56 → 43] | 44 → 52 (56) [44 → 57] |
+| Contender | 53 → 63 (27) [53 → 72] | 55 → 48 (29) [55 → 41] |
+| Mid | 59 → 44 (32) [58 → 58] | 57 → 57 (35) [58 → 73] |
+| Underdog | 65 → **92** (12) [63 → 65] | 62 → **45** (22) [62 → 27] |
+| Founded | 69 → 81 (36) [same] | 59 → 58 (38) [same] |
+
+- **More than 15 points off:** underdog Normal (+27, N = 12) and underdog Hard (−17, N = 22); mid Normal at −15. Contender Normal (+19 → +10) and underdog Hard (−35 → −17) moved closer.
+- **Bands** (three plans): competent 73 % same band, 27 % adjacent, 1 % two or more away (N = 1080; refit 69 / 29 / 3). Careless 25 / 57 / 18 (N = 1077; refit 18 / 61 / 22).
+- **Dismissals:**
+  - competent **3 / 60**, all SAM: Normal mid at S6, Hard elite at S4, Hard contender at S6. The refit run had 0 / 60.
+  - careless **15 / 60**, at S4 to S6: SAM 8, NA 5, EU 2. The refit run had 11 / 60; rc.5 had 16 / 60.
+- **Career ends:** 2 insolvencies, both careless (NA Hard mid; SAM Hard elite), the same two configurations as in the refit run. 0 soft locks in 120 careers.
+- **Cash at S6** (median, competent, by starting tier), Normal / Hard: elite $627k / $509k [672 / 689], contender $398k / $131k [782 / 210], mid $520k / $79k [710 / 117], underdog $83k / $47k [206 / 85], founded $69k / $34k [same].
+- **Tier changes per starting tier** (competent; no relegation in 120 careers):
+
+  | Promotion | Normal | Hard |
+  |---|---|---|
+  | contender → elite | 6/6 (S2-S3) | 5/6 (S2-S3) |
+  | mid → contender | 4/6 by S2 | 4/6 by S4 |
+  | underdog → mid | 6/6 by S2 | 4/6 by S3 |
+
+  Careless: contender → elite 3/6 Normal and 5/6 Hard; mid 2/6 Normal and 0/6 Hard; underdog 1/6 Normal and 0/6 Hard.
+
+**Reading: did round 2 move anything beyond noise?**
+- **Founded careers:** identical to the refit run, as they should be.
+- **Stated → measured:** most cells moved by amounts that 12 to 35 seasons per cell cannot separate from noise; the bands improved slightly.
+- **Competent dismissals (0 → 3 of 60):** not significant on its own (about p = 0.12 one-sided, 0.24 two-sided, Fisher's exact test), but it matches the round-2 sanity run (2 / 30). All five dismissals across the two runs are SAM.
+- **Cash at S6:** the one change that looks real. It is lower in all 8 established cells (a one-sided sign test gives about p = 0.004), even though the elite budget grew.
+- **Why the cash fell is not verified.** Candidates:
+  1. the day-one sponsor deal, whose missed goals bring fines;
+  2. the rc.34 cap on non-earned income (`incomeTally`) absorbing the larger grant;
+  3. the bot spending more once its starting cash is larger.
+
+  A ledger probe on one elite and one mid career would settle it. No code change was made for this measurement.
+
+### After the refit (before round 2)
 
 `calibration` and `goalRates` were refitted on the rc.6 rules (commit `5653a98`). The fit used 90 competent careers × 6 seasons: seeds 9000, 12000 and 12101, NA / EU / SAM, Normal and Hard, the four tiers plus founded, every staging flag on including endless. That is 3 of rc.5's 6 fit seeds; the count matches rc.5's ~88 careers, and the full list would have doubled the run. `goalRatesK` stays 8, since the fit does not estimate it.
 
