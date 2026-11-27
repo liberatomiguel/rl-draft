@@ -26,7 +26,7 @@ import { CAREER_PLAYBACK } from "@/config/balance";
 import { inviteSurfacedToday, moneyNoticeOf } from "@/store/careerFlow";
 import { useCareerStore, selectActiveSave } from "@/store/careerStore";
 import { followCardOf } from "@/store/careerSunday";
-import { eventEndDayFor } from "@/engine/career/calendar";
+import { eventEndDayFor, isWindowLastWeekStart } from "@/engine/career/calendar"; // v2.3 SKIP
 import { continueKind } from "./careerUi";
 import { useSettings } from "@/store/settingsStore";
 
@@ -65,6 +65,11 @@ export function CareerAutopilot() {
     // rc.49: a Major / Worlds the user is out of resolved today — stop once, so HQ can offer watch / results / skip.
     const followed = followCardOf(save);
     if (followed && (followed.def.tier === "major" || followed.def.tier === "worlds") && eventEndDayFor(followed.def) === save.clock.day && startRef.current !== today) {
+      setAutoAdvance(false);
+      return;
+    }
+    // v2.3 SKIP (R200): a transfer window enters its last week — stop once, never a hold.
+    if (isWindowLastWeekStart(save.clock.day) && startRef.current !== today) {
       setAutoAdvance(false);
       return;
     }

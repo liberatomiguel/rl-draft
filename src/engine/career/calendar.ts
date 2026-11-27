@@ -580,3 +580,12 @@ export function orderFor(seasonIndex: number): number {
   if (seasonIndex < INFINITE_FROM) return CAREER_SEASONS[seasonIndex].order;
   return CAREER_SEASONS[CAREER_SEASONS.length - 1].order;
 }
+
+// v2.3 SKIP (R200): the Monday a multi-week transfer window enters its last week.
+// A single-week window (Worlds) never qualifies: its open Monday is the stop.
+export function isWindowLastWeekStart(day: number): boolean {
+  if (dayOfWeekOf(day) !== 1) return false;
+  const week = weekOfDay(day);
+  const idx = windowIndexOf(week);
+  return idx !== null && week === windowCloseWeekFor(idx) && !isWindowStartWeek(week);
+}

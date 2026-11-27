@@ -9,6 +9,10 @@
  */
 
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
+import { CAREER_FEED_PT } from "./copy.career.feed.pt"; // v2.3 FEED
+
+import { CAREER_LOCKER_PT } from "./copy.career.locker.pt"; // v2.3 LOCKER
+import { CAREER_MEDIA_PT } from "./copy.career.media.pt"; // v2.3 MEDIA
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
@@ -214,6 +218,7 @@ const stepWhenPt = (week: string | number | undefined, nextSeason: string | numb
   `a segunda-feira da semana ${week}${Number(nextSeason) ? " da próxima temporada" : ""}`;
 
 export const CAREER_PT: CareerCopy = {
+  ...CAREER_FEED_PT, // v2.3 FEED
   meta: {
     title: "Road to Worlds",
     nav: "Carreira",
@@ -445,7 +450,7 @@ export const CAREER_PT: CareerCopy = {
       `Só ${n} de 3 vagas preenchidas. Assine um terceiro jogador antes de ${event}: um agente livre pode entrar hoje, com ou sem janela.`,
     // rc.39 F6 (R103): titular indisponível e sem reserva — a mesma pausa, com o texto certo.
     squadShortAbsentTitle: "Sem substituto",
-    absenceReasons: { fatigue: "excesso de carga de treino", illness: "problemas de saúde", fitness: "falta de condições físicas" },
+    absenceReasons: { fatigue: "excesso de carga de treino", illness: "problemas de saúde", fitness: "falta de condições físicas", media: "um dia de mídia" }, // v2.3 MEDIA
     squadShortAbsentBody: (player: string, event: string, reason?: string) =>
       `${player} não poderá jogar ${event} por ${reason ?? "falta de condições físicas"}. Não há um substituto para ocupar sua vaga. Contrate um substituto durante a janela de transferências ou fique fora deste campeonato.`,
     squadShortAbsentSkip: "Ficar fora deste evento",
@@ -1816,6 +1821,7 @@ export const CAREER_PT: CareerCopy = {
       sponsorFine: "Multa do patrocinador",
       boardGrant: "Verba da diretoria",
       boardBonus: "Bônus da diretoria",
+      mediaDay: "Dia de mídia", // v2.3 MEDIA
     },
     sponsors: "Patrocinadores",
     sponsorTier: (t: number) => `Nível ${t}`,
@@ -2354,6 +2360,7 @@ export const CAREER_PT: CareerCopy = {
         `Semana de scrims (${({ easy: "fácil", even: "equilibrado", hard: "difícil" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,
       windowOpen: () => `Janela de transferências aberta: os telefones ligados`,
       windowClose: () => `Janela fechada. Os elencos são o que são.`,
+      windowClosing: (p: Record<string, string | number>) => `A janela de transferências fecha em ${p.n} dias`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas pelas regiões`,
       debtCleared: () => `Empréstimo emergencial quitado: a org anda livre`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} anuncia parceria com ${p.name}`,
@@ -2517,6 +2524,7 @@ export const CAREER_PT: CareerCopy = {
         `A idade cobra a mecânica primeiro. ${p.player} está adaptando o próprio jogo: a experiência segue pagando.`,
       windowOpen: () =>
         `Agentes atendendo, taxas circulando, elencos destravados. Negócios resolvem com o passar dos dias; a janela não espera.`,
+      windowClosing: () => `Última semana da janela. Propostas de troca sem resposta e jogadores no mercado caducam quando ela fechar; contrate, venda ou retire antes disso.`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) =>
         `${p.n} trocas registradas antes da janela fechar. O plantão completo, taxas, agentes livres, todas as regiões, está no QG.`,
       debtCleared: () =>
@@ -4936,4 +4944,6 @@ export const CAREER_PT: CareerCopy = {
     /** A linha da ficha da org para um projeto rival (o kit da temporada). */
     projectKit: (season: number, kit: string) => `Projeto, temporada ${season}: ${kitPt(kit)}.`,
   },
+  locker: CAREER_LOCKER_PT, // v2.3 LOCKER
+  media: CAREER_MEDIA_PT, // v2.3 MEDIA
 };

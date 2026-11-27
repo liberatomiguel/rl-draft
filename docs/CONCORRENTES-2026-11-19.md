@@ -53,6 +53,16 @@ jogadas no próprio Rocket League por bots (RLBot + BakkesMod). **Risco deles:**
 o Rocket League recebeu o Easy Anti-Cheat em 28/4/2026 e o BakkesMod parou;
 as partidas do RLM dependem de abrir o jogo sem anti-cheat.
 
+> **Correção de 27/11/2026:** o BakkesMod parou por cerca de duas semanas e
+> voltou em meados de maio de 2026 no modo sem anti-cheat (`-noeac` na Epic,
+> escolha a cada abertura na Steam), só offline, com apoio declarado da
+> Psyonix. O risco deles é quebrar a cada atualização do jogo, não estar
+> bloqueado. Um mod novo, o RL Career Mode (beta aberto em 13/11, cerca de 233
+> mil views em 5 vídeos), roda por esse caminho. Confiança média: parte das
+> fontes só abriu como trecho de busca. Análise dele e comparação com o Road
+> to Worlds: `docs/handoff-2.3/HISTORIAS-SPEC.md` e o doc "RL Career Mode:
+> análise do concorrente".
+
 **Alcance real:** ~70 instalações completas pelos downloads do GitHub, base
 ativa na casa das dezenas; 0 estrelas, 2 issues (uma de soft lock em julho de
 2027 ainda aberta). 12 versões em 23 dias (18/10 a 9/11), nada depois de 9/11.

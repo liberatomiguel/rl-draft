@@ -12,7 +12,7 @@
 
 import { useRouter } from "next/navigation";
 import { LoanSummary } from "../finances/LoanSummary";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type CareerCopy } from "@/content/careerCopy";
 import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import type { MailItem, MailKind } from "@/engine/career/types";
@@ -29,6 +29,10 @@ import { dateOfDay, seasonLabelFor, useCareerSave } from "@/components/career/ca
 import { formatDateTiny } from "@/components/career/dateText";
 import { resolveMail } from "@/components/career/news/newsText";
 import { withMoneyParams } from "@/components/career/hub/hubShared";
+import { LockerTalkAnswers } from "@/components/career/locker/LockerTalkAnswers"; // v2.3 LOCKER
+import { MediaOfferAnswers } from "@/components/career/media/MediaOfferAnswers"; // v2.3 MEDIA
+import { FanFeedView } from "@/components/career/feed/FanFeedView"; // v2.3 UI
+import { FEATURES } from "@/config/balance"; // v2.3 UI
 
 type DatesCopy = CareerCopy["dates"];
 
@@ -58,8 +62,8 @@ import { ICON_TONE, MailKindIcon } from "../news/MailKindIcon";
 // Screen
 // ---------------------------------------------------------------------------
 
-type DeskView = "inbox" | "news" | "transfers";
-const VIEWS: DeskView[] = ["inbox", "news", "transfers"];
+type DeskView = "inbox" | "news" | "transfers" | "fans";
+const VIEWS: DeskView[] = ["inbox", "news", "transfers", ...(FEATURES.fanFeed ? (["fans"] as const) : [])]; // v2.3 UI: "fans"
 const viewOfHash = (hash: string): DeskView => (VIEWS as string[]).includes(hash.replace("#", "")) ? (hash.replace("#", "") as DeskView) : "inbox";
 
 // The desk's job: read what reached the club. One decision here: which message to open (and act on).
@@ -81,6 +85,13 @@ export function NewsScreen() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  // v2.3 UI: the open view stays in sight when the strip scrolls (horizontal only, on a view change).
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = tabsRef.current;
+    const el = list?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (list && el && list.scrollWidth > list.clientWidth) list.scrollLeft += el.getBoundingClientRect().left - list.getBoundingClientRect().left - (list.clientWidth - el.offsetWidth) / 2;
+  }, [view, mounted]);
   const setView = (v: DeskView) => {
     setViewState(v);
     window.history.replaceState(null, "", v === "inbox" ? window.location.pathname : `#${v}`);
@@ -108,7 +119,7 @@ export function NewsScreen() {
     if (!item.read) markMailRead(item.id);
   };
 
-  const viewLabel: Record<DeskView, string> = { inbox: C.mail.title, news: C.news.feed.name, transfers: C.hub.transfersTitle };
+  const viewLabel: Record<DeskView, string> = { inbox: C.mail.title, news: C.news.feed.name, transfers: C.hub.transfersTitle, fans: C.feed.ui.tab }; // v2.3 UI
 
   return (
     <div className="rise-in mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
@@ -127,7 +138,8 @@ export function NewsScreen() {
       />
 
       {/* The desk's three views: what was sent to you, the news, the transfer wire. */}
-      <div role="tablist" aria-label={C.mail.title} className="flex gap-6 border-b border-line">
+      {/* v2.3 UI: with the fourth view (Fans) the strip scrolls sideways on a narrow phone instead of wrapping. */}
+      <div ref={tabsRef} role="tablist" aria-label={C.mail.title} className={cx("flex gap-6 border-b border-line", FEATURES.fanFeed && "max-sm:-mx-3 max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]")}>
         {VIEWS.map((v) => (
           <button
             key={v}
@@ -137,6 +149,7 @@ export function NewsScreen() {
             onClick={() => setView(v)}
             className={cx(
               "display -mb-px flex min-h-10 items-center gap-2 border-b-2 text-[13px] uppercase tracking-[0.04em] transition-colors",
+              FEATURES.fanFeed && "shrink-0 whitespace-nowrap max-sm:mb-0", // v2.3 UI
               view === v ? "border-orange font-bold text-ink" : "border-transparent font-semibold text-sub hover:text-ink",
             )}
           >
@@ -148,6 +161,7 @@ export function NewsScreen() {
 
       {view === "news" ? <NewsFeed save={save} C={C} lang={lang} full /> : null}
       {view === "transfers" ? <TransferWirePanel save={save} C={C} D={C.dates} full /> : null}
+      {view === "fans" ? <FanFeedView save={save} C={C} lang={lang} /> : null} {/* v2.3 UI */}
 
       {view === "inbox" ? (
         <>
@@ -293,6 +307,8 @@ function MailReader({ item, C, D, currentSeason }: { item: MailItem; C: CareerCo
       ) : resolved.body ? (
         <p className="mt-4 max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
       ) : null}
+      <LockerTalkAnswers item={item} C={C} /> {/* v2.3 LOCKER */}
+      <MediaOfferAnswers item={item} C={C} /> {/* v2.3 MEDIA */}
       {item.linkTo ? (
         <Button variant="secondary" className="mt-5" onClick={() => router.push(item.linkTo!)}>
           {C.mail.open}

@@ -10,6 +10,78 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.3.0-dev]
+
+### Fixed
+
+- A batched Skip or the autoplay sailed past the close of a transfer window with no stop and no notice. Root cause: `isStopState` and `CareerAutopilot` only knew the Monday a window OPENS; nothing marked the Monday its last week begins, and the only warning was the passive "closes in N days" on two screens. Now both stop once on that Monday (`isWindowLastWeekStart`, never a clock hold) and a "Transfer window closes in 6 days" news item with a body says what lapses (R200).
+
+## [2.3.0-dev, front UI] — 2026-11-27 · The locker room and the fan feed on screen (branch v23/ui-stories)
+
+### Added
+- The locker room on the Squad screen (R202, `FEATURES.lockerRoom`): each starter card shows his mood (a face and a word); a "Locker room" board with the first open talk, one row per player (his framed overall, name, the last thing that moved him, his mood), the manager's word as two figures, and the open promises with progress and deadline ("1 of 3 starts, 2 events left"). A tap on a player opens why: his last changes with reasons, his promise, his talk.
+- The talk as a conversation (R201, `locker/LockerTalk.tsx`, replaces the wave-1 buttons in the inbox too): who, the staff's report, two or three answers with what each commits the manager to, the default marked; after the tap, the answer, his mood and where the promise lives.
+- HQ: a "Locker room" card under the decision block only when a talk waits or a promise is one bench from breaking; a "Post after the series" card (R203) with three tones, the post previewed before it goes out, Post and Skip. Neither holds the clock.
+- The desk's fourth view, Fans (R203, `FEATURES.fanFeed`): followers, then the posts; the manager's posts and the receipts stand out (DESIGN-DECISIONS #222); empty state for a save with no series yet.
+- Read-only selectors in `lockerRoom.ts` (`promiseProgressOf`, `playerLockerLogOf`, `squadMoodOf`, `wordStandingOf`, `lockerAttentionOf`, `lockerDaysBetween`) and `managerPostDraftOf` in `fanFeed.ts`, tested in `lockerRoom.view.test.ts`. No rule or number changed.
+- `careerStore.postToFeed` wires `postToFeedFlow` (wave 1 left it unwired). Copy: `locker.ui.*` and `feed.ui.*`, EN and PT.
+
+### Changed
+- The desk's tab strip scrolls sideways on a phone when the fan feed is on (DESIGN-DECISIONS #223).
+
+## [2.3.0-dev, front FEED] — 2026-11-27 · The fan feed: rules and text, no screen yet (branch v23/fan-feed)
+
+### Added
+- Fan feed (R195-R199, `FEATURES.fanFeed`, staging only): `engine/career/fanFeed.ts` (`fanFeedFor`, pure and seeded) derives recent posts from the save: series won and lost, upsets, win and loss streaks, signings, sales, titles, lost finals, the fans' answer to the manager's post and the receipt. Posts are data, never stored.
+- 13 event kinds, 6 to 9 variants each (`fanFeedVariants.ts`), every variant naming two or more slots; no variant repeats inside the last 5 posts of its kind. "Dynasty", "best team in the region" and "first title" appear only when the save's ledger supports them.
+- Generated fan handles from a bank of our own (`fanHandles.ts`), checked in a test against every dataset and career-catalogue player and org name.
+- The manager's post (`store/fanFeedFlow.ts`): `postToFeedFlow(save, tone | "skip")` stores tone, opponent and week; a provocative post followed by a loss to that opponent becomes a receipt the fans quote back. Followers move with results, tone and receipts and have no other effect.
+- Copy: `copy.career.feed.en.ts` / `.pt.ts` (88 texts each, the Portuguese written as a Brazilian fan would post).
+
+### Changed
+- `finishEvent` calls `recordFeedSeries` (one line, a no-op with the flag off) to keep the user's last 40 series in the new optional `save.fanFeed`; recording of results is untouched. `stagingFlags.test.ts` lists the new flag.
+
+### Balance
+- BALANCE_VERSION 54: the new `CAREER_FEED` group only (feed tunables); no gameplay number moves.
+
+---
+
+## [v2.3.0-dev, front MEDIA] — 2026-11-27 · Media days: a brand pays for a named player to be away a few days (branch v23/media-days, FEATURES.mediaDays, staging only)
+
+### Added
+- Media days (R205–R209, `engine/career/mediaDays.ts`, tunables in `config/balance.mediaDays.ts` as `CAREER_MEDIA`, store side `store/mediaDaysFlow.ts`). On a weekly tick a seeded roll may bring an offer: a fictional brand, a named player, 2 to 4 days, cash. One optional save field, `mediaDays`.
+- The offer is inbox mail stating the dates, the cash and the event(s) he would miss. It never holds the clock and lapses as declined the day before the first away day. `MediaOfferAnswers` (accept, decline) is the minimum the reader needs; **not mounted and not seen in a browser** (the one line to mount it is in `docs/handoff-2.3/MEDIA.md`).
+- Accepting books the cash once, on the ledger line "Media day" (new ledger kind `mediaDay`, brand as the reference) on the first away day, and rules the player out of a committed event inside the days through the existing absence system (`pendingUnavailability`, new reason `media`).
+- A club is never offered a date that leaves it without three players for one of its events (a starter's seat needs a registered reserve).
+- With the locker room on, sending the same player again inside six weeks costs him 6 morale (new reason `mediaFatigue`, shown in the mood mail and his last change; the offer warns about it).
+- A bank of 15 fictional brands (parodies) in `copy.career.media.en.ts` / `.pt.ts`, spread into the career copy as `media`; a test checks it against the real names it plays on.
+
+### Changed
+- `FEATURES.mediaDays` (staging build or `NEXT_PUBLIC_MEDIA_DAYS=1`). Off: nothing runs and nothing is written; a six-week walk is byte-identical with and without the hook.
+- `lockerRoom.ts` gains `nudgeMorale` and the reason `mediaFatigue`; `absenceReasons` and the ledger labels gain `media` / `mediaDay`.
+
+### Balance
+- BALANCE_VERSION 55: the new `CAREER_MEDIA` group only; no existing gameplay number moves. The cash is one week of the sponsor tier the reputation reaches (`tierValuePerWeek`) x 0.8 / 1 / 1.2 for 2 / 3 / 4 days, +/- 15 %. **Not measured in a battery.**
+
+---
+
+## [v2.3.0-dev, front LOCKER] — 2026-11-27 · The locker room: player morale, talks and promises (branch v23/locker-room, FEATURES.lockerRoom, staging only)
+
+### Added
+- Morale 0–100 per contracted player of the user's club, read as five moods (R190–R194, `engine/career/lockerRoom.ts`, tunables in `config/balance.lockerRoom.ts` as `CAREER_LOCKER`). One optional save field, `lockerRoom`; a save without it reads as neutral; AI clubs have none.
+- Drivers: events sat out (a talk after three in a row for a player who expects to start), playing again, a title or a deep run, a losing run, being listed, a refused AI bid (a talk), promises kept or broken. Every change is logged with its reason; a change of mood is a mail that names it.
+- Talks in the inbox with two or three answers (`LockerTalkAnswers`, the minimum the reader needed; not seen in a browser). Unanswered for a week, a talk closes itself with the neutral answer; talks never hold the clock.
+- Promises `minutes` (starts 3 of the next 4 events) and `stay` (not sold or listed before the window closes), settled by the game; the manager's word scales how much a new promise calms.
+- Transfer request after four weeks of low morale (sell, promise, refuse); an agreed sale lists him at his value.
+- Training gain × 0.94–1.06 from morale (raw gain only, never a decline); a match-performance effect exists at 0 and is not wired.
+- Takeover hooks `lockerIssuesOf` and `seedInheritedLockerRoom` (exported and tested, not wired).
+- Strings in `copy.career.locker.en.ts` / `.pt.ts`, spread into the career copy as `locker`.
+
+### Changed
+- `FEATURES.lockerRoom` (staging build or `NEXT_PUBLIC_LOCKER_ROOM=1`). Off: nothing runs and nothing is written; a six-week walk is byte-identical with and without the hook.
+
+## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
+
 ## [2.2.0-rc.7] — 2026-11-27 · Take over an organisation in RLCS 2027, under the board's mandate (staging)
 
 Miguel on rc.6 (27/11): the takeover started in 2020 with few orgs and not the ones people want, it reused the founded club's progression, and it let the player choose his goals. This rc is the second pass, stages 1 and 2 of `docs/handoff-2.2/ORGMODE-2027-SPEC.md`: the two fronts below (ERA, MANDATE), merged with the share kit, plus what the integration's browser pass found. Founding a club is unchanged. BALANCE_VERSION 55. Decisions R173 to R180.

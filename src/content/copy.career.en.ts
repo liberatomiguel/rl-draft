@@ -1,3 +1,5 @@
+import { CAREER_FEED_EN } from "./copy.career.feed.en"; // v2.3 FEED
+
 /**
  * Road to Worlds — English copy (career mode).
  *
@@ -9,6 +11,9 @@
  * `copy.career.pt.ts` mirrors this shape exactly (enforced by its type).
  * Tone: broadcast desk / post-match analysis — clean esports language.
  */
+
+import { CAREER_LOCKER_EN } from "./copy.career.locker.en"; // v2.3 LOCKER
+import { CAREER_MEDIA_EN } from "./copy.career.media.en"; // v2.3 MEDIA
 
 /** v2.2 ENDLESS: the host cities a season draws its Majors and Worlds from (indexes are stored in the save). */
 const ENDLESS_HOSTS_EN = [
@@ -228,6 +233,7 @@ const stepWhenEn = (week: string | number | undefined, nextSeason: string | numb
   `the Monday of ${Number(nextSeason) ? "next season's " : ""}week ${week}`;
 
 export const CAREER_EN = {
+  ...CAREER_FEED_EN, // v2.3 FEED
   meta: {
     title: "Road to Worlds",
     nav: "Career",
@@ -466,7 +472,7 @@ export const CAREER_EN = {
       `Only ${n} of 3 seats are filled. Sign a third player before ${event}: a free agent can join today, window or not.`,
     // rc.39 F6 (R103): a starter ruled out and no reserve — the same hold, worded for it.
     squadShortAbsentTitle: "No substitute",
-    absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues" },
+    absenceReasons: { fatigue: "training fatigue", illness: "illness", fitness: "fitness issues", media: "a media day" }, // v2.3 MEDIA
     squadShortAbsentBody: (player: string, event: string, reason?: string) =>
       `${player} cannot play ${event} due to ${reason ?? "fitness issues"}. There is no substitute to take his place. Sign a substitute during a transfer window or sit this tournament out.`,
     squadShortAbsentSkip: "Sit this event out",
@@ -1843,6 +1849,7 @@ export const CAREER_EN = {
       // v2.2 board front: the board's seasonal budget and an objective's bonus.
       boardGrant: "Board budget",
       boardBonus: "Board bonus",
+      mediaDay: "Media day", // v2.3 MEDIA
     },
     sponsors: "Sponsors",
     sponsorTier: (t: number) => `Tier ${t}`,
@@ -2380,6 +2387,7 @@ export const CAREER_EN = {
         `Scrim week (${({ easy: "easy", even: "even", hard: "hard" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,
       windowOpen: () => `Transfer window opens: the phones are on`,
       windowClose: () => `Window shut. Rosters are what they are.`,
+      windowClosing: (p: Record<string, string | number>) => `Transfer window closes in ${p.n} days`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves across the regions`,
       debtCleared: () => `Emergency loan repaid: the org walks free`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} announces ${p.name} partnership`,
@@ -2544,6 +2552,7 @@ export const CAREER_EN = {
         `Age comes for the mechanics first. ${p.player} is adapting his game: experience keeps paying.`,
       windowOpen: () =>
         `Agents answering, fees moving, rosters unlocked. Deals resolve as the days advance; the window won't wait.`,
+      windowClosing: () => `Last week of the window. Trade proposals still waiting for an answer and players on the market lapse when it shuts; sign, sell or withdraw before then.`, // v2.3 SKIP
       windowReport: (p: Record<string, string | number>) =>
         `${p.n} moves logged before the window shut. The full wire, fees, free agents, every region, is on the HQ.`,
       debtCleared: () =>
@@ -4971,6 +4980,8 @@ export const CAREER_EN = {
     /** The org sheet's line for a rival project (its kit this season). */
     projectKit: (season: number, kit: string) => `Project, season ${season}: ${kitEn(kit)}.`,
   },
+  locker: CAREER_LOCKER_EN, // v2.3 LOCKER
+  media: CAREER_MEDIA_EN, // v2.3 MEDIA
 };
 
 export type CareerCopy = typeof CAREER_EN;

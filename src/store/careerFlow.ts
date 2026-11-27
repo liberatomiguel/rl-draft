@@ -110,6 +110,7 @@ import {
   firstDayOfWeek,
   isTwoDayEvent,
   isWindowStartWeek,
+  isWindowLastWeekStart, // v2.3 SKIP
   isWindowWeek,
   officialEventDefsForWeek,
   worldsCancelledIn,
@@ -424,6 +425,7 @@ import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
 import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
 import { noteFinishedTournament } from "./careerAnalytics";
 import { proHooks } from "./proHooks";
+import { recordFeedSeries } from "./fanFeedFlow"; // v2.3 FEED
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -1394,6 +1396,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.bidsThisWindow = 0;
         save.lastBidDay = -99;
       }
+      // v2.3 SKIP (R200): the last week begins; one notice per window.
+      if (isWindowLastWeekStart(day)) pushNews(save, { type: "window", priority: 1, titleKey: "windowClosing", params: { n: windowCloseDayFor(windowIdx) - day } });
       const { world, transfers } = aiWindowMoves(save.world, {
         seasonIndex,
         windowIdx,
@@ -4292,6 +4296,7 @@ export function finishEvent(input: CareerSave): CareerSave {
   // Lifetime stats from the user's series.
   accumulateStats(save, ev.tournament);
   accumulateBoxStats(save, ev.tournament);
+  recordFeedSeries(save, ev.tournament, def); // v2.3 FEED
   if (placement === "champion") {
     if (def.tier === "t3") save.stats.titlesT3 += 1;
     if (def.tier === "t2") save.stats.titlesT2 += 1;
@@ -5248,6 +5253,8 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   ) {
     return true;
   }
+  // v2.3 SKIP (R200): a transfer window enters its last week; one stop, never a hold.
+  if (day !== startedAtDay && isWindowLastWeekStart(day)) return true;
   if (day >= DAYS_PER_SEASON) return true;
   return false;
 }

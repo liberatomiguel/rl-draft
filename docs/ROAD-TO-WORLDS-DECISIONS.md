@@ -2821,6 +2821,129 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Decidido:** a tela de escolha monta o mundo em `CAREER_ERA.takeoverDefaultStart` (6); no build de staging `?era=N` (0–6) troca a era para teste até existir o seletor (etapa 4). Org que volta é marcada no dossiê ("De volta, vista pela última vez em RLCS 2026"). O técnico de uma org na onda de 2027 é o da lineup de 2027.
 - **Não feito:** as telas da diretoria (contrato "até a temporada N", registro "S7 · W3") ainda mostram o índice absoluto +1; é a UI do front MANDATE.
 
+## R200 — 27 de novembro de 2026: o Skip e o autoplay param na última semana da janela (v2.3.0-dev)
+
+- **Decidido:** na segunda-feira em que uma janela de transferências entra na última semana, o Avançar em lote para uma vez (como a abertura da janela, protegido por `day !== startedAtDay`, então o segundo toque segue) e o autoplay também. É parada do lote, nunca trava do relógio. Nessa segunda sai uma notícia "A janela de transferências fecha em N dias" (chave `windowClosing`, pública) com corpo dizendo o que caduca (propostas sem resposta, jogadores no mercado). Predicado puro: `isWindowLastWeekStart(day)` em `calendar.ts`.
+- **Janela de uma semana (Worlds, S31):** o predicado é falso; a segunda de abertura já é a parada e não há aviso de fechamento (a opção mais simples).
+- **Não feito:** regras de expiração de lances/trocas e a contagem das telas ficam como estavam.
+
+## R195 — 27 de novembro de 2026: o feed lê o que o save já guarda, e o que faltava vira um log (v2.3.0-dev, front FEED)
+
+- **Decidido:** `fanFeedFor(save)` (puro, semeado) deriva os posts na hora e nunca os guarda. Títulos e finais perdidas vêm de `eventResults` e do livro de honras; contratações e vendas, de `transferLog`.
+- **Fato que o save não tinha:** o resultado de cada série (adversário, placar, upset). Só sobrava o total em `stats` e o placement do evento. Em vez de mexer em como os resultados são gravados, `finishEvent` chama um gancho de uma linha (`recordFeedSeries`) que só lê o torneio e grava um anel de 40 séries em `save.fanFeed.series`. Com a flag ligada. Save antigo não tem o log: sem posts de série, nunca inventados.
+- **Também pulado:** título de temporada antiga (o livro de honras guarda o evento, não o nome do evento): conta para a dinastia, mas não vira post.
+- **Alternativa descartada:** derivar série de `followEvent`/`activeEvent` (só existem em momentos soltos).
+
+## R196 — 27 de novembro de 2026: o post do manager e o recibo (v2.3.0-dev, front FEED)
+
+- **Decidido:** uma ação, `postToFeedFlow(save, tom | "skip")`, responde à última série (uma resposta por série). Guarda tom, adversário e semana (mais o número da série e a temporada) em `fanFeed.posts` (últimos 12). "Pular" só marca a série como respondida.
+- **Recibo:** só o tom provocador pode virar recibo. A primeira série **posterior** contra o mesmo adversário (mesmo ref) fecha o post: derrota = recibo (os fãs citam de volta), vitória = "cumpriu". Fecha uma vez só e dentro de 1 temporada (`receiptWindowSeasons`). Vem do log, não de um segundo registro.
+- **Derivado, não guardado:** o recibo e a resposta dos fãs aparecem no feed a partir do post guardado; o guardado é só o dado.
+
+## R197 — 27 de novembro de 2026: variedade e afirmações com dado (v2.3.0-dev, front FEED)
+
+- **Decidido:** cada tipo de evento tem uma tabela de variantes (`fanFeedVariants.ts`): 6 a 9 por tipo, cada uma com os slots que exige (sempre 2 ou mais, e o texto usa exatamente esses), e opcionalmente uma afirmação (`dynasty`, `bestInRegion`, `firstMajor`) ou um tom. Variante só é elegível com todos os slots presentes: dado ausente em save antigo derruba a variante, não inventa.
+- **Afirmações:** "dinastia" = 3 ou mais títulos de Major e Mundial no livro até aquele momento (`CAREER_FEED.claims.dynastyTitles`); "melhor time da região" = o último regional registrado até ali foi do usuário; "primeiro título" = o título é o número 1 do livro. Um teste varre o copy EN e PT e falha se uma dessas palavras aparecer em variante sem a marca.
+- **Janela:** nenhuma variante se repete nas últimas 5 do mesmo tipo (`window`); com menos variantes elegíveis a janela encolhe para elegíveis menos 1 (a resposta dos fãs ao post, por exemplo, tem 3 variantes por tom). Série que fecha marco de sequência (3, 5, 8, 12) vira post de sequência antes de upset.
+- **Texto:** `copy.career.feed.*` com `{slot}`; o placar é sempre o da série, vencedor primeiro. Fã é informal; jogador ou org real só como assunto, nunca autor nem citação.
+
+## R198 — 27 de novembro de 2026: seguidores são um número e nada mais (v2.3.0-dev, front FEED)
+
+- **Decidido:** `fanFeed.followers` começa em 400 mais 6 por ponto de reputação e se move em percentual (mínimo 1): vitória +3 %, derrota −2 %, upset +2 % / −1 % extra, título +10 %, post por tom (+1 / +2 / +4 %), recibo −8 %, cumpriu +6 %. Nunca abaixo de 0. Não toca dinheiro, moral nem nada: só enfeita o feed (curtidas escalam com ele, até 12×).
+- **Por quê guardado e não derivado:** o log de séries é um anel de 40; derivar da janela faria o número andar para trás quando séries velhas saíssem.
+
+## R199 — 27 de novembro de 2026: a flag, o contrato fechado e os handles (v2.3.0-dev, front FEED)
+
+- **Decidido:** `FEATURES.fanFeed` (`NEXT_PUBLIC_FAN_FEED=1`, ligada só no staging). Desligada, o gancho e a ação voltam sem tocar no save (teste: o save de um evento real não tem o campo). Os números ficam em `balance.fanFeed.ts`; `BALANCE_VERSION` 53 → 54 só porque `CAREER_FEED` entrou na exportação (nenhum número de jogo mudou; o merge com os outros fronts recalcula a impressão digital).
+- **Handles:** banco próprio de palavras de jogo e cena ("ceilingkid", "boost_fan42"), sem jogador, org ou criador real; um teste confere todas as palavras e 20 mil handles contra o dataset e o catálogo de nomes da carreira (isso tirou "shadow", "andy", "goblin", "rookie" e "ghost", que são nicknames reais).
+- **Não feito (onda 2):** tela do feed, o botão do post depois da série e a ligação da ação ao `careerStore`.
+
+> Nota de numeração (27/11): R190–R194 são do front LOCKER (v2.3, onda 1, `v23/locker-room`); R195–R199 ficam com o FEED.
+
+## R190 — 27 de novembro de 2026: a conversa é um e-mail com respostas e nunca segura o calendário (v2.3.0-dev, LOCKER)
+
+- **Decidido:** a fila de decisões (`careerDecisions`) não carrega título, texto nem respostas (cada tipo tem a sua tela), e o e-mail não tinha ações. A conversa vira um e-mail da comissão (`lockerTalk_<tema>`, com `talkId` nos params) e o leitor da caixa de entrada ganhou o mínimo: `components/career/locker/LockerTalkAnswers.tsx`, um botão por resposta, e depois a resposta dada. Não entra na fila: nunca segura o relógio nem o autoplay. Sem resposta em `CAREER_LOCKER.talkDays` (7) dias, fecha sozinha com a resposta neutra e manda um e-mail dizendo qual foi.
+- **Por quê:** o spec pede que a conversa nunca trave o calendário e que o jogo funcione para quem ignora o sistema. Sem a sonda de soft lock nesta onda, a opção que não segura nada é a única segura.
+- **Não visto num navegador.** A onda 2 troca o componente pela tela do vestiário.
+
+## R191 — 27 de novembro de 2026: a "série" do spec é um evento que o clube jogou (v2.3.0-dev, LOCKER)
+
+- **Decidido:** a unidade do tempo de jogo e da promessa `minutes` é um evento do clube com resultado em `eventResults` (o sábado e o domingo de um fim de semana são dois). A escalação é a `fieldedIds` do evento (congelada desde o R40), senão os titulares. Evento lateral 1v1/2v2 não conta. A troca no meio da série (Matchday) não conta.
+- **Reservas:** quem tem overall abaixo do titular mais fraco escalado não espera jogar: o banco sozinho o leva só até `benchFloorReserve` (32, acima do limite do pedido de transferência) e ele não pede a conversa. Quem é melhor que um titular cai sem piso e pede a conversa no 3º evento seguido no banco (`benchRunTalk`), e continua caindo até jogar.
+- **Por quê:** contar séries pediria ler a chave do torneio por dentro; o evento já é o que o save registra com escalação.
+
+## R192 — 27 de novembro de 2026: os fatos do vestiário vêm do save antes e depois de cada escrita (v2.3.0-dev, LOCKER)
+
+- **Decidido:** nenhum fluxo da carreira mudou. A store chama `lockerRoomAfter(prev, next)` em `withSave` e `withResult` (duas linhas), e `store/lockerRoomFlow.ts` lê a diferença: segundas cruzadas (o tick semanal), resultado novo do clube (evento jogado), entrada nova na lista de transferências, jogador que saiu com `soldOn` novo (vendido; sem ele, liberado ou fim de contrato), proposta recebida que sumiu no mesmo dia com o jogador ainda no elenco (recusada). Se o passo falha, a escrita segue sem ele.
+- **Limite:** o que não passa por esses dois helpers (bots, sondas, testes que chamam fluxos direto) não roda o vestiário. Com a flag desligada nada roda e nada é gravado (teste de seis semanas, save igual byte a byte).
+
+## R193 — 27 de novembro de 2026: como uma promessa fecha, e a palavra do técnico (v2.3.0-dev, LOCKER)
+
+- **`minutes`** (3 dos próximos 4 eventos como titular): cumprida assim que ele soma 3; quebrada assim que não dá mais (2 eventos fora). Se em 70 dias o clube não jogou eventos suficientes, ela caduca sem contar para a palavra (senão prometer na pré-temporada seria palavra grátis).
+- **`stay`**: vale até o fim da janela aberta, ou da próxima. Lista ou venda antes disso quebra; a janela fechar cumpre. Vender um jogador quebra toda promessa feita a ele; liberar ou o fim do contrato só as apaga.
+- **Efeitos:** cumprida +8 para ele; quebrada −20 para ele e −4 para cada companheiro. A palavra é `(cumpridas + 1) / (cumpridas + quebradas + 2)`; uma promessa nova acalma 10 × `clamp((palavra − 0,3) / 0,2, 0, 1,25)`: 10 para um técnico novo, 2 depois de uma quebrada, 0 com duas quebradas e nenhuma cumprida. Promessa herdada (L5) conta para a palavra de quem a cumpre ou quebra.
+
+## R194 — 27 de novembro de 2026: as consequências e os números de partida (v2.3.0-dev, LOCKER)
+
+- **Pedido de transferência:** moral abaixo de 25 por 4 ticks semanais seguidos abre a conversa "vender, prometer, recusar" (neutra: recusar, −6). Depois de respondida, 8 semanas sem novo pedido. "Vender" coloca o jogador na lista pelo valor dele se a janela estiver aberta (sem a queda de ser listado); com a janela fechada, um e-mail manda listar quando abrir.
+- **Treino:** fator linear 0,94 (moral 0) a 1,06 (moral 100) no ganho bruto de todo tick que lê `growthCtxOf` (treino, scrims, XP de partida); nunca no declínio, então nenhum efeito de moral baixa overall ou potencial gravado. Moral neutra não entra no contexto: o tick é o antigo bit a bit.
+- **Partida:** `CAREER_LOCKER.matchEffect` existe e vale 0; `matchMoraleEffectOf` não está ligado em lugar nenhum.
+- **Outros números:** título regional, Major ou Worlds +6 para o elenco, top 4 sem título num Major ou Worlds +3, a partir do 3º evento seguido eliminado na Swiss −2 cada, listado −10, resposta seca −5, deriva semanal de 1 em direção a 50 (não para quem está emburrado no banco). Os cinco humores cortam em 20/40/60/80. Mudança de humor vira um e-mail por motivo, com os nomes e o humor novo. **Não medido:** nenhum desses números passou por bateria.
+
+## R201 — 27 de novembro de 2026: a conversa mostra quem, e a comissão relata o que ele disse (v2.3.0-dev, UI)
+
+- **Decidido:** a conversa (`locker/LockerTalk.tsx`) tem a cara do jogador (o overall na moldura de raridade do Draft, como a linha do reserva no QG), o nome, o humor e o prazo; depois "A comissão relata" com o texto do e-mail; depois as respostas, cada uma com o que compromete o técnico; a neutra leva a etiqueta "Se você não responder". Respondida, a conversa fica na tela com a resposta, o humor dele agora e onde a promessa mora (o vestiário, no Elenco).
+- **Por quê:** o wave 2 pede "quem fala, o que diz", mas HISTORIAS-SPEC proíbe frase inventada na boca de um pro de verdade. A fala é relatada pela comissão (o texto da onda 1), nunca entre aspas na voz dele.
+- **Um toque responde.** O texto da conversa já avisa que promessa é lembrada; não há confirmação extra.
+
+## R202 — 27 de novembro de 2026: onde o vestiário aparece, e o que o QG mostra (v2.3.0-dev, UI)
+
+- **Elenco:** o humor no rodapé de cada card titular e um bloco "Vestiário" na coluna principal: a primeira conversa aberta por inteiro (as outras viram linhas que abrem a ficha do jogador), uma linha por jogador (cara, nome, o último motivo como frase, humor), a palavra do técnico (cumpridas e quebradas como números) e as promessas abertas com progresso e prazo. Tocar num jogador abre a ficha "por quê" (as últimas 4 mudanças com motivo e valor, a promessa, a conversa).
+- **QG:** um cartão "Vestiário" logo abaixo do bloco de decisão, só quando há conversa esperando (um pedido de transferência é uma conversa) ou promessa `minutes` a um banco de quebrar. No desktop a primeira conversa se responde ali; no celular (QG é resumo, DESIGN.md "Phone") cada conversa é uma linha que leva ao vestiário. Nunca entra na fila de decisões e nunca segura o relógio (R190).
+- **Seletores novos, puros e testados** em `lockerRoom.ts` (`promiseProgressOf`, `playerLockerLogOf`, `squadMoodOf`, `wordStandingOf`, `lockerAttentionOf`, `lockerDaysBetween`): só leitura, nenhuma regra ou número mudou. "Em risco" = mais um evento no banco quebra a promessa. "Palavra arranhada" = credibilidade abaixo de 0,5.
+
+## R203 — 27 de novembro de 2026: a torcida é uma aba da mesa, e o post do técnico um cartão do QG (v2.3.0-dev, UI)
+
+- **Torcida:** quarta aba em Caixa de entrada (`#fans`), só com `FEATURES.fanFeed`. Seguidores como o número da aba; depois os posts, mais novo primeiro (handle, texto, evento, semana, curtidas), os 12 primeiros e "Ver todos os N". O post do técnico é um quadro com a marca do clube e o tom; o print leva etiqueta vermelha e cita o post que ele responde; a resposta da torcida diz "Respondendo ao seu post". Save sem série registrada: estado vazio.
+- **Post do técnico:** cartão do QG depois de uma série do clube (`pendingFeedPostOf`): a série numa linha, os três tons com a dica, o texto do post aparece ao escolher o tom (`managerPostDraftOf`, o mesmo texto que o feed mostra depois), "Postar" e "Pular". Postado, o cartão mostra o post e o caminho para a torcida até sair da tela. Não está no `EventScreen` (outra sessão). `postToFeed` entrou na `careerStore` (uma linha, `withSave`).
+- **No celular** a faixa de abas rola de lado quando a torcida está ligada (a aba aberta fica centralizada); com a flag desligada a faixa é a de antes.
+
+## R204 — 27 de novembro de 2026: o que foi visto, e como (v2.3.0-dev, UI)
+
+- **Visto no navegador** (dev, flags ligadas) a 1280, 375 e 320 px, em EN e PT, nos estados listados em `docs/handoff-2.3/UI.md`. Os estados com promessa, conversa, palavra arranhada, print e posts foram montados à mão no localStorage de uma carreira rápida (um script descartável fora do repo), não jogados semana a semana.
+- **Flag desligada:** servidor reiniciado com `NEXT_PUBLIC_LOCKER_ROOM=0` e `NEXT_PUBLIC_FAN_FEED=0` sobre o mesmo save com estado: nada renderiza, o invólucro do QG fica `display: none` (`empty:hidden`), a aba Torcida some e `#fans` cai na caixa de entrada.
+
+## R205 — 27 de novembro de 2026: a oferta é um e-mail com resposta, nunca segura o calendário e vence como recusada (v2.3.0-dev, MEDIA)
+
+- **O mecanismo é o do vestiário (R190):** uma oferta de dia de mídia vira e-mail (`mediaOffer`) com os botões aceitar e recusar sob a mensagem. Não é decisão da fila do relógio (`careerDecisions`), então não segura o calendário. Sem resposta, vence como recusada no dia seguinte ao prazo (o prazo é o dia antes do primeiro dia fora). Recusar e vencer mudam só o status da oferta.
+- **Os fatos vêm do save antes e depois de cada escrita** (como R192): `mediaDaysAfter(prev, next)` roda nas duas escritas da store (`withSave`, `withResult`), sem tocar em `careerFlow.ts`. Flag desligada: nada roda e nada é escrito. Ligada, `save.mediaDays` nasce na primeira oferta.
+- **Lacuna de UI, dita:** os botões (`MediaOfferAnswers`) precisam de uma linha em `NewsScreen.tsx`, arquivo que outra sessão edita agora; sem ela a oferta aparece como e-mail comum, sem botões, e vence sozinha. **Não visto em navegador.**
+
+## R206 — 27 de novembro de 2026: quando, para quem e em quais dias (v2.3.0-dev, MEDIA)
+
+- **Quando:** a cada tick semanal (uma segunda cruzada) um sorteio com semente (`careerSeed`, temporada, semana absoluta). Chance = `min(0,20; 0,03 + 0,0015 × reputação)`, vezes `1 + 0,5 × min(1, seguidores / 4000)` com o feed ligado: 3 % / 10,5 % / 18 % por semana com reputação 0 / 50 / 100. Nunca antes da semana 3, uma oferta aberta por vez, e 2 semanas de intervalo depois de cada oferta.
+- **Quem:** um jogador do elenco, sorteado com peso `overall²` (o nome mais procurado). **Dias:** 2 a 4 dias; o primeiro dia fica de 2 a 6 dias depois da segunda do sorteio; tudo dentro da mesma temporada. Até 6 tentativas de (jogador, datas); se nenhuma passa pela regra do R207, não há oferta.
+- **A marca** é um índice no banco de 15 paródias (`copy.career.media.*`); nunca uma empresa real (um teste confere contra a lista dos nomes reais parodiados).
+
+## R207 — 27 de novembro de 2026: usa o sistema de ausência existente, e o time nunca fica curto (v2.3.0-dev, MEDIA)
+
+- **O sistema existente é `pendingUnavailability`** (o de doença e fadiga: um jogador fora de um evento, com a nota que nomeia causa e jogador). Aceitar, com um evento do clube já comprometido dentro dos dias, grava `{ playerId, eventId, reason: "media" }`; o lobby, o HQ e `userTeamForEvent` já leem isso. Sem evento nos dias, não há o que vetar: o jogador só fica registrado como fora (`awayOn`) e o dinheiro entra.
+- **"Evento do clube"** = o que `userEventDefOnDay` diz que ocupa o dia, só oficiais (qualifier, regional, Major, Worlds); copas t2/t3 e formatos 1v1/2v2 não contam. Um Major ou Worlds com campo já decidido sem o clube não conta; campo ainda indefinido conta (o lado seguro).
+- **M3, `leavesEnough`:** com o jogador fora restam pelo menos 3, e se ele é titular existe reserva registrada e livre (a regra `reserveCovers`). Um evento que já tem outro ausente (a rolagem de doença) ou outra viagem marcada recusa a data. Um clube de 3 jogadores nunca recebe data com evento; datas sem evento continuam possíveis.
+- **Limite conhecido:** a rolagem de doença roda na segunda da semana do evento e pode cair depois do aceite. Se ela pega outro jogador para o mesmo evento e a viagem ainda não foi paga, a viagem é cancelada (e-mail `mediaCalledOff`, nada pago). Se vender ou liberar o jogador antes do primeiro dia, o mesmo.
+
+## R208 — 27 de novembro de 2026: o dinheiro, modesto, e o que não foi medido (v2.3.0-dev, MEDIA)
+
+- **Valor:** `tierValuePerWeek` do tier de patrocínio que a reputação alcança (os mesmos `repGate`), na temporada e dificuldade do save, que já é o ganho semanal de um patrocinador típico nessa reputação. Vezes `weeks` (1) × 0,8 / 1 / 1,2 para 2 / 3 / 4 dias, ± 15 % semeado, quantizado. Temporada 1, Normal: cerca de $750 (tier 1) a $9.350 (tier 4, 4 dias).
+- **Lançamento:** um tipo novo de lançamento, `mediaDay` ("Dia de mídia", com a marca como referência), no primeiro dia fora e uma vez só (o trecho `paid` do trip). Fica de fora do teto de renda "outra" dos inserts de propósito: não consome vaga de insert.
+- **Não medido:** nenhum número passou por bateria; só a conta contra o `tierValuePerWeek`. A oferta mostra o valor antes de aceitar; o jogador decide.
+
+## R209 — 27 de novembro de 2026: repetir o mesmo jogador cansa, só com o vestiário ligado (v2.3.0-dev, MEDIA)
+
+- **Regra:** uma segunda viagem do mesmo jogador até 6 semanas depois da primeira (contadas da semana do primeiro dia fora) tira 6 de moral dele pela API da onda 1 (`nudgeMorale`, motivo novo `mediaFatigue`: "ele foi enviado a outro dia de mídia logo depois do último"). O motivo aparece no e-mail de humor, quando o humor muda de faixa, e em `lockerRoom.players[id].last` e no log.
+- **Aviso na oferta:** a oferta já diz que repetir pesa, mas só com o vestiário ligado (sem custo, sem aviso). Com o vestiário desligado nada é escrito em `lockerRoom`.
+- **Efeito colateral aceito:** o vestiário da onda 1 conta um evento sem ele no time como "banco" (R191); um dia de mídia que o tira de um evento entra nessa conta como qualquer outra ausência.
+
 ## R177 — 27 de novembro de 2026: a diretoria de uma org consolidada define o mandato, o manager não escolhe (v2.2 ORGMODE 2027, front MANDATE; BALANCE_VERSION 54)
 
 - **Decidido:** numa org consolidada a temporada abre com o mandato da diretoria: três metas, classificação, dinheiro e elenco, cada uma com o que dá se cumprida e o que custa se perdida (confiança, passo do orçamento da próxima temporada, bônus). Não há escolha: os três planos e as faixas de chance saem desse modo; o clube fundado continua com os três planos exatamente como antes. A classificação é o objetivo Expected do patamar com a mira movida pelo nível de exigência; no motor é o único pacote da temporada (`offers` com id "expected", com os termos do mandato), então pontos de controle, ultimato, revisão, meta da HQ e o orçamento seguem funcionando sem caminho novo. O secundário e o legado não existem numa temporada com mandato (as metas de dinheiro e elenco ocupam esse lugar).

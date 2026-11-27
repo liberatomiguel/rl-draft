@@ -58,6 +58,8 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { LockerRoomBlock } from "@/components/career/locker/LockerRoomBlock"; // v2.3 UI
+import { TileMood } from "@/components/career/locker/lockerUi"; // v2.3 UI
 
 const CHEM_TIER_TONE: Record<string, "good" | "blue" | "neutral" | "bad"> = {
   Perfect: "good",
@@ -255,6 +257,7 @@ export function SquadScreen() {
                 region={p.region}
                 selected={selected === p.id}
                 onClick={() => onTileClick(p.id)}
+                footer={FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : undefined} // v2.3 UI
               />
             ))}
           </div>
@@ -440,6 +443,7 @@ export function SquadScreen() {
         ) : null}
       </Panel>
 
+      <LockerRoomBlock save={save} C={C} /> {/* v2.3 UI */}
       </div>
       {/* v2.1 Matchday slice 5: the season's box-score stats (staging flag). */}
       {FEATURES.matchdayBoxScore ? <RosterSeasonStats save={save} /> : null}

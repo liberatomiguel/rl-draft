@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 55;
+export const BALANCE_VERSION = 56; // v2.3: 55 (v2.2.0-rc.7) -> 56, only because CAREER_FEED, CAREER_LOCKER and CAREER_MEDIA joined the export (no gameplay number moves)
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5530,6 +5530,13 @@ export const FEATURES = {
    * for byte as before. ON in the staging build only; probes: NEXT_PUBLIC_ENDLESS_VARIETY=1.
    */
   endlessVariety: STAGING_BUILD || process.env.NEXT_PUBLIC_ENDLESS_VARIETY === "1",
+  // v2.3 FEED: the fan feed (engine/career/fanFeed.ts, store/fanFeedFlow.ts; CAREER_FEED). Off: nothing is written and no save changes. Staging only; probes: NEXT_PUBLIC_FAN_FEED=1.
+  fanFeed: STAGING_BUILD || process.env.NEXT_PUBLIC_FAN_FEED === "1", // v2.3 FEED
+
+  /** v2.3 LOCKER: player morale, talks and promises (CAREER_LOCKER, engine/career/lockerRoom.ts). Off = no save field, no effect. Staging only; probes: NEXT_PUBLIC_LOCKER_ROOM=1. */
+  lockerRoom: STAGING_BUILD || process.env.NEXT_PUBLIC_LOCKER_ROOM === "1",
+  /** v2.3 MEDIA: media days (CAREER_MEDIA, engine/career/mediaDays.ts). Off = no save field, no effect. Staging only; probes: NEXT_PUBLIC_MEDIA_DAYS=1. */
+  mediaDays: STAGING_BUILD || process.env.NEXT_PUBLIC_MEDIA_DAYS === "1", // v2.3 MEDIA
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
@@ -5665,3 +5672,10 @@ export const CAREER_ENDLESS = {
 
 /** v2.2 PROQA polish: the Pro's Continue plans the week by itself after his first confirmed plan, and stops at least this often with a digest. */
 export const CAREER_PRO_PLAN = { digestWeeks: 4 } as const;
+
+// v2.3 FEED: the fan feed tunables (CAREER_FEED), in their own file.
+export * from "./balance.fanFeed"; // v2.3 FEED
+
+export * from "./balance.lockerRoom"; // v2.3 LOCKER
+
+export * from "./balance.mediaDays"; // v2.3 MEDIA

@@ -26,6 +26,11 @@
 
 import { acceptJobOfferFlow, acknowledgeMandateFlow, chooseBoardPackageFlow, chooseBoardUpgradeFlow, declineJobOfferFlow, type BoardUpgradeOption } from "./boardFlow";
 import type { PackageId } from "@/engine/career/boardTypes";
+import { answerLockerTalkFlow, lockerRoomAfter } from "./lockerRoomFlow"; // v2.3 LOCKER
+import { answerMediaOfferFlow, mediaDaysAfter } from "./mediaDaysFlow"; // v2.3 MEDIA
+import type { TalkAnswer } from "@/engine/career/lockerRoom"; // v2.3 LOCKER
+import { postToFeedFlow } from "./fanFeedFlow"; // v2.3 UI
+import type { FanTone } from "@/engine/career/fanFeedTypes"; // v2.3 UI
 import { create } from "zustand";
 import { asCareerSwitch, onLocalCareerReplaced } from "@/lib/localOwner";
 import { careerAchievementById } from "@/data/career/achievements";
@@ -375,6 +380,10 @@ interface CareerStoreState {
   markNewsRead: () => void;
   markMailRead: (mailId: string) => void;
   markAllMailRead: () => void;
+  answerLockerTalk: (talkId: string, answer: TalkAnswer) => void; // v2.3 LOCKER
+  postToFeed: (tone: FanTone | "skip") => void; // v2.3 UI
+
+  answerMediaOffer: (offerId: string, accept: boolean) => void; // v2.3 MEDIA
   clearError: () => void;
 }
 
@@ -541,6 +550,8 @@ export const useCareerStore = create<CareerStoreState>()(
           if (get().lastError !== null) set({ lastError: null });
           return;
         }
+        lockerRoomAfter(prevSave, next); // v2.3 LOCKER
+        mediaDaysAfter(prevSave, next); // v2.3 MEDIA
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
         const seeded = next !== prevSave ? seedCareerNew(prevSave, next) : undefined;
         if (seeded) next.newItems = seeded;
@@ -590,6 +601,8 @@ export const useCareerStore = create<CareerStoreState>()(
         if (!ran.ok) return;
         const { error, save } = ran.value;
         const changed = save !== slots[activeSlot];
+        if (changed) lockerRoomAfter(prevSave, save); // v2.3 LOCKER
+        if (changed) mediaDaysAfter(prevSave, save); // v2.3 MEDIA
         // v2.0 (C1): the career pays profile XP (series, events, titles, seasons) — never rating.
         if (changed) grantCareerXp(prevSave, save);
         if (changed) save.lastPlayedAt = nextStamp(prevSave);
@@ -823,6 +836,10 @@ export const useCareerStore = create<CareerStoreState>()(
             },
             { allowEnded: true },
           ),
+        answerLockerTalk: (talkId, answer) => withResult((s) => answerLockerTalkFlow(s, talkId, answer)), // v2.3 LOCKER
+        postToFeed: (tone) => withSave((s) => postToFeedFlow(s, tone)), // v2.3 UI
+
+        answerMediaOffer: (offerId, accept) => withResult((s) => answerMediaOfferFlow(s, offerId, accept)), // v2.3 MEDIA
         markMailRead: (mailId) =>
           withSave(
             (s) => {
