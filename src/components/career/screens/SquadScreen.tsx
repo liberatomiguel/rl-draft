@@ -368,14 +368,22 @@ export function SquadScreen() {
 
           {/* rc9 (Miguel, 27/11): the bench and the coach stay in the squad's
               board, and the coach is a card like the players, not loose text. */}
-          <div data-tour="squad-bench" className="mt-5 grid grid-cols-1 gap-x-3 gap-y-5 border-t border-line pt-4 sm:grid-cols-3">
-            <div className="sm:col-span-2">
-              <p className="kicker mb-2.5">{C.squad.bench}</p>
+          <div data-tour="squad-bench" className="mt-5 grid grid-cols-1 gap-x-4 gap-y-5 border-t border-line pt-4 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col">
+              <div className="mb-2.5 flex min-h-5 items-baseline justify-between gap-3">
+                <p className="kicker">{C.squad.bench}</p>
+                {bench.length === 0 ? (
+                  <AppLink href="/career/market" className="text-xs text-blue-bright transition-colors hover:text-ink">
+                    {C.nav.market}
+                  </AppLink>
+                ) : null}
+              </div>
               {bench.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
                   {bench.map((p) => (
                     <PlayerCardTile
                       rarityFrame
+                      layout="row"
                       key={p.id}
                       name={p.name}
                       overall={p.overall}
@@ -384,31 +392,23 @@ export function SquadScreen() {
                       archetype={p.archetype}
                       country={p.country}
                       region={p.region}
-                      size="sm"
                       selected={selected === p.id}
                       onClick={() => onTileClick(p.id)}
-                      footer={
-                        <span className="flex items-center justify-between gap-2">
-                          <span>{wageLabel(C, p.salaryPerSplit)}</span>
-                          {FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : null}
-                        </span>
-                      }
+                      aside={FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : undefined}
+                      footer={wageLabel(C, p.salaryPerSplit)}
                     />
                   ))}
                 </div>
               ) : (
-                // Empty: what it means, and where to find one.
-                <div>
-                  <p className="max-w-md text-sm text-sub">{C.squad.emptySub}</p>
-                  <AppLink href="/career/market" className="mt-2 inline-flex min-h-8 items-center text-xs text-blue-bright transition-colors hover:text-ink">
-                    {C.nav.market}
-                  </AppLink>
+                // The empty seat keeps the card's place: what it means, in one line.
+                <div className="flex flex-1 items-center rounded-xl border border-dashed border-line-strong p-3">
+                  <p className="text-xs leading-relaxed text-sub">{C.squad.emptySub}</p>
                 </div>
               )}
             </div>
 
-            <div>
-              <div className="mb-2.5 flex items-baseline justify-between gap-3">
+            <div className="flex min-w-0 flex-col">
+              <div className="mb-2.5 flex min-h-5 items-baseline justify-between gap-3">
                 <p className="kicker">{C.squad.coachSlot}</p>
                 <AppLink
                   href="/career/market#coaches"
@@ -420,34 +420,37 @@ export function SquadScreen() {
               {save.coach ? (
                 <PlayerCardTile
                   rarityFrame
-                  size="sm"
+                  layout="row"
+                  className="flex-1"
                   name={save.coach.name}
                   overall={save.coach.overall}
                   footer={
-                    <span className="block space-y-2">
-                      <span className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="block">
+                      <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
                         <Badge tone="blue">
                           {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
                         </Badge>
                       </span>
-                      <CoachEffectLines coach={save.coach} />
+                      <CoachEffectLines coach={save.coach} compact className="mt-1.5" />
                     </span>
                   }
                 />
               ) : (
-                <p className="text-sm text-sub">{C.squad.emptyCoach}</p>
+                <div className="flex flex-1 items-center rounded-xl border border-dashed border-line-strong p-3">
+                  <p className="text-xs leading-relaxed text-sub">{C.squad.emptyCoach}</p>
+                </div>
               )}
-              {/* The staff around him: the gear ladder, and the psychologist when hired. */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-                <AppLink href="/career/finances" className="text-sub transition-colors hover:text-ink">
-                  {C.finances.gearLadder}
-                </AppLink>
-                {save.finances.gear.psychologist ? (
-                  <Badge tone="good">{C.finances.psychologist}</Badge>
-                ) : null}
-              </div>
             </div>
+          </div>
+          {/* The staff around the coach: the gear ladder, and the psychologist when hired. */}
+          <div className="mt-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs">
+            <AppLink href="/career/finances" className="text-sub transition-colors hover:text-ink">
+              {C.finances.gearLadder}
+            </AppLink>
+            {save.finances.gear.psychologist ? (
+              <Badge tone="good">{C.finances.psychologist}</Badge>
+            ) : null}
           </div>
         </div>
       </Panel>

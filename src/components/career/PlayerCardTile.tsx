@@ -42,6 +42,8 @@ export function PlayerCardTile({
   onClick,
   className,
   rarityFrame = false,
+  layout = "stack",
+  aside,
 }: {
   name: string;
   overall: number;
@@ -60,12 +62,65 @@ export function PlayerCardTile({
   className?: string;
   /** Use the Draft's complete OVR rarity palette on the squad screen. */
   rarityFrame?: boolean;
+  /** "row" lays the card on its side (the squad's bench and coach). */
+  layout?: "stack" | "row";
+  /** Row layout only: one tag on the right of the name. */
+  aside?: React.ReactNode;
 }) {
   const C = useCareerCopy();
   const frame = ovrFrame(overall);
   const potText =
     band && band.min === band.max ? C.player.potExact(band.max) : band ? C.player.potBand(band.min, band.max) : null;
   const Wrapper: React.ElementType = onClick ? "button" : "div";
+
+  // rc9 (Miguel, 27/11): the horizontal card of the squad's bench and coach.
+  // Same stock and frame as the tile, laid on its side: the figure, a hairline,
+  // then the name with who he is under it; `aside` holds one tag on the right.
+  if (layout === "row") {
+    return (
+      <Wrapper
+        type={onClick ? "button" : undefined}
+        onClick={onClick}
+        disabled={disabled}
+        className={cx(
+          "group relative flex w-full items-center gap-3 p-3 text-left transition-[border-color,transform]",
+          rarityFrame ? `card-frame card-${baseRarityOf(Math.round(overall))}` : cx("rounded-xl border bg-surface", frame.border),
+          onClick && !disabled && "cursor-pointer hover:-translate-y-0.5 hover:!border-orange/60",
+          selected && "!border-orange",
+          disabled && "cursor-not-allowed opacity-50",
+          className,
+        )}
+      >
+        <div className="relative w-11 shrink-0 text-center leading-none">
+          <div className={cx("display text-2xl font-bold tabular-nums", rarityFrame ? "text-ink" : frame.ovr)}>
+            {Math.round(overall)}
+          </div>
+          <div className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</div>
+        </div>
+        <span className="relative h-10 w-px shrink-0 bg-line" aria-hidden />
+        <div className="relative min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="display truncate text-base font-bold leading-tight text-ink">{name}</span>
+            {aside ? <span className="shrink-0">{aside}</span> : null}
+          </div>
+          {country || region || age !== undefined || archetype || potText ? (
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-sub">
+              {country ? <CountryChip code={country} /> : region ? <span>{region}</span> : null}
+              {age !== undefined ? <span>{C.player.age(age)}</span> : null}
+              {archetype ? (
+                <>
+                  {country || region || age !== undefined ? <span aria-hidden>·</span> : null}
+                  <span>{C.player.archetype[archetype]}</span>
+                </>
+              ) : null}
+              {potText ? <span className="display font-semibold text-blue-bright">{potText}</span> : null}
+            </div>
+          ) : null}
+          {footer ? <div className="mt-1 text-xs text-sub">{footer}</div> : null}
+        </div>
+      </Wrapper>
+    );
+  }
 
   return (
     <Wrapper
