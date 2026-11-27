@@ -3155,6 +3155,31 @@ export const CAREER_EN = {
           return "";
       }
     },
+    // rc.6 (ORGMODE E4): an established board's goal with the season's total ("top 4 in 3 of the 9 regionals").
+    seasonTotal: (kind: string, count: number, place: number, total: number): string => {
+      switch (kind) {
+        case "regionalReach":
+          return count === 1 ? "Play a Sunday regional" : `Play ${count} of the ${total} Sunday regionals`;
+        case "regionalFinish":
+          if (place <= 1) return count === 1 ? "Win a regional" : `Win ${count} of the ${total} regionals`;
+          return count === 1 ? `A regional top ${place}` : `Top ${place} in ${count} of the ${total} regionals`;
+        case "majorQualify":
+          return count === 1 ? "Qualify for a Major" : count >= total ? `Qualify for all ${total} Majors` : `Qualify for ${count} of the ${total} Majors`;
+        case "majorFinish":
+          if (place <= 1) return count === 1 ? "Win a Major" : `Win ${count} of the ${total} Majors`;
+          return count === 1 ? `A Major top ${place}` : `Top ${place} at ${count} of the ${total} Majors`;
+        case "worldsQualify":
+          return "Qualify for Worlds";
+        case "worldsFinish":
+          return place <= 1 ? "Win Worlds" : `A Worlds top ${place}`;
+        case "cupFinal":
+          return count === 1 ? "Reach a Community Cup final" : `Reach ${count} Community Cup finals`;
+        case "cupWin":
+          return count === 1 ? "Win a Community Cup" : `Win ${count} Community Cups`;
+        default:
+          return "";
+      }
+    },
     role: { target: "Target", stretch: "Stretch" } as Record<string, string>,
     deadline: {
       lastCup: (w: number) => `Last chance: the final Community Cup · W${w}`,
@@ -4066,6 +4091,7 @@ export const CAREER_EN = {
       met: (goal: string) => `Objective met: ${goal}.`,
       missed: (goal: string) => `Objective missed: ${goal}.`,
       confidence: (n: number) => `Board confidence ends the season at ${n} / 100.`,
+      tier: (up: boolean, tier: string) => (up ? `Standing: up to ${tier}.` : `Standing: down to ${tier}.`),
       open: "Open the board",
     },
     band: (n: number): string => (n >= 80 ? "Strong" : n >= 40 ? "Steady" : n >= 25 ? "Under pressure" : "Critical"),
@@ -4086,6 +4112,7 @@ export const CAREER_EN = {
       debt: "Deep debt",
       ultimatumMet: "Ultimatum answered",
       newSeason: "New season: the board eases its view",
+      promoted: "Promoted a tier",
     } as Record<string, string>,
     objectives: "This season's objectives",
     sporting: "Season objective",
@@ -4151,6 +4178,36 @@ export const CAREER_EN = {
       pick: "Fund it",
       taken: (name: string) => `Funded by the board: ${name}.`,
     },
+    // rc.6 (ORGMODE E1/E2/E4): an established org's Standing, the board's brief and its sign-off.
+    standing: {
+      title: "Standing",
+      tier: { elite: "Elite", contender: "Contender", mid: "Mid-table", underdog: "Underdog" } as Record<string, string>,
+      phrase: { elite: "an elite org", contender: "a contender", mid: "a mid-table org", underdog: "an underdog" } as Record<string, string>,
+      value: (n: number) => `Standing ${n}`,
+      next: (tier: string, line: number) => `${tier} from ${line}`,
+      top: "The top tier of the scene",
+      relegation: (line: number) => `Under ${line} at the review, the org drops a tier`,
+    },
+    brief: {
+      heading: "The board's brief",
+      takeover: (p: { org: string; tier: string; goal?: string }) => `You take over ${p.org}, ${p.tier}. The board sets this first season on the squad you inherit.`,
+      met: (p: { org: string; tier: string; goal?: string }) => `Last season's objective was met${p.goal ? ` (${p.goal})` : ""}. The board builds on it and expects ${p.org} to hold that level.`,
+      missed: (p: { org: string; tier: string; goal?: string }) => `Last season's objective was missed${p.goal ? ` (${p.goal})` : ""}. The board wants that ground back this season.`,
+      title: (p: { org: string; tier: string; goal?: string }) => `A title last season raised the bar at ${p.org}. The board now plans as ${p.tier} that wins.`,
+      promoted: (p: { org: string; tier: string; goal?: string }) => `${p.org} moved up a tier at the review and now plan as ${p.tier}. The ask rises with it.`,
+      relegated: (p: { org: string; tier: string; goal?: string }) => `${p.org} dropped a tier at the review and now plan as ${p.tier}. The board resets its ask to rebuild.`,
+      ultimatumSurvived: (p: { org: string; tier: string; goal?: string }) => `You answered the board's ultimatum last season. ${p.org} keep you on and ask for steady progress.`,
+      lastRank: (n: number) => `Last season: #${n} in the region.`,
+      bestFinish: (tier: string, place: number) => `Best finish last season: ${place <= 1 ? "won" : `top ${place}`} at ${tier === "worlds" ? "Worlds" : tier === "major" ? "a Major" : "a regional"}.`,
+    },
+    // rc.6: a market row above an established org's signing pull.
+    signCapLock: (cap: number) => `Above this org's pull: it signs up to ${cap}`,
+    approval: {
+      boardApproval: (n: number) => `The board will not fund this while its confidence is under ${n}.`,
+      boardFlagship: (n: number) => `The board funds the performance centre only with confidence at ${n} or more.`,
+      boardFrozen: "The board froze capital spending for this window.",
+      needs: (n: number) => `Needs the board's sign-off: confidence ${n}`,
+    },
     mail: {
       tpl: {
         boardPackage: () => "The board's offer for the season",
@@ -4165,6 +4222,10 @@ export const CAREER_EN = {
         boardApproach: (p: Record<string, string | number>) => `${p.org} make an approach`,
         boardNewJob: (p: Record<string, string | number>) => `Welcome to ${p.org}`,
         boardUpgrade: () => "The board will fund an upgrade",
+        boardTierUp: (p: Record<string, string | number>) => `${p.org} move up a tier`,
+        boardTierDown: (p: Record<string, string | number>) => `${p.org} drop a tier`,
+        orgTierUp: (p: Record<string, string | number>) => `${p.org} rise to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier`,
+        orgTierDown: (p: Record<string, string | number>) => `${p.org} drop to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier`,
       } as Record<string, (p: Record<string, string | number>) => string>,
       body: {
         boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
@@ -4186,6 +4247,12 @@ export const CAREER_EN = {
           `${p.org} (${p.region}) ask whether you would manage them next season. Answer in the season review.`,
         boardNewJob: (p: Record<string, string | number>) => `You take over ${p.org}. ${p.left} continue in the league without you.`,
         boardUpgrade: (p: Record<string, string | number>) => `With confidence at ${p.confidence}, the board will pay for one upgrade. Pick it on the Board page.`,
+        boardTierUp: (p: Record<string, string | number>) =>
+          `The org's standing lifts it to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier. The budget base and the wage ceiling rise with it, and so does the board's ask.`,
+        boardTierDown: (p: Record<string, string | number>) =>
+          `The org's standing drops it to the ${({ elite: "elite", contender: "contender", mid: "mid-table", underdog: "underdog" } as Record<string, string>)[String(p.to)] ?? p.to} tier. The budget base and the wage ceiling fall with it, and the board eases its ask.`,
+        orgTierUp: (p: Record<string, string | number>) => `${p.org} move up a tier in the scene after their season.`,
+        orgTierDown: (p: Record<string, string | number>) => `${p.org} drop a tier in the scene after their season.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
     },
   },

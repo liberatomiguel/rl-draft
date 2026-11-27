@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 51;
+export const BALANCE_VERSION = 52;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5125,13 +5125,60 @@ export const CAREER_BOARD = {
    * aim moves by this (negative = harder). gear: installations the org owns.
    * "owners" = a founded club (D5: owners and investors, softer).
    */
+  // rc.6 (ORGMODE E1/E2): signCap = the best overall a new signing accepts at an established org
+  // (the tier's pull, replacing the reputation formula); staff = the support staff the org arrives
+  // with (retainers the manager may cut). "owners" never reads either (a founded club keeps the ladder).
   profiles: {
-    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3 },
-    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2 },
-    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0, expectedRank: 8, gear: 1 },
-    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0 },
-    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.08, expectedRank: 12, gear: 0 },
+    elite: { rep: 50, runwayWeeks: 10, grantWeeks: 16, wageRoom: 1.25, patience: 1.3, aimShift: -0.06, expectedRank: 2, gear: 3, signCap: 99, staff: ["analyst", "psychologist"] },
+    contender: { rep: 36, runwayWeeks: 10, grantWeeks: 22, wageRoom: 1.25, patience: 1.1, aimShift: -0.03, expectedRank: 4, gear: 2, signCap: 95, staff: ["analyst"] },
+    mid: { rep: 24, runwayWeeks: 12, grantWeeks: 20, wageRoom: 1.2, patience: 0.85, aimShift: 0, expectedRank: 8, gear: 1, signCap: 90, staff: ["assistant"] },
+    underdog: { rep: 14, runwayWeeks: 14, grantWeeks: 18, wageRoom: 1.2, patience: 0.8, aimShift: 0.04, expectedRank: 12, gear: 0, signCap: 86, staff: [] },
+    owners: { rep: 5, runwayWeeks: 0, grantWeeks: 0, wageRoom: 1.6, patience: 0.4, aimShift: 0.08, expectedRank: 12, gear: 0, signCap: 0, staff: [] },
+  } as Record<"elite" | "contender" | "mid" | "underdog" | "owners", {
+    rep: number; runwayWeeks: number; grantWeeks: number; wageRoom: number; patience: number; aimShift: number;
+    expectedRank: number; gear: number; signCap: number; staff: readonly ("assistant" | "analyst" | "physio" | "brand" | "psychologist")[];
+  }>,
+  /**
+   * rc.6 (ORGMODE E1): an established org's Standing (the engine's reputation, shown as a tier).
+   * At the season review the tier is re-read: promoted at or above the next tier's `promote` line,
+   * relegated under its own `keep` floor, one step a season, never in the board's first season.
+   * A change steps `grantBase` and `wageRoom` by `budgetStep`; a promotion adds `promoteConfidence`.
+   * The keep floors sit under the starting values (14 / 24 / 36 / 50), which read as their own tier.
+   * Spec deviation (R167): one line per tier with a hysteresis could not hold both the starting
+   * values and the measured climb (a mid club's standing is 29-68 after its first season, 40-100
+   * after its second; competent bot, seeds 30000, NA/EU/SAM, Normal and Hard, 12 careers).
+   * Tuned so a good mid-table club reaches Contender in its second or third season.
+   */
+  standing: {
+    promote: { mid: 35, contender: 50, elite: 85 },
+    keep: { mid: 18, contender: 28, elite: 40 },
+    budgetStep: { up: 1.2, down: 0.9 },
+    promoteConfidence: 5,
+    /**
+     * A promotion also needs the season's objective met (R167): on standing alone, 3 of 4 competent
+     * dismissals came after a promotion the squad had not earned (BOARD_PROBE seeds 30000, 30 careers).
+     */
+    promoteNeedsObjective: true,
   },
+  /** rc.6 (ORGMODE E2): the board signs off capital projects: an installation at this confidence, the performance centre at `flagship`. */
+  approval: { capital: 50, flagship: 65 },
+  /**
+   * rc.6 (ORGMODE E4): the competitions each tier's board asks about. "kind" or "kind:place".
+   * A preferred goal wins when its stated chance is within `objectivePrefWindow` of the plan's
+   * aim, else the nearest goal of any kind. `objectivePlanKinds` replaces the list for one plan.
+   * An established org is never asked for a Community Cup, nor for more than `objectiveMaxCount` regionals.
+   */
+  objectiveKinds: {
+    elite: ["majorFinish", "worldsFinish", "worldsQualify"],
+    contender: ["majorQualify", "majorFinish", "worldsQualify", "regionalFinish:1"],
+    mid: ["majorQualify", "regionalFinish"],
+    underdog: ["regionalFinish", "regionalReach"],
+  } as Record<string, readonly string[]>,
+  objectivePlanKinds: {
+    underdog: { ambitious: ["majorQualify"] },
+  } as Record<string, Partial<Record<"cautious" | "expected" | "ambitious", readonly string[]>>>,
+  objectivePrefWindow: 0.15,
+  objectiveMaxCount: 5,
   /** Difficulty scales patience and the objective's band (never a hidden number). */
   difficulty: {
     easy: { patience: 0.8, aimShift: 0.06 },

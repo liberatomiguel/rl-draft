@@ -58,6 +58,8 @@ interface SeasonRow {
   moved: boolean;
   balance: number;
   rank: number;
+  /** rc.6: the standing (reputation) at the season's review. */
+  rep?: number;
 }
 interface CareerRow {
   region: Region;
@@ -360,6 +362,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         moved,
         balance: save.finances.balance,
         rank: h?.userRegionRank ?? 0,
+        rep: Math.round(save.reputation),
       });
     };
     const start = createCareerSave(input(job.region, job.diff, job.ref ?? undefined), job.seed);
@@ -368,7 +371,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     const tag = `${job.region}/${job.diff}/${job.policy}/${job.stature}`;
     console.log(
       `${tag.padEnd(34)} ${out.softlock ? "SOFTLOCK " + out.softlock : (out.ended ?? "ok")} | ` +
-        seasonRows.map((r) => `S${r.s + 1}:${r.pkg?.[0] ?? "-"}${Math.round((r.chance ?? 0) * 100)}${r.met ? "+" : "-"}${r.conf}${r.ultimatum ? "U" : ""}${r.dismissed ? "D" : ""}${r.moved ? "M" : ""} $${Math.round(r.balance / 1000)}k#${r.rank}`).join(" "),
+        seasonRows.map((r) => `S${r.s + 1}:${r.pkg?.[0] ?? "-"}${Math.round((r.chance ?? 0) * 100)}${r.met ? "+" : "-"}${r.conf}${r.ultimatum ? "U" : ""}${r.dismissed ? "D" : ""}${r.moved ? "M" : ""} $${Math.round(r.balance / 1000)}k#${r.rank}/${r.stature.slice(0, 3)}${r.rep ?? ""}`).join(" "),
     );
     if (env.BOARD_OUT) writeFileSync(env.BOARD_OUT, JSON.stringify(rows));
     if (env.BOARD_CAL_OUT) writeFileSync(env.BOARD_CAL_OUT, JSON.stringify(cal));
@@ -378,6 +381,33 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
 
 function summary(rows: CareerRow[]): void {
   const pc = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+  // rc.6 (ORGMODE E1): Standing tier changes per starting tier, at the starting club (the season of each change).
+  const ORDER = ["underdog", "mid", "contender", "elite"];
+  for (const pol of [...new Set(rows.map((r) => r.policy))])
+    for (const diff of [...new Set(rows.map((r) => r.diff))])
+      for (const st of ["elite", "contender", "mid", "underdog"]) {
+        const cs = rows.filter((r) => r.policy === pol && r.diff === diff && r.stature === st);
+        if (!cs.length) continue;
+        const ups: number[] = [];
+        const downs: number[] = [];
+        const ends: string[] = [];
+        for (const c of cs) {
+          let tier = st;
+          for (const s of c.seasons) {
+            if (s.moved) break;
+            if (s.stature !== tier && ORDER.includes(s.stature)) {
+              (ORDER.indexOf(s.stature) > ORDER.indexOf(tier) ? ups : downs).push(s.s + 1);
+              tier = s.stature;
+            }
+          }
+          ends.push(tier);
+        }
+        const firstUp = cs.map((c) => c.seasons.find((s) => !s.moved && ORDER.indexOf(s.stature) > ORDER.indexOf(st))?.s).filter((x): x is number => x !== undefined);
+        console.log(
+          `TIERS ${pol} ${diff} ${st.padEnd(9)} careers ${cs.length} | promotions ${ups.length} (seasons ${ups.join(",") || "-"}) | relegations ${downs.length} (seasons ${downs.join(",") || "-"})` +
+            ` | first promotion by S${firstUp.length ? Math.max(...firstUp) + 1 : "-"} in ${firstUp.length}/${cs.length} | end tiers ${ends.join(",")}`,
+        );
+      }
   // Bands, per policy: every offered package's objective (seasons at the starting club), grouped by cell × stated band.
   const order = ["longShot", "stretch", "reach", "expected"];
   for (const pol of [...new Set(rows.map((r) => r.policy))]) {

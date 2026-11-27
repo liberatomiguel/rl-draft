@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { CAREER_BOARD } from "@/config/balance";
+import { STANDING_TIERS } from "@/engine/career/established";
 import type { CareerCopy } from "@/content/careerCopy";
 import { chanceBandOf, missionProgressOf } from "@/engine/career/board";
 import type { BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
@@ -122,6 +123,15 @@ export function BoardSeasonPanel({ save, C }: { save: CareerSave; C: CareerCopy 
           {(board.season.met ? V.met : V.missed)(goalText(C, pkg.objective))}
         </p>
         <p className="mt-1 text-sm text-sub">{V.confidence(Math.round(board.confidence))}</p>
+        {board.tierChange?.seasonIndex === save.clock.seasonIndex ? (
+          // rc.6 (ORGMODE E1): the Standing tier change at this review.
+          <p className="mt-1 text-sm font-semibold text-ink">
+            {V.tier(
+              STANDING_TIERS.indexOf(board.tierChange.to) > STANDING_TIERS.indexOf(board.tierChange.from),
+              C.board.standing.tier[board.tierChange.to] ?? board.tierChange.to,
+            )}
+          </p>
+        ) : null}
         <AppLink href="/career/board" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
           {V.open}
         </AppLink>

@@ -18,6 +18,7 @@
 import { CAREER_BOARD, FEATURES } from "@/config/balance";
 import {
   applyConfidence,
+  bestFinishOf,
   boardPackagesFor,
   chanceNowOf,
   chanceBandOf,
@@ -26,6 +27,7 @@ import {
   missionProgressOf,
   newBoardState,
   ratedGoals,
+  seasonBriefFor,
   secondaryFor,
   secondaryMet,
   stretchFor,
@@ -34,9 +36,11 @@ import {
   type ObjectiveInput,
 } from "@/engine/career/board";
 import type { BoardPackage, BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
-import { deliverMail } from "@/engine/career/communications";
+import { deliverMail, deliverNews } from "@/engine/career/communications";
+import { grantBaseNow, wageCeilingOf } from "@/engine/career/budget";
+import { applyTierChange, establishedOf, gateRepOf, standingChangeFor } from "@/engine/career/established";
 import { seasonYear } from "@/engine/career/development";
-import { moneyIndex, pushLedger, quantize, weeklyWageBill } from "@/engine/career/economy";
+import { pushLedger, quantize, weeklyWageBill } from "@/engine/career/economy";
 import { bumpManagerRep, dismissalOffersFor, newManagerState, unsolicitedOfferFor } from "@/engine/career/manager";
 import { orgMoneyFor, patienceOf, profileOf, type ProfileKey } from "@/engine/career/orgProfile";
 import { foundNewSeat, leaveSeat, takeOrgSeat } from "@/engine/career/seatSwap";
@@ -90,7 +94,7 @@ export function boardRawGoalsOf(save: CareerSave): ReturnType<typeof ratedGoals>
 
 /** The wage ceiling in this season's money (the board sized it in its own season's). */
 export function wageRoomNow(board: BoardState, seasonIndex: number): number {
-  return quantize(board.wageRoom * (moneyIndex(seasonIndex) / moneyIndex(board.startSeason)));
+  return wageCeilingOf(board, seasonIndex);
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +123,14 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
   if (board.season?.seasonIndex === s || save.squad.length < 3) return;
   const input = objectiveInputOf(save);
   const week = weekWagesOf(save);
-  const grantBase = board.kind === "owners" ? 0 : quantize(Math.min(week, wageRoomNow(board, s)) * profileOf(board.stature).grantWeeks);
+  // rc.6 (ORGMODE E3): an established org's budget is its own (grantBase on the money index), not the current wage bill.
+  const established = establishedOf(save) && board.kind === "board";
+  const grantBase =
+    board.kind === "owners"
+      ? 0
+      : established
+        ? grantBaseNow(board, s)
+        : quantize(Math.min(week, wageRoomNow(board, s)) * profileOf(board.stature).grantWeeks);
   const offers = boardPackagesFor({
     ...input,
     stature: board.stature,
@@ -127,10 +138,26 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
     grantBase,
     budgetMult: board.budgetMult,
     weekWages: week,
+    ...(established ? { established: true } : {}),
   });
   const last = save.history[save.history.length - 1];
   const lastTitles = last && last.seasonIndex === s - 1 ? titlesOfSeason(save, s - 1) : null;
   const majorChance = seasonGoalChance({ kind: "majorQualify", count: 1 }, input.level, input.cup);
+  // rc.6 (ORGMODE E4): why the board asks this, read from last season (an established org only).
+  const prev = board.season?.seasonIndex === s - 1 ? board.season : null;
+  const brief =
+    established && board.stature !== "owners"
+      ? seasonBriefFor({
+          tier: board.stature,
+          firstSeason: s === board.startSeason,
+          last: prev,
+          tierChange: board.tierChange?.seasonIndex === s - 1 ? board.tierChange : null,
+          ultimatumSurvived: board.ultimatum?.status === "met" && board.ultimatum.issuedSeason === s - 1,
+          titles: lastTitles,
+          ...(last && last.seasonIndex === s - 1 && last.userRegionRank ? { lastRegionalRank: last.userRegionRank } : {}),
+          ...(prev ? { bestFinish: bestFinishOf(save.eventResults, s - 1) } : {}),
+        })
+      : null;
   board.season = {
     seasonIndex: s,
     offers,
@@ -140,6 +167,7 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
     startChance: null,
     checkpoints: [],
     met: null,
+    ...(brief ? { brief } : {}),
   };
   mail(save, "boardPackage", { season: s + 1 });
 }
@@ -450,6 +478,7 @@ export function boardOnSeasonReview(save: CareerSave): void {
   if (c >= B.confidence.warn) board.warnedSeason = null;
   warnIfLow(save);
   mail(save, "boardVerdict", { met: season.met ? 1 : 0, confidence: c });
+  boardTierReview(save as CareerSave & { board: BoardState });
 
   // 8. An unsolicited approach from a bigger org (never holds).
   const approach = unsolicitedOfferFor({
@@ -464,6 +493,31 @@ export function boardOnSeasonReview(save: CareerSave): void {
   });
   manager.offers = approach ? [approach] : null;
   if (approach) mail(save, "boardApproach", { org: approach.name, region: approach.region });
+}
+
+/**
+ * rc.6 (ORGMODE E1): an established org's tier is re-read from its Standing
+ * at the review (after the verdict): one step at most, never in the board's
+ * first season. Patience, expectations and the calibration cell follow the
+ * stature; the budget base and the wage ceiling step; a promotion adds
+ * confidence. A mail, a news line, and the review's line (board.tierChange).
+ */
+function boardTierReview(save: CareerSave & { board: BoardState }): void {
+  if (!establishedOf(save)) return;
+  const board = save.board;
+  const s = save.clock.seasonIndex;
+  // The season's sporting objective was settled at step 1 of the review (board.season.met).
+  const to = standingChangeFor(board, save.reputation, s, board.season?.seasonIndex === s ? board.season.met === true : false);
+  if (!to) return;
+  const change = applyTierChange(board, to, s);
+  const up = to === nextTierUp(change.from);
+  if (up) applyConfidence(board, B.standing.promoteConfidence, "promoted", today(save));
+  mail(save, up ? "boardTierUp" : "boardTierDown", { org: save.identity.orgName, from: change.from, to });
+  deliverNews(save, { type: "org", priority: 2, titleKey: up ? "orgTierUp" : "orgTierDown", params: { org: save.identity.orgName, from: change.from, to } });
+}
+
+function nextTierUp(t: string): string | null {
+  return t === "underdog" ? "mid" : t === "mid" ? "contender" : t === "contender" ? "elite" : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -579,9 +633,10 @@ export function boardUpgradeOptionsOf(save: CareerSave): BoardUpgradeOption[] {
   if (!boardOn(save) || !save.board.upgrade || save.board.upgrade.taken || save.phase !== "running") return [];
   const out: BoardUpgradeOption[] = [];
   const next = gearNextItem(save.finances.gear);
-  if (next && save.reputation >= next.repGate) out.push({ id: "gear", item: next.id, cost: gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex) });
+  const rep = gateRepOf(save);
+  if (next && rep >= next.repGate) out.push({ id: "gear", item: next.id, cost: gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex) });
   for (const id of CAREER_STAFF.order) {
-    if (staffOn(save.finances.gear, id) || save.reputation < CAREER_STAFF.roles[id].repGate) continue;
+    if (staffOn(save.finances.gear, id) || rep < CAREER_STAFF.roles[id].repGate) continue;
     out.push({ id, cost: quantize(staffPerSplitFor(id, save.clock.seasonIndex) * 3) });
   }
   return out;

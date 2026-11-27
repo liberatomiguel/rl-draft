@@ -23,12 +23,16 @@ import { quantize } from "./economy";
 import type {
   BoardLegacy,
   BoardPackage,
+  BoardSeason,
   BoardSecondary,
   BoardState,
   BoardUltimatum,
   LegacyKind,
   PackageId,
+  SeasonBrief,
   SecondaryKind,
+  Stature,
+  TierChange,
 } from "./boardTypes";
 import type { CareerDifficulty, CompactEventResult, SeasonGoalSpec } from "./types";
 import { patienceOf, profileOf, type ProfileKey } from "./orgProfile";
@@ -147,6 +151,43 @@ export interface PackageInput extends ObjectiveInput {
   grantBase: number;
   budgetMult: number;
   weekWages: number;
+  /**
+   * rc.6 (ORGMODE E4): an established org's board asks about its tier's own
+   * competitions (CAREER_BOARD.objectiveKinds), never a Community Cup nor more
+   * than `objectiveMaxCount` regionals. Absent = the founded rules.
+   */
+  established?: boolean;
+}
+
+/** rc.6: the goals an established org's board may ask for (no cups, no more than objectiveMaxCount regionals). */
+export function establishedPool(pool: readonly SeasonGoalSpec[]): SeasonGoalSpec[] {
+  return pool.filter(
+    (c) =>
+      c.kind !== "cupFinal" &&
+      c.kind !== "cupWin" &&
+      !((c.kind === "regionalReach" || c.kind === "regionalFinish") && c.count > B.objectiveMaxCount),
+  );
+}
+
+/** rc.6: the competitions a tier's board prefers for one plan ("kind" or "kind:place"). */
+export function preferredKindsOf(stature: ProfileKey, pkg: PackageId): readonly string[] {
+  return B.objectivePlanKinds[stature]?.[pkg] ?? B.objectiveKinds[stature] ?? [];
+}
+
+export function isPreferred(c: Pick<SeasonGoalSpec, "kind" | "place">, kinds: readonly string[]): boolean {
+  return kinds.includes(c.kind) || (c.place !== undefined && kinds.includes(`${c.kind}:${c.place}`));
+}
+
+/** A preferred goal wins when its chance is within objectivePrefWindow of the aim; else the nearest of any kind. */
+function pickFor(
+  pool: readonly SeasonGoalSpec[],
+  aim: number,
+  kinds: readonly string[],
+  filter?: (c: SeasonGoalSpec) => boolean,
+): SeasonGoalSpec | null {
+  const pref = nearest(pool, aim, (c) => (!filter || filter(c)) && isPreferred(c, kinds));
+  if (pref && Math.abs(pref.chance - aim) <= B.objectivePrefWindow + 1e-9) return pref;
+  return nearest(pool, aim, filter);
 }
 
 /**
@@ -154,14 +195,17 @@ export interface PackageInput extends ObjectiveInput {
  * and each strictly harder than the one before when the season has one.
  */
 export function boardPackagesFor(input: PackageInput): BoardPackage[] {
-  const pool = ratedGoals(input);
+  const established = input.established === true && input.stature !== "owners";
+  const pool = established ? establishedPool(ratedGoals(input)) : ratedGoals(input);
   const patience = patienceOf(input.stature, input.difficulty);
+  const pick = (pkg: PackageId, filter?: (c: SeasonGoalSpec) => boolean) =>
+    established
+      ? pickFor(pool, objectiveAimOf(pkg, input.stature, input.difficulty), preferredKindsOf(input.stature, pkg), filter)
+      : nearest(pool, objectiveAimOf(pkg, input.stature, input.difficulty), filter);
   // Never an empty objective: a season with no rated goal (a squad that cannot play) asks to play a Sunday regional.
-  const expected = nearest(pool, objectiveAimOf("expected", input.stature, input.difficulty)) ?? { kind: "regionalReach" as const, count: 1, chance: 0.5 };
-  const cautious =
-    nearest(pool, objectiveAimOf("cautious", input.stature, input.difficulty), (c) => c.chance > expected.chance + 0.02) ?? expected;
-  const ambitious =
-    nearest(pool, objectiveAimOf("ambitious", input.stature, input.difficulty), (c) => c.chance < expected.chance - 0.02) ?? expected;
+  const expected = pick("expected") ?? { kind: "regionalReach" as const, count: 1, chance: 0.5 };
+  const cautious = pick("cautious", (c) => c.chance > expected.chance + 0.02) ?? expected;
+  const ambitious = pick("ambitious", (c) => c.chance < expected.chance - 0.02) ?? expected;
   const goal: Record<PackageId, SeasonGoalSpec> = { cautious, expected, ambitious };
   return PACKAGE_IDS.map((id) => {
     const P = B.packages[id];
@@ -383,3 +427,61 @@ export function newBoardState(input: {
     dismissedSeason: null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// rc.6 (ORGMODE E4): goal totals and the season brief
+// ---------------------------------------------------------------------------
+
+/** How many events of a goal's kind a season holds (the "of the 9 regionals" in its copy). */
+export function goalTotalOf(kind: SeasonGoalSpec["kind"]): number {
+  return eventsOf(kind);
+}
+
+/** The user's best finish of a season at an official event: Worlds first, then the Majors, then the regionals. */
+export function bestFinishOf(results: readonly CompactEventResult[], seasonIndex: number): SeasonBrief["bestFinish"] {
+  for (const tier of ["worlds", "major", "regional"] as const) {
+    const places = results
+      .filter((r) => r.seasonIndex === seasonIndex && r.tier === tier && r.userPlacement !== undefined)
+      .map((r) => PLACE[r.userPlacement!]);
+    if (places.length > 0) return { tier, place: Math.min(...places) };
+  }
+  return undefined;
+}
+
+export interface BriefInput {
+  tier: Stature;
+  /** The board's first season (a takeover, a new job). */
+  firstSeason: boolean;
+  /** Last season's board season (its objective and verdict), when it was this board's. */
+  last: Pick<BoardSeason, "seasonIndex" | "offers" | "choice" | "met"> | null;
+  /** A tier change at last season's review. */
+  tierChange: TierChange | null;
+  /** An ultimatum answered last season. */
+  ultimatumSurvived: boolean;
+  titles: { majors: number; worlds: boolean } | null;
+  lastRegionalRank?: number;
+  bestFinish?: SeasonBrief["bestFinish"];
+}
+
+/** Why the board asks what it asks: the first reason that holds, from the takeover down to last season's verdict. */
+export function seasonBriefFor(input: BriefInput): SeasonBrief {
+  const lastPkg = input.last?.choice ? input.last.offers.find((o) => o.id === input.last!.choice) : undefined;
+  const facts: Omit<SeasonBrief, "reason"> = {
+    tier: input.tier,
+    ...(lastPkg ? { lastObjective: { ...lastPkg.objective } } : {}),
+    ...(input.lastRegionalRank ? { lastRegionalRank: input.lastRegionalRank } : {}),
+    ...(input.bestFinish ? { bestFinish: input.bestFinish } : {}),
+  };
+  if (input.firstSeason || !input.last) return { reason: "takeover", ...facts };
+  if (input.tierChange) {
+    const up = STANDING_ORDER.indexOf(input.tierChange.to) > STANDING_ORDER.indexOf(input.tierChange.from);
+    return { reason: up ? "promoted" : "relegated", ...facts };
+  }
+  if (input.titles && (input.titles.majors > 0 || input.titles.worlds)) {
+    return { reason: "title", ...facts, majors: input.titles.majors, worlds: input.titles.worlds };
+  }
+  if (input.ultimatumSurvived) return { reason: "ultimatumSurvived", ...facts };
+  return { reason: input.last.met ? "met" : "missed", ...facts };
+}
+
+const STANDING_ORDER: readonly Stature[] = ["underdog", "mid", "contender", "elite"];

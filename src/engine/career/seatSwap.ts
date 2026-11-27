@@ -14,7 +14,8 @@
  * the world in the place of its region's weakest filler.
  */
 
-import { CAREER_GEAR } from "@/config/balance";
+import { CAREER_GEAR, FEATURES } from "@/config/balance";
+import { inheritedGearFor } from "./established";
 import type { Region } from "../types";
 import { playerViewById } from "./development";
 import { quantize, weeklyWageBill } from "./economy";
@@ -201,7 +202,8 @@ export function takeOrgSeat(save: CareerSave, ref: string): SeatTaken | null {
   save.reputation = Math.max(profile.rep, 0);
   const week = weeklyWageBill(squad.map((p) => p.salaryPerSplit), usable?.salaryPerSplit ?? null);
   const money = orgMoneyFor(stature, week, save.difficulty, save.clock.seasonIndex);
-  resetClubState(save, money.startCash, gearFor(profile.gear));
+  // rc.6 (ORGMODE E2): the org arrives with its installations and its retained staff (the retainers come out of the same cash).
+  resetClubState(save, money.startCash, FEATURES.realOrgStart ? inheritedGearFor(stature) : gearFor(profile.gear));
   save.world = computeStars(world, { seasonIndex: save.clock.seasonIndex, careerSeed: save.careerSeed, difficulty: save.difficulty });
   return { stature, money };
 }

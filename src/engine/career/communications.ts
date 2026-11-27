@@ -12,6 +12,8 @@ const PUBLIC_KEYS = new Set([
   "userSigned", "userSold", "userReleased", "result", "resultUser", "seasonChampion",
   "windowOpen", "windowClose", "windowReport", "retired", "rookieClass", "breakout", "orgEnters", "orgLeaves",
   "worldsCancelled", "orgRelocates",
+  // rc.6 (ORGMODE E1): an established org changes tier.
+  "orgTierUp", "orgTierDown",
   // v2.1 M1 (R139): the world renewing itself is public reporting.
   "orgNewcomer", "stackSigned", "prospectScouted", "prodigyRises",
   // v2.2 ENDLESS: a rival project is public reporting.

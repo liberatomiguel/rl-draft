@@ -17,7 +17,9 @@ import { CAREER_BOARD, CAREER_ECONOMY, CAREER_SEASONS } from "@/config/balance";
 import { coachById, lineups } from "@/data";
 import type { Region } from "../types";
 import { playerViewById, seasonYear } from "./development";
-import { coachWageFor, computeSalaryAsk, moneyIndex, quantize, weeklyWageBill } from "./economy";
+import { coachWageFor, computeSalaryAsk, gearOwned, moneyIndex, quantize, weeklyWageBill } from "./economy";
+import { inheritedGearFor, standingViewFor, type StandingView } from "./established";
+import { sponsorLadderLevelFor } from "./ladder";
 import { askInputOf } from "./market";
 import { coachBonusLevelFor } from "./training";
 import type { CareerDifficulty, CoachState, SquadPlayer, WorldOrgState, WorldState } from "./types";
@@ -198,6 +200,18 @@ export interface RealOrgChoice {
   /** Seasons before the board can issue an ultimatum. */
   graceSeasons: number;
   rep: number;
+  /** rc.6 (ORGMODE E5): the installations the org owns at the takeover (CAREER_GEAR item ids). */
+  gear: string[];
+  /** rc.6: the staff it retains ("psychologist" or a CAREER_STAFF role). */
+  staff: string[];
+  /** rc.6: the best signing level a new signing accepts at this tier. */
+  signCap: number;
+  /** rc.6: the sponsor ladder level its Standing opens (0-4). */
+  sponsorLevel: number;
+  /** rc.6: the Standing track at the takeover. */
+  standing: StandingView;
+  /** rc.6: the board's confidence on day one. */
+  confidenceStart: number;
 }
 
 /** The region's real orgs a manager can take over this season, strongest first (fillers excluded). */
@@ -229,6 +243,12 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       missCost: Math.round(Math.abs(CAREER_BOARD.packages.expected.miss) * patienceOf(stature, ctx.difficulty)),
       graceSeasons: CAREER_BOARD.graceSeasons.board,
       rep: p.rep,
+      gear: gearOwned(inheritedGearFor(stature)),
+      staff: [...p.staff],
+      signCap: p.signCap,
+      sponsorLevel: sponsorLadderLevelFor(p.rep),
+      standing: standingViewFor(stature, p.rep),
+      confidenceStart: CAREER_BOARD.confidence.start,
     });
   });
   return out;

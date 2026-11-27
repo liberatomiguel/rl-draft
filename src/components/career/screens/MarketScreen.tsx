@@ -32,10 +32,9 @@ import {
   repNeededForOverall,
   runwayWeeksAfter,
   scoutReportCostFor,
-  signableOverallCap,
   signingLevelOf,
 } from "@/engine/career/economy";
-import { signableAtRep } from "@/engine/career/market";
+import { establishedOf, gateRepOf, signCapOf, signableFor } from "@/engine/career/established";
 import type { ContractOffer } from "@/engine/career/contract";
 import { growthModelOf, signsForFinalSeason } from "@/engine/career/development";
 import type {
@@ -285,7 +284,7 @@ export function MarketScreen() {
       seasonIndex: save.clock.seasonIndex,
       careerSeed: save.careerSeed,
       // rc.32: always a page of free agents this org can actually sign.
-      signableCap: signableOverallCap(save.reputation),
+      signableCap: signCapOf(save),
       freeAgentsOnly: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -324,7 +323,7 @@ export function MarketScreen() {
   }, [listing, tab, save]);
 
   const signableCount = useMemo(
-    () => (save ? rows.filter((r) => signableAtRep(r.view, save.reputation)).length : 0),
+    () => (save ? rows.filter((r) => signableFor(save, r.view)).length : 0),
     [rows, save],
   );
   const visible = useMemo(() => {
@@ -333,7 +332,7 @@ export function MarketScreen() {
     if (q) out = out.filter((r) => r.view.name.toLowerCase().includes(q));
     if (regionFilter !== "all") out = out.filter((r) => r.view.region === regionFilter);
     // rc.33 (UX-07): the one rule a signing checks (market.signableAtRep).
-    if (signableOnly && save) out = out.filter((r) => signableAtRep(r.view, save.reputation));
+    if (signableOnly && save) out = out.filter((r) => signableFor(save, r.view));
     const sorted = [...out];
     switch (sort) {
       case "ovr":
@@ -377,7 +376,7 @@ export function MarketScreen() {
   const emptySeatOpen = !windowOpen && rosterIsShort(save);
   const freeAgentSignable = windowOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
-  const targetLocked = target ? (!signableAtRep(target.view, save.reputation) || (target.orgRef !== null && save.reputation < CAREER_UNLOCKS.contractedRep)) : false;
+  const targetLocked = target ? (!signableFor(save, target.view) || (target.orgRef !== null && gateRepOf(save) < CAREER_UNLOCKS.contractedRep)) : false;
   const nextWindowStop = windowOpen
     ? null
     : (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null);
@@ -607,7 +606,7 @@ export function MarketScreen() {
                 {visible.slice(0, shown).map((r) => {
                   // v0.3 visible signing gate: over-cap players stay browsable
                   // but read as locked, with the rep that opens the door.
-                  const repLocked = !signableAtRep(r.view, save.reputation) || (tab === "contracted" && save.reputation < CAREER_UNLOCKS.contractedRep);
+                  const repLocked = !signableFor(save, r.view) || (tab === "contracted" && gateRepOf(save) < CAREER_UNLOCKS.contractedRep);
                   // rc.35 (front C): an org signed him in this window — no offer until the next one.
                   const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
                   const locked = repLocked || justSigned;
@@ -658,7 +657,9 @@ export function MarketScreen() {
                             <LockIcon className="h-3.5 w-3.5 shrink-0" />
                             {justSigned
                               ? C.market.justSignedTag
-                              : C.market.lockedAtRep(Math.max(repNeededForOverall(signingLevelOf(r.view)), r.orgRef ? CAREER_UNLOCKS.contractedRep : 0))}
+                              : establishedOf(save)
+                                ? C.board.signCapLock(signCapOf(save))
+                                : C.market.lockedAtRep(Math.max(repNeededForOverall(signingLevelOf(r.view)), r.orgRef ? CAREER_UNLOCKS.contractedRep : 0))}
                           </p>
                         ) : null}
                         </>
@@ -680,7 +681,7 @@ export function MarketScreen() {
       ) : null}
 
       {/* ================= coaches tab ================= */}
-      {tab === "coaches" && save.reputation < CAREER_UNLOCKS.coachRep ? (
+      {tab === "coaches" && gateRepOf(save) < CAREER_UNLOCKS.coachRep ? (
         // v0.3: a coach is earned — the tab stays visible, the door is locked.
         <Panel className="rise-in p-8 text-center" style={{ animationDelay: "60ms" }}>
           <p className="card-title">🔒</p>
@@ -693,7 +694,7 @@ export function MarketScreen() {
           </p>
         </Panel>
       ) : null}
-      {tab === "coaches" && save.reputation >= CAREER_UNLOCKS.coachRep ? (
+      {tab === "coaches" && gateRepOf(save) >= CAREER_UNLOCKS.coachRep ? (
         <div className="rise-in space-y-4" style={{ animationDelay: "60ms" }}>
           {!save.coach ? (
             <Panel className="p-4 sm:p-5 text-xs font-semibold text-orange-bright">
@@ -751,7 +752,7 @@ export function MarketScreen() {
                 statLabels={t.STAT_LABELS}
                 disabled={save.coach?.id === c.id}
                 lockedNote={
-                  coachHireRefusalFor(save.reputation, c) === "exProGate"
+                  coachHireRefusalFor(gateRepOf(save), c) === "exProGate"
                     ? C.market.exProLockedAt(CAREER_LADDER.exProCoachRep)
                     : null
                 }

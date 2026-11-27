@@ -162,6 +162,7 @@ import {
   userSeriesPlayed,
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
+import { capitalRefusalOf, establishedOf, gateRepOf, signCapOf, signableFor } from "@/engine/career/established";
 import {
   cycleEndedTodayOf,
   initialTrainingState,
@@ -201,6 +202,7 @@ import {
   foundingPartnerActive,
   foundingPartnerBaseFor,
   foundingPartnerEnds,
+  gearItemById,
   gearNextItem,
   gearPriceFor,
   gearTrainingBonus,
@@ -230,7 +232,6 @@ import {
   runwayWeeks,
   scoutReportCostFor,
   severanceFor,
-  signableOverallCap,
   startingBudgetFor,
   t3RepKeyFor,
   takeBankLoan,
@@ -288,7 +289,6 @@ import {
   type ContractOffer,
   type NegotiationAnswer,
 } from "@/engine/career/contract";
-import { signableAtRep } from "@/engine/career/market";
 import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS, sameStarters } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName, localPlayerNames } from "@/engine/career/localScene";
@@ -573,7 +573,10 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
     [CAREER_UNLOCKS.t2InvitationalRep, "t2"],
     [CAREER_UNLOCKS.relocationRep, "relocation"],
   ];
+  // rc.6 (ORGMODE E1): an established org has nothing to unlock but the sponsor levels (they scale).
+  const established = establishedOf(save);
   for (const [gate, key] of crossings) {
+    if (established && !key.startsWith("sponsors")) continue;
     if (repBefore < gate && save.reputation >= gate) {
       pushNews(save, { type: "org", priority: 2, titleKey: "unlock", params: { name: key } });
       pushMail(save, {
@@ -5544,12 +5547,12 @@ export function emptySeatPriceFor(
     squadIds: save.squad.map((p) => p.id),
     seasonIndex: save.clock.seasonIndex,
     careerSeed: save.careerSeed,
-    signableCap: signableOverallCap(save.reputation),
+    signableCap: signCapOf(save),
     skipContracted: true,
   });
   let best: { playerId: string; name: string; cost: number; wagePerSplit: number } | null = null;
   for (const view of listing.freeAgents) {
-    if (!isCompetitiveAge(view.age) || !signableAtRep(view, save.reputation)) continue;
+    if (!isCompetitiveAge(view.age) || !signableFor(save, view)) continue;
     const pack = askPackageFor(view, {
       rep: save.reputation,
       seasonIndex: save.clock.seasonIndex,
@@ -5623,13 +5626,13 @@ export function signingPlanFor(
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   // RTW-05 (rc.33): the empty seat outside a window takes a free agent only.
   if (emptySeat && onOrg) return { error: "windowClosed" };
-  if (onOrg && save.reputation < CAREER_UNLOCKS.contractedRep) return { error: "contractedRep" };
+  if (onOrg && gateRepOf(save) < CAREER_UNLOCKS.contractedRep) return { error: "contractedRep" };
   // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
   if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 
   // v0.3 visible signing gate: new signings accept only up to the rep cap
   // (rc.33 UX-07: the one rule the Market's "signable at my reputation" filter reads).
-  if (!signableAtRep(view, save.reputation)) return { error: "repGate" };
+  if (!signableFor(save, view)) return { error: "repGate" };
   // rc.35 (front C): a player an org signed in this window takes no other offer before it closes.
   if (justSignedElsewhere(save, playerId)) return { error: "justSigned" };
   // R135: a player the user sold or traded away does not come back within a season.
@@ -6368,6 +6371,16 @@ export function acceptTradeFlow(input: CareerSave, proposalId: string): FlowResu
  * per render: the largest single script cost of a day's advance on HQ.
  */
 export function gearRefusalOf(save: CareerSave, itemId: GearItemId): string | null {
+  // rc.6 (ORGMODE E2): an established org buys any installation it lacks, in any order, once the board signs it off.
+  if (establishedOf(save)) {
+    if (save.finances.gear[itemId]) return gearNextItem(save.finances.gear) ? "owned" : "maxed";
+    const board = capitalRefusalOf(save, itemId);
+    if (board) return board;
+    if (CAREER_LOAN.lockCommitments && save.finances.loan) return "loanActive";
+    const price = gearPriceFor(gearItemById(itemId).cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
+    if (save.finances.balance - price < backerLineOf(save).floor) return "funds";
+    return null;
+  }
   const next = gearNextItem(save.finances.gear);
   if (!next) return "maxed";
   if (next.id !== itemId) return "locked"; // strict ladder order
@@ -6380,7 +6393,7 @@ export function gearRefusalOf(save: CareerSave, itemId: GearItemId): string | nu
 }
 
 export function psychologistRefusalOf(save: CareerSave, on: boolean): string | null {
-  if (on && !unlocksFor(save.reputation).psychologist) return "locked";
+  if (on && !unlocksFor(gateRepOf(save)).psychologist) return "locked";
   // rc.32 (M4, provisional): a new retainer while the Backer is owed must not shorten the runway.
   if (on && !save.finances.gear.psychologist) {
     const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, psychologist: true } } });
@@ -6392,7 +6405,7 @@ export function psychologistRefusalOf(save: CareerSave, on: boolean): string | n
 export function bootcampRefusalOf(save: CareerSave): string | null {
   // The event team is frozen, including between Saturday and Sunday.
   if (save.activeEvent) return "bootcampEventActive";
-  const tier = bootcampTierFor(save.reputation);
+  const tier = bootcampTierFor(gateRepOf(save));
   if (tier === 0) return "locked";
   if (save.finances.bootcampUsedThisSplit) return "used";
   const isFree = save.finances.freeBootcampsUsedThisSeason < sponsorFreeBootcampsOf(save.sponsor);
@@ -6404,8 +6417,8 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
   const refused = gearRefusalOf(input, itemId);
   if (refused) return { save: input, error: refused };
   const save = clone(input);
-  const next = gearNextItem(save.finances.gear)!;
-  const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
+  // gearRefusalOf passed: the item is the ladder's next (a founded club) or any one not owned (an established org).
+  const cost = gearPriceFor(gearItemById(itemId).cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
   save.finances = pushLedger(save.finances, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -6430,7 +6443,7 @@ export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult 
 /** rc.45 (R120): retain or release a support-staff role (CAREER_STAFF), the psychologist's rules. */
 export function setStaffFlow(input: CareerSave, id: StaffId, on: boolean): FlowResult {
   const save = clone(input);
-  if (on && save.reputation < CAREER_STAFF.roles[id].repGate) return { save: input, error: "locked" };
+  if (on && gateRepOf(save) < CAREER_STAFF.roles[id].repGate) return { save: input, error: "locked" };
   const staff = { ...(save.finances.gear.staff ?? {}), [id]: on };
   if (on && !staffOn(save.finances.gear, id)) {
     const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, staff } } });
@@ -6444,7 +6457,7 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
   const refused = bootcampRefusalOf(input);
   if (refused) return { save: input, error: refused };
   const save = clone(input);
-  const tier = bootcampTierFor(save.reputation);
+  const tier = bootcampTierFor(gateRepOf(save));
   if (tier === 0) return { save: input, error: "locked" }; // bootcampRefusalOf's rule (narrows the tier)
   const camp = CAREER_GEAR.bootcamp[tier - 1];
   const campCost = bootcampCostFor(tier, save.clock.seasonIndex); // rc.32 (M1): indexed
@@ -6527,14 +6540,14 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
 export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult {
   const save = clone(input);
   // v0.3: a coach is earned early — hiring unlocks at CAREER_UNLOCKS.coachRep.
-  if (save.reputation < CAREER_UNLOCKS.coachRep) return { save: input, error: "repGate" };
+  if (gateRepOf(save) < CAREER_UNLOCKS.coachRep) return { save: input, error: "repGate" };
   // Validate the candidate came from the current shortlist (no injected coaches).
   const candidates = coachCandidatesFor(save);
   const valid = candidates.find((c) => c.id === coach.id);
   if (!valid) return { save: input, error: "unknown" };
   if (save.coach?.id === valid.id) return { save: input, error: "alreadySigned" };
   // rc.35: the ladder gates ex-pro coaches (engine/career/ladder).
-  if (coachHireRefusalFor(save.reputation, valid)) return { save: input, error: "exProGate" };
+  if (coachHireRefusalFor(gateRepOf(save), valid)) return { save: input, error: "exProGate" };
   // rc.32 (M4, provisional): while the Backer is owed, a hire must not shorten the runway.
   const coachWeeklyDelta =
     weeklyWageBill([], valid.salaryPerSplit) - weeklyWageBill([], save.coach?.salaryPerSplit ?? null);
@@ -7043,7 +7056,7 @@ function startSponsorBootcamp(save: CareerSave): boolean {
   if (allowance <= 0 || fin.freeBootcampsUsedThisSeason >= allowance) return false;
   if (save.activeEvent || fin.bootcampUsedThisSplit || fin.bootcampSharp > 0) return false;
   if (save.phase !== "running") return false;
-  const tier = Math.max(1, bootcampTierFor(save.reputation)) as 1 | 2;
+  const tier = Math.max(1, bootcampTierFor(gateRepOf(save))) as 1 | 2;
   const camp = CAREER_GEAR.bootcamp[tier - 1];
   const lastsSplit = CAREER_GEAR.bootcampSpan === "split";
   fin.freeBootcampsUsedThisSeason += 1;
