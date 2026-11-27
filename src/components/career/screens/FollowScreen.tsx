@@ -65,10 +65,10 @@ function FollowScreenContent() {
   if (!f) {
     return (
       <div className="mx-auto max-w-2xl px-3 py-10 sm:px-4">
-        <Panel className="rise-in p-8 text-center">
-          <p className="kicker">{C.follow.kicker}</p>
-          <p className="mt-2 text-sm text-sub">{C.follow.nothing}</p>
-          <Button variant="primary" className="mt-5" onClick={() => router.push("/career")}>
+        <Panel className="rise-in px-6 py-10 text-center">
+          <p className="display text-lg font-bold text-ink">{C.follow.nothing}</p>
+          <p className="mx-auto mt-1.5 max-w-xs text-sm text-sub">{C.follow.nothingWhy}</p>
+          <Button variant="primary" className="mt-6" onClick={() => router.push("/career")}>
             {C.follow.backToHq}
           </Button>
         </Panel>
@@ -119,10 +119,10 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   // who is in
   const fieldPanel = (
     <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
-      <p className="kicker mb-2.5">{C.follow.field}</p>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-4">
+      <div className="card-head"><h2 className="card-title">{C.follow.field}</h2><span className="text-xs text-faint">{C.follow.teams(f.teams.length)}</span></div>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
         {f.teams.map((t) => (
-          <li key={t.id} className="flex min-w-0 items-center gap-1.5 text-xs">
+          <li key={t.id} className="flex min-h-9 min-w-0 items-center gap-1.5 text-[13px]">
             <EventTeamButton teamId={t.id} name={t.name} className="flex-1">
             <OrgMark save={save} orgRef={t.id} size="xs" className="shrink-0" />
             <span className="min-w-0 truncate text-ink" title={t.name}>
@@ -130,7 +130,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
             </span>
             </EventTeamButton>
             {qualified.has(t.id) ? (
-              <span title={C.event.qualifiedTagHint} className="display shrink-0 rounded bg-cyan/20 px-1 text-[10px] font-bold text-cyan">
+              <span title={C.event.qualifiedTagHint} className="display shrink-0 rounded bg-cyan/20 px-1 text-[11px] font-bold text-cyan">
                 {C.event.qualifiedTag}
               </span>
             ) : null}
@@ -159,16 +159,16 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   const resultsPanel =
     done && result ? (
       <Panel className="rise-in p-4 sm:p-5">
-        <p className="kicker mb-2.5">{C.follow.results}</p>
-        <table className="w-full table-fixed text-left text-xs">
+        <div className="card-head"><h2 className="card-title">{C.follow.results}</h2></div>
+        <table className="w-full table-fixed text-left text-[13px]">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-faint">
-              <th className="hidden w-32 pb-1.5 font-semibold sm:table-cell" scope="col">{C.event.digestPlacement}</th>
-              <th className="pb-1.5 font-semibold" scope="col">{T.team}</th>
+            <tr>
+              <th className="kicker hidden w-32 pb-2 sm:table-cell" scope="col">{C.event.digestPlacement}</th>
+              <th className="kicker pb-2" scope="col">{T.team}</th>
               {showPoints ? (
-                <th className="w-12 pb-1.5 text-right font-semibold" scope="col">{C.standings.ptsShort}</th>
+                <th className="kicker w-12 pb-2 text-right" scope="col">{C.standings.ptsShort}</th>
               ) : null}
-              <th className="w-16 pb-1.5 text-right font-semibold" scope="col">{C.common.prize}</th>
+              <th className="kicker w-16 pb-2 text-right" scope="col">{C.common.prize}</th>
             </tr>
           </thead>
           <tbody>
@@ -179,10 +179,10 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                 const prize = row.prize || prizeFor(f.def.tier, row.placement, prizeShapeOf(f.def), save.difficulty, f.def.seasonIndex);
                 return (
                   <tr key={row.ref} className={cx("border-t border-line", row.placement === "champion" && "bg-amber-400/5")}>
-                    <td className="hidden truncate py-1.5 pr-2 text-sub sm:table-cell" title={label}>
+                    <td className="hidden truncate py-2.5 pr-2 text-sub sm:table-cell" title={label}>
                       {label}
                     </td>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2.5 pr-2">
                       <EventTeamButton teamId={row.ref} name={nameOf(row.ref)} className="flex min-w-0 items-center gap-1.5">
                         <OrgMark save={save} orgRef={row.ref} size="xs" className="shrink-0" />
                         <span className="min-w-0 truncate text-ink">{row.name}</span>
@@ -190,9 +190,9 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                       <span className="mt-0.5 block truncate text-[11px] leading-tight text-sub sm:hidden">{label}</span>
                     </td>
                     {showPoints ? (
-                      <td className="display py-1.5 text-right font-bold text-cyan">{row.points > 0 ? row.points : "-"}</td>
+                      <td className="display py-2.5 text-right font-bold text-ink">{row.points > 0 ? row.points : "-"}</td>
                     ) : null}
-                    <td className="display py-1.5 text-right font-bold text-ink">
+                    <td className="display py-2.5 text-right font-bold tabular-nums text-ink">
                       {prize > 0 ? formatMoney(prize, { compact: true }) : "-"}
                     </td>
                   </tr>
@@ -210,7 +210,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-7xl space-y-6 px-3 py-5 sm:px-4">
       <SectionTitle kicker={C.follow.kicker} title={f.def.name} />
 
       {/* header: the event, why the user follows from outside, the champion once revealed */}
@@ -234,7 +234,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
               <p className="flex min-w-0 items-center gap-2">
                 <EventTeamButton teamId={f.champion} name={nameOf(f.champion)}>
                 <OrgMark save={save} orgRef={f.champion} size="sm" className="shrink-0" />
-                <span className="display min-w-0 truncate text-2xl font-bold uppercase tracking-wide text-ink">
+                <span className="display min-w-0 truncate text-2xl font-bold text-ink">
                   {nameOf(f.champion)}
                 </span>
                 </EventTeamButton>
