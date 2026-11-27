@@ -1,6 +1,6 @@
 # ORGMODE 2027, stage 2: the board's mandate (front MANDATE, handoff)
 
-Branch `v22/mandate`, cut from `release/v2.2` at the 2027 spec (`7e94926`). Spec: `ORGMODE-2027-SPEC.md`, "Stage 2". Decisions R176 to R178 (R173 to R175 left for front ERA). BALANCE_VERSION 52 → 53. Founded clubs are untouched: their three plans, secondary and legacy asks, mails and bots run as before (their tests pass unchanged).
+Branch `v22/mandate`, cut from `release/v2.2` at the 2027 spec (`7e94926`). Spec: `ORGMODE-2027-SPEC.md`, "Stage 2". Decisions R177 to R179 (R173 to R176 are front ERA's). BALANCE_VERSION 53 → 54. Founded clubs are untouched: their three plans, secondary and legacy asks, mails and bots run as before (their tests pass unchanged).
 
 ## What changed, by file
 

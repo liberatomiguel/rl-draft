@@ -21,13 +21,15 @@ import { createCareerSave } from "./careerFlow";
 import { playArcCareer } from "./careerArcBot";
 
 const SEED = 5150;
+/** v2.2 ORGMODE-2027: BOARD_SOFT_ERA=6 plays the same two job moves from a takeover at that era. */
+const ERA = Number(process.env.BOARD_SOFT_ERA ?? 0);
 const REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 
 function start(region: Region, stature: string): CareerSave {
-  const world = computeStars(buildWorldAtCreation(SEED), { seasonIndex: 0, careerSeed: SEED, difficulty: "normal" });
-  const pick = realOrgChoicesFor(region, { careerSeed: SEED, seasonIndex: 0, difficulty: "normal", world }).find((c) => c.stature === stature)!;
+  const world = computeStars(buildWorldAtCreation(SEED, ERA), { seasonIndex: ERA, careerSeed: SEED, difficulty: "normal" });
+  const pick = realOrgChoicesFor(region, { careerSeed: SEED, seasonIndex: ERA, difficulty: "normal", world }).find((c) => c.stature === stature)!;
   return createCareerSave(
-    { identity: { orgName: "S", abbrev: "S", managerName: "Bot", country: "US", region, crestId: "shield", colors: { primary: "#f97316", secondary: "#fff" }, buffType: "offense" }, difficulty: "normal", rosterKey: "balanced", realOrgRef: pick.ref },
+    { identity: { orgName: "S", abbrev: "S", managerName: "Bot", country: "US", region, crestId: "shield", colors: { primary: "#f97316", secondary: "#fff" }, buffType: "offense" }, difficulty: "normal", rosterKey: "balanced", realOrgRef: pick.ref, ...(ERA ? { startSeasonIndex: ERA } : {}) },
     SEED,
   );
 }
@@ -40,10 +42,10 @@ describe.skipIf(!process.env.BOARD_SOFT)("board job moves under the arc bot", ()
     const out = playArcCareer({
       region: "EU", difficulty: "normal", policy: "tuned", seed: SEED, seasons: 4, startFrom: first, budgetMs: 900_000,
       onSeason: (moment, save) => {
-        if (moment === "start" && save.clock.seasonIndex === 2) moved = save.identity.orgName;
-        if (moment !== "end" || save.clock.seasonIndex !== 1 || !save.board || !save.manager) return;
-        save.board.dismissedSeason = 1;
-        save.manager.offers = dismissalOffersFor({ world: save.world, rep: save.manager.reputation, home: "EU", regions: REGIONS, exclude: [save.identity.realOrgRef ?? ""], careerSeed: SEED, seasonIndex: 1, foundName: "New Club" });
+        if (moment === "start" && save.clock.seasonIndex === ERA + 2) moved = save.identity.orgName;
+        if (moment !== "end" || save.clock.seasonIndex !== ERA + 1 || !save.board || !save.manager) return;
+        save.board.dismissedSeason = ERA + 1;
+        save.manager.offers = dismissalOffersFor({ world: save.world, rep: save.manager.reputation, home: "EU", regions: REGIONS, exclude: [save.identity.realOrgRef ?? ""], careerSeed: SEED, seasonIndex: ERA + 1, foundName: "New Club" });
       },
     });
     expect(out.softlock).toBeNull();
@@ -57,8 +59,8 @@ describe.skipIf(!process.env.BOARD_SOFT)("board job moves under the arc bot", ()
       region: "SAM", difficulty: "normal", policy: "tuned", seed: SEED, seasons: 3, startFrom: start("SAM", "underdog"), budgetMs: 900_000, boardApproach: true,
       onSeason: (moment, save) => {
         if (moment === "start") names.push(save.identity.orgName);
-        if (moment !== "end" || save.clock.seasonIndex !== 0 || !save.manager) return;
-        const o = dismissalOffersFor({ world: save.world, rep: 80, home: "SAM", regions: REGIONS, exclude: [save.identity.realOrgRef ?? ""], careerSeed: SEED, seasonIndex: 0, foundName: "x" }).find((x) => x.kind === "org")!;
+        if (moment !== "end" || save.clock.seasonIndex !== ERA || !save.manager) return;
+        const o = dismissalOffersFor({ world: save.world, rep: 80, home: "SAM", regions: REGIONS, exclude: [save.identity.realOrgRef ?? ""], careerSeed: SEED, seasonIndex: ERA, foundName: "x" }).find((x) => x.kind === "org")!;
         save.manager.offers = [{ ...o, reason: "approach" }];
       },
     });

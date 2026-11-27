@@ -8,6 +8,7 @@
 import { CAREER_ECONOMY, CAREER_INSERTS } from "@/config/balance";
 import { CAREER_INSERTS_CATALOG, type InsertDef } from "@/data/career/inserts";
 import { regionalDayFor, seasonSchedule, weekOfDay } from "./calendar";
+import { careerSeasonOf } from "./era";
 import { insertMoneyFor, moneyIndex, weeklyOf } from "./economy";
 import { otherIncomeRoomOf, type OtherIncomeRoom } from "./sponsorDeals";
 import type { CareerSave } from "./types";
@@ -74,7 +75,7 @@ export function insertWithinCap(def: InsertDef, save: CareerSave): boolean {
  */
 export function rollInsertFor(save: CareerSave, week: number): InsertDef | null {
   const firstRegional = seasonSchedule().find((w) => w.kind === "regional")!;
-  if (save.clock.seasonIndex === 0 && save.clock.day <= regionalDayFor(firstRegional.week)) return null;
+  if (careerSeasonOf(save) === 0 && save.clock.day <= regionalDayFor(firstRegional.week)) return null;
   const key = `${save.clock.seasonIndex}:${week}`;
   if (derivedFloat(save.careerSeed, streams.gen("insertRoll", key)) >= CAREER_INSERTS.chancePerWeek) {
     return null;

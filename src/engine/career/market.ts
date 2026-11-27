@@ -799,8 +799,9 @@ export function aiWindowMoves(
  * preseason window, windowIdx 0). `CAREER_TRANSFER.firstWindowBidFree`.
  * Read by `incomingBidForDay` and by the scripted-beat Blockbuster degrade.
  */
-export function userBidsBlocked(seasonIndex: number, windowIdx: number | null): boolean {
-  return CAREER_TRANSFER.firstWindowBidFree && seasonIndex === 0 && windowIdx === 0;
+export function userBidsBlocked(seasonIndex: number, windowIdx: number | null, startSeasonIndex = 0): boolean {
+  // v2.2 ORGMODE-2027: the career's first window, counted from its start era.
+  return CAREER_TRANSFER.firstWindowBidFree && seasonIndex - startSeasonIndex === 0 && windowIdx === 0;
 }
 
 /**
@@ -839,6 +840,8 @@ export function incomingBidForDay(ctx: {
   world: WorldState;
   squad: SquadPlayer[];
   seasonIndex: number;
+  /** v2.2 ORGMODE-2027: the save's start era (absent = 0). */
+  startSeasonIndex?: number;
   windowIdx: number;
   day: number;
   careerSeed: number;
@@ -851,7 +854,7 @@ export function incomingBidForDay(ctx: {
   const T = CAREER_TRANSFER;
   if (ctx.squad.length === 0) return null;
   // ECO-03b (R47): the career's first window is bid-free.
-  if (userBidsBlocked(ctx.seasonIndex, ctx.windowIdx)) return null;
+  if (userBidsBlocked(ctx.seasonIndex, ctx.windowIdx, ctx.startSeasonIndex)) return null;
   if (ctx.bidsThisWindow >= T.maxBidsPerWindow) return null;
   if (ctx.day - ctx.lastBidDay < T.bidCooldownDays) return null;
 

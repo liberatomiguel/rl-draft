@@ -18,19 +18,21 @@ import {
   CAREER_AGE,
   CAREER_CALENDAR,
   CAREER_DEV,
+  CAREER_ERA,
   CAREER_SCOUT,
   CAREER_SEASONS,
   CAREER_TRAINING,
   CAREER_WORLD,
   TEAM_RATING,
 } from "@/config/balance";
-import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards } from "@/data";
+import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards, subs } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/legacyNames";
 import { gamertagVariant, playerNameBankFor } from "./names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
 import type { BuffLevel, PlayerCard, Region, StatKey, Stats, TournamentState } from "../types";
+import { lastEraRulesOn, retirementTableOf, type RetirementTable } from "./era";
 import { derivedFloat, streams } from "./seeds";
 import { coachProfileOf, objectiveEffectPct } from "./training";
 import type {
@@ -321,11 +323,13 @@ export function isGrowthContract(model: number | undefined): boolean {
 
 /** DEV-01: a career's growth context right now — its model, today and its seed (see GrowthCtx). */
 export function growthCtxOf(save: {
-  world: { growthModel?: number };
+  world: { growthModel?: number; eraStart?: number };
   careerSeed: number;
   clock: { day: number };
-}): { model: number; day: number; careerSeed: number } {
-  return { model: growthModelOf(save.world), day: save.clock.day, careerSeed: save.careerSeed };
+}): { model: number; day: number; careerSeed: number; retire?: RetirementTable } {
+  const ctx = { model: growthModelOf(save.world), day: save.clock.day, careerSeed: save.careerSeed };
+  // v2.2 ORGMODE-2027 (E3): a career started at the last era follows the long retirement window.
+  return lastEraRulesOn(save.world) ? { ...ctx, retire: retirementTableOf(save.world) } : ctx;
 }
 
 /** DEV-01b: when a player reaches his top. */
@@ -581,19 +585,23 @@ export function isCompetitiveAge(age: number): boolean {
  * otherwise CAREER_AGE.retirementByAge, times retirementStarMult for a star —
  * stars linger, inside the window only.
  */
-export function retirementChanceFor(p: {
-  age: number;
-  nextAge: number;
-  peakAge: number;
-  overall: number;
-  starOverall: number;
-}): number {
-  const A = CAREER_AGE;
+export function retirementChanceFor(
+  p: {
+    age: number;
+    nextAge: number;
+    peakAge: number;
+    overall: number;
+    starOverall: number;
+  },
+  /** v2.2 ORGMODE-2027 (E3): the window (era.retirementTableOf); absent = CAREER_AGE's. */
+  table: RetirementTable = CAREER_AGE,
+): number {
+  const A = table;
   const earliest = Math.min(A.retireMaxAge, Math.max(A.retireMinAge, p.peakAge));
   if (p.age < earliest) return 0;
   if (p.nextAge > A.retireMaxAge) return 1;
   const base = A.retirementByAge[Math.min(p.age, A.retireMaxAge)] ?? 0;
-  return clamp(base * (p.overall >= p.starOverall ? A.retirementStarMult : 1), 0, 1);
+  return clamp(base * (p.overall >= p.starOverall ? CAREER_AGE.retirementStarMult : 1), 0, 1);
 }
 
 /**
@@ -608,15 +616,20 @@ export function retirementChanceFor(p: {
 export function signsForFinalSeason(
   p: { age: number; peakAge: number; overall: number },
   seasonIndex: number,
+  /** v2.2 ORGMODE-2027 (E3): the save's world, for its retirement window. */
+  world?: { eraStart?: number },
 ): boolean {
   return (
-    retirementChanceFor({
-      age: p.age,
-      nextAge: p.age + (seasonYear(seasonIndex + 1) - seasonYear(seasonIndex)),
-      peakAge: peakAgeOf(p),
-      overall: p.overall,
-      starOverall: CAREER_AGE.retirementStarOverallSquad,
-    }) >= 1
+    retirementChanceFor(
+      {
+        age: p.age,
+        nextAge: p.age + (seasonYear(seasonIndex + 1) - seasonYear(seasonIndex)),
+        peakAge: peakAgeOf(p),
+        overall: p.overall,
+        starOverall: CAREER_AGE.retirementStarOverallSquad,
+      },
+      retirementTableOf(world),
+    ) >= 1
   );
 }
 
@@ -650,6 +663,53 @@ export function anchorOverall(playerId: string, seasonOrder: number): number | n
 }
 
 /**
+ * v2.2 ORGMODE-2027 (E3, a world built at the last era): a real player aged
+ * CAREER_ERA.projectedPotential.maxAge or younger at the start gets
+ * max(dataset potential, overall at the start + a headroom drawn per career
+ * seed from his age row), capped; when that raises his ceiling his peak moves
+ * late enough to reach it (`peakAgeWithRoom`). Fixed per (seed, player).
+ */
+export function projectedArcOf(
+  playerId: string,
+  careerSeed: number,
+  start: number,
+  potential: number,
+  peakAge: number,
+): { potential: number; peakAge: number } {
+  const P = CAREER_ERA.projectedPotential;
+  const age = ageOf(deriveBirthYear(playerId, careerSeed), start);
+  if (age > P.maxAge) return { potential, peakAge };
+  const base = anchorOverall(playerId, seasonOrderFor(start)) ?? eraSubAnchorOf(playerId, start);
+  if (base === null) return { potential, peakAge };
+  const row = P.headroomByAge.find((r) => age <= r.maxAge) ?? P.headroomByAge[P.headroomByAge.length - 1];
+  const values = Object.keys(row.weights).map(Number).sort((a, b) => a - b);
+  const headroom = weightedFrom(derivedFloat(careerSeed, streams.gen("eraPot", playerId)), values, (v) => row.weights[v] ?? 0);
+  const projected = Math.min(P.cap, base + headroom);
+  if (projected <= potential) return { potential, peakAge };
+  return { potential: projected, peakAge: peakAgeWithRoom(peakAge, age, projected - base) };
+}
+
+/** v2.2 ORGMODE-2027: per start era, the best sub overall of each person in its free-agent window (memoized). */
+const eraSubAnchors = new Map<number, Map<string, number>>();
+function eraSubAnchorOf(playerId: string, start: number): number | null {
+  let map = eraSubAnchors.get(start);
+  if (!map) {
+    map = new Map();
+    const window = new Set<string>();
+    for (let back = 1; back <= CAREER_ERA.freeAgentSeasons; back++) {
+      const s = CAREER_SEASONS[start - back];
+      if (s) window.add(s.seasonId);
+    }
+    for (const sub of subs) {
+      if (!window.has(sub.seasonId)) continue;
+      map.set(sub.personId, Math.max(map.get(sub.personId) ?? -Infinity, sub.overall));
+    }
+    eraSubAnchors.set(start, map);
+  }
+  return map.get(playerId) ?? null;
+}
+
+/**
  * rc.34 (DEV-03 decision 5-A): a player's CAREER-BEST club card overall (the
  * ex-pro coach's quality reads it, not the last card); null = no card.
  */
@@ -680,7 +740,10 @@ export interface ViewCtx {
  */
 export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView | null {
   if (ctx.world.retiredIds.includes(playerId)) return null;
-  const anchor = anchorOverall(playerId, seasonOrderFor(ctx.seasonIndex));
+  let anchor = anchorOverall(playerId, seasonOrderFor(ctx.seasonIndex));
+  // v2.2 ORGMODE-2027 (front ERA): a world built at a later era also knows the
+  // window's substitutes who never had a club card (their best sub overall).
+  if (anchor === null && (ctx.world.eraStart ?? 0) > 0) anchor = eraSubAnchorOf(playerId, ctx.world.eraStart!);
   if (anchor === null) return null;
   const player = playerById.get(playerId);
   if (!player) return null;
@@ -692,6 +755,10 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
   // real-moment peak; rc.31 derived both per view (potential clamped up to the
   // current overall, peak 18–22).
   const dev01 = isGrowthContract(growthModelOf(ctx.world));
+  let potential = dev01 ? derivePotentialV2(playerId, ctx.careerSeed) : derivePotential(playerId, ctx.careerSeed, overall);
+  let peakAge = dev01 ? developmentProfileOf(playerId, ctx.careerSeed).peakAge : derivePeakAge(playerId, ctx.careerSeed);
+  // v2.2 ORGMODE-2027 (E3): past the end of the dataset a young real player's ceiling is projected.
+  if (dev01 && lastEraRulesOn(ctx.world)) ({ potential, peakAge } = projectedArcOf(playerId, ctx.careerSeed, ctx.world.eraStart!, potential, peakAge));
   return {
     id: playerId,
     kind: "real",
@@ -702,10 +769,8 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
     archetype,
     overall,
     attrOffsets: deriveAttrOffsets(playerId, ctx.careerSeed, archetype),
-    potential: dev01 ? derivePotentialV2(playerId, ctx.careerSeed) : derivePotential(playerId, ctx.careerSeed, overall),
-    peakAge: dev01
-      ? developmentProfileOf(playerId, ctx.careerSeed).peakAge
-      : derivePeakAge(playerId, ctx.careerSeed),
+    potential,
+    peakAge,
     declineRate: deriveDeclineRate(playerId, ctx.careerSeed),
     anchored: !offScript,
   };
@@ -746,7 +811,8 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
     FILLER_AGE_RANGE[0],
     FILLER_AGE_RANGE[1],
   );
-  const birthYear = seasonYear(0) - age0;
+  // v2.2 ORGMODE-2027 (front ERA): a world built at a later era meets its fillers at their base age there.
+  const birthYear = seasonYear(ctx.world.eraStart ?? 0) - age0;
 
   const dev01 = isGrowthContract(growthModelOf(ctx.world));
   const profile = dev01 ? developmentProfileOf(id, ctx.careerSeed) : null;
@@ -1482,6 +1548,8 @@ export interface GrowthCtx {
   model?: number;
   day?: number;
   careerSeed?: number;
+  /** v2.2 ORGMODE-2027 (E3): the retirement window (absent = CAREER_AGE's). */
+  retire?: RetirementTable;
 }
 
 /**
@@ -2013,13 +2081,16 @@ export function squadRollover(
   // DEV-02 (R48): announce at the rollover into his final season — only
   // inside the 24–29 window and never before his peak; the season at 29 (or
   // the last one before a calendar jump past 29) always ends it.
-  const chance = retirementChanceFor({
-    age,
-    nextAge: ageOf(p.birthYear, seasonIndex + 1),
-    peakAge: peakAgeOf(p),
-    overall: p.overall,
-    starOverall: CAREER_AGE.retirementStarOverallSquad,
-  });
+  const chance = retirementChanceFor(
+    {
+      age,
+      nextAge: ageOf(p.birthYear, seasonIndex + 1),
+      peakAge: peakAgeOf(p),
+      overall: p.overall,
+      starOverall: CAREER_AGE.retirementStarOverallSquad,
+    },
+    growth?.retire,
+  );
   // Always consume exactly one roll — keeps the rollover stream stable per player.
   const announcedRetirement = rng.chance(chance);
 

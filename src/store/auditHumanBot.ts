@@ -903,7 +903,7 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
     policy = { ...policy, market: "upgrade" };
   }
   if ((policy.switchAtRep !== undefined && input.reputation >= policy.switchAtRep) ||
-      (policy.switchAfterSeason !== undefined && input.clock.seasonIndex >= policy.switchAfterSeason)) {
+      (policy.switchAfterSeason !== undefined && input.clock.seasonIndex - (input.startSeasonIndex ?? 0) >= policy.switchAfterSeason)) {
     policy = { ...policy, market: "upgrade", candidateKind: undefined, candidateMaxAge: undefined,
       candidateMinBand: undefined, candidateMinOverall: undefined, upgradeMargin: 2 };
   }
@@ -1162,7 +1162,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   if (
     !save.activeEvent && save.phase === "running" &&
     CAREER_WORLD.unavailabilityWithoutReserve === "short" &&
-    save.clock.seasonIndex >= CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
+    save.clock.seasonIndex - (save.startSeasonIndex ?? 0) >= CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
     save.squad.length === 3 && dayOfWeekOf(save.clock.day) === 1
   ) {
     save = signReserve(save, policy, t, false);

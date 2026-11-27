@@ -10,14 +10,21 @@
  *  - nothing throws (an exception in a click handler is a dead button).
  *
  *   P1_SOFT=1 P1_SOFT_REGIONS=SAM,NA P1_SOFT_SEASONS=7 npx vitest run src/store/careerSoftlock.probe.test.ts
+ *
+ * v2.2 ORGMODE-2027: P1_SOFT_ERA=N plays a takeover at era N instead of a
+ * founded club (needs NEXT_PUBLIC_REAL_ORG_START=1); P1_SOFT_PICK=i picks the
+ * region's i-th org by rating (default: a third of the way down the list).
  */
 import { writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 import { playArcCareer, type ArcPolicyId } from "./careerArcBot";
+import { realOrgChoicesFor } from "@/engine/career/orgProfile";
+import { buildWorldAtCreation, computeStars } from "@/engine/career/worldSim";
 import {
   advanceDayFlow,
+  createCareerSave,
   canSkipShortSquadEvent,
   eventStartBlockOf,
   finishEvent,
@@ -34,6 +41,21 @@ const POLICIES = (env.P1_SOFT_POLICIES ?? "autopilot,tuned").split(",") as ArcPo
 const DIFFS = (env.P1_SOFT_DIFFS ?? "normal").split(",") as CareerDifficulty[];
 const SEEDS = Number(env.P1_SOFT_SEEDS ?? 1);
 const SEASONS = Number(env.P1_SOFT_SEASONS ?? 7);
+const ERA = env.P1_SOFT_ERA === undefined ? null : Number(env.P1_SOFT_ERA);
+
+/** v2.2 ORGMODE-2027: the takeover a P1_SOFT_ERA run starts from (null = a founded club). */
+function takeoverAt(region: Region, difficulty: CareerDifficulty, seed: number): { save: CareerSave; ref: string } | null {
+  if (ERA === null) return null;
+  const world = computeStars(buildWorldAtCreation(seed, ERA), { seasonIndex: ERA, careerSeed: seed, difficulty });
+  const list = realOrgChoicesFor(region, { careerSeed: seed, seasonIndex: ERA, difficulty, world });
+  const pick = list[env.P1_SOFT_PICK === undefined ? Math.floor(list.length / 3) : Math.min(list.length - 1, Number(env.P1_SOFT_PICK))];
+  if (!pick) return null;
+  const save = createCareerSave(
+    { identity: { orgName: pick.name, abbrev: "ORG", managerName: "Bot", country: pick.country, region, crestId: "shield", colors: { primary: "#f97316", secondary: "#fff" }, buffType: "offense" }, difficulty, rosterKey: "balanced", realOrgRef: pick.ref, startSeasonIndex: ERA },
+    seed,
+  );
+  return { save, ref: pick.ref };
+}
 
 /** The lobby the manager will open tomorrow, driven as the event screen drives it. */
 function checkLobby(save: CareerSave, found: string[]): number {
@@ -92,13 +114,17 @@ describe.skipIf(!ON)("v2.0 (P1) soft-lock probe", () => {
               let softlock: string | null = null;
               let seasons = 0;
               const t0 = Date.now();
+              let label = "";
               try {
+                const from = takeoverAt(region, difficulty, seed);
+                if (from) label = ` takeover ${from.ref} at era ${ERA}`;
                 const career = playArcCareer({
                   region,
                   difficulty,
                   policy,
                   seed,
                   seasons: SEASONS,
+                  ...(from ? { startFrom: from.save } : {}),
                   budgetMs: 1_800_000,
                   onDay: (save) => {
                     lobbies += checkLobby(save, found);
@@ -110,7 +136,7 @@ describe.skipIf(!ON)("v2.0 (P1) soft-lock probe", () => {
                 found.push(`career throws: ${(e as Error).message}\n${(e as Error).stack?.split("\n").slice(1, 6).join("\n")}`);
               }
               if (softlock) found.push(`bot softlock: ${softlock}`);
-              const line = `${region} ${difficulty} ${policy} seed ${seed}: ${seasons} seasons, ${lobbies} lobbies, ${found.length} findings, ${Math.round((Date.now() - t0) / 1000)}s`;
+              const line = `${region} ${difficulty} ${policy} seed ${seed}${label}: ${seasons} seasons, ${lobbies} lobbies, ${found.length} findings, ${Math.round((Date.now() - t0) / 1000)}s`;
               lines.push(line, ...found.map((f) => `   ! ${f}`));
               all.push(...found);
               console.log(line);

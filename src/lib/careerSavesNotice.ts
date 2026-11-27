@@ -24,9 +24,10 @@ function read(): string | null {
 }
 
 /** Whether the card may open on this device for a career at this point of its calendar. */
-export function careerSavesNoticeDue(clock: { seasonIndex: number; day: number }): boolean {
+export function careerSavesNoticeDue(clock: { seasonIndex: number; day: number }, startSeasonIndex = 0): boolean {
   if (read() !== null) return false;
-  return clock.seasonIndex > 0 || clock.day >= CAREER_SAVES_NOTICE.minDay;
+  // v2.2 ORGMODE-2027: the career's own first season, whatever era it started at.
+  return clock.seasonIndex - startSeasonIndex > 0 || clock.day >= CAREER_SAVES_NOTICE.minDay;
 }
 
 /** The player answered (opened the list or dismissed): never again on this device. */

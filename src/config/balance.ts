@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 53;
+export const BALANCE_VERSION = 54;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1144,6 +1144,56 @@ export const CAREER_CANCELLED_WORLDS = {
   seasonIndexes: [0] as readonly number[],
   /** The Monday the cancellation is announced: the second week of split 3 (W23 opens it). */
   announceWeek: 24,
+} as const;
+
+/**
+ * v2.2 ORGMODE-2027 (front ERA, R173–R176): a career can start at any era.
+ * `seasonIndex` stays the absolute era (0 = Season X … 6 = RLCS 2027, the late
+ * wave); a save's optional `startSeasonIndex` is where it began, and progress
+ * reads `seasonIndex − startSeasonIndex` (engine/career/era). A founded club
+ * starts at 0 and is unchanged; a takeover defaults to the last era.
+ */
+export const CAREER_ERA = {
+  /** The era a takeover starts at when the pick screen names none (6 = RLCS 2027). */
+  takeoverDefaultStart: 6,
+  /** A founded club's era (the timeline from Season X). */
+  foundedDefaultStart: 0,
+  /**
+   * E3's rules for a world built at the last era (projected potential, long
+   * careers, every real player developing past his last card). false = the
+   * dataset rules there too (the measurement's "before").
+   */
+  lastEraRules: true as boolean,
+  /** Real orgs whose last lineup is this many seasons before the start may return to complete a region (newest first). */
+  returningOrgSeasons: 2,
+  /** Real players whose last club card is this many seasons before the start, with no seat, start as free agents. */
+  freeAgentSeasons: 3,
+  /**
+   * E3, only for a career that starts at the last era (no dataset season
+   * after it): a real player this age or younger at the start gets
+   * max(dataset potential, overall at the start + headroom), the headroom
+   * drawn per career seed from his age row (most draws low, a few high),
+   * the result capped at `cap`.
+   */
+  projectedPotential: {
+    maxAge: 21,
+    cap: 96,
+    headroomByAge: [
+      { maxAge: 17, weights: { 4: 0.25, 7: 0.3, 10: 0.25, 14: 0.15, 18: 0.05 } },
+      { maxAge: 19, weights: { 3: 0.3, 5: 0.3, 8: 0.25, 11: 0.12, 14: 0.03 } },
+      { maxAge: 21, weights: { 2: 0.35, 4: 0.35, 6: 0.2, 9: 0.1 } },
+    ] as readonly { maxAge: number; weights: Record<number, number> }[],
+  },
+  /**
+   * E3: the retirement window of a career that starts at the last era
+   * (CAREER_AGE's shape: nobody retires before `retireMinAge` nor before his
+   * peak; the season at `retireMaxAge` is always the last).
+   */
+  longCareers: {
+    retireMinAge: 26,
+    retireMaxAge: 32,
+    retirementByAge: { 26: 0.05, 27: 0.1, 28: 0.15, 29: 0.25, 30: 0.4, 31: 0.6, 32: 1 } as Record<number, number>,
+  },
 } as const;
 
 /**

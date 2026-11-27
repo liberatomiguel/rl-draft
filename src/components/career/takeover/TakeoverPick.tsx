@@ -23,6 +23,8 @@ import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { abbrevFor, realOrgChoicesFor, type RealOrgChoice } from "@/engine/career/orgProfile";
 import type { Stature } from "@/engine/career/boardTypes";
+import { takeoverStartEraFor } from "@/engine/career/era";
+import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerDifficulty } from "@/engine/career/types";
 import { buildWorldAtCreation, computeStars } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
@@ -50,7 +52,7 @@ const TIERS: Stature[] = ["elite", "contender", "mid", "underdog"];
 const DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
 
 /** The takeover's input: the button and the dossier build the SAME one (the manager's name aside, which no rule reads). */
-export function takeoverInputOf(c: RealOrgChoice, difficulty: CareerDifficulty, managerName: string): CreateCareerInput {
+export function takeoverInputOf(c: RealOrgChoice, difficulty: CareerDifficulty, managerName: string, startSeasonIndex?: number): CreateCareerInput {
   const crest = proceduralCrestFor(c.ref, c.name);
   return {
     identity: {
@@ -67,7 +69,17 @@ export function takeoverInputOf(c: RealOrgChoice, difficulty: CareerDifficulty, 
     difficulty,
     rosterKey: "balanced",
     realOrgRef: c.ref,
+    ...(startSeasonIndex ? { startSeasonIndex } : {}),
   };
+}
+
+/** v2.2 ORGMODE-2027 (E4): the takeover's era — the default, or the staging build's `?era=N`. */
+function startEraOfPage(): number {
+  try {
+    return takeoverStartEraFor(globalThis.location?.search ?? "");
+  } catch {
+    return takeoverStartEraFor("");
+  }
 }
 
 function initialRegion(): Region {
@@ -183,6 +195,7 @@ function Dossier({
             <span className="text-sub"> · {copy.SETUP.regionNames[c.region]} · {P.rank(c.rank, c.teams)}</span>
           </p>
           <p className="mt-0.5 text-sm text-sub">{C.board.statureNote[c.stature]}</p>
+          {c.returningFrom !== undefined && <p className="mt-0.5 text-sm text-sub">{P.returning(seasonLabelFor(c.returningFrom))}</p>}
         </div>
       </div>
 
@@ -338,6 +351,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
   const slots = useCareerStore((s) => s.slots);
   const createCareer = useCareerStore((s) => s.createCareer);
   const [seed] = useState(() => randomSeed());
+  const [era] = useState(startEraOfPage);
   const [managerDefault] = useState(() => QUICKSTART_MANAGER_NAMES[Math.floor(Math.random() * QUICKSTART_MANAGER_NAMES.length)]);
   const [region, setRegion] = useState<Region>(initialRegion);
   const [difficulty, setDifficulty] = useState<CareerDifficulty>(CAREER_DIFFICULTY.defaultPreset);
@@ -349,16 +363,16 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
   const listRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const world = useMemo(() => computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" }), [seed]);
+  const world = useMemo(() => computeStars(buildWorldAtCreation(seed, era), { seasonIndex: era, careerSeed: seed, difficulty: "normal" }), [seed, era]);
   // Only the regions with an organization to take over get a tab (APAC and SSA have none in the first season).
   const regions = useMemo(
-    () => REGIONS.filter((r) => realOrgChoicesFor(r, { careerSeed: seed, seasonIndex: 0, difficulty: "normal", world }).length > 0),
-    [seed, world],
+    () => REGIONS.filter((r) => realOrgChoicesFor(r, { careerSeed: seed, seasonIndex: era, difficulty: "normal", world }).length > 0),
+    [seed, era, world],
   );
   const regionShown = regions.includes(region) ? region : (regions[0] ?? region);
   const choices = useMemo(
-    () => realOrgChoicesFor(regionShown, { careerSeed: seed, seasonIndex: 0, difficulty, world }),
-    [regionShown, seed, difficulty, world],
+    () => realOrgChoicesFor(regionShown, { careerSeed: seed, seasonIndex: era, difficulty, world }),
+    [regionShown, seed, era, difficulty, world],
   );
   // The region's first organization reads until the player picks (the desktop dossier is never empty).
   const chosen = choices.find((c) => c.ref === pick) ?? choices[0] ?? null;
@@ -366,8 +380,8 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
 
   // The dossier: the save this org's takeover creates (memoized per org, difficulty and seed).
   const preview = useMemo(
-    () => (chosen ? takeoverPreviewOf(takeoverInputOf(chosen, difficulty, managerDefault), seed) : null),
-    [chosen, difficulty, managerDefault, seed],
+    () => (chosen ? takeoverPreviewOf(takeoverInputOf(chosen, difficulty, managerDefault, era), seed) : null),
+    [chosen, difficulty, managerDefault, seed, era],
   );
 
   const choose = (ref: string, toDossier: boolean) => {
@@ -396,7 +410,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
       setFull(true);
       return;
     }
-    createCareer(slot, takeoverInputOf(chosen, difficulty, manager.trim().length >= 2 ? manager.trim() : managerDefault), seed);
+    createCareer(slot, takeoverInputOf(chosen, difficulty, manager.trim().length >= 2 ? manager.trim() : managerDefault, era), seed);
     setArrived(true);
   };
 

@@ -41,6 +41,7 @@ import {
   CAREER_SEASONS,
   CAREER_TITLE_DEFENSE,
   CAREER_DYNASTY,
+  CAREER_ERA,
   CAREER_NAMES,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
@@ -60,6 +61,7 @@ import {
   playerCards,
   players,
   seasonById,
+  subs,
 } from "@/data";
 import {
   PLAYER_NAME_BANK,
@@ -90,10 +92,12 @@ import type {
   TournamentTeam,
 } from "../types";
 import {
+  ageOf,
   anchorOverall,
   declinePerYearOf,
   deriveArchetype,
   deriveAttrOffsets,
+  deriveBirthYear,
   deriveDeclineRate,
   derivePeakAge,
   developmentProfileOf,
@@ -108,6 +112,7 @@ import {
   peakAgeWithRoom,
   peakTargetOf,
   playerViewById,
+  realPlayerView,
   retirementChanceFor,
   rookieView,
   seasonYear,
@@ -115,6 +120,7 @@ import {
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
 import { intakeSeasonIdFor } from "./calendar";
+import { clampStartEra, lastEraRulesOn, retirementTableOf } from "./era";
 import { invitationalRefsFor, isLegendRef, LEGEND_REF_PREFIX, legendTeamFor, projectKitEffect } from "./endless";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
@@ -248,7 +254,10 @@ export function fillerOrgName(region: Region, i: number, careerSeed: number, nam
  * padded with fillers to faPoolFloorPerRegion, capped at FA_POOL_CAP with
  * best-overall priority).
  */
-export function buildWorldAtCreation(careerSeed: number): WorldState {
+export function buildWorldAtCreation(careerSeed: number, startSeasonIndex = 0): WorldState {
+  // v2.2 ORGMODE-2027 (front ERA): a career that starts past Season X builds that era's world.
+  const start = clampStartEra(startSeasonIndex);
+  if (start > 0) return buildWorldAtEra(careerSeed, start);
   const season0 = CAREER_SEASONS[0];
   const orgs: Record<string, WorldOrgState> = {};
   const rosteredPlayerIds = new Set<string>();
@@ -389,6 +398,189 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
   return world;
 }
 
+
+/** The dataset season id of a timeline index (0..5), for the era build's look-back. */
+function timelineSeasonId(seasonIndex: number): string | null {
+  return seasonIndex >= 0 && seasonIndex < CAREER_SEASONS.length ? CAREER_SEASONS[seasonIndex].seasonId : null;
+}
+
+/**
+ * v2.2 ORGMODE-2027 (front ERA, spec E2): the world a career starts in at era
+ * `start` (1..LAST_START_ERA), built from that season's lineups instead of
+ * aging the Season X world forward.
+ *  1. Every club lineup of the start season is an AI org (dataset order; a
+ *     player on two lineups stays on the first, the later seat is a hole).
+ *  2. A region below minOrgsPerRegion is completed first with real orgs whose
+ *     last lineup is in the `returningOrgSeasons` seasons before the start
+ *     (newest season first, then the lineup's strength), on that roster minus
+ *     anyone seated elsewhere or past the retirement window (a hole). They
+ *     carry `returningFrom`.
+ *  3. Fillers cover what is left, exactly as at Season X.
+ *  4. Free agents: real players with no seat whose last club card is in the
+ *     `freeAgentSeasons` seasons before the start (or in it), plus the window's
+ *     subs, at their last overall and their age at the start, nobody past the
+ *     retirement window; the holes sign the best of their region, then the
+ *     pool floor, the cap and the creation prospects as at Season X.
+ * Deterministic: dataset order and sorted scans, the seed only names fillers.
+ */
+function buildWorldAtEra(careerSeed: number, start: number): WorldState {
+  const seasonId = intakeSeasonIdFor(start);
+  if (!seasonId) throw new Error(`buildWorldAtEra: no dataset season at era ${start}`);
+  const orderNow = orderFor(start);
+  const maxAge = retirementTableOf({ eraStart: start }).retireMaxAge;
+  const ctx = { careerSeed, seasonIndex: start, world: { orgs: {}, overallDelta: {}, freeAgentIds: [], retiredIds: [], version: 0, eraStart: start } as WorldState };
+  const tooOld = (id: string) => ageOf(deriveBirthYear(id, careerSeed), start) > maxAge;
+  const orgs: Record<string, WorldOrgState> = {};
+  const rostered = new Set<string>();
+  const holes: { ref: string; slot: number; region: Region }[] = [];
+  const seat = (lineup: (typeof lineups)[number], returningFrom?: number) => {
+    const playerIds = lineup.playerCardIds.map((cardId) => playerCardById.get(cardId)!.playerId) as [string, string, string];
+    playerIds.forEach((id, slot) => {
+      if (rostered.has(id) || (returningFrom !== undefined && tooOld(id))) holes.push({ ref: lineup.orgId, slot, region: lineup.region });
+    });
+    const coach = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
+    const prestige = PRESTIGE_BY_STRENGTH[lineup.historicalStrength];
+    orgs[lineup.orgId] = {
+      ref: lineup.orgId,
+      name: orgById.get(lineup.orgId)?.name ?? lineup.name,
+      region: lineup.region,
+      prestige,
+      playerIds,
+      coachOverall: coach?.overall,
+      stars: prestige,
+      ...(returningFrom !== undefined ? { returningFrom } : {}),
+    };
+    for (const id of playerIds) rostered.add(id);
+  };
+
+  // 1. The start season's club lineups.
+  for (const lineup of lineups) {
+    if (lineup.seasonId !== seasonId || lineup.rareSpawn || lineup.national) continue;
+    if (orgs[lineup.orgId]) continue;
+    seat(lineup);
+  }
+
+  // 2. Returning orgs: the newest look-back season first, then the lineup's strength.
+  const seen = new Set(Object.keys(orgs));
+  const returning: { lineup: (typeof lineups)[number]; back: number; strength: number }[] = [];
+  for (let back = 1; back <= CAREER_ERA.returningOrgSeasons; back++) {
+    const sid = timelineSeasonId(start - back);
+    if (!sid) continue;
+    const order = orderFor(start - back);
+    for (const lineup of lineups) {
+      if (lineup.seasonId !== sid || lineup.rareSpawn || lineup.national || seen.has(lineup.orgId)) continue;
+      seen.add(lineup.orgId);
+      const ids = lineup.playerCardIds.map((cardId) => playerCardById.get(cardId)!.playerId);
+      const strength = ids.reduce((sum, id) => sum + (anchorOverall(id, order) ?? 60), 0) / ids.length;
+      returning.push({ lineup, back, strength });
+    }
+  }
+  returning.sort((a, b) => a.back - b.back || b.strength - a.strength || a.lineup.orgId.localeCompare(b.lineup.orgId));
+  for (const r of returning) {
+    const have = Object.values(orgs).filter((o) => o.region === r.lineup.region).length;
+    if (have >= CAREER_WORLD.minOrgsPerRegion) continue;
+    seat(r.lineup, start - r.back);
+  }
+
+  // 3. Fillers for what is left (Season X's rule and names).
+  const ficNext: Record<Region, number> = { NA: 0, EU: 0, SAM: 0, MENA: 0, OCE: 0, APAC: 0, SSA: 0 };
+  for (const region of REGIONS) {
+    const realCount = Object.values(orgs).filter((o) => o.region === region).length;
+    for (let i = 0; realCount + i < CAREER_WORLD.minOrgsPerRegion; i++) {
+      const ref = `fill:${region}:${i}`;
+      const prestige: WorldOrgState["prestige"] =
+        derivedFloat(careerSeed, streams.gen("fillerOrgPrestige", `${region}:${i}`)) < FILLER_PRESTIGE_ONE_CHANCE ? 1 : 0;
+      const base = ficNext[region];
+      ficNext[region] += 3;
+      orgs[ref] = {
+        ref,
+        name: fillerOrgName(region, i, careerSeed, CAREER_NAMES.bankVersion),
+        region,
+        prestige,
+        playerIds: [`fic:${region}:${base}`, `fic:${region}:${base + 1}`, `fic:${region}:${base + 2}`],
+        stars: prestige,
+      };
+    }
+  }
+
+  // 4. Free agents from the look-back window (club cards, then the window's subs).
+  const oldestOrder = orderFor(Math.max(0, start - CAREER_ERA.freeAgentSeasons));
+  const windowSubSeasons = new Set<string>();
+  for (let back = 1; back <= CAREER_ERA.freeAgentSeasons; back++) {
+    const sid = timelineSeasonId(start - back);
+    if (sid) windowSubSeasons.add(sid);
+  }
+  // A person who coaches a start-season lineup is on its bench, not on the market.
+  const coaching = new Set(
+    lineups.filter((l) => l.seasonId === seasonId && l.coachId).map((l) => coachById.get(l.coachId!)?.personId).filter((id): id is string => !!id),
+  );
+  const candidates: { id: string; region: Region; overall: number }[] = [];
+  const inPool = new Set<string>(coaching);
+  for (const p of players) {
+    if (rostered.has(p.id) || coaching.has(p.id)) continue;
+    const last = lastDatasetCardOrder(p.id);
+    if (last === undefined || last < oldestOrder || last > orderNow) continue;
+    const overall = anchorOverall(p.id, orderNow);
+    if (overall === null || tooOld(p.id)) continue;
+    candidates.push({ id: p.id, region: p.region, overall });
+    inPool.add(p.id);
+  }
+  for (const sub of subs) {
+    if (!windowSubSeasons.has(sub.seasonId) || rostered.has(sub.personId) || inPool.has(sub.personId)) continue;
+    const view = realPlayerView(sub.personId, ctx);
+    if (!view || tooOld(sub.personId)) continue;
+    candidates.push({ id: sub.personId, region: view.region, overall: view.overall });
+    inPool.add(sub.personId);
+  }
+  candidates.sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
+
+  let pool = candidates;
+  for (const hole of holes) {
+    const pick = pool.find((c) => c.region === hole.region);
+    if (pick) {
+      orgs[hole.ref].playerIds[hole.slot] = pick.id;
+      pool = pool.filter((c) => c.id !== pick.id);
+    } else {
+      orgs[hole.ref].playerIds[hole.slot] = `fic:${hole.region}:${ficNext[hole.region]++}`;
+    }
+  }
+  const fillersNeededFor = (real: { region: Region }[]): number => {
+    let need = 0;
+    for (const region of REGIONS) need += Math.max(0, CAREER_WORLD.faPoolFloorPerRegion - real.filter((r) => r.region === region).length);
+    return need;
+  };
+  let realFAs = pool;
+  let fillerCount = fillersNeededFor(realFAs);
+  for (let guard = 0; guard < 8 && realFAs.length + fillerCount > FA_POOL_CAP; guard++) {
+    realFAs = realFAs.slice(0, Math.max(0, FA_POOL_CAP - fillerCount));
+    fillerCount = fillersNeededFor(realFAs);
+  }
+  const fillerFAIds: string[] = [];
+  for (const region of REGIONS) {
+    const have = realFAs.filter((r) => r.region === region).length;
+    for (let j = have; j < CAREER_WORLD.faPoolFloorPerRegion; j++) fillerFAIds.push(`fic:${region}:${ficNext[region]++}`);
+  }
+
+  const world: WorldState = {
+    orgs,
+    overallDelta: {},
+    freeAgentIds: [...realFAs.map((r) => r.id), ...fillerFAIds],
+    retiredIds: [],
+    version: 0,
+    nameBankVersion: CAREER_NAMES.bankVersion,
+    ...(isGrowthContract(CAREER_DEV.growthModel) ? { growthModel: CAREER_DEV.growthModel } : {}),
+    eraStart: start,
+  };
+  addCreationFaProspects(world, careerSeed, ficNext, start);
+  // E3: past the end of the dataset no card will carry a real player again, so every one of them
+  // develops (worldGrowthWeek reads the off-script ids): his growth, plateau and decline from here.
+  if (lastEraRulesOn(world)) {
+    const ids = [...Object.values(world.orgs).flatMap((o) => o.playerIds), ...world.freeAgentIds];
+    for (const id of ids) if (!id.startsWith("fic:") && !id.startsWith("rook:")) world.overallDelta[id] = 0;
+  }
+  return world;
+}
+
 /**
  * rc.35 (front C, Miguel on rc.34: "no free agent above 80 potential in my
  * career"): every region's creation pool holds at least
@@ -398,9 +590,9 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
  * used, `nextFillerId` reads the highest). Before the rookies' first intake
  * the pool had none in about a third of the regions. Mutates `world`.
  */
-function addCreationFaProspects(world: WorldState, careerSeed: number, ficNext: Record<Region, number>): void {
+function addCreationFaProspects(world: WorldState, careerSeed: number, ficNext: Record<Region, number>, seasonIndex = 0): void {
   const { perRegion, minPotential, scanLimit } = CAREER_WORLD.creationFaProspects;
-  const ctx = { careerSeed, seasonIndex: 0, world };
+  const ctx = { careerSeed, seasonIndex, world };
   const count = new Map<Region, number>();
   for (const id of world.freeAgentIds) {
     const v = playerViewById(id, ctx);
@@ -1687,7 +1879,8 @@ export function fieldForEvent(
       ? (CAREER_REGION_FIELD.shift[def.region ?? ctx.userRegion] ?? 0) *
         (CAREER_REGION_FIELD.shiftScaleByDifficulty[ctx.difficulty] ?? 1) +
         // v2.1 M3 (R143): the early regional ramp (EU, NA), fading out by season.
-        earlyRegionShift(def.region ?? ctx.userRegion, ctx.difficulty, def.seasonIndex)
+        // v2.2 ORGMODE-2027: a new career's ramp, so counted from the world's start era.
+        earlyRegionShift(def.region ?? ctx.userRegion, ctx.difficulty, def.seasonIndex - (ctx.world.eraStart ?? 0))
       : 0) +
     // rc.39 F6 (R102): the top tiers' own shift (the counterpart of chemistry by time together).
     (CAREER_REGION_FIELD.tierShift[def.tier] ?? 0) +
@@ -1883,6 +2076,8 @@ export function agePassAndIntake(
     ...(world.rookieNames ? { rookieNames: { ...world.rookieNames } } : {}),
     ...(world.nameBankVersion !== undefined ? { nameBankVersion: world.nameBankVersion } : {}),
     ...(world.growthModel !== undefined ? { growthModel: world.growthModel } : {}),
+    // v2.2 ORGMODE-2027: the era the world was built at outlives the rollover.
+    ...(world.eraStart !== undefined ? { eraStart: world.eraStart } : {}),
     // v2.1 M2.1 (R142): the elite renewal's baseline and promoted prodigies outlive the rollover.
     ...(world.eliteBaseline ? { eliteBaseline: { ...world.eliteBaseline } } : {}),
     ...(world.potentialLift ? { potentialLift: { ...world.potentialLift } } : {}),
@@ -1907,6 +2102,7 @@ export function agePassAndIntake(
   // played. rc.32: the age clock steps exactly one year a season (rc.31's
   // was two across 2022-23 → 2024), so the step is 1 at every rollover.
   const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
+  const retireTable = retirementTableOf(world); // v2.2 ORGMODE-2027 (E3): the long window in a last-era world
   const lateWave = CAREER_WORLD.lateIntake;
   const lateWavePending =
     lateWave.enabled && toSeasonIndex >= CAREER_SEASONS.length && toSeasonIndex <= lateWave.atSeasonIndex;
@@ -1921,13 +2117,16 @@ export function agePassAndIntake(
       // rc.39 (R109): a player of the late wave plays its season first.
       if (lateWavePending && lateWavePlayers().has(view.id)) return false;
     }
-    const p = retirementChanceFor({
-      age: view.age - calendarStep,
-      nextAge: view.age,
-      peakAge: peakAgeOf(view),
-      overall: view.overall,
-      starOverall: CAREER_AGE.retirementStarOverallWorld,
-    });
+    const p = retirementChanceFor(
+      {
+        age: view.age - calendarStep,
+        nextAge: view.age,
+        peakAge: peakAgeOf(view),
+        overall: view.overall,
+        starOverall: CAREER_AGE.retirementStarOverallWorld,
+      },
+      retireTable,
+    );
     return p > 0 && rng.chance(p);
   };
 

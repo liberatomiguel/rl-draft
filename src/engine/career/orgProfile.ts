@@ -16,6 +16,7 @@
 import { CAREER_BOARD, CAREER_ECONOMY, CAREER_SEASONS, FEATURES } from "@/config/balance";
 import { coachById, lineups } from "@/data";
 import type { Region } from "../types";
+import { intakeSeasonIdFor } from "./calendar";
 import { playerViewById, seasonYear } from "./development";
 import { coachWageFor, computeSalaryAsk, gearOwned, moneyIndex, quantize, weeklyWageBill } from "./economy";
 import { inheritedGearFor, standingViewFor, structureWeeklyOf, type StandingView } from "./established";
@@ -84,10 +85,14 @@ interface SquadCtx {
   world: WorldState;
 }
 
-/** The dataset coach of an org's lineup this season (a real coach, when the data has one). */
-export function datasetCoachOf(ref: string, seasonIndex: number, difficulty: CareerDifficulty): CoachState | null {
-  const seasonId = CAREER_SEASONS[Math.min(seasonIndex, CAREER_SEASONS.length - 1)]?.seasonId;
-  if (seasonIndex >= CAREER_SEASONS.length) return null;
+/**
+ * The dataset coach of an org's lineup this season (a real coach, when the data has one).
+ * v2.2 ORGMODE-2027: a world built at the late wave's season (`eraStart`) reads that wave's coaches.
+ */
+export function datasetCoachOf(ref: string, seasonIndex: number, difficulty: CareerDifficulty, eraStart?: number): CoachState | null {
+  const lateWave = seasonIndex >= CAREER_SEASONS.length && eraStart === seasonIndex;
+  const seasonId = lateWave ? intakeSeasonIdFor(seasonIndex) : CAREER_SEASONS[Math.min(seasonIndex, CAREER_SEASONS.length - 1)]?.seasonId;
+  if (!seasonId || (seasonIndex >= CAREER_SEASONS.length && !lateWave)) return null;
   const lineup = lineups.find((l) => l.seasonId === seasonId && l.orgId === ref && !l.rareSpawn && !l.national);
   const coach = lineup?.coachId ? coachById.get(lineup.coachId) : undefined;
   if (!coach) return null;
@@ -218,6 +223,8 @@ export interface RealOrgChoice {
   standing: StandingView;
   /** rc.6: the board's confidence on day one. */
   confidenceStart: number;
+  /** v2.2 ORGMODE-2027: a returning org (no lineup in the start era), from its last lineup's era index. */
+  returningFrom?: number;
 }
 
 /** The region's real orgs a manager can take over this season, strongest first (fillers excluded). */
@@ -229,7 +236,7 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
     const stature = statureFor(i + 1, org.prestige);
     const squad = takeoverSquadOf(org.ref, stature, ctx);
     if (!squad) return;
-    const coach = datasetCoachOf(org.ref, ctx.seasonIndex, ctx.difficulty);
+    const coach = datasetCoachOf(org.ref, ctx.seasonIndex, ctx.difficulty, ctx.world.eraStart);
     const week = weeklyWageBill(squad.map((p) => p.salaryPerSplit), coach?.salaryPerSplit ?? null);
     const p = profileOf(stature);
     out.push({
@@ -261,6 +268,7 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       sponsorLevel: sponsorLadderLevelFor(p.rep),
       standing: standingViewFor(stature, p.rep),
       confidenceStart: CAREER_BOARD.confidence.start,
+      ...(org.returningFrom !== undefined ? { returningFrom: org.returningFrom } : {}),
     });
   });
   return out;

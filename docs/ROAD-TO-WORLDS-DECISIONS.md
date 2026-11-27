@@ -2795,9 +2795,33 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Medido:** `seasonGoalCounts.test.ts` passa por toda meta com contagem acima de um nas duas línguas e nas duas funções.
 - **Não verificado:** o bloco no navegador.
 
-<!-- R173 a R175 ficam para o front ERA (ORGMODE 2027 etapa 1), que trabalhou em paralelo; o front MANDATE começa no R176. -->
+> Nota de numeração (27/11): R173–R176 são do front ERA (ORGMODE-2027). Se o front MANDATE também usou R173+, o integrador renumera um dos blocos na fusão.
 
-## R176 — 27 de novembro de 2026: a diretoria de uma org consolidada define o mandato, o manager não escolhe (v2.2 ORGMODE 2027, front MANDATE; BALANCE_VERSION 53)
+## R173 — 27 de novembro de 2026: a carreira começa em qualquer era; `seasonIndex` continua sendo a era (v2.2.0-dev, BALANCE_VERSION 53)
+
+- **Decidido:** o save ganha `startSeasonIndex` opcional (ausente = 0) e o mundo ganha `eraStart`. `seasonIndex` continua absoluto (6 = RLCS 2027): idade, rótulos, dados, intake e sementes leem a era. O progresso da carreira (dia de fundação, primeira janela sem propostas, guardas de novato, a graça da estreia na nota, a rampa regional R143, o aviso de saves, o número da temporada na confirmação de apagar) lê `era.careerSeasonOf`. Nesta etapa só a tomada de org usa outra era; o clube fundado começa em 0 (o dinheiro da fundação é dinheiro da temporada 0).
+- **Por quê:** a auditoria (handoff `ORGMODE-2027-ERA.md`) achou centenas de leitores de era e cerca de vinte de progresso: o lado menor é o do progresso.
+- **Medido:** carreira fundada bit a bit igual ao rc.6 (2 fundadas × 8 temporadas e 1 tomada × 2, todas as flags de staging, hash do save no início e no fim de cada temporada, 40 linhas iguais).
+- **BALANCE_VERSION 52 → 53:** só porque `balance.ts` ganhou `CAREER_ERA` (o teste de impressão digital exige); nenhum número de carreira fundada muda.
+
+## R174 — 27 de novembro de 2026: o mundo de uma era tardia, e o dinheiro é da era (v2.2.0-dev)
+
+- **Decidido:** `buildWorldAtCreation(seed, era)` monta as lineups daquela temporada; região abaixo de 16 completa primeiro com orgs que voltam (última lineup nas 2 temporadas anteriores, mais nova primeiro, depois força), depois fillers. Agentes livres: jogadores reais sem vaga com último card de clube nas 3 temporadas anteriores e os subs dessa janela, no último overall, ninguém além da janela de aposentadoria, nenhum técnico de lineup da era.
+- **Dinheiro:** o índice de dinheiro e a receita tardia leem a era (absoluto), não o progresso. O índice único (×1,15 por temporada) multiplica todo valor indexado por igual, então uma tomada em 2027 é a economia de 2020 ×2,31 em tudo que é indexado; a diferença real é a receita tardia (Majors e Worlds maiores, patrocínio tardio) ligada desde o primeiro dia. Trocar para progresso pediria passar o início por dezenas de funções de dinheiro usadas também pelo mundo. **Não medido:** o caixa de uma tomada em 2027 contra a de 2020 (a decisão 3 do portão rc.6, "a economia é folgada?", fica mais pertinente).
+- **Medido (seed 5150):** em 2027 NA 19 orgs, EU 24, SAM 16 (4 voltam), MENA 16 (6 voltam), nenhum filler nessas quatro; OCE 9 fillers, APAC 3, SSA 12.
+
+## R175 — 27 de novembro de 2026: jogadores reais depois do fim dos dados (v2.2.0-dev)
+
+- **Decidido:** só num mundo montado na última era (`CAREER_ERA.lastEraRules`): jogador real de até 21 anos no início tem potencial `max(dos dados, overall no início + folga)`, folga sorteada por seed numa tabela por idade (teto 96), e o pico vai para onde ele alcança; todo jogador real passa a evoluir fora dos cards (antes ficava congelado no último card até se aposentar); aposentadoria de 26 a 32 (`CAREER_ERA.longCareers`) para mundo e elenco.
+- **Medido** (conjunto dos 213 jogadores de 2027, 2 tomadas jogadas pelo bot, EU seed 5150 e NA seed 9100, 8 temporadas): ativos depois de 3/6/8 temporadas 87–90 % / 62 % / 46–47 % → 99 % / 87–90 % / 72 %; reais no top 30 na temporada 4 / 8: 80–83 % / 3–13 % → 97–100 % / 63–67 %. Metas do spec cumpridas (≥ 75 %, ≥ 50 %, ≥ 60 %), mas as do "antes" já eram cumpridas em 3 e 6 temporadas.
+- **Efeito colateral medido:** o corte do top 30 do mundo sobe de 88 para 92–93 na temporada 3–4 (os jovens reais crescem). **Não medido:** o efeito disso na chance de título de uma tomada.
+
+## R176 — 27 de novembro de 2026: a tomada começa em 2027 (v2.2.0-dev)
+
+- **Decidido:** a tela de escolha monta o mundo em `CAREER_ERA.takeoverDefaultStart` (6); no build de staging `?era=N` (0–6) troca a era para teste até existir o seletor (etapa 4). Org que volta é marcada no dossiê ("De volta, vista pela última vez em RLCS 2026"). O técnico de uma org na onda de 2027 é o da lineup de 2027.
+- **Não feito:** as telas da diretoria (contrato "até a temporada N", registro "S7 · W3") ainda mostram o índice absoluto +1; é a UI do front MANDATE.
+
+## R177 — 27 de novembro de 2026: a diretoria de uma org consolidada define o mandato, o manager não escolhe (v2.2 ORGMODE 2027, front MANDATE; BALANCE_VERSION 54)
 
 - **Decidido:** numa org consolidada a temporada abre com o mandato da diretoria: três metas, classificação, dinheiro e elenco, cada uma com o que dá se cumprida e o que custa se perdida (confiança, passo do orçamento da próxima temporada, bônus). Não há escolha: os três planos e as faixas de chance saem desse modo; o clube fundado continua com os três planos exatamente como antes. A classificação é o objetivo Expected do patamar com a mira movida pelo nível de exigência; no motor é o único pacote da temporada (`offers` com id "expected", com os termos do mandato), então pontos de controle, ultimato, revisão, meta da HQ e o orçamento seguem funcionando sem caminho novo. O secundário e o legado não existem numa temporada com mandato (as metas de dinheiro e elenco ocupam esse lugar).
 - **Termos (`CAREER_BOARD.mandate.terms`):** classificação +12 / −18 de confiança, ±5 % de orçamento, bônus de 4 semanas da folha; dinheiro +5 / −6, ±5 %; elenco +5 / −6, bônus de 1,5 semana. Perdas × paciência do patamar e da dificuldade; ganhos e perdas × `stakes` da exigência (baixa 0,85, média 1, alta 1,2). A classificação pesa mais.
@@ -2805,14 +2829,14 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Por quê:** Miguel, 27/11: "Não deve ter a opção de escolher qual meta você quer... deve somente receber um pop up avisando quais as suas metas e o que você ganha/perde com isso."
 - **Não verificado:** os números dos termos não foram ajustados por medição; o ultimato e a demissão continuam lendo só a confiança.
 
-## R177 — 27 de novembro de 2026: os problemas da casa e o nível de exigência (v2.2 ORGMODE 2027, front MANDATE)
+## R178 — 27 de novembro de 2026: os problemas da casa e o nível de exigência (v2.2 ORGMODE 2027, front MANDATE)
 
 - **Decidido:** `orgIssuesOf(save)` lê a org como ela está e devolve até três problemas, do mais urgente: contrato de titular acabando, folha acima de 92 % do teto, caixa abaixo de 4 semanas da conta corrente, elo fraco (um titular 4+ pontos abaixo da média dos outros dois), núcleo velho, entrosamento baixo, sem técnico, sem reserva, banco caro, promessa fora do trio, patrocínio acabando, sem patrocinador, contratos acabando na próxima, pouca margem na folha. A meta de dinheiro sai de um problema de dinheiro (folha → baixar a folha até a semana 21; caixa → terminar com um piso; banco caro → arrecadar em vendas), senão do patamar (elite e candidato: gasto líquido em transferências dentro de um teto; meio e azarão: piso de caixa). A meta de elenco sai de um problema de elenco (contrato → renovar o nomeado; elo fraco → contratar um titular na régua; núcleo velho → baixar a média de idade; promessa no banco → escalar em 6 eventos; entrosamento → manter o núcleo), senão da exigência (alta: contratar; as outras: manter o núcleo). O nível de exigência é a soma do patamar (0 a 3) e do prestígio do dataset (−0,5 a +1): alta a partir de 2,5, média a partir de 1.
 - **Forma para a etapa 3:** `OrgIssue` nomeia a situação e o jogador, nunca a solução; as metas guardam o problema que respondem (`issue`). Cláusulas, pedidos à diretoria e departamentos se penduram nesses tipos.
 - **Leitura:** com os dados de 2020 as orgs tomadas são uniformes (elenco jovem, contratos de 2 a 3 temporadas, folha a 80-84 % do teto, sem reserva), então na chegada os problemas mais comuns são "sem reserva", "sem patrocinador", "pouca margem" e, em algumas, "elo fraco" e "sem técnico". Os problemas de contrato e de idade aparecem nas temporadas seguintes e numa chegada em 2027 (front ERA).
 - **Não verificado:** o conjunto de problemas numa chegada em 2027 (depende do front ERA).
 
-## R178 — 27 de novembro de 2026: as contas do mandato e os bots (v2.2 ORGMODE 2027, front MANDATE)
+## R179 — 27 de novembro de 2026: as contas do mandato e os bots (v2.2 ORGMODE 2027, front MANDATE)
 
 - **Decidido:** o dinheiro de transferências da temporada é contado por `pushLedger` num campo opcional `finances.transferTally` que só o mandato cria (o razão guarda menos que uma temporada); um clube fundado nunca o tem. O piso de caixa lê o saldo antes dos bônus da revisão. A meta de folha é lida na fronteira da semana 21 e de novo na revisão. Os eventos da promessa contam no `ingestResult` (titular escalado num evento oficial). O bot competente (`tuned`, `followsMandate`) trabalha o mandato: renova o nomeado, não vende nem dispensa os nomeados, contrata o titular na régua, escala a promessa, aceita oferta pelo reserva quando a meta é de vendas, e só contrata dentro da meta de dinheiro. Qualquer bot lê o mandato (`boardAutoAnswer`), então nenhum trava nele.
 - **Medido:** ver o handoff `ORGMODE-2027-MANDATE.md` (BOARD_PROBE de checagem e BOARD_SOFT).
