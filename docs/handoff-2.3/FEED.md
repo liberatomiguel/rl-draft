@@ -38,7 +38,7 @@ seriesWon 7 · seriesLost 6 · upsetWin 6 · upsetLoss 6 · winStreak 8 · loseS
 
 No browser, no full suite, no `npm run build`, no soft-lock probe, no battery. The hook is exercised by one real event per flag state, not across a season. The action is not wired into `careerStore` (wave 2 with the screen). Persist round-trip and cloud copy of the new field are untested (it is plain JSON, additive). The Portuguese has not had a native read beyond mine.
 
-## Samples, rendered from a test save (EN, then the same twelve in PT)
+## Samples, rendered from a test save (EN, then the same in PT)
 
 Org "Kestrel Gaming", a SAM career with a 19-series run, a Major won in season 2 (third Major or Worlds title on the ledger), a lost regional final, one signing and one sale, a provocative post settled as a receipt and a confident post. Opponents are world orgs and appear only as subjects.
 
@@ -56,20 +56,22 @@ Org "Kestrel Gaming", a SAM career with a 19-series run, a Major won in season 2
 | signing | @flip_vods82 | 280 | Marvel in Kestrel Gaming colours. The roster talk starts today. |
 | titleWon | @carry.main | 1663 | Kestrel Gaming win Fall Major. A whole season of work paid off. |
 | upsetWin | @pinchveteran | 157 | 3-1. Kestrel Gaming just flipped the bracket upside down. |
+| upsetLoss | @bracket_spirit94 | 67 | A shock at SAM Regional 3: 3-1. The bracket just got messy. |
 
 | Kind | Autor | Curtidas | PT |
 |---|---|---|---|
-| winStreak | @hotseat.gremlin | 347 | 3-1 em cima de Avidity Esports e já são 5 seguidas. |
-| managerReply | @lobby_dad45 | 128 | Kestrel Gaming sobre Avidity Esports: confiança lá em cima. Confiança é barata, resultado não é. |
-| managerPost | Manager (você) | 257 | Estamos prontos pra Avidity Esports. Kestrel Gaming confia no trabalho. |
-| seriesWon | @ceiling_dad91 | 143 | Anotações de SAM Regional 6: 3-1 em cima de FURIA, rotação afiada a série inteira. |
+| winStreak | @hotseat.gremlin | 347 | 3-1 contra Avidity Esports e já são 5 seguidas. |
+| managerReply | @lobby_dad45 | 128 | Kestrel Gaming encara Avidity Esports com a confiança lá em cima. Confiança é barata, resultado não é. |
+| managerPost | Manager (você) | 257 | Estamos prontos pra encarar Avidity Esports. Kestrel Gaming confia no trabalho. |
+| seriesWon | @ceiling_dad91 | 143 | Anotações do SAM Regional 6: 3-1 contra FURIA, rotação afiada a série inteira. |
 | sale | @boost_fan92 | 48 | $800k por Zenith. Kestrel Gaming fez caixa, agora quero ver onde vai gastar. |
-| finalLost | @open_veteran13 | 404 | Kestrel Gaming cai na final de SAM Regional 3. Orgulho da campanha mesmo assim. |
-| seriesLost | @ceiling_critter46 | 38 | SAM Regional 5: 3-1 pra FURIA. A gente volta. |
+| finalLost | @open_veteran13 | 404 | Kestrel Gaming cai na final do SAM Regional 3. Orgulho da campanha mesmo assim. |
+| seriesLost | @ceiling_critter46 | 38 | No SAM Regional 5: 3-1 contra FURIA. A gente volta. |
 | loseStreak | @hotseat.corner | 195 | São 5 seguidas, a última por 3-1. Hora de repensar as rotações? |
 | receipt | @reboundstats | 423 | True Neutral vence por 3-1. Engraçado, lembro de um post sobre esse confronto. |
-| signing | @flip_vods82 | 280 | Marvel com a camisa de Kestrel Gaming. A conversa sobre o elenco começa hoje. |
-| titleWon | @carry.main | 1663 | Kestrel Gaming leva Fall Major. Uma temporada inteira de trabalho que compensou. |
+| signing | @flip_vods82 | 280 | Marvel assina com Kestrel Gaming. A conversa sobre o elenco começa hoje. |
+| titleWon | @carry.main | 1663 | Kestrel Gaming leva o Fall Major. Uma temporada inteira de trabalho que compensou. |
 | upsetWin | @pinchveteran | 157 | 3-1. Kestrel Gaming virou a chave de cabeça pra baixo. |
+| upsetLoss | @bracket_spirit94 | 67 | Susto no SAM Regional 3: 3-1. A chave ficou bagunçada. |
 
 The score is always the series score, winner first. The claim lines (dynasty, best team in the region, first title) were eligible only where the data allowed and were simply not drawn in this sample; their texts are in `copy.career.feed.en.ts` / `.pt.ts` under `winStreak.7`, `winStreak.8`, `seriesWon.7`, `titleWon.7` and `titleWon.8`.
