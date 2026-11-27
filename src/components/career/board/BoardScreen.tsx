@@ -30,9 +30,12 @@ import { UserOrgMark } from "@/components/career/OrgMark";
 import { AppLink } from "@/components/ui/AppLink";
 import { SectionTitle } from "@/components/ui/Panel";
 import { useMounted } from "@/store/useMounted";
-import { pendingPackageOf } from "@/store/boardFlow";
+import { mandateOf, pendingMandateOf, pendingPackageOf } from "@/store/boardFlow";
+import { orgIssuesOf } from "@/engine/career/mandate";
+import { MandateGoals, MandateIssues } from "./MandateParts";
 import {
   AlsoAsked,
+  BoardMandateInline,
   BoardBrief,
   BoardPackageChoice,
   BoardSeasonPanel,
@@ -55,6 +58,8 @@ export function BoardScreen() {
   const board = save.board;
   const own = board?.kind === "owners";
   const pending = Boolean(pendingPackageOf(save));
+  const mandatePending = Boolean(pendingMandateOf(save));
+  const mandate = mandateOf(save);
   const tier = board && board.stature !== "owners" ? C.board.stature[board.stature] : null;
   const verdictOnly =
     save.phase === "seasonReview" &&
@@ -88,7 +93,11 @@ export function BoardScreen() {
           {/* The object and what hangs off it. */}
           <div className="contents lg:block lg:space-y-5">
             <div className="order-1 space-y-5">
-              {pending ? (
+              {mandatePending ? (
+                <div className="panel-strong p-4 sm:p-6">
+                  <BoardMandateInline save={save} C={C} />
+                </div>
+              ) : pending ? (
                 <div className="panel-strong p-4 sm:p-6">
                   <BoardPackageChoice save={save} C={C} />
                 </div>
@@ -98,11 +107,15 @@ export function BoardScreen() {
                   <BoardBrief save={save} C={C} />
                   {/* At the review the verdict states the objective and its result; the object would repeat it. */}
                   {verdictOnly ? null : <ObjectiveBoard save={save} C={C} />}
+                  {/* v2.2 MANDATE: the money and squad goals hang off the classification object. */}
+                  {verdictOnly ? null : <MandateGoals save={save} C={C} />}
                 </>
               )}
               <UltimatumBoard save={save} C={C} />
             </div>
             <div className="order-4 space-y-5">
+              {/* v2.2 MANDATE: what needs fixing at the org, read live (the mandate was set on the problems of its first day). */}
+              {mandate ? <MandateIssues issues={orgIssuesOf(save)} C={C} title={C.board.mandate.issuesNow} /> : null}
               <AlsoAsked save={save} C={C} />
               <BudgetStrip save={save} C={C} />
               <BoardTerms save={save} C={C} />
@@ -112,7 +125,7 @@ export function BoardScreen() {
           <div className="contents lg:block lg:space-y-5">
             <div className="order-2 space-y-5">
               <BoardUpgradePanel save={save} C={C} />
-              <ConfidencePanel board={board} C={C} />
+              <ConfidencePanel board={board} C={C} save={save} />
             </div>
             <div className="order-3">
               <StandingTrack save={save} C={C} />
@@ -135,6 +148,7 @@ function confidenceTone(c: number): string {
 /** What the HQ says about the board in one line: the plan to choose, an ultimatum, the objective's progress. */
 export function boardGlanceNoteOf(save: CareerSave, C: CareerCopy): { text: string; tone: "sub" | "warn" | "good" | "bad" } {
   const G = C.board.glance;
+  if (pendingMandateOf(save)) return { text: G.pendingMandate, tone: "warn" };
   if (pendingPackageOf(save)) return { text: G.pending, tone: "warn" };
   const u = save.board?.ultimatum;
   if (u && u.issuedSeason === save.clock.seasonIndex && u.status === "open") return { text: G.ultimatum, tone: "warn" };

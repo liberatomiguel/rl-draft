@@ -836,7 +836,21 @@ export function pushLedger(fin: FinanceState, entry: Omit<LedgerEntry, "id">): F
   // rc.34 (ECO-05): the season's earned and other income — the other-income cap's basis.
   const tally = tallyIncome(fin.incomeTally, entry);
   if (tally !== fin.incomeTally) next.incomeTally = tally;
+  // v2.2 MANDATE: the season's transfer money, only while an established org's mandate keeps it.
+  if (fin.transferTally) next.transferTally = tallyTransfers(fin.transferTally, entry);
   return next;
+}
+
+/** v2.2 MANDATE: the season's transfer money after one ledger line (a new season starts again from zero). */
+export function tallyTransfers(
+  t: { seasonIndex: number; out: number; in: number },
+  entry: Pick<LedgerEntry, "seasonIndex" | "kind" | "amount">,
+): { seasonIndex: number; out: number; in: number } {
+  if (entry.seasonIndex < t.seasonIndex) return t;
+  const base = t.seasonIndex === entry.seasonIndex ? t : { seasonIndex: entry.seasonIndex, out: 0, in: 0 };
+  if (entry.kind === "transferIn" && entry.amount > 0) return { ...base, in: base.in + entry.amount };
+  if ((entry.kind === "transferOut" || entry.kind === "signingBonus") && entry.amount < 0) return { ...base, out: base.out - entry.amount };
+  return base;
 }
 
 /**

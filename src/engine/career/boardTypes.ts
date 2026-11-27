@@ -61,6 +61,113 @@ export interface BoardSeason {
   met: boolean | null;
   /** rc.6 (ORGMODE E4): an established org's reason for this season's ask. Optional: older saves have none. */
   brief?: SeasonBrief;
+  /**
+   * v2.2 ORGMODE 2027 (front MANDATE): an established org's mandate, three goals the board sets and
+   * the player does not choose. Present = the season's `offers` hold the classification goal only
+   * (id "expected") and `choice` is set when the mandate is acknowledged. Optional, additive.
+   */
+  mandate?: BoardMandate;
+}
+
+// ---------------------------------------------------------------------------
+// v2.2 ORGMODE 2027 (front MANDATE): the board's mandate and the house's problems
+// ---------------------------------------------------------------------------
+
+/** How much the board asks of this org: read from its tier and its history (prestige). */
+export type DemandLevel = "low" | "medium" | "high";
+
+/**
+ * One of the org's real problems, read from its state (`orgIssuesOf`). Stage 3 attaches its
+ * tools to these kinds (contract clauses to `dealsEnding`, asks to the board to `wageBill`,
+ * the departments to `noCoach`), so a kind names a situation, never a fix.
+ */
+export type OrgIssueKind =
+  | "dealsEnding" // a starter's deal ends this season
+  | "wageBill" // the wage bill at or over the board's ceiling
+  | "shortCash" // cash under a few weeks of the running bill
+  | "weakLink" // one starter well under the other two
+  | "agingCore" // an old starting three
+  | "lowChemistry" // the starters do not play together yet
+  | "noCoach" // no head coach
+  | "costlyBench" // a reserve paid like a starter
+  | "noReserve" // nobody on the bench: an absent starter leaves a seat empty
+  | "sponsorEnding" // the sponsor deal ends this season
+  | "prospectBenched" // a young prospect outside the starting three
+  | "noSponsor" // no sponsor under contract
+  | "dealsSoon" // starters' deals end next season
+  | "wageRoom"; // little room under the wage ceiling
+
+export interface OrgIssue {
+  kind: OrgIssueKind;
+  /** 0-1: how pressing it is (the order shown; the mandate reads the most pressing). */
+  severity: number;
+  /** The figure behind it: a share in percent, weeks of cash, an age, a chemistry percent, a gap, a count. */
+  value: number;
+  /** The player it is about, when it is about one (a deal, the weak link, the bench). */
+  playerId?: string;
+  playerName?: string;
+}
+
+export type MandateArea = "classification" | "money" | "squad";
+export type MoneyGoalKind = "cashFloor" | "wagesUnder" | "netSpend" | "sales";
+export type SquadGoalKind = "signStarter" | "renew" | "ageUnder" | "youthEvents" | "keepCore";
+
+/** What a goal gives when met or costs when missed: confidence points, next season's budget step (× multiplier), a bonus paid at the review. */
+export interface MandateTerms {
+  confidence: number;
+  budget: number;
+  bonus: number;
+}
+
+interface MandateGoalBase {
+  gain: MandateTerms;
+  loss: MandateTerms;
+  /** Settled at the season review (null before). */
+  met: boolean | null;
+  /** The problem it answers, when it answers one. */
+  issue?: OrgIssueKind;
+}
+
+export interface ClassificationGoal extends MandateGoalBase {
+  area: "classification";
+  objective: SeasonGoalSpec;
+}
+
+export interface MoneyGoal extends MandateGoalBase {
+  area: "money";
+  kind: MoneyGoalKind;
+  /** cashFloor: the balance to end above; wagesUnder: the weekly bill; netSpend: the most net transfer spend; sales: the sales to raise. */
+  amount: number;
+  /** wagesUnder: the deadline week, and whether the bill was under it then (set at that week's boundary). */
+  week?: number;
+  deadlineMet?: boolean;
+}
+
+export interface SquadGoal extends MandateGoalBase {
+  area: "squad";
+  kind: SquadGoalKind;
+  /** signStarter: the overall bar; ageUnder: the age line; youthEvents: the events; keepCore / renew: the players named. */
+  value: number;
+  playerIds?: string[];
+  playerNames?: string[];
+  /** signStarter: the squad when the mandate was set (a newcomer is anyone else). */
+  baselineIds?: string[];
+  /** youthEvents: events played so far in the starting three. */
+  progress?: number;
+}
+
+export interface BoardMandate {
+  seasonIndex: number;
+  demand: DemandLevel;
+  /** The org's problems when the mandate was set (two or three, most pressing first). */
+  issues: OrgIssue[];
+  classification: ClassificationGoal;
+  money: MoneyGoal;
+  squad: SquadGoal;
+  /** False until the player has read it (the season's first decision); the sponsor desk opens after. */
+  acknowledged: boolean;
+  /** Last season's mandate in brief (the new pop-up says what changed and why). Absent in a board's first season. */
+  last?: { demand: DemandLevel; tier: Stature; met: Record<MandateArea, boolean | null> };
 }
 
 /** rc.6 (ORGMODE E4): why the board asks what it asks this season, read from last season. */
@@ -137,6 +244,8 @@ export interface BoardState {
   upgrade?: { offeredSeason: number; taken?: string };
   /** rc.6 (ORGMODE E1): the last Standing tier change (an established org; optional, additive). */
   tierChange?: TierChange;
+  /** v2.2 ORGMODE 2027 (MANDATE): the org's dataset prestige (0-3) read at the takeover, for its demand level. Optional, additive. */
+  prestige?: number;
 }
 
 export interface JobOffer {

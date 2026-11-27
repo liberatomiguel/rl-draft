@@ -10,6 +10,24 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased: 2.2 ORGMODE 2027, front MANDATE] — 2026-11-27 · The board's mandate (branch `v22/mandate`)
+
+Miguel's brief of 27/11: taking over an org, the player does not choose his goals; he is told the demand level and receives one pop-up with his goals and what he gains or loses, money, signings and classification, by mail too, with a welcome mail. Spec: `docs/handoff-2.2/ORGMODE-2027-SPEC.md` (stage 2). Handoff: `ORGMODE-2027-MANDATE.md`. Decisions R177 to R179. BALANCE_VERSION 54.
+
+### Added
+- **The board's mandate** (R177). An established org's season opens with three goals the board sets: classification (the tier's Expected objective, aimed by the demand level), money and squad (read from the org's problems). Each states what meeting it gives and what missing it costs (confidence, next season's budget, a bonus); the review settles all three. The founded club keeps its three plans.
+- **The house's problems** (R178). `orgIssuesOf` reads the org as it is (a starter's deal ending, wages at the ceiling, short cash, a weak link, an old core, chemistry, no coach, no reserve, a costly bench, a benched prospect, the sponsor) and the dossier shows them with the demand level (low, medium, high) before the takeover.
+- **The pop-up.** After the arrival screen and at every new season: the org, the demand as a figure, the three goals with their terms, last season's verdicts and the board's brief, one action. Portal on `<body>`, no close; the sponsor desk opens after it.
+- **Mail.** The owner's welcome (the org's own RLCS history), the mandate, a report on the three goals at weeks 11 and 21, the verdict on the three at the review.
+- **Screens.** `/career/board`: the classification object, the money and squad goals with today's figures, what needs fixing now. HQ's season-goal block: the money and squad goals under the classification rows. The season review's verdict: the three goals, the count met.
+
+### Changed
+- An established org's season has one package (the mandate's classification goal) and no secondary or legacy ask. `chooseBoardPackageFlow` with any id reads the mandate there.
+- The competent bot (`tuned`) works the mandate (R179); every bot reads it, so none stops on it.
+- After the merge with the 2027 start (front ERA): the board's dates read the career season or the year ("Season 3", "S1 · W3", "RLCS 2027"), not the era index; the signing bar is capped per tier; "no sponsor" is not a problem in the board's first week.
+
+### Balance
+- `CAREER_BOARD.mandate` (demand, terms, issue thresholds, the money and squad goals' figures). BALANCE_VERSION 53 → 54.
 ## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
 
 ### Added

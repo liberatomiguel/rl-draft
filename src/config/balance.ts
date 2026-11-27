@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 53;
+export const BALANCE_VERSION = 54;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5337,6 +5337,85 @@ export const CAREER_BOARD = {
     offersAfterDismissal: 3,
     /** Unsolicited off-season offer: the manager's reputation and confidence it needs, and its chance. */
     unsolicited: { minRep: 55, minConfidence: 60, chance: 0.5 },
+  },
+  /**
+   * v2.2 ORGMODE 2027 stage 2 (front MANDATE): an established org's season opens with the board's
+   * mandate, three goals the player is told and does not choose (engine/career/mandate.ts). The
+   * classification goal is the tier's Expected objective with its aim moved by the demand level; the
+   * money and squad goals come from the org's problems (`orgIssuesOf`). A founded club keeps the three
+   * plans and reads none of this.
+   */
+  mandate: {
+    /**
+     * The demand level: tier score + prestige score (the dataset's 0-3), at or over a cut. It moves the
+     * classification aim (`aimShift`, negative = harder) and multiplies every confidence gain and loss
+     * of the mandate (`stakes`).
+     */
+    demand: {
+      tierScore: { underdog: 0, mid: 1, contender: 2, elite: 3 } as Record<string, number>,
+      prestigeScore: [-0.5, 0, 0.5, 1] as readonly number[],
+      cuts: { medium: 1, high: 2.5 },
+      aimShift: { low: 0.05, medium: 0, high: -0.05 } as Record<string, number>,
+      stakes: { low: 0.85, medium: 1, high: 1.2 } as Record<string, number>,
+    },
+    /**
+     * What each goal gives and costs. confidence: points (a loss × patience × stakes, a gain × stakes);
+     * budget: next season's budget multiplier step; bonusWeeks: weeks of the wage bill paid at the review.
+     * Classification weighs most (the Expected plan's own terms).
+     */
+    terms: {
+      classification: { hit: 12, miss: -18, budget: 0.05, budgetLoss: -0.05, bonusWeeks: 4 },
+      money: { hit: 5, miss: -6, budget: 0.05, budgetLoss: -0.05, bonusWeeks: 0 },
+      squad: { hit: 5, miss: -6, budget: 0, budgetLoss: 0, bonusWeeks: 1.5 },
+    },
+    /** The house's problems: thresholds and how pressing each reads (severity 0-1), at most `max` shown. */
+    issues: {
+      max: 3,
+      /** Wage bill over this share of the ceiling: a problem (and the "wages" money goal). */
+      wageShare: 0.92,
+      /** Bill at or over this share: the softer "little wage room" note. */
+      roomShare: 0.8,
+      /** Cash under this many weeks of the running bill (wages + structure). */
+      cashWeeks: 4,
+      /** A starter this many points under the other two's average: the weak link. */
+      weakGap: 4,
+      /** Starters' average age at or over this, or two starters at `oldAge` or older. */
+      agingAvg: 26,
+      oldAge: 27,
+      /** Chemistry under this percent. */
+      chemistry: 60,
+      /** A reserve paid at least this share of the average starter's wage. */
+      benchShare: 0.6,
+      /** A prospect this young or younger outside the starting three. */
+      prospectAge: 20,
+      severity: {
+        dealsEnding: 0.9, wageBill: 0.85, shortCash: 0.8, weakLink: 0.7, agingCore: 0.6, lowChemistry: 0.55,
+        noCoach: 0.5, noReserve: 0.48, costlyBench: 0.45, sponsorEnding: 0.4, prospectBenched: 0.35, noSponsor: 0.3, dealsSoon: 0.25, wageRoom: 0.2,
+      } as Record<string, number>,
+    },
+    /** The money goals' figures, in weeks of the running bill (wages + structure). */
+    money: {
+      cashFloorWeeks: { low: 2, medium: 3, high: 4 } as Record<string, number>,
+      netSpendWeeks: { low: 3, medium: 4, high: 5 } as Record<string, number>,
+      /** The sales goal: this share of the costly reserve's market value. */
+      salesShare: 0.5,
+      /** The wage goal's deadline (the week-21 split boundary). */
+      wagesWeek: 21,
+    },
+    /** The squad goals' figures. */
+    squad: {
+      /** A signing at least this far over the weakest starter, never under the tier's bar nor over its pull. */
+      signOver: 2,
+      tierBar: { underdog: 76, mid: 80, contender: 84, elite: 88 } as Record<string, number>,
+      /** The bar never asks more than this (a 2027 elite's weakest starter is 91-93: weakest + 2 asked for a 95). */
+      barMax: { underdog: 82, mid: 86, contender: 90, elite: 93 } as Record<string, number>,
+      /** The age goal: the starters' average at or under the current one minus this. */
+      ageCut: 1,
+      /** The prospect's events in the starting three. */
+      youthEvents: 6,
+      /** Players named in "keep the core". */
+      core: 2,
+    },
   },
 } as const;
 
