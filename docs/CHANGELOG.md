@@ -10,6 +10,20 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-dev] — 2026-11-27 · Majors and Worlds in their season's format (branch `v22/event-formats`, not on staging)
+
+Miguel's document of 27/11 ("Formatos dos Majors e Worlds no Road to Worlds"): each season's three Majors share a format and the Worlds has its own, as in the RLCS of that season. Spec: `docs/handoff-2.2/FORMATS-SPEC.md`. Decision R-FMT (numbered at the merge). Behind `FEATURES.eventFormats` (staging build only; `NEXT_PUBLIC_EVENT_FORMATS=1` for probes); off, every official event is the classic Swiss into the 8-team double elimination, byte for byte.
+
+### Added
+- **Six season rows** (`CAREER_EVENT_LAYOUTS`): Season X Majors Swiss → top-8 knockout; 2021-22 Majors 16-team double elimination, Worlds 2 double-elimination groups of 8 → top-8 knockout; 2022-23 Majors 4 groups of 4 → 12-team knockout (group winners to the quarterfinals), Worlds as 2021-22; 2024 Majors Swiss → top-8 knockout, Worlds Swiss → 8-team hybrid; 2025 Majors Swiss → 8-team hybrid, Worlds 2 groups of 8 → 8-team hybrid; 2026 Majors 4 groups of 4 → 8-team hybrid, Worlds 4 groups of 4 → 12-team hybrid. Season X's Worlds stays cancelled. From 2027 the seasons rotate through the six rows (2027 = Season X's row, its Worlds played).
+- **Engine** (`engine/eventLayouts.ts`, new branches in `playoffs.ts` / `tournament.ts`): group stages kept in the Swiss state (`kind`, `groups`; the draw is by rating pots, regions apart where possible), five career-only brackets with their pairings, eliminations and placements, the new placement `top12` (9th-12th). The Draft paths are untouched (golden master bit-exact). An event keeps the shape it started with; no save version change.
+- **Screens**: the lobby's format line and two rule lines (Saturday, Sunday), the weekend strip named by stage, group tables in the standings, the brackets drawn per shape (upper / lower rows, the hybrid quarterfinal under the lower bracket), the Saturday panel with the side the user starts Sunday on ("Upper bracket", "Bye to the quarterfinals") and, for the 16-team double elimination, Saturday's bracket and the last eight with their bracket records; "Group stage exit" where a Swiss exit was; follow mode records the groups. EN and PT.
+
+### Balance
+- **Same total per event** (FORMATS-SPEC §4): a bracket redistributes the classic event's points and prize pool over its own placements (the mean of the ranks each covers; 9th-12th get 1/6 above, 13th-16th 1/6 below the classic 9th-16th value). A Major's points: 3rd-4th 470 when they are shared, 5th-8th 280, 9th-12th 140, 13th-16th 100. BALANCE_VERSION 53. Title odds per shape are not measured yet.
+
+---
+
 ## [2.2.0-rc.6] — 2026-11-27 · The established organisation: its own rules, its own screens (staging)
 
 Miguel's brief of 27/11: taking over a real organisation has to read as a consolidated org, with its own goals, budget, progression and screens, not as the founded club's ladder. Spec and handoffs: `docs/handoff-2.2/ORGMODE-*.md`. What to play and what Miguel decides: `docs/V2.2-STATUS.md`. Decisions R163 to R172, DESIGN-DECISIONS #187 to #201.

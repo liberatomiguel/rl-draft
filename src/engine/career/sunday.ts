@@ -68,8 +68,15 @@ export function briefingEdgeFor(
     const round = roundOrderFor(t.playoffs.format)[t.playoffs.rounds.length];
     const fx = CAREER_SUNDAY.championshipBriefing[choice];
     if (round === "grand_final" || round === "final") return fx.final;
-    if (round === "quarterfinal" || round === "ub_quarterfinal" || round === "lb_round1") return fx.quarters;
-    if (round === "semifinal" || round === "ub_semifinal" || round === "lb_round2" || round === "lb_semifinal") return fx.semis;
+    if (
+      round === "quarterfinal" || round === "ub_quarterfinal" || round === "lb_round1" ||
+      // v2.2 event formats: the opening rounds of the career-only brackets.
+      round === "upper_round" || round === "lower_round1" || round === "ko_round1" || round === "ub_round1"
+    ) return fx.quarters;
+    if (
+      round === "semifinal" || round === "ub_semifinal" || round === "lb_round2" || round === "lb_semifinal" ||
+      round === "lower_round2" || round === "lb_round3" || round === "lb_round4"
+    ) return fx.semis;
     return fx.other;
   }
   const fx = briefingEffectOf(choice);

@@ -32,7 +32,7 @@ import { dateOfDay, eventTeamPreview, nameOfRef } from "@/components/career/care
 import { formatDateShort } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
-import { openingOpponentOf, userSeedOf } from "@/components/career/event/weekendView";
+import { advancedSeedsOf, openingOpponentOf, userSeedOf } from "@/components/career/event/weekendView";
 import { TierChip } from "@/components/career/hub/hubShared";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge } from "@/components/ui/Badge";
@@ -143,14 +143,19 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
 
   // Out in the Swiss: the playoffs go on without the user (SUN-03's Sunday side).
   if (ahead.kind === "championship" && !ahead.playing) {
-    const seeds = t?.playoffs?.seeds ?? [];
+    // v2.2 event formats: Sunday's sides in standing order (a 16-team double elimination keeps eight).
+    const seeds = t?.layout ? advancedSeedsOf(t).map((r) => r.id) : (t?.playoffs?.seeds ?? []);
     return (
       <div>
         <SundayHeader save={save} C={C} ahead={ahead} title={C.sunday.outTitle}>
           <p className="mt-1 text-sm text-sub">{C.sunday.outLine(recordText)}</p>
         </SundayHeader>
         <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3">
-          <CrestStrip save={save} refs={seeds} label={C.event.playoffEight} />
+          <CrestStrip
+            save={save}
+            refs={seeds}
+            label={t?.layout ? (t.layout.stage === "none" ? C.event.formats.lastEight : C.event.formats.sundayField(seeds.length)) : C.event.playoffEight}
+          />
         </div>
         <div className="mt-4"><Button variant="secondary" size="lg" onClick={() => go(null, "watch")}>{C.sunday.watch}</Button></div>
         <p className="mt-2 text-[11px] text-faint">{C.sunday.outHint}</p>
@@ -161,7 +166,10 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
   const championship = ahead.kind === "championship";
   const seed = t ? userSeedOf(t) : null;
   const openerId = t ? openingOpponentOf(t.playoffs) : null;
-  const openerSeed = openerId && t?.playoffs ? t.playoffs.seeds.indexOf(openerId) + 1 : null;
+  const openerSeed =
+    openerId && t?.playoffs
+      ? (t.layout ? advancedSeedsOf(t).map((r) => r.id) : t.playoffs.seeds).indexOf(openerId) + 1
+      : null;
   const openerName = openerId ? (t?.teams[openerId]?.name ?? nameOfRef(save, openerId)) : null;
   const field = championship ? [] : lobbyFieldRefs(save, def, eventTeamPreview(save, def).rating.total);
   const q = def.region ? save.competition.qualifiedRefs?.[def.region] : undefined;

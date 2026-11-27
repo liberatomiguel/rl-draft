@@ -2,12 +2,21 @@
 import type { FollowEventState } from "@/engine/career/types";
 import type { PlayoffRoundName } from "@/engine/types";
 import { followSwissTable, followWinnerOf } from "@/engine/career/follow";
-import { roundOrderFor } from "@/engine/playoffs";
+import { playoffFormatOf } from "@/engine/eventLayouts";
+import { LAYOUT_ROUND_ORDER, roundOrderFor } from "@/engine/playoffs";
 import type { BracketTournament } from "./CareerBracket";
 
-const names = new Set<string>([...roundOrderFor("double"), ...roundOrderFor("single")]);
+const names = new Set<string>([
+  ...roundOrderFor("double"),
+  ...roundOrderFor("single"),
+  // v2.2 event formats: the career-only brackets' rounds.
+  ...Object.values(LAYOUT_ROUND_ORDER).flat(),
+]);
 
-export function followBoardOf(f: Pick<FollowEventState, "teams" | "swiss" | "playoffs" | "seeds">, revealedRounds: number) {
+export function followBoardOf(
+  f: Pick<FollowEventState, "teams" | "swiss" | "playoffs" | "seeds"> & { def?: Pick<FollowEventState["def"], "layout"> },
+  revealedRounds: number,
+) {
   const swissShown = Math.max(0, Math.min(revealedRounds, f.swiss.length));
   const playoffShown = Math.max(0, revealedRounds - f.swiss.length);
   const swissComplete = swissShown === f.swiss.length;
@@ -17,7 +26,11 @@ export function followBoardOf(f: Pick<FollowEventState, "teams" | "swiss" | "pla
     series: round.series.map((s) => ({ teamAId: s.a, teamBId: s.b, score: [s.sa, s.sb] as [number, number], winnerTeamId: followWinnerOf(s) })),
   }));
   const playoffs: BracketTournament["playoffs"] = rounds.length ? {
-    format: rounds.some((r) => r.name.startsWith("ub_")) ? "double" : "single",
+    format: f.def?.layout
+      ? playoffFormatOf(f.def.layout.bracket)
+      : rounds.some((r) => r.name.startsWith("ub_"))
+        ? "double"
+        : "single",
     finished: true,
     seeds: swissComplete ? f.seeds : [],
     rounds: swissComplete ? rounds : [],

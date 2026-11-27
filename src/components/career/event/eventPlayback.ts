@@ -9,9 +9,11 @@
  * (seeded off each game's persisted result) and their pacing in clockPlayback.ts.
  */
 
+import { isLayoutBracket, lossEliminates } from "@/engine/eventLayouts";
 import type {
   Placement,
   PlayoffRoundName,
+  PlayoffState,
   SeriesResult,
   TournamentState,
 } from "@/engine/types";
@@ -224,7 +226,7 @@ export function userSeriesStatus(
     swissLossesAfter: number;
     winsToAdvance: number;
     lossesToEliminate: number;
-    playoffFormat: "double" | "single" | null;
+    playoffFormat: PlayoffState["format"] | null;
   },
 ): UserSeriesStatus {
   const userWon = series.winnerTeamId === "user";
@@ -240,6 +242,8 @@ export function userSeriesStatus(
     return "advancing";
   }
   if (ctx.playoffFormat === "single") return "eliminated";
+  // v2.2 event formats: the career-only brackets name their own eliminating rounds.
+  if (isLayoutBracket(ctx.playoffFormat)) return name && lossEliminates(ctx.playoffFormat!, name) ? "eliminated" : null;
   if (
     name === "lb_round1" ||
     name === "lb_round2" ||
@@ -311,6 +315,7 @@ export const PLACEMENT_ORDER: readonly Placement[] = [
   "top4",
   "top6",
   "top8",
+  "top12",
   "swiss_exit",
 ];
 

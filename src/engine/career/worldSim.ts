@@ -1788,7 +1788,7 @@ export function simulateAiEvent(
     userSeedRow: ctx.userSeedRow ?? null,
   });
   const rng: Rng = createRng(deriveSeed(ctx.careerSeed, `evt:${def.id}`));
-  const state = initFieldTournament(field, def.format, rng);
+  const state = initFieldTournament(field, def.format, rng, def.layout);
   return fastForward(state, ctx.difficulty, rng);
 }
 

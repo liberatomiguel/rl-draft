@@ -13,7 +13,7 @@
 
 import { CAREER_BOARD, CAREER_POINTS } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import { prizePoolPaidFor, type BreachOutcome } from "@/engine/career/economy";
+import { prizePoolPaidFor, prizeShapeOf, type BreachOutcome } from "@/engine/career/economy";
 import type {
   CalendarWeek,
   CareerDifficulty,
@@ -190,7 +190,7 @@ export function prizePoolOf(
   def: Pick<CareerEventDef, "tier" | "format" | "seasonIndex">,
   difficulty: CareerDifficulty,
 ): number {
-  return prizePoolPaidFor(def.tier, def.format, difficulty, def.seasonIndex);
+  return prizePoolPaidFor(def.tier, prizeShapeOf(def), difficulty, def.seasonIndex);
 }
 
 /** Max Season Points on the line (champion row); null for unofficials/Worlds. */

@@ -379,7 +379,7 @@ export function ultimatumMissionFor(week: number, input: ObjectiveInput): Season
 }
 
 const PLACE: Record<Placement, number> = {
-  champion: 1, runner_up: 2, third: 3, fourth: 4, top4: 4, top6: 6, top8: 8, swiss_exit: 16,
+  champion: 1, runner_up: 2, third: 3, fourth: 4, top4: 4, top6: 6, top8: 8, top12: 12, swiss_exit: 16,
 };
 
 /** How far the mission is: the user's results of the season from its week on. */

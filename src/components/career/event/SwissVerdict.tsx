@@ -11,6 +11,7 @@
  * screen reader announces the moment it appears.
  */
 
+import type { EventStageKind } from "@/engine/types";
 import { MilestoneMoment } from "./MilestoneMoment";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
@@ -22,6 +23,7 @@ export function SwissVerdict({
   context,
   regionalName,
   seed = null,
+  stageKind,
 }: {
   verdict: Verdict | null;
   context: "qualifier" | "twoDay";
@@ -29,6 +31,8 @@ export function SwissVerdict({
   regionalName: string;
   /** rc.29: the locked seed once every Swiss round is on screen (Major / Worlds). */
   seed?: number | null;
+  /** v2.2 event formats: the stage of a Major / Worlds in its season's shape. */
+  stageKind?: EventStageKind;
 }) {
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
@@ -39,7 +43,9 @@ export function SwissVerdict({
       ? context === "qualifier"
         ? C.event.qualifiedForSunday
         : C.event.throughToSunday
-      : C.event.eliminatedInSwiss;
+      : stageKind
+        ? C.event.formats.eliminatedIn[stageKind]
+        : C.event.eliminatedInSwiss;
   const sub = !verdict
     ? ""
     : context === "qualifier"

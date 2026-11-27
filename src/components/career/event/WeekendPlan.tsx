@@ -31,7 +31,8 @@ export function roleTitleOf(C: CareerCopy, role: WeekendRole, def: CareerEventDe
     case "qualifier":
       return C.common.tier.qualifier;
     case "swissDay":
-      return C.event.swissStage;
+      // v2.2 event formats: Saturday is named by its stage.
+      return def.layout ? C.event.formats.stage[def.layout.stage] : C.event.swissStage;
     case "championshipSunday":
       return C.event.championshipSunday;
     default:
@@ -40,7 +41,15 @@ export function roleTitleOf(C: CareerCopy, role: WeekendRole, def: CareerEventDe
 }
 
 /** One line on what the day is (counts come from balance, never the copy). */
-export function roleSubOf(C: CareerCopy, role: WeekendRole): string | null {
+export function roleSubOf(C: CareerCopy, role: WeekendRole, def?: CareerEventDef): string | null {
+  // v2.2 event formats: a Major / Worlds in its season's shape.
+  const layout = def?.layout;
+  if (layout && role === "swissDay") {
+    return layout.stage === "swiss"
+      ? C.event.formats.stageSub.swiss(TOURNAMENT.swiss.teams, TOURNAMENT.swiss.winsToAdvance)
+      : C.event.formats.stageSub[layout.stage];
+  }
+  if (layout && role === "championshipSunday") return C.event.formats.bracketSub[layout.bracket];
   switch (role) {
     case "qualifier":
       return C.event.roleQualifierSub(TOURNAMENT.swiss.teams, CAREER_QUALIFIER.advanceSlots);
@@ -65,6 +74,13 @@ export function formatLineOf(C: CareerCopy, def: CareerEventDef): string {
       TOURNAMENT.swiss.winsToAdvance,
       regionalForQualifier(def)?.name ?? C.common.tier.regional,
     );
+  }
+  if (def.layout) {
+    // v2.2 event formats: "4 groups of 4 → top-8 hybrid bracket".
+    const F = C.event.formats;
+    return def.layout.stage === "none"
+      ? `${F.stageShort.none} · ${F.bracketRule.double16}`
+      : `${F.stageShort[def.layout.stage]} → ${F.bracketShort[def.layout.bracket]}`;
   }
   if (isTwoDayEvent(def)) return C.event.formatTwoDay(TOURNAMENT.swiss.teams, TOURNAMENT.playoffs.teams);
   return C.event.formatSwiss;
@@ -170,7 +186,7 @@ function WeekendDayCell({
   arrow: boolean;
 }) {
   const D = C.dates;
-  const sub = roleSubOf(C, d.role);
+  const sub = roleSubOf(C, d.role, d.def);
   const date = formatDateShort(D, dateOfDay(save.clock.seasonIndex, d.day));
   return (
     <li

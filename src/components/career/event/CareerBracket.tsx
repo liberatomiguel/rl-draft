@@ -65,7 +65,48 @@ const SLOTS: Record<PlayoffRoundName, number> = {
   quarterfinal: 4,
   semifinal: 2,
   final: 1,
+  // v2.2 event formats (career-only brackets)
+  upper_round: 2,
+  lower_round1: 4,
+  lower_round2: 2,
+  ko_round1: 4,
+  ub_round1: 8,
+  lb_round3: 2,
+  lb_round4: 2,
 };
+
+/**
+ * v2.2 event formats: each career-only bracket's rows of columns (upper /
+ * lower, or one knockout row). The hybrids' quarterfinal sits with the lower
+ * bracket (upper losers drop into it), their semifinal and final with the upper.
+ */
+type BracketRow = { side: "upper" | "lower" | null; columns: PlayoffRoundName[] };
+const LAYOUT_ROWS: Partial<Record<PlayoffState["format"], BracketRow[]>> = {
+  single8: [{ side: null, columns: ["quarterfinal", "semifinal", "grand_final"] }],
+  single12: [{ side: null, columns: ["ko_round1", "quarterfinal", "semifinal", "grand_final"] }],
+  hybrid8: [
+    { side: "upper", columns: ["upper_round", "semifinal", "grand_final"] },
+    { side: "lower", columns: ["lower_round1", "quarterfinal"] },
+  ],
+  hybrid12: [
+    { side: "upper", columns: ["upper_round", "semifinal", "grand_final"] },
+    { side: "lower", columns: ["lower_round1", "lower_round2", "quarterfinal"] },
+  ],
+  double16: [
+    { side: "upper", columns: ["ub_round1", "ub_quarterfinal", "ub_semifinal", "ub_final", "grand_final"] },
+    { side: "lower", columns: ["lb_round1", "lb_round2", "lb_round3", "lb_round4", "lb_semifinal", "lb_final"] },
+  ],
+};
+
+/** Cells a round shows: the classic table, but the hybrids' quarterfinal (and the 8-team one's lower round 1) has two series. */
+function slotsOf(format: PlayoffState["format"], name: PlayoffRoundName): number {
+  if (format === "hybrid8" && name === "lower_round1") return 2;
+  if ((format === "hybrid8" || format === "hybrid12") && name === "quarterfinal") return 2;
+  if (format === "double16") {
+    if (name === "ub_quarterfinal" || name === "lb_round1" || name === "lb_round2") return 4;
+  }
+  return SLOTS[name];
+}
 
 export function CareerBracket({
   save,
@@ -111,7 +152,7 @@ export function CareerBracket({
     const ri = roundIndexByName.get(name);
     const spoiler = ri !== undefined && ri > revealedRounds;
     const series = ri !== undefined && !spoiler ? p.rounds[ri].series : null;
-    return Array.from({ length: SLOTS[name] }).map((_, si) => {
+    return Array.from({ length: slotsOf(p.format, name) }).map((_, si) => {
       const s = series?.[si] ?? null;
       const key = ri !== undefined ? `po:${ri}:${si}` : null;
       const isRevealed = Boolean(key && revealed.has(key));
@@ -126,7 +167,7 @@ export function CareerBracket({
           revealed={isRevealed}
           live={isLive}
           pair={pair ?? undefined}
-          seedOf={name === "ub_quarterfinal" || name === "quarterfinal" ? seedOf : undefined}
+          seedOf={!layoutRows && (name === "ub_quarterfinal" || name === "quarterfinal") ? seedOf : undefined}
           tbdLabel={T.tbd}
           onClick={isRevealed && key && onInspect ? () => onInspect(key) : undefined}
         />
@@ -149,6 +190,14 @@ export function CareerBracket({
   );
 
   const isSingle = p.format === "single";
+  // v2.2 event formats: a career-only bracket draws its own rows (no seed numbers: its seeds are slots).
+  const layoutRows = LAYOUT_ROWS[p.format] ?? null;
+  const sideLabel = (side: BracketRow["side"]) =>
+    side === "upper" ? (
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-cyan">{C.event.upperBracket}</p>
+    ) : side === "lower" ? (
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-orange-bright">{C.event.lowerBracket}</p>
+    ) : null;
 
   return (
     <Panel className="p-4 sm:p-5">
@@ -156,7 +205,27 @@ export function CareerBracket({
         {C.event.bracket}
       </h3>
 
-      {layout === "column" ? (
+      {layoutRows ? (
+        layout === "column" ? (
+          <div className="space-y-4">{layoutRows.flatMap((r) => r.columns).map(stackedSection)}</div>
+        ) : (
+          <div className="space-y-5 pb-1 sm:overflow-x-auto">
+            {layoutRows.map((r) => (
+              <div key={r.side ?? "ko"}>
+                {sideLabel(r.side)}
+                <div
+                  className={cx(
+                    "mobile-bracket flex gap-3",
+                    r.columns.length <= 3 ? "sm:min-w-[500px]" : r.columns.length <= 5 ? "sm:min-w-[640px]" : "sm:min-w-[860px]",
+                  )}
+                >
+                  {r.columns.map(wideColumn)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : layout === "column" ? (
         <div className="space-y-4">
           {(isSingle ? SINGLE_COLUMNS : [...UPPER_COLUMNS, ...LOWER_COLUMNS]).map(stackedSection)}
         </div>

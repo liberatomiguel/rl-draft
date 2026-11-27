@@ -73,6 +73,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
     top4: { title: R.top4, sub: R.top4Sub, tone: "blue" },
     top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
     top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
+    // v2.2: career-only placement, never reached in the Draft.
+    top12: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
     swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
   };
   const clearRun = useRunStore((s) => s.clearRun);

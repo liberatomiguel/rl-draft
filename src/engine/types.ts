@@ -557,6 +557,32 @@ export interface SwissState {
   /** Pre-computed pairings for the next round (UI shows the matchup early). */
   nextPairings: [string, string][] | null;
   finished: boolean;
+  /**
+   * v2.2 event formats: a GROUP stage instead of the Swiss ("groups4" = four
+   * round-robin groups of four; "gsl8" = two double-elimination groups of
+   * eight, 2 wins in / 2 losses out). Absent = the Swiss (every Draft state).
+   */
+  kind?: GroupStageKind;
+  /** v2.2 event formats: the drawn groups (team ids, pot order). Set with `kind`. */
+  groups?: string[][];
+}
+
+/** v2.2 event formats: the group stages a Major / Worlds can open with. */
+export type GroupStageKind = "groups4" | "gsl8";
+
+/** v2.2 event formats: the Saturday stage ("none" = the bracket starts at once). */
+export type EventStageKind = "swiss" | GroupStageKind | "none";
+
+/**
+ * v2.2 event formats: the bracket. "double8" = the classic 8-team double
+ * elimination (PlayoffState format "double"); the others are career-only.
+ */
+export type EventBracketKind = "double8" | "single8" | "hybrid8" | "hybrid12" | "single12" | "double16";
+
+/** v2.2 event formats: one event's shape, Saturday stage + bracket. */
+export interface EventLayout {
+  stage: EventStageKind;
+  bracket: EventBracketKind;
 }
 
 /**
@@ -575,7 +601,15 @@ export type PlayoffRoundName =
   | "grand_final"
   | "quarterfinal"
   | "semifinal"
-  | "final";
+  | "final"
+  // v2.2 event formats (career brackets only)
+  | "upper_round"
+  | "lower_round1"
+  | "lower_round2"
+  | "ko_round1"
+  | "ub_round1"
+  | "lb_round3"
+  | "lb_round4";
 
 export interface PlayoffRound {
   name: PlayoffRoundName;
@@ -583,7 +617,8 @@ export interface PlayoffRound {
 }
 
 export interface PlayoffState {
-  format: "double" | "single";
+  /** v2.2 event formats add the career-only brackets (their seeds are in SLOT order). */
+  format: "double" | "single" | Exclude<EventBracketKind, "double8">;
   /** Seeded team ids, best record first. */
   seeds: string[];
   rounds: PlayoffRound[];
@@ -605,6 +640,12 @@ export interface TournamentState {
    * stays null. Absent on every Draft-mode state (their shape is unchanged).
    */
   swissOnly?: true;
+  /**
+   * v2.2 event formats: the shape this event was STARTED with (a Major /
+   * Worlds under FEATURES.eventFormats). Absent = the classic Swiss → double
+   * elimination; a save keeps the shape its event began with.
+   */
+  layout?: EventLayout;
 }
 
 // --- Results ---
@@ -617,6 +658,8 @@ export type Placement =
   | "top4"
   | "top6"
   | "top8"
+  /** v2.2 event formats: 9th-12th in a 12/16-team bracket (never in the Draft). */
+  | "top12"
   | "swiss_exit";
 
 export interface XpLine {

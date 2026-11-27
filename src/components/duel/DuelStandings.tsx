@@ -21,6 +21,8 @@ export function usePlacementLabel(): (p: Placement) => string {
     top4: R.top4,
     top6: R.top6,
     top8: R.top8,
+    // v2.2: career-only placement, never reached in the Draft.
+    top12: R.swissExit,
     swiss_exit: R.swissExit,
   };
   return (p) => labels[p] ?? p;

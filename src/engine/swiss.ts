@@ -277,6 +277,8 @@ function repairStoredRound(
  */
 export function upcomingSwissPairings(state: SwissState): [string, string][] | null {
   if (state.finished) return null;
+  // v2.2 event formats: a group stage's pairings are fixed by its groups (no Swiss repair).
+  if (state.kind) return state.nextPairings;
   const played = swissHistory(state.rounds);
   const stored = state.nextPairings ? pairingRematches(state.nextPairings, state.records, played) : -1;
   if (stored === 0) return state.nextPairings;

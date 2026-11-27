@@ -13,6 +13,7 @@
 
 import type {
   Difficulty,
+  EventLayout,
   Placement,
   Region,
   StatKey,
@@ -592,6 +593,12 @@ export interface CareerEventDef {
    * "legends" = the Legends invitational (all-time rosters). Absent = as before.
    */
   endless?: "cup" | "legends" | "world";
+  /**
+   * v2.2 event formats: a Major / Worlds shape (CAREER_EVENT_LAYOUTS, set
+   * under FEATURES.eventFormats). Absent = the classic Swiss into the 8-team
+   * double elimination (and every regional, qualifier and cup).
+   */
+  layout?: EventLayout;
 }
 
 /** v2.0 (R40): the tournament shapes a career event can take. */
@@ -1506,6 +1513,8 @@ export interface FollowEventState {
   playoffs: { name: string; series: FollowSeries[] }[];
   /** The playoff eight in seed order ([] for a Swiss-only event). */
   seeds: string[];
+  /** v2.2 event formats: the drawn groups of a group stage (absent for a Swiss). */
+  groups?: string[][];
   champion: string | null;
   /** How the user opened it (null = not opened yet). */
   view: "watch" | "results" | null;

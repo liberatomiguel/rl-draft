@@ -145,11 +145,11 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         const role = weekendRoleOf(ev, today);
         const stage =
           phase === "paused"
-            ? { label: C.event.swissComplete, tone: "good" as const }
+            ? { label: ev.layout ? C.event.formats.stageComplete[ev.layout.stage] : C.event.swissComplete, tone: "good" as const }
             : role === "championshipSunday"
               ? { label: C.event.championshipSunday, tone: "gold" as const, live: true }
               : role === "swissDay"
-                ? { label: C.event.swissStage, tone: "orange" as const, live: true }
+                ? { label: ev.layout ? C.event.formats.stage[ev.layout.stage] : C.event.swissStage, tone: "orange" as const, live: true }
                 : undefined;
         // rc.34: a Community Cup's matchday holds the clock — Play, or Pass explicitly (no silent walk past).
         const cupLobby = !save.activeEvent && (ev.tier === "t2" || ev.tier === "t3");
@@ -191,7 +191,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
               def={ahead.def}
               daysAway={0}
               day={today}
-              stage={{ label: C.event.swissStage, tone: "orange", live: true }}
+              stage={{ label: ahead.def.layout ? C.event.formats.stage[ahead.def.layout.stage] : C.event.swissStage, tone: "orange", live: true }}
               primaryLabel={C.hub.continue}
               onPrimary={() => router.push("/career/event")}
             />

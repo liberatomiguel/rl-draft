@@ -195,7 +195,9 @@ export function DayCard({
   // R40: today's role on the weekend (the header badge) — the user's own events only.
   const todayRole =
     kind === "eventPaused"
-      ? C.event.swissComplete
+      ? save.activeEvent?.def.layout
+        ? C.event.formats.stageComplete[save.activeEvent.def.layout.stage]
+        : C.event.swissComplete
       : weekDays[todayIdx]
         ? dayBadgeOf(C, weekDays[todayIdx])
         : null;

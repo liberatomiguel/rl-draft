@@ -29,15 +29,17 @@
 import {
   CAREER_CALENDAR,
   CAREER_CANCELLED_WORLDS,
+  CAREER_EVENT_LAYOUTS,
   CAREER_QUALIFIER,
   CAREER_ROCKET_STREET,
   CAREER_SEASONS,
   CAREER_SLOTS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
+  FEATURES,
 } from "@/config/balance";
 import { PARTNER_EVENT_NAMES, ROCKET_STREET_EVENT_NAME, T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
-import type { Region } from "../types";
+import type { EventLayout, Region } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type { CalendarWeek, CareerEventDef } from "./types";
 
@@ -365,9 +367,29 @@ export function regionalForQualifier(def: CareerEventDef): CareerEventDef | null
   );
 }
 
+/**
+ * v2.2 event formats: the shape of a season's Majors / Worlds — its dataset
+ * row, then the rows in rotation from the first infinite season. Null with
+ * FEATURES.eventFormats off (the classic shape).
+ */
+export function eventLayoutFor(seasonIndex: number, tier: "major" | "worlds"): EventLayout | null {
+  if (!FEATURES.eventFormats) return null;
+  const rows = CAREER_EVENT_LAYOUTS.seasons;
+  const row =
+    seasonIndex < INFINITE_FROM
+      ? rows[Math.max(0, seasonIndex)]
+      : rows[(seasonIndex - INFINITE_FROM) % rows.length];
+  return row ? row[tier] : null;
+}
+
 /** v2.0 (C1): this season's World Championship is not played (CAREER_CANCELLED_WORLDS — Season X, the pandemic). */
 export function worldsCancelledIn(seasonIndex: number): boolean {
   return CAREER_CANCELLED_WORLDS.seasonIndexes.includes(seasonIndex);
+}
+
+/** `{ layout }` when there is one; nothing otherwise (defs stay byte-identical with the flag off). */
+function layoutField(layout: EventLayout | null): { layout?: EventLayout } {
+  return layout ? { layout } : {};
 }
 
 /**
@@ -411,6 +433,7 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
         split,
         name: `Split ${split} Major`,
         format: "swiss",
+        ...layoutField(eventLayoutFor(seasonIndex, "major")),
       },
     ];
   }
@@ -427,6 +450,7 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
         day,
         name: "World Championship",
         format: "swiss",
+        ...layoutField(eventLayoutFor(seasonIndex, "worlds")),
       },
     ];
   }

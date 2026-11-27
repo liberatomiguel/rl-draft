@@ -34,6 +34,7 @@ export function followRecordOf(
     swiss: t.swiss.rounds.map((r) => r.series.map(compactSeries)),
     playoffs: (t.playoffs?.rounds ?? []).map((r) => ({ name: r.name, series: r.series.map(compactSeries) })),
     seeds: t.playoffs?.seeds ?? [],
+    ...(t.swiss.groups ? { groups: t.swiss.groups } : {}),
     champion: t.playoffs?.championTeamId ?? null,
     view: null,
     dismissed: false,

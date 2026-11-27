@@ -559,6 +559,14 @@ export const TOURNAMENT_UI = {
     quarterfinal: "Quarterfinal",
     semifinal: "Semifinal",
     final: "Final",
+    // v2.2 event formats (Road to Worlds brackets)
+    upper_round: "Upper bracket",
+    lower_round1: "Lower round 1",
+    lower_round2: "Lower round 2",
+    ko_round1: "First round",
+    ub_round1: "UB Round 1",
+    lb_round3: "LB Round 3",
+    lb_round4: "LB Round 4",
   } as Record<string, string>,
 };
 
@@ -806,6 +814,7 @@ export const PROFILE_UI = {
     top4: "Top 4",
     top6: "Top 6",
     top8: "Top 8",
+    top12: "Top 12",
     swiss_exit: "Swiss",
     semifinalist: "Top 4",
     quarterfinalist: "Top 8",
