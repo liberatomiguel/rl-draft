@@ -4006,6 +4006,7 @@ export const CAREER_PT: CareerCopy = {
     kicker: "O que a diretoria espera desta temporada e como ela avalia o seu trabalho.",
     // rc.6 (ORGMODE UI-B): um clube fundado responde aos donos pelas mesmas peças.
     ownersTitle: "Donos",
+    ownersConfidence: "Confiança dos donos",
     ownersKicker: "O que os donos do seu clube esperam desta temporada e como eles avaliam o seu trabalho.",
     seasonOf: (org: string, season: string) => `${org} · ${season}`,
     stature: { elite: "Elite", contender: "Candidato", mid: "Meio de tabela", underdog: "Azarão", owners: "Donos" } as Record<string, string>,
@@ -4336,7 +4337,6 @@ export const CAREER_PT: CareerCopy = {
       kicker: "Primeiro dia no clube",
       title: (manager: string, org: string) => `${manager}, manager da ${org}`,
       ask: "O primeiro pedido da diretoria",
-      askLine: (objective: string, band: string) => `${objective}. A diretoria avalia: ${band.toLowerCase()}.`,
       squad: "Seu elenco",
       action: "Ir para o QG",
     },

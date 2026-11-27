@@ -100,7 +100,7 @@ function PlanOption({ o, active, proposedLabel, onPick, C }: { o: BoardPackage; 
       aria-checked={active}
       onClick={onPick}
       className={cx(
-        "panel flex w-full flex-col p-4 text-left transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
+        "panel flex w-full flex-col p-4 text-left max-sm:py-3.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
         active ? "panel-glow-orange" : "hover:!border-line-strong",
       )}
     >
@@ -110,7 +110,17 @@ function PlanOption({ o, active, proposedLabel, onPick, C }: { o: BoardPackage; 
       </span>
       <span className="mt-3 block text-[15px] font-semibold leading-snug text-ink">{goalText(C, o.objective)}</span>
       <span className="mt-1 block text-sm text-sub">{K.band(band)}</span>
-      <span className="mt-4 grid w-full grid-cols-2 gap-x-4 border-t border-line pt-3 sm:mt-auto">
+      {/* A phone row carries the terms as one line; the card sets them as figures. */}
+      <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-sub sm:hidden">
+        <span><span className="display text-sm font-bold tabular-nums text-ink">{o.grant > 0 ? formatMoney(o.grant, { compact: true }) : "–"}</span> <span className="lowercase">{K.budgetLabel}</span></span>
+        <span><span className="display text-sm font-bold tabular-nums text-ink">{o.bonus > 0 ? formatMoney(o.bonus, { compact: true }) : "–"}</span> <span className="lowercase">{K.bonusLabel}</span></span>
+        <span>
+          <span className="display text-sm font-bold tabular-nums text-good">+{o.hit}</span>
+          <span className="text-faint"> / </span>
+          <span className="display text-sm font-bold tabular-nums text-bad">−{Math.abs(o.miss)}</span> <span className="lowercase">{K.confidenceLabel}</span>
+        </span>
+      </span>
+      <span className="mt-4 grid w-full grid-cols-2 gap-x-4 border-t border-line pt-3 max-sm:hidden sm:mt-auto">
         <span className="min-w-0">
           <span className="display block truncate text-lg font-bold leading-none tabular-nums text-ink">{o.grant > 0 ? formatMoney(o.grant, { compact: true }) : "–"}</span>
           <span className="mt-1 block text-xs text-sub">{K.budgetLabel}</span>
@@ -120,7 +130,7 @@ function PlanOption({ o, active, proposedLabel, onPick, C }: { o: BoardPackage; 
           <span className="mt-1 block text-xs text-sub">{K.bonusLabel}</span>
         </span>
       </span>
-      <span className="mt-3 flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-line pt-2.5">
+      <span className="mt-3 flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-line pt-2.5 max-sm:hidden">
         <span className="text-xs text-sub">{K.confidenceLabel}</span>
         <span className="text-xs text-sub">
           <span className="display text-base font-bold tabular-nums text-good">+{o.hit}</span> {K.hitLabel}
@@ -456,7 +466,7 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
   const state = c >= L.warn ? "text-ink" : c >= L.ultimatum ? "text-orange-bright" : "text-bad";
   return (
     <Panel className="p-4 sm:p-5">
-      <h3 className="card-title">{C.board.confidence}</h3>
+      <h3 className="card-title">{board.kind === "owners" ? C.board.ownersConfidence : C.board.confidence}</h3>
       <div className="mt-4 flex items-end justify-between gap-4">
         <p className="display text-6xl font-bold leading-[0.85] tabular-nums text-ink">
           {c}

@@ -59,7 +59,11 @@ export function ArrivalSplash({ onDone }: { onDone: () => void }) {
             <p className="text-xs text-sub">{S.ask}</p>
             {brief ? <p className="mt-1.5 text-[15px] leading-snug text-ink">{brief.reason}</p> : null}
             {plan ? (
-              <p className="mt-1.5 text-[15px] leading-snug text-ink">{S.askLine(goalText(C, plan.objective), C.board.bandWord(plan.band))}</p>
+              // rc.6 (UI-B pass): the ask is the splash's second figure, set as the objective itself with its band under it.
+              <>
+                <p className="display mt-3 text-2xl uppercase leading-tight text-ink sm:text-3xl">{goalText(C, plan.objective)}</p>
+                <p className="mt-1 text-sm text-sub">{C.takeover.dossier.chance(C.board.bandWord(plan.band))}</p>
+              </>
             ) : null}
           </div>
         ) : null}

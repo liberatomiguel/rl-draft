@@ -4035,6 +4035,7 @@ export const CAREER_EN = {
     kicker: "What the board expects this season, and how it rates your work.",
     // rc.6 (ORGMODE UI-B): a founded club answers to its owners through the same pieces.
     ownersTitle: "Owners",
+    ownersConfidence: "Owners' confidence",
     ownersKicker: "What your club's owners expect this season, and how they rate your work.",
     seasonOf: (org: string, season: string) => `${org} · ${season}`,
     stature: { elite: "Elite", contender: "Contender", mid: "Mid-table", underdog: "Underdog", owners: "Owners" } as Record<string, string>,
@@ -4365,7 +4366,6 @@ export const CAREER_EN = {
       kicker: "First day at the club",
       title: (manager: string, org: string) => `${manager}, manager of ${org}`,
       ask: "The board's first ask",
-      askLine: (objective: string, band: string) => `${objective}. The board rates it: ${band.toLowerCase()}.`,
       squad: "Your roster",
       action: "Go to HQ",
     },

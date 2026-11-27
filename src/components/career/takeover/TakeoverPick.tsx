@@ -228,16 +228,22 @@ function Dossier({
         ) : null}
         {over ? <p className="mt-1 text-xs text-orange-bright">{D.overCeiling}</p> : null}
       </div>
-      <dl className="mt-4 border-t border-line text-sm">
-        <div className="flex min-h-11 items-center justify-between gap-4 border-b border-line py-2">
-          <dt className="shrink-0 text-sub">{D.installations}</dt>
-          <dd className="min-w-0 text-right text-ink">{itemNames.length ? itemNames.join(", ") : <span className="text-faint">{D.noInstallations}</span>}</dd>
+      {/* rc.6 (UI-B pass): the structure the org arrives with, set as figures like the money above it. */}
+      <div className="mt-5 grid grid-cols-2 gap-x-6 border-t border-line pt-4">
+        <div className="min-w-0">
+          <p className="display text-2xl font-bold leading-none tabular-nums text-ink sm:text-[1.75rem]">
+            {itemNames.length}
+            <span className="ml-1 text-base text-faint">/ 4</span>
+          </p>
+          <p className="mt-1.5 text-xs text-sub">{D.installations}</p>
+          <p className="mt-1 text-xs leading-snug text-ink">{itemNames.length ? itemNames.join(", ") : <span className="text-faint">{D.noInstallations}</span>}</p>
         </div>
-        <div className="flex min-h-11 items-center justify-between gap-4 border-b border-line py-2">
-          <dt className="shrink-0 text-sub">{D.staff}</dt>
-          <dd className="min-w-0 text-right text-ink">{staffNames.length ? staffNames.join(", ") : <span className="text-faint">{D.noStaff}</span>}</dd>
+        <div className="min-w-0">
+          <p className="display text-2xl font-bold leading-none tabular-nums text-ink sm:text-[1.75rem]">{staffNames.length}</p>
+          <p className="mt-1.5 text-xs text-sub">{D.staff}</p>
+          <p className="mt-1 text-xs leading-snug text-ink">{staffNames.length ? staffNames.join(", ") : <span className="text-faint">{D.noStaff}</span>}</p>
         </div>
-      </dl>
+      </div>
 
       {/* What the board expects: the proposed plan's objective is the sentence that matters. */}
       <h4 className="card-title mt-7">{D.board}</h4>

@@ -160,7 +160,7 @@ export function BoardLink({ save, C }: { save: CareerSave; C: CareerCopy }) {
     <AppLink href="/career/board" className="group mt-3 block border-t border-line pt-3 max-sm:hidden">
       <span className="flex items-end justify-between gap-3">
         <span className="min-w-0">
-          <span className="block text-xs text-sub">{own ? C.board.glance.ownersTitle : C.board.confidence}</span>
+          <span className="block text-xs text-sub">{own ? C.board.ownersConfidence : C.board.confidence}</span>
           <span className="display mt-1 block text-3xl font-bold leading-none tabular-nums text-ink">
             {c}
             <span className="ml-1 text-sm text-faint">{C.board.outOf}</span>
