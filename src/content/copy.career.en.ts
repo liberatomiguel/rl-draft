@@ -291,52 +291,38 @@ export const CAREER_EN = {
   },
 
   wizard: {
-    regionLevels: { hard: "Harder road", mid: "Intermediate", easy: "Easier road" },
+    regionLevels: { hard: "Harder", mid: "Intermediate", easy: "Easier" },
     iconColor: "Emblem colour",
     tertiaryColor: "Third colour",
     title: "Found your organization",
     step: (n: number, total: number) => `Step ${n} of ${total}`,
     quickStart: "Quick start",
-    quickStartHint: "Randomize everything: you can re-tint colors later.",
+    quickStartHint: "Fills every step at random",
     // Step 1 — identity
     identityTitle: "Identity",
-    identityKicker: "Every dynasty starts with a name on a jersey.",
     orgName: "Organization name",
     orgNamePlaceholder: "e.g. Horizon Esports",
-    orgNameTaken: "That name belongs to an existing org.",
-    orgNameLength: "2-18 characters.",
+    orgNameTaken: "That name belongs to an existing org",
+    orgNameLength: "2 to 18 characters",
     abbrev: "Tag",
     abbrevHint: "2-4 letters, shown on tables and the crest.",
     managerName: "Manager name",
-    managerNamePlaceholder: "Your name on the desk.",
+    managerNamePlaceholder: "Your name",
     country: "Country",
     // Step 2 — crest (v0.2: shapes × symbols × patterns × free colors)
     crestTitle: "Crest & colors",
-    crestKicker: "Pick a mark. The scene will learn to fear it.",
     crestLabel: "Shape",
     crestSymbol: "Symbol",
     crestPattern: "Pattern",
     crestNone: "None",
     randomizeCrest: "Randomize",
     kits: "Kits",
-    kitsHint: "One tap fills both colours, then change either one on its own.",
+    kitsHint: "Sets both colours. Adjust either",
     primaryColor: "Primary color",
     secondaryColor: "Accent",
     // rc.36 (UX-04, R88): layouts, the free colour pick and the contrast guard.
     crestLayout: "Layout",
     crestLayouts: { emblem: "Emblem", monogram: "Letters", stacked: "Emblem + letters", band: "Band" },
-    customColor: "Any colour",
-    colorsTitle: "Colours",
-    contrastTitle: "Contrast check",
-    contrastPair: "Accent on base",
-    contrastCard: "Base on a dark card",
-    contrastGood: "Reads well at every size.",
-    contrastLowPair: "The accent is close to the base: the symbol blurs on small crests.",
-    contrastLowCard: "The base nearly melts into dark cards and tables.",
-    contrastUseAccent: (name: string) => `Use ${name} as accent`,
-    contrastUsePrimary: (name: string) => `Use ${name} as base`,
-    contrastSwap: "Swap the colours",
-    contrastKeep: "Your colours are saved either way.",
     playstyleHelp: {"offense":"Helps the team create chances and finish attacks.","defense":"Strengthens positioning and protection of the goal.","mechanics":"Improves technical execution and ball control.","consistency":"Helps players keep a steady level during a series.","experience":"Adds composure and better decisions during matches.","clutch":"Helps the team perform in decisive moments."},
     colorNames: {
       "black": "Black", "graphite": "Graphite", "navy-light": "Light navy", "royal-light": "Light royal blue", "scarlet-light": "Light scarlet", "burgundy-light": "Light burgundy", "forest-light": "Light forest", "teal-light": "Light teal", "plum-light": "Light plum", "orange-light": "Light orange", "gold-light": "Light gold", "olive-light": "Light olive",
@@ -349,26 +335,20 @@ export const CAREER_EN = {
     identityBuffHint: "Your org's specialty: a small team-wide edge.",
     // Step 3 — region
     regionTitle: "Home region",
-    regionKicker: "Where you play decides who you face, and how many Worlds seats exist.",
-    regionStrength: "Field strength",
+    regionKicker: "Sets your rivals and the Worlds slots",
     regionSlots: (n: number) => `${n} Worlds slots`,
     regionRivals: "RLCS X rivals",
-    regionNote: "Relocating to another region unlocks later in the career.",
-    strengthDeep: "Deep field: the hard road",
-    strengthStrong: "Strong field",
-    strengthDeveloping: "Developing field: a softer road",
+    regionNote: "Relocating to another region unlocks later in the career",
     // Step 4 — roster
     rosterTitle: "First signings",
-    rosterKicker: "Three players without an org. One of them says yes to yours.",
+    rosterKicker: "Choose your first three players",
     rosterProspects: "Prospects",
-    rosterProspectsDesc: "Teenagers with sky-high ceilings. Patience required.",
+    rosterProspectsDesc: "Young, high potential, need time",
     rosterJourneymen: "Journeymen",
-    rosterJourneymenDesc: "The scene's veterans. Ready now, done growing.",
+    rosterJourneymenDesc: "Veterans: strong now, little growth left",
     rosterBalanced: "Balanced",
-    rosterBalancedDesc: "A bit of now, a bit of later.",
+    rosterBalancedDesc: "A mix of veterans and prospects",
     recommended: "Recommended",
-    /** rc.35 (front C): the middle roster offer's tag. */
-    rosterBalancedTag: "Balanced",
     wageBill: "Wage bill",
     avgAge: "Avg age",
     avgOverall: "Avg OVR",
@@ -379,37 +359,36 @@ export const CAREER_EN = {
     // Step 5 — difficulty + summary. rc.34 (front I, Miguel 31/10): rewritten
     // for a first-time player on a phone — a promise and three plain bullets.
     finalTitle: "Difficulty",
-    finalKicker: "Your pick stays for the whole career.",
+    finalKicker: "Your pick stays for the whole career",
     // rc.32 (BAL-02): the career presets replace the Management Style step.
     presets: {
-      easy: { label: "Easy", promise: "A forgiving first career, with room to learn." },
-      normal: { label: "Normal", promise: "The career as it's meant to be played." },
-      hard: { label: "Hard", promise: "A real test for experienced managers." },
+      easy: { label: "Easy", promise: "For learning the game" },
+      normal: { label: "Normal", promise: "The intended balance" },
+      hard: { label: "Hard", promise: "For experienced managers" },
     } as Record<"easy" | "normal" | "hard", { label: string; promise: string }>,
     // The bullets (wizard/PresetEffects.tsx), read live from balance.ts.
     presetMatches: {
-      easier: "Matches lean your way.",
-      even: "Fair matches.",
-      harder: "Tougher rivals.",
+      easier: "Matches lean your way",
+      even: "Fair matches",
+      harder: "Tougher rivals",
     } as Record<"easier" | "even" | "harder", string>,
     // rc.34 review: the preset's whole money rule (economy.moneyRuleFor) — the emergency loans a
     // career gets (null = no cap), the weeks to repay each, or no deadline (the loan never ends it).
     presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
-      const head = r.loans === null ? "The bank lends it" : r.loans === 1 ? "One bank loan" : `Up to ${countWordEn(r.loans)} bank loans`;
-      if (r.deadlineWeeks === null) return `Out of money? ${head}, no deadline: prizes and sales repay ${r.loans === null || r.loans === 1 ? "it" : "them"}.`;
-      const repay = r.loans === null ? "repay" : r.loans === 1 ? "repay it" : "repay each";
-      return `Out of money? ${head}: ${repay} within ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "week" : "weeks"} or the career ends.`;
+      const head = r.loans === null ? "the bank lends it" : r.loans === 1 ? "you get one bank loan" : `you get up to ${countWordEn(r.loans)} bank loans`;
+      if (r.deadlineWeeks === null) return `If you run out of money, ${head}. No deadline: prizes and sales repay ${r.loans === null || r.loans === 1 ? "it" : "them"}`;
+      const repay = r.loans === null || r.loans === 1 ? "it" : "each";
+      return `If you run out of money, ${head}. Repay ${repay} within ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "week" : "weeks"} or the career ends`;
     },
     // CAREER_LOAN.breachesToEnd 1: the first Monday below the floor ends the career — no loan.
-    presetMoneyNoLoan: "Out of money? The career ends.",
+    presetMoneyNoLoan: "If you run out of money, the career ends",
     // rc.34 review: the training delegation the preset starts on (difficulty.presetTrainingModeOf,
     // CAREER_PLAN.modeByPreset) and whether cups are entered for you (the preset's prefs).
     presetHelp: (mode: "auto" | "recommend" | "manual", autoCups: boolean): string =>
-      `${{ auto: "The best training plan is tagged for you.", recommend: "The best training plan is tagged; you pick.", manual: "You plan training, no hints." }[mode]} ${autoCups ? "Cups are entered for you." : "You pick every cup."}`,
-    summaryTitle: "The paperwork",
+      `${{ auto: "The best training plan is tagged for you", recommend: "The best plan is tagged and you pick", manual: "You plan training, no hints" }[mode]}. ${autoCups ? "Cups are entered for you" : "You pick every cup"}`,
+    summaryTitle: "Summary",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
-    foundedSplash: "A new name enters the scene.",
   },
 
   hub: {
@@ -4301,7 +4280,8 @@ export const CAREER_EN = {
     mandate: {
       title: "The board's mandate",
       season: (season: string) => `${season} · set by the board`,
-      body: "The board sets three goals for the season. They are not a choice: they are what the job asks.",
+      body: "The board sets three goals for the season.",
+      goalLabel: "Goal", // rc9 ORG-UI: the goal table's first column
       demandLabel: "Demand",
       demand: { low: "Low", medium: "Medium", high: "High" } as Record<string, string>,
       demandNote: {

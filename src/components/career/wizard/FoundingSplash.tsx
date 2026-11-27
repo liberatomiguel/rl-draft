@@ -32,7 +32,7 @@ export function FoundingSplash({
   /** "EST. 2020" plate (copy). */
   establishedLabel: string;
   /** One broadcast-voice line under the name (copy). */
-  tagline: string;
+  tagline?: string;
   onDone: () => void;
 }) {
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -69,9 +69,11 @@ export function FoundingSplash({
         <p className="display rise-in mt-3 text-sm font-semibold uppercase tracking-[0.06em] text-sub" style={{ animationDelay: "0.5s" }}>
           {establishedLabel}
         </p>
-        <p className="rise-in mt-4 text-sm text-sub" style={{ animationDelay: "0.75s" }}>
-          {tagline}
-        </p>
+        {tagline ? (
+          <p className="rise-in mt-4 text-sm text-sub" style={{ animationDelay: "0.75s" }}>
+            {tagline}
+          </p>
+        ) : null}
       </div>
     </div>,
     host,

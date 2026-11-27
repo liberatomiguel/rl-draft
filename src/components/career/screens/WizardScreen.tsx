@@ -112,15 +112,6 @@ function pickRandom<T>(arr: readonly T[]): T {
 }
 
 /** Region field-strength copy key (design §6: telegraphed difficulty lever). */
-const STRENGTH_KEY: Record<Region, "strengthDeep" | "strengthStrong" | "strengthDeveloping"> = {
-  NA: "strengthDeep",
-  EU: "strengthDeep",
-  SAM: "strengthStrong",
-  MENA: "strengthStrong",
-  OCE: "strengthStrong",
-  APAC: "strengthDeveloping",
-  SSA: "strengthDeveloping",
-};
 
 /**
  * Notable Season X rivals per region — elite/strong RLCS X lineups first, then
@@ -363,7 +354,7 @@ export function WizardScreen() {
         {/* ------------------------------------------------ Step 1 · Identity */}
         {step === 1 ? (
           <>
-            <StepHeader title={C.wizard.identityTitle} kicker={C.wizard.identityKicker} />
+            <StepHeader title={C.wizard.identityTitle} />
             {/* One board: the four fields, and beside them (under them on a
                 phone) what they make, past a hairline. */}
             <Panel className="grid lg:grid-cols-[1fr_minmax(15rem,18rem)]">
@@ -447,7 +438,7 @@ export function WizardScreen() {
         {/* rc.36 (UX-04, R88): more shapes / symbols / layouts, free colours, the contrast guard. */}
         {step === 2 ? (
           <>
-            <StepHeader title={C.wizard.crestTitle} kicker={C.wizard.crestKicker} />
+            <StepHeader title={C.wizard.crestTitle} />
             <CrestStep
               C={C}
               statLabels={copy.STAT_LABELS}
@@ -493,11 +484,11 @@ export function WizardScreen() {
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex min-w-0 items-center gap-2">
                         <Badge className={REGION_BADGE[r]}>{r}</Badge>
-                        <span className="display truncate text-lg font-bold uppercase leading-none text-ink">
+                        <span className="display truncate text-lg font-bold leading-none text-ink">
                           {copy.SETUP.regionNames[r]}
                         </span>
                       </span>
-                      <span className="display shrink-0 text-sm font-semibold uppercase leading-none text-sub">
+                      <span className="display shrink-0 text-sm font-semibold leading-none text-sub">
                         {C.wizard.regionSlots(CAREER_SLOTS.worlds[r])}
                       </span>
                     </div>
@@ -510,9 +501,6 @@ export function WizardScreen() {
                       </span>
                       <span className="text-xs text-ink">{C.wizard.regionLevels[level.key]}</span>
                     </div>
-                    <p className="mt-1.5 text-xs leading-relaxed text-sub">
-                      {C.wizard.regionStrength}: {C.wizard[STRENGTH_KEY[r]]}
-                    </p>
                     {regionRivals.length > 0 ? (
                       <div className="mt-3 border-t border-line pt-2.5">
                         <p className="kicker mb-1.5">{C.wizard.regionRivals}</p>
@@ -574,9 +562,9 @@ export function WizardScreen() {
                         the card called Balanced is gone). */}
                     <span className="flex min-w-0 items-center gap-2">
                       <RosterIcon className="h-5 w-5 shrink-0 text-sub" />
-                      <span className="display truncate text-lg font-bold uppercase leading-none text-ink">{labels[key].label}</span>
+                      <span className="display truncate text-lg font-bold leading-none text-ink">{labels[key].label}</span>
                     </span>
-                    <p className="mt-2 text-sm leading-snug text-sub">{labels[key].desc}</p>
+                    <p className="mt-1.5 text-sm leading-snug text-sub">{labels[key].desc}</p>
 
                     {/* The three players: a list, one row each. */}
                     <div className="mt-3 border-t border-line">
@@ -638,10 +626,10 @@ export function WizardScreen() {
                   >
                     <span className="flex items-center gap-2">
                       <PresetIcon className="h-5 w-5 shrink-0 text-sub" />
-                      <span className="display min-w-0 flex-1 text-lg font-bold uppercase leading-none text-ink">{C.wizard.presets[id].label}</span>
+                      <span className="display min-w-0 flex-1 text-lg font-bold leading-none text-ink">{C.wizard.presets[id].label}</span>
                       {recommended ? <Badge tone="blue">{C.wizard.recommended}</Badge> : null}
                     </span>
-                    <p className="mt-3 text-sm leading-snug text-ink">{C.wizard.presets[id].promise}</p>
+                    <p className="mt-3 text-sm leading-snug text-sub">{C.wizard.presets[id].promise}</p>
                     <div className="mt-3 border-t border-line">
                       <PresetEffects difficulty={id} C={C} />
                     </div>
@@ -659,7 +647,7 @@ export function WizardScreen() {
                 <div className="flex min-w-0 flex-1 items-center gap-4">
                   <UserCrest crestId={crestId} colors={colors} abbrev={abbrev} size="lg" />
                   <div className="min-w-0">
-                    <p className="display truncate text-xl font-bold uppercase leading-none text-ink">{nameTrim}</p>
+                    <p className="display truncate text-xl font-bold leading-none text-ink">{nameTrim}</p>
                     <p className="mt-1.5 flex items-center gap-2 text-sm text-sub">
                       <CountryChip code={country} />
                       {managerName.trim()}
@@ -721,7 +709,6 @@ export function WizardScreen() {
           crestId={crestId}
           colors={colors}
           establishedLabel={C.wizard.founded}
-          tagline={C.wizard.foundedSplash}
           onDone={onFounded}
         />
       ) : null}
@@ -737,12 +724,12 @@ const inputCls =
   "h-11 w-full rounded-lg border border-line-strong bg-white/5 px-3 text-sm text-ink " +
   "placeholder:text-faint transition-colors focus:border-orange/60 focus:outline-none";
 
-/** The step's name and its one line: the largest thing on the step after the slab. */
-function StepHeader({ title, kicker }: { title: string; kicker: string }) {
+/** The step's name, and its one line when it says something the title does not. */
+function StepHeader({ title, kicker }: { title: string; kicker?: string }) {
   return (
-    <div className="mb-5">
-      <h3 className="display text-2xl uppercase leading-none text-ink">{title}</h3>
-      <p className="mt-2 max-w-xl text-sm leading-snug text-sub">{kicker}</p>
+    <div className="mb-6">
+      <h3 className="card-title !text-xl">{title}</h3>
+      {kicker ? <p className="mt-1.5 max-w-xl text-sm leading-snug text-sub">{kicker}</p> : null}
     </div>
   );
 }
@@ -751,8 +738,8 @@ function StepHeader({ title, kicker }: { title: string; kicker: string }) {
 function Figure({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <span className="block min-w-0">
-      <span className="display block whitespace-nowrap text-xl font-bold uppercase leading-none text-ink">{value}</span>
-      <span className="mt-1 block text-xs leading-snug text-sub">{label}</span>
+      <span className="display block whitespace-nowrap text-xl font-bold leading-none text-ink">{value}</span>
+      <span className="kicker mt-1.5 block">{label}</span>
     </span>
   );
 }

@@ -280,44 +280,30 @@ export const CAREER_PT: CareerCopy = {
     title: "Funde sua organização",
     step: (n: number, total: number) => `Etapa ${n} de ${total}`,
     quickStart: "Início rápido",
-    quickStartHint: "Aleatoriza tudo: dá para re-tintar as cores depois.",
+    quickStartHint: "Preenche todas as etapas ao acaso",
     identityTitle: "Identidade",
-    identityKicker: "Toda dinastia começa com um nome na camisa.",
     orgName: "Nome da organização",
     orgNamePlaceholder: "ex.: Horizon Esports",
-    orgNameTaken: "Esse nome pertence a uma org existente.",
-    orgNameLength: "2-18 caracteres.",
+    orgNameTaken: "Esse nome pertence a uma org existente",
+    orgNameLength: "2 a 18 caracteres",
     abbrev: "Tag",
     abbrevHint: "2-4 letras, aparece nas tabelas e no escudo.",
     managerName: "Nome do manager",
-    managerNamePlaceholder: "Seu nome na bancada.",
+    managerNamePlaceholder: "Seu nome",
     country: "País",
     crestTitle: "Escudo & cores",
-    crestKicker: "Escolha um símbolo. A cena vai aprender a respeitá-lo.",
     crestLabel: "Formato",
     crestSymbol: "Símbolo",
     crestPattern: "Padrão",
     crestNone: "Nenhum",
     randomizeCrest: "Aleatorizar",
     kits: "Kits",
-    kitsHint: "Um toque preenche as duas cores: depois mude qualquer uma delas à vontade.",
+    kitsHint: "Define as duas cores. Ajuste qualquer uma",
     primaryColor: "Cor primária",
     secondaryColor: "Detalhe",
     // rc.36 (UX-04, R88): layouts, a cor livre e o aviso de contraste.
     crestLayout: "Layout",
     crestLayouts: { emblem: "Emblema", monogram: "Letras", stacked: "Emblema + letras", band: "Faixa" },
-    customColor: "Qualquer cor",
-    colorsTitle: "Cores",
-    contrastTitle: "Checagem de contraste",
-    contrastPair: "Detalhe sobre a base",
-    contrastCard: "Base num card escuro",
-    contrastGood: "Fica legível em qualquer tamanho.",
-    contrastLowPair: "O detalhe está perto da base: o símbolo some nos escudos pequenos.",
-    contrastLowCard: "A base quase se mistura aos cards e tabelas escuros.",
-    contrastUseAccent: (name: string) => `Usar ${name} no detalhe`,
-    contrastUsePrimary: (name: string) => `Usar ${name} na base`,
-    contrastSwap: "Inverter as cores",
-    contrastKeep: "Suas cores ficam salvas de qualquer jeito.",
     playstyleHelp: {"offense":"Ajuda o time a criar chances e finalizar ataques.","defense":"Reforça o posicionamento e a proteção do gol.","mechanics":"Melhora a execução técnica e o controle de bola.","consistency":"Ajuda os jogadores a manter o nível durante a série.","experience":"Traz mais calma e decisões melhores nas partidas.","clutch":"Ajuda o time a render nos momentos decisivos."},
     colorNames: {
       "black": "Preto", "graphite": "Grafite", "navy-light": "Marinho claro", "royal-light": "Azul royal claro", "scarlet-light": "Escarlate claro", "burgundy-light": "Bordô claro", "forest-light": "Verde-floresta claro", "teal-light": "Verde-azulado claro", "plum-light": "Ameixa claro", "orange-light": "Laranja claro", "gold-light": "Dourado claro", "olive-light": "Oliva claro",
@@ -329,25 +315,19 @@ export const CAREER_PT: CareerCopy = {
     identityBuff: "Identidade da org",
     identityBuffHint: "A especialidade da sua org: uma pequena vantagem coletiva.",
     regionTitle: "Região-sede",
-    regionKicker: "Onde você joga define quem enfrenta, e quantas vagas de Worlds existem.",
-    regionStrength: "Força do campo",
+    regionKicker: "Define seus rivais e as vagas de Worlds",
     regionSlots: (n: number) => `${n} vagas no Worlds`,
     regionRivals: "Rivais da RLCS X",
-    regionNote: "Mudar de região é desbloqueado mais adiante na carreira.",
-    strengthDeep: "Campo profundo: o caminho difícil",
-    strengthStrong: "Campo forte",
-    strengthDeveloping: "Campo em formação: um caminho mais suave",
+    regionNote: "Mudar de região é desbloqueado mais adiante na carreira",
     rosterTitle: "Primeiras contratações",
-    rosterKicker: "Três jogadores sem org. Um deles diz sim para a sua.",
+    rosterKicker: "Escolha seus três primeiros jogadores",
     rosterProspects: "Promessas",
-    rosterProspectsDesc: "Adolescentes com teto altíssimo. Exige paciência.",
+    rosterProspectsDesc: "Jovens, alto potencial, precisam de tempo",
     rosterJourneymen: "Rodados",
-    rosterJourneymenDesc: "Os veteranos da cena. Prontos agora, sem margem de evolução.",
+    rosterJourneymenDesc: "Veteranos: fortes agora, pouca evolução",
     rosterBalanced: "Equilibrado",
-    rosterBalancedDesc: "Um pouco de agora, um pouco de depois.",
+    rosterBalancedDesc: "Uma mistura de veteranos e promessas",
     recommended: "Recomendado",
-    /** rc.35 (front C): a tag da oferta do meio. */
-    rosterBalancedTag: "Equilibrado",
     wageBill: "Folha salarial",
     avgAge: "Idade média",
     avgOverall: "OVR médio",
@@ -358,36 +338,35 @@ export const CAREER_PT: CareerCopy = {
     // Etapa 5 — dificuldade + resumo. rc.34 (front I, Miguel 31/10): reescrita
     // para quem joga pela primeira vez, no celular — uma promessa e três tópicos simples.
     finalTitle: "Dificuldade",
-    finalKicker: "A escolha vale para a carreira inteira.",
+    finalKicker: "A escolha vale para a carreira inteira",
     // rc.32 (BAL-02): os presets da carreira substituem a etapa de Estilo de gestão.
     presets: {
-      easy: { label: "Fácil", promise: "Uma primeira carreira mais tranquila, com espaço para errar." },
-      normal: { label: "Normal", promise: "A carreira do jeito que ela foi pensada." },
-      hard: { label: "Difícil", promise: "Um desafio de verdade, para quem já conhece o caminho." },
+      easy: { label: "Fácil", promise: "Para aprender o jogo" },
+      normal: { label: "Normal", promise: "O equilíbrio pensado para o jogo" },
+      hard: { label: "Difícil", promise: "Para managers experientes" },
     } as Record<"easy" | "normal" | "hard", { label: string; promise: string }>,
     // Os tópicos (wizard/PresetEffects.tsx), lidos ao vivo de balance.ts.
     presetMatches: {
-      easier: "As partidas pendem a seu favor.",
-      even: "Partidas equilibradas.",
-      harder: "Adversários mais fortes.",
+      easier: "As partidas pendem a seu favor",
+      even: "Partidas equilibradas",
+      harder: "Adversários mais fortes",
     } as Record<"easier" | "even" | "harder", string>,
     // rc.34 review: a regra de dinheiro inteira do preset (economy.moneyRuleFor) — os empréstimos
     // emergenciais da carreira (null = sem limite), as semanas para quitar cada um, ou sem prazo.
     presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
-      const head = r.loans === null ? "O banco empresta" : r.loans === 1 ? "Um empréstimo do banco" : `Até ${countWordPt(r.loans)} empréstimos do banco`;
-      if (r.deadlineWeeks === null) return `Sem dinheiro? ${head}, sem prazo: prêmios e vendas pagam.`;
-      return `Sem dinheiro? ${head}: pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba.`;
+      const head = r.loans === null ? "o banco empresta" : r.loans === 1 ? "você tem um empréstimo do banco" : `você tem até ${countWordPt(r.loans)} empréstimos do banco`;
+      if (r.deadlineWeeks === null) return `Se o dinheiro acabar, ${head}. Sem prazo: prêmios e vendas pagam`;
+      return `Se o dinheiro acabar, ${head}. Pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba`;
     },
     // CAREER_LOAN.breachesToEnd 1: a primeira segunda abaixo do piso encerra a carreira — sem empréstimo.
-    presetMoneyNoLoan: "Sem dinheiro, a carreira acaba.",
+    presetMoneyNoLoan: "Se o dinheiro acabar, a carreira acaba",
     // rc.34 review: a delegação do treino com que o preset começa (difficulty.presetTrainingModeOf,
     // CAREER_PLAN.modeByPreset) e se as copas são inscritas por você (as prefs do preset).
     presetHelp: (mode: "auto" | "recommend" | "manual", autoCups: boolean): string =>
-      `${{ auto: "O melhor plano de treino vem marcado para você.", recommend: "O melhor plano de treino vem marcado; você escolhe.", manual: "Você planeja os treinos, sem dicas." }[mode]} ${autoCups ? "A inscrição nas copas é automática." : "Você escolhe cada copa."}`,
-    summaryTitle: "A papelada",
+      `${{ auto: "O melhor plano de treino vem marcado para você", recommend: "O melhor plano vem marcado e você escolhe", manual: "Você planeja os treinos, sem dicas" }[mode]}. ${autoCups ? "A inscrição nas copas é automática" : "Você escolhe cada copa"}`,
+    summaryTitle: "Resumo",
     found: (org: string) => `Fundar ${org}`,
     founded: "EST. 2020",
-    foundedSplash: "Um novo nome entra na cena.",
   },
 
   hub: {
@@ -4271,7 +4250,8 @@ export const CAREER_PT: CareerCopy = {
     mandate: {
       title: "O mandato da diretoria",
       season: (season: string) => `${season} · definido pela diretoria`,
-      body: "A diretoria define três metas para a temporada. Não é uma escolha: é o que o cargo pede.",
+      body: "A diretoria define três metas para a temporada.",
+      goalLabel: "Meta", // rc9 ORG-UI: the goal table's first column
       demandLabel: "Exigência",
       demand: { low: "Baixa", medium: "Média", high: "Alta" } as Record<string, string>,
       demandNote: {
