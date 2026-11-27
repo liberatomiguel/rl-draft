@@ -12,8 +12,8 @@ import { NAME_CATALOG } from "@/data/career/nameCatalog";
 import { orgs, players } from "@/data";
 import { createRng } from "@/lib/rng";
 import { createCareerSave, type CreateCareerInput } from "@/store/careerFlow";
-import { claimHolds, eligibleVariants, fanFeedFor, windowFor } from "./fanFeed";
-import { FEED_VARIANTS, MANAGER_POST_KEYS } from "./fanFeedVariants";
+import { claimHolds, eligibleVariants, fanFeedFor, managerPostDraftOf, windowFor } from "./fanFeed";
+import { FEED_VARIANTS } from "./fanFeedVariants";
 import { feedTextOf, fillTemplate, placeholdersOf } from "./fanFeedText";
 import type { FanFeedSave, FeedKind, FeedSeries } from "./fanFeedTypes";
 import { HANDLE_HEADS, HANDLE_TAILS, handleFrom, handleKey } from "./fanHandles";
@@ -127,7 +127,7 @@ describe("variety (F3)", () => {
   it("every kind has at least six variants and the copy has exactly their keys, EN and PT", () => {
     const keys = Object.values(FEED_VARIANTS).flatMap((vs) => vs.map((v) => v.key));
     for (const [kind, vs] of Object.entries(FEED_VARIANTS)) expect(vs.length, kind).toBeGreaterThanOrEqual(6);
-    const wanted = [...keys, ...Object.values(MANAGER_POST_KEYS)].sort();
+    const wanted = [...keys].sort();
     expect(Object.keys(CAREER_FEED_EN.feed.text).sort()).toEqual(wanted);
     expect(Object.keys(CAREER_FEED_PT.feed.text).sort()).toEqual(wanted);
     expect(Object.keys(CAREER_FEED_PT.feed.tones).sort()).toEqual(Object.keys(CAREER_FEED_EN.feed.tones).sort());
@@ -135,12 +135,7 @@ describe("variety (F3)", () => {
   });
 
   it("every variant uses at least two data slots, and exactly the ones it declares", () => {
-    const all = [
-      ...Object.values(FEED_VARIANTS).flat(),
-      { key: "managerPost.humble", needs: ["opponent", "org"] },
-      { key: "managerPost.confident", needs: ["opponent", "org"] },
-      { key: "managerPost.provocative", needs: ["opponent", "org"] },
-    ];
+    const all = Object.values(FEED_VARIANTS).flat();
     for (const v of all) {
       expect(new Set(v.needs).size, v.key).toBeGreaterThanOrEqual(2);
       for (const dict of [CAREER_FEED_EN.feed.text, CAREER_FEED_PT.feed.text]) {
@@ -392,10 +387,12 @@ describe("the manager's post, the fans' answer and the receipt in the feed (F4)"
     for (const tone of ["humble", "confident", "provocative"] as const) {
       const save = withFeed(base(), feedOf(series("WW"), { posts: [post(tone)] }));
       const feed = fanFeedFor(save);
-      expect(feed.filter((p) => p.kind === "managerPost").map((p) => p.variant)).toEqual([`managerPost.${tone}`]);
+      const mine = feed.filter((p) => p.kind === "managerPost");
+      expect(mine).toHaveLength(1);
+      expect(FEED_VARIANTS.managerPost.find((v) => v.key === mine[0].variant)).toMatchObject({ tone, result: "won" });
       const reply = feed.find((p) => p.kind === "managerReply")!;
       const def = FEED_VARIANTS.managerReply.find((v) => v.key === reply.variant)!;
-      expect(def.tone).toBe(tone);
+      expect(def).toMatchObject({ tone, result: "won" });
       expect(feed.some((p) => p.kind === "receipt")).toBe(false);
     }
   });
@@ -433,7 +430,119 @@ describe("eligibleVariants", () => {
   it("drops a variant whose slot is missing and a tone that is not his", () => {
     const keys = eligibleVariants("signing", { player: "X", org: "Y" }, { ledger: 0, regionalChampion: false }).map((v) => v.key);
     expect(keys).toHaveLength(6);
-    const reply = eligibleVariants("managerReply", { opponent: "A", org: "B", week: "3" }, { ledger: 0, regionalChampion: false }, "humble");
-    expect(reply.map((v) => v.tone)).toEqual(["humble", "humble", "humble"]);
+    const reply = eligibleVariants("managerReply", { opponent: "A", org: "B", week: "3", score: "3-0" }, { ledger: 0, regionalChampion: false }, "humble");
+    expect(reply.map((v) => `${v.tone}/${v.result}`)).toEqual(["humble/won", "humble/won"]);
+    const lost = eligibleVariants("managerReply", { opponent: "A", org: "B", week: "3", score: "3-0" }, { ledger: 0, regionalChampion: false }, "humble", "lost");
+    expect(lost.map((v) => `${v.tone}/${v.result}`)).toEqual(["humble/lost", "humble/lost"]);
+  });
+});
+
+// v2.3 FIX: the manager's post and the fans' answer are written after the series, by its result.
+describe("the manager's post follows the result of the series (v2.3 FIX)", () => {
+  const TONES = ["humble", "confident", "provocative"] as const;
+  const RESULTS = ["won", "lost"] as const;
+  const COPIES = [
+    ["en", CAREER_FEED_EN.feed],
+    ["pt", CAREER_FEED_PT.feed],
+  ] as const;
+  /** Words that only make sense before a series is played. */
+  const PRE_MATCH = {
+    en: /\b(ready for|coming for|should be worried|before facing|ahead of|prepared for|getting ready|say you are ready)\b/i,
+    pt: /\b(prontos? pra|vem pra cima|pode se preocupar|antes de enfrentar|se preparando|diz que est[aá] pronto)\b/i,
+  };
+  const postKeys = () => [...FEED_VARIANTS.managerPost, ...FEED_VARIANTS.managerReply, ...FEED_VARIANTS.receipt].map((v) => v.key);
+
+  it("has at least two variants for each tone x result, each with two or more slots", () => {
+    for (const kind of ["managerPost", "managerReply"] as const) {
+      for (const tone of TONES) {
+        for (const result of RESULTS) {
+          const cell = FEED_VARIANTS[kind].filter((v) => v.tone === tone && v.result === result);
+          expect(cell.length, `${kind} ${tone} ${result}`).toBeGreaterThanOrEqual(2);
+          for (const v of cell) expect(new Set(v.needs).size, v.key).toBeGreaterThanOrEqual(2);
+        }
+      }
+    }
+    for (const v of FEED_VARIANTS.managerPost) {
+      expect(v.needs, v.key).toContain("opponent");
+      expect(v.needs.some((s) => s === "score" || s === "event"), v.key).toBe(true);
+    }
+  });
+
+  it("EN and PT have the same keys for post, reply and receipt, and every text drops in exactly its slots", () => {
+    for (const k of postKeys()) {
+      const need = [...new Set(Object.values(FEED_VARIANTS).flat().find((v) => v.key === k)!.needs)].sort();
+      for (const [, copy] of COPIES) expect([...new Set(placeholdersOf(copy.text[k]))].sort(), k).toEqual(need);
+    }
+  });
+
+  it("carries no pre-match sentence in any variant or tone description, EN or PT", () => {
+    for (const [lang, copy] of COPIES) {
+      for (const k of postKeys()) expect(copy.text[k], `${lang} ${k}`).not.toMatch(PRE_MATCH[lang]);
+      for (const t of TONES) expect(copy.tones[t].hint, `${lang} ${t}`).not.toMatch(PRE_MATCH[lang]);
+    }
+  });
+
+  it("PT keeps its rules: events take the article, an org never follows a bare de / pra / em cima de", () => {
+    for (const k of postKeys()) {
+      const t = CAREER_FEED_PT.feed.text[k];
+      expect(t, k).not.toMatch(/\b(de|pra|para|em cima de|a|ao)\s+\{(opponent|org)\}/);
+      expect(t, k).not.toMatch(/\b(em|de)\s+\{event\}/);
+    }
+  });
+
+  it("after a win and after a loss the post and the reply draw only that result's variants; the draft is the post", () => {
+    for (const won of [true, false]) {
+      for (const tone of TONES) {
+        for (let seed = 1; seed <= 30; seed++) {
+          const list = series(won ? "WW" : "WL");
+          const post = { seriesN: 2, tone, opponentRef: "opp1", opponentName: "Rival Beta", seasonIndex: 1, week: 4 };
+          const save = withFeed({ ...base(), careerSeed: seed * 131 }, feedOf(list, { posts: [post] }));
+          const feed = fanFeedFor(save);
+          for (const kind of ["managerPost", "managerReply"] as const) {
+            const p = feed.find((x) => x.kind === kind)!;
+            expect(FEED_VARIANTS[kind].find((v) => v.key === p.variant), `${kind} ${tone} ${won}`).toMatchObject({ tone, result: won ? "won" : "lost" });
+            for (const [lang, copy] of COPIES) {
+              const text = feedTextOf(p, copy);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(PRE_MATCH[lang]);
+              expect(text).toContain("Rival Beta");
+            }
+          }
+          const mine = feed.find((x) => x.kind === "managerPost")!;
+          const draft = managerPostDraftOf(save, list[1], tone);
+          expect(draft.variant).toBe(mine.variant);
+          expect(feedTextOf(draft, CAREER_FEED_EN.feed)).toBe(feedTextOf(mine, CAREER_FEED_EN.feed));
+        }
+      }
+    }
+  });
+
+  it("the draft names the score and the event of the series, winner first", () => {
+    const lost = series("WL")[1];
+    expect([lost.us, lost.them]).toEqual([1, 3]);
+    const draft = managerPostDraftOf(base(), lost, "provocative");
+    expect(draft.slots).toMatchObject({ opponent: "Rival Beta", score: "3-1", event: lost.event });
+    expect(FEED_VARIANTS.managerPost.find((v) => v.key === draft.variant)?.result).toBe("lost");
+  });
+
+  it("a post stored without a result reads the series ring; with neither it is a win with nothing to name", () => {
+    const post = { seriesN: 2, tone: "confident" as const, opponentRef: "opp1", opponentName: "Rival Beta", seasonIndex: 1, week: 4 };
+    const fromRing = fanFeedFor(withFeed(base(), feedOf(series("WL"), { posts: [post] }))).find((p) => p.kind === "managerPost")!;
+    expect(FEED_VARIANTS.managerPost.find((v) => v.key === fromRing.variant)?.result).toBe("lost");
+    const stored = { ...post, result: { won: true, us: 3, them: 0, event: "Stored Event" } };
+    const fromRecord = fanFeedFor(withFeed(base(), feedOf(series("WL"), { posts: [stored] }))).find((p) => p.kind === "managerPost")!;
+    expect(FEED_VARIANTS.managerPost.find((v) => v.key === fromRecord.variant)?.result).toBe("won");
+    expect(fromRecord.slots).toMatchObject({ score: "3-0", event: "Stored Event" });
+    const bare = fanFeedFor(withFeed(base(), feedOf([], { posts: [post] })));
+    expect(bare.some((p) => p.kind === "managerPost")).toBe(false);
+    for (const p of bare.filter((x) => x.kind === "managerReply")) expect(FEED_VARIANTS.managerReply.find((v) => v.key === p.variant)?.result).toBe("won");
+  });
+
+  it("a receipt never repeats a post's own claim (it would read wrong after a win or a loss)", () => {
+    for (const [, copy] of COPIES) {
+      for (const v of FEED_VARIANTS.receipt) {
+        expect(copy.text[v.key], v.key).not.toMatch(/\b(ready|pronto|coming|worried|preocupar|will be back|volta)\b/i);
+      }
+    }
   });
 });

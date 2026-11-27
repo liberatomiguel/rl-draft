@@ -92,6 +92,8 @@ export function postToFeedFlow(input: CareerSave, tone: FanTone | "skip"): Caree
       opponentName: series.opponentName,
       seasonIndex: input.clock.seasonIndex,
       week: weekOfDay(input.clock.day),
+      // v2.3 FIX: the result it reacted to, so its text is about a series already played.
+      result: { won: series.won, us: series.us, them: series.them, event: series.event },
     },
   ].slice(-CAREER_FEED.postsKept);
   return { ...input, fanFeed: { ...feed, posts, answered: series.n, followers: followersMove(feed.followers, F.tone[tone]) } };

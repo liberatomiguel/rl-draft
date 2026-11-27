@@ -90,8 +90,10 @@ describe("locker room views", () => {
   });
 
   it("drafts the manager's post with the copy the feed uses once it is sent", () => {
-    const draft = managerPostDraftOf({ identity: { orgName: "Kestrel Gaming" } as never }, "FURIA", "confident");
-    expect(draft.variant).toBe("managerPost.confident");
-    expect(feedTextOf(draft, CAREER_FEED_EN.feed)).toBe("Kestrel Gaming is ready for FURIA. We trust our work.");
+    // v2.3 FIX: the draft is written after the series (its result, score, event)
+    const series = { n: 1, opponentName: "FURIA", us: 3, them: 1, won: true, event: "Garage Series" };
+    const draft = managerPostDraftOf({ identity: { orgName: "Kestrel Gaming" } as never, careerSeed: 5 }, series, "confident");
+    expect(draft.variant).toMatch(/^managerPost\.(5|6)$/);
+    expect(feedTextOf(draft, CAREER_FEED_EN.feed)).toMatch(/FURIA/);
   });
 });
