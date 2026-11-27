@@ -238,9 +238,10 @@ function SubjectChips({
   wire: boolean;
 }) {
   const region = newsRegionOf(item);
-  return <span className="flex flex-wrap items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-faint">
+  return <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-faint">
     <span>{archive ? C.news.feed.archive + " · " + seasonLabelFor(item.seasonIndex) : wire ? brandKicker : C.news.feed.subject[item.type]}</span>
-    {region ? <span>· {region}</span> : null}
+    {region ? <span aria-hidden>·</span> : null}
+    {region ? <span>{region}</span> : null}
   </span>;
 }
 
@@ -254,7 +255,7 @@ function ActionLink({ item, C, lead }: { item: NewsItem; C: CareerCopy; lead?: b
   return (
     <AppLink
       href={a.href}
-      className="inline-flex min-h-7 items-center text-xs font-semibold text-blue-bright underline-offset-4 hover:underline"
+      className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-bright underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-blue sm:min-h-8"
     >
       {C.news.feed.action[a.action]}
     </AppLink>
@@ -274,18 +275,18 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
     // The headline is a band across the feed, edge to edge: the front page of the desk.
     // The crests of the orgs it is about stand large on the right, like a lower-third.
     // The open story is marked in the desk's blue: a tinted band between two blue rules.
-    <article className="border-y border-blue-bright/55 bg-blue/[0.09] px-4 py-5 first:border-t-0 sm:px-6 sm:py-6">
-      <div className="flex items-center justify-between gap-3">
-        <p className="display flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.05em] text-blue-bright">
+    <article className="border-y border-line-strong bg-white/[0.03] px-4 py-6 first:border-t-0 sm:px-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="kicker !text-blue-bright">
           {C.news.feed.lead}
-          <span className="font-sans text-[11px] font-normal normal-case tracking-normal text-faint">{stampOf(item, save, C, C.dates)}</span>
+          <span className="ml-2 font-sans text-xs font-normal normal-case tracking-normal text-faint">{stampOf(item, save, C, C.dates)}</span>
         </p>
         <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} />
       </div>
-      <div className="mt-4 flex items-center gap-5">
+      <div className="mt-4 flex items-center gap-6">
         <div className="min-w-0 flex-1">
-          <h3 className="display text-2xl font-bold uppercase leading-[1.05] text-ink sm:text-[2rem]">{r.title}</h3>
-          {r.body ? <p className="mt-3 max-w-prose text-sm leading-relaxed text-sub">{r.body}</p> : null}
+          <h3 className="display text-2xl font-bold leading-[1.12] text-ink sm:text-[1.75rem]">{r.title}</h3>
+          {r.body ? <p className="mt-3 max-w-prose text-[15px] leading-[1.55] text-sub max-sm:text-sm">{r.body}</p> : null}
           {archive ? <p className="mt-2 text-xs text-faint">{C.news.feed.archiveNote}</p> : null}
         </div>
         {/* The mark has its own cell: a fixed square on the right, the art centred in it. */}
@@ -293,7 +294,7 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
           <Crests item={item} refs={refs.slice(0, 2)} save={save} size="md" type={item.type} archive={archive} />
         </div>
       </div>
-      <div className="mt-4"><ActionLink item={item} C={C} lead /></div>
+      <div className="mt-5"><ActionLink item={item} C={C} lead /></div>
     </article>
   );
 }
@@ -304,17 +305,22 @@ function StoryRow({ item, save, C, lang, brandKicker, compact, onSelect }: { ite
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
     // Every story is a ruled row; its mark sits in a fixed column so the marks and the text line up down the feed.
-    <article className="flex items-center gap-4 border-b border-line-strong px-4 py-4 last:border-0 sm:px-6">
-      <span className="flex h-10 w-12 shrink-0 items-center justify-center [&_img]:!max-w-12">
+    <article className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0 sm:px-6">
+      <span className="flex h-10 w-12 shrink-0 items-center justify-center max-sm:hidden [&_img]:!max-w-12">
         <Crests item={item} refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
       </span>
       <div className="min-w-0 flex-1">
-        <button type="button" onClick={onSelect} className="block w-full cursor-pointer rounded text-left hover:text-blue-bright focus-visible:outline-2 focus-visible:outline-blue">
-        {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} /> : null}
-        <p className={cx("text-sm leading-snug", item.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
-        {!compact && r.body ? <p className="mt-0.5 text-xs leading-relaxed text-sub">{r.body}</p> : null}
+        <button type="button" onClick={onSelect} className="block min-h-11 w-full cursor-pointer rounded text-left hover:text-blue-bright focus-visible:outline-2 focus-visible:outline-blue">
+          <p className={cx("text-[15px] leading-snug", item.read ? "text-sub" : "display font-bold text-ink")}>{r.title}</p>
+          {!compact && r.body ? <p className="mt-1 line-clamp-1 text-[13px] text-sub">{r.body}</p> : null}
         </button>
-        <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[11px] text-faint">{stampOf(item, save, C, C.dates)}</span><ActionLink item={item} C={C} /></div>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0">
+          <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-faint">
+            {!compact || archive ? <><SubjectChips item={item} C={C} archive={archive} brandKicker={rocketStreetNews(item) ? C.launch.rocketStreet : brandKicker} wire={Boolean(r.wire) || rocketStreetNews(item)} /><span aria-hidden>·</span></> : null}
+            <span>{stampOf(item, save, C, C.dates)}</span>
+          </span>
+          <ActionLink item={item} C={C} />
+        </div>
       </div>
       {!item.read ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-bright" aria-label={C.news.unread(1)} /> : null}
     </article>
@@ -367,20 +373,21 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
   return (
     <Panel id="career-news" className="rise-in scroll-mt-36 overflow-hidden" style={{ animationDelay: "120ms" }}>
       {/* Masthead: the desk's mark and name, ruled off from the stories. */}
-      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-6">
+      <div className="flex min-h-[3.25rem] items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3.5">
           {/* The partner's mark, with its credit line right under it. */}
           <span className="flex shrink-0 flex-col items-start gap-1">
             <BrandMark brand={brand} name={B.name} />
           </span>
           <span className="min-w-0">
+            {/* On the desk's own page the screen title already says "Newsroom"; the HQ's preview names it here. */}
             <span className="flex items-center gap-2">
-              <span className="card-title">{C.news.feed.name}</span>
+              {full ? null : <span className="card-title">{C.news.feed.name}</span>}
               {unread > 0 ? (
-                <span className="rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] text-orange-bright">{unread}</span>
+                <span className="rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] text-orange-bright">{full ? C.news.unread(unread) : unread}</span>
               ) : null}
             </span>
-            {B.credit ? <span className="mt-1.5 block text-xs text-sub">{B.credit}</span> : null}
+            {B.credit ? <span className={cx("block text-xs text-sub", !full && "mt-1.5")}>{B.credit}</span> : null}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -399,15 +406,15 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
         </div>
       </div>
       {open ? (
-        <div className="flex flex-wrap gap-2 border-b border-line px-4 py-3 sm:px-6">
+        <div role="group" aria-label={C.news.feed.name} className="flex gap-x-5 overflow-x-auto border-b border-line px-4 [scrollbar-width:none] sm:px-6">
           {FILTERS.map((key) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
               aria-pressed={filter === key}
               className={cx(
-                "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
-                filter === key ? "border-blue/50 bg-blue/15 text-blue-bright" : "border-line-strong bg-white/5 text-sub hover:text-ink",
+                "min-h-11 shrink-0 whitespace-nowrap border-b-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-blue sm:min-h-10",
+                filter === key ? "-mb-px border-blue-bright font-semibold text-ink" : "border-transparent text-sub hover:text-ink",
               )}
             >
               {C.news.filter[key]}
