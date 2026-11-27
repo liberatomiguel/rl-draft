@@ -24,7 +24,7 @@ import { CAREER_PLAYBACK, CAREER_SUNDAY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { followRoundsOf, followWinnerOf } from "@/engine/career/follow";
-import { prizeFor } from "@/engine/career/economy";
+import { prizeFor, prizeShapeOf } from "@/engine/career/economy";
 import type { CareerSave, FollowEventState, FollowSeries } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
@@ -37,7 +37,7 @@ import { dateOfDay, useCareerSave } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
 import { EventTierIcon, TIER_ICON_TONE } from "@/components/career/event/EventTierIcon";
 import { placementRankOf } from "@/components/career/event/eventPlayback";
-import { placementLabelOf } from "@/components/career/event/weekendView";
+import { placementLabelOf, stageExitLabelOf } from "@/components/career/event/weekendView";
 import { TierChip, maxPointsOf } from "@/components/career/hub/hubShared";
 import { OrgMark } from "@/components/career/OrgMark";
 import { EventRosters, EventTeamButton, useEventRosterOpen } from "@/components/career/event/EventRosters";
@@ -152,7 +152,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
     <div className={cx("grid items-start gap-4", f.swiss.length > 0 && (showPlayoffs || roundPanel) && "lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]")}>
       {roundPanel}
       {showPlayoffs ? <div className="min-w-0"><CareerBracket save={save} t={board.tournament} revealed={board.revealed} liveKey={null} showUpcoming={false} layout="wide" /></div> : null}
-      {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings title={C.follow.swissStandings} save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} /></div> : null}
+      {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings title={C.follow.swissStandings} save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} stage={followStageOf(f)} /></div> : null}
     </div>
   );
   // the readable results: placement, points, prize
@@ -175,8 +175,8 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
             {[...result.rows]
               .sort((a, b) => placementRankOf(a.placement) - placementRankOf(b.placement))
               .map((row) => {
-                const label = placementLabelOf(labels, f.def.tier, row.placement);
-                const prize = row.prize || prizeFor(f.def.tier, row.placement, f.def.format, save.difficulty, f.def.seasonIndex);
+                const label = placementLabelOf(labels, f.def.tier, row.placement, stageExitLabelOf(C, f.def));
+                const prize = row.prize || prizeFor(f.def.tier, row.placement, prizeShapeOf(f.def), save.difficulty, f.def.seasonIndex);
                 return (
                   <tr key={row.ref} className={cx("border-t border-line", row.placement === "champion" && "bg-amber-400/5")}>
                     <td className="hidden truncate py-1.5 pr-2 text-sub sm:table-cell" title={label}>
@@ -314,4 +314,15 @@ function SeriesList({ save, f, series }: { save: CareerSave; f: FollowEventState
       })}
     </ul>
   );
+}
+
+/**
+ * v2.2 event formats: a recorded group stage for the standings (its groups,
+ * never "finished": a follow record keeps no table statuses, so a group of
+ * four is ordered by its revealed records and tagged only by the 2-win rule).
+ */
+function followStageOf(f: FollowEventState) {
+  const kind = f.def.layout?.stage;
+  if (!f.groups || (kind !== "groups4" && kind !== "gsl8")) return undefined;
+  return { kind, groups: f.groups, records: [], rounds: [], finished: false };
 }

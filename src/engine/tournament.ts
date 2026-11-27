@@ -14,10 +14,28 @@ import { TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
 import type { SeriesOptions, UserSeriesResolver } from "./match";
 import { generateOpponents } from "./opponents";
-import { createPlayoffs, nextPlayoffPairings, playPlayoffRound, userPlayoffSeries } from "./playoffs";
+import {
+  advancePerGroup,
+  bracketSlotsFor,
+  createGroupStage,
+  double16Slots,
+  isLayoutBracket,
+  layoutPlacementOf,
+  lossEliminates,
+  playGroupRound,
+  playoffFormatOf,
+} from "./eventLayouts";
+import {
+  createPlayoffs,
+  nextPlayoffPairings,
+  playPlayoffRound,
+  sundayStartRoundOf,
+  userPlayoffSeries,
+} from "./playoffs";
 import { createSwissState, playSwissRound, seedsFromSwiss, upcomingSwissPairings } from "./swiss";
 import type {
   Difficulty,
+  EventLayout,
   Placement,
   TournamentState,
   TournamentTeam,
@@ -118,9 +136,13 @@ export function initFieldTournament(
   field: TournamentTeam[],
   format: FieldTournamentFormat,
   rng: Rng,
+  /** v2.2 event formats: a Major / Worlds shape (only with format "swiss"). */
+  layout?: EventLayout,
 ): TournamentState {
   const teams: Record<string, TournamentTeam> = {};
   for (const team of field) teams[team.id] = team;
+
+  if (layout && format === "swiss") return initLayoutTournament(field, teams, layout, rng);
 
   if (format === "single") {
     if (field.length !== 8) {
@@ -164,6 +186,52 @@ export function initFieldTournament(
   return format === "swissOnly" ? { ...state, swissOnly: true } : state;
 }
 
+/** A finished, empty stage (the shapes whose bracket starts at once). */
+function emptyStage(teams: Record<string, TournamentTeam>): TournamentState["swiss"] {
+  return {
+    rounds: [],
+    records: Object.keys(teams).map((teamId) => ({
+      teamId,
+      wins: 0,
+      losses: 0,
+      gameDiff: 0,
+      status: "advanced" as const,
+    })),
+    nextPairings: null,
+    finished: true,
+  };
+}
+
+/**
+ * v2.2 event formats: a 16-team Major / Worlds in the given shape. The Swiss
+ * stage draws exactly as the classic one; a group stage draws its groups;
+ * "none" goes straight into the 16-team bracket (seeded by rating).
+ */
+function initLayoutTournament(
+  field: TournamentTeam[],
+  teams: Record<string, TournamentTeam>,
+  layout: EventLayout,
+  rng: Rng,
+): TournamentState {
+  if (field.length !== TOURNAMENT.swiss.teams) {
+    throw new Error(`initFieldTournament(layout) needs exactly ${TOURNAMENT.swiss.teams} teams, got ${field.length}`);
+  }
+  const ids = Object.keys(teams);
+  if (layout.stage === "none") {
+    return {
+      teams,
+      swiss: emptyStage(teams),
+      playoffs: createPlayoffs(double16Slots(ids, teams), playoffFormatOf(layout.bracket)),
+      stage: "playoffs",
+      userEliminated: false,
+      layout,
+    };
+  }
+  const swiss =
+    layout.stage === "swiss" ? createSwissState(ids, rng) : createGroupStage(layout.stage, ids, teams, rng);
+  return { teams, swiss, playoffs: null, stage: "swiss", userEliminated: false, layout };
+}
+
 /**
  * v2.0 (R40): re-shape an existing state as Swiss-only — the legacy-save
  * path for a qualifier that was started under the old "swiss" format. A
@@ -195,10 +263,29 @@ export function playNextRound(
   userSeries?: UserSeriesResolver,
 ): TournamentState {
   if (state.stage === "swiss") {
-    const swiss = playSwissRound(state.swiss, state.teams, difficulty, rng, userSeries);
+    const layout = state.layout;
+    const swiss =
+      state.swiss.kind && layout
+        ? playGroupRound(
+            state.swiss,
+            state.teams,
+            difficulty,
+            rng,
+            advancePerGroup(state.swiss.kind, layout.bracket),
+            userSeries,
+          )
+        : playSwissRound(state.swiss, state.teams, difficulty, rng, userSeries);
     let next: TournamentState = { ...state, swiss };
 
-    if (swiss.finished && state.swissOnly) {
+    if (swiss.finished && layout) {
+      // v2.2 event formats: the stage's results fill the bracket's slots.
+      next = {
+        ...next,
+        playoffs: createPlayoffs(bracketSlotsFor(next, layout), playoffFormatOf(layout.bracket)),
+        stage: "playoffs",
+        userEliminated: userStatus(next) === "eliminated",
+      };
+    } else if (swiss.finished && state.swissOnly) {
       // v2.0 (R40): a Swiss-only event ends with its Swiss — no playoffs.
       next = { ...next, stage: "finished", userEliminated: userStatus(next) === "eliminated" };
     } else if (swiss.finished) {
@@ -228,7 +315,10 @@ export function playNextRound(
       );
       if (userSeries) {
         const lost = userSeries.winnerTeamId !== "user";
-        if (playoffs.format === "single") {
+        if (isLayoutBracket(playoffs.format)) {
+          // v2.2 event formats: the bracket's own rule for each round.
+          if (lost && lossEliminates(playoffs.format, lastRound.name)) next.userEliminated = true;
+        } else if (playoffs.format === "single") {
           // Single elim (quick): any loss ends the run.
           if (lost) next.userEliminated = true;
         } else if (lastRound.name === "third_place") {
@@ -320,11 +410,29 @@ export function upcomingUserPairing(
  * single-elimination shapes (no Swiss rounds were ever played there).
  */
 export function atPlayoffsStart(state: TournamentState): boolean {
+  // v2.2 event formats: the 16-team double elimination has no stage, so its
+  // Saturday is the bracket's first rounds, down to eight sides.
+  if (state.playoffs?.format === "double16") {
+    return state.stage === "playoffs" && state.playoffs.rounds.length === sundayStartRoundOf("double16");
+  }
   return (
     state.stage === "playoffs" &&
     state.swiss.rounds.length > 0 &&
     state.playoffs !== null &&
     state.playoffs.rounds.length === 0
+  );
+}
+
+/**
+ * v2.2 event formats: true while a 16-team double elimination is still in its
+ * Saturday rounds (the bracket started at once, so its stage reads
+ * "playoffs" from the first series). False for every other shape.
+ */
+export function inSaturdayBracket(state: TournamentState): boolean {
+  return (
+    state.stage === "playoffs" &&
+    state.playoffs?.format === "double16" &&
+    state.playoffs.rounds.length < sundayStartRoundOf("double16")
   );
 }
 
@@ -345,6 +453,7 @@ export function fastForward(
 }
 
 export function userPlacement(state: TournamentState): Placement {
+  if (isLayoutBracket(state.playoffs?.format)) return layoutPlacementOf(state, "user");
   if (state.playoffs?.championTeamId === "user") return "champion";
 
   const playoffRuns = userPlayoffSeries(state.playoffs);

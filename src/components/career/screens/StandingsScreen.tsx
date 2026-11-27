@@ -83,6 +83,7 @@ const FORM_CHIP: Record<Placement, { label: string; cls: string }> = {
   top4: { label: "4", cls: "bg-blue/15 text-blue-bright" },
   top6: { label: "6", cls: "bg-white/[0.07] text-sub" },
   top8: { label: "8", cls: "bg-white/[0.07] text-sub" },
+  top12: { label: "12", cls: "bg-white/[0.07] text-sub" },
   swiss_exit: { label: "9+", cls: "bg-bad/15 text-bad" },
 };
 

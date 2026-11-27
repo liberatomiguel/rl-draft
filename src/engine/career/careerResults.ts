@@ -12,7 +12,8 @@
 
 import { CAREER_REP, CAREER_SLOTS, CAREER_STABILITY, FEATURES } from "@/config/balance";
 import type { Placement, PlayoffState, Region, TournamentState } from "../types";
-import { pointsFor, prizeFor, repTierOf } from "./economy";
+import { pointsFor, prizeFor, prizeShapeOf, repTierOf } from "./economy";
+import { isLayoutBracket, layoutPlacementOf } from "../eventLayouts";
 import { seedsFromSwiss } from "../swiss";
 import { derivedFloat, streams } from "./seeds";
 import type {
@@ -54,6 +55,8 @@ function teamPlayoffSeries(playoffs: PlayoffState | null, teamId: string) {
  * and no new Placement value (Placement is shared with the Draft).
  */
 export function placementOf(state: TournamentState, teamId: string): Placement {
+  // v2.2 event formats: the career-only brackets place by their own rounds.
+  if (isLayoutBracket(state.playoffs?.format)) return layoutPlacementOf(state, teamId);
   if (state.swissOnly) {
     const record = state.swiss.records.find((r) => r.teamId === teamId);
     return record?.status === "advanced" ? "top8" : "swiss_exit";
@@ -99,7 +102,8 @@ const PLACEMENT_RANK: Record<Placement, number> = {
   top4: 4,
   top6: 5,
   top8: 6,
-  swiss_exit: 7,
+  top12: 7,
+  swiss_exit: 8,
 };
 
 /**
@@ -168,8 +172,8 @@ export function compileEventResult(
       ref: teamId,
       name: ctx.nameOf(teamId),
       placement,
-      points: pointsFor(def.tier, placement),
-      prize: prizeFor(def.tier, placement, def.format, ctx.difficulty, def.seasonIndex),
+      points: pointsFor(def.tier, placement, prizeShapeOf(def)),
+      prize: prizeFor(def.tier, placement, prizeShapeOf(def), ctx.difficulty, def.seasonIndex),
     };
   });
   if (state.swissOnly) {
@@ -383,6 +387,7 @@ const GRADE_WORLDS_SCORE: Record<Placement, number> = {
   top4: 4,
   top6: 3,
   top8: 3,
+  top12: 2,
   swiss_exit: 2,
 };
 /** Expected score per rep tier (repTierOf: 0..4). */

@@ -26,7 +26,8 @@ import {
 import { eventRepKindFor, repGainFor, t3RepKeyFor } from "@/engine/career/economy";
 import { deepRunKeyFor, newcomerRepKindOf, type NewcomerRepKind } from "@/engine/career/reputation";
 import type { CareerEventDef, CareerSave, EventTier } from "@/engine/career/types";
-import { nextPlayoffPairings } from "@/engine/playoffs";
+import { stageRuleOf, sundayEntrantsOf, type SundaySide } from "@/engine/eventLayouts";
+import { nextPlayoffPairings, pairingsForRound, sundayOpeningRoundsOf } from "@/engine/playoffs";
 import type { PlayoffState } from "@/engine/types";
 import { seedsFromSwiss } from "@/engine/swiss";
 import { atPlayoffsStart } from "@/engine/tournament";
@@ -170,10 +171,27 @@ export interface SwissVerdict {
  * The user's Swiss verdict from a REVEALED record (the playback's spoiler-safe
  * record): null until it reaches the wins to advance / losses to go out.
  */
-export function swissVerdictOf(record: { wins: number; losses: number } | undefined): SwissVerdict | null {
+export function swissVerdictOf(
+  record: { wins: number; losses: number } | undefined,
+  /**
+   * v2.2 event formats: the event's state and whether its whole stage is on
+   * screen. A double-elimination group decides at 2 wins / 2 losses; a group
+   * of four only by its table, once every stage round is revealed.
+   */
+  stage?: { t: TournamentState; fullyRevealed: boolean },
+): SwissVerdict | null {
   if (!record) return null;
-  if (record.wins >= TOURNAMENT.swiss.winsToAdvance) return { outcome: "advanced", ...pick(record) };
-  if (record.losses >= TOURNAMENT.swiss.lossesToEliminate) return { outcome: "eliminated", ...pick(record) };
+  const rule = stage ? stageRuleOf(stage.t.swiss) : null;
+  if (rule === "table") {
+    if (!stage!.fullyRevealed || !stage!.t.swiss.finished) return null;
+    const status = stage!.t.swiss.records.find((r) => r.teamId === "user")?.status;
+    if (status === "advanced" || status === "eliminated") return { outcome: status, ...pick(record) };
+    return null;
+  }
+  const wins = rule ? rule.wins : TOURNAMENT.swiss.winsToAdvance;
+  const losses = rule ? rule.losses : TOURNAMENT.swiss.lossesToEliminate;
+  if (record.wins >= wins) return { outcome: "advanced", ...pick(record) };
+  if (record.losses >= losses) return { outcome: "eliminated", ...pick(record) };
   return null;
 }
 
@@ -195,6 +213,23 @@ function recordOf(t: TournamentState, id: string): { wins: number; losses: numbe
   return { wins: r?.wins ?? 0, losses: r?.losses ?? 0, gameDiff: r?.gameDiff ?? 0 };
 }
 
+/** v2.2 event formats: a side's record in the bracket rounds played so far (wins, losses, game diff). */
+function bracketRecordOf(t: TournamentState, id: string): { wins: number; losses: number; gameDiff: number } {
+  let wins = 0;
+  let losses = 0;
+  let gameDiff = 0;
+  for (const r of t.playoffs?.rounds ?? []) {
+    for (const x of r.series) {
+      if (x.teamAId !== id && x.teamBId !== id) continue;
+      const mine = x.teamAId === id ? x.score[0] - x.score[1] : x.score[1] - x.score[0];
+      if (x.winnerTeamId === id) wins += 1;
+      else losses += 1;
+      gameDiff += mine;
+    }
+  }
+  return { wins, losses, gameDiff };
+}
+
 /**
  * The teams through the Swiss, in seed order: the bracket's own seeds once
  * the playoffs are seeded (a Major / Worlds), the engine's Swiss seeding rule
@@ -202,8 +237,19 @@ function recordOf(t: TournamentState, id: string): { wins: number; losses: numbe
  */
 export function advancedSeedsOf(t: TournamentState): SeedRow[] {
   if (!t.swiss.finished) return [];
+  // v2.2 event formats: Sunday's sides in standing order (bracket seeds are slots there).
+  if (t.layout && t.playoffs) {
+    // A 16-team double elimination has no stage: its sides carry their Saturday bracket record.
+    const rec = t.layout.stage === "none" ? (id: string) => bracketRecordOf(t, id) : (id: string) => recordOf(t, id);
+    return sundayEntrantsOf(t).map(({ id }, i) => ({ id, seed: i + 1, ...rec(id) }));
+  }
   const ids = t.playoffs ? t.playoffs.seeds : seedsFromSwiss(t.swiss, t.teams);
   return ids.map((id, i) => ({ id, seed: i + 1, ...recordOf(t, id) }));
+}
+
+/** v2.2 event formats: the side the user enters Sunday on (upper / lower, bye / first round); null otherwise. */
+export function userSundaySideOf(t: TournamentState): SundaySide | null {
+  return sundayEntrantsOf(t).find((e) => e.id === "user")?.side ?? null;
 }
 
 /** The user's seed (1-based) once the Swiss is over and they advanced; null otherwise. */
@@ -254,6 +300,9 @@ export interface SundayPreview {
  * engine has already played.
  */
 export function openingPairingsOf(playoffs: PlayoffState): [string, string][] {
+  // v2.2 event formats: Sunday opens on the rounds the seeds (and Saturday) fix.
+  const opening = sundayOpeningRoundsOf(playoffs.format);
+  if (opening.length) return opening.flatMap((name) => pairingsForRound(playoffs, name));
   return nextPlayoffPairings({ ...playoffs, rounds: [], championTeamId: null, finished: false });
 }
 
@@ -271,7 +320,8 @@ export function openingOpponentOf(playoffs: PlayoffState | null): string | null 
  */
 export function sundayPreviewOf(t: TournamentState): SundayPreview | null {
   if (!t.playoffs || !atPlayoffsStart(t)) return null;
-  const seeds = t.playoffs.seeds;
+  // v2.2 event formats: numbered by Sunday standing, not by bracket slot.
+  const seeds = t.layout ? sundayEntrantsOf(t).map((e) => e.id) : t.playoffs.seeds;
   const seedOf = (id: string) => seeds.indexOf(id) + 1;
   const pairs = openingPairingsOf(t.playoffs).map(([a, b]) => ({
     a: { id: a, seed: seedOf(a) },
@@ -306,6 +356,8 @@ export function simStopsAtSwissEnd(def: CareerEventDef, today: number): boolean 
 export function isSundaySpectator(save: CareerSave): boolean {
   const ev = save.activeEvent;
   if (!ev || !isTwoDayEvent(ev.def) || save.clock.day === ev.def.day) return false;
+  // v2.2 event formats: the 16-team double elimination keeps only its last eight for Sunday.
+  if (ev.tournament.layout) return !sundayEntrantsOf(ev.tournament).some((e) => e.id === "user");
   return !(ev.tournament.playoffs?.seeds.includes("user") ?? false);
 }
 
@@ -334,11 +386,26 @@ export interface PlacementLabels {
  * A result row's label. R40: a qualifier never has a bracket placement —
  * its "top8" reads Qualified and its "swiss_exit" Eliminated.
  */
-export function placementLabelOf(labels: PlacementLabels, tier: EventTier, placement: Placement): string {
+export function placementLabelOf(
+  labels: PlacementLabels,
+  tier: EventTier,
+  placement: Placement,
+  /** v2.2 event formats: the 13th-16th label of the event's stage ("Group stage exit"). */
+  stageExit?: string,
+): string {
   if (tier === "qualifier") {
     return placement === "swiss_exit" ? labels.qualifierOutcome.eliminated : labels.qualifierOutcome.qualified;
   }
+  if (placement === "swiss_exit" && stageExit) return stageExit;
   return labels.placement[placement];
+}
+
+/** v2.2 event formats: the stage-exit label of a Major / Worlds in a season's shape (undefined otherwise). */
+export function stageExitLabelOf(
+  C: { event: { formats: { stageExit: Record<string, string> } } },
+  def: Pick<CareerEventDef, "layout">,
+): string | undefined {
+  return def.layout ? C.event.formats.stageExit[def.layout.stage] : undefined;
 }
 
 // ---------------------------------------------------------------------------

@@ -16,6 +16,7 @@ import {
   CAREER_CONTRACT,
   CAREER_DEV,
   CAREER_ECONOMY,
+  CAREER_EVENT_LAYOUTS,
   CAREER_GEAR,
   CAREER_LOAN,
   CAREER_PAYROLL,
@@ -34,12 +35,14 @@ import {
   CAREER_STAFF,
 } from "@/config/balance";
 import { clamp } from "@/lib/util";
-import type { Placement } from "../types";
+import { LAYOUT_PLACEMENTS, layoutPlacementValues } from "../eventLayouts";
+import type { EventBracketKind, Placement } from "../types";
 import { DAYS_PER_SEASON, dayOfWeekOf } from "./calendar";
 import { derivedFloat, streams } from "./seeds";
 import type {
   BankLoanState,
   CareerDifficulty,
+  CareerEventDef,
   CareerEventFormat,
   CareerMonday,
   EmergencyLoanState,
@@ -162,12 +165,45 @@ export function prizeTables(): { swiss16: Record<string, number>; single8: Recor
 }
 
 /**
+ * v2.2 event formats: what a prize / points table is keyed by — the event
+ * format, or a Major / Worlds bracket other than the classic double8.
+ */
+export type PrizeShape = CareerEventFormat | Exclude<EventBracketKind, "double8">;
+
+/** The prize / points shape of an event (its bracket when it has a career-only one). */
+export function prizeShapeOf(def: Pick<CareerEventDef, "format" | "layout">): PrizeShape {
+  const bracket = def.layout?.bracket;
+  return bracket && bracket !== "double8" ? bracket : def.format;
+}
+
+function isLayoutShape(shape: PrizeShape): shape is Exclude<EventBracketKind, "double8"> {
+  return shape in LAYOUT_PLACEMENTS;
+}
+
+/** The classic 16-team values a career-only bracket redistributes (FORMATS-SPEC §4). */
+function classicTable(t: Record<string, number>) {
+  return {
+    champion: t.champion,
+    runner_up: t.runner_up,
+    third: t.third,
+    fourth: t.fourth,
+    top6: t.top6,
+    top8: t.top8,
+    swiss_exit: t.swiss_exit,
+  };
+}
+
+/**
  * Placement → percent of the pool. Swiss16 pays every placement ("top4"
  * maps onto the fourth row); single8 collapses third/fourth into top4;
  * v2.0 (R40) Swiss-only pays flat by outcome (qualified "top8" vs
  * eliminated "swiss_exit").
  */
-function prizePctFor(placement: Placement, format: CareerEventFormat): number {
+function prizePctFor(placement: Placement, format: PrizeShape): number {
+  if (isLayoutShape(format)) {
+    const table = layoutPlacementValues(format, classicTable(prizeTables().swiss16), CAREER_EVENT_LAYOUTS.nineToTwelveLift);
+    return table[placement] ?? table.swiss_exit ?? 0;
+  }
   if (format === "swissOnly") {
     const table = CAREER_PRIZES.swissOnlyPct;
     return placement === "swiss_exit" ? table.eliminated : table.qualified;
@@ -201,13 +237,14 @@ function prizePctFor(placement: Placement, format: CareerEventFormat): number {
 export function prizeFor(
   tier: EventTier,
   placement: Placement,
-  format: CareerEventFormat,
+  format: PrizeShape,
   difficulty: CareerDifficulty,
   /** v0.3: pools grow with the season (rc.32 M1: the money index; default 0 = season X). */
   seasonIndex = 0,
 ): number {
   const pct = prizePctFor(placement, format);
   const schedule = prizeScheduleFor(tier, format, difficulty, seasonIndex);
+  if (isLayoutShape(format)) return schedule[placement] ?? schedule.swiss_exit ?? 0;
   const key = Object.keys(schedule).find(p => prizePctFor(p as Placement, format) === pct);
   return key ? schedule[key] : 0;
 }
@@ -230,10 +267,16 @@ const PLACEMENTS_BY_FORMAT: Record<CareerEventFormat, Partial<Record<Placement, 
  * the first placement so the advertised budget is exactly the amount paid.
  * Existing ledgers/results are never rewritten.
  */
+/** How many teams finish on each placement of an event shape. */
+function placementsOf(format: PrizeShape): [Placement, number][] {
+  if (isLayoutShape(format)) return LAYOUT_PLACEMENTS[format];
+  return Object.entries(PLACEMENTS_BY_FORMAT[format]) as [Placement, number][];
+}
+
 export function prizeScheduleFor(
-  tier: EventTier, format: CareerEventFormat, difficulty: CareerDifficulty, seasonIndex = 0,
+  tier: EventTier, format: PrizeShape, difficulty: CareerDifficulty, seasonIndex = 0,
 ): Record<string, number> {
-  const placements = Object.entries(PLACEMENTS_BY_FORMAT[format]) as [Placement, number][];
+  const placements = placementsOf(format);
   // rc.37 F2: the switch-back restores rc.31 exactly — no late-revenue factor on this branch.
   if (CAREER_PRIZES.tables === "rc31" || CAREER_ECONOMY.indexMode === "rc31") {
     const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
@@ -286,13 +329,13 @@ export function prizeScheduleFor(
  */
 export function prizePoolPaidFor(
   tier: EventTier,
-  format: CareerEventFormat,
+  format: PrizeShape,
   difficulty: CareerDifficulty,
   seasonIndex = 0,
 ): number {
   const schedule = prizeScheduleFor(tier, format, difficulty, seasonIndex);
   let total = 0;
-  for (const [placement, count] of Object.entries(PLACEMENTS_BY_FORMAT[format])) {
+  for (const [placement, count] of placementsOf(format)) {
     total += (count ?? 0) * schedule[placement];
   }
   return total;
@@ -319,9 +362,17 @@ export function playerShareFor(tier: EventTier, placement: Placement, prize: num
  * Season Points: 0 for unofficials (t3/t2) and Worlds (the finale pays no
  * points); regionals use the placement table; Majors pay exactly ×2.
  */
-export function pointsFor(tier: EventTier, placement: Placement): number {
+export function pointsFor(tier: EventTier, placement: Placement, shape?: PrizeShape): number {
   if (tier === "t3" || tier === "t2" || tier === "qualifier" || tier === "worlds") return 0;
-  const base = CAREER_POINTS.regional[placement] ?? 0;
+  // v2.2 event formats: a career-only bracket shares the classic event's total (FORMATS-SPEC §4).
+  const base =
+    shape && isLayoutShape(shape)
+      ? Math.round(
+          layoutPlacementValues(shape, classicTable(CAREER_POINTS.regional), CAREER_EVENT_LAYOUTS.nineToTwelveLift)[
+            placement
+          ] ?? 0,
+        )
+      : (CAREER_POINTS.regional[placement] ?? 0);
   return tier === "major" ? base * CAREER_POINTS.majorMultiplier : base;
 }
 

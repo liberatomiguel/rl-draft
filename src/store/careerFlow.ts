@@ -83,6 +83,7 @@ import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
 import {
   asSwissOnly,
   atPlayoffsStart,
+  inSaturdayBracket,
   initFieldTournament,
   playNextRound,
   upcomingUserPairing,
@@ -3693,7 +3694,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     userRecentWorldsTitles: recentWorldsTitlesOf(save),
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
-  const tournament = withEndlessDraw(initFieldTournament(field, def.format, rng), def, save.careerSeed);
+  const tournament = withEndlessDraw(initFieldTournament(field, def.format, rng, def.layout), def, save.careerSeed);
   save.activeEvent = {
     def,
     rngState: rng.state,
@@ -3795,7 +3796,9 @@ export function isLegacySaturdayPlayoffs(save: CareerSave): boolean {
   const ev = save.activeEvent;
   return Boolean(
     ev && isTwoDayEvent(ev.def) && save.clock.day === ev.def.day &&
-      ev.tournament.stage !== "swiss" && !isEventPaused(save),
+      ev.tournament.stage !== "swiss" && !isEventPaused(save) &&
+      // v2.2 event formats: a 16-team double elimination plays its first rounds on Saturday.
+      !inSaturdayBracket(ev.tournament),
   );
 }
 

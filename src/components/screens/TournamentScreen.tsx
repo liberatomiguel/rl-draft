@@ -873,6 +873,14 @@ const SLOTS: Record<PlayoffRoundName, number> = {
   quarterfinal: 4,
   semifinal: 2,
   final: 1,
+  // v2.2 event formats (career-only brackets)
+  upper_round: 2,
+  lower_round1: 4,
+  lower_round2: 2,
+  ko_round1: 4,
+  ub_round1: 8,
+  lb_round3: 2,
+  lb_round4: 2,
 };
 
 function PlayoffBracketView({

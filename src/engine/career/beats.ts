@@ -38,6 +38,7 @@ const PLACE: Record<Placement, number> = {
   top4: 4,
   top6: 6,
   top8: 8,
+  top12: 12,
   swiss_exit: 16,
 };
 

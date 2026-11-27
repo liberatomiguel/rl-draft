@@ -41,7 +41,7 @@ import { useCopy } from "@/content/copy";
 import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { isTwoDayEvent, isWindowWeek, regionalForQualifier, weekOfDay } from "@/engine/career/calendar";
 import { nextPlayoffPairings } from "@/engine/playoffs";
-import { prizeFor, pointsFor } from "@/engine/career/economy";
+import { prizeFor, prizeShapeOf, pointsFor } from "@/engine/career/economy";
 import { eventPlayerShareFor } from "@/store/careerFlow";
 import { placementOf } from "@/engine/career/careerResults";
 import { upcomingSwissPairings } from "@/engine/swiss";
@@ -108,6 +108,8 @@ import { SwissCompletePanel } from "@/components/career/event/SwissCompletePanel
 import { SwissVerdict } from "@/components/career/event/SwissVerdict";
 import { lobbyDirectRefs, lobbyFieldRefs } from "@/components/career/event/lobbyField";
 import { WeekendPlan, formatLineOf, type WeekendNote } from "@/components/career/event/WeekendPlan";
+import { FormatRules } from "@/components/career/event/FormatRules";
+import { stageRuleOf } from "@/engine/eventLayouts";
 import {
   advancedSeedsOf,
   eventRepPreview,
@@ -115,6 +117,7 @@ import {
   isSundaySpectator,
   openingOpponentOf,
   placementLabelOf,
+  stageExitLabelOf,
   qualifiedIntoRegional,
   regionalEntryOf,
   regionalTomorrowOf,
@@ -370,6 +373,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           </div>
         </div>
         <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
+        {def.layout ? <FormatRules C={C} layout={def.layout} /> : null}
       </Panel>
 
       {/* R40: the weekend — qualifier → regional, or Swiss stage → Championship Sunday */}
@@ -742,11 +746,16 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   };
   const allSimRevealed = effRevealed >= rounds.length && !effAnim;
 
-  const hasSwiss = def.format !== "single"; // "swiss" and the R40 "swissOnly" qualifier
+  // "swiss" and the R40 "swissOnly" qualifier; v2.2: not the 16-team double elimination (no stage).
+  const hasSwiss = def.format !== "single" && t.layout?.stage !== "none";
+  const stageRule = stageRuleOf(t.swiss);
+  // v2.2 event formats: Saturday's stage by name ("Group stage").
+  const stageTitle = t.layout ? C.event.formats.stage[t.layout.stage] : C.event.swissStage;
   const swissFullyRevealed = throughRound >= t.swiss.rounds.length;
   // R40: a Major / Worlds Saturday never shows the bracket — its playoffs are
   // Sunday's (rc.29: the reduced-motion results stop shows Saturday's end here).
-  const saturdayOfTwoDay = twoDay && !championshipSunday && !legacyPlayoffs;
+  // v2.2 event formats: a 16-team double elimination's Saturday IS bracket rounds.
+  const saturdayOfTwoDay = twoDay && !championshipSunday && !legacyPlayoffs && t.layout?.stage !== "none";
   const showBracket =
     Boolean(t.playoffs) && !saturdayOfTwoDay && (!hasSwiss || (t.swiss.finished && swissFullyRevealed));
 
@@ -827,8 +836,9 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     return userSeriesStatus(round, series, {
       swissWinsAfter: wins,
       swissLossesAfter: losses,
-      winsToAdvance: TOURNAMENT.swiss.winsToAdvance,
-      lossesToEliminate: TOURNAMENT.swiss.lossesToEliminate,
+      // v2.2 event formats: the stage's own rule (a group of four is decided by its table).
+      winsToAdvance: stageRule === "table" ? Infinity : stageRule.wins,
+      lossesToEliminate: stageRule === "table" ? Infinity : stageRule.losses,
       playoffFormat: t.playoffs?.format ?? null,
     });
   };
@@ -843,7 +853,10 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const centerStatus =
     ownsSwissVerdict && center?.round.stage === "swiss" ? null : seriesStatus;
   // Spoiler-safe: the REVEALED record (the decisive banner has landed).
-  const swissVerdict = swissVerdictContext && hasSwiss ? swissVerdictOf(userRecord) : null;
+  const swissVerdict =
+    swissVerdictContext && hasSwiss
+      ? swissVerdictOf(userRecord, t.layout ? { t, fullyRevealed: swissFullyRevealed } : undefined)
+      : null;
   const regionalName =
     def.tier === "qualifier" ? (regionalForQualifier(def)?.name ?? C.common.tier.regional) : "";
 
@@ -906,7 +919,11 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   // R40: on a Major / Worlds Saturday the sim stops at the end of the Swiss
   // — keyed on the day (a stage-keyed label flipped mid-series, a spoiler).
   const simLabel =
-    simStopsAtSwissEnd(def, save.clock.day) && !legacyPlayoffs ? C.event.simSwiss : C.event.simToEnd;
+    simStopsAtSwissEnd(def, save.clock.day) && !legacyPlayoffs
+      ? t.layout
+        ? C.event.formats.simStage[t.layout.stage]
+        : C.event.simSwiss
+      : C.event.simToEnd;
   // The stage ON SCREEN — the round being revealed, not the engine's stage
   // (it runs ahead: a qualifier is "finished" while its Swiss still plays
   // out, a regional's playoffs are seeded before its last Swiss round shows).
@@ -941,7 +958,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     ? (() => {
         const [stage, n] = pendingSeries.roundKey.split(":");
         const bo = T.bestOf(pendingSeries.state.target * 2 - 1);
-        return stage === "sw" ? `${C.event.swissStage} · ${C.event.roundLabel(Number(n) + 1)} · ${bo}` : `${C.event.playoffs} · ${bo}`;
+        return stage === "sw" ? `${stageTitle} · ${C.event.roundLabel(Number(n) + 1)} · ${bo}` : `${C.event.playoffs} · ${bo}`;
       })()
     : "";
   const markLive = () => {
@@ -958,7 +975,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         kicker={def.name}
         title={
           revealStage === "swiss"
-            ? C.event.swissStage
+            ? stageTitle
             : championshipSunday
               ? C.event.championshipSunday
               : C.event.playoffs
@@ -1079,6 +1096,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               verdict={swissVerdict}
               context={swissVerdictContext}
               regionalName={regionalName}
+              stageKind={t.layout?.stage}
               seed={swissFullyRevealed ? userSeedOf(t) : null}
             />
           ) : null}
@@ -1104,6 +1122,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
             <CareerSwissStandings
               save={save}
               t={t}
+              stage={t.swiss.kind ? t.swiss : undefined}
               records={standingsRecords}
               throughRound={throughRound}
               nextUpRef={nextOpponentRef}
@@ -1135,10 +1154,10 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const isQualifier = outcome !== null;
   const qualified = outcome === "qualified";
   const isChamp = placement === "champion";
-  const prize = prizeFor(def.tier, placement, def.format, save.difficulty, def.seasonIndex);
+  const prize = prizeFor(def.tier, placement, prizeShapeOf(def), save.difficulty, def.seasonIndex);
   // The players' share finishEvent books out of a podium prize (rc.33 ECO-10: each played contract's own share).
   const playerShare = eventPlayerShareFor(save, ev, placement, prize);
-  const points = pointsFor(def.tier, placement);
+  const points = pointsFor(def.tier, placement, prizeShapeOf(def));
   // Display mirror of finishEvent's applyEventRep (pure, unit-tested).
   const repInput = {
     tier: def.tier,
@@ -1218,7 +1237,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
     ? qualified
       ? C.event.qualified
       : C.event.eliminatedTitle
-    : C.common.placement[placement];
+    : placementLabelOf(C.common, def.tier, placement, stageExitLabelOf(C, def));
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-3 py-6 sm:px-4">
@@ -1386,11 +1405,11 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           <tbody>
             {finalRows.map((row) => {
               const isUser = row.id === "user";
-              const rowPrize = prizeFor(def.tier, row.placement, def.format, save.difficulty, def.seasonIndex);
-              const rowPoints = pointsFor(def.tier, row.placement);
+              const rowPrize = prizeFor(def.tier, row.placement, prizeShapeOf(def), save.difficulty, def.seasonIndex);
+              const rowPoints = pointsFor(def.tier, row.placement, prizeShapeOf(def));
               const rec = isQualifier ? recordOf(row.id) : undefined;
               const rowQualified = isQualifier && row.placement !== "swiss_exit";
-              const placementLabel = placementLabelOf(labels, def.tier, row.placement);
+              const placementLabel = placementLabelOf(labels, def.tier, row.placement, stageExitLabelOf(C, def));
               const placementTone = rowQualified ? "font-semibold text-good" : "text-sub";
               const teamName = t.teams[row.id]?.name ?? row.id;
               return (

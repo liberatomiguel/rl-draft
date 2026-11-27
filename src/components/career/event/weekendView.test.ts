@@ -153,6 +153,7 @@ const LABELS = {
     top4: "Top 4",
     top6: "Top 6",
     top8: "Top 8",
+    top12: "Top 12",
     swiss_exit: "Swiss exit",
   },
   qualifierOutcome: { qualified: "Qualified", eliminated: "Eliminated" },

@@ -23,10 +23,11 @@ import { TierChip } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
+import { CareerBracket } from "./CareerBracket";
 import { CareerSwissStandings } from "./CareerSwissStandings";
 import { SeedList } from "./SeedList";
 import { ContinueToSundayLabel, WeekendPlan } from "./WeekendPlan";
-import { advancedSeedsOf, userSeedOf } from "./weekendView";
+import { advancedSeedsOf, userSeedOf, userSundaySideOf } from "./weekendView";
 
 export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const C = useCareerCopy();
@@ -39,10 +40,35 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
   const seeds = advancedSeedsOf(t);
   const seed = userSeedOf(t);
   const through = seed !== null;
-  const record = t.swiss.records.find((r) => r.teamId === "user") ?? { wins: 0, losses: 0 };
+  // v2.2 event formats: a 16-team double elimination has no stage; its Saturday record is the bracket's.
+  const bracketRecord = () => {
+    let wins = 0;
+    let losses = 0;
+    for (const r of t.playoffs?.rounds ?? []) {
+      for (const x of r.series) {
+        if (x.teamAId !== "user" && x.teamBId !== "user") continue;
+        if (x.winnerTeamId === "user") wins += 1;
+        else losses += 1;
+      }
+    }
+    return { wins, losses };
+  };
+  const record =
+    t.layout?.stage === "none"
+      ? bracketRecord()
+      : (t.swiss.records.find((r) => r.teamId === "user") ?? { wins: 0, losses: 0 });
   const records = new Map(
     t.swiss.records.map((r) => [r.teamId, { wins: r.wins, losses: r.losses, gameDiff: r.gameDiff }]),
   );
+  // v2.2 event formats: the stage's own words, the side the user starts Sunday on.
+  const F = C.event.formats;
+  const stageKind = t.layout?.stage;
+  const side = userSundaySideOf(t);
+  const fieldTitle = !t.layout
+    ? C.event.playoffEight
+    : stageKind === "none"
+      ? F.lastEight
+      : F.sundayField(seeds.length);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-3 py-6 sm:px-4">
@@ -65,7 +91,7 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
             <p className="kicker">{def.name}</p>
             <TierChip tier={def.tier} />
           </div>
-          <p className="kicker mt-3 text-faint">{C.event.swissComplete}</p>
+          <p className="kicker mt-3 text-faint">{stageKind ? F.stageComplete[stageKind] : C.event.swissComplete}</p>
 
           <div role="status">
             <p
@@ -74,10 +100,14 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
                 through ? "text-orange-bright" : "text-ink",
               )}
             >
-              {through ? C.event.throughToSunday : C.event.eliminatedInSwiss}
+              {through ? C.event.throughToSunday : stageKind ? F.eliminatedIn[stageKind] : C.event.eliminatedInSwiss}
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              {seed !== null ? (
+              {side ? (
+                <Badge tone="orange" className="!text-xs">
+                  {F.side[side]}
+                </Badge>
+              ) : seed !== null ? (
                 <Badge tone="orange" className="!text-xs">
                   {C.event.yourSeed(seed)}
                 </Badge>
@@ -96,9 +126,11 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
             doneRoles={["swissDay"]}
             className="mx-auto mt-6 max-w-lg"
             notes={
-              seed !== null
-                ? { championshipSunday: { text: C.event.yourSeed(seed), tone: "orange" } }
-                : undefined
+              side
+                ? { championshipSunday: { text: F.side[side], tone: "orange" } }
+                : seed !== null
+                  ? { championshipSunday: { text: C.event.yourSeed(seed), tone: "orange" } }
+                  : undefined
             }
           />
 
@@ -135,12 +167,29 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
         save={save}
         t={t}
         rows={seeds}
-        title={C.event.playoffEight}
+        title={fieldTitle}
         style={{ animationDelay: "60ms" }}
       />
 
       <div className="rise-in" style={{ animationDelay: "120ms" }}>
-        <CareerSwissStandings save={save} t={t} records={records} throughRound={t.swiss.rounds.length} />
+        {stageKind === "none" ? (
+          <CareerBracket
+            save={save}
+            t={t}
+            revealed={new Set((t.playoffs?.rounds ?? []).flatMap((r, ri) => r.series.map((_, si) => `po:${ri}:${si}`)))}
+            liveKey={null}
+            showUpcoming
+            layout="wide"
+          />
+        ) : (
+          <CareerSwissStandings
+            save={save}
+            t={t}
+            records={records}
+            throughRound={t.swiss.rounds.length}
+            stage={t.swiss.kind ? t.swiss : undefined}
+          />
+        )}
       </div>
     </div>
   );

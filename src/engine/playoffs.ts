@@ -40,7 +40,57 @@ export const SINGLE_ELIM_ROUND_ORDER: PlayoffRoundName[] = [
   "final",
 ];
 
+/**
+ * v2.2 event formats (career-only brackets; seeds in SLOT order, arranged by
+ * eventLayouts.bracketSlotsFor). Round order is play order: one round per
+ * playNextRound.
+ */
+export const LAYOUT_ROUND_ORDER: Record<LayoutFormat, PlayoffRoundName[]> = {
+  single8: ["quarterfinal", "semifinal", "grand_final"],
+  hybrid8: ["upper_round", "lower_round1", "quarterfinal", "semifinal", "grand_final"],
+  hybrid12: ["upper_round", "lower_round1", "lower_round2", "quarterfinal", "semifinal", "grand_final"],
+  single12: ["ko_round1", "quarterfinal", "semifinal", "grand_final"],
+  double16: [
+    "ub_round1",
+    "lb_round1",
+    "ub_quarterfinal",
+    "lb_round2",
+    "ub_semifinal",
+    "lb_round3",
+    "lb_round4",
+    "ub_final",
+    "lb_semifinal",
+    "lb_final",
+    "grand_final",
+  ],
+};
+
+type LayoutFormat = Exclude<PlayoffState["format"], "double" | "single">;
+
+/** Teams each career-only bracket takes. */
+const LAYOUT_TEAMS: Record<LayoutFormat, number> = {
+  single8: 8,
+  hybrid8: 8,
+  hybrid12: 12,
+  single12: 12,
+  double16: 16,
+};
+
+function isLayoutFormat(format: PlayoffState["format"]): format is LayoutFormat {
+  return format !== "double" && format !== "single";
+}
+
+/**
+ * v2.2 event formats: the 16-team double elimination plays its first four
+ * rounds on Saturday (down to eight sides) — the round index its Sunday
+ * starts at. 0 for every other bracket (the stage is the Saturday).
+ */
+export function sundayStartRoundOf(format: PlayoffState["format"]): number {
+  return format === "double16" ? 4 : 0;
+}
+
 export function roundOrderFor(format: PlayoffState["format"]): PlayoffRoundName[] {
+  if (isLayoutFormat(format)) return LAYOUT_ROUND_ORDER[format];
   return format === "single" ? SINGLE_ELIM_ROUND_ORDER : PLAYOFF_ROUND_ORDER;
 }
 
@@ -48,10 +98,98 @@ export function createPlayoffs(
   seeds: string[],
   format: PlayoffState["format"] = "double",
 ): PlayoffState {
-  if (seeds.length !== TOURNAMENT.playoffs.teams) {
-    throw new Error(`Playoffs need ${TOURNAMENT.playoffs.teams} seeds, got ${seeds.length}`);
+  const size = isLayoutFormat(format) ? LAYOUT_TEAMS[format] : TOURNAMENT.playoffs.teams;
+  if (seeds.length !== size) {
+    throw new Error(`Playoffs need ${size} seeds, got ${seeds.length}`);
   }
   return { format, seeds, rounds: [], championTeamId: null, finished: false };
+}
+
+/**
+ * v2.2 event formats: the rounds that open a career-only bracket's Sunday,
+ * whose pairings depend only on the seeds (and, for the 16-team double
+ * elimination, on Saturday's results): the screens' preview and "your
+ * opener". [] for the classic brackets.
+ */
+export function sundayOpeningRoundsOf(format: PlayoffState["format"]): PlayoffRoundName[] {
+  switch (format) {
+    case "hybrid8":
+    case "hybrid12":
+      return ["upper_round", "lower_round1"];
+    case "single12":
+      return ["ko_round1"];
+    case "single8":
+      return ["quarterfinal"];
+    case "double16":
+      return ["ub_semifinal", "lb_round3"];
+    default:
+      return [];
+  }
+}
+
+/** v2.2 event formats: one round's pairings of a career-only bracket, once the rounds it reads are played. */
+export function pairingsForRound(state: PlayoffState, name: PlayoffRoundName): [string, string][] {
+  return isLayoutFormat(state.format) ? layoutPairings(state, name) : [];
+}
+
+/** v2.2 event formats: next pairings of a career-only bracket (slot-order seeds). */
+function layoutPairings(state: PlayoffState, name: PlayoffRoundName): [string, string][] {
+  const s = state.seeds;
+  const r = (n: PlayoffRoundName) => roundByName(state, n);
+  const W = (n: PlayoffRoundName, i: number) => winner(r(n)[i]);
+  const L = (n: PlayoffRoundName, i: number) => loser(r(n)[i]);
+  const slotPairs = (from: number, count: number): [string, string][] =>
+    Array.from({ length: count }, (_, k) => [s[from + 2 * k], s[from + 2 * k + 1]]);
+
+  switch (state.format) {
+    case "single8":
+      if (name === "quarterfinal") return slotPairs(0, 4);
+      if (name === "semifinal") return [[W("quarterfinal", 0), W("quarterfinal", 1)], [W("quarterfinal", 2), W("quarterfinal", 3)]];
+      return [[W("semifinal", 0), W("semifinal", 1)]];
+    case "hybrid8":
+    case "hybrid12": {
+      const lowerIn = state.format === "hybrid8" ? "lower_round1" : "lower_round2";
+      if (name === "upper_round") return slotPairs(0, 2);
+      if (name === "lower_round1") return slotPairs(4, state.format === "hybrid8" ? 2 : 4);
+      if (name === "lower_round2") return [[W("lower_round1", 0), W("lower_round1", 1)], [W("lower_round1", 2), W("lower_round1", 3)]];
+      if (name === "quarterfinal") return [[L("upper_round", 0), W(lowerIn, 1)], [L("upper_round", 1), W(lowerIn, 0)]];
+      if (name === "semifinal") return [[W("upper_round", 0), W("quarterfinal", 1)], [W("upper_round", 1), W("quarterfinal", 0)]];
+      return [[W("semifinal", 0), W("semifinal", 1)]];
+    }
+    case "single12":
+      if (name === "ko_round1") return slotPairs(4, 4);
+      if (name === "quarterfinal") return [0, 1, 2, 3].map((k) => [s[k], W("ko_round1", k)] as [string, string]);
+      if (name === "semifinal") return [[W("quarterfinal", 0), W("quarterfinal", 3)], [W("quarterfinal", 1), W("quarterfinal", 2)]];
+      return [[W("semifinal", 0), W("semifinal", 1)]];
+    case "double16":
+      switch (name) {
+        case "ub_round1":
+          return slotPairs(0, 8);
+        case "lb_round1":
+          return [0, 1, 2, 3].map((k) => [L("ub_round1", 2 * k), L("ub_round1", 2 * k + 1)] as [string, string]);
+        case "ub_quarterfinal":
+          return [0, 1, 2, 3].map((k) => [W("ub_round1", 2 * k), W("ub_round1", 2 * k + 1)] as [string, string]);
+        case "lb_round2":
+          // Cross-bracket: the lower half meets the upper half's drops.
+          return [0, 1, 2, 3].map((k) => [W("lb_round1", k), L("ub_quarterfinal", 3 - k)] as [string, string]);
+        case "ub_semifinal":
+          return [[W("ub_quarterfinal", 0), W("ub_quarterfinal", 1)], [W("ub_quarterfinal", 2), W("ub_quarterfinal", 3)]];
+        case "lb_round3":
+          return [[W("lb_round2", 0), W("lb_round2", 1)], [W("lb_round2", 2), W("lb_round2", 3)]];
+        case "lb_round4":
+          return [[W("lb_round3", 0), L("ub_semifinal", 1)], [W("lb_round3", 1), L("ub_semifinal", 0)]];
+        case "ub_final":
+          return [[W("ub_semifinal", 0), W("ub_semifinal", 1)]];
+        case "lb_semifinal":
+          return [[W("lb_round4", 0), W("lb_round4", 1)]];
+        case "lb_final":
+          return [[W("lb_semifinal", 0), L("ub_final", 0)]];
+        default:
+          return [[W("ub_final", 0), W("lb_final", 0)]];
+      }
+    default:
+      return [];
+  }
 }
 
 function roundByName(state: PlayoffState, name: PlayoffRoundName): SeriesResult[] {
@@ -70,6 +208,8 @@ function loser(series: SeriesResult): string {
 export function nextPlayoffPairings(state: PlayoffState): [string, string][] {
   const name = roundOrderFor(state.format)[state.rounds.length];
   if (!name) return [];
+
+  if (isLayoutFormat(state.format)) return layoutPairings(state, name);
 
   // Single elimination (quick mode).
   if (state.format === "single") {

@@ -2762,6 +2762,74 @@ export const CAREER_PT: CareerCopy = {
     format: "Formato",
     formatSwiss: "Swiss de 16 times → top-8 em eliminação dupla",
     formatSingle: "Mata-mata de 8 times",
+    /** v2.2 formatos de evento (FORMATS-SPEC.md): Major / Worlds no formato da temporada. */
+    formats: {
+      /** O título do sábado, por fase. */
+      stage: { swiss: "Fase Swiss", groups4: "Fase de grupos", gsl8: "Fase de grupos", none: "Rodadas iniciais" },
+      stageShort: {
+        swiss: "Swiss de 16 times",
+        groups4: "4 grupos de 4",
+        gsl8: "2 grupos de 8 em eliminação dupla",
+        none: "Eliminação dupla de 16 times",
+      },
+      bracketShort: {
+        double8: "top-8 em eliminação dupla",
+        single8: "mata-mata de 8",
+        hybrid8: "chave híbrida de 8",
+        hybrid12: "chave híbrida de 12",
+        single12: "mata-mata de 12",
+        double16: "os oito finais no domingo",
+      },
+      /** A linha do sábado na faixa do fim de semana. */
+      stageSub: {
+        swiss: (teams: number, wins: number) => `Swiss de ${teams} times · ${wins} vitórias para avançar`,
+        groups4: "4 grupos de 4 · todos contra todos no grupo",
+        gsl8: "2 grupos de 8 · 2 vitórias classificam, 2 derrotas eliminam",
+        none: "Eliminação dupla de 16 times · até sobrarem oito",
+      },
+      /** A linha do domingo na faixa do fim de semana. */
+      bracketSub: {
+        double8: "Top-8 em eliminação dupla",
+        single8: "Mata-mata de 8",
+        hybrid8: "Chave híbrida de 8",
+        hybrid12: "Chave híbrida de 12",
+        single12: "Mata-mata de 12",
+        double16: "Os oito finais da eliminação dupla",
+      },
+      /** Como a fase classifica (o lobby). */
+      stageRule: {
+        swiss: "Três vitórias classificam e três derrotas eliminam.",
+        groups4: "Todos jogam contra todos dentro do grupo. Os desempates são pela tabela.",
+        gsl8: "Duas vitórias classificam e duas derrotas eliminam. Avançam quatro por grupo.",
+        none: "Todos começam na chave superior. Duas derrotas e você está fora.",
+      },
+      /** Como a chave é jogada (o lobby). */
+      bracketRule: {
+        double8: "Eliminação dupla com disputa de terceiro lugar.",
+        single8: "Perdeu, está fora. A grande final é uma única série.",
+        hybrid8: "Quem vence na chave superior vai direto à semifinal; quem perde ainda disputa as quartas. A chave inferior é eliminatória desde a primeira série.",
+        hybrid12: "O primeiro de cada grupo começa na chave superior. O segundo e o terceiro jogam a chave inferior, que tem uma rodada eliminatória extra.",
+        single12: "O primeiro de cada grupo vai direto às quartas. O segundo e o terceiro disputam a primeira rodada.",
+        double16: "A grande final é uma única série.",
+      },
+      /** Quem começa onde na chave híbrida, pela fase que a preenche. */
+      hybridEntry: {
+        swiss: "Os quatro melhores do Swiss começam na chave superior; os outros quatro, na inferior.",
+        groups4: "O primeiro de cada grupo começa na chave superior; o segundo, na inferior.",
+        gsl8: "Quem se classifica com 2–0 começa na chave superior; quem se classifica com 2–1, na inferior.",
+        none: "",
+      },
+      stageComplete: { swiss: "Fase Swiss encerrada", groups4: "Fase de grupos encerrada", gsl8: "Fase de grupos encerrada", none: "Sábado encerrado" },
+      eliminatedIn: { swiss: "Eliminado no Swiss", groups4: "Eliminado nos grupos", gsl8: "Eliminado nos grupos", none: "Eliminado no sábado" },
+      /** O nome da colocação 13º–16º, por fase. */
+      stageExit: { swiss: "Eliminado no Swiss", groups4: "Eliminado nos grupos", gsl8: "Eliminado nos grupos", none: "Eliminado na rodada 1 da inferior" },
+      simStage: { swiss: "Simular o Swiss", groups4: "Simular os grupos", gsl8: "Simular os grupos", none: "Simular o sábado" },
+      sundayField: (n: number): string => (n === 12 ? "Os doze dos playoffs" : "Os oito dos playoffs"),
+      lastEight: "Os oito finais",
+      side: { upper: "Chave superior", lower: "Chave inferior", bye: "Direto às quartas", round1: "Primeira rodada" },
+      group: (letter: string) => `Grupo ${letter}`,
+      groupStandings: "Classificação dos grupos",
+    },
     yourSeed: (n: number) => `Seed nº ${n}`,
     watch: "Jogar a série",
     instant: "Resultado instantâneo",
@@ -3593,6 +3661,7 @@ export const CAREER_PT: CareerCopy = {
       top4: "Top 4",
       top6: "Top 6",
       top8: "Top 8",
+      top12: "Top 12",
       swiss_exit: "Eliminado no Swiss",
     },
     /** v2.0 (R40): linha de qualificatória nunca tem colocação de chave (top8 = classificado). */

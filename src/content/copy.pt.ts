@@ -787,6 +787,14 @@ export const PT: Copy = {
       quarterfinal: "Quartas",
       semifinal: "Semifinal",
       final: "Final",
+      // v2.2 formatos de evento (chaves do Road to Worlds)
+      upper_round: "Chave superior",
+      lower_round1: "Inferior R1",
+      lower_round2: "Inferior R2",
+      ko_round1: "Primeira rodada",
+      ub_round1: "Superior R1",
+      lb_round3: "Inferior R3",
+      lb_round4: "Inferior R4",
     },
   },
 
@@ -1029,6 +1037,7 @@ export const PT: Copy = {
       top4: "Top 4",
       top6: "Top 6",
       top8: "Top 8",
+      top12: "Top 12",
       swiss_exit: "Swiss",
       semifinalist: "Top 4",
       quarterfinalist: "Top 8",

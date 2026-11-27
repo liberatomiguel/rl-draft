@@ -6,7 +6,7 @@
  * See docs/BALANCE-GUIDE.md for what each knob does and its safe range.
  */
 
-import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, StatKey } from "@/engine/types";
+import type { BuffLevel, Difficulty, EventLayout, HistoricalStrength, Placement, Region, StatKey } from "@/engine/types";
 
 /**
  * OBS-01 (DESIGN-DECISIONS #145): the tuning generation of this file, sent as
@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 56; // v2.3: 55 (v2.2.0-rc.7) -> 56, only because CAREER_FEED, CAREER_LOCKER and CAREER_MEDIA joined the export (no gameplay number moves)
+export const BALANCE_VERSION = 57; // integration 27/11: 56 (v2.3 on rc.7) + v22/event-formats (CAREER_EVENT_LAYOUTS joined the export and the points split moved, which was 52 -> 53 on its branch)
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1204,6 +1204,40 @@ export const CAREER_ERA = {
      */
     declineFromAgeWeights: { 24: 0.2, 25: 0.3, 26: 0.3, 27: 0.2 } as Record<number, number>,
   },
+} as const;
+
+/**
+ * v2.2 event formats (docs/handoff-2.2/FORMATS-SPEC.md, Miguel's document of
+ * 27/11): the shape of each season's three Majors and its Worlds. Row k is
+ * dataset season k (0 = Season X ... 5 = 2026); from the first infinite
+ * season (RLCS 2027, calendar's INFINITE_FROM) the seasons cycle through the rows in order, so
+ * 2027 plays Season X's row (its Worlds included) and 2033 starts again.
+ * Season X's Worlds stays cancelled (CAREER_CANCELLED_WORLDS). Read only when
+ * FEATURES.eventFormats is on; off = every official event is the classic
+ * Swiss into an 8-team double elimination.
+ */
+export const CAREER_EVENT_LAYOUTS = {
+  seasons: [
+    // Season X: Swiss into a top-8 single elimination | 4 groups of 4 into the 8-team hybrid.
+    { major: { stage: "swiss", bracket: "single8" }, worlds: { stage: "groups4", bracket: "hybrid8" } },
+    // 2021-22: 16-team double elimination | 2 double-elimination groups of 8 into a top-8 single elimination.
+    { major: { stage: "none", bracket: "double16" }, worlds: { stage: "gsl8", bracket: "single8" } },
+    // 2022-23: 4 groups of 4 into a 12-team single elimination (group winners to the quarters) | as 2021-22.
+    { major: { stage: "groups4", bracket: "single12" }, worlds: { stage: "gsl8", bracket: "single8" } },
+    // 2024: Swiss into a top-8 single elimination | Swiss into the 8-team hybrid.
+    { major: { stage: "swiss", bracket: "single8" }, worlds: { stage: "swiss", bracket: "hybrid8" } },
+    // 2025: Swiss into the 8-team hybrid | 2 groups of 8 into the 8-team hybrid (2-0 upper, 2-1 lower).
+    { major: { stage: "swiss", bracket: "hybrid8" }, worlds: { stage: "gsl8", bracket: "hybrid8" } },
+    // 2026: 4 groups of 4 into the 8-team hybrid | 4 groups of 4 into the 12-team hybrid.
+    { major: { stage: "groups4", bracket: "hybrid8" }, worlds: { stage: "groups4", bracket: "hybrid12" } },
+  ] as readonly { major: EventLayout; worlds: EventLayout }[],
+  /**
+   * FORMATS-SPEC §4: an event pays the same points and prize total as the
+   * classic one. Where a bracket separates 9th-12th from 13th-16th, 9th-12th
+   * get (1 + lift) and 13th-16th (1 - lift) of the classic 9th-16th value
+   * (points 60 -> 70 / 50).
+   */
+  nineToTwelveLift: 1 / 6,
 } as const;
 
 /**
@@ -5557,6 +5591,14 @@ export const FEATURES = {
    * `scripts/postexport.mjs` deletes the cut routes — keep them in sync.
    */
   playtest: process.env.NEXT_PUBLIC_PLAYTEST === "1",
+  /**
+   * v2.2 event formats (FORMATS-SPEC.md, CAREER_EVENT_LAYOUTS): each season's
+   * Majors and Worlds take the shape of their RLCS season (groups, Swiss,
+   * hybrid / 12 / 16-team brackets). An event keeps the shape it started
+   * with. Off: the classic Swiss into the 8-team double elimination, byte for
+   * byte. ON in the staging build only; probes: NEXT_PUBLIC_EVENT_FORMATS=1.
+   */
+  eventFormats: STAGING_BUILD || process.env.NEXT_PUBLIC_EVENT_FORMATS === "1",
 } as const;
 
 // ---------------------------------------------------------------------------

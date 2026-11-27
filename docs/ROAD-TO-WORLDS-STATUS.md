@@ -13,6 +13,8 @@
 
 **Endless variety** (`endlessVariety`, from season index 7; R155–R156). Drawn cups, a Legends Invitational, an Intercontinental, season hosts. Rival projects use the user's own toolbox and scale with the dynasty; elite promotions arrive stronger; a project may bid for the user's best starter. Worlds won by a 100+ team: 91 % to 64 %; the target of 3 AI sides within 3 points is missed (2.2 to 2.7). Per-season circuit formats are not built.
 
+**Event formats** (`eventFormats`; R210, branch `v22/event-formats`, on staging since the 27/11 integration; spec handoff-2.2/FORMATS-SPEC.md). Majors and Worlds take each season's RLCS shape (`CAREER_EVENT_LAYOUTS`: Swiss, groups of 4, double-elimination groups of 8, the 16-team double elimination; top-8 / 12 knockouts and 8 / 12 hybrids); 2027+ rotates through the six rows; Season X's Worlds stays cancelled. Same points and prize total per event. Engine `engine/eventLayouts.ts` and the career-only brackets in `playoffs.ts`. Probe `EVENT_FORMATS_PROBE=1`; screen fixtures `EF_FIX=1`. Title odds per shape not measured.
+
 **Pro, the player career** (`proCareer`; R157–R161; spec PRO-SPEC.md, §15 is its state). Own save `rocket-draft:pro:v1`; the world runs on a hidden host save, not `worldTick.ts`. Week, ranked, one decision a game, offers, rotation, aging, gala, nicknames, a shareable card. Peaks: average managed 92.1, high 97.2, careless 82.2. Out of band: Worlds played in 92 % of average careers. The board is inert on the host (R162).
 
 After any career engine or store change run the soft-lock probe (`P1_SOFT=1`) and the Pro probe (`PRO_CAREER=1`) with every staging flag on together, each alone.

@@ -136,7 +136,7 @@ export function CareerMatchCenter({
 
   const label =
     round.stage === "swiss"
-      ? `${C.event.swissStage} · ${C.event.roundLabel(round.roundNo)}`
+      ? `${t.layout ? C.event.formats.stage[t.layout.stage] : C.event.swissStage} · ${C.event.roundLabel(round.roundNo)}`
       : (T.roundNames[round.name ?? ""] ?? C.event.playoffs);
 
   // --- desk narration (finished user series only) --------------------------

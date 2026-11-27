@@ -2791,6 +2791,74 @@ export const CAREER_EN = {
     format: "Format",
     formatSwiss: "16-team Swiss → top-8 double elimination",
     formatSingle: "8-team knockout",
+    /** v2.2 event formats (FORMATS-SPEC.md): a Major / Worlds in its season's shape. */
+    formats: {
+      /** Saturday's headline, by stage. */
+      stage: { swiss: "Swiss stage", groups4: "Group stage", gsl8: "Group stage", none: "Opening rounds" },
+      stageShort: {
+        swiss: "16-team Swiss",
+        groups4: "4 groups of 4",
+        gsl8: "2 double-elimination groups of 8",
+        none: "16-team double elimination",
+      },
+      bracketShort: {
+        double8: "top-8 double elimination",
+        single8: "top-8 knockout",
+        hybrid8: "top-8 hybrid bracket",
+        hybrid12: "top-12 hybrid bracket",
+        single12: "top-12 knockout",
+        double16: "the last eight on Sunday",
+      },
+      /** Saturday's one line on the weekend strip. */
+      stageSub: {
+        swiss: (teams: number, wins: number) => `${teams}-team Swiss · ${wins} wins to advance`,
+        groups4: "4 groups of 4 · everyone plays everyone in the group",
+        gsl8: "2 groups of 8 · 2 wins to qualify, 2 losses to go out",
+        none: "16-team double elimination · down to the last eight",
+      },
+      /** Sunday's one line on the weekend strip. */
+      bracketSub: {
+        double8: "Top-8 double elimination",
+        single8: "Top-8 knockout",
+        hybrid8: "Top-8 hybrid bracket",
+        hybrid12: "Top-12 hybrid bracket",
+        single12: "Top-12 knockout",
+        double16: "The last eight of the double elimination",
+      },
+      /** How the stage sends sides on (the lobby). */
+      stageRule: {
+        swiss: "Three wins to qualify, three losses to go out.",
+        groups4: "Everyone plays everyone in the group. Ties are settled by the table.",
+        gsl8: "Two wins to qualify, two losses to go out. Four go through from each group.",
+        none: "Everyone starts in the upper bracket. Two losses and you are out.",
+      },
+      /** How the bracket is entered and played (the lobby). */
+      bracketRule: {
+        double8: "Double elimination with a third-place series.",
+        single8: "One loss and you are out. The grand final is one series.",
+        hybrid8: "Win in the upper bracket and you go straight to the semifinals; lose and you still play the quarterfinals. The lower bracket is a knockout from its first series.",
+        hybrid12: "Group winners start in the upper bracket. Seconds and thirds play the lower bracket, which has an extra knockout round.",
+        single12: "Group winners go straight to the quarterfinals. Seconds and thirds play the first round.",
+        double16: "The grand final is one series.",
+      },
+      /** Who starts where in a hybrid bracket, by the stage that fills it. */
+      hybridEntry: {
+        swiss: "The top four of the Swiss start in the upper bracket, the other four in the lower.",
+        groups4: "Group winners start in the upper bracket, runners-up in the lower.",
+        gsl8: "Sides through at 2-0 start in the upper bracket, those through at 2-1 in the lower.",
+        none: "",
+      },
+      stageComplete: { swiss: "Swiss stage complete", groups4: "Group stage complete", gsl8: "Group stage complete", none: "Saturday complete" },
+      eliminatedIn: { swiss: "Eliminated in the Swiss", groups4: "Eliminated in the groups", gsl8: "Eliminated in the groups", none: "Eliminated on Saturday" },
+      /** The 13th-16th placement's name, by stage. */
+      stageExit: { swiss: "Swiss exit", groups4: "Group stage exit", gsl8: "Group stage exit", none: "Out in lower round 1" },
+      simStage: { swiss: "Sim the Swiss", groups4: "Sim the groups", gsl8: "Sim the groups", none: "Sim Saturday" },
+      sundayField: (n: number): string => (n === 12 ? "The playoff twelve" : "The playoff eight"),
+      lastEight: "The last eight",
+      side: { upper: "Upper bracket", lower: "Lower bracket", bye: "Bye to the quarterfinals", round1: "First round" },
+      group: (letter: string) => `Group ${letter}`,
+      groupStandings: "Group standings",
+    },
     yourSeed: (n: number) => `Seed #${n}`,
     watch: "Play it out",
     instant: "Instant result",
@@ -3623,6 +3691,7 @@ export const CAREER_EN = {
       top4: "Top 4",
       top6: "Top 6",
       top8: "Top 8",
+      top12: "Top 12",
       swiss_exit: "Swiss exit",
     },
     /** v2.0 (R40): a qualifier row never has a bracket placement (top8 = qualified). */
