@@ -4346,6 +4346,7 @@ export const CAREER_PT: CareerCopy = {
       keptNote: "O mandato fica na página da Diretoria e na caixa de entrada.",
       pending: "O mandato da diretoria está na sua mesa: leia para começar a temporada.",
       verdictTitle: "O mandato na revisão",
+      metOf: (n: number, total: number) => `${n} of ${total} met`,
       dossierTitle: "O que a diretoria vai pedir",
       dossierNote: "Definido na chegada, a partir da org como ela está. Você não escolhe.",
     },

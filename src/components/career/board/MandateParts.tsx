@@ -42,7 +42,7 @@ import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { mandateOf, pendingMandateOf } from "@/store/boardFlow";
 import { useMounted } from "@/store/useMounted";
-import { objectiveText } from "./briefLines";
+import { briefLinesOf, objectiveText } from "./briefLines";
 
 // ---------------------------------------------------------------------------
 // Text
@@ -160,7 +160,7 @@ function GoalRow({ g, i, C }: { g: GoalView; i: number; C: CareerCopy }) {
 }
 
 /** Last season in brief: the three verdicts and a demand change, when the board set one before. */
-function LastSeason({ m, C }: { m: BoardMandate; C: CareerCopy }) {
+function LastSeason({ m, C, why }: { m: BoardMandate; C: CareerCopy; why: string | null }) {
   const last = m.last;
   if (!last) return null;
   const K = C.board.mandate;
@@ -168,6 +168,8 @@ function LastSeason({ m, C }: { m: BoardMandate; C: CareerCopy }) {
   return (
     <div className="border-t border-line py-4">
       <p className="text-xs text-sub">{K.lastTitle}</p>
+      {/* What changed and why: the board's brief, read from last season. */}
+      {why ? <p className="mt-1 max-w-xl text-sm leading-snug text-ink">{why}</p> : null}
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
         {(["classification", "money", "squad"] as const).map((a) => (
           <li key={a} className="flex items-center gap-2 text-sm text-ink">
@@ -231,7 +233,7 @@ export function MandateSheet({
           <GoalRow key={g.key} g={g} i={i} C={C} />
         ))}
       </ol>
-      <LastSeason m={m} C={C} />
+      <LastSeason m={m} C={C} why={briefLinesOf(C, save.board?.season?.brief, save.identity.orgName)?.reason ?? null} />
     </>
   );
   const action = onAccept ? (
@@ -316,6 +318,8 @@ interface ProgressView {
   key: "money" | "squad";
   /** "over": a figure to reach (open until it is); "under": a line to stay under (behind while over it). */
   sense: "under" | "over";
+  /** Reached for good once on track (a renewal signed, the events played, the sales made); the others can still slip. */
+  final: boolean;
   text: string;
   now: string;
   /** 0-1 toward the goal, when a bar reads. */
@@ -338,6 +342,7 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
     {
       key: "money",
       sense: mp.sense,
+      final: m.money.kind === "sales",
       text: moneyGoalText(C, m.money),
       now: K.moneyNow(m.money.kind, formatMoney(mp.now, { compact: true })),
       bar: ratio(mp.now, mp.target, mp.sense),
@@ -351,6 +356,7 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
     {
       key: "squad",
       sense: sp.sense,
+      final: m.squad.kind === "renew" || m.squad.kind === "youthEvents",
       text: squadGoalText(C, m.squad),
       now: K.squadNow(m.squad.kind, sp.now, sp.target),
       bar: m.squad.kind === "youthEvents" || m.squad.kind === "keepCore" ? ratio(sp.now, sp.target, "over") : null,
@@ -364,11 +370,11 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
   ];
 }
 
-function StatusTag({ v, C }: { v: Pick<ProgressView, "met" | "onTrack" | "lost" | "sense">; C: CareerCopy }) {
+function StatusTag({ v, C }: { v: Pick<ProgressView, "met" | "onTrack" | "lost" | "sense" | "final">; C: CareerCopy }) {
   if (v.met === true) return <Badge tone="good">{C.goals.status.met}</Badge>;
   if (v.met === false) return <Badge tone="bad">{C.goals.status.missed}</Badge>;
   if (v.lost) return <Badge tone="bad">{C.goals.status.out}</Badge>;
-  if (v.onTrack) return <Badge tone="good">{v.sense === "over" ? C.goals.status.done : C.board.mandate.onTrack}</Badge>;
+  if (v.onTrack) return <Badge tone="good">{v.final ? C.goals.status.done : C.board.mandate.onTrack}</Badge>;
   // A figure still to reach is open; a line the books are over is behind.
   return v.sense === "over" ? <Badge>{C.goals.status.open}</Badge> : <Badge tone="orange">{C.board.mandate.behind}</Badge>;
 }
@@ -383,7 +389,7 @@ export function MandateGoals({ save, C }: { save: CareerSave; C: CareerCopy }) {
     <section className="panel p-4 sm:p-5">
       <div className="card-head">
         <h3 className="card-title">{K.title}</h3>
-        <span className="text-xs font-semibold text-sub">{K.demandLine(m.demand)}</span>
+        <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-sub">{K.demandLine(m.demand)}</span>
       </div>
       <ul>
         {views.map((v) => (

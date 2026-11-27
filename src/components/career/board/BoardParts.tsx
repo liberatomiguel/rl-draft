@@ -270,16 +270,24 @@ export function BoardSeasonPanel({ save, C }: { save: CareerSave; C: CareerCopy 
     if (!pkg || board.season?.met === null || board.season?.met === undefined) return null;
     const V = C.board.verdict;
     const met = board.season.met;
+    // v2.2 MANDATE: the head counts the goals met; the classification's own verdict sits on its line.
+    const m = board.season.mandate;
+    const metCount = m ? [met, m.money.met, m.squad.met].filter((x) => x === true).length : 0;
     return (
       <Panel className="p-4 sm:p-5">
         <div className="card-head">
           <h3 className="card-title">{owners(board) ? C.board.ownersTitle : V.title}</h3>
-          <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge>
+          {m ? (
+            <Badge tone={metCount === 3 ? "good" : metCount === 0 ? "bad" : "neutral"}>{C.board.mandate.metOf(metCount, 3)}</Badge>
+          ) : (
+            <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge>
+          )}
         </div>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0 flex-1 basis-60">
-            <p className="text-xs text-sub">
-              {board.season.mandate ? `${C.board.mandate.area.classification} · ${C.board.mandate.title}` : `${C.board.sporting} · ${C.board.packages.plan(C.board.packages.name[pkg.id])}`}
+            <p className="flex flex-wrap items-center gap-2 text-xs text-sub">
+              {m ? `${C.board.mandate.area.classification} · ${C.board.mandate.title}` : `${C.board.sporting} · ${C.board.packages.plan(C.board.packages.name[pkg.id])}`}
+              {m ? <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge> : null}
             </p>
             <p className="display mt-1.5 text-2xl uppercase leading-tight text-ink">{goalText(C, pkg.objective)}</p>
           </div>

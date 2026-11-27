@@ -4375,6 +4375,7 @@ export const CAREER_EN = {
       keptNote: "The mandate stays on the Board page and in the inbox.",
       pending: "The board's mandate is on your desk: read it to start the season.",
       verdictTitle: "The mandate at the review",
+      metOf: (n: number, total: number) => `${n} of ${total} met`,
       dossierTitle: "What the board will ask",
       dossierNote: "Set at the takeover from the org as it is. You will not choose it.",
     },
