@@ -11,6 +11,8 @@
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
 import { CAREER_FEED_PT } from "./copy.career.feed.pt"; // v2.3 FEED
 
+import { CAREER_LOCKER_PT } from "./copy.career.locker.pt"; // v2.3 LOCKER
+
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
 const BOARD_BANDS_PT: Record<string, string> = { expected: "Provável", reach: "Ao alcance", stretch: "Um desafio", longShot: "Muito difícil" };
@@ -4746,4 +4748,5 @@ export const CAREER_PT: CareerCopy = {
     /** A linha da ficha da org para um projeto rival (o kit da temporada). */
     projectKit: (season: number, kit: string) => `Projeto, temporada ${season}: ${kitPt(kit)}.`,
   },
+  locker: CAREER_LOCKER_PT, // v2.3 LOCKER
 };

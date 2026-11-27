@@ -12,6 +12,8 @@ import { CAREER_FEED_EN } from "./copy.career.feed.en"; // v2.3 FEED
  * Tone: broadcast desk / post-match analysis — clean esports language.
  */
 
+import { CAREER_LOCKER_EN } from "./copy.career.locker.en"; // v2.3 LOCKER
+
 /** v2.2 ENDLESS: the host cities a season draws its Majors and Worlds from (indexes are stored in the save). */
 const ENDLESS_HOSTS_EN = [
   "London", "Paris", "Copenhagen", "Stockholm", "Boston", "Dallas",
@@ -4782,6 +4784,7 @@ export const CAREER_EN = {
     /** The org sheet's line for a rival project (its kit this season). */
     projectKit: (season: number, kit: string) => `Project, season ${season}: ${kitEn(kit)}.`,
   },
+  locker: CAREER_LOCKER_EN, // v2.3 LOCKER
 };
 
 export type CareerCopy = typeof CAREER_EN;

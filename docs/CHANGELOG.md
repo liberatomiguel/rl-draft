@@ -33,6 +33,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [v2.3.0-dev, front LOCKER] — 2026-11-27 · The locker room: player morale, talks and promises (branch v23/locker-room, FEATURES.lockerRoom, staging only)
+
+### Added
+- Morale 0–100 per contracted player of the user's club, read as five moods (R190–R194, `engine/career/lockerRoom.ts`, tunables in `config/balance.lockerRoom.ts` as `CAREER_LOCKER`). One optional save field, `lockerRoom`; a save without it reads as neutral; AI clubs have none.
+- Drivers: events sat out (a talk after three in a row for a player who expects to start), playing again, a title or a deep run, a losing run, being listed, a refused AI bid (a talk), promises kept or broken. Every change is logged with its reason; a change of mood is a mail that names it.
+- Talks in the inbox with two or three answers (`LockerTalkAnswers`, the minimum the reader needed; not seen in a browser). Unanswered for a week, a talk closes itself with the neutral answer; talks never hold the clock.
+- Promises `minutes` (starts 3 of the next 4 events) and `stay` (not sold or listed before the window closes), settled by the game; the manager's word scales how much a new promise calms.
+- Transfer request after four weeks of low morale (sell, promise, refuse); an agreed sale lists him at his value.
+- Training gain × 0.94–1.06 from morale (raw gain only, never a decline); a match-performance effect exists at 0 and is not wired.
+- Takeover hooks `lockerIssuesOf` and `seedInheritedLockerRoom` (exported and tested, not wired).
+- Strings in `copy.career.locker.en.ts` / `.pt.ts`, spread into the career copy as `locker`.
+
+### Changed
+- `FEATURES.lockerRoom` (staging build or `NEXT_PUBLIC_LOCKER_ROOM=1`). Off: nothing runs and nothing is written; a six-week walk is byte-identical with and without the hook.
+
 ## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
 
 ### Added

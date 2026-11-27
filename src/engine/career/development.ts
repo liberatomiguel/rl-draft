@@ -34,6 +34,7 @@ import { finalOverall } from "../cards";
 import type { BuffLevel, PlayerCard, Region, StatKey, Stats, TournamentState } from "../types";
 import { lastEraRulesOn, retirementTableOf, type RetirementTable } from "./era";
 import { derivedFloat, streams } from "./seeds";
+import { moraleTrainingCtxOf, type LockerRoomState } from "./lockerRoom"; // v2.3 LOCKER
 import { coachProfileOf, objectiveEffectPct } from "./training";
 import type {
   ArchetypeId,
@@ -326,8 +327,9 @@ export function growthCtxOf(save: {
   world: { growthModel?: number; eraStart?: number };
   careerSeed: number;
   clock: { day: number };
-}): { model: number; day: number; careerSeed: number; retire?: RetirementTable } {
-  const ctx = { model: growthModelOf(save.world), day: save.clock.day, careerSeed: save.careerSeed };
+  lockerRoom?: LockerRoomState; // v2.3 LOCKER
+}): { model: number; day: number; careerSeed: number; retire?: RetirementTable; moraleFactors?: Record<string, number> } {
+  const ctx = { model: growthModelOf(save.world), day: save.clock.day, careerSeed: save.careerSeed, ...moraleTrainingCtxOf(save.lockerRoom) }; // v2.3 LOCKER: the morale factors (none when off)
   // v2.2 ORGMODE-2027 (E3): a career started at the last era follows the long retirement window.
   return lastEraRulesOn(save.world) ? { ...ctx, retire: retirementTableOf(save.world) } : ctx;
 }
@@ -1550,6 +1552,8 @@ export interface GrowthCtx {
   careerSeed?: number;
   /** v2.2 ORGMODE-2027 (E3): the retirement window (absent = CAREER_AGE's). */
   retire?: RetirementTable;
+  /** v2.3 LOCKER: the user's players' morale factors on gain (engine/career/lockerRoom; absent = ×1). */
+  moraleFactors?: Readonly<Record<string, number>>;
 }
 
 /**
@@ -1655,6 +1659,7 @@ function rawGain(p: SquadPlayer, ctx: GainCtx): number {
     (1 + ctx.gearBonus) *
     (ctx.trainingWeekBonus ? 1 + CAREER_CALENDAR.trainingWeekBonus : 1) *
     Math.max(1, ctx.packageMult ?? 1) *
+    (ctx.moraleFactors?.[p.id] ?? 1) * // v2.3 LOCKER
     ctx.weeks
   );
 }
