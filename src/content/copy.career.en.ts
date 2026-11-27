@@ -3083,12 +3083,12 @@ export const CAREER_EN = {
 
   cloud: {
     synced: (when: string) => `Saved in your account · ${when}`,
-    pending: "Changes waiting to be saved in your account",
+    pending: "Waiting to save to your account",
     syncing: "Saving to your account…",
     conflict: "Two copies of this career",
     choose: "Choose",
-    newer: "The copy in your account was saved by a newer version of the game. Reload to update.",
-    error: "Could not reach your account. It will be tried again.",
+    newer: "The copy in your account is from a newer version of the game. Reload to update",
+    error: "Could not reach your account. Retrying",
     tryNow: "Try now",
     restoring: "Restoring from your account…",
     exportSave: "Export save",
@@ -3102,9 +3102,9 @@ export const CAREER_EN = {
       "slot-taken": "This slot already holds a career.",
     },
     deleteAlso: "The copy in your account is deleted too.",
-    helpActive: "Your careers are also saved in your account. Export a save file to keep your own backup.",
-    helpLocal: "Careers are saved in this browser. Export a save file to move one to another device or keep a backup.",
-    helpSignIn: "Sign in to keep a copy in your account.",
+    helpActive: "Careers are also saved in your account. Export a file for a backup of your own",
+    helpLocal: "Careers are saved in this browser. Export a file to move one to another device or keep a backup",
+    helpSignIn: "Sign in to keep a copy in your account",
     notice: {
       titleDiverged: "This career was played on two devices",
       titleDifferent: "This slot holds a different career in your account",
@@ -3124,8 +3124,8 @@ export const CAREER_EN = {
       seasonWeek: (season: string, week: string) => `${season} · ${week}`,
     },
     toast: {
-      updated: (org: string) => `${org}: updated from your account (played on another device).`,
-      restored: (org: string) => `${org}: restored from your account.`,
+      updated: (org: string) => `${org}: updated from your account`,
+      restored: (org: string) => `${org}: restored from your account`,
     },
   },
 
@@ -3134,21 +3134,20 @@ export const CAREER_EN = {
     empty: "Found a new org",
     resume: "Resume",
     archived: "Archived",
-    champion: "CHAMPIONS",
-    endedInsolvent: "Insolvent",
-    endedRetired: "Retired",
+    champion: "Champions",
     delete: "Delete",
     deleteConfirm: (org: string, n: number) =>
-      `Delete ${org}? ${n} season${n === 1 ? "" : "s"} of history disappears. Permanent and local.`,
+      `Delete ${org}? ${n} season${n === 1 ? "" : "s"} of history disappears. This cannot be undone.`,
     lastPlayed: "Last played",
     newCareer: "New career",
-    slotsFull: "All three slots are taken.",
+    emptySlot: "Empty slot",
+    slotsFull: "All three slots are taken",
   },
 
   /** v2.0.34: the one-off HQ card about several careers and the account copy (lib/careerSavesNotice.ts). */
   savesNotice: {
     title: "Your careers, on every device",
-    body: "You can run up to three careers at once: Careers, in the top bar, lists them. Signed in, each one is also kept in your account, so the same career opens on your phone and on your computer.",
+    body: "Run up to three careers. Signed in, each one is saved to your account and opens on any device.",
     open: "See my careers",
     dismiss: "Got it",
   },
@@ -3156,7 +3155,7 @@ export const CAREER_EN = {
   /** v2.0.31: the player-research invitation on the season review (lib/researchInvite.ts). */
   research: {
     title: "Help shape Road to Worlds",
-    body: "A season in the books. Your read on the career and the draft helps decide what comes next. A short form on what works, what does not and what is missing.",
+    body: "A short form on what works, what does not and what is missing.",
     note: "Opens in a new tab. We only ask once.",
     open: "Open the form",
     dismiss: "No thanks",
@@ -4564,7 +4563,16 @@ export const CAREER_EN = {
       goShort: "Take over",
       /** v2.2 ORGMODE-2027: an org back from its last lineup to complete the region. */
       returning: (season: string) => `Returning, last seen in ${season}`,
-      loading: "Reading the file",
+      loading: "Loading",
+      // rc9 ORG-UI: what the board asks of a tier (the group's line), the row's problem line.
+      ask: {
+        elite: "The board asks for Majors and Worlds",
+        contender: "The board asks for Majors and a run at Worlds",
+        mid: "The board asks for the regional fight",
+        underdog: "The board asks for growth in the regionals",
+      } as Record<string, string>,
+      problemNone: "Nothing pressing",
+      squadLabel: "Squad",
     },
     dossier: {
       squad: "The roster",
@@ -4596,7 +4604,13 @@ export const CAREER_EN = {
       noBoard: "This organization's board sets its plan on day one.",
       difficulty: "Difficulty",
       manager: "Manager name",
-      managerPlaceholder: "Your name",
+      // rc9 ORG-UI: the structure in the org catalogue's terms, the deal in force.
+      structure: "Structure",
+      departments: "Departments",
+      noDepartments: "None staffed",
+      sponsor: "Sponsor in force",
+      sponsorTerms: (weekly: string, ends: string) => `${weekly} a week until ${ends}`,
+      noSponsor: "No sponsor under contract",
     },
     splash: {
       kicker: "First day at the club",

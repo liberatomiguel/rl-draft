@@ -28,7 +28,7 @@ const when = (ms: number): string => {
 };
 
 /** One quiet line about a slot's copy in the account. `occupied` is the local state of the slot. */
-export function CloudStatusLine({ cloud, occupied }: { cloud: SlotCloud | undefined; occupied: boolean }) {
+export function CloudStatusLine({ cloud, occupied, className }: { cloud: SlotCloud | undefined; occupied: boolean; className?: string }) {
   const C = useCareerCopy();
   const syncNow = useCareerCloudStore((s) => s.syncNow);
   const openFor = useCloudNoticeUi((s) => s.openFor);
@@ -37,7 +37,7 @@ export function CloudStatusLine({ cloud, occupied }: { cloud: SlotCloud | undefi
   let text: string | null = null;
   let glyph: GlyphKind = "cloud";
   let action: { label: string; run: () => void } | null = null;
-  let tone = "text-sub";
+  let tone = "text-faint";
 
   if (!occupied) {
     if (status === "newer") text = C.cloud.newer;
@@ -50,7 +50,7 @@ export function CloudStatusLine({ cloud, occupied }: { cloud: SlotCloud | undefi
   else if (status === "conflict") {
     text = C.cloud.conflict;
     glyph = "alert";
-    tone = "text-ink";
+    tone = "text-sub";
     action = { label: C.cloud.choose, run: openFor };
   } else if (status === "newer") {
     text = C.cloud.newer;
@@ -63,7 +63,7 @@ export function CloudStatusLine({ cloud, occupied }: { cloud: SlotCloud | undefi
   if (!text) return null;
 
   return (
-    <p className={cx("relative mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs", tone)} aria-live="polite">
+    <p className={cx("flex flex-wrap items-center gap-x-2 gap-y-1 text-xs", tone, className)} aria-live="polite">
       <span className="flex min-w-0 items-center gap-1.5">
         <Glyph kind={glyph} />
         <span className="min-w-0">{text}</span>

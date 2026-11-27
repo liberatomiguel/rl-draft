@@ -4,9 +4,11 @@
  * Road to Worlds — the saves picker (design §11: 3 slots, slot meta rendered
  * from slotMetaFor without hydrating full saves into the UI tree).
  *
- * Occupied slot → crest + org identity + season/week clock + balance/rep +
- * stars (0-5, half steps), with Resume / Delete (confirmed via portal Modal).
- * Empty slot → "Found a new org" CTA into the wizard.
+ * rc9 CLUB-NEWS: the player picks a career or starts one, so the three slots
+ * are rows of one board: org, where it stands (season, week), its two
+ * figures, then Resume (filled only on the career played last), Export and
+ * Delete. An empty slot is a row with its own way in. Cloud state is one
+ * quiet line under the row it belongs to.
  */
 
 import { establishedOf } from "@/engine/career/established";
@@ -54,11 +56,7 @@ export function SavesScreen() {
       <div className="mx-auto max-w-6xl px-3 py-6 sm:px-4">
         <div className="space-y-6" aria-busy>
           <div className="h-10 w-44 animate-pulse rounded-lg bg-white/5" />
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
-            <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
-          </div>
+          <div className="h-80 animate-pulse rounded-xl bg-white/5" />
         </div>
       </div>
     );
@@ -74,39 +72,46 @@ export function SavesScreen() {
     router.push("/career");
   };
 
+  // The career played last carries the screen's one filled button.
+  let lastSlot = -1;
+  metas.forEach((m, i) => {
+    if (m && (lastSlot < 0 || m.lastPlayedAt > (metas[lastSlot]?.lastPlayedAt ?? 0))) lastSlot = i;
+  });
+
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
       <SectionTitle title={C.saves.title} className="mb-6" />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {metas.map((meta, slot) =>
-          meta ? (
-            <SlotCard
-              key={slot}
-              meta={meta}
-              delay={slot * 70}
-              onResume={() => resume(slot)}
-              onDelete={() => setConfirmSlot(slot)}
-              onExport={() => downloadSlotFile(slot)}
-              cloud={cloudActive ? cloudSlots[slot] : undefined}
-            />
-          ) : (
-            <EmptySlot
-              key={slot}
-              slot={slot}
-              delay={slot * 70}
-              onFound={() => router.push("/career/new")}
-              cloud={cloudActive ? cloudSlots[slot] : undefined}
-            />
-          ),
-        )}
-      </div>
+      <Panel className="overflow-hidden">
+        <ul className="divide-y divide-line">
+          {metas.map((meta, slot) =>
+            meta ? (
+              <SlotRow
+                key={slot}
+                meta={meta}
+                latest={slot === lastSlot}
+                onResume={() => resume(slot)}
+                onDelete={() => setConfirmSlot(slot)}
+                onExport={() => downloadSlotFile(slot)}
+                cloud={cloudActive ? cloudSlots[slot] : undefined}
+              />
+            ) : (
+              <EmptyRow
+                key={slot}
+                slot={slot}
+                onFound={() => router.push("/career/new")}
+                cloud={cloudActive ? cloudSlots[slot] : undefined}
+              />
+            ),
+          )}
+        </ul>
+      </Panel>
 
-      <p className="mt-4 text-xs text-sub">
+      <p className="mt-4 text-xs leading-relaxed text-faint">
         {cloudActive
           ? C.cloud.helpActive
           : CAREER_CLOUD_AUDIENCE === "all" && !signedIn
-            ? `${C.cloud.helpLocal} ${C.cloud.helpSignIn}`
+            ? `${C.cloud.helpLocal}. ${C.cloud.helpSignIn}`
             : C.cloud.helpLocal}
       </p>
 
@@ -146,19 +151,22 @@ export function SavesScreen() {
 }
 
 // ---------------------------------------------------------------------------
-// Slot cards
+// Slot rows
 // ---------------------------------------------------------------------------
 
-function SlotCard({
+const quietAction =
+  "inline-flex min-h-11 items-center rounded px-2 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-blue sm:min-h-8";
+
+function SlotRow({
   meta,
-  delay,
+  latest,
   onResume,
   onDelete,
   onExport,
   cloud,
 }: {
   meta: CareerSlotView;
-  delay: number;
+  latest: boolean;
   onResume: () => void;
   onDelete: () => void;
   onExport: () => void;
@@ -166,112 +174,69 @@ function SlotCard({
 }) {
   const copy = useCopy();
   const C = useCareerCopy();
-  const champion = meta.champion;
+  const established = establishedOf({ identity: { realOrgRef: meta.realOrgRef } as CareerSave["identity"] });
   return (
-    <Panel
-      className={cx(
-        "rise-in relative flex flex-col overflow-hidden p-4 transition-shadow",
-        champion && "border-amber-400/40 shadow-[0_0_28px_rgba(251,191,36,0.12)]",
-      )}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Org-colored glow — each slot card wears its own identity */}
-
-      <div className="relative mb-3 flex items-start gap-3">
-        <UserOrgMark identity={meta} seasonIndex={meta.seasonIndex} size="lg" />
-        <div className="min-w-0 flex-1">
-          <p className="display truncate text-lg font-bold uppercase tracking-wide text-ink">
-            {meta.orgName}
-          </p>
-          <div className="mt-0.5 flex items-center gap-2">
-            <TeamStars stars={meta.stars} />
-            <Badge className={REGION_BADGE[meta.region]}>{meta.region}</Badge>
+    <li className="px-4 py-5 sm:px-6">
+      <div className="grid gap-x-6 gap-y-4 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
+        {/* Who and where: the org, then the season and week it is at, then who runs it. */}
+        <div className="flex min-w-0 items-center gap-4">
+          <UserOrgMark identity={meta} seasonIndex={meta.seasonIndex} size="lg" className="shrink-0" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <p className="display truncate text-lg font-bold leading-tight text-ink">{meta.orgName}</p>
+              {meta.champion ? <Badge tone="gold">{C.saves.champion}</Badge> : null}
+              {meta.ended ? <Badge tone="neutral">{C.saves.archived}</Badge> : null}
+            </div>
+            <p className="mt-1 text-sm text-sub">
+              {meta.seasonLabel} · {C.hub.week(meta.week)}
+            </p>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-faint">
+              <span className="truncate">{meta.managerName}</span>
+              <Badge className={REGION_BADGE[meta.region]}>{meta.region}</Badge>
+              <span>{copy.DIFFICULTY_LABELS[meta.difficulty].label}</span>
+              <TeamStars stars={meta.stars} />
+            </p>
           </div>
-          <p className="mt-1 truncate text-xs text-sub">{meta.managerName}</p>
+        </div>
+
+        {/* Where it stands: the two figures, the label under each. */}
+        <dl className="grid grid-cols-2 gap-x-8 lg:text-right">
+          <div className="flex flex-col-reverse">
+            <dt className="kicker mt-1.5">{C.finances.balance}</dt>
+            <dd className={cx("display text-xl font-bold leading-none tabular-nums", meta.balance < 0 ? "text-bad" : "text-ink")}>
+              {formatMoney(meta.balance, { compact: true })}
+            </dd>
+          </div>
+          <div className="flex flex-col-reverse">
+            {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing. */}
+            <dt className="kicker mt-1.5">{established ? C.orgmode.standing : C.common.rep}</dt>
+            <dd className="display text-xl font-bold leading-none tabular-nums text-ink">{String(Math.round(meta.reputation))}</dd>
+          </div>
+        </dl>
+
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 lg:justify-end">
+          <Button variant={latest ? "primary" : "secondary"} size="md" className="max-lg:w-full lg:min-w-28" onClick={onResume}>
+            {C.saves.resume}
+          </Button>
+          <button type="button" onClick={onExport} className={cx(quietAction, "text-sub hover:text-ink")}>
+            {C.cloud.exportSave}
+          </button>
+          <button type="button" onClick={onDelete} aria-label={`${C.saves.delete}: ${meta.orgName}`} className={cx(quietAction, "text-bad/90 hover:text-bad")}>
+            {C.saves.delete}
+          </button>
         </div>
       </div>
-
-      {(meta.champion || meta.ended) && (
-        <div className="relative mb-3 flex flex-wrap gap-1.5">
-          {meta.champion ? <Badge tone="gold">{C.saves.champion}</Badge> : null}
-          {meta.ended ? <Badge tone="neutral">{C.saves.archived}</Badge> : null}
-        </div>
-      )}
-
-      <div className="relative mb-4 grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line bg-black/20 p-3">
-        <MetaRow label={meta.seasonLabel} value={C.hub.week(meta.week)} wide />
-        <MetaRow
-          label={C.finances.balance}
-          value={formatMoney(meta.balance, { compact: true })}
-          good={meta.balance >= 0}
-          bad={meta.balance < 0}
-        />
-        {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing. */}
-        <MetaRow label={establishedOf({ identity: { realOrgRef: meta.realOrgRef } as CareerSave["identity"] }) ? C.orgmode.standing : C.common.rep} value={String(Math.round(meta.reputation))} />
-        <MetaRow label={copy.SETUP.difficulty} value={copy.DIFFICULTY_LABELS[meta.difficulty].label} />
-        <MetaRow
-          label={C.saves.lastPlayed}
-          value={meta.lastPlayedAt > 0 ? new Date(meta.lastPlayedAt).toLocaleDateString() : "-"}
-        />
-      </div>
-
-      {cloud ? <CloudStatusLine cloud={cloud} occupied /> : null}
-
-      <div className="relative mt-auto flex flex-wrap items-center gap-2">
-        <Button variant="primary" size="md" className="flex-1" onClick={onResume}>
-          {C.saves.resume}
-        </Button>
-        <Button variant="danger" size="md" onClick={onDelete} aria-label={C.saves.delete}>
-          {C.saves.delete}
-        </Button>
-        <button
-          type="button"
-          onClick={onExport}
-          className="min-h-11 w-full rounded px-1 text-xs font-semibold text-sub hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 sm:min-h-8"
-        >
-          {C.cloud.exportSave}
-        </button>
-      </div>
-    </Panel>
+      {cloud ? <CloudStatusLine cloud={cloud} occupied className="mt-3" /> : null}
+    </li>
   );
 }
 
-function MetaRow({
-  label,
-  value,
-  wide,
-  good,
-  bad,
-}: {
-  label: string;
-  value: string;
-  wide?: boolean;
-  good?: boolean;
-  bad?: boolean;
-}) {
-  return (
-    <div className={cx("min-w-0", wide && "col-span-2")}>
-      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</p>
-      <p
-        className={cx(
-          "display truncate text-sm font-bold",
-          bad ? "text-bad" : good ? "text-good" : "text-ink",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function EmptySlot({
+function EmptyRow({
   slot,
-  delay,
   onFound,
   cloud,
 }: {
   slot: number;
-  delay: number;
   onFound: () => void;
   cloud?: SlotCloud;
 }) {
@@ -295,61 +260,43 @@ function EmptySlot({
   };
 
   return (
-    <div
-      className="rise-in flex min-h-[16rem] flex-col gap-2"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <button
-        type="button"
-        onClick={onFound}
-        className={cx(
-          "group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed",
-          "border-line-strong bg-white/[0.02] p-6 text-center transition-all",
-          "hover:border-orange/50 hover:bg-orange/5",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60",
-        )}
-      >
-        <span
-          aria-hidden
-          className={cx(
-            "flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-white/5 text-2xl text-sub",
-            "transition-all group-hover:border-orange/50 group-hover:text-orange-bright",
-          )}
-        >
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-          </svg>
-        </span>
-        <span className="display text-base font-bold uppercase tracking-wide text-ink">
+    <li className="px-4 py-5 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <p className="display text-lg font-bold leading-tight text-sub">{C.saves.emptySlot}</p>
           {/* rc.6 (UI-A): with the takeover on, the slot opens the door (two ways in). */}
-          {FEATURES.realOrgStart ? C.saves.newCareer : C.saves.empty}
-        </span>
-        <span className="text-xs text-sub">{FEATURES.realOrgStart ? C.takeover.door.savesHint : C.wizard.title}</span>
-      </button>
-      {cloud ? <CloudStatusLine cloud={cloud} occupied={false} /> : null}
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".json,application/json"
-        className="hidden"
-        tabIndex={-1}
-        onChange={(e) => void onFile(e.currentTarget)}
-      />
-      <button
-        type="button"
-        onClick={() => {
-          setError(null);
-          fileRef.current?.click();
-        }}
-        className="min-h-11 rounded px-1 text-xs font-semibold text-sub hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 sm:min-h-8"
-      >
-        {C.cloud.importSave}
-      </button>
+          {FEATURES.realOrgStart ? <p className="mt-1 text-sm text-faint">{C.takeover.door.savesHint}</p> : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 max-lg:w-full">
+          <Button variant="secondary" size="md" className="max-lg:w-full lg:min-w-28" onClick={onFound}>
+            {FEATURES.realOrgStart ? C.saves.newCareer : C.saves.empty}
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            tabIndex={-1}
+            onChange={(e) => void onFile(e.currentTarget)}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              fileRef.current?.click();
+            }}
+            className={cx(quietAction, "text-sub hover:text-ink")}
+          >
+            {C.cloud.importSave}
+          </button>
+        </div>
+      </div>
+      {cloud ? <CloudStatusLine cloud={cloud} occupied={false} className="mt-3" /> : null}
       {error ? (
-        <p role="alert" className="text-center text-xs text-bad">
+        <p role="alert" className="mt-3 text-xs text-bad">
           {C.cloud.importErrors[error]}
         </p>
       ) : null}
-    </div>
+    </li>
   );
 }

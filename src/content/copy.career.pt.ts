@@ -3056,12 +3056,12 @@ export const CAREER_PT: CareerCopy = {
 
   cloud: {
     synced: (when: string) => `Salvo na sua conta · ${when}`,
-    pending: "Alterações aguardando para serem salvas na sua conta",
+    pending: "Aguardando para salvar na sua conta",
     syncing: "Salvando na sua conta…",
     conflict: "Duas cópias desta carreira",
     choose: "Escolher",
-    newer: "A cópia na sua conta foi salva por uma versão mais nova do jogo. Recarregue para atualizar.",
-    error: "Não foi possível acessar a sua conta. Vamos tentar de novo.",
+    newer: "A cópia na sua conta é de uma versão mais nova do jogo. Recarregue para atualizar",
+    error: "Não foi possível acessar a sua conta. Tentando de novo",
     tryNow: "Tentar agora",
     restoring: "Restaurando da sua conta…",
     exportSave: "Exportar save",
@@ -3075,9 +3075,9 @@ export const CAREER_PT: CareerCopy = {
       "slot-taken": "Este espaço já tem uma carreira.",
     },
     deleteAlso: "A cópia na sua conta também é apagada.",
-    helpActive: "Suas carreiras também ficam salvas na sua conta. Exporte um arquivo de save para ter o seu próprio backup.",
-    helpLocal: "As carreiras ficam salvas neste navegador. Exporte um arquivo de save para levar uma para outro aparelho ou guardar um backup.",
-    helpSignIn: "Entre para manter uma cópia na sua conta.",
+    helpActive: "As carreiras também ficam salvas na sua conta. Exporte um arquivo para ter um backup seu",
+    helpLocal: "As carreiras ficam salvas neste navegador. Exporte um arquivo para levar uma para outro aparelho ou guardar um backup",
+    helpSignIn: "Entre para manter uma cópia na sua conta",
     notice: {
       titleDiverged: "Esta carreira foi jogada em dois aparelhos",
       titleDifferent: "Este espaço guarda uma carreira diferente na sua conta",
@@ -3097,8 +3097,8 @@ export const CAREER_PT: CareerCopy = {
       seasonWeek: (season: string, week: string) => `${season} · ${week}`,
     },
     toast: {
-      updated: (org: string) => `${org}: atualizada pela sua conta (jogada em outro aparelho).`,
-      restored: (org: string) => `${org}: restaurada da sua conta.`,
+      updated: (org: string) => `${org}: atualizada pela sua conta`,
+      restored: (org: string) => `${org}: restaurada da sua conta`,
     },
   },
 
@@ -3107,28 +3107,27 @@ export const CAREER_PT: CareerCopy = {
     empty: "Fundar uma nova org",
     resume: "Retomar",
     archived: "Arquivada",
-    champion: "CAMPEÕES",
-    endedInsolvent: "Insolvente",
-    endedRetired: "Aposentada",
+    champion: "Campeões",
     delete: "Apagar",
     deleteConfirm: (org: string, n: number) =>
-      `Apagar ${org}? ${n} temporada${n === 1 ? "" : "s"} de história somem. Permanente e local.`,
+      `Apagar ${org}? ${n} temporada${n === 1 ? "" : "s"} de história somem. Isto não pode ser desfeito.`,
     lastPlayed: "Jogado por último",
     newCareer: "Nova carreira",
-    slotsFull: "Os três espaços estão ocupados.",
+    emptySlot: "Espaço vazio",
+    slotsFull: "Os três espaços estão ocupados",
   },
 
   // v2.0.31: o convite da pesquisa com jogadores na revisão da temporada.
   savesNotice: {
     title: "Suas carreiras em qualquer aparelho",
-    body: "Você pode ter até três carreiras ao mesmo tempo: Carreiras, na barra do topo, lista todas. Com a conta conectada, cada uma também fica guardada nela, e a mesma carreira abre no celular e no computador.",
+    body: "Até três carreiras ao mesmo tempo. Com a conta conectada, cada uma fica guardada nela e abre em qualquer aparelho.",
     open: "Ver minhas carreiras",
     dismiss: "Entendi",
   },
 
   research: {
     title: "Ajude a moldar o Road to Worlds",
-    body: "Uma temporada fechada. A sua leitura da carreira e do draft ajuda a decidir o que vem a seguir. Um formulário curto sobre o que funciona, o que não funciona e o que falta.",
+    body: "Um formulário curto sobre o que funciona, o que não funciona e o que falta.",
     note: "Abre em uma nova aba. Só perguntamos uma vez.",
     open: "Abrir o formulário",
     dismiss: "Agora não, obrigado",
@@ -4534,7 +4533,16 @@ export const CAREER_PT: CareerCopy = {
       goShort: "Assumir",
       /** v2.2 ORGMODE-2027: uma org que volta da sua última lineup para completar a região. */
       returning: (season: string) => `De volta, vista pela última vez em ${season}`,
-      loading: "Lendo o dossiê",
+      loading: "Carregando",
+      // rc9 ORG-UI
+      ask: {
+        elite: "A diretoria cobra Majors e o Worlds",
+        contender: "A diretoria cobra Majors e uma campanha no Worlds",
+        mid: "A diretoria cobra a briga no regional",
+        underdog: "A diretoria cobra crescimento nos regionais",
+      } as Record<string, string>,
+      problemNone: "Nada urgente",
+      squadLabel: "Elenco",
     },
     dossier: {
       squad: "O elenco",
@@ -4566,7 +4574,13 @@ export const CAREER_PT: CareerCopy = {
       noBoard: "A diretoria desta org define o plano no primeiro dia.",
       difficulty: "Dificuldade",
       manager: "Nome do manager",
-      managerPlaceholder: "Seu nome",
+      // rc9 ORG-UI
+      structure: "Estrutura",
+      departments: "Departamentos",
+      noDepartments: "Nenhum com equipe",
+      sponsor: "Patrocínio em vigor",
+      sponsorTerms: (weekly: string, ends: string) => `${weekly} por semana até ${ends}`,
+      noSponsor: "Nenhum patrocinador com contrato",
     },
     splash: {
       kicker: "Primeiro dia no clube",
