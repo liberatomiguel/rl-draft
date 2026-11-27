@@ -381,14 +381,17 @@ h1.display {
 
 /* The one title of a board, anywhere in the game: same face, size and weight
    in the main column and in a rail, so two boards side by side read as peers.
-   rc9 DS (#212): Demi in mixed case. Caps are for section titles, tabs, tags
-   and buttons; a board's title is a name, read as one. */
+   rc9 DS (#212, amended 27/11 by Miguel: "podemos manter as caixas altas em
+   títulos"): Demi in caps, one step smaller than the mixed-case trial and at
+   the open caps tracking, so the title leads without the old weight. Names
+   (players, orgs, options) stay mixed case. */
 .card-title {
   font-family: var(--font-display);
   font-weight: var(--w-head);
-  font-size: 1.125rem;
+  font-size: 1rem;
   line-height: var(--lh-display);
-  letter-spacing: var(--tr-mixed);
+  letter-spacing: var(--tr-caps);
+  text-transform: uppercase;
   color: var(--ink);
 }
 

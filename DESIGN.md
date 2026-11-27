@@ -73,7 +73,7 @@ write the role, not the number.
 | Role | Weight | Case and tracking | Size |
 |---|---|---|---|
 | The one title of a screen (`h1`), the key figure of a block (display 24px+) | Bold 700 | caps title 0.03em, or a number | 24 to 40 |
-| Section title (`.title-slab`), card title (`.card-title`, `h2`, `h3`) | Demi 600 | slab in caps; card title in **mixed case** | 18 to 24 |
+| Section title (`.title-slab`), card title (`.card-title`, `h2`, `h3`) | Demi 600 | caps (slab 0.03em; card title 16px at 0.05em) | 16 to 24 |
 | Buttons, names, small figures in a row (display `font-bold`) | Demi 600 | buttons caps, names mixed | 13 to 17 |
 | Nav, tabs, tags, labels (`.kicker`, display `font-semibold`) | Medium 500 | caps 0.05em to 0.08em | 11 to 13 |
 | Body text | Barlow 400 (600 for a phrase) | sentences | 15px / 1.55 desktop, 14 phone |
@@ -81,8 +81,9 @@ write the role, not the number.
 
 - Nothing renders at 800: Black is not loaded and synthetic bold is off. The
   Home wordmark is the one italic.
-- Caps are for section titles, tabs, tags, buttons and labels. Card titles,
-  option names, player and org names, dates and headlines are mixed case.
+- Caps are for titles (screen, section and card titles: Miguel, 27/11), tabs,
+  tags, buttons and labels. Option names, player and org names, dates and
+  news headlines are mixed case.
   Never caps at 0 to 0.02em.
 - Display line height 1.1 to 1.15; figures are tabular.
 - Three text steps on purpose: `--ink` the value or the name, `--sub` what
@@ -109,7 +110,7 @@ to 40 (`--section-gap`, `.stack-sections`); between boards in a column 24 to 32.
   `.kicker`.
 - **Section header:** `SectionTitle` (the slab) once per screen section, with
   its one figure, tag or link on the right. Nothing above it.
-- **Card title:** `.card-title` in a `.card-head`, mixed case; the right side
+- **Card title:** `.card-title` in a `.card-head`, Demi caps 16px; the right side
   holds one figure, tag or link, never a sentence.
 - **Tag:** `Badge`, Medium caps 11px, names a real state; at most two on a row.
 - **When a box is drawn:** around one object the player acts on (a squad, a
