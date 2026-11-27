@@ -12,7 +12,8 @@ import { playArcCareer } from "./careerArcBot";
 
 // Base cfcf1cd gave ["a42a77a750681368", "bce87b43a025194f"]; season 2 moved only by the formerSquad fix
 // (agePassAndIntake keeps world.formerSquad in every build since v2.2), checked by toggling that one line.
-const BASE_DIGESTS: string[] = ["a42a77a750681368", "67050fa1fe0b28fe"];
+// v2.2.0-rc.8: both seasons moved only by R200 (v2.3, every build): the "window closes in 6 days" news items.
+const BASE_DIGESTS: string[] = ["167f698048884e27", "7c9b339aa3aeeb4e"];
 
 describe("flags off", () => {
   it("plays exactly as the base commit", () => {

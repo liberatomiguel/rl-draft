@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
+
+Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.
+
+### Added
+- **v2.3 (`v23/int`, chat "Análise competitiva modo carreira"):** the locker room (`lockerRoom`: morale, talks, promises), media days (`mediaDays`), the fan feed (`fanFeed`) and their screens; the Skip and the autoplay stop once as a transfer window enters its last week (R200). Decisions R190 to R200; what is not verified and Miguel's eight decisions: `docs/V2.3-STATUS.md`.
+- **Majors and Worlds in their season's format (`v22/event-formats`, chat "Formatos Worlds/Majors Road to Worlds"):** behind `eventFormats`. Decision R210 (it was R-FMT on its branch). The work had been left uncommitted in its worktree; it was committed as it was (`8cbef58`) and merged.
+
+### Balance
+- BALANCE_VERSION 57: 56 (v2.3, its tables joined the export) plus the formats' points and prize split (53 on its branch). No number moves beyond what each branch had.
+
+### Fixed
+- A playoff state with no `format` (an older save, a partial state) crashed the Sunday briefing (`roundOrderFor` returned nothing). Root cause: the formats branch's `isLayoutFormat` was a negative test ("neither double nor single"), so a missing format counted as a career-only bracket. Now it checks the layout table itself and a missing format is the classic double elimination again (`careerSunday.test.ts`).
+- Test-only: the flag-off base hashes (`endlessFlagOff`, `careerBoard.flagOff`) refreshed for R200, whose "window closes in 6 days" news items are in every build (the saves were diffed: nothing else moves; the merged tree hashes exactly like `v23/int`, so the formats are neutral with their flag off). The "no app file imports test support" rule now covers every `*ForTests.ts` file (the formats' `careerMajorLobbyForTests` builds on the clock helper).
+
 ## [2.3.0-dev]
 
 ### Fixed

@@ -12,7 +12,12 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.7 (27/11/2026)**, branch `release/v2.2` (rc.7 is the
+- **Staging = 2.2.0-rc.8 (27/11/2026)**, branch `release/v2.2`: rc.7 below
+  plus v2.3 (locker room, media days, fan feed, Skip guard; `V2.3-STATUS.md`)
+  and the per-season Majors/Worlds formats (`eventFormats`, R210,
+  `handoff-2.2/FORMATS-SPEC.md`), each behind its staging-only flag;
+  BALANCE_VERSION 57.
+- **rc.7 (27/11/2026)** below it (rc.7 is the
   second pass on the takeover of a real org: it starts in RLCS 2027 with the
   current orgs, and the board sets a mandate of three goals with no choice;
   R173 to R180, BALANCE_VERSION 55; rc.6 gave it standing, operations, the

@@ -572,7 +572,9 @@ describe("rc.34 — test support stays out of the app", () => {
         if (e.isDirectory()) return appSources(path);
         return /\.(ts|tsx)$/.test(e.name) && !/\.test\.tsx?$/.test(e.name) ? [path] : [];
       });
-    const importers = appSources().filter((f) => !f.endsWith("careerClockForTests.ts") && readFileSync(f, "utf8").includes("careerClockForTests"));
+    // v2.2.0-rc.8: the other `*ForTests.ts` support files (careerMajorLobbyForTests, event formats) may
+    // build on the clock helper; no app file may import either kind.
+    const importers = appSources().filter((f) => !/ForTests\.ts$/.test(f) && /\w+ForTests["']/.test(readFileSync(f, "utf8")));
     expect(importers).toEqual([]);
   });
 });

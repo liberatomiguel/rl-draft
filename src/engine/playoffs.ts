@@ -77,7 +77,9 @@ const LAYOUT_TEAMS: Record<LayoutFormat, number> = {
 };
 
 function isLayoutFormat(format: PlayoffState["format"]): format is LayoutFormat {
-  return format !== "double" && format !== "single";
+  // A positive check: a playoff state with no `format` (older saves, partial states) is the
+  // classic double elimination, as before the event formats (rc.8 integration fix).
+  return typeof format === "string" && Object.prototype.hasOwnProperty.call(LAYOUT_ROUND_ORDER, format);
 }
 
 /**

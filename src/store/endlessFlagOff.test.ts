@@ -20,8 +20,10 @@ function fnv(text: string): string {
 
 const BASE: Record<string, string[]> = {
   // v2.2 BOARD: refreshed for the formerSquad fix in agePassAndIntake (every build): seasons 2-3 moved.
-  "NA:9100": ["253a6ec2", "e352c27c", "ca70537c"],
-  "SAM:17019": ["22963bf6", "f8a4104b", "7f738f22"],
+  // v2.2.0-rc.8: refreshed for R200 (v2.3, every build): the only difference in the save is the
+  // "window closes in 6 days" news items and the ids after them (checked by diffing the saves).
+  "NA:9100": ["388d0352", "67f39a93", "45caf4a1"],
+  "SAM:17019": ["7c4f30c", "2d721c4a", "7dfc0e77"],
 };
 
 describe("endless variety off = the base career", () => {
