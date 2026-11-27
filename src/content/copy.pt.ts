@@ -681,6 +681,15 @@ export const PT: Copy = {
     rowOrg: "Organização",
     rowChemistry: "Química",
     rowSpecials: "Especiais",
+    // rc9 LEGACY: as linhas que fecham a conta (engine/overallBreakdown.ts, #222)
+    rowCurve: "Curva do topo",
+    curveNote: (pivot: number, pct: number) => `Acima de ${pivot}, cada ponto vale ${pct}%.`,
+    rowCap: "Limite de 99",
+    rowRounding: "Arredondamento",
+    rowSum: "Antes da curva",
+    endedBy: (name: string) => `${name} eliminou seu time`,
+    playedAt: (shown: number, played: number) => `Overall ${shown}, jogou como ${played}`,
+    // rc9 LEGACY fim
     statHigh: {
       offense: "Forte pressão ofensiva.",
       defense: "Difícil de furar.",

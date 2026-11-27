@@ -445,6 +445,14 @@ export interface TournamentTeam {
    * scorelines and challenge goal stars stay as they are).
    */
   careerScoreline?: true;
+  // rc9 LEGACY
+  /**
+   * Region-only Draft runs (DRAFT_UPSET_GUARD, DESIGN-DECISIONS #220): the part
+   * of this AI side's rating the screens do not show beyond the difficulty's
+   * own shift (region boost + field depth). Stamped only with the guard on;
+   * absent → match.ts runs the old path byte for byte.
+   */
+  regionLift?: number;
   /**
    * v2.1 Matchday slice 2: the side's play style (engine/career/styles.ts).
    * Only career sides get it, and only with FEATURES.matchdayStyles on;

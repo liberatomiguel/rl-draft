@@ -79,7 +79,7 @@ marks an optional property.
 
 | Event | Priority | Fires | Properties |
 |---|---|---|---|
-| `run_completed` | standard | A run reaches its results screen (after every grant landed) | `runId`, `mode`, `difficulty`, `region`, `placement`, `won`, `hiddenOverall`, `teamOverall`, `swissWins`, `swissLosses`, `playoffWins`, `gameWins`, `goalsFor`, `goalsAgainst`, `eliminatedStage?`, `xpGained`, `chemistryTier`, `chemistryPercent`, `durationSec?`, `dailyTemplate?`, `resets`, `rerollsLeft`, `picks`, `specials`, `specialsCount`, `specialsNew`, `achievementsNew`, `ratingDelta`, `ratingAfter`, `rankId`, `rankUp` |
+| `run_completed` | standard | A run reaches its results screen (after every grant landed) | `runId`, `mode`, `difficulty`, `region`, `placement`, `won`, `hiddenOverall`, `teamOverall`, `swissWins`, `swissLosses`, `playoffWins`, `gameWins`, `goalsFor`, `goalsAgainst`, `eliminatedStage?`, `xpGained`, `chemistryTier`, `chemistryPercent`, `durationSec?`, `dailyTemplate?`, `resets`, `rerollsLeft`, `picks`, `specials`, `specialsCount`, `specialsNew`, `achievementsNew`, `ratingDelta`, `ratingAfter`, `rankId`, `rankUp`; rc.9: `seriesWon`, `seriesLost`, `oppOverallAvg`, `lostToLowerBy5`, `lostToLowerBy8`, `lostToLowerBy10`, `worstLossGap?`, `endOppOverall?`, `endOppStrength?`, `endGap?`, `endScore?`, `endRound?` (see the note below) |
 | `run_abandoned` | standard | A run is left for good before its results (never for a restart, never for a challenge that was already played) | `runId`, `mode`, `difficulty`, `region`, `hiddenOverall`, `phase`, `reason` (`quit`), `resets`, `picksMade`, `durationSec?` |
 | `challenge_played` | standard | A challenge attempt is evaluated | `challengeId`, `difficulty`, `kind` (`boss`, `gauntlet`, `draft`), `cleared`, `stars`, `starsNew`, `firstClear`, `resets`, `rerollsUsed`, `teamOverall`, `chemistryPercent`, `picks`, `specials`, `xpGained` |
 | `daily_insight` | standard | v2.1: a finished Daily's best-draft panel finished its analysis (`action` = `shown`, once per Daily) or its result line was shared (`shared`) | `action`, `dailyNumber`, `dailyTemplate`, `percentile` (vs simulated drafts), `percentileSource` (`simulated`), `gap` (rating points to the best draft), `matched`, `teamOverall`, `bestOverall`, `computeMs?` |
@@ -95,6 +95,15 @@ marks an optional property.
   `arrayJoin(splitByChar('|', properties.specials))`.
 - `resets` counts the restarts before this run in the same sitting.
 - The daily challenge is `run_completed` with `mode = daily` and `dailyTemplate`.
+- rc.9 (DESIGN-DECISIONS #224): `run_completed` carries the player's series,
+  computed by `engine/runSeriesFacts.ts` from the finished tournament, no new
+  event. A gap is the player's shown overall minus the rival's shown overall
+  (`displayTeamOverall`, the number the screens print even when the run hid
+  it). `endOppStrength` is the rating the rival that ended the run actually
+  played at: the hidden difficulty shift and region lift included, the upset
+  guard applied. `endOppStrength - endOppOverall` is the hidden part. "The run
+  ended" = the last lost series that is not the third-place match.
+  `lostToLowerBy8 > 0` is the "absurd loss" the rc.9 complaint names.
 
 ### Progression
 

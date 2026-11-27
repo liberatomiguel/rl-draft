@@ -451,6 +451,16 @@ export const REVIEW = {
   rowOrg: "Organization",
   rowChemistry: "Chemistry",
   rowSpecials: "Specials",
+  // rc9 LEGACY: the lines that make the breakdown add up (engine/overallBreakdown.ts, #222)
+  rowCurve: "Top-end curve",
+  curveNote: (pivot: number, pct: number) => `Above ${pivot}, each point counts ${pct}%.`,
+  rowCap: "Cap at 99",
+  rowRounding: "Rounding",
+  rowSum: "Before the curve",
+  /** The rival that ended the run, its shown overall and the strength it played at (runSeriesFacts). */
+  endedBy: (name: string) => `Knocked out by ${name}`,
+  playedAt: (shown: number, played: number) => `Overall ${shown}, played at ${played}`,
+  // rc9 LEGACY end
   statHigh: {
     offense: "Heavy attacking pressure.",
     defense: "Hard to break down.",

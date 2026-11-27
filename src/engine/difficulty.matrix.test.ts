@@ -25,8 +25,9 @@ import { applyFreeReroll, applyPick, applyReroll, createDraft, drawNextOffer, ne
 import { displayTeamOverall } from "./rating";
 import { buildUserTeam } from "./teams";
 import { generateOpponents } from "./opponents";
+import { guardedSide } from "./match";
 import { fastForward, initTournament, userPlacement } from "./tournament";
-import type { CardKind, Difficulty, DraftOfferCard, Region, Roster, RosterPick, TournamentTeam } from "./types";
+import type { CardKind, Difficulty, DraftOfferCard, Region, Roster, RosterPick, SeriesResult, TournamentTeam } from "./types";
 
 const env = process.env;
 const OUT = env.SIM_OUT;
@@ -148,9 +149,74 @@ const BUCKETS: [string, (r: number) => boolean][] = [
   ["88-89", (r) => r >= 88 && r < 90], ["90-91", (r) => r >= 90 && r < 92], ["92-93", (r) => r >= 92 && r < 94],
   ["94-95", (r) => r >= 94 && r < 96], ["96-97", (r) => r >= 96 && r < 98], ["98+", (r) => r >= 98],
 ];
+// rc9 LEGACY: the upset tail (SIM_TAIL=1). Every user series is bucketed by
+// the DISPLAYED gap (user overall - opponent overall as the screens show them).
+// SIM_GUARD=1 / 0 forces DRAFT_UPSET_GUARD.enabled for a paired before/after.
+const TAIL = env.SIM_TAIL === "1";
+if (env.SIM_GUARD != null && B.DRAFT_UPSET_GUARD) B.DRAFT_UPSET_GUARD.enabled = env.SIM_GUARD === "1";
+/** SIM_GUARD_PARAMS={"startGap":5,"fullGap":10,"floorKeep":0.3} overrides the guard's shape. */
+if (env.SIM_GUARD_PARAMS && B.DRAFT_UPSET_GUARD) Object.assign(B.DRAFT_UPSET_GUARD, JSON.parse(env.SIM_GUARD_PARAMS));
+const GAP_BUCKETS: [string, number, number][] = [
+  ["<0", -99, 0], ["0-2", 0, 3], ["3-4", 3, 5], ["5-7", 5, 8], ["8-9", 8, 10], ["10-14", 10, 15], ["15+", 15, 99],
+];
+interface TailCell {
+  series: number; runs: number;
+  /** per displayed-gap bucket: series, user losses, run-ending losses, sum of effective gap, sum of hidden lift */
+  b: Record<string, { n: number; lost: number; ended: number; eff: number; lift: number }>;
+  /** runs that ended on a loss at displayed gap >= 8 / >= 10 */
+  endedAt8: number; endedAt10: number;
+  worst: { gap: number; eff: number; user: number; opp: number; lift: number; stage: string; score: string; ended: boolean }[];
+}
+const tail: Record<string, TailCell> = {};
+let tailKey = "";
+function tailRecord(t: ReturnType<typeof fastForward>, d: Difficulty) {
+  const cell = (tail[tailKey] ??= { series: 0, runs: 0, b: {}, endedAt8: 0, endedAt10: 0, worst: [] });
+  cell.runs++;
+  const user = t.teams.user;
+  const userOvr = displayTeamOverall(user.rating);
+  const list: { s: SeriesResult; stage: string }[] = [];
+  for (const r of t.swiss.rounds) for (const s of r.series) if (s.teamAId === "user" || s.teamBId === "user") list.push({ s, stage: "swiss" });
+  for (const r of t.playoffs?.rounds ?? []) for (const s of r.series) if (s.teamAId === "user" || s.teamBId === "user") list.push({ s, stage: r.name });
+  const champion = t.playoffs?.championTeamId === "user";
+  // The run-ending loss: the last lost series that is not the 3rd-place match.
+  let endIdx = -1;
+  if (!champion) for (let i = list.length - 1; i >= 0; i--) if (list[i].s.winnerTeamId !== "user" && list[i].stage !== "third_place") { endIdx = i; break; }
+  // Run level for the strong teams (PostHog: 97-98 and 99 lose the run often).
+  const ok = userOvr >= 99 ? "99" : userOvr >= 97 ? String(userOvr) : userOvr >= 95 ? "95-96" : "<95";
+  const ro = ((cell as TailCell & { byOvr?: Record<string, number[]> }).byOvr ??= {});
+  const row = (ro[ok] ??= [0, 0, 0, 0, 0]); // runs, titles, ended at gap>=5, >=8, series won share sum
+  row[0]++; if (champion) row[1]++;
+  if (endIdx >= 0) {
+    const s = list[endIdx].s; const opp = t.teams[s.teamAId === "user" ? s.teamBId : s.teamAId];
+    const g = userOvr - displayTeamOverall(opp.rating);
+    if (g >= 5) row[2]++; if (g >= 8) row[3]++;
+  }
+  row[4] += list.filter((x) => x.s.winnerTeamId === "user").length / Math.max(1, list.length);
+  list.forEach(({ s, stage }, i) => {
+    const opp = t.teams[s.teamAId === "user" ? s.teamBId : s.teamAId];
+    const gap = userOvr - displayTeamOverall(opp.rating);
+    // What the rival actually played at (upset guard applied when it is on).
+    const played = guardedSide(opp, user).rating.total;
+    const eff = user.rating.total - played;
+    const lift = opp.rating.difficultyShift - (opp.rating.total - played) - balance.DIFFICULTY[d].opponentRatingShift;
+    const key = GAP_BUCKETS.find(([, lo, hi]) => gap >= lo && gap < hi)![0];
+    const bk = (cell.b[key] ??= { n: 0, lost: 0, ended: 0, eff: 0, lift: 0 });
+    const lost = s.winnerTeamId !== "user";
+    bk.n++; bk.eff += eff; bk.lift += lift; cell.series++;
+    if (lost) bk.lost++;
+    if (i === endIdx) { bk.ended++; if (gap >= 8) cell.endedAt8++; if (gap >= 10) cell.endedAt10++; }
+    if (lost && gap >= 8) {
+      const sc = s.teamAId === "user" ? s.score : [s.score[1], s.score[0]];
+      cell.worst.push({ gap, eff: Math.round(eff * 10) / 10, user: userOvr, opp: displayTeamOverall(opp.rating), lift: Math.round(lift * 10) / 10, stage, score: sc.join("-"), ended: i === endIdx });
+      cell.worst.sort((a, b) => b.gap - a.gap || a.eff - b.eff);
+      cell.worst.length = Math.min(cell.worst.length, 6);
+    }
+  });
+}
 function play(team: TournamentTeam, d: Difficulty, seed: number, pool: string[] | undefined, boost: number, depth = 0) {
   const rng = createRng(seed);
-  const t = fastForward(initTournament(team, d, rng, { poolLineupIds: pool, opponentRatingBoost: boost, opponentFieldDepth: depth }), d, rng);
+  const t = fastForward(initTournament(team, d, rng, { poolLineupIds: pool, opponentRatingBoost: boost, opponentFieldDepth: depth, regionLock: pool !== undefined } as Parameters<typeof initTournament>[3]), d, rng);
+  if (TAIL) tailRecord(t, d);
   return userPlacement(t);
 }
 const draftCache = new Map<string, ReturnType<typeof draftBestOf>>();
@@ -217,7 +283,9 @@ it.skipIf(!env.SIM_MATRIX)("difficulty matrix", () => {
   for (const pool of POOLS) {
     for (const d of DIFFS) {
       const t0 = Date.now();
+      tailKey = `${pool}/${d}`;
       const r = SKIP_REAL ? null : realistic(pool, d);
+      tailKey = `${pool}/${d}/pop`;
       const p = SKIP_POP ? null : population(pool, d);
       // Reuse the exact drafts and match seeds when sweeping shifts. This avoids
       // redrafting every candidate and makes comparisons paired experiments.
@@ -234,6 +302,13 @@ it.skipIf(!env.SIM_MATRIX)("difficulty matrix", () => {
         `| boost ${boostFor(pool, d)} | ${((Date.now() - t0) / 1000).toFixed(0)}s`,
       );
       if (r) console.log("   ", Object.entries(r.buckets).map(([k, v]) => `${k}:${(v.title * 100).toFixed(0)}/${(v.final * 100).toFixed(0)}(${v.n})`).join("  "));
+      const tc = tail[`${pool}/${d}`];
+      if (TAIL && tc) {
+        (out[`${pool}/${d}`] as Record<string, unknown>).tail = tc;
+        console.log("    tail", `runs ${tc.runs} ended@8+ ${((tc.endedAt8 / tc.runs) * 100).toFixed(1)}% ended@10+ ${((tc.endedAt10 / tc.runs) * 100).toFixed(1)}% |`,
+          GAP_BUCKETS.filter(([k]) => tc.b[k]).map(([k]) => { const v = tc.b[k]; return `${k}: lose ${((v.lost / v.n) * 100).toFixed(1)}% end ${((v.ended / v.n) * 100).toFixed(1)}% eff ${(v.eff / v.n).toFixed(1)} lift ${(v.lift / v.n).toFixed(1)} (${v.n})`; }).join(" | "));
+        console.log("    worst", tc.worst.map((w) => `${w.user}v${w.opp} eff${w.eff} lift${w.lift} ${w.stage} ${w.score}${w.ended ? " END" : ""}`).join("; "));
+      }
       if (OUT) writeFileSync(OUT, JSON.stringify(out, null, 1));
     }
   }

@@ -8,7 +8,7 @@
  * wins the series. Overall remains the dominant factor — see tests.
  */
 
-import { CAREER_MATCHDAY, DIFFICULTY, SIMULATION as SIM } from "@/config/balance";
+import { CAREER_MATCHDAY, DIFFICULTY, DRAFT_UPSET_GUARD, SIMULATION as SIM } from "@/config/balance";
 import { specialCardById } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
@@ -26,6 +26,7 @@ import {
   type MatchdaySeriesState,
 } from "./career/matchday";
 import { styleMatchupBonus } from "./career/styles";
+import { displayTeamOverall } from "./rating";
 import { traitBounce, traitGameEffects } from "./career/traits";
 import type {
   Difficulty,
@@ -492,6 +493,24 @@ export type UserSeriesResolver = (
   options: SeriesOptions,
 ) => SeriesResult;
 
+// rc9 LEGACY
+/**
+ * The upset guard (DRAFT_UPSET_GUARD, DESIGN-DECISIONS #220): in the player's
+ * series of a Region-only run, the opponent's hidden region lift fades out as
+ * the SHOWN gap grows. Only the rating moves; the series draws exactly the
+ * same numbers in the same order. A side without `regionLift` (every
+ * worldwide, Daily, challenge and career side) comes back untouched.
+ */
+export function guardedSide(team: TournamentTeam, other: TournamentTeam): TournamentTeam {
+  const lift = team.regionLift;
+  if (!lift || lift <= 0 || !DRAFT_UPSET_GUARD.enabled || team.isUser || !other.isUser) return team;
+  const g = DRAFT_UPSET_GUARD;
+  const shownGap = displayTeamOverall(other.rating) - displayTeamOverall(team.rating);
+  const keep = Math.max(g.floorKeep, clamp((g.fullGap - shownGap) / (g.fullGap - g.startGap), 0, 1));
+  if (keep >= 1) return team;
+  return { ...team, rating: { ...team.rating, total: team.rating.total - lift * (1 - keep) } };
+}
+
 /** The whole series at once — a loop over the three steps above. */
 export function simulateSeries(
   teamA: TournamentTeam,
@@ -499,6 +518,9 @@ export function simulateSeries(
   options: SeriesOptions,
   rng: Rng,
 ): SeriesResult {
+  // rc9 LEGACY: the upset guard (identity unless a side carries regionLift).
+  teamA = guardedSide(teamA, teamB);
+  teamB = guardedSide(teamB, teamA);
   let state = startSeries(teamA, teamB, options, rng);
   while (!isSeriesOver(state)) {
     // v2.1 Matchday slice 3: the coaches' breaks (no matchday layer → the same state, nothing drawn).

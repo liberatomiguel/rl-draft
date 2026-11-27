@@ -10,7 +10,7 @@
  * other path (all Draft modes included) draws exactly as before.
  */
 
-import { TOURNAMENT } from "@/config/balance";
+import { DIFFICULTY, DRAFT_UPSET_GUARD, TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
 import type { SeriesOptions, UserSeriesResolver } from "./match";
 import { generateOpponents } from "./opponents";
@@ -49,6 +49,23 @@ export interface TournamentOptions {
   opponentRatingBoost?: number;
   /** Share of each opponent's gap to the field's best that is closed (REGION_LOCK.fieldDepth). */
   opponentFieldDepth?: number;
+  // rc9 LEGACY
+  /** A Region-only run: with DRAFT_UPSET_GUARD on, each opponent carries its hidden lift (#220). */
+  regionLock?: boolean;
+}
+
+// rc9 LEGACY
+/**
+ * Stamps `regionLift` (the rating above the shown overall beyond the
+ * difficulty's own shift) on a Region-only field, guard on only. Draws nothing.
+ */
+function stampRegionLift(opponents: TournamentTeam[], difficulty: Difficulty, options: TournamentOptions): TournamentTeam[] {
+  if (!options.regionLock || !DRAFT_UPSET_GUARD.enabled) return opponents;
+  const base = DIFFICULTY[difficulty].opponentRatingShift;
+  return opponents.map((t) => {
+    const lift = Math.round((t.rating.difficultyShift - base) * 100) / 100;
+    return lift > 0 ? { ...t, regionLift: lift } : t;
+  });
 }
 
 export function initTournament(
@@ -61,14 +78,14 @@ export function initTournament(
 
   // Quick mode: 8 teams straight into a single-elimination bracket.
   if (mode === "quick") {
-    const opponents = generateOpponents(
+    const opponents = stampRegionLift(generateOpponents(
       difficulty,
       rng,
       TOURNAMENT.quick.teams - 1,
       options.poolLineupIds,
       options.opponentRatingBoost,
       options.opponentFieldDepth,
-    );
+    ), difficulty, options);
     const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
     for (const opp of opponents) teams[opp.id] = opp;
 
@@ -96,14 +113,14 @@ export function initTournament(
     };
   }
 
-  const opponents = generateOpponents(
+  const opponents = stampRegionLift(generateOpponents(
     difficulty,
     rng,
     TOURNAMENT.swiss.teams - 1,
     options.poolLineupIds,
     options.opponentRatingBoost,
     options.opponentFieldDepth,
-  );
+  ), difficulty, options);
   const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
   for (const opp of opponents) teams[opp.id] = opp;
 
