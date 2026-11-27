@@ -210,8 +210,9 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
   }
   // The season's transfer money is kept from today (the ledger tail is shorter than a season).
   save.finances = { ...save.finances, transferTally: { seasonIndex: s, out: 0, in: 0 } };
-  if (s === board.startSeason) welcomeMail(save);
   mail(save, "boardMandate", mandateParams(save, mandate));
+  // The owner's welcome lands last, so it is the first mail the inbox lists on the takeover's day.
+  if (s === board.startSeason) welcomeMail(save);
 }
 
 /** v2.2 MANDATE: the owner's welcome on the board's first day (the org's own history, where the dataset has it). */
@@ -250,6 +251,12 @@ export function mandateParams(save: CareerSave, m: BoardMandate): Record<string,
     squadKind: m.squad.kind,
     squadValue: m.squad.value,
     squadPlayer: (m.squad.playerNames ?? []).join(" · "),
+    clsHit: m.classification.gain.confidence,
+    clsMiss: m.classification.loss.confidence,
+    moneyHit: m.money.gain.confidence,
+    moneyMiss: m.money.loss.confidence,
+    squadHit: m.squad.gain.confidence,
+    squadMiss: m.squad.loss.confidence,
   };
 }
 

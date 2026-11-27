@@ -12,6 +12,7 @@ import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
+const swingPt = (hit: string | number | undefined, miss: string | number | undefined): string => (hit === undefined ? "" : ` (+${hit} / −${Math.abs(Number(miss))} de confiança)`);
 const BOARD_BANDS_PT: Record<string, string> = { expected: "Provável", reach: "Ao alcance", stretch: "Um desafio", longShot: "Muito difícil" };
 
 const ENDLESS_HOSTS_PT = [
@@ -4228,19 +4229,19 @@ export const CAREER_PT: CareerCopy = {
       gainLabel: "Se cumprir",
       lossLabel: "Se não cumprir",
       confidenceUnit: "de confiança",
-      budgetUnit: "de orçamento na próxima temporada",
+      budgetUnit: "no orçamento seguinte",
       bonusUnit: "de bônus",
       noChange: "Nada muda",
       money: (kind: string, amount: string, week: number): string => {
         switch (kind) {
           case "cashFloor":
-            return `Terminar a temporada com pelo menos ${amount} em caixa`;
+            return `Termine a temporada com pelo menos ${amount} em caixa`;
           case "wagesUnder":
-            return `Baixar a folha para ${amount} por semana até a semana ${week}`;
+            return `Baixe a folha para ${amount} por semana até a semana ${week}`;
           case "netSpend":
-            return `Manter o gasto líquido em transferências dentro de ${amount}`;
+            return `Mantenha o gasto líquido em transferências dentro de ${amount}`;
           case "sales":
-            return `Arrecadar ${amount} em vendas de jogadores`;
+            return `Arrecade ${amount} em vendas de jogadores`;
           default:
             return "";
         }
@@ -4248,15 +4249,15 @@ export const CAREER_PT: CareerCopy = {
       squad: (kind: string, value: number, names: string[]): string => {
         switch (kind) {
           case "signStarter":
-            return `Contratar um titular de ${value} ou mais`;
+            return `Contrate um titular de ${value} ou mais`;
           case "renew":
-            return `Renovar o contrato de ${names[0] ?? "o titular"}`;
+            return `Renove o contrato de ${names[0] ?? "o titular"}`;
           case "ageUnder":
-            return `Baixar a média de idade dos titulares para ${value} ou menos`;
+            return `Baixe a média de idade dos titulares para ${value} ou menos`;
           case "youthEvents":
-            return `Escalar ${names[0] ?? "a promessa"} como titular em ${value} eventos oficiais`;
+            return `Escale ${names[0] ?? "a promessa"} como titular em ${value} eventos oficiais`;
           case "keepCore":
-            return `Manter ${joinPt(names)} até o fim da temporada`;
+            return `Mantenha ${joinPt(names)} até o fim da temporada`;
           default:
             return "";
         }
@@ -4385,9 +4386,9 @@ export const CAREER_PT: CareerCopy = {
       body: {
         boardPackage: () => "Três pacotes estão na sua mesa: cauteloso, esperado e ambicioso. Mais ambição traz mais verba e um bônus maior, e custa mais confiança se o objetivo não for cumprido. O relógio espera a sua escolha.",
         boardWelcome: (p: Record<string, string | number>) =>
-          `${p.manager}, bem-vindo à ${p.org}.${Number(p.seasons) > 0 ? ` A org disputou ${p.seasons} temporadas da RLCS desde a ${p.since}${Number(p.top) > 0 ? `, ${p.top} delas entre os times mais fortes da região` : ""}.` : ""} Você assume ${({ elite: "uma org de elite", contender: "uma candidata", mid: "uma org de meio de tabela", underdog: "uma azarã" } as Record<string, string>)[String(p.tier)] ?? "a org"}, com o elenco, os contratos e os problemas dela. Conserte o que precisa, arrume a casa e monte o time para vencer. O mandato da diretoria para a temporada está na sua mesa.`,
+          `${p.manager}, bem-vindo à ${p.org}.${Number(p.seasons) > 0 ? ` A org disputou ${p.seasons} temporadas da RLCS, a primeira na ${p.since}${Number(p.top) > 0 ? `, ${p.top} delas entre os times mais fortes da região` : ""}.` : ""} Você assume ${({ elite: "uma org de elite", contender: "uma candidata", mid: "uma org de meio de tabela", underdog: "uma azarã" } as Record<string, string>)[String(p.tier)] ?? "a org"}, com o elenco, os contratos e os problemas dela. Conserte o que precisa, arrume a casa e monte o time para vencer. O mandato da diretoria para a temporada está na sua mesa.`,
         boardMandate: (p: Record<string, string | number>) =>
-          `${p.demandWord}. Classificação: ${p.cls}. Dinheiro: ${p.money}. Elenco: ${p.squad}. O que cada meta dá e custa está na página da Diretoria.`,
+          `${p.demandWord}. Classificação: ${p.cls}${swingPt(p.clsHit, p.clsMiss)}. Dinheiro: ${p.money}${swingPt(p.moneyHit, p.moneyMiss)}. Elenco: ${p.squad}${swingPt(p.squadHit, p.squadMiss)}. Os passos de orçamento e os bônus estão na página da Diretoria.`,
         boardMandateReport: (p: Record<string, string | number>) =>
           `Classificação: ${p.cls}, ${p.clsDone} de ${p.clsTarget} (${Number(p.clsOk) === 1 ? "cumprida" : Number(p.clsOk) === 0 ? "fora de alcance" : "em aberto"}). Dinheiro: ${p.money} (${Number(p.moneyOk) ? "no caminho" : "atrasada"}). Elenco: ${p.squad} (${Number(p.squadOk) ? "no caminho" : "atrasada"}). A confiança da diretoria ${Number(p.delta) > 0 ? `subiu ${p.delta} e foi a` : Number(p.delta) < 0 ? `caiu ${Math.abs(Number(p.delta))} e foi a` : "segue em"} ${p.confidence}.`,
         boardMandateVerdict: (p: Record<string, string | number>) =>

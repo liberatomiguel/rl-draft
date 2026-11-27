@@ -131,14 +131,14 @@ function goalViewsOf(C: CareerCopy, m: BoardMandate): GoalView[] {
 function GoalRow({ g, i, C }: { g: GoalView; i: number; C: CareerCopy }) {
   const K = C.board.mandate;
   return (
-    <li className="grid gap-x-6 gap-y-3 border-b border-line py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_12.5rem] sm:py-5">
+    <li className="grid gap-x-6 gap-y-3 border-b border-line py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_13.5rem]">
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
           <span className="display text-sm font-bold tabular-nums text-faint">{i + 1}</span>
           <span className="display text-sm font-semibold uppercase tracking-[0.04em] text-ink">{K.area[g.key]}</span>
           {g.key === "classification" ? <Badge>{K.weighsMost}</Badge> : null}
         </p>
-        <p className="display mt-1.5 text-xl uppercase leading-[1.05] text-ink [overflow-wrap:break-word] sm:text-[1.6rem]">{g.text}</p>
+        <p className="display mt-1.5 text-xl uppercase leading-[1.05] text-ink [overflow-wrap:break-word] sm:text-[1.45rem]">{g.text}</p>
         {g.note ? <p className="mt-1.5 text-sm leading-snug text-sub">{g.note}</p> : null}
       </div>
       <dl className="grid grid-cols-2 gap-x-4 text-xs sm:grid-cols-1 sm:content-start sm:gap-y-3 sm:border-l sm:border-line sm:pl-5">
@@ -205,20 +205,21 @@ export function MandateSheet({
   const views = goalViewsOf(C, m);
   const header = (
     <div className={cx(inline ? "" : "card-texture border-b border-line px-4 pb-4 pt-4 sm:px-7 sm:pb-5 sm:pt-6")}>
-      <div className="flex items-center gap-3">
-        <UserOrgMark identity={save.identity} seasonIndex={save.clock.seasonIndex} size="md" loading="eager" />
-        <p className="min-w-0 text-xs leading-snug text-sub">
-          <span className="block truncate font-semibold text-ink">{save.identity.orgName}</span>
-          {K.season(seasonLabelFor(m.seasonIndex))}
-        </p>
-      </div>
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <h2 id={titleId} className="display text-3xl uppercase leading-[0.95] text-ink sm:text-[2.6rem]">
-          {K.title}
-        </h2>
+      {/* Who sets it on the left, how much it asks on the right; the title under them, full width. */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <UserOrgMark identity={save.identity} seasonIndex={save.clock.seasonIndex} size="md" loading="eager" />
+          <p className="min-w-0 text-xs leading-snug text-sub">
+            <span className="block truncate font-semibold text-ink">{save.identity.orgName}</span>
+            {K.season(seasonLabelFor(m.seasonIndex))}
+          </p>
+        </div>
         <DemandFigure demand={m.demand} C={C} />
       </div>
-      <p className="mt-3 max-w-xl text-sm leading-snug text-sub">
+      <h2 id={titleId} className="display mt-3 text-3xl uppercase leading-[0.95] text-ink sm:text-[2.6rem]">
+        {K.title}
+      </h2>
+      <p className="mt-2.5 max-w-xl text-sm leading-snug text-sub">
         {K.body} <span className="text-ink">{K.demandNote[m.demand]}</span>
       </p>
     </div>
@@ -253,10 +254,13 @@ export function MandateSheet({
       </div>
     );
   }
+  // The header scrolls with the goals: on a 320 x 640 phone a pinned header would leave the goals half the card.
   return (
     <>
-      <div className="shrink-0">{header}</div>
-      <div className="min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-7">{goals}</div>
+      <div className="min-h-0 overflow-y-auto overscroll-contain">
+        {header}
+        <div className="px-4 sm:px-7">{goals}</div>
+      </div>
       {action ? (
         <div className="flex shrink-0 items-center justify-between gap-4 border-t border-line px-4 py-3 sm:px-7 sm:py-4">
           <p className="text-xs leading-snug text-faint max-sm:hidden">{K.keptNote}</p>
@@ -295,7 +299,7 @@ export function MandatePrompt() {
         ref={panelRef}
         tabIndex={-1}
         style={{ outline: "none" }}
-        className="panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full min-w-0 max-w-2xl flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)]"
+        className="panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full min-w-0 max-w-3xl flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)]"
       >
         <MandateSheet save={save} m={m} C={C} onAccept={acknowledge} titleId="mandate-title" />
       </div>
@@ -310,6 +314,8 @@ export function MandatePrompt() {
 
 interface ProgressView {
   key: "money" | "squad";
+  /** "over": a figure to reach (open until it is); "under": a line to stay under (behind while over it). */
+  sense: "under" | "over";
   text: string;
   now: string;
   /** 0-1 toward the goal, when a bar reads. */
@@ -331,6 +337,7 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
   return [
     {
       key: "money",
+      sense: mp.sense,
       text: moneyGoalText(C, m.money),
       now: K.moneyNow(m.money.kind, formatMoney(mp.now, { compact: true })),
       bar: ratio(mp.now, mp.target, mp.sense),
@@ -343,6 +350,7 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
     },
     {
       key: "squad",
+      sense: sp.sense,
       text: squadGoalText(C, m.squad),
       now: K.squadNow(m.squad.kind, sp.now, sp.target),
       bar: m.squad.kind === "youthEvents" || m.squad.kind === "keepCore" ? ratio(sp.now, sp.target, "over") : null,
@@ -356,11 +364,13 @@ function progressViewsOf(save: CareerSave, m: BoardMandate, C: CareerCopy): Prog
   ];
 }
 
-function StatusTag({ v, C }: { v: Pick<ProgressView, "met" | "onTrack" | "lost">; C: CareerCopy }) {
+function StatusTag({ v, C }: { v: Pick<ProgressView, "met" | "onTrack" | "lost" | "sense">; C: CareerCopy }) {
   if (v.met === true) return <Badge tone="good">{C.goals.status.met}</Badge>;
   if (v.met === false) return <Badge tone="bad">{C.goals.status.missed}</Badge>;
   if (v.lost) return <Badge tone="bad">{C.goals.status.out}</Badge>;
-  return v.onTrack ? <Badge tone="good">{C.board.mandate.onTrack}</Badge> : <Badge tone="orange">{C.board.mandate.behind}</Badge>;
+  if (v.onTrack) return <Badge tone="good">{v.sense === "over" ? C.goals.status.done : C.board.mandate.onTrack}</Badge>;
+  // A figure still to reach is open; a line the books are over is behind.
+  return v.sense === "over" ? <Badge>{C.goals.status.open}</Badge> : <Badge tone="orange">{C.board.mandate.behind}</Badge>;
 }
 
 /** The Board page: the mandate's money and squad goals with today's figures (the classification goal is the object above). */

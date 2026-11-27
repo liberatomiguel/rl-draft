@@ -34,6 +34,7 @@ const listEn = (p: Record<string, string | number>): string => {
 
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
+const swingEn = (hit: string | number | undefined, miss: string | number | undefined): string => (hit === undefined ? "" : ` (+${hit} / −${Math.abs(Number(miss))} confidence)`);
 const BOARD_BANDS_EN: Record<string, string> = { expected: "Likely", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
 
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
@@ -4257,7 +4258,7 @@ export const CAREER_EN = {
       gainLabel: "If met",
       lossLabel: "If missed",
       confidenceUnit: "confidence",
-      budgetUnit: "budget next season",
+      budgetUnit: "next season's budget",
       bonusUnit: "bonus",
       noChange: "Nothing changes",
       money: (kind: string, amount: string, week: number): string => {
@@ -4414,9 +4415,9 @@ export const CAREER_EN = {
       body: {
         boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
         boardWelcome: (p: Record<string, string | number>) =>
-          `${p.manager}, welcome to ${p.org}.${Number(p.seasons) > 0 ? ` This org has played ${p.seasons} RLCS seasons since ${p.since}${Number(p.top) > 0 ? `, ${p.top} of them among its region's strongest sides` : ""}.` : ""} You take over ${({ elite: "an elite org", contender: "a contender", mid: "a mid-table org", underdog: "an underdog" } as Record<string, string>)[String(p.tier)] ?? "the org"}, with its roster, its contracts and its problems. Fix what needs fixing and build it to win. The board's mandate for the season is on your desk.`,
+          `${p.manager}, welcome to ${p.org}.${Number(p.seasons) > 0 ? ` The org has played ${p.seasons} RLCS seasons, the first in ${p.since}${Number(p.top) > 0 ? `, ${p.top} of them among its region's strongest sides` : ""}.` : ""} You take over ${({ elite: "an elite org", contender: "a contender", mid: "a mid-table org", underdog: "an underdog" } as Record<string, string>)[String(p.tier)] ?? "the org"}, with its roster, its contracts and its problems. Fix what needs fixing and build it to win. The board's mandate for the season is on your desk.`,
         boardMandate: (p: Record<string, string | number>) =>
-          `${p.demandWord}. Classification: ${p.cls}. Money: ${p.money}. Squad: ${p.squad}. What each goal gives and costs is on the Board page.`,
+          `${p.demandWord}. Classification: ${p.cls}${swingEn(p.clsHit, p.clsMiss)}. Money: ${p.money}${swingEn(p.moneyHit, p.moneyMiss)}. Squad: ${p.squad}${swingEn(p.squadHit, p.squadMiss)}. The budget steps and bonuses are on the Board page.`,
         boardMandateReport: (p: Record<string, string | number>) =>
           `Classification: ${p.cls}, ${p.clsDone} of ${p.clsTarget} (${Number(p.clsOk) === 1 ? "met" : Number(p.clsOk) === 0 ? "out of reach" : "open"}). Money: ${p.money} (${Number(p.moneyOk) ? "on track" : "behind"}). Squad: ${p.squad} (${Number(p.squadOk) ? "on track" : "behind"}). Board confidence ${Number(p.delta) > 0 ? `rose by ${p.delta} to` : Number(p.delta) < 0 ? `fell by ${Math.abs(Number(p.delta))} to` : "holds at"} ${p.confidence}.`,
         boardMandateVerdict: (p: Record<string, string | number>) =>
