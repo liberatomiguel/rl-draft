@@ -42,6 +42,7 @@ import { useCareerStore } from "@/store/careerStore";
 import type { CreateCareerInput } from "@/store/careerFlow";
 import { takeoverPreviewOf, type TakeoverPreview } from "@/store/takeoverPreview";
 import { ArrivalSplash } from "./ArrivalSplash";
+import { MandateDossier } from "@/components/career/board/MandateParts";
 import { briefLinesOf } from "@/components/career/board/briefLines";
 
 const REGIONS: Region[] = ["EU", "NA", "SAM", "MENA", "OCE", "APAC", "SSA"];
@@ -245,7 +246,17 @@ function Dossier({
         </div>
       </div>
 
+      {/* v2.2 MANDATE: the demand level, the house's problems and the three goals, before the player accepts. */}
+      {preview.mandate ? (
+        <div className="mt-7">
+          <MandateDossier m={preview.mandate} C={C} />
+          <p className="mt-3 text-xs text-sub">
+            {D.grace(c.graceSeasons)}. {D.boardNote}
+          </p>
+        </div>
+      ) : null}
       {/* What the board expects: the proposed plan's objective is the sentence that matters. */}
+      {preview.mandate ? null : <>
       <h4 className="card-title mt-7">{D.board}</h4>
       {brief ? <p className="mt-2 text-sm text-ink">{brief.reason}</p> : null}
       {plan ? (
@@ -277,6 +288,7 @@ function Dossier({
       ) : (
         <p className="mt-2 text-sm text-sub">{D.noBoard}</p>
       )}
+      </>}
 
       {/* The career's two settings: difficulty and the manager's name. */}
       <div className="mt-7 grid gap-5 border-t border-line pt-5 sm:grid-cols-2">

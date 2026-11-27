@@ -27,7 +27,7 @@
  * changes when things surface, never how they roll.
  */
 
-import { boardOnCreate, boardOnDayArrival, boardOnSeasonReview, boardOnSeasonStart, boardOnSplitBoundary, boardSeatAtRollover, boardHiringFrozen } from "./boardFlow";
+import { boardOnCreate, boardOnDayArrival, boardOnEventResult, boardOnSeasonReview, boardOnSeasonStart, boardOnSplitBoundary, boardSeatAtRollover, boardHiringFrozen } from "./boardFlow";
 import { emptyCompetition as emptyCompetitionState } from "@/engine/career/competition";
 import {
   CAREER_MATCHDAY,
@@ -2340,6 +2340,7 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
     regionOfRef(save, ref),
   );
   save.eventResults.push(result);
+  boardOnEventResult(save, result, save.activeEvent?.fieldedIds ?? save.starterIds); // v2.2 MANDATE: a prospect's events
   // R133: the regional partner desk reports its championship and its region's regionals.
   pushDeskStory(save, rocketStreetResultStory({ careerSeed: save.careerSeed, userRegion: save.identity.region, result }));
   if (save.eventResults.length > CAREER_SAVE.eventResultsCap) {

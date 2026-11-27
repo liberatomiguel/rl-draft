@@ -62,6 +62,8 @@ interface SeasonRow {
   rep?: number;
   /** rc.6: the tier the board held when it made this season's offer (its calibration cell; "owners" for a founded club). */
   tier?: string;
+  /** v2.2 MANDATE: an established org's mandate as settled: demand, and each goal's kind and verdict. */
+  mandate?: { demand: string; cls: boolean | null; money: [string, boolean | null]; squad: [string, boolean | null] };
 }
 interface CareerRow {
   region: Region;
@@ -366,6 +368,9 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         rank: h?.userRegionRank ?? 0,
         rep: Math.round(save.reputation),
         tier: pool && pool.s === save.clock.seasonIndex ? pool.stature : String(b.stature),
+        ...(se?.seasonIndex === save.clock.seasonIndex && se.mandate
+          ? { mandate: { demand: se.mandate.demand, cls: se.mandate.classification.met, money: [se.mandate.money.kind, se.mandate.money.met], squad: [se.mandate.squad.kind, se.mandate.squad.met] } }
+          : {}),
       });
     };
     const start = createCareerSave(input(job.region, job.diff, job.ref ?? undefined), job.seed);
@@ -400,6 +405,31 @@ function seasonsByCell(c: CareerRow): SeasonRow[] {
 
 function summary(rows: CareerRow[]): void {
   const pc = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+  // v2.2 MANDATE: how often each goal is met, by the season's tier and by kind (every settled mandate season).
+  for (const pol of [...new Set(rows.map((r) => r.policy))])
+    for (const diff of [...new Set(rows.map((r) => r.diff))]) {
+      const ms = rows.filter((r) => r.policy === pol && r.diff === diff).flatMap((c) => c.seasons.filter((x) => x.mandate).map((x) => ({ tier: cellOf(c, x), m: x.mandate! })));
+      if (!ms.length) continue;
+      for (const tier of ["elite", "contender", "mid", "underdog"]) {
+        const xs = ms.filter((x) => x.tier === tier);
+        if (!xs.length) continue;
+        const met = (f: (m: NonNullable<SeasonRow["mandate"]>) => boolean | null) => xs.filter((x) => f(x.m) === true).length;
+        const demands = ["low", "medium", "high"].map((d) => `${d} ${xs.filter((x) => x.m.demand === d).length}`).join(", ");
+        console.log(
+          `MANDATE ${pol} ${diff} ${tier.padEnd(9)} N=${xs.length} | classification ${pc(met((m) => m.cls), xs.length)} | money ${pc(met((m) => m.money[1]), xs.length)} | squad ${pc(met((m) => m.squad[1]), xs.length)} | all three ${pc(xs.filter((x) => x.m.cls && x.m.money[1] && x.m.squad[1]).length, xs.length)} | demand ${demands}`,
+        );
+      }
+      const kinds = new Map<string, { n: number; met: number }>();
+      for (const x of ms)
+        for (const [area, [kind, ok]] of [["money", x.m.money], ["squad", x.m.squad]] as const) {
+          const k = `${x.tier}/${area}:${kind}`;
+          const t = kinds.get(k) ?? { n: 0, met: 0 };
+          t.n += 1;
+          t.met += ok ? 1 : 0;
+          kinds.set(k, t);
+        }
+      console.log(`MANDATE KINDS ${pol} ${diff}: ${[...kinds].sort().map(([k, t]) => `${k} ${t.met}/${t.n}`).join(" | ")}`);
+    }
   // rc.6 (ORGMODE E1): Standing tier changes per starting tier, at the starting club (the season of each change).
   const ORDER = ["underdog", "mid", "contender", "elite"];
   for (const pol of [...new Set(rows.map((r) => r.policy))])

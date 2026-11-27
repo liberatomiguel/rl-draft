@@ -841,6 +841,12 @@ export interface FinanceState {
   balanceRing?: MondayBalance[];
   /** v2.0 bank loan (absent on pre-2.0 saves = none). */
   bankLoan?: BankLoanState | null;
+  /**
+   * v2.2 ORGMODE 2027 (MANDATE): the season's transfer money (fees and signing bonuses paid,
+   * fees received), kept by `pushLedger` only while present: an established org's mandate seeds
+   * it each season (the ledger tail is shorter than a season). Absent = not kept (a founded club).
+   */
+  transferTally?: { seasonIndex: number; out: number; in: number };
   gear: GearState;
   /** Bootcamp "Sharp" rating armed for the next official event (0 = none). */
   bootcampSharp: number;

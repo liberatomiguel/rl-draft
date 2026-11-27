@@ -34,6 +34,8 @@ import { TrainingReportModal } from "@/components/career/training/TrainingReport
 import { CareerCloudSync } from "@/components/career/cloud/CareerCloudSync";
 import { CareerCloudConflict } from "@/components/career/cloud/CareerCloudConflict";
 import { CareerCloudToast } from "@/components/career/cloud/CareerCloudToast";
+import { MandatePrompt } from "@/components/career/board/MandateParts";
+import { pendingMandateOf } from "@/store/boardFlow";
 
 // Full-screen routes without the career top bar. EXACT match — "/career/news"
 // must NOT be caught by a "/career/new" prefix (that hid the nav in the inbox).
@@ -100,6 +102,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
   // The board's package comes first (v2.2): the sponsor popup waits until it is answered.
   const boardFirst = save ? pendingDecisionsOf(save).some(d => d.kind === "board") : false;
   const sponsor = save && !boardFirst ? pendingDecisionsOf(save).find(d => d.kind === "sponsor" && !d.parked) : null;
+  // v2.2 MANDATE: an established org's season mandate is read first; every other notice waits for it.
+  const mandatePending = save ? pendingMandateOf(save) !== null : false;
   const hasAnySave = slots.some(Boolean);
   const hasActive = activeSlot !== null && Boolean(slots[activeSlot]);
   const bare = isBareRoute(pathname);
@@ -172,9 +176,9 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <CareerAnnouncement />
           <SponsorAutoBootcamp />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}
-          {sponsor && save ? <SponsorDecisionPrompt key={sponsor.id} save={save} C={C} canWait={sponsor.canWait} onSign={id => useCareerStore.getState().chooseSponsor(id)} onLater={() => useCareerStore.getState().parkDecision(sponsor.id)} /> : <MoneyNoticeModal />}
+          {mandatePending ? <MandatePrompt /> : sponsor && save ? <SponsorDecisionPrompt key={sponsor.id} save={save} C={C} canWait={sponsor.canWait} onSign={id => useCareerStore.getState().chooseSponsor(id)} onLater={() => useCareerStore.getState().parkDecision(sponsor.id)} /> : <MoneyNoticeModal />}
           {/* rc.35 (front T): a finished training cycle's results, once per cycle. */}
-          {!sponsor ? <TrainingReportModal /> : null}
+          {!sponsor && !mandatePending ? <TrainingReportModal /> : null}
         </>
       ) : null}
       {children}

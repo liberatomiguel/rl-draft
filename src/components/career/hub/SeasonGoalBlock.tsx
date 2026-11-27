@@ -17,7 +17,8 @@ import { seasonLabelFor } from "@/components/career/careerUi";
 import { SeasonGoalRows } from "@/components/career/SeasonGoalRows";
 import { AppLink } from "@/components/ui/AppLink";
 import { establishedOf } from "@/engine/career/established";
-import { pendingPackageOf } from "@/store/boardFlow";
+import { pendingMandateOf, pendingPackageOf } from "@/store/boardFlow";
+import { MandateHqRows, MandatePendingLine } from "@/components/career/board/MandateParts";
 
 export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const view = useMemo(() => seasonGoalsViewOf(save), [save]);
@@ -31,10 +32,16 @@ export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }
           <h3 className={RAIL_TITLE}>{C.hub.seasonGoal}</h3>
           <span className="text-[11px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
         </div>
-        <p className="text-sm leading-snug text-sub">{C.board.planPending}</p>
-        <AppLink href="/career/board" className="mt-1.5 inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
-          {C.board.planOpen}
-        </AppLink>
+        {pendingMandateOf(save) ? (
+          <MandatePendingLine C={C} />
+        ) : (
+          <>
+            <p className="text-sm leading-snug text-sub">{C.board.planPending}</p>
+            <AppLink href="/career/board" className="mt-1.5 inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
+              {C.board.planOpen}
+            </AppLink>
+          </>
+        )}
       </div>
     );
   }
@@ -45,6 +52,8 @@ export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }
         <span className="text-[11px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
       </div>
       <SeasonGoalRows view={view} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} showStatus={false} totals={established} />
+      {/* v2.2 MANDATE: the money and squad goals under the classification rows. */}
+      <MandateHqRows save={save} C={C} />
       <BoardLink save={save} C={C} />
     </div>
   );

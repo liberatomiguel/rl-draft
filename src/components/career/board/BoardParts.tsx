@@ -39,8 +39,9 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useCareerStore } from "@/store/careerStore";
-import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
+import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingMandateOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
 import { briefLinesOf, objectiveText } from "./briefLines";
+import { MandateSheet, MandateVerdict } from "./MandateParts";
 
 /** The board's objective as a sentence ("Top 4 in 3 of the 9 regionals"). */
 export function goalText(C: CareerCopy, spec: Pick<SeasonGoalSpec, "kind" | "count" | "place">): string {
@@ -172,8 +173,17 @@ export function BoardPackageChoice({ save, C, titleAs = "h2" }: { save: CareerSa
   );
 }
 
+/** v2.2 MANDATE: the unread mandate on a page (HQ's decision block, the Board page), with its one action. */
+export function BoardMandateInline({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const acknowledge = useCareerStore((s) => s.acknowledgeMandate);
+  const m = pendingMandateOf(save);
+  if (!m) return null;
+  return <MandateSheet save={save} m={m} C={C} onAccept={acknowledge} inline />;
+}
+
 /** HQ's decision block body for kind "board". */
 export function BoardDecision({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  if (pendingMandateOf(save)) return <BoardMandateInline save={save} C={C} />;
   if (pendingPackageOf(save)) return <BoardPackageChoice save={save} C={C} />;
   if (pendingJobChoiceOf(save)) {
     return (
@@ -268,11 +278,14 @@ export function BoardSeasonPanel({ save, C }: { save: CareerSave; C: CareerCopy 
         </div>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0 flex-1 basis-60">
-            <p className="text-xs text-sub">{C.board.sporting} · {C.board.packages.plan(C.board.packages.name[pkg.id])}</p>
+            <p className="text-xs text-sub">
+              {board.season.mandate ? `${C.board.mandate.area.classification} · ${C.board.mandate.title}` : `${C.board.sporting} · ${C.board.packages.plan(C.board.packages.name[pkg.id])}`}
+            </p>
             <p className="display mt-1.5 text-2xl uppercase leading-tight text-ink">{goalText(C, pkg.objective)}</p>
           </div>
           <Figure value={String(Math.round(board.confidence))} label={V.confidenceLabel} size="text-4xl" note={C.board.band(board.confidence)} />
         </div>
+        <MandateVerdict save={save} C={C} />
         <TierChangeRow save={save} C={C} />
         <AppLink href="/career/board" className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-blue-bright hover:underline">
           {V.open}
@@ -368,9 +381,9 @@ export function ObjectiveBoard({ save, C }: { save: CareerSave; C: CareerCopy })
   return (
     <Panel strong className="p-5 sm:p-7">
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-sub">
-        <span>{C.board.sporting}</span>
+        <span>{season.mandate ? C.board.mandate.area.classification : C.board.sporting}</span>
         <span aria-hidden>·</span>
-        <span className="font-semibold text-ink">{K.plan(K.name[pkg.id])}</span>
+        <span className="font-semibold text-ink">{season.mandate ? C.board.mandate.title : K.plan(K.name[pkg.id])}</span>
       </p>
       <h2 className="display mt-3 max-w-3xl text-3xl uppercase leading-[0.95] text-ink [overflow-wrap:break-word] sm:text-[2.5rem]">{goalText(C, pkg.objective)}</h2>
 
@@ -608,7 +621,7 @@ export function BudgetStrip({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <div className="border-line sm:flex sm:flex-col">
           <p className="text-xs text-sub sm:order-2 sm:mt-1.5">{own ? M.ownersAllocation : M.allocation}</p>
           <p className="display text-2xl font-bold leading-none tabular-nums text-ink sm:order-1">{pending ? "–" : formatMoney(b.allocation, { compact: true })}</p>
-          {pending ? <p className="hidden text-xs text-faint sm:order-3 sm:block">{M.notYet}</p> : null}
+          {pending ? <p className="hidden text-xs text-faint sm:order-3 sm:block">{pendingMandateOf(save) ? M.notYetMandate : M.notYet}</p> : null}
         </div>
         <div className="border-line sm:flex sm:flex-col">
           <p className="text-xs text-sub sm:order-2 sm:mt-1.5">{M.wages}</p>

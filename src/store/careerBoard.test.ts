@@ -24,6 +24,7 @@ import {
   chooseBoardUpgradeFlow,
   chooseBoardPackageFlow,
   pendingJobChoiceOf,
+  pendingMandateOf,
   pendingPackageOf,
 } from "./boardFlow";
 import { playArcCareer } from "./careerArcBot";
@@ -92,23 +93,32 @@ describe("taking over a real org", () => {
     }
     expect(save.board?.kind).toBe("board");
     expect(save.board?.stature).toBe("elite");
-    expect(pendingPackageOf(save)).toHaveLength(3);
+    // v2.2 MANDATE: an established org's board sets one mandate (its classification goal is the season's one package).
+    expect(pendingPackageOf(save)).toHaveLength(1);
+    expect(pendingMandateOf(save)).not.toBeNull();
     expect(pendingDecisionsOf(save).some((d) => d.kind === "board" && d.holds)).toBe(true);
   });
 
-  it("the package: budget paid, its objective becomes the season goal's target, fixed once shown", () => {
+  it("the mandate: read once, budget paid, its classification goal becomes the season goal's target, fixed once shown", () => {
     const pick = choices("SAM")[2];
     const save = createCareerSave(input("SAM", pick.ref), SEED);
+    // v2.2 MANDATE: no plan to choose: one package, the mandate's classification goal, on the mandate's terms.
     const offers = pendingPackageOf(save)!;
-    expect(offers.map((o) => o.id)).toEqual(["cautious", "expected", "ambitious"]);
-    expect(offers[0].objective.chance).toBeGreaterThanOrEqual(offers[1].objective.chance);
-    expect(offers[1].objective.chance).toBeGreaterThanOrEqual(offers[2].objective.chance);
+    expect(offers.map((o) => o.id)).toEqual(["expected"]);
+    const m = pendingMandateOf(save)!;
+    expect(offers[0].objective).toEqual(m.classification.objective);
+    expect(offers[0].hit).toBe(m.classification.gain.confidence);
+    expect(offers[0].miss).toBe(m.classification.loss.confidence);
     const before = save.finances.balance;
+    // Any plan id an older tool passes reads the mandate.
     const after = chooseBoardPackageFlow(save, "ambitious").save;
-    expect(after.finances.balance).toBe(before + offers[2].grant);
-    expect(after.seasonGoals?.plan?.target.kind).toBe(offers[2].objective.kind);
-    expect(after.seasonGoals?.plan?.target.count).toBe(offers[2].objective.count);
+    expect(after.board?.season?.choice).toBe("expected");
+    expect(after.board?.season?.mandate?.acknowledged).toBe(true);
+    expect(after.finances.balance).toBe(before + offers[0].grant);
+    expect(after.seasonGoals?.plan?.target.kind).toBe(offers[0].objective.kind);
+    expect(after.seasonGoals?.plan?.target.count).toBe(offers[0].objective.count);
     expect(pendingPackageOf(after)).toBeNull();
+    expect(pendingMandateOf(after)).toBeNull();
     expect(chooseBoardPackageFlow(after, "cautious").error).toBe("none");
   });
 
@@ -190,7 +200,9 @@ describe("warning, ultimatum, dismissal, offers", () => {
     expect(next.board!.confidence).toBe(CAREER_BOARD.confidence.start);
     expect(next.board!.startSeason).toBe(2);
     expect(next.manager!.spells.map((s) => s.left ?? "now")).toEqual(["dismissed", "now"]);
-    expect(pendingPackageOf(next)).toHaveLength(3);
+    // v2.2 MANDATE: the new org is a real one, so its board sets a mandate.
+    expect(pendingPackageOf(next)).toHaveLength(1);
+    expect(pendingMandateOf(next)).not.toBeNull();
   }, 120_000);
 });
 
