@@ -133,8 +133,9 @@ export function CareerTabBar({
                   onClick={() => setMore(false)}
                   aria-current={on ? "page" : undefined}
                   className={cx(
-                    "display flex min-h-12 items-center justify-between gap-3 px-2 text-base uppercase tracking-[0.03em]",
-                    on ? "font-bold text-ink shadow-[inset_3px_0_0_var(--orange)]" : "font-semibold text-sub",
+                    // rc9 DS: a destination in a list is a name, in mixed case.
+                    "display flex min-h-12 items-center justify-between gap-3 px-3 text-base",
+                    on ? "font-bold text-ink shadow-[inset_3px_0_0_var(--orange)]" : "font-semibold text-sub hover:text-ink",
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -158,7 +159,7 @@ export function CareerTabBar({
             <AppLink
               href="/"
               onClick={() => setMore(false)}
-              className="flex min-h-12 items-center px-2 text-sm font-semibold text-sub"
+              className="flex min-h-12 items-center px-3 text-sm text-sub hover:text-ink"
             >
               {C.nav.exit}
             </AppLink>

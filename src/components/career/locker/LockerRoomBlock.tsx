@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * v2.3 UI (U1, U2): the locker room on the Squad screen. One board:
+ * v2.3 UI (U1, U2): the locker room on the Squad screen. One board in the
+ * right column, under the season stats (rc9 DS, #218):
  *   - the talks waiting for the manager, each as a conversation (U3);
- *   - the squad, one row per player: his face (the overall in its rarity
- *     frame), his name, the last thing that moved him as a sentence, and his
- *     mood; a tap opens the sheet that says why (U1);
- *   - the manager's word (kept and broken, as figures) and the open promises
- *     with their progress and deadline.
+ *   - the open promises with their progress and deadline;
+ *   - the manager's word (kept and broken) as one line under them.
+ * Each player's mood is shown with the player (his tile and contract row on
+ * Squad, his mood sheet), not as a second roster here.
  * People first, no meters (Miguel: no second shelf of progress bars).
  * Renders nothing with FEATURES.lockerRoom off.
  */
@@ -15,13 +15,13 @@
 import { useEffect, useState } from "react";
 import { FEATURES } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import { lockerIssuesOf, moodOf, moraleOf, squadMoodOf, wordStandingOf } from "@/engine/career/lockerRoom";
+import { lockerIssuesOf, squadMoodOf, wordStandingOf } from "@/engine/career/lockerRoom";
 import type { CareerSave } from "@/engine/career/types";
+import { cx } from "@/lib/util";
 import { Panel } from "@/components/ui/Panel";
-import { squadAge } from "@/components/career/careerUi";
 import { LockerTalk } from "./LockerTalk";
 import { PlayerMoodSheet, PromiseLines } from "./PlayerMoodSheet";
-import { MoodMark, PlayerFace, lockerDateText, reasonSentence, useShownTalks } from "./lockerUi";
+import { MoodMark, lockerDateText, useShownTalks } from "./lockerUi";
 
 export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -49,8 +49,8 @@ export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }
       </div>
 
       {shown.talks.length > 0 ? (
-        <section className="mb-5">
-          <h3 className="kicker mb-3">{L.ui.talks}</h3>
+        <section className="mb-6">
+          <h3 className="kicker mb-3 text-orange-bright">{L.ui.talks}</h3>
           {/* The first talk in full; the others as rows that open the player's sheet, where they are answered. */}
           <LockerTalk save={save} C={C} talk={shown.talks[0]} linkToSquad={false} onAnswered={shown.keep} />
           {shown.talks.length > 1 ? (
@@ -68,59 +68,33 @@ export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }
         </section>
       ) : null}
 
-      {/* The squad's faces. */}
-      <ul className="-mx-1 border-t border-line">
-        {save.squad.map((p) => {
-          const entry = st?.players[p.id];
-          const mood = moodOf(moraleOf(st, p.id));
-          return (
-            <li key={p.id} className="border-b border-line">
-              <button
-                type="button"
-                onClick={() => setOpen(p.id)}
-                className="flex min-h-14 w-full items-center gap-3 rounded-md px-1 py-2.5 text-left transition-colors hover:bg-white/[0.03]"
-              >
-                <PlayerFace overall={p.overall} size="sm" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-ink">{p.name}</span>
-                  <span className="block truncate text-xs text-faint">{entry?.last ? reasonSentence(C, entry.last.reason) : `${C.player.age(squadAge(save, p))} · ${C.player.archetype[p.archetype]}`}</span>
-                </span>
-                <MoodMark mood={mood} C={C} />
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-[auto_1fr] sm:gap-8">
-        {/* The manager's word: two figures and what they mean. */}
-        <section className="sm:max-w-56">
-          <h3 className="kicker">{L.ui.word}</h3>
-          <div className="mt-2 flex gap-6">
-            <div>
-              <p className="display text-2xl font-bold leading-none tabular-nums text-ink">{word.kept}</p>
-              <p className="mt-1 text-xs text-sub">{L.ui.kept}</p>
-            </div>
-            <div>
-              <p className={`display text-2xl font-bold leading-none tabular-nums ${word.broken > 0 ? "text-bad" : "text-ink"}`}>{word.broken}</p>
-              <p className="mt-1 text-xs text-sub">{L.ui.broken}</p>
-            </div>
+      {/* rc9 DS (#218): each player's mood now lives with him (his tile, his contract row,
+          his sheet). This block keeps what asks for the manager: the talks and the promises,
+          and the standing of his word as one line under them. */}
+      <section>
+        <h3 className="kicker">{L.ui.promises}</h3>
+        {issues.promises.length === 0 ? (
+          <p className="mt-2 text-sm text-sub">{L.ui.noPromises}</p>
+        ) : (
+          <div className="mt-3 space-y-4">
+            {issues.promises.map((p) => (
+              <PromiseLines key={p.id} C={C} promise={p} name={nameOf(p.playerId)} />
+            ))}
           </div>
-          <p className={`mt-2 text-xs leading-relaxed ${standing === "damaged" ? "font-semibold text-orange-bright" : "text-sub"}`}>{L.ui.wordLine[standing]}</p>
-        </section>
+        )}
+      </section>
 
-        <section className="min-w-0">
-          <h3 className="kicker">{L.ui.promises}</h3>
-          {issues.promises.length === 0 ? (
-            <p className="mt-2 text-sm text-sub">{L.ui.noPromises}</p>
-          ) : (
-            <div className="mt-2 space-y-3">
-              {issues.promises.map((p) => (
-                <PromiseLines key={p.id} C={C} promise={p} name={nameOf(p.playerId)} />
-              ))}
-            </div>
-          )}
-        </section>
+      <div className="mt-5 border-t border-line pt-4">
+        <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-sub">
+          <span className="kicker">{L.ui.word}</span>
+          <span>
+            <span className="font-semibold tabular-nums text-ink">{word.kept}</span> {L.ui.kept}
+          </span>
+          <span>
+            <span className={cx("font-semibold tabular-nums", word.broken > 0 ? "text-bad" : "text-ink")}>{word.broken}</span> {L.ui.broken}
+          </span>
+        </p>
+        <p className={cx("mt-1.5 text-xs", standing === "damaged" ? "font-semibold text-orange-bright" : "text-faint")}>{L.ui.wordLine[standing]}</p>
       </div>
 
       <PlayerMoodSheet save={save} C={C} playerId={open} onClose={() => setOpen(null)} />

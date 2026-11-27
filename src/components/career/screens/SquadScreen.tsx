@@ -59,7 +59,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { LockerRoomBlock } from "@/components/career/locker/LockerRoomBlock"; // v2.3 UI
-import { TileMood } from "@/components/career/locker/lockerUi"; // v2.3 UI
+import { MoodButton, PlayerFace, TileMood } from "@/components/career/locker/lockerUi"; // v2.3 UI
+import { PlayerMoodSheet } from "@/components/career/locker/PlayerMoodSheet"; // rc9 DS
 
 const CHEM_TIER_TONE: Record<string, "good" | "blue" | "neutral" | "bad"> = {
   Perfect: "good",
@@ -89,6 +90,8 @@ export function SquadScreen() {
   const [swapBefore, setSwapBefore] = useState<{ rating: number; chem: number } | null>(null);
   const [chemOpen, setChemOpen] = useState(false);
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
+  /** rc9 DS: the player whose mood sheet is open (from his contract row). */
+  const [moodOpen, setMoodOpen] = useState<string | null>(null);
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
   /** R135: the listing sheet for one player. */
@@ -213,11 +216,22 @@ export function SquadScreen() {
   const stabilityExempt = CAREER_STABILITY.preseasonExempt && clock.kind === "preseason";
   const showStabilityWarning = nextFacePct > 0 && !stabilityExempt;
 
+  // rc9 DS (#217): contracts in the order the manager acts on them: the ones
+  // that end first (this season's at the top), starters before the reserve.
+  const contractRows = [...save.squad].sort(
+    (a, b) => a.contractEndSeason - b.contractEndSeason || Number(a.role === "sub") - Number(b.role === "sub"),
+  );
+  const endingCount = save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length;
+
+  // rc9 DS (#217, #218): the decision on this screen is who plays. The starters
+  // board is the focal point (its figure: the team rating); bench and coach are
+  // their own boards under it; contracts take the rest of the left column. On
+  // the right, the season's stats and, under them, what the locker room asks.
   return (
-    <div className="rise-in mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-4">
+    <div className="rise-in mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
       <SectionTitle
-        
         title={C.squad.title}
+        className="mb-6"
         right={
           <div className="flex items-center gap-2 text-xs">
             <Badge tone="neutral">{save.squad.length}/4</Badge>
@@ -228,10 +242,9 @@ export function SquadScreen() {
 
       <ErrorBanner />
 
-      {/* The squad as one board (starters, bench, coach) and its stability on the left; the contracts on the right. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
-      <div className="space-y-4 lg:col-span-2">
-      {/* ==================== starters — the pitch ==================== */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
+      <div className="space-y-6 lg:col-span-2 lg:space-y-8">
+      {/* ==================== starters: the pitch ==================== */}
       <Panel data-tour="squad-starters" strong className="p-4 sm:p-5">
         <div>
           {/* The team rating is the figure of this board. */}
@@ -239,7 +252,7 @@ export function SquadScreen() {
             <h2 className="card-title">{C.squad.starters}</h2>
             <span className="flex items-baseline gap-2">
               <span className="display text-3xl font-bold leading-none tabular-nums text-ink">{teamRating}</span>
-              <span className="text-xs text-sub">{C.club.stars}</span>
+              <span className="text-xs text-faint">{C.club.stars}</span>
             </span>
           </div>
 
@@ -263,7 +276,7 @@ export function SquadScreen() {
           </div>
 
           {/* swap affordance / feedback line */}
-          <div className="mt-2 min-h-[1.25rem] text-center text-[11px]">
+          <div className="mt-3 min-h-5 text-center text-xs">
             {lineupLocked ? (
               <span className="rounded-sm bg-orange/10 px-2.5 py-0.5 font-semibold text-orange-bright">
                 {C.event.lineupLocked}
@@ -278,14 +291,14 @@ export function SquadScreen() {
                 {C.squad.chemPreview(swapBefore.chem, team.chemistry.percent)}
               </span>
             ) : (
-              <span className="rounded-sm bg-white/5 px-2.5 py-0.5 text-faint">
+              <span className="text-faint">
                 {C.squad.makeStarter} ↔ {C.squad.makeSub}
               </span>
             )}
           </div>
 
-          {/* chemistry module — bar + tier + expandable "why" */}
-          <div className="mt-4 border-t border-line pt-3.5">
+          {/* chemistry module: bar + tier + expandable "why" */}
+          <div className="mt-5 border-t border-line pt-4">
             <button
               type="button"
               onClick={() => setChemOpen((v) => !v)}
@@ -327,13 +340,39 @@ export function SquadScreen() {
               </ul>
             ) : null}
           </div>
+
+          {/* rc9 DS (#217): roster stability as one quiet line of the starters, orange only when the next new face costs points. */}
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-3 text-xs">
+            <span className="text-faint">{C.squad.stabilityLine(faces, maxFaces)}</span>
+            <span className="flex items-center gap-1" aria-hidden>
+              {Array.from({ length: maxFaces }, (_, i) => (
+                <span
+                  key={i}
+                  className={cx(
+                    "h-1.5 w-5 rounded-full",
+                    i < faces
+                      ? i + 1 <= CAREER_STABILITY.freeNewFaces
+                        ? "bg-cyan/70"
+                        : "bg-orange"
+                      : "bg-white/10",
+                  )}
+                />
+              ))}
+            </span>
+            {showStabilityWarning ? (
+              <span className="basis-full font-semibold text-orange-bright">
+                {C.squad.stabilityWarning(nextFacePct, userSeasonPts)}
+              </span>
+            ) : null}
+          </div>
         </div>
-      {/* ==================== bench + coach ==================== */}
-      <div data-tour="squad-bench" className="mt-5 grid grid-cols-1 gap-x-8 gap-y-5 border-t border-line pt-5 sm:grid-cols-2">
-        <div>
-          <div className="mb-2 flex items-center justify-between">
+      </Panel>
+
+      {/* ==================== bench and coach: a board each ==================== */}
+      <div data-tour="squad-bench" className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <Panel className="p-4 sm:p-5">
+          <div className="card-head">
             <h2 className="card-title">{C.squad.bench}</h2>
-            <Badge tone="neutral">{C.squad.subSlot}</Badge>
           </div>
           {bench.length > 0 ? (
             bench.map((p) => (
@@ -350,145 +389,146 @@ export function SquadScreen() {
                 size="sm"
                 selected={selected === p.id}
                 onClick={() => onTileClick(p.id)}
-                className="mb-2"
-                footer={wageLabel(C, p.salaryPerSplit)}
+                className="mb-2 last:mb-0"
+                footer={
+                  <span className="flex items-center justify-between gap-2">
+                    <span>{wageLabel(C, p.salaryPerSplit)}</span>
+                    {FEATURES.lockerRoom ? <TileMood save={save} C={C} playerId={p.id} /> : null}
+                  </span>
+                }
               />
             ))
           ) : (
-            <AppLink href="/career/market" className="block">
-              <div className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-faint transition-colors hover:border-orange/50 hover:text-sub">
-                {C.squad.emptySub}
-              </div>
-            </AppLink>
+            // Empty: what it means, and where to find one. No box inside the board.
+            <div>
+              <p className="text-sm text-sub">{C.squad.emptySub}</p>
+              <AppLink href="/career/market" className="mt-3 inline-flex min-h-8 items-center text-xs text-blue-bright transition-colors hover:text-ink">
+                {C.nav.market}
+              </AppLink>
+            </div>
           )}
-        </div>
+        </Panel>
 
-        <div>
-          <div className="mb-2 flex items-center justify-between">
+        <Panel className="p-4 sm:p-5">
+          <div className="card-head">
             <h2 className="card-title">{C.squad.coachSlot}</h2>
             <AppLink
               href="/career/market#coaches"
-              className="rounded-sm bg-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-bright transition-colors hover:bg-blue/20"
+              className="text-xs text-blue-bright transition-colors hover:text-ink"
             >
               {C.market.coaches}
             </AppLink>
           </div>
           {save.coach ? (
             <div>
-              <div className="flex items-center justify-between">
-                <span className="display font-bold text-ink">{save.coach.name}</span>
-                <span className="display text-xl font-bold text-ink">{save.coach.overall}</span>
+              {/* The coach as a name and his figure, then what he brings. */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="display truncate text-lg font-bold leading-tight text-ink">{save.coach.name}</p>
+                  <p className="mt-1 text-xs text-sub">{wageLabel(C, save.coach.salaryPerSplit)}</p>
+                </div>
+                <div className="shrink-0 text-right leading-none">
+                  <p className="display text-2xl font-bold tabular-nums text-ink">{save.coach.overall}</p>
+                  <p className="display mt-1 text-[11px] font-semibold uppercase text-faint">{C.common.ovr}</p>
+                </div>
               </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-sub">
-                <span className="rounded bg-blue/10 px-1.5 py-0.5 font-semibold text-cyan">
+              <p className="mt-3">
+                <Badge tone="blue">
                   {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
-                </span>
-                <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
-              </div>
-              <CoachEffectLines coach={save.coach} className="mt-2" />
+                </Badge>
+              </p>
+              <CoachEffectLines coach={save.coach} className="mt-3" />
             </div>
           ) : (
-            <AppLink href="/career/market#coaches" className="block">
-              <div className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-faint transition-colors hover:border-orange/50 hover:text-sub">
-                {C.squad.emptyCoach}
-              </div>
-            </AppLink>
+            <p className="text-sm text-sub">{C.squad.emptyCoach}</p>
           )}
-          {/* staff & boosts chips */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <AppLink
-              href="/career/finances"
-              className="rounded bg-white/6 px-2 py-1 text-[11px] font-semibold text-sub transition-colors hover:text-ink"
-            >
+          {/* The staff around him: the gear ladder, and the psychologist when hired. */}
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-xs">
+            <AppLink href="/career/finances" className="text-sub transition-colors hover:text-ink">
               {C.finances.gearLadder}
             </AppLink>
             {save.finances.gear.psychologist ? (
-              <span className="rounded bg-emerald-500/15 px-2 py-1 text-[11px] font-semibold text-emerald-300">
-                {C.finances.psychologist}
-              </span>
+              <Badge tone="good">{C.finances.psychologist}</Badge>
             ) : null}
           </div>
-        </div>
+        </Panel>
       </div>
-      </Panel>
 
-      {/* ==================== roster stability ==================== */}
-      <Panel glow={showStabilityWarning ? "orange" : undefined} className="p-4 sm:p-5">
-        <div className="card-head"><h2 className="card-title">{C.squad.stability}</h2></div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            
-            <p className="text-sm text-sub">{C.squad.stabilityState(faces, maxFaces)}</p>
-          </div>
-          <div className="flex items-center gap-1" aria-hidden>
-            {Array.from({ length: maxFaces }, (_, i) => (
-              <span
-                key={i}
-                className={cx(
-                  "h-2 w-8 rounded-full",
-                  i < faces
-                    ? i + 1 <= CAREER_STABILITY.freeNewFaces
-                      ? "bg-cyan/70"
-                      : "bg-orange"
-                    : "bg-white/8",
-                )}
-              />
-            ))}
-          </div>
-        </div>
-        {showStabilityWarning ? (
-          <p className="mt-2 text-xs font-semibold text-orange-bright">
-            {C.squad.stabilityWarning(nextFacePct, userSeasonPts)}
-          </p>
-        ) : null}
-      </Panel>
-
-      <LockerRoomBlock save={save} C={C} /> {/* v2.3 UI */}
-      </div>
-      {/* v2.1 Matchday slice 5: the season's box-score stats (staging flag). */}
-      {FEATURES.matchdayBoxScore ? <RosterSeasonStats save={save} /> : null}
       {/* ==================== contracts ==================== */}
       <Panel data-tour="squad-contracts" className="p-4 sm:p-5">
-        <div className="card-head"><h2 className="card-title">{C.squad.contracts}</h2></div>
-        <div>
-          {save.squad.map((p) => {
+        <div className="card-head">
+          <h2 className="card-title">{C.squad.contracts}</h2>
+          <span className={cx("text-xs", endingCount > 0 ? "font-semibold text-orange-bright" : "text-faint")}>
+            {endingCount > 0 ? C.squad.contractsEnding(endingCount) : C.squad.contractsSettled}
+          </span>
+        </div>
+        {/* rc9 DS (#217): one row per contract, built around what the manager reads first:
+            who (and how he feels), when it ends, what it costs; then what he can do. */}
+        <div className="hidden grid-cols-[minmax(0,1fr)_10rem_7.5rem] gap-x-4 pb-2 sm:grid">
+          <span className="kicker">{C.squad.colPlayer}</span>
+          <span className="kicker">{C.squad.colEnds}</span>
+          <span className="kicker text-right">{C.squad.colWage}</span>
+        </div>
+        {/* The column heads exist from `sm`; on a phone the board's head rule is the only rule above the list. */}
+        <ul className="border-line sm:border-t">
+          {contractRows.map((p) => {
             const expiring = p.contractEndSeason === save.clock.seasonIndex;
             return (
-              <div
+              <li
                 key={p.id}
-                className={cx(
-                  // A contract is a ruled row; one that ends this season carries the orange rule.
-                  "flex flex-wrap items-center gap-3 border-b py-3.5 last:border-b-0 last:pb-0",
-                  expiring ? "border-orange/50" : "border-line",
-                )}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 border-b border-line py-4 first:pt-0 last:border-b-0 last:pb-0 sm:first:pt-4 sm:grid-cols-[minmax(0,1fr)_10rem_7.5rem]"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="display truncate font-bold text-ink">{p.name}</span>
-                    {p.role === "sub" ? <Badge tone="neutral">{C.market.sub}</Badge> : null}
-                    {expiring ? <Badge tone="orange">{C.squad.expiring}</Badge> : null}
-                    {p.finalSeasonAnnounced ? <Badge tone="bad">{C.squad.finalSeason}</Badge> : null}
-                    {freshKeys.has(contractNewKey(p.id, p.contractEndSeason)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null}
-                    {listedIds.has(p.id) ? <Badge tone="blue">{C.market.transferList.listedTag}</Badge> : null}
+                {/* Who: his face, his name (opens his sheet), his state, his mood. */}
+                <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
+                  <PlayerFace overall={p.overall} size="sm" />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <button
+                        type="button"
+                        onClick={() => openSheet(p)}
+                        title={C.market.viewSheet}
+                        className="display min-h-6 truncate text-left text-[15px] font-bold text-ink underline-offset-4 hover:underline"
+                      >
+                        {p.name}
+                      </button>
+                      {expiring ? <Badge tone="orange">{C.squad.expiring}</Badge> : null}
+                      {p.finalSeasonAnnounced ? <Badge tone="bad">{C.squad.finalSeason}</Badge> : null}
+                      {freshKeys.has(contractNewKey(p.id, p.contractEndSeason)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null}
+                      {listedIds.has(p.id) ? <Badge tone="blue">{C.market.transferList.listedTag}</Badge> : null}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-faint">
+                      <span>{p.role === "sub" ? C.market.sub : C.squad.roleStarter}</span>
+                      <span aria-hidden>·</span>
+                      <span>{C.player.age(squadAge(save, p))}</span>
+                      {FEATURES.lockerRoom ? (
+                        <>
+                          <span aria-hidden>·</span>
+                          <MoodButton save={save} C={C} playerId={p.id} name={p.name} onOpen={setMoodOpen} />
+                        </>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-faint">
-                    {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))} ·{" "}
-                    {C.squad.expires(seasonLabelFor(p.contractEndSeason))}
-                    {/* rc.34 (UX-06b): the time left in a final-season contract. */}
-                    {expiring && contractWarnsFor(save, p) ? (
-                      <span className="font-semibold text-orange-bright"> · {C.squad.weeksLeft(contractClockOf(save, p).weeksLeft ?? 0)}</span>
-                    ) : null}
-                  </div>
-                  {/* rc.33 (ECO-10): the prize share this contract carries. */}
-                  <div className="mt-0.5 text-[11px] text-faint">{prizeShareLabelOf(C, p)}</div>
                 </div>
-                <span className="text-xs text-sub">
-                  {wageLabel(C, p.salaryPerSplit)}
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  <Button size="sm" variant="ghost" onClick={() => openSheet(p)}>
-                    {C.market.viewSheet}
-                  </Button>
+
+                {/* When it ends, and the time left when it is this season. */}
+                <div className="min-w-0">
+                  <p className={cx("text-sm", expiring ? "font-semibold text-orange-bright" : "text-ink")}>
+                    {C.squad.expires(seasonLabelFor(p.contractEndSeason))}
+                  </p>
+                  {/* rc.34 (UX-06b): the time left in a final-season contract. */}
+                  {expiring && contractWarnsFor(save, p) ? (
+                    <p className="text-xs text-orange-bright">{C.squad.weeksLeft(contractClockOf(save, p).weeksLeft ?? 0)}</p>
+                  ) : (
+                    // rc.33 (ECO-10): the prize share this contract carries.
+                    <p className="text-xs text-faint">{prizeShareLabelOf(C, p)}</p>
+                  )}
+                </div>
+
+                {/* What it costs. */}
+                <p className="text-right text-sm tabular-nums text-ink">{wageLabel(C, p.salaryPerSplit)}</p>
+
+                {/* What he can do: renew first, the rest quieter. */}
+                <div className="col-span-2 flex flex-wrap gap-1.5 sm:col-span-3 sm:pl-12">
                   <Button
                     size="sm"
                     variant="secondary"
@@ -519,22 +559,32 @@ export function SquadScreen() {
                   {/* rc.30: roster moves wait for the event (its team froze at the start). */}
                   <Button
                     size="sm"
-                    variant="danger"
+                    variant="ghost"
                     disabled={lineupLocked}
                     title={lineupLocked ? C.market.errors.rosterLocked : undefined}
                     onClick={() => setRelease(p)}
+                    className="!text-bad"
                   >
                     {C.squad.release}
                   </Button>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </Panel>
       </div>
 
+      {/* ==================== the right column: the season, then the room ==================== */}
+      <div className="space-y-6 lg:space-y-8">
+        {/* v2.1 Matchday slice 5: the season's box-score stats (staging flag). */}
+        {FEATURES.matchdayBoxScore ? <RosterSeasonStats save={save} /> : null}
+        <LockerRoomBlock save={save} C={C} /> {/* v2.3 UI */}
+      </div>
+      </div>
+
       <PlayerSheet data={sheet} onClose={() => setSheet(null)} />
+      {FEATURES.lockerRoom ? <PlayerMoodSheet save={save} C={C} playerId={moodOpen} onClose={() => setMoodOpen(null)} /> : null}
       {listing ? <ListPlayerSheet key={listing} save={save} open playerId={listing} onClose={() => setListing(null)} /> : null}
 
       {/* ==================== release confirm ==================== */}

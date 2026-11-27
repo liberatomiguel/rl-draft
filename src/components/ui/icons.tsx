@@ -175,6 +175,15 @@ export function CheckIcon({ className }: { className?: string }) {
   );
 }
 
+/** Close: dismisses the thing it sits on (rc9 DS, in place of a "×" glyph). */
+export function CloseIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" {...P} />
+    </LineIcon>
+  );
+}
+
 /** Star — a recommendation. */
 export function StarIcon({ className, filled = true }: { className?: string; filled?: boolean }) {
   return (

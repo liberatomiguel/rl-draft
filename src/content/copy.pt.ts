@@ -944,6 +944,9 @@ export const PT: Copy = {
     languageSection: "Idioma",
     language: "Idioma",
     reset: "Resetar configurações",
+    // rc9 DS: o laboratório de fonte (só nos builds de teste e dev).
+    typeLab: "Fonte dos títulos",
+    typeLabHint: "Só no build de teste. Troca a fonte dos títulos, números e botões neste aparelho.",
   },
 
   PROFILE_UI: {

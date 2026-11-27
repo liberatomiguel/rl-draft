@@ -1008,6 +1008,17 @@ export const CAREER_PT: CareerCopy = {
     renewalsTitle: "Contratos para renovar",
     renewalsEmpty: "Nenhum contrato termina nesta temporada.",
     renewalsGo: "Renovar no Elenco",
+    // rc9 DS: os contratos e a linha de estabilidade do Elenco, refeitos.
+    colPlayer: "Jogador",
+    colEnds: "Contrato",
+    colWage: "Salário",
+    colMood: "Humor",
+    contractsEnding: (n: number) =>
+      n === 1 ? "1 termina nesta temporada" : `${n} terminam nesta temporada`,
+    contractsSettled: "Nenhum termina nesta temporada",
+    stabilityLine: (used: number, max: number) => `Estabilidade do elenco: ${used} de ${max} caras novas neste split`,
+    openMood: (name: string) => `Por que ${name} está assim`,
+    roleStarter: "Titular",
   },
 
   player: {

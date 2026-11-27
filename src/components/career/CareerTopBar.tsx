@@ -189,8 +189,9 @@ export function CareerTopBar() {
         {/* Under 360px the crest gives its room to the date (the club is in More). */}
         <AppLink href="/career/club" className="flex shrink-0 items-center gap-2 max-[359px]:hidden">
           <UserOrgMark identity={save.identity} seasonIndex={save.clock.seasonIndex} size="sm" />
+          {/* rc9 DS: the club is a name (mixed case, Demi); the date is the bar's one figure. */}
           <span className="hidden flex-col items-start gap-1 sm:flex">
-            <span className="display max-w-44 truncate text-base font-bold uppercase leading-none text-ink">
+            <span className="display max-w-44 truncate text-[15px] font-bold leading-none text-ink">
               <span className="lg:hidden">{save.identity.abbrev}</span>
               <span className="hidden lg:inline">{save.identity.orgName}</span>
             </span>
@@ -200,23 +201,24 @@ export function CareerTopBar() {
 
         {/* Center clock — the date is the game's heartbeat now. */}
         <div data-tour="career-clock" className="min-w-0 flex-1 text-center">
-          <div className="kicker truncate leading-none text-faint">{clock.season}</div>
-          <div className="display truncate text-base font-bold uppercase leading-tight tracking-[0.03em] text-ink">
+          <div className="kicker truncate leading-none">{clock.season}</div>
+          <div className="display mt-1 truncate text-[17px] font-bold leading-tight text-ink">
             {formatDateShort(copy.dates, clock.date)}
           </div>
           {clock.split ? (
-            <div className="truncate text-[11px] leading-none text-faint">
+            <div className="mt-0.5 truncate text-[11px] leading-none text-faint">
               {copy.calendar.split(clock.split)} · {copy.hub.week(clock.week)}
             </div>
           ) : null}
         </div>
 
-        <div className="hidden shrink-0 items-center gap-3 text-right md:flex">
+        {/* Two quiet figures: Medium, the label above in the faint step. */}
+        <div className="hidden shrink-0 items-center gap-5 text-right md:flex">
           <div>
-            <div className="kicker leading-none text-faint">{copy.hub.budget}</div>
+            <div className="kicker leading-none">{copy.hub.budget}</div>
             <div
               className={cx(
-                "display text-base font-bold leading-tight tabular-nums",
+                "display mt-1 text-[15px] font-semibold leading-tight tabular-nums",
                 save.finances.balance < 0 ? "text-bad" : "text-ink",
               )}
             >
@@ -224,11 +226,11 @@ export function CareerTopBar() {
             </div>
           </div>
           <div>
-            <div className="kicker leading-none text-faint">{copy.common.rep}</div>
-            <div className="display text-base font-bold leading-tight tabular-nums text-ink">
+            <div className="kicker leading-none">{copy.common.rep}</div>
+            <div className="display mt-1 text-[15px] font-semibold leading-tight tabular-nums text-ink">
               {Math.round(save.reputation)}
               {/* rc.6 (ORGMODE UI-C): an established org's number is its Standing, read with its tier. */}
-              {standingTier ? <span className="ml-1.5 text-xs font-semibold uppercase text-sub">{copy.board.standing.tier[standingTier] ?? standingTier}</span> : null}
+              {standingTier ? <span className="ml-1.5 text-xs text-sub">{copy.board.standing.tier[standingTier] ?? standingTier}</span> : null}
             </div>
           </div>
         </div>
@@ -286,7 +288,8 @@ export function CareerTopBar() {
               aria-current={active ? "page" : undefined}
               className={cx(
                 // The current tab is marked by weight and the orange rule, not by colour alone.
-                "display relative flex min-h-10 items-center whitespace-nowrap px-3 text-[13px] uppercase tracking-[0.04em] transition-colors",
+                // rc9 DS: tabs are caps in Medium; the current one is Demi in ink over the orange rule.
+                "display relative flex min-h-11 items-center whitespace-nowrap px-2 text-[13px] uppercase transition-colors xl:px-3",
                 startsGroup && tab.group < 4 && "ml-3 before:absolute before:-left-1.5 before:top-1/2 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-line-strong",
                 tab.group === 4 && "ml-auto",
                 active

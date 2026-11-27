@@ -8,6 +8,8 @@ import { LocaleRoot } from "@/components/layout/LocaleRoot";
 import { AssetHealReport } from "@/components/AssetHealReport";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { assetHealInlineScript } from "@/lib/assetHeal";
+import { TYPE_LAB } from "@/components/ui/typeLab";
+import { TypeLabEffect } from "@/components/ui/TypeLabSwitch";
 import "./globals.css";
 
 // Self-hosted fonts (v1.4 "World Stage"). Previously fetched from
@@ -58,8 +60,10 @@ const barlow = localFont({
 // for the career crest's monogram (UserCrest) and the game clock. The share
 // images (v2.2, lib/share) draw in the page's own display and text faces.
 // Industry (Fort Foundry), the display face (DESIGN.md). Medium/Demi/Bold
-// cover font-medium/semibold/bold; Black answers extrabold; the Bold Italic
-// serves the Home wordmark.
+// are the three steps of the weight ladder (globals.css, rc9 DS: the role
+// rules choose the step, #209); the Bold Italic serves the Home wordmark.
+// rc9 DS: the Black file is no longer declared, so nothing can render
+// heavier than Bold (an `extrabold` gets the Bold file).
 // The metric overrides centre the capitals on the line: the file's own ascent
 // and descent (108% / 23%) set a 70% cap height 0.075em low, so every title in
 // a slab, tag or button sat under the middle. 100.5% / 30.5% keep the same
@@ -75,8 +79,25 @@ const industry = localFont({
     { path: "./fonts/industry-medium.woff2", weight: "500", style: "normal" },
     { path: "./fonts/industry-demi.woff2", weight: "600", style: "normal" },
     { path: "./fonts/industry-bold.woff2", weight: "700", style: "normal" },
-    { path: "./fonts/industry-black.woff2", weight: "800", style: "normal" },
     { path: "./fonts/industry-bolditalic.woff2", weight: "700", style: "italic" },
+  ],
+});
+
+// rc9 DS type lab (#213): Chakra Petch (OFL, @fontsource, licence beside the
+// files), the face Miguel named as the fallback. Declared but never preloaded:
+// it is fetched only when `html[data-type="chakra"]` asks for it, which only
+// the staging and dev builds can set (components/ui/TypeLabSwitch.tsx). Latin-ext
+// is a plain @font-face in globals.css ("Chakra Petch Ext").
+const chakra = localFont({
+  variable: "--font-chakra",
+  display: "swap",
+  preload: false,
+  src: [
+    { path: "./fonts/chakra-petch-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/chakra-petch-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/chakra-petch-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/chakra-petch-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/chakra-petch-latin-700-italic.woff2", weight: "700", style: "italic" },
   ],
 });
 
@@ -228,9 +249,10 @@ export default function RootLayout({
   // the /pt pages export lang="pt-BR" and PT chrome (rc.32, DRAFT-11, #148).
   return (
     <LocaleRoot
-      className={`${barlow.variable} ${barlowCondensed.variable} ${industry.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${industry.variable} ${chakra.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {TYPE_LAB ? <TypeLabEffect /> : null}
         {ASSET_HEAL_SCRIPT ? <script dangerouslySetInnerHTML={{ __html: ASSET_HEAL_SCRIPT }} /> : null}
         <script
           type="application/ld+json"

@@ -721,6 +721,9 @@ export const SETTINGS_UI = {
   languageSection: "Language",
   language: "Language",
   reset: "Reset settings",
+  // rc9 DS: the type lab (staging and dev builds only).
+  typeLab: "Display typeface",
+  typeLabHint: "Test build only. Switches the face of titles, figures and buttons on this device.",
 };
 
 export const PROFILE_UI = {

@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## rc.9 (unreleased)
+
+### Changed — DS front (type, spacing, chrome, Squad; DESIGN-DECISIONS #209 to #219)
+- The type ladder is one step lighter everywhere: Bold only for a screen's title and a block's key figure, Demi for section and card titles and buttons, Medium for nav, tags and labels. Caps track wider as they get smaller (0.05em to 0.08em), card titles and names are mixed case, body text is 15px / 1.55 on desktop (14px on a phone), secondary 13px. The ladder lives in CSS variables (`globals.css`), so the display face can be swapped.
+- Spacing scale (4 to 48) as tokens; standard boards get 24px of padding on desktop.
+- Type lab on staging and dev: Settings, "Display typeface" (Industry or Chakra Petch), or `?type=chakra`.
+- Career top bar: the club and the date in mixed case, budget and reputation as quiet figures. Mail and news toasts redrawn.
+- Squad: roster stability is a line in the starters; bench and coach are boards of their own; contracts take the left column, sorted by end date, with column heads, mood on each row (opens the mood sheet) and quieter actions; season stats and the locker room (talks, promises, your word) sit in the right column.
+- A disabled primary button is a grey slab instead of a faded orange.
+
+### Fixed — DS front
+- The news toast's blue band stopped short of the close button. Root cause: the X's 48px of room was reserved as padding on the whole toast, so the band inside it ended 48px early; the band now spans the card and reserves the X's room itself.
+- Toast titles and bodies were never clamped. Root cause: a `block` class beside `line-clamp-*` overrode the `-webkit-box` display the clamp needs.
+- Tracking utilities on display text never applied. Root cause: the unlayered `.display` rule set 0.02em and beat every layered `tracking-*` utility; tracking is now set by role.
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

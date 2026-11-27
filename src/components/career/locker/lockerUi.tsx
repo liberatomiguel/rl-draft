@@ -107,9 +107,31 @@ export function signedDelta(n: number): string {
   return n > 0 ? `+${n}` : `−${Math.abs(n)}`;
 }
 
-/** U1: the mood on a squad card's footer (the Squad screen's starters). */
+/** A player's mood, read through the engine's view helpers. */
+export function playerMoodOf(save: CareerSave, playerId: string): MoodId {
+  return moodOf(moraleOf(save.lockerRoom, playerId));
+}
+
+/** U1: the mood on a squad card's footer (the Squad screen's starters and bench). */
 export function TileMood({ save, C, playerId }: { save: CareerSave; C: CareerCopy; playerId: string }) {
-  return <MoodMark mood={moodOf(moraleOf(save.lockerRoom, playerId))} C={C} />;
+  return <MoodMark mood={playerMoodOf(save, playerId)} C={C} />;
+}
+
+/**
+ * rc9 DS (#218): the mood as a control on a player's row. It opens his mood
+ * sheet (why he feels this way); the row's other controls stay separate.
+ */
+export function MoodButton({ save, C, playerId, name, onOpen }: { save: CareerSave; C: CareerCopy; playerId: string; name: string; onOpen: (id: string) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(playerId)}
+      aria-label={`${C.squad.openMood(name)}: ${C.locker.moods[playerMoodOf(save, playerId)]}`}
+      className="-mx-1.5 inline-flex min-h-8 items-center rounded-md px-1.5 transition-colors hover:bg-white/[0.05]"
+    >
+      <MoodMark mood={playerMoodOf(save, playerId)} C={C} />
+    </button>
+  );
 }
 
 /**

@@ -2,7 +2,7 @@
 
 Read this before any UI work. It is the direction; the anti-slop rulebook
 (github.com/miqdadbadjuber/anti-slop) is only the filter applied on top of it.
-Decision record: `docs/DESIGN-DECISIONS.md` #173 to #177 (the redesign's first four were #164 to #167 before the merge with main v2.0.33).
+Decision record: `docs/DESIGN-DECISIONS.md` #173 to #177 (the redesign's first four were #164 to #167 before the merge with main v2.0.33); the rc.9 type and spacing system is #209 to #219.
 
 ## Design read
 
@@ -58,33 +58,63 @@ Rules:
 
 ## Type
 
-**Display face: Industry (Fort Foundry), Miguel's pick.** A commercial font.
-The files in hand are the trial set (personal-use licence, 66 characters), so
-nothing of it is in the repo: the fonts and their stylesheet sit in the
-git-ignored `public/fonts-trial/`, and `layout.tsx` links that stylesheet in
-development only. It ships only as a licensed webfont with the full character
-set. Until then **staging and production show Barlow Condensed**, the stand-in,
-which is also the fallback for every character the trial lacks.
+**Display face: Industry (Fort Foundry)**, licensed, files in `src/app/fonts/`
+(Medium, Demi, Bold, Bold Italic; Barlow Condensed is the fallback for glyphs
+it lacks). **Chakra Petch** (OFL) is loaded on demand as the candidate face:
+on staging and dev, Settings has a "Display typeface" switch, or `?type=chakra`
+/ `?type=industry` (#213). Text face: Barlow. Mono: Geist Mono, only for seeds
+and codes a player may copy.
 
-| Role | Face | Weight |
-|---|---|---|
-| Titles, buttons, key figures | Industry (stand-in: Barlow Condensed) | Bold (700 to 800), upright, caps |
-| Labels, tags, nav | same | Demi (600), upright, caps |
-| Quiet labels | same | Medium (500) |
-| Home wordmark only | same | Black italic |
-| Text | Barlow | 400, with 600 for emphasis |
-| Mono | Geist Mono | Only for seeds and codes a player may copy |
+The ladder is a set of variables in `globals.css` (`--w-*`, `--tr-*`,
+`--text-*`, `--sp-*`), tuned per face under `html[data-type]`. The role rules
+apply it to the weight utilities the screens already carry (#209 to #212), so
+write the role, not the number.
 
-### Weight
+| Role | Weight | Case and tracking | Size |
+|---|---|---|---|
+| The one title of a screen (`h1`), the key figure of a block (display 24px+) | Bold 700 | caps title 0.03em, or a number | 24 to 40 |
+| Section title (`.title-slab`), card title (`.card-title`, `h2`, `h3`) | Demi 600 | slab in caps; card title in **mixed case** | 18 to 24 |
+| Buttons, names, small figures in a row (display `font-bold`) | Demi 600 | buttons caps, names mixed | 13 to 17 |
+| Nav, tabs, tags, labels (`.kicker`, display `font-semibold`) | Medium 500 | caps 0.05em to 0.08em | 11 to 13 |
+| Body text | Barlow 400 (600 for a phrase) | sentences | 15px / 1.55 desktop, 14 phone |
+| Secondary text | Barlow 400 | sentences | 13px |
 
-- The heaviest upright weight is Bold. Black and Ultra are not loaded, and
-  synthetic bold is off, so nothing can go heavier by accident.
-- Bold is for titles, buttons and the key figure of a block. A paragraph is
-  never bold; a phrase inside one may be 600.
-- **Italic is the Home wordmark's alone.** The header logo, titles, labels and
-  numbers are upright.
-- Caps are for titles, labels and buttons, with 0.02em to 0.06em tracking.
-  Sentences are written as sentences.
+- Nothing renders at 800: Black is not loaded and synthetic bold is off. The
+  Home wordmark is the one italic.
+- Caps are for section titles, tabs, tags, buttons and labels. Card titles,
+  option names, player and org names, dates and headlines are mixed case.
+  Never caps at 0 to 0.02em.
+- Display line height 1.1 to 1.15; figures are tabular.
+- Three text steps on purpose: `--ink` the value or the name, `--sub` what
+  explains it, `--faint` the label. A block of all-ink bold lines is a defect.
+- Short labels and headings carry no full stop. No blurb under a title that
+  restates it.
+
+### Spacing
+
+Scale 4 / 8 / 12 / 16 / 24 / 32 / 48 (`--sp-*`). A board's padding is
+`--panel-pad` (16 phone, 24 desktop; a board written `p-4`/`p-5` gets it).
+Inside a block 12 to 16 (`--block-gap`, `.stack-block`); between sections 32
+to 40 (`--section-gap`, `.stack-sections`); between boards in a column 24 to 32.
+
+### Hierarchy recipes
+
+- **Figure with label:** the number in display Bold, 24px+, `--ink` (or
+  `--good`/`--bad` for a signed delta, which says against what); the label
+  under it as a `.kicker` or 12px `--faint`. One per block is the figure; the
+  others are 15px Demi.
+- **Row:** a name in display Demi mixed case 15px, under it one `--faint` 12px
+  line (role, age, state); values right-aligned and tabular; the row's action
+  last and quiet. Rows sit under hairlines in one board; a column head is a
+  `.kicker`.
+- **Section header:** `SectionTitle` (the slab) once per screen section, with
+  its one figure, tag or link on the right. Nothing above it.
+- **Card title:** `.card-title` in a `.card-head`, mixed case; the right side
+  holds one figure, tag or link, never a sentence.
+- **Tag:** `Badge`, Medium caps 11px, names a real state; at most two on a row.
+- **When a box is drawn:** around one object the player acts on (a squad, a
+  contract list, a coach). A list is rows in one board, not a box per item;
+  never a box inside a box; a quiet fact is a line, not a board.
 
 ## Material and shape
 
@@ -174,6 +204,8 @@ rules above still hold; these are added.
 - Slanted buttons, slanted tabs, stripe fills, a slab on anything but a
   section title.
 - Black or Ultra weights; italic outside the Home wordmark; bold paragraphs.
+- Bold caps stacked on bold caps (a title, its tabs and its figures all in
+  the same voice); caps names; caps tracked tighter than 0.03em.
 - Blurred colour orbs behind a panel; a glow on a state (selected, live, win).
 - A tiny wide-tracked caps label above a title that repeats the title.
 - A grid of identical boxes as the default answer to "show several things".

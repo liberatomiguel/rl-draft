@@ -9,6 +9,8 @@ import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { SectionTitle } from "@/components/ui/Panel";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
+import { TYPE_LAB } from "@/components/ui/typeLab";
+import { TypeLabSwitch } from "@/components/ui/TypeLabSwitch";
 
 const SPEED_KEYS: AnimSpeedKey[] = ["slow", "normal", "fast"];
 
@@ -130,6 +132,13 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
+
+      {/* rc9 DS: the type lab, on the staging and dev builds only. */}
+      {TYPE_LAB ? (
+        <section className={SECTION}>
+          <TypeLabSwitch />
+        </section>
+      ) : null}
 
       <div className="flex justify-end pt-4">
         <Button variant="ghost" size="sm" onClick={s.resetSettings}>

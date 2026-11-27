@@ -1028,6 +1028,17 @@ export const CAREER_EN = {
     renewalsTitle: "Contracts up for renewal",
     renewalsEmpty: "No contract ends this season.",
     renewalsGo: "Renew on Squad",
+    // rc9 DS: the Squad screen's rebuilt contracts and stability line.
+    colPlayer: "Player",
+    colEnds: "Contract",
+    colWage: "Wage",
+    colMood: "Mood",
+    contractsEnding: (n: number) =>
+      n === 1 ? "1 ends this season" : `${n} end this season`,
+    contractsSettled: "None ends this season",
+    stabilityLine: (used: number, max: number) => `Roster stability: ${used} of ${max} new faces this split`,
+    openMood: (name: string) => `Why ${name} feels this way`,
+    roleStarter: "Starter",
   },
 
   player: {

@@ -24,7 +24,7 @@ import { BrandMark, NewsTypeIcon } from "./news/NewsFeed";
 import { rocketStreetNews, newsActionOf, newsCrestsOf } from "./news/newsView";
 import { useCareerSave } from "./careerUi";
 import { useSettings } from "@/store/settingsStore";
-import { TrophyIcon } from "@/components/ui/icons";
+import { CloseIcon, TrophyIcon } from "@/components/ui/icons";
 import { OrgMark } from "./OrgMark";
 import { dateOfDay, firstDayOfWeek } from "@/engine/career/calendar";
 import { formatDateTiny } from "./dateText";
@@ -43,9 +43,22 @@ export function CareerToaster() {
       aria-live="polite"
     >
       {toasts.slice(0, 3).map((toast) => (
-        <div key={toast.id} className="relative hidden shrink-0 first:block sm:block [&>button:first-child]:pr-12">
+        // rc9 DS (#216): the close control sits inside the toast's own top row. A news
+        // flash keeps its blue masthead across the full width, the X on the band; the
+        // card reserves the X's room in its own first row, not in the outer padding.
+        <div key={toast.id} className="relative hidden shrink-0 first:block sm:block">
           <Toast toast={toast} />
-          <button type="button" onClick={() => dismiss(toast.id)} aria-label={C.common.close} className="pointer-events-auto absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-lg text-xl text-sub hover:text-ink">×</button>
+          <button
+            type="button"
+            onClick={() => dismiss(toast.id)}
+            aria-label={C.common.close}
+            className={cx(
+              "pointer-events-auto absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-lg transition-colors",
+              toast.source === "news" ? "text-white/80 hover:text-white" : "text-faint hover:text-ink",
+            )}
+          >
+            <CloseIcon className="h-4 w-4" />
+          </button>
         </div>
       ))}
     </div>,
@@ -87,17 +100,20 @@ function Toast({ toast }: { toast: CareerToast }) {
         // A news flash is a small front page, not a notification: the desk's masthead in blue,
         // the headline in the display face, the crests of who it is about.
         className="pop-in pointer-events-auto w-full shrink-0 overflow-hidden rounded-xl border border-blue-bright/55 bg-surface-strong text-left shadow-xl">
-        <span className="flex items-center justify-between gap-2 bg-blue px-4 py-2 text-white">
-          <span className="flex items-center gap-2.5">
+        {/* The masthead spans the whole card; its right end holds the date and leaves the X its 44px. */}
+        <span className="flex min-h-11 items-center justify-between gap-3 bg-blue py-2 pl-4 pr-12 text-white">
+          <span className="flex min-w-0 items-center gap-2.5">
             <BrandMark brand={partner} name={brand.name} small />
-            <span className="display text-xs font-bold uppercase tracking-[0.05em]">{news ? C.news.feed.subject[news.type] : C.hub.news}</span>
+            <span className="display truncate text-xs font-semibold uppercase">{news ? C.news.feed.subject[news.type] : C.hub.news}</span>
           </span>
-          <span className="text-[11px] text-white/80">{news ? formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week))) : null}</span>
+          <span className="shrink-0 text-xs tabular-nums text-white/80">{news ? formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week))) : null}</span>
         </span>
-        <span className="flex items-center gap-4 px-4 py-3.5">
+        <span className="flex items-center gap-4 px-4 pb-4 pt-3">
           <span className="min-w-0 flex-1">
-            <span className="display block text-lg font-bold uppercase leading-[1.1] text-ink line-clamp-3">{title}</span>
-            {content?.body ? <span className="mt-1.5 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
+            {/* rc9 DS: a headline in mixed case, Demi, so the masthead stays the one caps line. */}
+            {/* rc9 DS: `line-clamp` sets its own display; a `block` beside it undid the clamp. */}
+            <span className="display line-clamp-3 text-[17px] font-bold leading-[1.2] text-ink">{title}</span>
+            {content?.body ? <span className="mt-1.5 line-clamp-2 text-xs text-sub">{content.body}</span> : null}
           </span>
           {save && crests.length ? <span className="flex shrink-0 -space-x-2">{crests.map(ref => <OrgMark key={ref} save={save} orgRef={ref} size="md" />)}</span> : null}
         </span>
@@ -111,24 +127,23 @@ function Toast({ toast }: { toast: CareerToast }) {
       data-career-notice={toast.source}
       onClick={open}
       className={cx(
-        "pop-in pointer-events-auto flex w-full shrink-0 items-start gap-3 rounded-xl border border-line bg-[#111827] p-3.5 text-left shadow-xl",
-        toast.source === "achievement"
-          ? "ring-1 ring-amber-300/60"
-          : toast.source === "mail"
-            ? "ring-1 ring-orange/40"
-            : "ring-1 ring-blue/30",
+        // rc9 DS (#216): a letter, not an alert. One hairline in the source's colour, no ring
+        // on top of a border; the source as a quiet caps label with the sender in mixed case;
+        // the subject in the display face (mixed case, Demi); the body in the text face.
+        "pop-in pointer-events-auto flex w-full shrink-0 items-start gap-3 rounded-xl border bg-surface-strong py-3.5 pl-4 pr-12 text-left shadow-xl",
+        toast.source === "achievement" ? "border-amber-300/50" : toast.source === "mail" ? "border-orange/45" : "border-blue-bright/40",
       )}
     >
-      <span className={cx("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", toast.source === "achievement" ? "bg-amber-300/10 text-amber-300" : toast.source === "mail" ? "bg-orange/10 text-orange-bright" : "bg-blue/10 text-blue-bright")}>
+      <span className={cx("mt-0.5 shrink-0", toast.source === "achievement" ? "text-amber-300" : toast.source === "mail" ? "text-orange-bright" : "text-blue-bright")}>
         {toast.source === "achievement" ? <TrophyIcon className="h-5 w-5" /> : news ? <NewsTypeIcon type={news.type} className="h-5 w-5" /> : <MailIcon className="h-5 w-5" />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-faint">
-          {kicker}{from ? ` · ${from}` : ""}
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="kicker shrink-0">{kicker}</span>
+          {from ? <span className="truncate text-xs text-sub">{from}</span> : null}
         </span>
-        <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-snug text-ink">{title}</span>
-        {content?.body ? <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
-        <span className="mt-2 block text-[11px] font-semibold text-blue-bright">{toast.source === "mail" ? C.mail.title : toast.source === "achievement" ? C.achievements.unlocked : C.hub.news} →</span>
+        <span className="display mt-1.5 line-clamp-2 text-[15px] font-bold leading-[1.25] text-ink">{title}</span>
+        {content?.body ? <span className="mt-1 line-clamp-2 text-xs text-sub">{content.body}</span> : null}
       </span>
     </button>
   );

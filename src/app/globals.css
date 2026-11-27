@@ -46,6 +46,57 @@
 
   /* The angle of the section tick and of the wordmark's lean. */
   --cut: 12deg;
+
+  /* rc9 DS (DESIGN.md "Type", DESIGN-DECISIONS #209 to #212): the type ladder
+     as variables, so the display face can be swapped (`html[data-type]`).
+     Weights by role: Bold for the one title of a screen and the key figure
+     of a block, Demi for section and card titles and buttons, Medium for
+     nav, tags and labels. Tracking by role: caps open up as they get
+     smaller; mixed case sits almost at the face's own spacing. */
+  --face-display: var(--font-industry);
+  --w-title: 700;
+  --w-head: 600;
+  --w-label: 500;
+  --tr-caps-sm: 0.07em;
+  --tr-caps: 0.05em;
+  --tr-caps-title: 0.03em;
+  --tr-mixed: 0.005em;
+  --lh-display: 1.12;
+  /* Text (Barlow): body 15px on desktop, 14px on a phone; secondary 13px. */
+  --text-body: 0.875rem;
+  --text-secondary: 0.8125rem;
+
+  /* rc9 DS: the spacing scale (4/8/12/16/24/32/48) and the three distances
+     a screen uses: inside a board, around its content, between sections. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  --block-gap: var(--sp-3);
+  --panel-pad: var(--sp-4);
+  --section-gap: var(--sp-8);
+}
+@media (min-width: 640px) {
+  :root {
+    --text-body: 0.9375rem;
+    --block-gap: var(--sp-4);
+    --panel-pad: var(--sp-6);
+    --section-gap: 40px;
+  }
+}
+
+/* rc9 DS type lab (staging and dev only, `components/ui/TypeLabSwitch.tsx`): Chakra
+   Petch in place of Industry. It is narrower and squarer, so it takes a
+   little less tracking on caps and the same weight ladder. */
+html[data-type="chakra"] {
+  --face-display: var(--font-chakra), "Chakra Petch Ext";
+  --tr-caps-sm: 0.06em;
+  --tr-caps: 0.045em;
+  --tr-caps-title: 0.025em;
+  --tr-mixed: 0.01em;
 }
 
 @theme inline {
@@ -73,7 +124,7 @@
   /* "Barlow Ext" / "Barlow Condensed Ext" are the latin-ext files declared
      below with a unicode-range: listed first, used only for those glyphs. */
   --font-sans: "Barlow Ext", var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-industry), "Barlow Condensed Ext", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-display: var(--face-display), "Barlow Condensed Ext", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* The radius scale steps up to the card's own corner (14px in
@@ -137,6 +188,40 @@
   src: url("./fonts/barlow-condensed-latin-ext-800-italic.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+/* rc9 DS type lab: Chakra Petch's latin-ext glyphs, fetched only when the lab
+   face is on and a name needs them. */
+@font-face {
+  font-family: "Chakra Petch Ext";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/chakra-petch-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Chakra Petch Ext";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/chakra-petch-latin-ext-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Chakra Petch Ext";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/chakra-petch-latin-ext-600-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Chakra Petch Ext";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/chakra-petch-latin-ext-700-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 /* ---------------------------------------------------------------------------
    Base
@@ -158,9 +243,32 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* rc9 DS: text gets room. Tailwind's two text steps follow the ladder for the
+   text face (body 15px on desktop and 14px on a phone, secondary 13px, both
+   with open leading); the display face keeps its own 14 / 12 so buttons, tabs
+   and tags hold their size. Custom properties inherit, so a whole display
+   block (a button and its spans) keeps the display steps. */
+:root {
+  --text-sm: var(--text-body);
+  --text-sm--line-height: 1.55;
+  --text-xs: var(--text-secondary);
+  --text-xs--line-height: 1.5;
+}
+.display,
+.kicker,
+.card-title,
+.title-slab {
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+}
+
 body {
   background-color: var(--bg);
   color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.55;
   font-family: var(--font-sans);
   min-height: 100dvh;
 }
@@ -189,10 +297,10 @@ body {
    Typography helpers
 --------------------------------------------------------------------------- */
 
-/* The condensed face, upright: labels, numerals, buttons, tags. */
+/* The display face, upright: titles, numerals, buttons, tabs, tags. */
 .display {
   font-family: var(--font-display);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tr-mixed);
 }
 
 .display-tight {
@@ -200,54 +308,119 @@ body {
   letter-spacing: 0;
 }
 
-/* Headings in the display face are upright Bold: the one place the heavier
-   file is used. Italic is the Home wordmark's alone (DESIGN.md, "weight"). */
+/* rc9 DS (#209, #210): the weight ladder, one step down, applied to the
+   weight utilities the screens already carry so every screen inherits it.
+   These rules are unlayered, so they win over Tailwind's utilities.
+   - Bold is for the one title of a screen (h1) and the key figure of a block
+     (display text at 24px and up, which is where figures live).
+   - Demi for section and card titles (h2, h3) and for every other display
+     text that asks for bold: buttons, names, small figures in a row.
+   - Medium for what asks for semibold or medium: nav, tags, labels.
+   Nothing renders heavier than Bold: the Black file is not loaded, and the
+   Home wordmark is the one italic. */
+.display:is(.font-medium, .font-semibold) {
+  font-weight: var(--w-label);
+}
+.display:is(.font-bold, .font-extrabold) {
+  font-weight: var(--w-head);
+}
+.display:is(.font-bold, .font-extrabold):is([class*="text-2xl"], [class*="text-3xl"], [class*="text-4xl"], [class*="text-5xl"], [class*="text-6xl"], [class*="text-7xl"], [class*="text-[2"], [class*="text-[3"], [class*="text-[4"], [class*="text-[5"], [class*="text-[clamp"]),
+.display.italic,
+h1.display {
+  font-weight: var(--w-title);
+}
+:is(h2, h3).display {
+  font-weight: var(--w-head);
+}
 :is(h1, h2, h3).display {
-  font-weight: 800;
+  line-height: var(--lh-display);
+}
+
+/* rc9 DS (#211): tracking by role. Caps open up as they get smaller; a caps
+   title sits at about 0.03em; mixed case near the face's own spacing. The
+   old per-element `tracking-*` utilities lost to `.display` already (it is
+   unlayered), so the role decides, never the element. */
+.display.uppercase {
+  letter-spacing: var(--tr-caps-sm);
+}
+.display.uppercase:is(.text-base, .text-lg, [class*="text-[16"], [class*="text-[17"], [class*="text-[18"]) {
+  letter-spacing: var(--tr-caps);
+}
+.display.uppercase:is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"], [class*="text-4xl"], [class*="text-5xl"], [class*="text-6xl"], [class*="text-7xl"], [class*="text-[2"], [class*="text-[3"], [class*="text-[clamp"]) {
+  letter-spacing: var(--tr-caps-title);
+}
+
+/* The Home wordmark keeps its own tight set. */
+.display.italic {
   letter-spacing: 0.015em;
 }
 
-/* A scoreboard label: tight caps, read as a column head, not as an eyebrow.
-   Use it where it says something the title under it does not. */
+/* Tabular figures wherever a number is a figure (`tabular-nums` stays the
+   explicit way; display numerals in a column line up by default). */
+.display.leading-none {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A scoreboard label: small caps in Medium, read as a column head, not as an
+   eyebrow. Use it where it says something the title under it does not. */
 .kicker {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+  font-weight: var(--w-label);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: var(--tr-caps-sm);
   text-transform: uppercase;
-  color: var(--sub);
+}
+/* The label's colour is the faint step, layered so a caller's colour utility
+   (a kicker that names a state) wins. */
+@layer components {
+  .kicker {
+    color: var(--faint);
+  }
 }
 
 /* The one title of a board, anywhere in the game: same face, size and weight
-   in the main column and in a rail, so two boards side by side read as peers. */
+   in the main column and in a rail, so two boards side by side read as peers.
+   rc9 DS (#212): Demi in mixed case. Caps are for section titles, tabs, tags
+   and buttons; a board's title is a name, read as one. */
 .card-title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--w-head);
   font-size: 1.125rem;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-mixed);
   color: var(--ink);
 }
 
 /* The head of a board whose title is ruled off from its body: the title on the
    left, its one figure, tag or link on the right. Sits flush with the board's
-   padding (16px, 20px from `sm`). */
+   padding (`--panel-pad`: 16px, 24px from `sm`). */
 .card-head {
   display: flex;
-  min-height: 3rem;
+  min-height: 3.25rem;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin: -1rem -1rem 1rem;
-  padding: 0.75rem 1rem;
+  gap: var(--sp-3);
+  margin: calc(var(--panel-pad) * -1) calc(var(--panel-pad) * -1) var(--panel-pad);
+  padding: var(--sp-3) var(--panel-pad);
   border-bottom: 1px solid var(--line);
 }
-@media (min-width: 640px) {
-  .card-head {
-    margin: -1.25rem -1.25rem 1.25rem;
-    padding: 0.75rem 1.25rem;
-  }
+
+/* rc9 DS: a board's padding comes from the scale (16 on a phone, 24 from
+   `sm`). It replaces the 16/20 the screens wrote by hand, so every board
+   that asked for the standard padding gets the new room; a board that set a
+   denser padding (p-3, p-2) keeps it. */
+:is(.panel, .panel-strong):is(.p-4, .p-5, .p-6) {
+  padding: var(--panel-pad);
+}
+
+/* rc9 DS spacing primitives: the distance between a screen's sections and
+   the distance between the parts of one block (DESIGN.md "Spacing"). */
+.stack-sections > * + * {
+  margin-top: var(--section-gap);
+}
+.stack-block > * + * {
+  margin-top: var(--block-gap);
 }
 
 /* A section title is highlighted: upright Bold in dark ink on a paper slab
@@ -263,9 +436,10 @@ body {
   padding: 0.14em 0.8em 0.14em 0.65em;
   margin-right: 0.75em;
   font-family: var(--font-display);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: 0.015em;
+  /* rc9 DS: Demi; the paper slab is loud enough without the heaviest file. */
+  font-weight: var(--w-head);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-caps-title);
   text-transform: uppercase;
   color: var(--paper-ink);
 }
@@ -2206,7 +2380,7 @@ html.reduce-fx .card-float {
     font-size: 16px;
     max-width: 100%;
   }
-  .kicker { letter-spacing: 0.12em; }
+  .kicker { letter-spacing: calc(var(--tr-caps-sm) + 0.01em); }
   .mobile-bracket { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 20px; }
   .mobile-bracket > * { min-width: 0; }
   .mobile-list-table { display: block; }
@@ -2360,7 +2534,7 @@ html.reduce-fx .card-float {
     background: none;
     color: var(--sub);
     font-size: 12px;
-    letter-spacing: 0.02em;
+    letter-spacing: var(--tr-caps-sm);
     white-space: nowrap;
   }
   .phone-tabs > [aria-pressed="true"],
