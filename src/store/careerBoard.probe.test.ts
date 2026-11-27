@@ -60,6 +60,8 @@ interface SeasonRow {
   rank: number;
   /** rc.6: the standing (reputation) at the season's review. */
   rep?: number;
+  /** rc.6: the tier the board held when it made this season's offer (its calibration cell; "owners" for a founded club). */
+  tier?: string;
 }
 interface CareerRow {
   region: Region;
@@ -363,6 +365,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         balance: save.finances.balance,
         rank: h?.userRegionRank ?? 0,
         rep: Math.round(save.reputation),
+        tier: pool && pool.s === save.clock.seasonIndex ? pool.stature : String(b.stature),
       });
     };
     const start = createCareerSave(input(job.region, job.diff, job.ref ?? undefined), job.seed);
@@ -378,6 +381,22 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
   }
   summary(rows);
 });
+
+/** The season's calibration cell: the tier the board held for its offer (a founded club reads "founded"). */
+function cellOf(c: CareerRow, s: SeasonRow): string {
+  if (!s.tier) return c.stature;
+  return s.tier === "owners" ? "founded" : s.tier;
+}
+
+/** Every season with a recorded tier; an older row without one stops at a move (its tier is the starting one). */
+function seasonsByCell(c: CareerRow): SeasonRow[] {
+  const out: SeasonRow[] = [];
+  for (const s of c.seasons) {
+    if (!s.tier && s.moved) break;
+    out.push(s);
+  }
+  return out;
+}
 
 function summary(rows: CareerRow[]): void {
   const pc = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
@@ -408,15 +427,15 @@ function summary(rows: CareerRow[]): void {
             ` | first promotion by S${firstUp.length ? Math.max(...firstUp) + 1 : "-"} in ${firstUp.length}/${cs.length} | end tiers ${ends.join(",")}`,
         );
       }
-  // Bands, per policy: every offered package's objective (seasons at the starting club), grouped by cell × stated band.
+  // Bands, per policy: every offered package's objective, grouped by the season's cell (the tier the board held
+  // that season, rc.6) × stated band. An older BOARD_OUT row without a tier reads the starting one and stops at a move.
   const order = ["longShot", "stretch", "reach", "expected"];
   for (const pol of [...new Set(rows.map((r) => r.policy))]) {
     const g = new Map<string, { n: number; met: number; c: number }>();
     for (const c of rows.filter((r) => r.policy === pol))
-      for (const s of c.seasons) {
-        if (s.moved) break;
+      for (const s of seasonsByCell(c)) {
         for (const [stated, met] of Object.values(s.offers)) {
-          const k = `${c.stature}/${c.diff}|${chanceBandOf(stated)}`;
+          const k = `${cellOf(c, s)}/${c.diff}|${chanceBandOf(stated)}`;
           const t = g.get(k) ?? { n: 0, met: 0, c: 0 };
           t.n += 1;
           t.met += met ? 1 : 0;
@@ -441,17 +460,11 @@ function summary(rows: CareerRow[]): void {
     for (const diff of [...new Set(rows.map((r) => r.diff))]) {
       console.log(`\n[${pol} ${diff}] stature | Expected stated→measured (N) | Cautious / Ambitious measured | S1 hit | dismissed (seasons) | cash last season (median) | softlocks`);
       for (const st of ["elite", "contender", "mid", "underdog", "founded"]) {
+        // Dismissals, cash, S1 and soft locks: by STARTING tier. The stated → measured columns: by the season's
+        // own cell (rc.6: a promoted club's later seasons count in its new tier).
         const cs = rows.filter((r) => r.policy === pol && r.diff === diff && r.stature === st);
-        if (!cs.length) continue;
-        // Seasons at the career's starting club only (a move changes the stature).
-        const ss = cs.flatMap((c) => {
-          const out: SeasonRow[] = [];
-          for (const s of c.seasons) {
-            if (s.moved) break;
-            out.push(s);
-          }
-          return out;
-        });
+        const ss = rows.filter((r) => r.policy === pol && r.diff === diff).flatMap((c) => seasonsByCell(c).filter((s) => cellOf(c, s) === st));
+        if (!cs.length && !ss.length) continue;
         const ex = ss.filter((s) => s.offers.expected);
         const exStated = ex.reduce((n, s) => n + s.offers.expected[0], 0);
         const exMet = ex.filter((s) => s.offers.expected[1]).length;
