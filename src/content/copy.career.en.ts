@@ -2614,9 +2614,9 @@ export const CAREER_EN = {
 
   achievements: {
     title: "Career achievements",
-    hint: "Permanent: they count across every save and survive a season reset. Each pays Season XP once; the big ones unlock cosmetics.",
+    hint: "Kept across saves and season resets. Each pays Season XP once",
     // rc.6 (R171): an established org earns none of them; they belong to the founded road.
-    foundedOnly: "Earned on the founded road: a club you build yourself. Seasons at an established organization do not count toward them.",
+    foundedOnly: "Earned with a club you found. Seasons at an established organization do not count",
     unlocked: "Achievement unlocked",
     lockedLabel: "Locked",
     unlockedOn: (date: string) => `Unlocked ${date}`,
@@ -2681,17 +2681,15 @@ export const CAREER_EN = {
     stars: "Team rating",
     starLabel: (n: number) => `${n}-star org`,
     trophies: "Trophy room",
-    trophyEmpty: "The shelf is waiting.",
-    worldsPedestal: "The Worlds pedestal",
+    trophyEmpty: "No trophies yet",
+    worldsPedestal: "Worlds trophy",
     records: "Records",
     recordPrize: "Total prize money",
     recordSeries: "Series record",
     recordBiggestFee: "Biggest signing",
     recordTitles: "Titles",
     seasonHistory: "Season history",
-    editColors: "Re-tint colors",
     progression: "Progression",
-    progressionDesc: "Everything still ahead of this org.",
     unlockAt: (v: number) => `Unlocks at ${v} Reputation`,
     unlockWorlds: "Unlocks with a Worlds berth",
     unlockFuture: "Future update",
@@ -2722,7 +2720,6 @@ export const CAREER_EN = {
       relocation: "Org relocation",
       star5: "5-star status",
     },
-    editCrest: "Edit crest",
     settings: "Career settings",
     // v2.1 Matchday slice 3: the setting's label and options (the screen comes with slice 5).
     matchdayMode: {
@@ -2736,7 +2733,7 @@ export const CAREER_EN = {
       customHint: "Before your series the event stops: you set the plan and make the calls between games.",
     },
     abandonCareer: "Abandon career",
-    abandonConfirm: "This deletes the save permanently. The trophies go with it.",
+    abandonConfirm: "This deletes the save permanently",
   },
 
   event: {

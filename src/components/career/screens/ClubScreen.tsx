@@ -56,8 +56,8 @@ import { unlockTrack, useCareerSave, userStars } from "@/components/career/caree
 function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-1.5 text-xs leading-snug text-sub">{label}</dt>
-      <dd className="display truncate text-3xl font-extrabold leading-none text-ink">{value}</dd>
+      <dt className="kicker mt-2">{label}</dt>
+      <dd className="display truncate text-3xl font-bold leading-none text-ink">{value}</dd>
     </div>
   );
 }
@@ -204,11 +204,11 @@ export function ClubScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <SectionTitle title={copy.club.title} className="mb-5" />
+      <SectionTitle title={copy.club.title} className="mb-6" />
 
       {/* 1. Identity: the crest and the name lead the page; the career's
           records sit on the same board as a strip of figures. */}
-      <Panel strong className="mb-4 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
+      <Panel strong className="mb-6 grid gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
         <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:gap-5">
           <UserOrgMark
             identity={save.identity}
@@ -217,7 +217,7 @@ export function ClubScreen() {
             className="shrink-0"
           />
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <h3 className="display truncate text-3xl uppercase leading-none text-ink sm:text-4xl">
+            <h3 className="display truncate text-3xl font-bold leading-[1.05] text-ink sm:text-4xl">
               {save.identity.orgName}
             </h3>
             <p className="mt-2.5 flex flex-wrap items-center justify-center gap-2 text-sm text-sub sm:justify-start">
@@ -245,7 +245,7 @@ export function ClubScreen() {
         </dl>
       </Panel>
 
-      <div className="mb-4 grid grid-cols-1 items-start gap-x-4 gap-y-6 md:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 items-start gap-x-6 gap-y-6 md:grid-cols-5">
         {/* Primary column: what the club has won. */}
         <div className="flex min-w-0 flex-col gap-6 max-md:contents md:col-span-3">
           {/* 2. Trophy room: the Worlds pedestal (visible from day one, design §11)
@@ -255,10 +255,10 @@ export function ClubScreen() {
             <div className="mt-4 grid gap-5 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-stretch">
               <div
                 className={cx(
-                  "flex flex-col items-center justify-center rounded-lg border px-3 py-4 text-center",
+                  "flex flex-col items-center justify-center px-3 py-4 text-center",
                   worldsWon
-                    ? "border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
-                    : "border-dashed border-line-strong",
+                    ? "rounded-lg border border-amber-400/50 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,0.15)]"
+                    : "sm:border-r sm:border-line",
                 )}
               >
                 <WorldsPedestal
@@ -269,7 +269,7 @@ export function ClubScreen() {
                   )}
                 />
                 {worldsWon ? (
-                  <p className="display mt-2 text-3xl font-extrabold leading-none text-amber-300">
+                  <p className="display mt-2 text-3xl font-bold leading-none text-amber-300">
                     {stats.titlesWorlds}
                   </p>
                 ) : null}
@@ -290,7 +290,7 @@ export function ClubScreen() {
                     />
                     <p
                       className={cx(
-                        "display mt-2 text-3xl font-extrabold leading-none",
+                        "display mt-2 text-3xl font-bold leading-none",
                         t.count > 0 ? "text-ink" : "text-faint",
                       )}
                     >
@@ -301,7 +301,7 @@ export function ClubScreen() {
                 ))}
               </ul>
             </div>
-            {titlesTotal === 0 ? <p className="mt-4 text-sm text-sub">{copy.club.trophyEmpty}</p> : null}
+            {titlesTotal === 0 ? <p className="mt-4 border-t border-line pt-4 text-sm text-faint">{copy.club.trophyEmpty}</p> : null}
           </Panel>
 
           {/* 3. Career achievements (v2.0 R32): each one is its own card, so the section needs no board. */}
@@ -314,9 +314,9 @@ export function ClubScreen() {
                 {copy.achievements.progress(achievementsDone, CAREER_ACHIEVEMENTS.length)}
               </span>
             </div>
-            <p className="mt-1.5 max-w-prose text-sm leading-snug text-sub">{copy.achievements.hint}</p>
+            <p className="mt-1.5 max-w-prose text-sm leading-snug text-faint">{copy.achievements.hint}</p>
             {/* rc.6 (R171): an established org earns none of them; the board stays (the account's collection). */}
-            {established ? <p className="mt-1 max-w-prose text-sm leading-snug text-ink">{copy.achievements.foundedOnly}</p> : null}
+            {established ? <p className="mt-1 max-w-prose text-sm leading-snug text-sub">{copy.achievements.foundedOnly}</p> : null}
             <div data-all={allAchievements} className="club-achievements mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {CAREER_ACHIEVEMENTS.map((a) => {
                 const at = achievements.unlocked[a.id];
@@ -358,7 +358,7 @@ export function ClubScreen() {
           ) : (
           <Panel className="p-4 sm:p-5">
             <div className="card-head"><h3 className="card-title">{copy.club.reputation}</h3></div>
-            <p className="display mt-3 text-5xl font-extrabold leading-none text-ink">
+            <p className="display mt-1 text-5xl font-bold leading-none text-ink">
               <AnimatedNumber value={rep} />
               <span className="ml-1.5 text-base font-semibold text-faint">/ 100</span>
             </p>
@@ -385,7 +385,6 @@ export function ClubScreen() {
 
             <div className="mt-5 border-t border-line pt-4">
               <h3 className="card-title">{copy.club.progression}</h3>
-              <p className="mt-1.5 text-sm leading-snug text-sub">{copy.club.progressionDesc}</p>
               <ul className="mt-2">
                 {track.map((entry) => {
                   const owned = entry.unlocked && entry.owned === true;
@@ -433,7 +432,7 @@ export function ClubScreen() {
 
       {/* 4. Season history: one row per finished season, the points column carrying the weight. */}
       {save.history.length > 0 ? (
-        <Panel className="mb-4 p-4 sm:p-5">
+        <Panel className="mb-6 p-4 sm:p-5">
           <div className="card-head"><h3 className="card-title">{copy.club.seasonHistory}</h3></div>
           <div className="mt-3 min-w-0">
             <table className="mobile-history-table w-full border-collapse text-sm">
@@ -483,8 +482,8 @@ export function ClubScreen() {
       ) : null}
 
       {/* 5. Career settings: one destructive action, kept apart at the foot of the page. */}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-        <h3 className="display text-base uppercase leading-none text-sub">{copy.club.settings}</h3>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
+        <h3 className="card-title">{copy.club.settings}</h3>
         {/* v2.1 Matchday slice 5: quick or custom (staging flag). */}
         {FEATURES.matchdayDecisions ? (
           <div className="order-last w-full">

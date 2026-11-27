@@ -2586,9 +2586,9 @@ export const CAREER_PT: CareerCopy = {
 
   achievements: {
     title: "Conquistas da carreira",
-    hint: "Permanentes: valem em todos os saves e sobrevivem ao reset de season. Cada uma paga Season XP uma vez; as grandes liberam cosméticos.",
+    hint: "Valem em todos os saves e após o reset de season. Cada uma paga Season XP uma vez",
     // rc.6 (R171): uma org consolidada não ganha nenhuma; elas são do caminho do clube fundado.
-    foundedOnly: "Conquistadas no caminho do clube fundado, o clube que você monta. Temporadas numa organização consolidada não contam para elas.",
+    foundedOnly: "Conquistadas com um clube fundado por você. Temporadas numa organização consolidada não contam",
     unlocked: "Conquista desbloqueada",
     lockedLabel: "Bloqueada",
     unlockedOn: (date: string) => `Desbloqueada em ${date}`,
@@ -2653,17 +2653,15 @@ export const CAREER_PT: CareerCopy = {
     stars: "Rating do time",
     starLabel: (n: number) => `Org ${n} estrelas`,
     trophies: "Sala de troféus",
-    trophyEmpty: "A prateleira está esperando.",
-    worldsPedestal: "O pedestal do Worlds",
+    trophyEmpty: "Nenhum troféu ainda",
+    worldsPedestal: "Troféu do Worlds",
     records: "Recordes",
     recordPrize: "Premiação total",
     recordSeries: "Retrospecto em séries",
     recordBiggestFee: "Maior contratação",
     recordTitles: "Títulos",
     seasonHistory: "Histórico de temporadas",
-    editColors: "Re-tintar cores",
     progression: "Progressão",
-    progressionDesc: "Tudo o que ainda está pela frente desta org.",
     unlockAt: (v: number) => `Desbloqueia com ${v} de Reputação`,
     unlockWorlds: "Desbloqueia com uma vaga no Worlds",
     unlockFuture: "Atualização futura",
@@ -2693,7 +2691,6 @@ export const CAREER_PT: CareerCopy = {
       relocation: "Mudança de região",
       star5: "Status 5 estrelas",
     },
-    editCrest: "Editar escudo",
     settings: "Opções da carreira",
     // v2.1 Matchday fatia 3: o rótulo da opção e suas escolhas (a tela vem na fatia 5).
     matchdayMode: {
@@ -2707,7 +2704,7 @@ export const CAREER_PT: CareerCopy = {
       customHint: "Antes da sua série o evento para: você define o plano e decide entre os jogos.",
     },
     abandonCareer: "Abandonar carreira",
-    abandonConfirm: "Isto apaga o save permanentemente. Os troféus vão junto.",
+    abandonConfirm: "Isto apaga o save permanentemente",
   },
 
   event: {

@@ -115,7 +115,7 @@ export function NewsScreen() {
   const viewLabel: Record<DeskView, string> = { inbox: C.mail.title, news: C.news.feed.name, transfers: C.hub.transfersTitle, fans: C.feed.ui.tab }; // v2.3 UI
 
   return (
-    <div className="rise-in stack-sections mx-auto max-w-6xl px-3 py-5 sm:px-4">
+    <div className="rise-in mx-auto max-w-6xl space-y-6 px-3 py-5 sm:px-4">
       <div className="stack-block">
         <SectionTitle
           title={viewLabel[view]}
@@ -251,7 +251,7 @@ function MailRow({
         aria-current={selected ? "true" : undefined}
         className={cx(
           "grid min-h-16 w-full grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 px-4 py-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue sm:px-5",
-          selected ? "bg-white/[0.05]" : "hover:bg-white/[0.03]",
+          selected ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
         )}
       >
         <span className="flex min-w-0 items-center gap-2">

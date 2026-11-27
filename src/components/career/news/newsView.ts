@@ -194,6 +194,7 @@ const REPLY_KEYS = new Set([
   "sponsorDecision",
   "creditOffer",
   "mediaOffer",
+  "boardPackage",
 ]);
 
 export function mailNeedsReply(item: MailItem): boolean {
