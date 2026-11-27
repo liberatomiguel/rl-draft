@@ -2826,3 +2826,34 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Decidido:** na segunda-feira em que uma janela de transferências entra na última semana, o Avançar em lote para uma vez (como a abertura da janela, protegido por `day !== startedAtDay`, então o segundo toque segue) e o autoplay também. É parada do lote, nunca trava do relógio. Nessa segunda sai uma notícia "A janela de transferências fecha em N dias" (chave `windowClosing`, pública) com corpo dizendo o que caduca (propostas sem resposta, jogadores no mercado). Predicado puro: `isWindowLastWeekStart(day)` em `calendar.ts`.
 - **Janela de uma semana (Worlds, S31):** o predicado é falso; a segunda de abertura já é a parada e não há aviso de fechamento (a opção mais simples).
 - **Não feito:** regras de expiração de lances/trocas e a contagem das telas ficam como estavam.
+
+## R195 — 27 de novembro de 2026: o feed lê o que o save já guarda, e o que faltava vira um log (v2.3.0-dev, front FEED)
+
+- **Decidido:** `fanFeedFor(save)` (puro, semeado) deriva os posts na hora e nunca os guarda. Títulos e finais perdidas vêm de `eventResults` e do livro de honras; contratações e vendas, de `transferLog`.
+- **Fato que o save não tinha:** o resultado de cada série (adversário, placar, upset). Só sobrava o total em `stats` e o placement do evento. Em vez de mexer em como os resultados são gravados, `finishEvent` chama um gancho de uma linha (`recordFeedSeries`) que só lê o torneio e grava um anel de 40 séries em `save.fanFeed.series`. Com a flag ligada. Save antigo não tem o log: sem posts de série, nunca inventados.
+- **Também pulado:** título de temporada antiga (o livro de honras guarda o evento, não o nome do evento): conta para a dinastia, mas não vira post.
+- **Alternativa descartada:** derivar série de `followEvent`/`activeEvent` (só existem em momentos soltos).
+
+## R196 — 27 de novembro de 2026: o post do manager e o recibo (v2.3.0-dev, front FEED)
+
+- **Decidido:** uma ação, `postToFeedFlow(save, tom | "skip")`, responde à última série (uma resposta por série). Guarda tom, adversário e semana (mais o número da série e a temporada) em `fanFeed.posts` (últimos 12). "Pular" só marca a série como respondida.
+- **Recibo:** só o tom provocador pode virar recibo. A primeira série **posterior** contra o mesmo adversário (mesmo ref) fecha o post: derrota = recibo (os fãs citam de volta), vitória = "cumpriu". Fecha uma vez só e dentro de 1 temporada (`receiptWindowSeasons`). Vem do log, não de um segundo registro.
+- **Derivado, não guardado:** o recibo e a resposta dos fãs aparecem no feed a partir do post guardado; o guardado é só o dado.
+
+## R197 — 27 de novembro de 2026: variedade e afirmações com dado (v2.3.0-dev, front FEED)
+
+- **Decidido:** cada tipo de evento tem uma tabela de variantes (`fanFeedVariants.ts`): 6 a 9 por tipo, cada uma com os slots que exige (sempre 2 ou mais, e o texto usa exatamente esses), e opcionalmente uma afirmação (`dynasty`, `bestInRegion`, `firstMajor`) ou um tom. Variante só é elegível com todos os slots presentes: dado ausente em save antigo derruba a variante, não inventa.
+- **Afirmações:** "dinastia" = 3 ou mais títulos de Major e Mundial no livro até aquele momento (`CAREER_FEED.claims.dynastyTitles`); "melhor time da região" = o último regional registrado até ali foi do usuário; "primeiro título" = o título é o número 1 do livro. Um teste varre o copy EN e PT e falha se uma dessas palavras aparecer em variante sem a marca.
+- **Janela:** nenhuma variante se repete nas últimas 5 do mesmo tipo (`window`); com menos variantes elegíveis a janela encolhe para elegíveis menos 1 (a resposta dos fãs ao post, por exemplo, tem 3 variantes por tom). Série que fecha marco de sequência (3, 5, 8, 12) vira post de sequência antes de upset.
+- **Texto:** `copy.career.feed.*` com `{slot}`; o placar é sempre o da série, vencedor primeiro. Fã é informal; jogador ou org real só como assunto, nunca autor nem citação.
+
+## R198 — 27 de novembro de 2026: seguidores são um número e nada mais (v2.3.0-dev, front FEED)
+
+- **Decidido:** `fanFeed.followers` começa em 400 mais 6 por ponto de reputação e se move em percentual (mínimo 1): vitória +3 %, derrota −2 %, upset +2 % / −1 % extra, título +10 %, post por tom (+1 / +2 / +4 %), recibo −8 %, cumpriu +6 %. Nunca abaixo de 0. Não toca dinheiro, moral nem nada: só enfeita o feed (curtidas escalam com ele, até 12×).
+- **Por quê guardado e não derivado:** o log de séries é um anel de 40; derivar da janela faria o número andar para trás quando séries velhas saíssem.
+
+## R199 — 27 de novembro de 2026: a flag, o contrato fechado e os handles (v2.3.0-dev, front FEED)
+
+- **Decidido:** `FEATURES.fanFeed` (`NEXT_PUBLIC_FAN_FEED=1`, ligada só no staging). Desligada, o gancho e a ação voltam sem tocar no save (teste: o save de um evento real não tem o campo). Os números ficam em `balance.fanFeed.ts`; `BALANCE_VERSION` 53 → 54 só porque `CAREER_FEED` entrou na exportação (nenhum número de jogo mudou; o merge com os outros fronts recalcula a impressão digital).
+- **Handles:** banco próprio de palavras de jogo e cena ("ceilingkid", "boost_fan42"), sem jogador, org ou criador real; um teste confere todas as palavras e 20 mil handles contra o dataset e o catálogo de nomes da carreira (isso tirou "shadow", "andy", "goblin", "rookie" e "ghost", que são nicknames reais).
+- **Não feito (onda 2):** tela do feed, o botão do post depois da série e a ligação da ação ao `careerStore`.

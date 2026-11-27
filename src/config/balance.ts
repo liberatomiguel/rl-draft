@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region, Stat
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 53;
+export const BALANCE_VERSION = 54; // v2.3 FEED: 53 -> 54, only because CAREER_FEED joined the export (no gameplay number moves)
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -5439,6 +5439,8 @@ export const FEATURES = {
    * for byte as before. ON in the staging build only; probes: NEXT_PUBLIC_ENDLESS_VARIETY=1.
    */
   endlessVariety: STAGING_BUILD || process.env.NEXT_PUBLIC_ENDLESS_VARIETY === "1",
+  // v2.3 FEED: the fan feed (engine/career/fanFeed.ts, store/fanFeedFlow.ts; CAREER_FEED). Off: nothing is written and no save changes. Staging only; probes: NEXT_PUBLIC_FAN_FEED=1.
+  fanFeed: STAGING_BUILD || process.env.NEXT_PUBLIC_FAN_FEED === "1", // v2.3 FEED
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
@@ -5574,3 +5576,6 @@ export const CAREER_ENDLESS = {
 
 /** v2.2 PROQA polish: the Pro's Continue plans the week by itself after his first confirmed plan, and stops at least this often with a digest. */
 export const CAREER_PRO_PLAN = { digestWeeks: 4 } as const;
+
+// v2.3 FEED: the fan feed tunables (CAREER_FEED), in their own file.
+export * from "./balance.fanFeed"; // v2.3 FEED

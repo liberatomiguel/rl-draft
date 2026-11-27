@@ -1855,6 +1855,8 @@ export interface CareerSave {
   honors?: import("./honors").CareerHonor[];
   /** True only for a career created with the complete title recorder. */
   honorsComplete?: boolean;
+  /** v2.3 FEED: the fan feed's series log, the manager's posts and followers (FEATURES.fanFeed). Optional, additive. */
+  fanFeed?: import("./fanFeedTypes").FanFeedSave; // v2.3 FEED
   /**
    * rc.37 (F1): the user's titles per season (regional, Major or Worlds),
    * counted when he wins them — the renewal title raise's window reads it

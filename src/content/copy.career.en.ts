@@ -1,3 +1,5 @@
+import { CAREER_FEED_EN } from "./copy.career.feed.en"; // v2.3 FEED
+
 /**
  * Road to Worlds — English copy (career mode).
  *
@@ -227,6 +229,7 @@ const stepWhenEn = (week: string | number | undefined, nextSeason: string | numb
   `the Monday of ${Number(nextSeason) ? "next season's " : ""}week ${week}`;
 
 export const CAREER_EN = {
+  ...CAREER_FEED_EN, // v2.3 FEED
   meta: {
     title: "Road to Worlds",
     nav: "Career",

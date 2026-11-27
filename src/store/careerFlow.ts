@@ -425,6 +425,7 @@ import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
 import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
 import { noteFinishedTournament } from "./careerAnalytics";
 import { proHooks } from "./proHooks";
+import { recordFeedSeries } from "./fanFeedFlow"; // v2.3 FEED
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -4294,6 +4295,7 @@ export function finishEvent(input: CareerSave): CareerSave {
   // Lifetime stats from the user's series.
   accumulateStats(save, ev.tournament);
   accumulateBoxStats(save, ev.tournament);
+  recordFeedSeries(save, ev.tournament, def); // v2.3 FEED
   if (placement === "champion") {
     if (def.tier === "t3") save.stats.titlesT3 += 1;
     if (def.tier === "t2") save.stats.titlesT2 += 1;

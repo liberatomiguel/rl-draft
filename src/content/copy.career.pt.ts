@@ -9,6 +9,7 @@
  */
 
 import { noticeRows, type CareerCopy, type MoneyNoticeText } from "./copy.career.en";
+import { CAREER_FEED_PT } from "./copy.career.feed.pt"; // v2.3 FEED
 
 /** v2.2 ENDLESS: as cidades-sede que uma temporada sorteia para os Majors e o Worlds (o save guarda os índices). */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
@@ -213,6 +214,7 @@ const stepWhenPt = (week: string | number | undefined, nextSeason: string | numb
   `a segunda-feira da semana ${week}${Number(nextSeason) ? " da próxima temporada" : ""}`;
 
 export const CAREER_PT: CareerCopy = {
+  ...CAREER_FEED_PT, // v2.3 FEED
   meta: {
     title: "Road to Worlds",
     nav: "Carreira",
