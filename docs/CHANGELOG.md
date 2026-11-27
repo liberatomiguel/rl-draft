@@ -10,6 +10,22 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
+
+### Added
+- Start era (R173): `startSeasonIndex` on the save (optional), `eraStart` on the world, `engine/career/era.ts` (`careerSeasonOf`, `clampStartEra`, `retirementTableOf`, `takeoverStartEraFor`).
+- The world at an era (R174): `buildWorldAtCreation(seed, era)` from that season's lineups, returning orgs before fillers (`returningFrom`), free agents from the three seasons before (club cards and subs).
+- Real players past the dataset (R175, last era only): projected potential for players of 21 or younger, every real player developing off his cards, retirement 26 to 32.
+- The takeover pick builds the 2027 world; `?era=N` on the staging build; a returning org says so in the dossier (EN, PT).
+- Probes: `P1_SOFT_ERA` / `P1_SOFT_PICK` (soft-lock probe from a takeover), `BOARD_SOFT_ERA`.
+
+### Changed
+- Progress rules read the career season, not the index: the founding day, the first bid-free window, the novice unavailability guard and the no-reserve grace, the debut grade grace, the early regional ramp (R143), the saves notice, the delete confirm. A founded career is bit-identical.
+- The board and the manager start at the clock's season (was a literal 0).
+
+### Balance
+- BALANCE_VERSION 53: new `CAREER_ERA` group only; founded numbers unchanged.
+
 ## [2.2.0-rc.6] — 2026-11-27 · The established organisation: its own rules, its own screens (staging)
 
 Miguel's brief of 27/11: taking over a real organisation has to read as a consolidated org, with its own goals, budget, progression and screens, not as the founded club's ladder. Spec and handoffs: `docs/handoff-2.2/ORGMODE-*.md`. What to play and what Miguel decides: `docs/V2.2-STATUS.md`. Decisions R163 to R172, DESIGN-DECISIONS #187 to #201.

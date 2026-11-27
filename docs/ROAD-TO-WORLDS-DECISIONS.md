@@ -2794,3 +2794,29 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Correção:** `C.goals.season` perdia a contagem de um `majorFinish` de colocação 1 ("Vença um Major" para dois títulos: o "(0/2)" que o integrador viu). Causa raiz: o ramo da colocação 1 retornava antes de ler a contagem. Vale também para o clube fundado, em EN e PT.
 - **Medido:** `seasonGoalCounts.test.ts` passa por toda meta com contagem acima de um nas duas línguas e nas duas funções.
 - **Não verificado:** o bloco no navegador.
+
+> Nota de numeração (27/11): R173–R176 são do front ERA (ORGMODE-2027). Se o front MANDATE também usou R173+, o integrador renumera um dos blocos na fusão.
+
+## R173 — 27 de novembro de 2026: a carreira começa em qualquer era; `seasonIndex` continua sendo a era (v2.2.0-dev, BALANCE_VERSION 53)
+
+- **Decidido:** o save ganha `startSeasonIndex` opcional (ausente = 0) e o mundo ganha `eraStart`. `seasonIndex` continua absoluto (6 = RLCS 2027): idade, rótulos, dados, intake e sementes leem a era. O progresso da carreira (dia de fundação, primeira janela sem propostas, guardas de novato, a graça da estreia na nota, a rampa regional R143, o aviso de saves, o número da temporada na confirmação de apagar) lê `era.careerSeasonOf`. Nesta etapa só a tomada de org usa outra era; o clube fundado começa em 0 (o dinheiro da fundação é dinheiro da temporada 0).
+- **Por quê:** a auditoria (handoff `ORGMODE-2027-ERA.md`) achou centenas de leitores de era e cerca de vinte de progresso: o lado menor é o do progresso.
+- **Medido:** carreira fundada bit a bit igual ao rc.6 (2 fundadas × 8 temporadas e 1 tomada × 2, todas as flags de staging, hash do save no início e no fim de cada temporada, 40 linhas iguais).
+- **BALANCE_VERSION 52 → 53:** só porque `balance.ts` ganhou `CAREER_ERA` (o teste de impressão digital exige); nenhum número de carreira fundada muda.
+
+## R174 — 27 de novembro de 2026: o mundo de uma era tardia, e o dinheiro é da era (v2.2.0-dev)
+
+- **Decidido:** `buildWorldAtCreation(seed, era)` monta as lineups daquela temporada; região abaixo de 16 completa primeiro com orgs que voltam (última lineup nas 2 temporadas anteriores, mais nova primeiro, depois força), depois fillers. Agentes livres: jogadores reais sem vaga com último card de clube nas 3 temporadas anteriores e os subs dessa janela, no último overall, ninguém além da janela de aposentadoria, nenhum técnico de lineup da era.
+- **Dinheiro:** o índice de dinheiro e a receita tardia leem a era (absoluto), não o progresso. O índice único (×1,15 por temporada) multiplica todo valor indexado por igual, então uma tomada em 2027 é a economia de 2020 ×2,31 em tudo que é indexado; a diferença real é a receita tardia (Majors e Worlds maiores, patrocínio tardio) ligada desde o primeiro dia. Trocar para progresso pediria passar o início por dezenas de funções de dinheiro usadas também pelo mundo. **Não medido:** o caixa de uma tomada em 2027 contra a de 2020 (a decisão 3 do portão rc.6, "a economia é folgada?", fica mais pertinente).
+- **Medido (seed 5150):** em 2027 NA 19 orgs, EU 24, SAM 16 (4 voltam), MENA 16 (6 voltam), nenhum filler nessas quatro; OCE 9 fillers, APAC 3, SSA 12.
+
+## R175 — 27 de novembro de 2026: jogadores reais depois do fim dos dados (v2.2.0-dev)
+
+- **Decidido:** só num mundo montado na última era (`CAREER_ERA.lastEraRules`): jogador real de até 21 anos no início tem potencial `max(dos dados, overall no início + folga)`, folga sorteada por seed numa tabela por idade (teto 96), e o pico vai para onde ele alcança; todo jogador real passa a evoluir fora dos cards (antes ficava congelado no último card até se aposentar); aposentadoria de 26 a 32 (`CAREER_ERA.longCareers`) para mundo e elenco.
+- **Medido** (conjunto dos 213 jogadores de 2027, 2 tomadas jogadas pelo bot, EU seed 5150 e NA seed 9100, 8 temporadas): ativos depois de 3/6/8 temporadas 87–90 % / 62 % / 46–47 % → 99 % / 87–90 % / 72 %; reais no top 30 na temporada 4 / 8: 80–83 % / 3–13 % → 97–100 % / 63–67 %. Metas do spec cumpridas (≥ 75 %, ≥ 50 %, ≥ 60 %), mas as do "antes" já eram cumpridas em 3 e 6 temporadas.
+- **Efeito colateral medido:** o corte do top 30 do mundo sobe de 88 para 92–93 na temporada 3–4 (os jovens reais crescem). **Não medido:** o efeito disso na chance de título de uma tomada.
+
+## R176 — 27 de novembro de 2026: a tomada começa em 2027 (v2.2.0-dev)
+
+- **Decidido:** a tela de escolha monta o mundo em `CAREER_ERA.takeoverDefaultStart` (6); no build de staging `?era=N` (0–6) troca a era para teste até existir o seletor (etapa 4). Org que volta é marcada no dossiê ("De volta, vista pela última vez em RLCS 2026"). O técnico de uma org na onda de 2027 é o da lineup de 2027.
+- **Não feito:** as telas da diretoria (contrato "até a temporada N", registro "S7 · W3") ainda mostram o índice absoluto +1; é a UI do front MANDATE.
