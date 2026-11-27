@@ -69,6 +69,8 @@ import { CAREER_STAFF } from "@/config/balance";
 import { gearNextItem, gearPriceFor, staffOn, staffPerSplitFor, type GearItemId } from "@/engine/career/economy";
 import type { StaffId } from "@/engine/career/types";
 import { initialTrainingState } from "./careerTraining";
+import { signInheritedSponsor } from "./orgFlow"; // rc9 org
+import { orgItemOfFounded, type OrgItemId } from "@/engine/career/orgCatalogue"; // rc9 org
 
 const B = CAREER_BOARD;
 const OFFER_REGIONS: readonly Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
@@ -211,6 +213,8 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
   }
   // The season's transfer money is kept from today (the ledger tail is shorter than a season).
   save.finances = { ...save.finances, transferTally: { seasonIndex: s, out: 0, in: 0 } };
+  // rc9 org (R223): the cash in hand before the board's budget is paid (the money summary's bridge).
+  board.season.openingCash = save.finances.balance;
   mail(save, "boardMandate", mandateParams(save, mandate));
   // The owner's welcome lands last, so it is the first mail the inbox lists on the takeover's day.
   if (s === board.startSeason) welcomeMail(save);
@@ -291,6 +295,8 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
       if (taken) stature = taken.stature;
       else throw new Error(`takeover failed: ${ref}`);
       save.training = initialTrainingState(input.difficulty, input.trainingMode);
+      // rc9 org (R221): the org arrives with its deal in force; no sponsor offer on day one.
+      signInheritedSponsor(save);
     }
   }
   if (!FEATURES.board) {
@@ -700,8 +706,26 @@ function boardTierReview(save: CareerSave & { board: BoardState }): void {
   const change = applyTierChange(board, to, s);
   const up = to === nextTierUp(change.from);
   if (up) applyConfidence(board, B.standing.promoteConfidence, "promoted", today(save));
-  mail(save, up ? "boardTierUp" : "boardTierDown", { org: save.identity.orgName, from: change.from, to });
+  // rc9 org (R222): the owner writes about the new standing (a person, not a notice); the board's own line is gone.
+  ownerTierMail(save, up, change.from, to);
   deliverNews(save, { type: "org", priority: 2, titleKey: up ? "orgTierUp" : "orgTierDown", params: { org: save.identity.orgName, from: change.from, to } });
+}
+
+/**
+ * rc9 org (R222): the owner's letter when the tier changes at the review. It names no number: what
+ * the new standing changes in practice (who signs, what the board will ask) is the copy's, keyed by
+ * the move. `seasons` is the manager's seasons in charge, so the letter can say how long it took.
+ */
+function ownerTierMail(save: CareerSave & { board: BoardState }, up: boolean, from: string, to: string): void {
+  const seasons = careerSeasonOf(save, save.clock.seasonIndex) - careerSeasonOf(save, save.board.startSeason) + 1;
+  deliverMail(save, {
+    kind: "club",
+    titleKey: up ? "ownerTierUp" : "ownerTierDown",
+    bodyKey: up ? "ownerTierUp" : "ownerTierDown",
+    params: { org: save.identity.orgName, manager: save.identity.managerName, from, to, seasons },
+    fromKey: "owner",
+    linkTo: "/career/board",
+  });
 }
 
 function nextTierUp(t: string): string | null {
@@ -827,6 +851,8 @@ export interface BoardUpgradeOption {
   /** The gear item's id, for the label. */
   item?: string;
   cost: number;
+  /** rc9 org (R220): at an established org, the catalogue item it builds or staffs (the label wave 2 shows). */
+  org?: OrgItemId;
 }
 
 /** What the board would fund now: the next installation and the staff roles not yet retained, as the toolbox sells them. */
@@ -840,6 +866,8 @@ export function boardUpgradeOptionsOf(save: CareerSave): BoardUpgradeOption[] {
     if (staffOn(save.finances.gear, id) || rep < CAREER_STAFF.roles[id].repGate) continue;
     out.push({ id, cost: quantize(staffPerSplitFor(id, save.clock.seasonIndex) * 3) });
   }
+  // rc9 org (R220): an established org's options name the catalogue item (the purchase is the same).
+  if (establishedOf(save)) for (const o of out) o.org = orgItemOfFounded(o.item ?? o.id) ?? undefined;
   return out;
 }
 

@@ -67,6 +67,9 @@ export interface BoardSeason {
    * (id "expected") and `choice` is set when the mandate is acknowledged. Optional, additive.
    */
   mandate?: BoardMandate;
+  // rc9 org (R223): the cash in hand when the board set the season, before its budget was paid
+  // (the money summary's bridge from budget to cash). Optional, additive; a load repair fills it.
+  openingCash?: number;
 }
 
 // ---------------------------------------------------------------------------

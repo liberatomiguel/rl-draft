@@ -86,6 +86,8 @@ const SPONSOR_NAME_KEYS = new Set([
   "sponsorEnded",
   // rc.36 (front S2): the "signSafest" deadline rule's mail.
   "sponsorAutoSigned",
+  // rc9 org (R221): the deal an established org already runs on the takeover day.
+  "sponsorInherited",
 ]);
 
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;

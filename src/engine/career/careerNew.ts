@@ -22,7 +22,7 @@ import { CAREER_GEAR, CAREER_HQ } from "@/config/balance";
 import { itemKey, keyId, keyKind, newKeys, seedOnChange, type SeenState } from "../newItems";
 import { weekOfDay } from "./calendar";
 import { bootcampTierFor, type GearItemId } from "./economy";
-import { gateRepOf } from "./established";
+import { establishedOf, gateRepOf } from "./established";
 import type { CareerSave, SquadPlayer } from "./types";
 
 export const CAREER_NEW_KIND = {
@@ -45,6 +45,8 @@ export function contractWarnsFor(save: CareerSave, p: Pick<SquadPlayer, "contrac
 
 /** UX-06a: the toolbox items unlocked to buy and not owned (a bootcamp tier stays unlocked once opened). */
 export function toolboxUnlockedIds(save: CareerSave): ToolboxItemId[] {
+  // rc9 org (R220): an established org has no toolbox to unlock (no "New" tag, no unlock notice): its catalogue is orgCatalogue's.
+  if (establishedOf(save)) return [];
   // rc.6 (ORGMODE E1): an established org has the whole shelf open.
   const rep = gateRepOf(save);
   const gear = save.finances.gear;

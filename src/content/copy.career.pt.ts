@@ -18,6 +18,17 @@ import { CAREER_MEDIA_PT } from "./copy.career.media.pt"; // v2.3 MEDIA
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
 const swingPt = (hit: string | number | undefined, miss: string | number | undefined): string => (hit === undefined ? "" : ` (+${hit} / −${Math.abs(Number(miss))} de confiança)`);
 const BOARD_BANDS_PT: Record<string, string> = { expected: "Provável", reach: "Ao alcance", stretch: "Um desafio", longShot: "Muito difícil" };
+// rc9 org (R222): a carta do dono numa mudança de patamar, pelo patamar a que a org chega: onde ela está, depois o que muda.
+const OWNER_UP_PT: Record<string, string> = {
+  mid: "A gente deixou de ser o time que todo mundo espera vencer. Jogadores melhores vão atender as nossas ligações, e a diretoria vai querer a gente brigando nos regionais em todo split.",
+  contender: "Na cena, já contam a gente entre os candidatos. Jogadores que nos recusaram um ano atrás agora escutam, e a diretoria vai olhar para os Majors, não só para os regionais.",
+  elite: "Viramos uma das orgs com quem o resto da cena se compara. Qualquer jogador escuta a gente agora, e a diretoria vai julgar a temporada pelos títulos.",
+};
+const OWNER_DOWN_PT: Record<string, string> = {
+  contender: "Não estamos mais no topo. Alguns nomes que a gente persegue vão esperar uma proposta maior, e a diretoria vai cobrar Majors em vez de títulos.",
+  mid: "Voltamos para o meio do bolo. Os melhores agentes livres vão olhar outras propostas primeiro, e a diretoria aliviou o que pede da gente.",
+  underdog: "Voltamos a ser o time que ninguém teme. O mercado vai ficar mais difícil, e a diretoria sabe disso: desta vez ela pede menos.",
+};
 
 const ENDLESS_HOSTS_PT = [
   "Londres", "Paris", "Copenhague", "Estocolmo", "Boston", "Dallas",
@@ -4492,6 +4503,10 @@ export const CAREER_PT: CareerCopy = {
         boardUpgrade: () => "A diretoria vai pagar uma melhoria",
         boardTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe de patamar`,
         boardTierDown: (p: Record<string, string | number>) => `A ${p.org} cai de patamar`,
+        // rc9 org (R222, R221): a carta do dono numa mudança de patamar; o contrato em vigor no dia da chegada.
+        ownerTierUp: () => "Onde estamos agora",
+        ownerTierDown: () => "Onde estamos agora",
+        sponsorInherited: (p: Record<string, string | number>) => `${p.name}: o contrato que você herda`,
         orgTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe para o patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}`,
         orgTierDown: (p: Record<string, string | number>) => `A ${p.org} cai para o patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}`,
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -4527,6 +4542,12 @@ export const CAREER_PT: CareerCopy = {
           `O prestígio leva a org ao patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}. A base do orçamento e o teto salarial sobem junto, e a cobrança da diretoria também.`,
         boardTierDown: (p: Record<string, string | number>) =>
           `O prestígio deixa a org no patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}. A base do orçamento e o teto salarial caem junto, e a diretoria alivia a cobrança.`,
+        ownerTierUp: (p: Record<string, string | number>) =>
+          `${p.manager}, acabei de sair da revisão da temporada. ${OWNER_UP_PT[String(p.to)] ?? ""} Aproveite hoje, porque amanhã a gente começa de novo.`,
+        ownerTierDown: (p: Record<string, string | number>) =>
+          `${p.manager}, a revisão terminou e não vou dourar a pílula. ${OWNER_DOWN_PT[String(p.to)] ?? ""} Você continua com o meu apoio. Me mostre na próxima temporada do que esse elenco é capaz.`,
+        sponsorInherited: (p: Record<string, string | number>) =>
+          `A ${p.org} já joga com um contrato com a marca ${p.name}. Ele foi assinado antes da sua chegada e vale até a semana ${p.endWeek} da temporada ${p.endSeason}. Paga ${p.base} toda segunda${p.bonus ? `, e mais ${p.bonus} se a meta for cumprida` : ""}.${Number(p.fines) ? " Se a meta não sair, a marca cobra multa." : ""} A meta está na mesa de Finanças. Quando o contrato acabar, a ${p.name} vai conversar com você sobre a renovação.`,
         orgTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe um patamar na cena depois da temporada.`,
         orgTierDown: (p: Record<string, string | number>) => `A ${p.org} cai um patamar na cena depois da temporada.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -4673,18 +4694,19 @@ export const CAREER_PT: CareerCopy = {
     },
     ops: {
       title: "Operações",
-      body: "O que a org mantém e o que pode acrescentar. O dinheiro decide; a diretoria aprova cada instalação.",
+      // rc9 org (R220): estruturas que você amplia, departamentos com gente, o bootcamp de evento.
+      body: "As estruturas e os departamentos da org. Cada ampliação é um investimento que a diretoria precisa aprovar.",
       running: "Custo fixo",
       perWeek: (amount: string) => `${amount} / semana`,
-      dept: { facilities: "Instalações", staff: "Staff", camps: "Bootcamps" } as Record<string, string>,
+      dept: { facilities: "Estruturas", staff: "Departamentos", camps: "Bootcamp de evento" } as Record<string, string>,
       deptNote: {
-        facilities: "Investimentos. Cada compra precisa do aval da diretoria.",
-        staff: "Contratos pagos toda segunda. Contrate e dispense como achar melhor.",
+        facilities: "Cada nível é um investimento que a diretoria aprova.",
+        staff: "A equipe de cada departamento recebe toda segunda. Monte ou feche como achar melhor.",
         camps: "Um bootcamp por split, com a vantagem levada para a competição.",
       } as Record<string, string>,
       state: {
-        owned: "Na org",
-        retained: "Contratado",
+        owned: "Pronto",
+        retained: "Com equipe",
         available: "Disponível",
         needsApproval: "Precisa de aval",
         frozen: "Congelado",
@@ -4695,25 +4717,25 @@ export const CAREER_PT: CareerCopy = {
       frozen: "A diretoria congelou os investimentos nesta janela.",
       cantAfford: "Dinheiro insuficiente acima do piso.",
       upkeep: (amount: string) => `Manutenção de ${amount} por semana`,
-      buy: "Comprar",
-      hire: "Contratar",
-      release: "Dispensar",
+      buy: "Ampliar",
+      hire: "Montar equipe",
+      release: "Fechar",
       run: "Fazer o bootcamp",
-      saves: (split: string) => `Dispensar economiza ${split} por split`,
-      releaseTitle: (name: string) => `Dispensar: ${name}`,
+      saves: (split: string) => `Fechar economiza ${split} por split`,
+      releaseTitle: (name: string) => `Fechar: ${name}`,
       releaseBody: (split: string, week: string) =>
-        `O contrato para a partir da próxima segunda: a org economiza ${split} por split (${week} por semana). Dá para contratar a função de novo depois, pelo preço do momento.`,
-      releaseConfirm: "Dispensar",
+        `A folha do departamento para a partir da próxima segunda: a org economiza ${split} por split (${week} por semana). Dá para montar a equipe de novo depois, pelo preço do momento.`,
+      releaseConfirm: "Fechar",
       keep: "Manter",
       campUsed: "Já feito neste split",
       campActive: (date: string) => `Em vigor até ${date}`,
       campReady: "Pronto para fazer",
-      allOwned: "Todas as instalações estão prontas",
-      next: "Próxima compra",
+      allOwned: "Todas as estruturas estão completas",
+      next: "Próxima ampliação",
       open: "Abrir operações",
-      facilitiesOwned: (owned: number, total: number) => `${owned} de ${total} na org`,
-      staffNone: "Nenhum staff contratado",
-      facilitiesNone: "Nenhuma instalação ainda",
+      facilitiesOwned: (owned: number, total: number) => `${owned} de ${total} níveis prontos`,
+      staffNone: "Nenhum departamento com equipe",
+      facilitiesNone: "Nenhum nível de estrutura pronto",
       staffList: (names: string) => names,
     },
     club: {
@@ -4721,20 +4743,68 @@ export const CAREER_PT: CareerCopy = {
         `Uma promoção aumenta a base do orçamento e o teto da folha em ${pct}%, aumenta o que a diretoria espera e deixa a org contratar jogadores até ${cap}.`,
       top: (pct: number) => `No topo, a diretoria espera títulos. Uma queda corta a base do orçamento e o teto da folha em ${pct}%.`,
       opsTitle: "Operações",
-      opsBody: "Instalações, staff e bootcamps. Compra e gestão ficam em Finanças.",
+      opsBody: "Estruturas, departamentos e o bootcamp de evento. Tudo se amplia e se administra em Finanças.",
       opsOpen: "Abrir em Finanças",
     },
     words: {
       common: { rep: "Prestígio", reputation: "Prestígio" },
+      // rc9 org (R222): o prestígio se sente, não se conta: nenhum número nas linhas de uma org estabelecida.
       goals: {
-        reward: (n: number) => `+${n} de prestígio na revisão`,
-        missCost: (n: number) => `Se falhar: −${n} de prestígio`,
+        reward: (n: number) => (n > 0 ? "Aumenta o prestígio da org na revisão" : "Nenhum prestígio em jogo"),
+        missCost: (n: number) => (n > 0 ? "Se falhar, o prestígio da org cai" : "Nenhum prestígio em jogo"),
         noCost: "Nenhum prestígio em jogo",
-        repRisk: (n: number) => `O prestígio da org exige (−${n} se falhar)`,
+        repRisk: (n: number) => (n > 0 ? "O prestígio da org exige, e cai se falhar" : "O prestígio da org exige"),
       },
-      inserts: { fx: { rep: (n: number) => `${n > 0 ? "+" : ""}${n} de prestígio`, repLabel: "Prestígio" } },
+      inserts: { fx: { rep: (n: number) => (n > 0 ? "O prestígio sobe" : n < 0 ? "O prestígio cai" : "O prestígio se mantém"), repLabel: "Prestígio" } },
       event: { digestRep: "Prestígio" },
-      hub: { edgesEmpty: "Nenhuma vantagem ainda: coach, instalações e staff se compram em Finanças." },
+      hub: { edgesEmpty: "Nenhuma vantagem ainda: o coach, as estruturas e os departamentos se administram em Finanças." },
+      // rc9 org (R220): os nomes da prateleira do clube fundado, como o catálogo da org os chama.
+      club: {
+        unlockables: {
+          peripherals: "Centro de treinamento, nível 1",
+          monitors: "Centro de treinamento, nível 2",
+          pcs: "Centro de treinamento, nível 3",
+          perfCenter: "Centro de performance",
+          bootcamp1: "Bootcamp de evento",
+          bootcamp2: "Bootcamp de evento",
+          psychologist: "Psicologia do esporte",
+          assistant: "Desenvolvimento de jogadores",
+          analyst: "Departamento de análise",
+          physio: "Saúde e preparação física",
+          brand: "Departamento comercial",
+        },
+      },
+      ladder: {
+        rung: {
+          peripherals: "Centro de treinamento, nível 1",
+          monitors: "Centro de treinamento, nível 2",
+          pcs: "Centro de treinamento, nível 3",
+          perfCenter: "Centro de performance",
+          bootcamp1: "Bootcamp de evento",
+          bootcamp2: "Bootcamp de evento",
+          psychologist: "Psicologia do esporte",
+          assistant: "Desenvolvimento de jogadores",
+          analyst: "Departamento de análise",
+          physio: "Saúde e preparação física",
+          brand: "Departamento comercial",
+        },
+        hint: {
+          peripherals: "Treino rende mais",
+          monitors: "Treino rende mais",
+          pcs: "Treino e buff de time",
+          perfCenter: "O melhor treino e buff de time",
+          bootcamp1: "Química e vantagem de rating",
+          bootcamp2: "Química e vantagem de rating",
+          psychologist: "+5 de Clutch, +5 de Consistência",
+          assistant: "Reservas aprendem mais nos eventos",
+          analyst: "Vantagem de rating nos playoffs",
+          physio: "Menos risco de desgaste antes dos eventos",
+          brand: "Propostas de patrocínio valem mais",
+        },
+      },
+      toolbox: {
+        refusal: { maxed: "Todas as estruturas estão completas.", locked: "Não está disponível nesta org." },
+      },
       market: {
         filterSignable: "Ao alcance desta org",
         lockedHint: "Jogadores acima deste nível não vêm para a org com o prestígio atual.",
@@ -4749,12 +4819,36 @@ export const CAREER_PT: CareerCopy = {
           `Crédito pelo prestígio da org: ${weeks} parcelas semanais, ${pct}% de juros. Não resta empréstimo emergencial: furar o piso encerra a carreira.`,
         bankLockedRep: "O banco empresta quando o prestígio da org subir um pouco.",
         deal: { boldLocked: "Contratos ousados vêm com mais prestígio." },
+        // rc9 org (R220): as instalações e funções do clube fundado, com os nomes do catálogo da org.
+        gear: { peripherals: "Centro de treinamento, nível 1", monitors: "Centro de treinamento, nível 2", pcs: "Centro de treinamento, nível 3", perfCenter: "Centro de performance" },
+        gearDesc: {
+          peripherals: "As salas de treino e a estrutura de scrims da org. +5% de treino.",
+          monitors: "Uma segunda sala de treino e agenda de scrims em tempo integral. +5% de treino.",
+          pcs: "O centro de treinamento completo, com servidores próprios. +10% de treino e vantagem para o time.",
+          perfCenter: "Sala de análise, academia e sala de review no mesmo lugar. +15% de treino, a maior vantagem para o time.",
+        },
+        psychologist: "Psicologia do esporte",
+        staff: {
+          assistant: { title: "Desenvolvimento de jogadores", desc: "Treina os reservas: um reserva ganha 80% da experiência de série do time, em vez de 60%." },
+          analyst: { title: "Departamento de análise", desc: "Estuda cada adversário de playoff: +0,75 de rating do time em toda rodada de playoff." },
+          physio: { title: "Saúde e preparação física", desc: "Controla a carga de treino: um quarto a menos de risco de um jogador perder um evento por desgaste." },
+          brand: { title: "Departamento comercial", desc: "Vende a org para as marcas: as novas propostas de patrocínio valem 15% a mais." },
+        },
+        bootcampT1: "Bootcamp de evento",
+        bootcampT2: "Bootcamp de evento",
+        line: { psychologist: "Psicologia do esporte", staff: "Departamentos" },
       },
       news: {
         feed: { subject: { rep: "Prestígio" } },
+        // rc9 org (R220): a ampliação de uma estrutura e o bootcamp de evento, com as palavras da org.
+        tpl: {
+          gearBought: (p: Record<string, string | number>) => `${p.name}: ampliação concluída`,
+          bootcampRun: () => "Bootcamp de evento concluído",
+        },
         body: {
           unlock: (p: Record<string, string | number>) => `O prestígio da org traz um novo nível de patrocínio: ${p.name}.`,
           repDown: (p: Record<string, string | number>) => `As expectativas foram ditas e não cumpridas; o prestígio da ${p.org} sente o golpe. Os resultados o recuperam.`,
+          gearBought: (p: Record<string, string | number>) => `${p.name} já está funcionando. Os jogadores treinam lá a partir desta semana.`,
         },
       },
       mail: {
@@ -4763,9 +4857,114 @@ export const CAREER_PT: CareerCopy = {
         },
       },
       tour: {
-        hub: { progress: { title: "Operações", body: "Os resultados movem o prestígio da org. Instalações, staff e bootcamps estão disponíveis desde o primeiro dia: o dinheiro e a diretoria decidem." } },
-        finances: { progress: { title: "Toque a org", body: "Instalações, staff e bootcamps fazem o elenco evoluir e jogar melhor. A diretoria aprova cada instalação." } },
+        hub: { progress: { title: "Operações", body: "A org chega com as estruturas e os departamentos do patamar dela. Amplie uma estrutura ou monte um departamento quando o dinheiro e a diretoria permitirem." } },
+        finances: { progress: { title: "Toque a org", body: "Estruturas e departamentos fazem o elenco evoluir e jogar melhor. A diretoria aprova cada ampliação." } },
       },
+    },
+    // rc9 org (R220): o catálogo da org (engine/career/orgCatalogue.ts), com nomes e explicações.
+    org: {
+      name: {
+        trainingCentre: "Centro de treinamento",
+        performanceCentre: "Centro de performance",
+        deptDevelopment: "Desenvolvimento de jogadores",
+        deptAnalysis: "Departamento de análise",
+        deptPsychology: "Psicologia do esporte",
+        deptHealth: "Saúde e preparação física",
+        deptCommercial: "Departamento comercial",
+        eventCamp: "Bootcamp de evento",
+      } as Record<string, string>,
+      about: {
+        trainingCentre: "Onde o elenco treina todo dia: salas, estrutura de scrims e servidores.",
+        performanceCentre: "Análise, academia e sala de review no mesmo prédio. O projeto mais caro da diretoria.",
+        deptDevelopment: "Treinadores que trabalham com os reservas entre um evento e outro.",
+        deptAnalysis: "Analistas que destrincham cada adversário de playoff.",
+        deptPsychology: "Um psicólogo que prepara os jogadores para os jogos decisivos.",
+        deptHealth: "Uma equipe que cuida da carga de treino e da saúde dos jogadores.",
+        deptCommercial: "Gente que vende a org para as marcas.",
+        eventCamp: "O elenco reunido no mesmo lugar antes de uma sequência de eventos.",
+      } as Record<string, string>,
+      /** O que cada departamento faz no jogo, com os números do motor. */
+      deptEffect: {
+        deptDevelopment: (pct: number) => `Um reserva ganha ${pct}% da experiência de série do time`,
+        deptAnalysis: (rating: number) => `+${String(rating).replace(".", ",")} de rating do time em toda rodada de playoff`,
+        deptPsychology: (clutch: number, consistency: number) => `+${clutch} de Clutch e +${consistency} de Consistência`,
+        deptHealth: (pct: number) => `${pct}% a menos de risco de um jogador perder um evento por desgaste`,
+        deptCommercial: (pct: number) => `As novas propostas de patrocínio valem ${pct}% a mais`,
+      },
+      levelEffect: (training: number, buff: number, rating: number) =>
+        [training > 0 ? `+${training}% de treino` : "", buff > 0 ? `+${buff} ${buff === 1 ? "nível" : "níveis"} de buff do time` : "", rating > 0 ? `+${String(rating).replace(".", ",")} de rating do time` : ""].filter(Boolean).join(", "),
+      level: (n: number, max: number) => `Nível ${n} de ${max}`,
+      levelName: (name: string, n: number) => `${name}, nível ${n}`,
+      notBuilt: "Ainda não existe",
+      standard: "Já estava aqui quando você chegou",
+      aboveStandard: "Feito na sua gestão",
+      upgradeTo: (n: number) => `Ampliar para o nível ${n}`,
+      complete: "Completo",
+      staffed: "Com equipe",
+      vacant: "Sem ninguém",
+      staffIt: "Montar a equipe",
+      closeIt: "Fechar o departamento",
+      perWeek: (amount: string) => `${amount} por semana`,
+      campFree: "Pago pelo patrocinador",
+      boardSigns: (need: number) => `A diretoria aprova com confiança ${need}`,
+    },
+    // rc9 org (R222): o prestígio como palavra e o que ele muda, nunca um número.
+    sense: {
+      drift: {
+        rising: "A cena vê a org acima do patamar dela. Uma temporada que cumpra o objetivo da diretoria leva a org a subir na revisão.",
+        steady: "A org mantém o seu lugar na cena.",
+        slipping: "A org está caindo abaixo do patamar dela. Mais uma temporada fraca e ela desce na revisão.",
+      } as Record<string, string>,
+      pull: (cap: number) => `Jogadores com rating até ${cap} aceitam vir`,
+      expects: {
+        elite: "A diretoria julga a temporada pelos Majors e pelo Mundial.",
+        contender: "A diretoria espera Majors e uma briga pela vaga no Mundial.",
+        mid: "A diretoria espera a briga nos regionais e um Major quando der.",
+        underdog: "A diretoria espera ver a org crescer nos regionais.",
+      } as Record<string, string>,
+      patience: {
+        demanding: "Uma meta perdida custa muita confiança da diretoria.",
+        measured: "A diretoria pesa uma meta perdida contra a temporada inteira.",
+        forgiving: "A diretoria dá tempo ao projeto.",
+      } as Record<string, string>,
+    },
+    // rc9 org (R223): um resumo do dinheiro cujos números fecham (budget.orgMoneyOf).
+    money: {
+      title: "O dinheiro da temporada",
+      cash: "Caixa hoje",
+      commitments: "Ainda a pagar nesta temporada",
+      payroll: "Salários do elenco",
+      coach: "Coach",
+      retainers: "Departamentos",
+      upkeep: "Manutenção das estruturas",
+      loan: "Parcelas de empréstimo",
+      incomeToCome: "Receita ainda contratada",
+      sponsor: "Patrocínio",
+      fanbase: "Torcida",
+      projectedEnd: "No fim da temporada",
+      projectedNote: "Neste ritmo, sem contar prêmios e vendas de jogadores",
+      keepBack: {
+        cashFloor: (amount: string) => `O plano da diretoria pede ${amount} em caixa no fim da temporada`,
+        transferCap: (amount: string) => `O limite de gasto líquido em transferências deixa ${amount} fora de alcance`,
+        none: () => "O plano da diretoria não fixa um piso de caixa",
+      } as Record<string, (amount: string) => string>,
+      freeToSpend: "Livre para gastar",
+      freeNote: "O que dá para gastar nesta temporada sem quebrar o plano da diretoria",
+      short: "Abaixo do plano",
+      budgetPaid: "A verba da diretoria, já no caixa",
+      budgetProposed: "A verba da diretoria, paga quando você ler o mandato",
+      gap: {
+        pending: (budget: string) => `A diretoria deposita os ${budget} no caixa quando você ler o mandato.`,
+        carried: (budget: string, opening: string) => `O caixa tem os ${budget} da diretoria e os ${opening} que a org já tinha.`,
+        carriedAndSpent: (budget: string, opening: string, net: string) =>
+          `O caixa tem os ${budget} da diretoria e os ${opening} que a org já tinha, menos ${net} gastos desde então.`,
+        carriedAndEarned: (budget: string, opening: string, net: string) =>
+          `O caixa tem os ${budget} da diretoria e os ${opening} que a org já tinha, mais ${net} que entraram desde então.`,
+        spent: (budget: string, _opening: string, net: string) => `O caixa são os ${budget} da diretoria, menos ${net} gastos desde então.`,
+        earned: (budget: string, _opening: string, net: string) => `O caixa são os ${budget} da diretoria, mais ${net} que entraram desde então.`,
+        same: (budget: string) => `O caixa são os ${budget} da diretoria, intocados até agora.`,
+        unknown: () => "A diretoria depositou a verba no caixa no começo da temporada. Desde então o caixa acompanha as receitas e os gastos.",
+      } as Record<string, (budget: string, opening: string, net: string) => string>,
     },
   },
   proWorld: {

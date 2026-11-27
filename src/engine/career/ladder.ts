@@ -10,7 +10,7 @@
  */
 
 import { CAREER_GEAR, CAREER_LADDER, CAREER_UNLOCKS, CAREER_STAFF } from "@/config/balance";
-import { gateRepOf } from "./established";
+import { establishedOf, gateRepOf } from "./established";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 
 export type LadderRungId =
@@ -129,6 +129,8 @@ function ownedOf(save: CareerSave, id: LadderRungId): boolean {
 
 /** Every rung with its state: owned (bought / in post / signed), open (reached), locked. */
 export function ladderOf(save: CareerSave): LadderRungState[] {
+  // rc9 org (R220): an established org has no ladder: its progression is the org catalogue (orgCatalogue.ts).
+  if (establishedOf(save)) return [];
   // rc.6 (ORGMODE E1): an established org has every rung open but the sponsor levels (they scale with Standing).
   const open = gateRepOf(save);
   return ladderRungs().map((r) => {

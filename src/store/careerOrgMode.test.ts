@@ -211,7 +211,8 @@ describe("E1: the tier change at the season review", () => {
     expect(save.board.grantBase).toBe(Math.round(before.grant * CAREER_BOARD.standing.budgetStep.up));
     expect(save.board.wageRoom).toBe(Math.round(before.room * CAREER_BOARD.standing.budgetStep.up));
     expect(save.board.log.some((e) => e.reason === "promoted")).toBe(true);
-    expect(save.mail.some((m) => m.titleKey === "boardTierUp")).toBe(true);
+    // rc9 org (R222): the owner's letter replaces the board's notice.
+    expect(save.mail.some((m) => m.titleKey === "ownerTierUp" && m.fromKey === "owner")).toBe(true);
     expect(save.news.some((m) => m.titleKey === "orgTierUp")).toBe(true);
   });
 

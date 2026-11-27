@@ -35,7 +35,8 @@ describe("orgCopy (ORGMODE UI-C)", () => {
     expect(orgCopyFor(CAREER_EN, false)).toBe(CAREER_EN);
     const E = orgCopyFor(CAREER_EN, true);
     expect(E.common.rep).toBe("Standing");
-    expect(E.goals.reward(1)).toBe("+1 standing at review");
+    // rc9 org (R222): the standing is a word at an established org, never a figure.
+    expect(E.goals.reward(1)).toBe("Lifts the org's standing at the review");
     expect(E.common.ovr).toBe(CAREER_EN.common.ovr);
     expect(orgCopyFor(CAREER_EN, true)).toBe(E);
   });

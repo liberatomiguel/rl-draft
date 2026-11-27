@@ -1134,3 +1134,42 @@ export function otherIncomeRoomOf(input: {
     taken,
   };
 }
+
+// ---------------------------------------------------------------------------
+// rc9 org (R221): an established org arrives with a deal in force
+// ---------------------------------------------------------------------------
+
+/**
+ * The deal an established org already runs when the manager arrives: one of
+ * the offers its tier's desk would make today (`sponsorDecisionFor`, the same
+ * brands, money and goal), the profile its tier keeps (CAREER_ORG.inheritedSponsor),
+ * signed before the takeover. The terms are the offer's, marked `inherited`,
+ * its contract goal counted from the takeover day and no decision deadline.
+ * Null when the desk has no offer of that profile (the first offer then).
+ */
+export function inheritedDealOf(offers: readonly SponsorState[], profile: SponsorProfile, today: CareerDay): SponsorState | null {
+  const offer = offers.find((o) => o.terms?.profile === profile) ?? offers[0];
+  if (!offer || !offer.terms) return null;
+  const terms: SponsorTerms = structuredClone(offer.terms);
+  delete terms.decideBy;
+  delete terms.demoted;
+  terms.inherited = true;
+  for (const g of terms.goals) if (isContractGoal(g)) g.from = { ...today };
+  return { ...offer, terms, progress: 0, hitThisSplit: false, missedCount: 0 };
+}
+
+/**
+ * The end of an inherited deal opens its renewal: the brand that ran it comes
+ * back on the desk with the offer of the same profile (it swaps names with the
+ * offer that had it, so every brand stays once). Same tier only: a brand of
+ * another tier does not re-sign at a level it does not sell. Mutates.
+ */
+export function renewInheritedBrand(offers: SponsorState[] | null | undefined, ended: Pick<SponsorState, "sponsorId" | "tier" | "terms">): void {
+  if (!offers || !ended.terms?.inherited) return;
+  const slot = offers.find((o) => o.tier === ended.tier && o.terms?.profile === ended.terms!.profile);
+  if (!slot || slot.sponsorId === ended.sponsorId) return;
+  const holder = offers.find((o) => o.sponsorId === ended.sponsorId);
+  if (holder) holder.sponsorId = slot.sponsorId;
+  slot.sponsorId = ended.sponsorId;
+  if (slot.terms) slot.terms.renewal = true;
+}

@@ -13,7 +13,10 @@
 import { chanceBandOf, type ChanceBand } from "@/engine/career/board";
 import type { BoardMandate, BoardPackage, BoardSecondary, PackageId, SeasonBrief, Stature } from "@/engine/career/boardTypes";
 import { weeklyWageBill } from "@/engine/career/economy";
-import type { CareerSave, CoachState, SeasonGoalSpec, SquadPlayer, StaffId } from "@/engine/career/types";
+import type { CareerSave, CoachState, SeasonGoalSpec, SponsorState, SquadPlayer, StaffId } from "@/engine/career/types";
+import { seasonMoneyOf, type SeasonMoney } from "@/engine/career/budget"; // rc9 org
+import { establishedOf, standingSenseOf, type StandingSense } from "@/engine/career/established"; // rc9 org
+import { orgOperationsOf, type OrgOperations } from "@/engine/career/orgCatalogue"; // rc9 org
 import { createCareerSave, type CreateCareerInput } from "./careerFlow";
 
 export interface TakeoverPlan {
@@ -54,6 +57,15 @@ export interface TakeoverPreview {
   coach: CoachState | null;
   starters: SquadPlayer[];
   reserve: SquadPlayer | null;
+  // rc9 org (R220-R223): what the dossier and the arrival show in the org's own terms (null for a founded club).
+  /** The facilities' levels and the departments staffed (in place on day one): use this, not `gear` / `staff`. */
+  org: OrgOperations | null;
+  /** The sponsor deal in force on the takeover day. */
+  sponsor: SponsorState | null;
+  /** The standing as a word: tier, drift, signing cap, what the board expects. No figure. */
+  sense: StandingSense | null;
+  /** The season's money, one summary whose figures add up. */
+  money: SeasonMoney | null;
 }
 
 const GEAR_ORDER = ["peripherals", "monitors", "pcs", "perfCenter"] as const;
@@ -101,6 +113,10 @@ export function takeoverViewOf(save: CareerSave): TakeoverPreview {
     coach: save.coach ?? null,
     starters,
     reserve: save.squad.find((p) => !save.starterIds.includes(p.id)) ?? null,
+    org: orgOperationsOf(save),
+    sponsor: establishedOf(save) ? (save.sponsor ?? null) : null,
+    sense: standingSenseOf(save),
+    money: establishedOf(save) ? seasonMoneyOf(save) : null,
   };
 }
 

@@ -21,6 +21,7 @@ import { playerViewById, seasonYear } from "./development";
 import { coachWageFor, computeSalaryAsk, gearOwned, moneyIndex, quantize, weeklyWageBill } from "./economy";
 import { inheritedGearFor, standingViewFor, structureWeeklyOf, type StandingView } from "./established";
 import { sponsorLadderLevelFor } from "./ladder";
+import { tierStandardOf } from "./orgCatalogue"; // rc9 org
 import { askInputOf } from "./market";
 import { coachBonusLevelFor } from "./training";
 import type { CareerDifficulty, CoachState, SquadPlayer, WorldOrgState, WorldState } from "./types";
@@ -225,6 +226,12 @@ export interface RealOrgChoice {
   confidenceStart: number;
   /** v2.2 ORGMODE-2027: a returning org (no lineup in the start era), from its last lineup's era index. */
   returningFrom?: number;
+  /**
+   * rc9 org (R220): the structure in the org catalogue's terms (facility levels, departments staffed).
+   * The pick screen reads this, not `gear` / `staff` (founded ids), nor `standing.value` / `rep` /
+   * `sponsorLevel` (figures an established org does not show).
+   */
+  structure: { facilities: Record<"trainingCentre" | "performanceCentre", number>; departments: string[] };
 }
 
 /** The region's real orgs a manager can take over this season, strongest first (fillers excluded). */
@@ -268,6 +275,7 @@ export function realOrgChoicesFor(region: Region, ctx: SquadCtx): RealOrgChoice[
       sponsorLevel: sponsorLadderLevelFor(p.rep),
       standing: standingViewFor(stature, p.rep),
       confidenceStart: CAREER_BOARD.confidence.start,
+      structure: tierStandardOf(stature),
       ...(org.returningFrom !== undefined ? { returningFrom: org.returningFrom } : {}),
     });
   });
