@@ -48,6 +48,11 @@ States were reached on a `/career?start=quick` save by writing `lockerRoom` / `f
 
 No sideways page scroll measured at 320 and 375 on Squad, HQ and News.
 
+## v2.3 FIX (post card, media offer)
+
+- U5: the three tone buttons have an accessible name (`aria-label` = the tone, `aria-describedby` = its hint); the hints and the preview are written for a series already played, won or lost (see FEED.md). Seen on a real played career (lost 0-3 at a qualifier, provocative preview, posted, Fans tab), PT.
+- The media offer's answers are mounted in the inbox reader and look like the locker talk's: the rule above, full-width option rows, the hint in the faint line (see MEDIA.md).
+
 ## Not seen
 
 - Any state produced by actually playing weeks (a promise kept or broken by the engine, an auto-answered talk, a real receipt): all were hand-built saves, the dates in the log rows are clamped fixture dates.

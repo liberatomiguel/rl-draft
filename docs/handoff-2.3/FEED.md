@@ -15,7 +15,18 @@ The save did **not** record the user's series one by one (opponent, score, upset
 
 ## Event kinds and variants
 
-seriesWon 7 · seriesLost 6 · upsetWin 6 · upsetLoss 6 · winStreak 8 · loseStreak 6 · signing 8 · sale 8 · titleWon 9 · finalLost 6 · managerReply 9 (3 per tone) · receipt 6 · managerPost 3 (one per tone, his own words). Streak posts replace the plain post at lengths 3, 5, 8 and 12. Claim variants: seriesWon.7 and winStreak.7 (best team in the region), winStreak.8 and titleWon.7 (dynasty), titleWon.8 (first title).
+seriesWon 7 · seriesLost 6 · upsetWin 6 · upsetLoss 6 · winStreak 8 · loseStreak 6 · signing 8 · sale 8 · titleWon 9 · finalLost 6 · managerReply 12 (2 per tone x result) · receipt 6 · managerPost 12 (2 per tone x result, his own words). Streak posts replace the plain post at lengths 3, 5, 8 and 12. Claim variants: seriesWon.7 and winStreak.7 (best team in the region), winStreak.8 and titleWon.7 (dynasty), titleWon.8 (first title).
+
+## The manager's post is written after the series (v2.3 FIX)
+
+A browser review found the post saying "Halcyon Works is coming for this one" after a 0-3 loss. The post and the fans' reply were one text per tone, written as if the series were still ahead. Now:
+
+- `managerPost` and `managerReply` variants carry `tone` and `result` (`won` | `lost`), keys `managerPost.1..12`, `managerReply.1..12` (two per cell). Post variants name the opponent plus the score or the event; replies never warn about a result already played. `MANAGER_POST_KEYS` is gone; the post goes through `eligibleVariants(kind, slots, ctx, tone, result)`.
+- The result comes from the stored post: `FeedManagerPost.result?: { won, us, them, event }` (optional, written by `postToFeedFlow`). A post without it reads the series ring by `seriesN`; without either it counts as a win with no score or event to name (its post is dropped, its reply still shows).
+- `managerPostDraftOf(save, series, tone)` takes the series (it needs `careerSeed` for the seeded pick), so the HQ preview is the variant the feed shows once posted. The post has no no-repeat window for that reason.
+- The receipt keeps its rule; its texts say nothing of the post's own result, so they read right after a provocative post that followed a win or a loss. Tone hints on the card describe the tone (credit, back your work, talk big), not a pre-match stance.
+
+Samples (PT): humble/won "Passamos por {opponent} no {event}. O grupo todo merece, e seguimos com os pés no chão."; confident/lost "O {event} não foi nosso contra {opponent}. Confiamos no trabalho, e a gente volta."; provocative/lost "{opponent} ganhou a série no {event} dessa vez. Guardem a sensação, o próximo confronto não vai ser assim."
 
 ## Hooks in shared files (all marked `// v2.3 FEED`)
 
@@ -46,7 +57,7 @@ Org "Kestrel Gaming", a SAM career with a 19-series run, a Major won in season 2
 |---|---|---|---|
 | winStreak | @hotseat.gremlin | 347 | 3-1 over Avidity Esports makes it 5 in a row. |
 | managerReply | @lobby_dad45 | 128 | Kestrel Gaming on Avidity Esports: confident. Confidence is cheap, results are not. |
-| managerPost | Manager (you) | 257 | Kestrel Gaming is ready for Avidity Esports. We trust our work. |
+| managerPost (confident, after a win) | Manager (you) | 257 | Kestrel Gaming beat Avidity Esports 3-1. The work we put in is paying off. |
 | seriesWon | @ceiling_dad91 | 143 | SAM Regional 6 notes: 3-1 over FURIA, and the rotations were sharp all series. |
 | sale | @boost_fan92 | 48 | $800k for Zenith. Kestrel Gaming cashed in, now let us see how they spend it. |
 | finalLost | @open_veteran13 | 404 | Kestrel Gaming fall in the SAM Regional 3 final. Proud of the run anyway. |
@@ -62,7 +73,7 @@ Org "Kestrel Gaming", a SAM career with a 19-series run, a Major won in season 2
 |---|---|---|---|
 | winStreak | @hotseat.gremlin | 347 | 3-1 contra Avidity Esports e já são 5 seguidas. |
 | managerReply | @lobby_dad45 | 128 | Kestrel Gaming encara Avidity Esports com a confiança lá em cima. Confiança é barata, resultado não é. |
-| managerPost | Manager (você) | 257 | Estamos prontos pra encarar Avidity Esports. Kestrel Gaming confia no trabalho. |
+| managerPost (confiante, após vitória) | Manager (você) | 257 | Kestrel Gaming vence Avidity Esports por 3-1. O trabalho está dando resultado. |
 | seriesWon | @ceiling_dad91 | 143 | Anotações do SAM Regional 6: 3-1 contra FURIA, rotação afiada a série inteira. |
 | sale | @boost_fan92 | 48 | $800k por Zenith. Kestrel Gaming fez caixa, agora quero ver onde vai gastar. |
 | finalLost | @open_veteran13 | 404 | Kestrel Gaming cai na final do SAM Regional 3. Orgulho da campanha mesmo assim. |
