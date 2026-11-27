@@ -40,50 +40,43 @@ export const HOME = {
   playClassic: "Classic Draft",
   playClassicDesc: "3 players, coach, sub and org. Swiss into double-elim playoffs.",
   quickDraft: "Quick Draft",
-  quickDraftDesc: "Players only, short bracket. Built for quick sessions.",
+  quickDraftDesc: "Players only, short bracket.",
   daily: "Daily Challenge",
-  dailyDesc: "One seeded draft per day, same for everyone.",
   dailyPlay: "Play today's challenge",
   dailyVictory: "Victory",
   dailyDefeat: "Defeat",
-  dailyComeBack: "Come back tomorrow for a new challenge.",
+  dailyComeBack: "New challenge tomorrow",
   dailyStreak: (n: number) => `${n}-win streak`,
-  comingSoon: "Coming soon",
   collection: "Collection",
-  collectionDesc: "Special cards you have unlocked across your runs.",
   collectionLocked: "Unlocks at Bronze",
   achievements: "Achievements",
-  achievementsDesc: "Feats to chase across every run you play.",
   profile: "Profile",
-  profileDesc: "Rank, XP and run history.",
   challenges: "Challenges",
   challengesDesc: "Rank-unlocked draft puzzles to clear.",
   presentedBy: "Presented by",
   partnerVisit: "Visit 50/50",
-  partnerDesc: "Rocket League news, from the partner of Rocket Draft.",
+  partnerDesc: "Rocket League news",
   partnerSoon: "Link soon",
   challengesLocked: "Unlocks at Bronze",
-  signInNudge: "Sign in to save your progress and climb the leaderboards",
+  signInNudge: "Sign in to save your progress and join the leaderboards",
   launch: {
     kicker: "Season 1 · Out now",
     title: "Rocket Draft 2.0 is here",
-    headline: "A new season starts today.",
-    intro: "A full career mode, a new season with ranks and rating, three-star challenges, a bigger database and a profile you can make your own.",
     tabs: {
       career: {
         label: "Road to Worlds",
         tag: "New mode",
         number: "01 / CAREER MODE",
         title: "Road to Worlds",
-        body: "Found your organization, sign and develop players, hire a coach, balance the budget and play the RLCS calendar from open qualifiers to the World Championship. Beta: balance is still being tuned.",
+        body: "Run an RLCS org from open qualifiers to the World Championship: sign players, hire a coach, balance the budget.",
         alt: "Road to Worlds headquarters: the week ahead, the race to the Major, finances and the squad",
       },
       season: {
         label: "Season 1",
         tag: "",
         number: "02 / SEASON 1",
-        title: "A fresh climb",
-        body: "Everyone starts Season 1 unranked with a rating of 400. A longer rank ladder unlocks modes, special cards, titles, badges and banners, and your Season Rating moves after every run.",
+        title: "Ranks and rating",
+        body: "Everyone starts unranked at 400. Ranks unlock modes, special cards, titles, badges and banners, and every run moves your Season Rating.",
         alt: "Profile with the Season 1 rank track, a banner and badges",
       },
       challenges: {
@@ -91,7 +84,7 @@ export const HOME = {
         tag: "",
         number: "03 / CHALLENGES",
         title: "45 challenges, 135 stars",
-        body: "Fixed-seed draft puzzles with bonus objectives. Clear one for the first star, then chase the other two for exclusive rewards.",
+        body: "Fixed-seed draft puzzles with bonus objectives. Clearing one earns the first star; two more are on offer.",
         alt: "Challenges list with stars and bonus objectives",
       },
       collection: {
@@ -99,22 +92,14 @@ export const HOME = {
         tag: "",
         number: "04 / COLLECTION",
         title: "More cards to find",
-        body: "New special cards with real photos, national-team cards and a bigger database of historical rosters across NA, EU, SAM, MENA and OCE.",
+        body: "New special cards with real photos, national-team cards and more historical rosters across NA, EU, SAM, MENA and OCE.",
         alt: "Collection grid with legendary special cards",
       },
     },
     caption: "Captured from the game",
-    details: [
-      { title: "Five Regional Drafts", body: "Lock your draft to NA, EU, SAM, MENA or OCE and face that region's own scene, with a title leaderboard for each." },
-      { title: "Something new every day", body: "A daily quiz (guess the RLCS player), daily and weekly missions and a login streak with rewards." },
-      { title: "114 achievements", body: "A reviewed list with rare, legendary and secret feats, including a full set for Road to Worlds." },
-      { title: "Nine leaderboards", body: "Season Rating, titles, Legacy titles, one board per region and World Championships won in career mode." },
-      { title: "Your pre-season is safe", body: "Collection, history and stats are kept. Your peak rank and final leaderboard places became exclusive titles and badges." },
-      { title: "A profile of your own", body: "Equip titles, badges and animated banners, shown on your profile and on every leaderboard row." },
-    ],
     accountTitle: "Claim your pre-season rewards",
-    account: "Log in with your pre-season account to receive your leaderboard rewards and keep your progress on every device.",
-    accountSignedIn: "Your pre-season rewards are waiting in your profile.",
+    account: "Log in with your pre-season account to get your leaderboard rewards.",
+    accountSignedIn: "Your pre-season rewards are in your profile.",
     cta: "Create account / Log in",
     changelog: "Full changelog",
     play: "Let's play",
@@ -127,8 +112,6 @@ export const HOME = {
   quizMissed: "Try again tomorrow",
   quizPlay: "Play today's quiz",
   missions: "Missions",
-  missionsDesc: "Three daily and three weekly objectives.",
-  missionsProgress: (done: number, total: number) => `${done}/${total} today`,
   seasonStrip: {
     rating: "Season Rating",
     rank: "Rank",
@@ -138,23 +121,15 @@ export const HOME = {
     daysLeft: (n: number) => (n === 1 ? "1 day left" : `${n} days left`),
     viewProfile: "Profile",
   },
-  newBadge: "NEW",
-  featured: "Featured",
-  moreModes: "More ways to play",
   yourProgress: "Your progress",
   // rc.2 bento
-  sectionPlay: "Play",
   sectionDaily: "Today",
-  sectionYou: "You",
   quickDraftCta: "Quick Draft",
-  careerContinue: "Continue your career",
   leaderboards: "Leaderboards",
-  leaderboardsDesc: "Your best rosters and milestones.",
   howToPlay: "How to play",
   joinDiscord: "Join the Discord",
   followTwitter: "Follow on X",
   support: "Buy me a coffee",
-  liveBadge: "Available",
   playNow: "Play now",
   runs: (n: number) => `${n} ${n === 1 ? "run" : "runs"}`,
   titles: (n: number) => `${n} titles`,
@@ -162,13 +137,11 @@ export const HOME = {
   // dictionary, so the home page doesn't load the whole career copy.
   careerTitle: "Road to Worlds",
   careerBadge: "NEW",
-  careerDesc:
-    "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
-  careerCta: "Found an org and take it to the World Championship.",
+  careerDesc: "Run an RLCS org from open qualifiers to the World Championship.",
   careerPlay: "Play career",
   // v2.0 (G2): beta note on the career card + the community band.
-  careerBetaNote: "Beta: balance is still being tuned. Tell us what you think on Discord.",
-  discordDesc: "Talk drafts, report bugs and follow what ships next.",
+  careerBetaNote: "Beta: balance is still being tuned.",
+  discordDesc: "Drafts, bug reports and what ships next",
 };
 
 /**
@@ -261,11 +234,11 @@ export const NAV_UI = {
   ariaMain: "Main",
   ariaLanguage: "Language",
   // v2.0.14: the error screens (src/app/error.tsx; global-error.tsx keeps its own copy).
-  errorKicker: "Unexpected stoppage",
+  errorKicker: "Error",
   errorTitle: "Something went wrong",
   errorDataTitle: "Dataset error",
   errorBody: "An unexpected error interrupted the game. Your saved progress is safe.",
-  errorReloadBody: "This screen stopped loading. Reload the page to continue. Your saved progress is safe.",
+  errorReloadBody: "This screen stopped loading. Reload the page to continue.",
   errorTranslateHint: "If your browser is translating this page, turning the translation off for this site avoids this error.",
   errorRetry: "Try again",
   errorReload: "Reload the page",
@@ -291,18 +264,16 @@ export const RUN_UI = {
 
 export const SETUP = {
   title: "Game Setup",
-  subtitle:
-    "Pick a difficulty. It changes the tournament you face. The draft pool is fully random on all of them.",
+  subtitle: "Difficulty changes the tournament, not the draft pool.",
   difficulty: "Difficulty",
   showOverall: "Show overalls during the draft",
-  showOverallHint:
-    "Turn off to draft on knowledge alone. Overalls are revealed on the results screen.",
+  showOverallHint: "Turn off to draft on knowledge alone. Overalls show on the results screen.",
   overallLocked: "Locked hidden on this difficulty",
   rerolls: (n: number) => (n === 1 ? "1 reroll" : `${n} rerolls`),
   start: "Start Draft",
   back: "Back to menu",
-  legacyLocked: "Win a tournament on Hard to unlock Legacy.",
-  hardLocked: "Reach Silver to unlock Hard.",
+  legacyLocked: "Win a tournament on Hard to unlock Legacy",
+  hardLocked: "Reach Silver to unlock Hard",
   mode: "Game mode",
   modeClassic: "Classic Draft",
   modeClassicHint: "6 slots · Swiss + double-elim playoffs",
@@ -311,17 +282,13 @@ export const SETUP = {
   ovrOptional: "OVR optional",
   ovrHidden: "OVR hidden",
   selected: "Selected",
-  legacyBadge: "All-time gauntlet",
   region: "Region",
   regionHint: "Lock your run to one region's full scene, or draft worldwide.",
   regionWorldwide: "Worldwide",
   regionWorldwideHint: "The international pool: every region's top rosters",
   regionComingSoon: "Coming soon",
-  regionLockedBadge: "Region-locked",
-  regionDescWorldwide:
-    "The international pool: every region's top rosters. Tap a region to lock the draft to its scene.",
   regionDescLocked: (region: string, rosters: number) =>
-    `${region} only: ${rosters} rosters, a deeper pool that also includes teams that never reached Worlds.`,
+    `${region} only: ${rosters} rosters, including teams that never reached Worlds`,
   regionNames: {
     NA: "North America", EU: "Europe", SAM: "South America", MENA: "MENA",
     OCE: "Oceania", APAC: "APAC", SSA: "Sub-Saharan Africa",
@@ -349,7 +316,7 @@ export const DRAFT_UI = {
   rerollsLeft: (n: number) => (n === 1 ? "1 left" : `${n} left`),
   noRerolls: "No rerolls",
   freeReroll: "Free reroll",
-  freeRerollHint: "Nothing here fits your remaining slots. This one's on the house.",
+  freeRerollHint: "Nothing here fits your open slots",
   selectHint: "Tap a card to draft it. It lands on the first open slot",
   yourRoster: "Your Team",
   slotPlayer: (n: number) => `Player ${n}`,
@@ -366,7 +333,6 @@ export const DRAFT_UI = {
   stillNeeded: "Still needed",
   hiddenOverall: "??",
   noCoach: "No Coach",
-  noSub: "No Sub",
   notFielded: "Not fielded this season",
   player: "Player",
   /** rc.33 (COL-02a): a special or national card the player does not own yet. */
@@ -375,31 +341,21 @@ export const DRAFT_UI = {
 };
 
 export const ONBOARDING = {
-  howToTitle: "How to play",
-  howToIntro: "Build a roster from RLCS history, then run the bracket. The basics:",
-  howToSteps: [
-    "Each round draws a historical RLCS lineup. Tap a card to draft it onto your team.",
-    "Fill 3 players, a coach, a sub and an org. Chemistry is your edge: stack the same country, org or historical lineup and a coherent roster can beat a higher-rated all-star mix. The top overall isn't always the smart pick.",
-    "Then a tournament auto-plays: Swiss into double-elim playoffs. Higher overall + chemistry wins more series.",
-    "Finish runs, win or lose, to earn XP, rank up, and unlock special cards for your collection.",
-  ],
-  howToCta: "Let's draft",
   legacyTitle: "Welcome to Legacy",
-  legacyIntro: "You unlocked the all-time gauntlet. It plays differently:",
+  legacyIntro: "What changes in Legacy:",
   legacySteps: [
     "The field is stacked with the greatest championship rosters in RLCS history.",
     "Overalls are hidden and there are no rerolls. You draft on knowledge alone.",
-    "Win here and you've beaten the best of the best. Good luck.",
   ],
   legacyCta: "Start drafting",
   /** rc.29: the Legacy intro on a Daily "Legacy Day" (Legacy not unlocked). */
-  legacyDailyIntro: "Today's Daily Challenge opens the all-time gauntlet, no unlock needed. It plays differently:",
+  legacyDailyIntro: "Today's Daily Challenge is a Legacy day, no unlock needed. What changes in Legacy:",
   regionalTitle: "Regional Draft",
-  regionalIntro: "This run is locked to one region's scene. Here's what changes:",
+  regionalIntro: "This run is locked to one region's scene.",
   regionalSteps: [
     "The pool is region-only: its international teams plus the regional rosters that never reached a World Championship.",
-    "Deeper benches, local heroes and cult underdogs you'll never see in the worldwide draft.",
-    "Everything else is the same: difficulty, chemistry, the full tournament. Win it to fly your region's flag.",
+    "Deeper benches, local heroes and cult underdogs the worldwide draft never shows.",
+    "Everything else is the same.",
   ],
   regionalCta: "Let's run it",
   // T1 (v2.0): the first draft's guided tour (it replaces the "How to play"
@@ -430,7 +386,7 @@ export const ONBOARDING = {
     },
     finish: {
       title: "Then the tournament",
-      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose. Your first lineup is drawn when you close this guide.",
+      body: "Once the team is full, the tournament plays itself: Swiss, then playoffs. Every run earns XP, win or lose.",
     },
   },
 };
@@ -494,27 +450,22 @@ export const TUTORIAL = {
     {
       icon: "draft",
       title: "Draft your team",
-      body: "Each round shows one lineup from RLCS history. Pick a card to fill a slot. Build three players, a coach, a sub and an org.",
+      body: "Each round deals one lineup from RLCS history. Pick a card to fill a slot.",
     },
     {
       icon: "field",
       title: "Then simulate",
-      body: "Your team plays a full tournament: Swiss, then playoffs. Player overalls plus chemistry decide who lifts the trophy.",
-    },
-    {
-      icon: "collection",
-      title: "Build a Collection",
-      body: "Special cards you draft are saved forever in your Collection: rare moments from RLCS history to chase and complete.",
+      body: "Your team plays a full tournament, Swiss then playoffs. Overalls and chemistry decide it.",
     },
     {
       icon: "rank",
       title: "Ranks & rewards",
-      body: "Every run earns XP. Ranking up unlocks the Collection, new card rarities, Hard mode, and a higher special-card chance.",
+      body: "Every run earns XP. Ranks unlock the Collection, card rarities, Hard mode and a higher special-card chance.",
     },
     {
       icon: "difficulty",
       title: "Pick your challenge",
-      body: "Normal is winnable with a good team. Hard hides overalls and stiffens the field. Legacy is an all-time gauntlet, for champions only.",
+      body: "Normal is winnable with a good team. Hard hides overalls and stiffens the field. Legacy is an all-time gauntlet.",
     },
   ] as { icon: string; title: string; body: string }[],
 };
@@ -894,23 +845,23 @@ export const HOWTO = {
   steps: [
     {
       title: "Draft your roster",
-      body: "Each round shows one real historical RLCS lineup. Take exactly one card: a player, the coach, the substitute or the organization. The lineup pool is always fully random, on every difficulty.",
+      body: "Each round deals one historical RLCS lineup. Take exactly one card: a player, the coach, the substitute or the organization. The pool is fully random on every difficulty.",
     },
     {
       title: "Free choice, six slots",
-      body: "You need 3 players, 1 coach, 1 substitute and 1 org. Pick in any order. Once a person is on your roster, their other versions can't be drafted again this run. If nothing in a lineup fits your remaining slots, the reroll is free.",
+      body: "You need 3 players, 1 coach, 1 substitute and 1 org, in any order. Once someone is on your roster, their other versions are out for this run. If nothing in a lineup fits, the reroll is free.",
     },
     {
       title: "Build chemistry",
-      body: "Same historical lineup is the strongest link, same country is strong, same organization counts too. Coaches and subs connected to your players add a little more. Chemistry adds rating, more on higher difficulties.",
+      body: "The same historical lineup is the strongest link, then the same country, then the same organization. Coaches and subs tied to your players add a little more. Chemistry adds rating, more on higher difficulties.",
     },
     {
       title: "Survive the bracket",
-      body: "16 teams. Swiss stage in best-of-5: 3 wins to advance, 3 losses and you're out. Top 8 seed into a double-elimination best-of-7 bracket. An upper-bracket loss drops you to the lower bracket, not out of the event. Your team rating is driven mostly by player overalls. Chemistry, org buffs, coach and special effects add the edge.",
+      body: "16 teams. Swiss in best-of-5: 3 wins advance, 3 losses are out. The top 8 play a best-of-7 double elimination. Team rating is mostly player overall; chemistry, org, coach and specials add to it.",
     },
     {
       title: "Collect special cards",
-      body: "Rare special versions of cards can appear in any draft: iconic moments, MVP runs, legends. Draft one and finish the run, win or lose, and it's unlocked in your collection forever.",
+      body: "Rare special cards can appear in any draft: iconic moments, MVP runs, legends. Draft one and finish the run, win or lose, to unlock it in your collection.",
     },
   ],
   difficultiesTitle: "Difficulties",
@@ -927,46 +878,43 @@ export const HOWTO = {
   raritiesMid1: " (79 or below), ",
   raritiesMid2: " (80–89) and ",
   raritiesAfter:
-    " (90+). With overalls hidden, base cards turn black and show ??; special cards keep their look, but the number stays hidden until the results screen.",
+    " (90+). With overalls hidden, base cards show ??; special cards keep their look, and the number appears on the results screen.",
   startFirst: "Start your first draft",
 };
 
 export const NARRATION = {
   seriesWin: [
     "Your team closes it out with room to spare.",
-    "Composed series. The gap showed on the scoreboard.",
+    "A composed series, and the scoreboard showed it.",
     "Clean execution from start to finish.",
   ],
   seriesWinClose: [
     "Your team survives a full-length series.",
     "It came down to the smallest of margins.",
-    "A deciding game with everything on the line, and your roster delivers.",
+    "A deciding game, and your roster delivers.",
   ],
   seriesLoss: [
     "Your team struggled to close out the series.",
     "The opponent dictated the pace throughout.",
-    "A rough series. The reset button exists for a reason.",
+    "A rough series.",
   ],
   seriesLossClose: [
-    "One game short. That one will sting.",
+    "One game short.",
     "A deciding game slips away at the death.",
-    "Inches from the win. The series goes the other way.",
+    "Inches from the win, and the series goes the other way.",
   ],
   upsetWin: [
     "The lower-rated roster finds the upset.",
-    "Nobody had this one on the board. Your team takes down the favorite.",
+    "Your team takes down the favorite.",
   ],
   upsetLoss: [
     "An upset on the board: the favorite falls.",
-    "Your roster gets caught by a team playing above its rating.",
+    "A lower-rated team takes the series.",
   ],
   overtimeNote: "Overtime decided it.",
-  clutchNote: "Clutch factor tipped the deciding game.",
   specialNote: "A special card effect activated.",
   starLine: (name: string) => `${name} led the charge.`,
   starLineOpponent: (name: string) => `${name} was everywhere for the opposition.`,
-  chemistryNote: "Chemistry made the difference in a close matchup.",
-  coachNote: "The coach bonus helped stabilize the run.",
 };
 
 export const STAT_LABELS: Record<string, string> = {

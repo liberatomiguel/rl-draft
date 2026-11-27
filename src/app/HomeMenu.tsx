@@ -448,23 +448,23 @@ export default function HomeMenu() {
               </div>
             </div>
           ) : (
-            <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc} dot={dots.collection} dotLabel={NAV_UI.newHere}>
+            <Tile href="/collection" title={HOME.collection} dot={dots.collection} dotLabel={NAV_UI.newHere}>
               <span className="display text-5xl font-extrabold leading-none text-ink">
                 {mounted ? unlocked : 0}
                 <span className="text-base text-faint">/{COUNTS.specialCards}</span>
               </span>
             </Tile>
           )}
-          <Tile href="/achievements" title={HOME.achievements} desc={HOME.achievementsDesc}>
+          <Tile href="/achievements" title={HOME.achievements}>
             <span className="display text-5xl font-extrabold leading-none text-ink">
               {mounted ? achieved : 0}
               <span className="text-base text-faint">/{COUNTS.achievements}</span>
             </span>
           </Tile>
-          <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc} dot={dots.profile} dotLabel={NAV_UI.newHere}>
+          <Tile href="/profile" title={HOME.profile} dot={dots.profile} dotLabel={NAV_UI.newHere}>
             {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : <span className="h-12" />}
           </Tile>
-          <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
+          <Tile href="/leaderboards" title={HOME.leaderboards}>
             <span className="flex h-12 items-center text-ink" aria-hidden>
               <TrophyGlyph />
             </span>
@@ -599,14 +599,12 @@ function CardHit({
 function Tile({
   href,
   title,
-  desc,
   dot,
   dotLabel,
   children,
 }: {
   href: string;
   title: string;
-  desc: string;
   /** rc.33: something not opened yet behind this tile. */
   dot?: boolean;
   dotLabel?: string;
@@ -618,7 +616,6 @@ function Tile({
       {children}
       <div className="min-w-0">
         <h3 className="display text-base uppercase leading-none text-ink">{title}</h3>
-        <p className="mt-1.5 hidden text-xs leading-snug text-sub sm:block">{desc}</p>
       </div>
     </AppLink>
   );

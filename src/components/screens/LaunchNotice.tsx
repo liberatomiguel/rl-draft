@@ -98,8 +98,6 @@ export function LaunchNotice() {
             <h2 id="launch-title" className="display">
               {L.title}
             </h2>
-            <p className={styles.headline}>{L.headline}</p>
-            <p className={styles.lead}>{L.intro}</p>
           </div>
           <section className={styles.showcase}>
             <div className={styles.previewTabs}>
@@ -121,16 +119,6 @@ export function LaunchNotice() {
             </div>
             <p className={styles.caption}>{L.caption}</p>
           </section>
-          <div className={styles.details}>
-            {/* A plain ruled list: the six glyph tiles that sat here (a target,
-                a sparkle, a star) denoted nothing about their items. */}
-            {L.details.map((d) => (
-              <section key={d.title}>
-                <h3>{d.title}</h3>
-                <p>{d.body}</p>
-              </section>
-            ))}
-          </div>
         </div>
         <footer className={styles.footer}>
           <div>
