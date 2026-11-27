@@ -24,6 +24,7 @@ Miguel's brief of 27/11: taking over an org, the player does not choose his goal
 ### Changed
 - An established org's season has one package (the mandate's classification goal) and no secondary or legacy ask. `chooseBoardPackageFlow` with any id reads the mandate there.
 - The competent bot (`tuned`) works the mandate (R179); every bot reads it, so none stops on it.
+- After the merge with the 2027 start (front ERA): the board's dates read the career season or the year ("Season 3", "S1 · W3", "RLCS 2027"), not the era index; the signing bar is capped per tier; "no sponsor" is not a problem in the board's first week.
 
 ### Balance
 - `CAREER_BOARD.mandate` (demand, terms, issue thresholds, the money and squad goals' figures). BALANCE_VERSION 53 → 54.
