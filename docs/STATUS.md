@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Updated: **2026-11-26**. History: CHANGELOG.md. Career map:
+> Updated: **2026-11-27**. History: CHANGELOG.md. Career map:
 > ROAD-TO-WORLDS-STATUS.md. Post-2.0 Road to Worlds roadmap:
 > ROADMAP-RTW-2026-11-17.md, reordered by PLANO-PROXIMO-NIVEL-2026-11-19.md
 > (E1/E2 decided 24/11). Etapa 1: ETAPA-1-STATUS.md (gate closed) and
@@ -12,9 +12,11 @@
 - **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
   `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
   download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.6 (27/11/2026)**, branch `release/v2.2` (rc.6 redoes
-  the takeover of a real org: standing, operations, the org's budget, new
-  screens; BALANCE_VERSION 52): the 2.1 rc.6 plus
+- **Staging = 2.2.0-rc.7 (27/11/2026)**, branch `release/v2.2` (rc.7 is the
+  second pass on the takeover of a real org: it starts in RLCS 2027 with the
+  current orgs, and the board sets a mandate of three goals with no choice;
+  R173 to R180, BALANCE_VERSION 55; rc.6 gave it standing, operations, the
+  org's budget and its screens): the 2.1 rc.6 plus
   the big update, each part behind its own staging-only flag: the Pro player
   career to retirement (`proCareer`), a start at a real organisation
   (`realOrgStart`), the board with confidence, dismissal and job offers
@@ -28,6 +30,13 @@
   running (no full check of the board, real-organisation and endless screens
   nor of the Pro's match, gala and card); per-season circuit formats were
   judged unsafe and are not built.
+- **Share kit (27/11/2026, on staging since rc.6, branch `claude/share-boost`):**
+  one share sheet for runs, the Daily, duels, Road to Worlds careers and an
+  invitation; images in Post (1200 x 630) and Story (1080 x 1920) drawn in the
+  game's material; WhatsApp, X, Reddit, Telegram, copy image, native share;
+  "With friends" on the Home (duel in one click, invite). Event
+  `content_shared`; links carry `utm_medium=share`. Decisions #202 to #206.
+  Not checked on a physical phone (native share sheet, Instagram story).
 - **rc.6 (24/11/2026)** below it, integration of five lines on top of
   rc.5 (`3914518`, the phone redesign):
   - **Phone redesign (rc.5):** every screen has its own layout under 640px

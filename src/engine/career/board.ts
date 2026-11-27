@@ -157,6 +157,11 @@ export interface PackageInput extends ObjectiveInput {
    * than `objectiveMaxCount` regionals. Absent = the founded rules.
    */
   established?: boolean;
+  /**
+   * v2.2 MANDATE: an established org's demand level moves every aim by this (negative = harder),
+   * inside CAREER_BOARD.aimClamp. Absent = 0 (a founded club never passes it).
+   */
+  demandShift?: number;
 }
 
 /** rc.6: the goals an established org's board may ask for (no cups, no more than objectiveMaxCount regionals). */
@@ -190,6 +195,11 @@ function pickFor(
   return nearest(pool, aim, filter);
 }
 
+/** An aim moved by the demand level, kept inside the clamp (no shift: the aim as it was). */
+function demandAim(aim: number, shift: number | undefined): number {
+  return shift ? clamp(aim + shift, B.aimClamp.min, B.aimClamp.max) : aim;
+}
+
 /**
  * The three offers, cautious → ambitious: each objective nearest its aim,
  * and each strictly harder than the one before when the season has one.
@@ -200,7 +210,7 @@ export function boardPackagesFor(input: PackageInput): BoardPackage[] {
   const patience = patienceOf(input.stature, input.difficulty);
   const pick = (pkg: PackageId, filter?: (c: SeasonGoalSpec) => boolean) =>
     established
-      ? pickFor(pool, objectiveAimOf(pkg, input.stature, input.difficulty), preferredKindsOf(input.stature, pkg), filter)
+      ? pickFor(pool, demandAim(objectiveAimOf(pkg, input.stature, input.difficulty), input.demandShift), preferredKindsOf(input.stature, pkg), filter)
       : nearest(pool, objectiveAimOf(pkg, input.stature, input.difficulty), filter);
   // Never an empty objective: a season with no rated goal (a squad that cannot play) asks to play a Sunday regional.
   const expected = pick("expected") ?? { kind: "regionalReach" as const, count: 1, chance: 0.5 };

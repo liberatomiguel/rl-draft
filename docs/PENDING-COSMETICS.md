@@ -3,6 +3,28 @@
 Atualizado em 12/11/2026, rc.51. Este é o ponto de entrada para retomar as
 pendências; não marcar como concluído apenas porque o código foi publicado.
 
+- [ ] **Banner "Party Leader" (v2.2, kit de compartilhamento): arte do Miguel
+  + decisão da contagem.** Proposta de 27/11: o banner de quem trouxe **5
+  pessoas** para jogar (tier épico, prioridade 59, id
+  `share-banner-party-leader`, arte `party-leader`). Ideia da arte para o
+  arquivo de banners: o "party" do Rocket League, cinco vagas de jogador lado a
+  lado; a primeira em laranja (você) e as outras quatro acendendo em azul uma a
+  uma, com rastros de boost convergindo para o centro. Movimento pelo pipeline
+  de FRAMES (base, f1, f2 = as vagas acendendo). Moldura sugerida
+  `["#ff6a1a", "#2a66ff", "#fff1e0"]`, glow `#ff6a1a`. Contagem em aberto
+  (decisão do Miguel): (A) indicação contada no servidor (Supabase): o link
+  leva o código de quem convidou, um aparelho NOVO que chega por ele e termina a
+  primeira run conta uma vez, quem convidou precisa estar logado; exige SQL
+  aplicado por ele e só dá para testar com contas ligadas. (B) sem servidor:
+  corridas de amigos que voltam nos links de duelo; funciona hoje no staging,
+  mas dá para burlar jogando o próprio link em outro navegador. Ao ganhar, o
+  perfil grava a marca `share-friends-5` (mesma lista sincronizada das marcas de
+  run). A entrada no catálogo só entra junto com a arte (o teste de cosméticos
+  exige o arquivo).
+
+- [x] **Title "Ambassador" (v2.2).** Incomum, cinza, ganho no primeiro
+  compartilhamento por qualquer canal (marca `share-first`).
+
 - [ ] **Permitir a concessão online de 50/50 Staff no Supabase de staging.**
   A migração `docs/sql/rc38-staff-grant.sql` está pronta, mas NÃO foi executada:
   não havia conexão administrativa identificada para o projeto de staging.

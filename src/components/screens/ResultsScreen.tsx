@@ -23,14 +23,6 @@ import {
 import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
-import {
-  downloadShareCard,
-  shareCardBlob,
-  shareCardColor,
-  shareCardDataUrl,
-  type ShareCardData,
-} from "@/lib/shareCard";
-import { orgLogoSrc } from "@/lib/assets";
 import { dailyRunTag, resultStageLabel, signedDelta, xpLineLabel, xpMultiplierRows } from "@/lib/runLabels";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
@@ -45,7 +37,6 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { Modal } from "@/components/ui/Modal";
 import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { GameCard } from "@/components/cards/GameCard";
@@ -56,6 +47,7 @@ import { achievementStyle } from "@/components/achievementStyle";
 import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { ResearchInvite } from "@/components/ResearchInvite";
 import { DuelInvite } from "@/components/duel/DuelInvite";
+import { RunShareSheet } from "@/components/share/RunShareSheet";
 import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 import { DailyOptimalPanel } from "./DailyOptimalPanel";
@@ -99,7 +91,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   );
   const [rankUpSeen, setRankUpSeen] = useState(false);
   const [legacySeen, setLegacySeen] = useState(false);
-  const [shareData, setShareData] = useState<ShareCardData | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Placement cue, once on mount.
   useEffect(() => {
@@ -154,53 +146,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
     clearRun();
   };
 
-  const handleShare = () => {
-    const roleOf: Record<string, string> = {
-      player1: "P1", player2: "P2", player3: "P3", ...R.shareRoles,
-    };
-    const cards = rosterSlots(run.draft.roster)
-      .filter((s) => s.card)
-      .map((s) => {
-        const c = s.card!;
-        const isOrg = c.kind === "org";
-        const isSpecial = Boolean(c.special);
-        // Every card carries its org crest (org id is the org card's ref, or the
-        // card's own org for players/coach/sub).
-        const orgId = isOrg ? (c.orgId ?? c.refId) : c.orgId;
-        return {
-          name: c.name,
-          value: isOrg ? (c.buffLevel && c.buffLevel !== "~" ? c.buffLevel : "~") : String(c.overall ?? ""),
-          color: shareCardColor({
-            isSpecial,
-            specialRarity: c.special?.rarity,
-            overall: c.overall,
-            isOrg,
-            buffLevel: c.buffLevel,
-          }),
-          isSpecial,
-          role: roleOf[s.slot] ?? s.slot,
-          // Drawn into a ≤112×40 box on the 1200×630 canvas: the large logo
-          // variant is plenty (canvas drawImage decodes WebP like any <img>).
-          // Orgs without a logo get no URL → no request, the card just skips it.
-          imageUrl: (orgId && orgLogoSrc(orgId, 176)) || undefined,
-        };
-      });
-    setShareData({
-      placementLabel: placement.title,
-      placement: results.placement,
-      modeLabel: run.daily ? dailyRunTag(run.daily, DAILY_TEXT) : run.mode === "quick" ? R.shareModeQuick : R.shareModeClassic,
-      difficultyLabel: DIFFICULTY_LABELS[run.difficulty]?.label ?? DIFFICULTY[run.difficulty].label,
-      hiddenOverallLabel: R.shareHiddenOvr,
-      hiddenOverall: !run.showOverall,
-      swissRecord:
-        run.mode === "quick" ? null : `${results.swissRecord.wins}-${results.swissRecord.losses}`,
-      teamOverall: displayTeamOverall(team.rating),
-      chemistryTier: team.chemistry.tier,
-      cards,
-      xp: results.xp.total,
-      date: new Date().toISOString().slice(0, 10),
-    });
-  };
+  // v2.2 share kit: the sheet draws the run's image (post or story) on open.
+  const handleShare = () => setShareOpen(true);
 
   // Phone (mobile redesign, stage 2): the actions are one 65px row on ground
   // (`.action-dock`: play again and share; "back to menu" is the nav's Home on
@@ -572,101 +519,25 @@ export function ResultsScreen({ run }: { run: RunState }) {
         </Button>
       </div>
 
-      {shareData ? (
-        <ShareModal
-          data={shareData}
-          isChampion={isChampion}
-          placementLabel={placement.title}
-          onClose={() => setShareData(null)}
-        />
-      ) : null}
+      <RunShareSheet
+        run={run}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        placementLabel={placement.title}
+        teamOverall={displayTeamOverall(team.rating)}
+        chemistryTier={team.chemistry.tier}
+        modeLabel={run.mode === "quick" ? R.shareModeQuick : R.shareModeClassic}
+        difficultyLabel={DIFFICULTY_LABELS[run.difficulty]?.label ?? DIFFICULTY[run.difficulty].label}
+      />
 
       {/* v2.0.31: the research form, for returning players, once the results have settled. */}
       <ResearchInvite
         surface="draft"
-        ready={countXp && !shareData}
+        ready={countXp && !shareOpen}
         signals={{ activeDays, runsCompleted, careerSeasons: 0 }}
         text={RESEARCH_UI}
       />
     </div>
-  );
-}
-
-/**
- * Share preview (v1.3.1): renders the share image, a placement-aware caption and
- * three ways out — native Share (image + text on supporting devices), an X
- * compose intent (prefilled text), or a plain PNG download.
- */
-function ShareModal({
-  data,
-  isChampion,
-  placementLabel,
-  onClose,
-}: {
-  data: ShareCardData;
-  isChampion: boolean;
-  placementLabel: string;
-  onClose: () => void;
-}) {
-  const { RESULTS_UI: R } = useCopy();
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let alive = true;
-    void shareCardDataUrl(data).then((u) => {
-      if (alive) setUrl(u);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [data]);
-
-  const message = isChampion ? R.shareMsgChampion : R.shareMsgPlacement(placementLabel);
-
-  const onNativeShare = async () => {
-    try {
-      const blob = await shareCardBlob(data);
-      const file = new File([blob], `rocket-draft-${data.date}.png`, { type: "image/png" });
-      const nav = navigator as Navigator & {
-        canShare?: (d: ShareData) => boolean;
-      };
-      if (nav.canShare?.({ files: [file] }) && nav.share) {
-        await nav.share({ files: [file], text: `${message} rocketdraft.app` });
-        return;
-      }
-    } catch {
-      /* user cancelled or unsupported — fall through to download */
-    }
-    void downloadShareCard(data);
-  };
-
-  const onX = () => {
-    const text = encodeURIComponent(`${message} rocketdraft.app`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer");
-  };
-
-  return (
-    <Modal open title={R.shareTitle} onClose={onClose} wide>
-      <div className="space-y-4">
-        {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt="" className="w-full rounded-lg border border-line" />
-        ) : (
-          <div className="aspect-[1200/630] w-full animate-pulse rounded-lg bg-white/5" />
-        )}
-        <p className="text-center text-sm text-sub">{message}</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="primary" onClick={onNativeShare}>
-            {R.shareNative}
-          </Button>
-          <Button variant="secondary" onClick={onX}>
-            {R.shareX}
-          </Button>
-          <Button variant="ghost" onClick={() => void downloadShareCard(data)}>
-            {R.shareDownload}
-          </Button>
-        </div>
-      </div>
-    </Modal>
   );
 }
 

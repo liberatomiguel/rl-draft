@@ -24,7 +24,7 @@
  * news after each action).
  */
 
-import { acceptJobOfferFlow, chooseBoardPackageFlow, chooseBoardUpgradeFlow, declineJobOfferFlow, type BoardUpgradeOption } from "./boardFlow";
+import { acceptJobOfferFlow, acknowledgeMandateFlow, chooseBoardPackageFlow, chooseBoardUpgradeFlow, declineJobOfferFlow, type BoardUpgradeOption } from "./boardFlow";
 import type { PackageId } from "@/engine/career/boardTypes";
 import { answerLockerTalkFlow, lockerRoomAfter } from "./lockerRoomFlow"; // v2.3 LOCKER
 import { answerMediaOfferFlow, mediaDaysAfter } from "./mediaDaysFlow"; // v2.3 MEDIA
@@ -363,6 +363,8 @@ interface CareerStoreState {
   reviewContracts: () => void;
   /** v2.2 board front: the season's package, a job offer, turning an approach down (store/boardFlow). */
   chooseBoardPackage: (id: PackageId) => void;
+  /** v2.2 MANDATE: an established org's season mandate read (the season starts on it). */
+  acknowledgeMandate: () => void;
   acceptJobOffer: (id: string) => void;
   declineJobOffer: () => void;
   chooseBoardUpgrade: (id: BoardUpgradeOption["id"]) => void;
@@ -773,6 +775,7 @@ export const useCareerStore = create<CareerStoreState>()(
         declineSponsorOffers: () => withResult(declineSponsorOffersFlow),
         reviewContracts: () => withResult(reviewContractsFlow),
         chooseBoardPackage: (id) => withResult((s) => chooseBoardPackageFlow(s, id)),
+        acknowledgeMandate: () => withResult(acknowledgeMandateFlow),
         acceptJobOffer: (id) => withResult((s) => acceptJobOfferFlow(s, id)),
         declineJobOffer: () => withResult(declineJobOfferFlow),
         chooseBoardUpgrade: (id) => withResult((s) => chooseBoardUpgradeFlow(s, id)),

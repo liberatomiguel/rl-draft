@@ -35,8 +35,21 @@ import {
   ultimatumMissionFor,
   type ObjectiveInput,
 } from "@/engine/career/board";
-import type { BoardPackage, BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
+import type { BoardMandate, BoardPackage, BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
+import {
+  buildMandate,
+  countYouthEvent,
+  demandAimShiftOf,
+  demandOf,
+  markWageDeadline,
+  moneyProgressOf,
+  orgHistoryOf,
+  settleMandate,
+  squadProgressOf,
+} from "@/engine/career/mandate";
+import { goalTotalOf } from "@/engine/career/board";
 import { deliverMail, deliverNews } from "@/engine/career/communications";
+import { careerSeasonOf } from "@/engine/career/era";
 import { grantBaseNow, wageCeilingOf } from "@/engine/career/budget";
 import { applyTierChange, establishedOf, gateRepOf, standingChangeFor, structureWeeklyOf } from "@/engine/career/established";
 import { seasonYear } from "@/engine/career/development";
@@ -48,7 +61,7 @@ import { seasonGoalProgressOf, seasonGoalChance } from "@/engine/career/seasonGo
 import { derivedFloat, streams } from "@/engine/career/seeds";
 import { windowIndexOf, weekOfDay } from "@/engine/career/calendar";
 import { fillerOrgName } from "@/engine/career/worldSim";
-import type { CareerSave, MailItem } from "@/engine/career/types";
+import type { CareerSave, CompactEventResult, MailItem } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 import { buyGearFlow, chooseSponsorFlow, fieldDrawOf, openEstablishedSponsorDesk, setStaffFlow, sponsorLevelOf, type CreateCareerInput, type FlowResult } from "./careerFlow";
 import { safestSponsorOfferOf } from "@/engine/career/sponsorDeals";
@@ -134,7 +147,10 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
       : established
         ? grantBaseNow(board, s)
         : quantize(Math.min(week, wageRoomNow(board, s)) * profileOf(board.stature).grantWeeks);
-  const offers = boardPackagesFor({
+  // v2.2 MANDATE: an established org's board tells, it does not offer: its demand level aims the classification goal.
+  const tier = established && board.stature !== "owners" ? board.stature : null;
+  const demand = tier ? demandOf(tier, board.prestige ?? 1) : null;
+  const allOffers = boardPackagesFor({
     ...input,
     stature: board.stature,
     difficulty: save.difficulty,
@@ -142,6 +158,7 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
     budgetMult: board.budgetMult,
     weekWages: week,
     ...(established ? { established: true } : {}),
+    ...(demand ? { demandShift: demandAimShiftOf(demand) } : {}),
   });
   const last = save.history[save.history.length - 1];
   const lastTitles = last && last.seasonIndex === s - 1 ? titlesOfSeason(save, s - 1) : null;
@@ -161,18 +178,87 @@ function offerSeason(save: CareerSave & { board: BoardState }): void {
           ...(prev ? { bestFinish: bestFinishOf(save.eventResults, s - 1) } : {}),
         })
       : null;
+  const mandate =
+    tier && demand
+      ? buildMandate(save, {
+          classification: allOffers.find((o) => o.id === "expected")!,
+          tier,
+          demand,
+          patience: patienceOf(board.stature, save.difficulty),
+          last: prev?.mandate ?? null,
+          lastTier: board.tierChange?.seasonIndex === s - 1 ? board.tierChange.from : tier,
+        })
+      : null;
+  // The mandate's classification goal is the season's one package (its terms are the mandate's).
+  const offers = mandate
+    ? allOffers.filter((o) => o.id === "expected").map((o) => ({ ...o, bonus: mandate.classification.gain.bonus, hit: mandate.classification.gain.confidence, miss: mandate.classification.loss.confidence }))
+    : allOffers;
   board.season = {
     seasonIndex: s,
     offers,
     choice: null,
-    secondary: secondaryFor(derivedFloat(save.careerSeed, streams.gen("boardSecondary", String(s))), majorChance, wageRoomNow(board, s)),
-    legacy: legacyFor(lastTitles, input),
+    secondary: mandate ? null : secondaryFor(derivedFloat(save.careerSeed, streams.gen("boardSecondary", String(s))), majorChance, wageRoomNow(board, s)),
+    legacy: mandate ? null : legacyFor(lastTitles, input),
     startChance: null,
     checkpoints: [],
     met: null,
     ...(brief ? { brief } : {}),
+    ...(mandate ? { mandate } : {}),
   };
-  mail(save, "boardPackage", { season: s + 1 });
+  if (!mandate) {
+    mail(save, "boardPackage", { season: careerSeasonOf(save, s) + 1 });
+    return;
+  }
+  // The season's transfer money is kept from today (the ledger tail is shorter than a season).
+  save.finances = { ...save.finances, transferTally: { seasonIndex: s, out: 0, in: 0 } };
+  mail(save, "boardMandate", mandateParams(save, mandate));
+  // The owner's welcome lands last, so it is the first mail the inbox lists on the takeover's day.
+  if (s === board.startSeason) welcomeMail(save);
+}
+
+/** v2.2 MANDATE: the owner's welcome on the board's first day (the org's own history, where the dataset has it). */
+function welcomeMail(save: CareerSave): void {
+  const h = save.identity.realOrgRef ? orgHistoryOf(save.identity.realOrgRef, save.clock.seasonIndex) : null;
+  const item: Omit<MailItem, "id" | "seasonIndex" | "day" | "read"> = {
+    kind: "club",
+    titleKey: "boardWelcome",
+    bodyKey: "boardWelcome",
+    params: {
+      org: save.identity.orgName,
+      manager: save.identity.managerName,
+      tier: save.board?.stature ?? "mid",
+      ...(h ? { seasons: h.seasons, since: h.since, top: h.topSeasons } : {}),
+    },
+    fromKey: "owner",
+    linkTo: "/career/board",
+  };
+  deliverMail(save, item);
+}
+
+/** The mandate as mail params: the copy layer turns the kinds and figures into the three goals (newsText). */
+export function mandateParams(save: CareerSave, m: BoardMandate): Record<string, string | number> {
+  const o = m.classification.objective;
+  return {
+    season: careerSeasonOf(save, m.seasonIndex) + 1,
+    org: save.identity.orgName,
+    demand: m.demand,
+    clsKind: o.kind,
+    clsCount: o.count,
+    clsPlace: o.place ?? 0,
+    clsTotal: goalTotalOf(o.kind),
+    moneyKind: m.money.kind,
+    amount: m.money.amount,
+    moneyWeek: m.money.week ?? 0,
+    squadKind: m.squad.kind,
+    squadValue: m.squad.value,
+    squadPlayer: (m.squad.playerNames ?? []).join(" · "),
+    clsHit: m.classification.gain.confidence,
+    clsMiss: m.classification.loss.confidence,
+    moneyHit: m.money.gain.confidence,
+    moneyMiss: m.money.loss.confidence,
+    squadHit: m.squad.gain.confidence,
+    squadMiss: m.squad.loss.confidence,
+  };
 }
 
 /** v2.2: the season's titles as the history kept them (Major wins counted from the honours, Worlds from the record). */
@@ -195,9 +281,11 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
     return;
   }
   let stature: ProfileKey = "owners";
+  let prestige: number | null = null;
   if (input.realOrgRef && FEATURES.realOrgStart) {
     const ref = input.realOrgRef;
     if (save.world.orgs[ref]) {
+      prestige = save.world.orgs[ref].prestige;
       leaveSeat(save, false);
       const taken = takeOrgSeat(save, ref);
       if (taken) stature = taken.stature;
@@ -212,6 +300,7 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
   }
   // v2.2 ORGMODE-2027: the board and the manager start at the career's own start era.
   save.board = boardFor(save, stature, save.clock.seasonIndex);
+  if (prestige !== null && stature !== "owners") save.board.prestige = prestige;
   save.manager = newManagerState(save.clock.seasonIndex, save.identity.orgName, save.identity.realOrgRef);
   offerSeason(save as CareerSave & { board: BoardState });
 }
@@ -253,11 +342,40 @@ export function pendingPackageOf(save: CareerSave): BoardPackage[] | null {
   return season && season.seasonIndex === save.clock.seasonIndex && season.choice === null ? season.offers : null;
 }
 
-/** The manager takes one of the three packages: its budget is paid, its objective becomes the season's target. */
+/** v2.2 MANDATE: the season's mandate while the player has not read it (it holds the clock like the plan choice did). */
+export function pendingMandateOf(save: CareerSave): BoardMandate | null {
+  if (!pendingPackageOf(save)) return null;
+  const m = (save as CareerSave & { board: BoardState }).board.season?.mandate;
+  return m && !m.acknowledged ? m : null;
+}
+
+/** v2.2 MANDATE: the season's mandate once set (read or not), when the board season is this season's. */
+export function mandateOf(save: CareerSave): BoardMandate | null {
+  if (!boardOn(save)) return null;
+  const season = save.board.season;
+  return season && season.seasonIndex === save.clock.seasonIndex && season.mandate ? season.mandate : null;
+}
+
+/** v2.2 MANDATE: the player has read the mandate: the season starts on it (the classification goal is the season's target). */
+export function acknowledgeMandateFlow(input: CareerSave): FlowResult {
+  if (!pendingMandateOf(input)) return { save: input, error: "none" };
+  return chooseBoardPackageFlow(input, "expected");
+}
+
+/**
+ * The manager takes one of the three packages: its budget is paid, its objective becomes the season's target.
+ * v2.2 MANDATE: an established org's season has one package, the mandate's classification goal; any id
+ * acknowledges the mandate (the bots and older tools pass the plan they used to choose).
+ */
 export function chooseBoardPackageFlow(input: CareerSave, id: PackageId): FlowResult {
   if (!pendingPackageOf(input)) return { save: input, error: "none" };
   const save = structuredClone(input) as CareerSave & { board: BoardState };
   const season = save.board.season!;
+  const mandate = season.mandate;
+  if (mandate) {
+    id = "expected";
+    mandate.acknowledged = true;
+  }
   const pkg = season.offers.find((o) => o.id === id);
   if (!pkg) return { save: input, error: "unknown" };
   season.choice = id;
@@ -341,6 +459,9 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
     }
   }
   debtCheck(save);
+  // v2.2 MANDATE: the wage goal's deadline is read at its week's boundary.
+  const mandate = season.mandate;
+  if (mandate) markWageDeadline(save, mandate.money, week);
   const warnedBefore = board.warnedSeason !== null;
   warnIfLow(save);
   if (board.confidence < B.confidence.ultimatum && warnedBefore && ultimatumAllowed(board, save.clock.seasonIndex)) {
@@ -350,7 +471,41 @@ export function boardOnSplitBoundary(save: CareerSave, week: number): void {
       mail(save, "boardUltimatum", { kind: mission.kind, count: mission.count, place: mission.place ?? 0, band: chanceBandOf(mission.chance) });
     }
   }
+  // v2.2 MANDATE: the split's report covers the three goals, every split (an ultimatum set today has its own mail).
+  if (mandate && mandate.acknowledged) {
+    const ultimatumToday = board.ultimatum?.issuedSeason === save.clock.seasonIndex && board.ultimatum.issuedDay === save.clock.day;
+    if (!ultimatumToday) {
+      mail(save, "boardMandateReport", {
+        ...mandateParams(save, mandate),
+        ...mandateStatusParams(save, mandate),
+        split,
+        confidence: board.confidence,
+        delta: board.confidence - before,
+        ...(bandNow ? { band: bandNow } : {}),
+      });
+    }
+    return;
+  }
   if (board.confidence !== before && !board.ultimatum) mail(save, "boardCheckpoint", { split, confidence: board.confidence, delta: board.confidence - before, ...(bandNow ? { band: bandNow } : {}) });
+}
+
+/** v2.2 MANDATE: each goal's state for a mail (classification: 1 met, 0 out of reach, 2 open; the others: 1 on track, 0 not). */
+function mandateStatusParams(save: CareerSave, m: BoardMandate): Record<string, number> {
+  const cls = seasonGoalProgressOf(m.classification.objective, progressCtx(save));
+  return {
+    clsDone: Math.min(cls.done, cls.target),
+    clsTarget: cls.target,
+    clsOk: cls.hit ? 1 : cls.out ? 0 : 2,
+    moneyOk: moneyProgressOf(save, m.money).onTrack ? 1 : 0,
+    squadOk: squadProgressOf(save, m.squad).onTrack ? 1 : 0,
+  };
+}
+
+/** v2.2 MANDATE hook (careerFlow.ingestResult): an official event played, for the prospect's events. */
+export function boardOnEventResult(save: CareerSave, result: CompactEventResult, fieldedIds: readonly string[]): void {
+  const m = mandateOf(save);
+  if (!m || !m.acknowledged || save.phase !== "running") return;
+  countYouthEvent(m.squad, result, fieldedIds);
 }
 
 // ---------------------------------------------------------------------------
@@ -382,6 +537,8 @@ export function boardOnSeasonReview(save: CareerSave): void {
   const when = today(save);
   const week = weekWagesOf(save);
   const pkg = chosenOf(board);
+  // v2.2 MANDATE: the cash goal reads the books before the review pays any board bonus.
+  const balanceAtReview = save.finances.balance;
 
   // 1. The sporting objective (the season goal's target).
   if (pkg) {
@@ -396,6 +553,25 @@ export function boardOnSeasonReview(save: CareerSave): void {
       bumpManagerRep(manager, B.manager.objectiveMiss);
     }
   } else season.met = false;
+
+  // 1b. v2.2 MANDATE: the money and squad goals settled, each with its confidence, budget step and bonus
+  // (the classification's confidence and bonus were step 1's, on the package that carries its terms).
+  const mandate = season.mandate;
+  if (mandate) {
+    mandate.classification.met = season.met;
+    const verdict = settleMandate(save, mandate, balanceAtReview);
+    mandate.money.met = verdict.money;
+    mandate.squad.met = verdict.squad;
+    let budgetStep = season.met ? mandate.classification.gain.budget : mandate.classification.loss.budget;
+    for (const g of [mandate.money, mandate.squad]) {
+      const t = g.met ? g.gain : g.loss;
+      const area = g.area === "money" ? "Money" : "Squad";
+      applyConfidence(board, t.confidence, `mandate${area}${g.met ? "Met" : "Missed"}`, when);
+      if (t.bonus > 0) pay(save, t.bonus);
+      budgetStep += t.budget;
+    }
+    if (budgetStep !== 0) board.budgetMult = Math.round(Math.min(B.budget.max, Math.max(B.budget.min, board.budgetMult + budgetStep)) * 1000) / 1000;
+  }
 
   // 2. The secondary objective.
   if (season.secondary) {
@@ -477,7 +653,7 @@ export function boardOnSeasonReview(save: CareerSave): void {
   if (c >= B.confidence.high) {
     board.budgetMult = Math.min(B.budget.max, board.budgetMult + B.budget.step);
     manager.contractUntil = Math.max(manager.contractUntil, s + 1) + B.contract.extendSeasons;
-    mail(save, "boardHighConfidence", { confidence: c, until: manager.contractUntil + 1 });
+    mail(save, "boardHighConfidence", { confidence: c, until: careerSeasonOf(save, manager.contractUntil) + 1 });
   } else if (c < B.confidence.warn) {
     board.budgetMult = Math.max(B.budget.min, board.budgetMult - B.budget.step);
   }
@@ -487,7 +663,9 @@ export function boardOnSeasonReview(save: CareerSave): void {
   }
   if (c >= B.confidence.warn) board.warnedSeason = null;
   warnIfLow(save);
-  mail(save, "boardVerdict", { met: season.met ? 1 : 0, confidence: c });
+  if (mandate) {
+    mail(save, "boardMandateVerdict", { ...mandateParams(save, mandate), clsMet: season.met ? 1 : 0, moneyMet: mandate.money.met ? 1 : 0, squadMet: mandate.squad.met ? 1 : 0, confidence: c });
+  } else mail(save, "boardVerdict", { met: season.met ? 1 : 0, confidence: c });
   boardTierReview(save as CareerSave & { board: BoardState });
 
   // 8. An unsolicited approach from a bigger org (never holds).
@@ -578,6 +756,7 @@ export function boardSeatAtRollover(save: CareerSave, nextSeason: number): void 
   save.clock = { seasonIndex: nextSeason, day: 1 };
   const leftName = save.identity.orgName;
   const leftRegion = save.identity.region;
+  const prestige = offer.kind === "org" && offer.ref ? save.world.orgs[offer.ref]?.prestige : undefined;
   leaveSeat(save, true);
   const taken = offer.kind === "org" && offer.ref ? takeOrgSeat(save, offer.ref) : foundNewSeat(save, offer.name);
   const seat = taken ?? foundNewSeat(save, offer.name);
@@ -592,7 +771,12 @@ export function boardSeatAtRollover(save: CareerSave, nextSeason: number): void 
   manager.offers = null;
   manager.accepted = null;
   manager.contractUntil = nextSeason + B.contract.startSeasons - 1;
-  save.board = { ...boardFor(save, seat.stature, nextSeason), log: [], ...(save.identity.region !== leftRegion ? { regionChangedAt: nextSeason } : {}) };
+  save.board = {
+    ...boardFor(save, seat.stature, nextSeason),
+    log: [],
+    ...(save.identity.region !== leftRegion ? { regionChangedAt: nextSeason } : {}),
+    ...(taken && prestige !== undefined && seat.stature !== "owners" ? { prestige } : {}),
+  };
   save.training = initialTrainingState(save.difficulty, save.training?.mode);
   save.seq += 1;
   mail(save, "boardNewJob", { org: save.identity.orgName, left: leftName });
@@ -611,6 +795,7 @@ export function boardHiringFrozen(save: CareerSave): boolean {
 
 /** What careerDecisions lists: the package choice (holds the clock) or the job choice (holds the rollover). */
 export function boardDecisionOf(save: CareerSave): { id: string } | null {
+  if (pendingMandateOf(save)) return { id: `board:mandate:${save.clock.seasonIndex}` };
   if (pendingPackageOf(save)) return { id: `board:package:${save.clock.seasonIndex}` };
   if (pendingJobChoiceOf(save)) return { id: `board:job:${save.clock.seasonIndex}` };
   return null;

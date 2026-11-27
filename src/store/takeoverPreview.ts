@@ -11,7 +11,7 @@
  */
 
 import { chanceBandOf, type ChanceBand } from "@/engine/career/board";
-import type { BoardPackage, BoardSecondary, PackageId, SeasonBrief, Stature } from "@/engine/career/boardTypes";
+import type { BoardMandate, BoardPackage, BoardSecondary, PackageId, SeasonBrief, Stature } from "@/engine/career/boardTypes";
 import { weeklyWageBill } from "@/engine/career/economy";
 import type { CareerSave, CoachState, SeasonGoalSpec, SquadPlayer, StaffId } from "@/engine/career/types";
 import { createCareerSave, type CreateCareerInput } from "./careerFlow";
@@ -39,6 +39,8 @@ export interface TakeoverPreview {
   /** The plan the board proposes (preselected later on HQ): "expected" when present. */
   proposed: TakeoverPlan | null;
   secondary: BoardSecondary | null;
+  /** v2.2 MANDATE: an established org's mandate (demand level, the house's problems, the three goals). */
+  mandate: BoardMandate | null;
   brief: TakeoverBrief | null;
   confidence: number | null;
   cash: number;
@@ -88,6 +90,7 @@ export function takeoverViewOf(save: CareerSave): TakeoverPreview {
     plans,
     proposed: plans.find((p) => p.id === "expected") ?? plans[0] ?? null,
     secondary: season?.secondary ?? null,
+    mandate: season?.mandate ?? null,
     brief: brief && typeof brief.reason === "string" ? brief : null,
     confidence: board ? board.confidence : null,
     cash: save.finances.balance,

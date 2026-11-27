@@ -1624,6 +1624,7 @@ export const COSMETICS = {
       "run-one-flag": "Win a worldwide Classic run with three players, coach and substitute from the same country",
       "run-clean-sweep": "Win a Classic run with all six slots filled and without losing a series",
       "run-lock-all": "Win a Classic run in each Region-Locked Draft: NA, EU, SAM, MENA and OCE",
+      "share-first": "Share a run, your career or an invitation",
     } as Record<string, string>,
     "career-worlds": (n: number) => (n === 1 ? "Win Worlds on the Road to Worlds" : `Win ${n} Worlds on the Road to Worlds`),
     "season-feat": "In one season: reach SSL, win 3 Worlds on the Road to Worlds and 25 Legacy runs",
@@ -1716,6 +1717,7 @@ export const COSMETICS = {
     "run-title-technician": { name: "Technician", desc: "Won a worldwide Classic run with players, coach and substitute from one country." },
     "run-banner-clean-sweep": { name: "Clean Sweep", desc: "Won a Classic run with a full roster and no series lost." },
     "run-title-trade-minister": { name: "Trade Minister", desc: "Won a Classic run in every Region-Locked Draft: NA, EU, SAM, MENA and OCE." },
+    "share-title-ambassador": { name: "Ambassador", desc: "Took Rocket Draft out into the world: a run, a career or an invitation." },
     "career-title-roster-architect": { name: "Roster Architect", desc: "Reached a main regional through its qualifier on the Road to Worlds." },
     "career-banner-regional-laurels": { name: "Regional Laurels", desc: "Won a main regional on the Road to Worlds." },
     "career-banner-passport-stamped": { name: "Passport Stamped", desc: "Booked a Major berth on the Road to Worlds." },
@@ -2224,6 +2226,80 @@ export const DUEL_UI = {
   stepperTag: "Duel",
 };
 
+/**
+ * Share kit (v2.2, `components/share/ShareSheet`, `lib/share/*`): the share
+ * sheet, the words drawn on the share images and the posts that go with them,
+ * the invitation and the Home's "With friends" section. Career share words
+ * are in copy.career (`share`).
+ */
+export const SHARE_UI = {
+  titleRun: "Share your run",
+  titleDaily: "Share today's Daily",
+  titleDuel: "Share the duel",
+  titleInvite: "Invite friends",
+  formatLabel: "Image format",
+  formatPost: "Post",
+  formatPostHint: "X, Discord, WhatsApp, Reddit",
+  formatStory: "Story",
+  formatStoryHint: "Instagram, TikTok, status",
+  previewAlt: "The image that goes with your post",
+  rendering: "Drawing the image",
+  renderFailed: "This browser couldn't draw the image. The text and the link still work.",
+  caption: "Goes with the post",
+  share: "Share",
+  whatsapp: "WhatsApp",
+  x: "X",
+  reddit: "Reddit",
+  telegram: "Telegram",
+  copyImage: "Copy image",
+  copyText: "Copy text",
+  download: "Download",
+  downloaded: "Image saved.",
+  imageCopied: "Image copied. Paste it into Discord or a chat.",
+  copyImageFailed: "This browser won't copy images. Use Download.",
+  textCopied: "Text and link copied.",
+  copyFailed: "The copy didn't go through. Select the text above.",
+  storyTip: "Instagram and TikTok: save the story, then post it from your gallery.",
+  roadSwiss: "Swiss",
+  roadPlayoffs: "Playoffs",
+  figTeamOvr: "Team OVR",
+  figChemistry: "Chemistry",
+  figSwiss: "Swiss",
+  figPlayoffWins: "Playoff wins",
+  dailyTag: (n: number) => `Daily #${n}`,
+  headlineUndefeated: "Undefeated: not one series dropped.",
+  headlineChampion: (record: string) => `Through the Swiss at ${record}, then all the way to the trophy.`,
+  headlineChampionQuick: "Bracket cleared, trophy lifted.",
+  headlineOut: (team: string, stage: string, score: string) => `Out to ${team} (${score}) in the ${stage}.`,
+  headlineFallback: "Drafted from real RLCS history.",
+  pitchRun: "Draft real RLCS history",
+  textChampion: (ovr: number, chem: string) =>
+    `Champion in Rocket Draft: a ${ovr} OVR roster with ${chem} chemistry, drafted from real RLCS history. Think you can beat it?`,
+  textPlacement: (placement: string, ovr: number) =>
+    `${placement} in Rocket Draft with a ${ovr} OVR roster drafted from real RLCS history. How far would yours go?`,
+  textDaily: (n: number, placement: string, grid: string) =>
+    `Rocket Draft Daily #${n}: ${placement}${grid ? `\n${grid}` : ""}\nSame draft for everyone today. Your turn:`,
+  textDuel: (placement: string) => `My Rocket Draft duel run: ${placement}. Same draft, same bracket. Beat it:`,
+  inviteText:
+    "Rocket Draft: draft real RLCS lineups into one team and survive the bracket, or run your own org in Road to Worlds. Free, in the browser:",
+  inviteHint: "The link opens the game. No account needed.",
+  inviteHeadline: "Draft RLCS history",
+  inviteModeDraft: "Classic Draft",
+  inviteModeDraftDesc: "Draft real RLCS lineups into one team, then survive the Swiss and the playoffs.",
+  inviteModeCareer: "Road to Worlds",
+  inviteModeCareerDesc: "Found your own org, sign players, balance the budget and chase the Worlds.",
+  inviteFree: "Free, in the browser, no account needed.",
+  inviteFigCards: "Special cards to collect",
+  sectionFriends: "With friends",
+  duelTitle: "Friend duel",
+  duelDesc:
+    "Draft first, then send the link. Your friend gets the same offers and the same bracket, and the standings come back with every run.",
+  duelStart: "Start a duel",
+  inviteRowTitle: "Bring your friends",
+  inviteRowDesc: "Send the game to your group. The Daily is the same draft for everyone, so you can compare results every day.",
+  inviteButton: "Invite friends",
+};
+
 /** T1 (v2.0): tab titles for the single-URL pages (no /pt mirror), by path.
  *  EN is empty: the static `metadata` of each route already is the English
  *  title, and the shell only overrides the tab title when an entry exists. */
@@ -2269,6 +2345,7 @@ export const EN = {
   DATABASE_UI,
   RESEARCH_UI,
   DUEL_UI,
+  SHARE_UI,
   PAGE_TITLES,
 };
 

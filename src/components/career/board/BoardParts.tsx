@@ -29,6 +29,7 @@ import { seasonBudgetOf } from "@/engine/career/budget";
 import { weekOfDay } from "@/engine/career/calendar";
 import { promoteLineOf, STANDING_TIERS, standingOf } from "@/engine/career/established";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
+import { careerSeasonOf } from "@/engine/career/era";
 import type { CareerSave, SeasonGoalSpec } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -39,8 +40,9 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useCareerStore } from "@/store/careerStore";
-import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
+import { boardUpgradeOptionsOf, pendingJobChoiceOf, pendingMandateOf, pendingPackageOf, wageRoomNow } from "@/store/boardFlow";
 import { briefLinesOf, objectiveText } from "./briefLines";
+import { MandateSheet, MandateVerdict } from "./MandateParts";
 
 /** The board's objective as a sentence ("Top 4 in 3 of the 9 regionals"). */
 export function goalText(C: CareerCopy, spec: Pick<SeasonGoalSpec, "kind" | "count" | "place">): string {
@@ -172,8 +174,17 @@ export function BoardPackageChoice({ save, C, titleAs = "h2" }: { save: CareerSa
   );
 }
 
+/** v2.2 MANDATE: the unread mandate on a page (HQ's decision block, the Board page), with its one action. */
+export function BoardMandateInline({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const acknowledge = useCareerStore((s) => s.acknowledgeMandate);
+  const m = pendingMandateOf(save);
+  if (!m) return null;
+  return <MandateSheet save={save} m={m} C={C} onAccept={acknowledge} inline />;
+}
+
 /** HQ's decision block body for kind "board". */
 export function BoardDecision({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  if (pendingMandateOf(save)) return <BoardMandateInline save={save} C={C} />;
   if (pendingPackageOf(save)) return <BoardPackageChoice save={save} C={C} />;
   if (pendingJobChoiceOf(save)) {
     return (
@@ -260,19 +271,30 @@ export function BoardSeasonPanel({ save, C }: { save: CareerSave; C: CareerCopy 
     if (!pkg || board.season?.met === null || board.season?.met === undefined) return null;
     const V = C.board.verdict;
     const met = board.season.met;
+    // v2.2 MANDATE: the head counts the goals met; the classification's own verdict sits on its line.
+    const m = board.season.mandate;
+    const metCount = m ? [met, m.money.met, m.squad.met].filter((x) => x === true).length : 0;
     return (
       <Panel className="p-4 sm:p-5">
         <div className="card-head">
           <h3 className="card-title">{owners(board) ? C.board.ownersTitle : V.title}</h3>
-          <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge>
+          {m ? (
+            <Badge tone={metCount === 3 ? "good" : metCount === 0 ? "bad" : "neutral"}>{C.board.mandate.metOf(metCount, 3)}</Badge>
+          ) : (
+            <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge>
+          )}
         </div>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0 flex-1 basis-60">
-            <p className="text-xs text-sub">{C.board.sporting} · {C.board.packages.plan(C.board.packages.name[pkg.id])}</p>
+            <p className="flex flex-wrap items-center gap-2 text-xs text-sub">
+              {m ? `${C.board.mandate.area.classification} · ${C.board.mandate.title}` : `${C.board.sporting} · ${C.board.packages.plan(C.board.packages.name[pkg.id])}`}
+              {m ? <Badge tone={met ? "good" : "bad"}>{met ? C.goals.status.met : C.goals.status.missed}</Badge> : null}
+            </p>
             <p className="display mt-1.5 text-2xl uppercase leading-tight text-ink">{goalText(C, pkg.objective)}</p>
           </div>
           <Figure value={String(Math.round(board.confidence))} label={V.confidenceLabel} size="text-4xl" note={C.board.band(board.confidence)} />
         </div>
+        <MandateVerdict save={save} C={C} />
         <TierChangeRow save={save} C={C} />
         <AppLink href="/career/board" className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-blue-bright hover:underline">
           {V.open}
@@ -368,9 +390,9 @@ export function ObjectiveBoard({ save, C }: { save: CareerSave; C: CareerCopy })
   return (
     <Panel strong className="p-5 sm:p-7">
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-sub">
-        <span>{C.board.sporting}</span>
+        <span>{season.mandate ? C.board.mandate.area.classification : C.board.sporting}</span>
         <span aria-hidden>·</span>
-        <span className="font-semibold text-ink">{K.plan(K.name[pkg.id])}</span>
+        <span className="font-semibold text-ink">{season.mandate ? C.board.mandate.title : K.plan(K.name[pkg.id])}</span>
       </p>
       <h2 className="display mt-3 max-w-3xl text-3xl uppercase leading-[0.95] text-ink [overflow-wrap:break-word] sm:text-[2.5rem]">{goalText(C, pkg.objective)}</h2>
 
@@ -463,7 +485,9 @@ export function AlsoAsked({ save, C }: { save: CareerSave; C: CareerCopy }) {
 }
 
 /** Confidence: the large figure, the meter with its two labelled lines, the state sentence, the log. */
-export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy }) {
+export function ConfidencePanel({ board, C, save }: { board: BoardState; C: CareerCopy; save?: CareerSave }) {
+  // v2.2 MANDATE (after ERA): "S1 · W3" is the career's season, not the era index (a 2027 takeover starts at index 6).
+  const seasonNo = (s: number) => (save ? careerSeasonOf(save, s) : s) + 1;
   const L = CAREER_BOARD.confidence;
   const c = Math.round(board.confidence);
   const fill = c >= L.warn ? "bg-ink" : c >= L.ultimatum ? "bg-orange-bright" : "bg-bad";
@@ -501,7 +525,7 @@ export function ConfidencePanel({ board, C }: { board: BoardState; C: CareerCopy
               {e.delta > 0 ? `+${e.delta}` : e.delta < 0 ? `−${Math.abs(e.delta)}` : "0"}
             </span>
             <span className="min-w-0 flex-1 leading-snug text-ink">{C.board.reasons[e.reason] ?? e.reason}</span>
-            <span className="shrink-0 text-xs tabular-nums text-faint">{C.board.logWhen(e.seasonIndex + 1, weekOfDay(e.day))}</span>
+            <span className="shrink-0 text-xs tabular-nums text-faint">{C.board.logWhen(seasonNo(e.seasonIndex), weekOfDay(e.day))}</span>
           </li>
         ))}
       </ul>
@@ -562,7 +586,7 @@ export function ManagerPanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
       <p className="mt-1 text-sm text-sub">{save.identity.managerName}</p>
       <div className="stat-trio mt-3 grid grid-cols-3 gap-4 border-t border-line pt-3">
         {[
-          { label: C.board.contractLabel, value: C.board.contractValue(m.contractUntil + 1) },
+          { label: C.board.contractLabel, value: C.board.contractValue(careerSeasonOf(save, m.contractUntil) + 1) },
           { label: C.board.reputationLabel, value: String(Math.round(m.reputation)) },
           { label: C.board.clubsLabel, value: String(clubs) },
         ].map((f) => (
@@ -576,7 +600,7 @@ export function ManagerPanel({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <ul className="mt-3 border-t border-line">
           {m.spells.map((s, i) => (
             <li key={i} className="flex min-h-10 items-center border-b border-line py-1.5 text-sm text-ink last:border-b-0">
-              {C.board.spell(s.orgName, s.fromSeason, s.toSeason !== undefined ? String(s.toSeason + 1) : C.board.now)}
+              {C.board.spell(s.orgName, careerSeasonOf(save, s.fromSeason), s.toSeason !== undefined ? String(careerSeasonOf(save, s.toSeason) + 1) : C.board.now)}
             </li>
           ))}
         </ul>
@@ -608,7 +632,7 @@ export function BudgetStrip({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <div className="border-line sm:flex sm:flex-col">
           <p className="text-xs text-sub sm:order-2 sm:mt-1.5">{own ? M.ownersAllocation : M.allocation}</p>
           <p className="display text-2xl font-bold leading-none tabular-nums text-ink sm:order-1">{pending ? "–" : formatMoney(b.allocation, { compact: true })}</p>
-          {pending ? <p className="hidden text-xs text-faint sm:order-3 sm:block">{M.notYet}</p> : null}
+          {pending ? <p className="hidden text-xs text-faint sm:order-3 sm:block">{pendingMandateOf(save) ? M.notYetMandate : M.notYet}</p> : null}
         </div>
         <div className="border-line sm:flex sm:flex-col">
           <p className="text-xs text-sub sm:order-2 sm:mt-1.5">{M.wages}</p>
@@ -663,7 +687,7 @@ export function BoardTerms({ save, C }: { save: CareerSave; C: CareerCopy }) {
   if (!board) return null;
   const lines: { text: string; tone?: string }[] = [];
   if (board.freeze && board.freeze.seasonIndex === save.clock.seasonIndex) lines.push({ text: C.board.freeze, tone: "text-orange-bright" });
-  if (board.protectedUntil !== null && board.protectedUntil >= save.clock.seasonIndex) lines.push({ text: C.board.protectedUntil(board.protectedUntil + 1) });
+  if (board.protectedUntil !== null && board.protectedUntil >= save.clock.seasonIndex) lines.push({ text: C.board.protectedUntil(careerSeasonOf(save, board.protectedUntil) + 1) });
   if (Math.abs(board.budgetMult - 1) > 0.005) lines.push({ text: C.board.budgetLine(board.budgetMult) });
   if (!lines.length) return null;
   return (

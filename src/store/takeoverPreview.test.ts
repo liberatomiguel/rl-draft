@@ -39,11 +39,14 @@ describe("takeoverPreviewOf", () => {
   const world = computeStars(buildWorldAtCreation(SEED), { seasonIndex: 0, careerSeed: SEED, difficulty: "normal" });
   const pick = realOrgChoicesFor("NA", { careerSeed: SEED, seasonIndex: 0, difficulty: "normal", world })[0];
 
-  it("reads the board's three plans, the money and the squad of the save the takeover creates", () => {
+  it("reads the board's mandate, the money and the squad of the save the takeover creates", () => {
     const preview = takeoverPreviewOf(inputFor(pick.ref), SEED);
     const created = createCareerSave(inputFor(pick.ref), SEED);
     expect(preview.plans.map((p) => p.objective)).toEqual(created.board!.season!.offers.map((o) => o.objective));
-    expect(preview.plans).toHaveLength(3);
+    // v2.2 MANDATE: one package (the mandate's classification goal) and the mandate with its demand and problems.
+    expect(preview.plans).toHaveLength(1);
+    expect(preview.mandate).toEqual(created.board!.season!.mandate);
+    expect(["low", "medium", "high"]).toContain(preview.mandate!.demand);
     expect(preview.proposed?.id).toBe("expected");
     expect(preview.cash).toBe(created.finances.balance);
     expect(preview.starters.map((p) => p.id)).toEqual(created.starterIds);

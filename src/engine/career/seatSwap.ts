@@ -14,7 +14,7 @@
  * the world in the place of its region's weakest filler.
  */
 
-import { CAREER_GEAR, FEATURES } from "@/config/balance";
+import { CAREER_GEAR, CAREER_WORLD, FEATURES } from "@/config/balance";
 import { inheritedGearFor, structureWeeklyOf } from "./established";
 import { startAchievementBaseline } from "./achievements";
 import type { Region } from "../types";
@@ -181,17 +181,23 @@ export function takeOrgSeat(save: CareerSave, ref: string): SeatTaken | null {
   delete world.orgs[ref];
   toFreeAgency(world, org.reserveIds ?? []);
   world.freeAgentIds = world.freeAgentIds.filter((id) => !org.playerIds.includes(id));
-  const k = 100 + Object.keys(world.orgs).filter((r) => r.startsWith(`fill:${org.region}:`)).length;
-  let fillRef = `fill:${org.region}:${k}`;
-  for (let n = k; world.orgs[fillRef]; n++) fillRef = `fill:${org.region}:${n + 1}`;
-  world.orgs[fillRef] = {
-    ref: fillRef,
-    name: fillerOrgName(org.region, k, save.careerSeed, world.nameBankVersion ?? 1),
-    region: org.region,
-    prestige: 0,
-    playerIds: freshFillerIds(world, org.region),
-    stars: 0,
-  };
+  // rc.7 (ORGMODE-2027): the filler only keeps a region at its floor. A region that is still at
+  // minOrgsPerRegion without the org (EU and NA in RLCS 2027: 24 and 19 real orgs) gets none,
+  // so a takeover there adds no generic team.
+  const left = Object.values(world.orgs).filter((o) => o.region === org.region).length;
+  if (left < CAREER_WORLD.minOrgsPerRegion) {
+    const k = 100 + Object.keys(world.orgs).filter((r) => r.startsWith(`fill:${org.region}:`)).length;
+    let fillRef = `fill:${org.region}:${k}`;
+    for (let n = k; world.orgs[fillRef]; n++) fillRef = `fill:${org.region}:${n + 1}`;
+    world.orgs[fillRef] = {
+      ref: fillRef,
+      name: fillerOrgName(org.region, k, save.careerSeed, world.nameBankVersion ?? 1),
+      region: org.region,
+      prestige: 0,
+      playerIds: freshFillerIds(world, org.region),
+      stars: 0,
+    };
+  }
   world.userOrgRef = ref;
   world.version += 1;
 

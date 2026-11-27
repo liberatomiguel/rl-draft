@@ -55,8 +55,8 @@ const barlow = localFont({
 });
 
 // Rajdhani is no longer an interface face. It stays declared, not preloaded,
-// for the share card: lib/shareCard.ts draws its canvas text in "Rajdhani" and
-// loads it on demand (next/font names the family after this const).
+// for the career crest's monogram (UserCrest) and the game clock. The share
+// images (v2.2, lib/share) draw in the page's own display and text faces.
 // Industry (Fort Foundry), the display face (DESIGN.md). Medium/Demi/Bold
 // cover font-medium/semibold/bold; Black answers extrabold; the Bold Italic
 // serves the Home wordmark.

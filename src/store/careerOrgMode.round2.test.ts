@@ -62,16 +62,15 @@ describe("R168: the sponsor desk on day one", () => {
 });
 
 describe("R169: the Expected plan funds the season it asks for", () => {
-  it("every org of NA, EU and SAM, Normal and Hard, season 0: cash + Expected budget cover the committed season, before any sponsor income; Cautious < Expected < Ambitious", () => {
+  it("every org of NA, EU and SAM, Normal and Hard, season 0: cash + the mandate's budget cover the committed season, before any sponsor income", () => {
     let n = 0;
     for (const difficulty of ["normal", "hard"] as const)
       for (const region of ["NA", "EU", "SAM"] as const)
         for (const c of choices(region, difficulty)) {
           const save = createCareerSave(input(region, difficulty, c.ref), SEED);
+          // v2.2 MANDATE: an established org's season has one package, the mandate's (the plans' order is the founded club's now).
           const offers = pendingPackageOf(save)!;
-          const grant = (id: string) => offers.find((o) => o.id === id)!.grant;
-          expect(grant("cautious")).toBeLessThan(grant("expected"));
-          expect(grant("expected")).toBeLessThan(grant("ambitious"));
+          expect(offers.map((o) => o.id)).toEqual(["expected"]);
           const b = seasonBudgetOf(chooseBoardPackageFlow(save, "expected").save)!;
           expect(b.incomeToCome.sponsor, c.name).toBe(0);
           expect(b.free, `${difficulty} ${region} ${c.name} (${c.stature})`).toBeGreaterThanOrEqual(0);

@@ -10,6 +10,7 @@ import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { moneyNoticeOf } from "@/store/careerFlow";
 import { pendingDecisionsOf } from "@/store/careerDecisions";
+import { pendingMandateOf } from "@/store/boardFlow";
 import { trainingReportOf } from "@/store/careerTraining";
 import { useSettings } from "@/store/settingsStore";
 import { selectHeld, useOverlayHolds, useSettled } from "@/store/overlayHoldStore";
@@ -61,7 +62,7 @@ export function CareerAnnouncement() {
     if (save && !save.newAnnounced?.includes(INITIALIZED)) mark([INITIALIZED, ...reachedAnnouncementKeys(save)]);
   }, [save, mark]);
   const notice = save ? careerAnnouncementOf(save) : null;
-  const blocked = !save || (!save.flags["seenHub"] || Boolean(save.activeEvent || scrimPlaying)) || held || Boolean(moneyNoticeOf(save)) || pendingDecisionsOf(save).some(d => d.kind === "sponsor" && !d.parked) || Boolean(reports && trainingReportOf(save));
+  const blocked = !save || (!save.flags["seenHub"] || Boolean(save.activeEvent || scrimPlaying)) || held || Boolean(moneyNoticeOf(save)) || pendingDecisionsOf(save).some(d => d.kind === "sponsor" && !d.parked) || Boolean(reports && trainingReportOf(save)) || Boolean(pendingMandateOf(save));
   const ready = useSettled(Boolean(notice) && !blocked);
   useEffect(() => { if (ready) setAutoAdvance(false); }, [ready, setAutoAdvance]);
   if (!ready || !notice || !save) return null;

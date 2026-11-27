@@ -103,7 +103,8 @@ export type CosmeticSource =
   /** v2.0 (career R32): a permanent career achievement id. */
   | { type: "career-mark"; markId: string }
   /** rc.51: a permanent fact a finished Classic run left on the profile
-   *  (`src/engine/runMarks.ts`; stored with the career marks, `run-` prefix). */
+   *  (`src/engine/runMarks.ts`; stored with the career marks, `run-` prefix).
+   *  v2.2: the share kit's marks ride the same list (`share-` prefix). */
   | { type: "run-mark"; markId: string }
   /** rc.51: every one of these run marks (Trade Minister: the five region locks). */
   | { type: "run-marks-all"; markIds: string[] }
@@ -377,6 +378,8 @@ const PLAY: CosmeticDef[] = [
   title("run-title-technician", "uncommon", 41, { type: "run-mark", markId: "run-one-flag" }, GREY),
   banner("run-banner-clean-sweep", "rare", 42, { type: "run-mark", markId: "run-clean-sweep" }, { art: "clean-sweep", glow: "#bfe9ff", frame: ["#bfe9ff", "#6f8fb8", "#ffffff"] }),
   title("run-title-trade-minister", "rare", 43, { type: "run-marks-all", markIds: TRADE_MINISTER_MARKS }, GREY),
+  // v2.2 share kit: the first post that leaves the game (`share-first`, lib/share/shareMarks).
+  title("share-title-ambassador", "uncommon", 58, { type: "run-mark", markId: "share-first" }, ["#a3adbd"]),
 ];
 
 /** rc.51: Road to Worlds milestones (permanent marks mirrored on the profile). */

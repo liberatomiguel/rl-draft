@@ -39,6 +39,7 @@ const listEn = (p: Record<string, string | number>): string => {
 
 /** rc.33 review: how long the rescue partner pays (rc.34: the investor, CAREER_LOAN.investor.weeks, passed in) — nothing when unknown. */
 /** v2.2 board front: a board objective's chance, in words (CAREER_BOARD.bands sets the cut points). */
+const swingEn = (hit: string | number | undefined, miss: string | number | undefined): string => (hit === undefined ? "" : ` (+${hit} / −${Math.abs(Number(miss))} confidence)`);
 const BOARD_BANDS_EN: Record<string, string> = { expected: "Likely", reach: "Within reach", stretch: "A stretch", longShot: "A long shot" };
 
 const partnerRunEn = (weeks?: string | number): string => (Number(weeks) > 0 ? ` for ${weeks} weeks` : "");
@@ -638,6 +639,7 @@ export const CAREER_EN = {
       bank: "Northline Bank",
       accountant: "Org accountant",
       board: "The Board",
+      owner: "The Owner",
       agent: "Player Agents",
       sponsor: "Sponsor Relations",
       // History: rc.31–rc.33 mails from the Emergency Backer (rc.34: the bank lends instead).
@@ -3031,6 +3033,40 @@ export const CAREER_EN = {
     defendTitle: "Defend the title",
   },
 
+  // v2.2 share kit: the career's share card (components/career/share).
+  share: {
+    button: "Share career",
+    buttonTitle: "Share the title",
+    sheetTitle: "Share your career",
+    kicker: "Road to Worlds",
+    manager: (name: string) => `Manager ${name}`,
+    meta: (region: string, season: string) => `${region} · ${season}`,
+    headlineWorlds: (n: number) => (n > 1 ? `${n}× World champions` : "World champions"),
+    headlineMajors: (n: number) => (n > 1 ? `${n}× Major champions` : "Major champions"),
+    headlineRegionals: (n: number) => (n > 1 ? `${n} regional titles` : "Regional champions"),
+    headlineTitles: (n: number) => (n > 1 ? `${n} titles` : "First silverware"),
+    headlineNone: "The road begins",
+    sentenceTitles: (titles: number, w: number, l: number) =>
+      `${titles} ${titles === 1 ? "title" : "titles"} so far, ${w}-${l} in series.`,
+    sentenceNone: (w: number, l: number) => `${w}-${l} in series. The first trophy is still out there.`,
+    shelfWorlds: "Worlds",
+    shelfMajors: "Majors",
+    shelfRegionals: "Regionals",
+    shelfOther: "Other titles",
+    figSeries: "Series",
+    figPrize: "Prize money",
+    starters: "Starting three",
+    coach: (name: string) => `Coach ${name}`,
+    pitch: "Run your own RLCS org",
+    textWorlds: (org: string, n: number) =>
+      `${org} ${n > 1 ? `have won the Worlds ${n} times` : "are world champions"} in Road to Worlds, the RLCS career mode on Rocket Draft. Build your own org from nothing:`,
+    textTitles: (org: string, n: number) =>
+      `${org}: ${n} ${n === 1 ? "title" : "titles"} so far in Road to Worlds, the RLCS career mode on Rocket Draft. Run your own org:`,
+    textNone: (org: string) =>
+      `I'm running ${org} in Road to Worlds, the RLCS career mode on Rocket Draft. Build your own org and meet me at the Worlds:`,
+    hint: "The link opens Road to Worlds. Your save stays on this device.",
+  },
+
   cloud: {
     synced: (when: string) => `Saved in your account · ${when}`,
     pending: "Changes waiting to be saved in your account",
@@ -4120,6 +4156,7 @@ export const CAREER_EN = {
       allocation: "Board's budget",
       ownersAllocation: "Owners' budget",
       notYet: "Paid when you choose the plan",
+      notYetMandate: "Paid when you read the mandate",
       wages: "Wages / week",
       ceiling: (amount: string) => `Ceiling ${amount}`,
       over: "Over the board's ceiling",
@@ -4132,6 +4169,7 @@ export const CAREER_EN = {
       ownersTitle: "Owners",
       progress: (done: number, target: number) => `Objective ${done} of ${target}`,
       pending: "Choose the season plan",
+      pendingMandate: "Read the board's mandate",
       ultimatum: "Ultimatum open",
       met: "Objective met",
       missed: "Objective missed",
@@ -4151,6 +4189,10 @@ export const CAREER_EN = {
       ultimatumMet: "Ultimatum answered",
       newSeason: "New season: the board eases its view",
       promoted: "Promoted a tier",
+      mandateMoneyMet: "Money goal met",
+      mandateMoneyMissed: "Money goal missed",
+      mandateSquadMet: "Squad goal met",
+      mandateSquadMissed: "Squad goal missed",
     } as Record<string, string>,
     objectives: "This season's objectives",
     sporting: "Season objective",
@@ -4241,6 +4283,145 @@ export const CAREER_EN = {
       lastRank: (n: number) => `Last season: #${n} in the region.`,
       bestFinish: (tier: string, place: number) => `Best finish last season: ${place <= 1 ? "won" : `top ${place}`} at ${tier === "worlds" ? "Worlds" : tier === "major" ? "a Major" : "a regional"}.`,
     },
+    // v2.2 MANDATE (ORGMODE 2027 stage 2): an established org's season mandate, the house's problems, the demand level.
+    mandate: {
+      title: "The board's mandate",
+      season: (season: string) => `${season} · set by the board`,
+      body: "The board sets three goals for the season. They are not a choice: they are what the job asks.",
+      demandLabel: "Demand",
+      demand: { low: "Low", medium: "Medium", high: "High" } as Record<string, string>,
+      demandNote: {
+        low: "The board gives you time to build.",
+        medium: "The board expects steady progress.",
+        high: "The board expects to win, and soon.",
+      } as Record<string, string>,
+      demandLine: (level: string) => `${({ low: "Low", medium: "Medium", high: "High" } as Record<string, string>)[level] ?? level} demand`,
+      area: { classification: "Classification", money: "Money", squad: "Squad" } as Record<string, string>,
+      weighsMost: "Weighs most",
+      gainLabel: "If met",
+      lossLabel: "If missed",
+      confidenceUnit: "confidence",
+      budgetUnit: "next season's budget",
+      bonusUnit: "bonus",
+      noChange: "Nothing changes",
+      money: (kind: string, amount: string, week: number): string => {
+        switch (kind) {
+          case "cashFloor":
+            return `End the season with at least ${amount} in the bank`;
+          case "wagesUnder":
+            return `Bring the wage bill to ${amount} a week by week ${week}`;
+          case "netSpend":
+            return `Keep net transfer spending within ${amount}`;
+          case "sales":
+            return `Raise ${amount} in player sales`;
+          default:
+            return "";
+        }
+      },
+      squad: (kind: string, value: number, names: string[]): string => {
+        switch (kind) {
+          case "signStarter":
+            return `Sign a starter rated ${value} or better`;
+          case "renew":
+            return `Renew ${names[0] ?? "the starter"}'s contract`;
+          case "ageUnder":
+            return `Bring the starters' average age to ${value} or under`;
+          case "youthEvents":
+            return `Start ${names[0] ?? "the prospect"} at ${value} official events`;
+          case "keepCore":
+            return `Keep ${joinEn(names)} through the season`;
+          default:
+            return "";
+        }
+      },
+      moneyNow: (kind: string, now: string): string =>
+        kind === "cashFloor" ? `${now} in the bank now` : kind === "wagesUnder" ? `${now} a week now` : kind === "netSpend" ? `${now} spent net so far` : `${now} raised so far`,
+      squadNow: (kind: string, now: number, target: number): string => {
+        switch (kind) {
+          case "signStarter":
+            return now > 0 ? `Best new starter: ${now}` : "No new starter yet";
+          case "renew":
+            return now > 0 ? "Renewed" : "Not renewed yet";
+          case "ageUnder":
+            return `Average ${now} now`;
+          case "youthEvents":
+            return `${now} of ${target} events`;
+          case "keepCore":
+            return `${now} of ${target} still at the club`;
+          default:
+            return "";
+        }
+      },
+      because: (issue: string) => `Because: ${issue.toLowerCase()}`,
+      onTrack: "On track",
+      behind: "Behind",
+      issuesTitle: "The house's problems",
+      issuesNote: "What the board sees in the org you take over. The money and squad goals come from them.",
+      issuesNow: "What needs fixing",
+      noIssues: "Nothing pressing: the house is in order.",
+      issue: {
+        dealsEnding: "A deal runs out",
+        wageBill: "Wages at the ceiling",
+        shortCash: "Short of cash",
+        weakLink: "A weak link",
+        agingCore: "An ageing core",
+        lowChemistry: "No chemistry yet",
+        noCoach: "No head coach",
+        costlyBench: "A costly bench",
+        noReserve: "No reserve",
+        sponsorEnding: "The sponsor deal ends",
+        prospectBenched: "A prospect on the bench",
+        noSponsor: "No sponsor",
+        dealsSoon: "Deals end next season",
+        wageRoom: "Little wage room",
+      } as Record<string, string>,
+      issueLine: (kind: string, value: number, name?: string): string => {
+        switch (kind) {
+          case "dealsEnding":
+            return `${name ?? "A starter"}'s contract ends this season${value > 1 ? `, and ${value - 1} more` : ""}.`;
+          case "wageBill":
+            return `The wage bill is at ${value}% of the board's ceiling.`;
+          case "shortCash":
+            return `Cash covers ${value} weeks of running costs.`;
+          case "weakLink":
+            return `${name ?? "One starter"} is ${value} points under the other two starters.`;
+          case "agingCore":
+            return `The starters average ${value} years of age.`;
+          case "lowChemistry":
+            return `The starting three are at ${value}% chemistry.`;
+          case "noCoach":
+            return "Nobody runs the squad's training.";
+          case "costlyBench":
+            return `${name ?? "The reserve"} earns ${value}% of a starter's wage from the bench.`;
+          case "noReserve":
+            return "Nobody on the bench: an absent starter leaves a seat empty.";
+          case "sponsorEnding":
+            return "The sponsor's deal runs out this season.";
+          case "prospectBenched":
+            return `${name ?? "A prospect"} (${value}) is outside the starting three.`;
+          case "noSponsor":
+            return "No sponsor is under contract yet.";
+          case "dealsSoon":
+            return `${name ?? "A starter"}'s contract ends next season${value > 1 ? `, and ${value - 1} more` : ""}.`;
+          case "wageRoom":
+            return `The wage bill is at ${value}% of the ceiling.`;
+          default:
+            return "";
+        }
+      },
+      lastTitle: "Last season",
+      lastNote: "What the board read before setting this one.",
+      demandUp: "The demand rose with the org's tier.",
+      demandDown: "The demand eased with the org's tier.",
+      accept: "Start the season",
+      reread: "Read the mandate",
+      keptNote: "The mandate stays on the Board page and in the inbox.",
+      pending: "The board's mandate is on your desk: read it to start the season.",
+      verdictTitle: "The mandate at the review",
+      metOf: (n: number, total: number) => `${n} of ${total} met`,
+      dossierTitle: "What the board will ask",
+      dossierNote: "Set at the takeover from the org as it is. You will not choose it.",
+    },
     // rc.6 (R172): HQ's season goal while an established org's plan is pending.
     planPending: "The board's season plan is waiting for your answer. The season goal is the plan you accept.",
     planOpen: "Open the season plan",
@@ -4255,6 +4436,10 @@ export const CAREER_EN = {
     mail: {
       tpl: {
         boardPackage: () => "The board's offer for the season",
+        boardWelcome: (p: Record<string, string | number>) => `Welcome to ${p.org}`,
+        boardMandate: (p: Record<string, string | number>) => `The board's mandate for season ${p.season}`,
+        boardMandateReport: (p: Record<string, string | number>) => `Board report after split ${p.split}`,
+        boardMandateVerdict: () => "The board's verdict on the mandate",
         boardCheckpoint: (p: Record<string, string | number>) => `Board review after split ${p.split}`,
         boardWarning: () => "A warning from the board",
         boardUltimatum: () => "Ultimatum from the board",
@@ -4273,6 +4458,14 @@ export const CAREER_EN = {
       } as Record<string, (p: Record<string, string | number>) => string>,
       body: {
         boardPackage: () => "Three packages are on your desk: cautious, expected and ambitious. More ambition brings more budget and a bigger bonus, and costs more confidence if the objective is missed. The clock waits for your choice.",
+        boardWelcome: (p: Record<string, string | number>) =>
+          `${p.manager}, welcome to ${p.org}.${Number(p.seasons) === 1 ? ` The org is new to the RLCS: its first roster dates from ${p.since}.` : ""}${Number(p.seasons) > 1 ? ` The org has played ${p.seasons} RLCS seasons, the first in ${p.since}${Number(p.top) > 0 ? `, ${p.top} of them among its region's strongest sides` : ""}.` : ""} You take over ${({ elite: "an elite org", contender: "a contender", mid: "a mid-table org", underdog: "an underdog" } as Record<string, string>)[String(p.tier)] ?? "the org"}, with its roster, its contracts and its problems. Fix what needs fixing and build it to win. The board's mandate for the season is on your desk.`,
+        boardMandate: (p: Record<string, string | number>) =>
+          `${p.demandWord}. Classification: ${p.cls}${swingEn(p.clsHit, p.clsMiss)}. Money: ${p.money}${swingEn(p.moneyHit, p.moneyMiss)}. Squad: ${p.squad}${swingEn(p.squadHit, p.squadMiss)}. The budget steps and bonuses are on the Board page.`,
+        boardMandateReport: (p: Record<string, string | number>) =>
+          `Classification: ${p.cls}, ${p.clsDone} of ${p.clsTarget} (${Number(p.clsOk) === 1 ? "met" : Number(p.clsOk) === 0 ? "out of reach" : "open"}). Money: ${p.money} (${Number(p.moneyOk) ? "on track" : "behind"}). Squad: ${p.squad} (${Number(p.squadOk) ? "on track" : "behind"}). Board confidence ${Number(p.delta) > 0 ? `rose by ${p.delta} to` : Number(p.delta) < 0 ? `fell by ${Math.abs(Number(p.delta))} to` : "holds at"} ${p.confidence}.`,
+        boardMandateVerdict: (p: Record<string, string | number>) =>
+          `Classification ${Number(p.clsMet) ? "met" : "missed"}: ${p.cls}. Money ${Number(p.moneyMet) ? "met" : "missed"}: ${p.money}. Squad ${Number(p.squadMet) ? "met" : "missed"}: ${p.squad}. Board confidence ends the season at ${p.confidence}.`,
         boardCheckpoint: (p: Record<string, string | number>) =>
           `The board reviewed the split. Confidence ${Number(p.delta) >= 0 ? "rose" : "fell"} by ${Math.abs(Number(p.delta))} to ${p.confidence}.${p.band ? ` The season objective now reads as ${(BOARD_BANDS_EN[String(p.band)] ?? "").toLowerCase()}.` : ""}`,
         boardWarning: (p: Record<string, string | number>) =>
@@ -4331,13 +4524,13 @@ export const CAREER_EN = {
     },
     pick: {
       title: "Take over an organization",
-      kicker: "The organizations as they stand in the first season, by tier. Pick one to read its file.",
+      kicker: (season: string) => `The organizations as they stand in ${season}, by tier. Pick one to read its file.`,
       regions: "Region",
       orgs: "Organizations",
       tierCount: (n: number) => (n === 1 ? "1 organization" : `${n} organizations`),
       rank: (rank: number, teams: number) => `#${rank} of ${teams}`,
       rating: "Squad rating",
-      empty: "No organization in this region can be taken over in the first season.",
+      empty: (season: string) => `No organization in this region can be taken over in ${season}.`,
       fewOrgs: (n: number) => (n === 1 ? "Only one organization in this region can be taken over." : `Only ${n} organizations in this region can be taken over.`),
       none: "Pick an organization from the list to read its file.",
       back: "Back",
@@ -4356,7 +4549,7 @@ export const CAREER_EN = {
       inherit: "What you inherit",
       cash: "Cash",
       budget: "Season budget",
-      budgetNote: "The expected plan's grant",
+      budgetNote: "The board's grant for the season",
       wages: "Weekly wages",
       ceiling: (amount: string) => `Ceiling ${amount}`,
       overCeiling: "Over the board's ceiling",
@@ -4366,6 +4559,7 @@ export const CAREER_EN = {
       noStaff: "None",
       board: "What the board expects",
       boardNote: "On day one you choose between three plans. This is the one the board proposes.",
+      mandateNote: "The three goals arrive in a notice on day one and stay in your inbox.",
       chance: (band: string) => `The board rates it: ${band.toLowerCase()}.`,
       grace: (n: number) => (n <= 1 ? "No ultimatum in the first season" : `No ultimatum for ${n} seasons`),
       missLabel: "Confidence if missed",

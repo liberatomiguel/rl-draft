@@ -61,6 +61,7 @@ import {
   rolloverToNextSeason,
   runBootcampFlow,
   setPsychologistFlow,
+  setStartersFlow,
   signPlayerFlow,
   simEventToEnd,
   squadIsShort,
@@ -74,8 +75,10 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
-import { boardAutoAnswer } from "./boardFlow";
-import type { PackageId } from "@/engine/career/boardTypes";
+import { boardAutoAnswer, mandateOf } from "./boardFlow";
+import type { BoardMandate, PackageId } from "@/engine/career/boardTypes";
+import { billsOf, squadProgressOf, transferMoneyOf } from "@/engine/career/mandate";
+import { seasonBudgetOf } from "@/engine/career/budget";
 import { recordSundayBriefingFlow, sundayStopHolds } from "./careerSunday";
 import {
   approveTrainingProposalFlow,
@@ -191,6 +194,12 @@ export interface ArcPolicy {
    * or twelve weeks of runway.
    */
   prudent?: boolean;
+  /**
+   * v2.2 MANDATE: an established org's board sets a money and a squad goal; this manager works them
+   * (renews the named player, keeps the core, signs the starter, starts the prospect, accepts a bid
+   * for the costly reserve) and keeps each signing inside the money goal. A founded club has no mandate.
+   */
+  followsMandate?: boolean;
 }
 
 const base: Omit<ArcPolicy, "id"> = {
@@ -213,7 +222,7 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   /** The median, hands-off manager: takes the best sponsor, renews everyone, never shops (delegates; no coach = the base). */
   autopilot: { id: "autopilot", ...base },
   /** The engaged manager chasing titles: upgrades, coach, a Development package with scrims, selective renewals, the side income (rc.34). */
-  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, bids: "whenTight", others: "take" },
+  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, bids: "whenTight", others: "take", followsMandate: true },
   /** A youth core: the prospects start, young high-potential signings, everyone renewed; a Development package. */
   youth: { id: "youth", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, bids: "whenTight" },
   /** A costly squad: stars first, borrowing to pay for them. */
@@ -583,8 +592,34 @@ function statementOf(save: CareerSave) {
   return weeklyStatementOf(save);
 }
 
+/** v2.2 MANDATE: the board's goals this manager works (null: a founded club, an unread mandate, or a policy that ignores it). */
+function mandateFor(save: CareerSave, policy: ArcPolicy): BoardMandate | null {
+  if (!policy.followsMandate) return null;
+  const m = mandateOf(save);
+  return m && m.acknowledged && save.phase === "running" ? m : null;
+}
+
+/** v2.2 MANDATE: does a move of `cost` up front and `extraPerSplit` in wages keep the money goal? */
+function mandateAllows(save: CareerSave, cost: number, extraPerSplit: number, policy: ArcPolicy): boolean {
+  const m = mandateFor(save, policy);
+  if (!m || m.money.met !== null) return true;
+  const g = m.money;
+  if (g.kind === "netSpend") return transferMoneyOf(save).net + cost <= g.amount;
+  if (g.kind === "cashFloor") return save.finances.balance - cost >= g.amount;
+  if (g.kind === "wagesUnder") return extraPerSplit <= 0 || billsOf(save).wages + weeklyOf(extraPerSplit) <= g.amount;
+  return true;
+}
+
+/** v2.2 MANDATE: players the squad goal names to keep (the core, the player to renew, the prospect). */
+function mandateKeeps(save: CareerSave, policy: ArcPolicy): Set<string> {
+  const m = mandateFor(save, policy);
+  if (!m || (m.squad.kind !== "keepCore" && m.squad.kind !== "renew" && m.squad.kind !== "youthEvents")) return new Set();
+  return new Set(m.squad.playerIds ?? []);
+}
+
 /** Can the books carry `extraPerSplit` more in wages and `cost` up front? */
 function affordable(save: CareerSave, cost: number, extraPerSplit: number, policy: ArcPolicy): boolean {
+  if (!mandateAllows(save, cost, extraPerSplit, policy)) return false;
   const stmt = statementOf(save);
   const net = stmt.net - weeklyOf(extraPerSplit);
   const after = save.finances.balance - cost;
@@ -703,8 +738,12 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
     policy = { ...policy, market: "upgrade" };
   }
   const pool = candidatesFor(input);
-  const save = fillSeats(input, policy, t, pool);
+  let save = fillSeats(input, policy, t, pool);
   if (policy.prudent && save.finances.loan) return save;
+  // v2.2 MANDATE: the squad goal first (a signing at the bar, a younger lineup), then the policy's own upgrade.
+  const worked = mandateMarket(save, policy, t, pool);
+  if (worked !== save) return worked;
+  save = worked;
   const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   if (policy.market === "keep") return save;
 
@@ -731,11 +770,71 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
           .sort((a, b) => b.potentialRead - a.potentialRead)
       : byOverall.filter((c) => c.view.overall >= weakest.overall + margin);
   const severance = weakest.salaryPerSplit * Math.max(1, (weakest.contractEndSeason - save.clock.seasonIndex) * 3) * 0.5;
+  if (mandateKeeps(save, policy).has(weakest.id)) return save;
   const c = list.find((x) => affordable(save, x.cost + severance, x.salaryPerSplit - weakest.salaryPerSplit, policy));
   if (!c) return save;
   const released = releasePlayerFlow(save, weakest.id);
   if (released.error) return save;
   return sign(released.save, c, t) ?? released.save;
+}
+
+/**
+ * v2.2 MANDATE: one window move for the squad goal. signStarter: the cheapest
+ * player at the bar replaces the weakest starter; ageUnder: a younger player
+ * within two points replaces the oldest starter. Returns the save unchanged
+ * when nothing fits (the books, the money goal, the market).
+ */
+function mandateMarket(save: CareerSave, policy: ArcPolicy, t: Tally, pool: Candidate[]): CareerSave {
+  const m = mandateFor(save, policy);
+  if (!m || m.squad.met !== null || squadProgressOf(save, m.squad).onTrack) return save;
+  const g = m.squad;
+  const lineup = starters(save);
+  const keep = mandateKeeps(save, policy);
+  const severanceOf = (p: (typeof lineup)[number]) => p.salaryPerSplit * Math.max(1, (p.contractEndSeason - save.clock.seasonIndex) * 3) * 0.5;
+  let out: (typeof lineup)[number] | undefined;
+  let list: Candidate[] = [];
+  if (g.kind === "signStarter") {
+    out = [...lineup].sort((a, b) => a.overall - b.overall)[0];
+    list = pool.filter((c) => Math.round(c.view.overall) >= g.value).sort((a, b) => a.cost - b.cost || b.view.overall - a.view.overall);
+  } else if (g.kind === "ageUnder") {
+    const s = save.clock.seasonIndex;
+    out = [...lineup].sort((a, b) => ageOf(a.birthYear, s) - ageOf(b.birthYear, s) || a.overall - b.overall).pop();
+    if (out) {
+      const floor = out.overall - 2;
+      list = pool.filter((c) => c.view.age <= g.value - 1 && c.view.overall >= floor).sort((a, b) => b.view.overall - a.view.overall);
+    }
+  }
+  if (!out || keep.has(out.id) || !list.length) return save;
+  const leaving = out;
+  // The board's ask never sinks the books: the season's projected end (contracted income only, the sponsor through its
+  // own last Monday) still holds four weeks of payroll after the fee and the new wage, and the weekly net stays >= 0.
+  const budget = seasonBudgetOf(save);
+  const safe = (x: Candidate) => {
+    const stmt = statementOf(save);
+    const cost = x.cost + severanceOf(leaving);
+    const extra = weeklyOf(x.salaryPerSplit - leaving.salaryPerSplit);
+    const end = (budget?.projectedEnd ?? save.finances.balance) - cost - Math.max(0, extra) * (budget?.mondaysLeft ?? 0);
+    return end >= 4 * stmt.payroll && save.finances.balance - cost >= 8 * stmt.payroll && stmt.net - extra >= 0;
+  };
+  const c = list.find((x) => safe(x) && affordable(save, x.cost + severanceOf(leaving), x.salaryPerSplit - leaving.salaryPerSplit, policy));
+  if (!c) return save;
+  const released = releasePlayerFlow(save, leaving.id);
+  if (released.error) return save;
+  return sign(released.save, c, t) ?? released.save;
+}
+
+/** v2.2 MANDATE: the prospect the squad goal names starts once he is within four points of the weakest starter. */
+function mandateLineup(save: CareerSave, policy: ArcPolicy): CareerSave {
+  const m = mandateFor(save, policy);
+  if (!m || m.squad.kind !== "youthEvents" || save.activeEvent) return save;
+  const id = m.squad.playerIds?.[0];
+  const p = save.squad.find((x) => x.id === id);
+  if (!p || save.starterIds.includes(p.id)) return save;
+  const weakest = [...starters(save)].sort((a, b) => a.overall - b.overall)[0];
+  if (!weakest || p.overall < weakest.overall - 4) return save;
+  const ids = save.starterIds.map((x) => (x === weakest.id ? p.id : x)) as [string, string, string];
+  const res = setStartersFlow(save, ids);
+  return res.error ? save : res.save;
 }
 
 // ---------------------------------------------------------------------------
@@ -759,8 +858,19 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
   const core = new Set(
     [...starters(save)].sort((a, b) => b.overall - a.overall).slice(0, 3).map((p) => p.id),
   );
+  const named = mandateFor(save, policy)?.squad.kind === "renew" ? (mandateFor(save, policy)?.squad.playerIds?.[0] ?? null) : null;
   for (const p of expiring) {
     const young = ageOf(p.birthYear, seasonIndex) <= 21;
+    // v2.2 MANDATE: the board asked for this renewal: it is signed at the floor of the talk, else at the ask.
+    if (p.id === named) {
+      const talk = renewalTalkFor(save, p, 2);
+      const res = renewPlayerFlow(save, p.id, 2, { weekly: talk.zone.floorWeekly });
+      const done = res.error ? renewPlayerFlow(save, p.id, 2) : res;
+      if (!done.error) {
+        save = done.save;
+        continue;
+      }
+    }
     if (policy.renew === "core" && (core.has(p.id) || (young && p.potential >= lineupFloor + 3))) {
       // The core stays at any wage one split of the books can carry: four weeks of payroll left
       // after the raise, and a weekly loss the balance covers for at least six weeks.
@@ -905,10 +1015,18 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     save = { ...structuredClone(save), pendingEventDef: save.unofficialOffer };
   }
   save = chooseSponsor(save, policy);
+  save = mandateLineup(save, policy);
+  const salesGoal = mandateFor(save, policy)?.money;
+  const keeps = mandateKeeps(save, policy);
   for (const bid of save.pendingOffers.filter((o) => o.status === "pending" && o.direction === "out")) {
     const net = statementOf(save).net;
     const tight = net < 0 && save.finances.balance / -net < 8;
-    const sold = policy.bids === "whenTight" && tight && !save.activeEvent ? acceptBidFlow(save, bid.id) : null;
+    // v2.2 MANDATE: a bid for a reserve while the sales goal is open is taken; a player the squad goal names stays,
+    // unless the books are tight: survival first (keeping the core while the cash ran out took two 2027 careers to
+    // insolvency in the probe, NA Hard mid and underdog, seed 30000).
+    const forSale = salesGoal?.kind === "sales" && salesGoal.met === null && !save.starterIds.includes(bid.playerId) && transferMoneyOf(save).in < salesGoal.amount;
+    const sellable = (!keeps.has(bid.playerId) || tight) && (forSale || (policy.bids === "whenTight" && tight));
+    const sold = sellable && !save.activeEvent ? acceptBidFlow(save, bid.id) : null;
     if (sold && !sold.error) t.sales += 1;
     save = sold && !sold.error ? sold.save : declineBidFlow(save, bid.id);
   }

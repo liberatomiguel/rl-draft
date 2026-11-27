@@ -82,6 +82,54 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
 
+## [2.2.0-rc.7] — 2026-11-27 · Take over an organisation in RLCS 2027, under the board's mandate (staging)
+
+Miguel on rc.6 (27/11): the takeover started in 2020 with few orgs and not the ones people want, it reused the founded club's progression, and it let the player choose his goals. This rc is the second pass, stages 1 and 2 of `docs/handoff-2.2/ORGMODE-2027-SPEC.md`: the two fronts below (ERA, MANDATE), merged with the share kit, plus what the integration's browser pass found. Founding a club is unchanged. BALANCE_VERSION 55. Decisions R173 to R180.
+
+### Changed (integration)
+- **A real player's decline never starts before 24 to 27 in a 2027 world** (R180, `lateArcPeakOf`, `CAREER_ERA.longCareers.declineFromAgeWeights`).
+- **The mandate asks for a signing only when it would improve the three.** With every starter at or over the tier's capped bar the board asks to keep the core.
+- **A takeover adds no generic team where the region stays at its floor without the org** (EU and NA in RLCS 2027).
+- **The sponsor's deal is a house problem only 56 days from its end** (`issues.sponsorEndingDays`).
+- The pick screen names the season ("as they stand in RLCS 2027") and no longer promises three plans under the mandate.
+
+### Fixed
+- **Stars of 21 to 23 began RLCS 2027 "in decline".** Root cause: a real player's arc dates his peak by his best dataset card; with the dataset ending at the start, that is only his latest card, and R175 took every real player off his cards. 19 of the 36 real players rated 88+ started past their plateau.
+- **Gentle Mates (96 / 95 / 94) was asked to "sign a starter of 93 or better".** Root cause: at high demand the default squad goal was a signing, and the bar's cap per tier sat under the weakest starter.
+- **A takeover in Europe put a generic team in the taken org's seat** although the region has 24 real orgs. Root cause: `takeOrgSeat` always refilled the seat, a rule written for regions of exactly 16.
+- **The sponsor signed on day one showed as "the sponsorship is ending".** Root cause: the issue compared seasons only, and a one-season deal ends in the season it is signed.
+- **The owner's welcome said "played 1 seasons, the first in RLCS 2027".** Root cause: one sentence for every count; an org with one season now reads "new to the RLCS".
+
+### Measured
+- Suite green; `P1_SOFT` 0 findings (a 2027 takeover in NA, EU, SAM and MENA, autopilot and tuned, 7 seasons; founded SAM and NA, 7 seasons); `BOARD_SOFT` 2 / 2 at 2020 and at 2027.
+- The fronts' own numbers (below and in their handoffs) predate the integration changes.
+
+### Not verified
+- The R175 shares (active after 3, 6, 8 seasons; real players in the top 30) and the mandate's met rates were not re-measured after R180 and the signing-goal change.
+- The economy of a 2027 takeover (elite and contender end season 3 near $2M; money reads the era, R174) and the takeover's title chances in the stronger 2027 world.
+- `?era=N` exists only in the staging build (not seen on the dev server); the review and the season-2 pop-up in a played game; a physical phone, Safari.
+
+## [2.2.0-rc.7 · front MANDATE] — 2026-11-27 · The board's mandate
+
+Miguel's brief of 27/11: taking over an org, the player does not choose his goals; he is told the demand level and receives one pop-up with his goals and what he gains or loses, money, signings and classification, by mail too, with a welcome mail. Spec: `docs/handoff-2.2/ORGMODE-2027-SPEC.md` (stage 2). Handoff: `ORGMODE-2027-MANDATE.md`. Decisions R177 to R179. BALANCE_VERSION 54.
+
+### Added
+- **The board's mandate** (R177). An established org's season opens with three goals the board sets: classification (the tier's Expected objective, aimed by the demand level), money and squad (read from the org's problems). Each states what meeting it gives and what missing it costs (confidence, next season's budget, a bonus); the review settles all three. The founded club keeps its three plans.
+- **The house's problems** (R178). `orgIssuesOf` reads the org as it is (a starter's deal ending, wages at the ceiling, short cash, a weak link, an old core, chemistry, no coach, no reserve, a costly bench, a benched prospect, the sponsor) and the dossier shows them with the demand level (low, medium, high) before the takeover.
+- **The pop-up.** After the arrival screen and at every new season: the org, the demand as a figure, the three goals with their terms, last season's verdicts and the board's brief, one action. Portal on `<body>`, no close; the sponsor desk opens after it.
+- **Mail.** The owner's welcome (the org's own RLCS history), the mandate, a report on the three goals at weeks 11 and 21, the verdict on the three at the review.
+- **Screens.** `/career/board`: the classification object, the money and squad goals with today's figures, what needs fixing now. HQ's season-goal block: the money and squad goals under the classification rows. The season review's verdict: the three goals, the count met.
+
+### Changed
+- An established org's season has one package (the mandate's classification goal) and no secondary or legacy ask. `chooseBoardPackageFlow` with any id reads the mandate there.
+- The competent bot (`tuned`) works the mandate (R179); every bot reads it, so none stops on it.
+- After the merge with the 2027 start (front ERA): the board's dates read the career season or the year ("Season 3", "S1 · W3", "RLCS 2027"), not the era index; the signing bar is capped per tier; "no sponsor" is not a problem in the board's first week.
+
+### Balance
+- `CAREER_BOARD.mandate` (demand, terms, issue thresholds, the money and squad goals' figures). BALANCE_VERSION 53 → 54.
+
+## [2.2.0-rc.7 · front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027
+
 ### Added
 - Start era (R173): `startSeasonIndex` on the save (optional), `eraStart` on the world, `engine/career/era.ts` (`careerSeasonOf`, `clampStartEra`, `retirementTableOf`, `takeoverStartEraFor`).
 - The world at an era (R174): `buildWorldAtCreation(seed, era)` from that season's lineups, returning orgs before fillers (`returningFrom`), free agents from the three seasons before (club cards and subs).
@@ -95,6 +143,22 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ### Balance
 - BALANCE_VERSION 53: new `CAREER_ERA` group only; founded numbers unchanged.
+
+## [2.2.0-dev] — 2026-11-27 · Share kit: share a run, a career, invite friends (staging)
+
+Miguel's brief of 27/11: more ways to spread the game (share a run, share a Road to Worlds career, invite friends, play with a friend) and share images and texts that look better and make people want to post them. Spec in code: `src/lib/share/`, `src/components/share/`, `src/components/career/share/`.
+
+### Added
+- **One share sheet for every surface** (`ShareSheet`): the image in two formats, **Post** (1200 × 630, for X, Discord, WhatsApp, Reddit) and **Story** (1080 × 1920, for Instagram, TikTok and WhatsApp status), drawn on open; the system share sheet with the image attached (phones), WhatsApp, X, Reddit and Telegram links, copy image (paste into Discord), copy text and link, download. The text that goes with the post is shown before it leaves.
+- **New run image.** Drawn in the game's own material (DESIGN.md): the placement on the paper slab, one sentence on how the run went ("Undefeated", "Out to Vitality (2-4) in the Grand Final"), the road through the bracket as a square per series, three figures (team OVR, chemistry, Swiss record) and the drafted roster as the game's cards (rarity frames, special photos, flags, org crests). A title run gets the gold frame. Works for Classic, Quick, the Daily (its number on the image, a square grid in the post) and a duel run (the post carries the duel link, so the friend plays the same draft).
+- **Share a Road to Worlds career.** "Share career" on the Club screen and at the season review, "Share the title" on the event screen after a title. The card: the crest and the club's name, the manager, region and season, the headline on the slab (World champions, Major champions...), the trophy shelf (Worlds in trophy gold) and the starting three as cards wearing the club's crest. A club that has won the Worlds gets the gold frame. The link opens the career landing page.
+- **"With friends" on the Home**: a friend duel in one click (Classic, the last difficulty and overall setting, a fresh seed; the link goes out from the results) and "Invite friends" (the game's pitch and link, no account needed).
+- **Ambassador**, a new title (uncommon): earned the first time something leaves the game through a share sheet, any channel. Stored as the profile mark `share-first` (the run marks' list, synced with the account), so no new save field. Proposal for a "Party Leader" banner (5 friends brought to play) waits on Miguel's art and his choice of how to count (PENDING-COSMETICS.md).
+- Analytics: `content_shared` (critical) with `surface` (run, daily, duel, career, invite), `channel` and `format`. Share links go to rocketdraft.app with `utm_medium=share` and `utm_campaign=<surface>`.
+
+### Changed
+- The old share preview (Rajdhani canvas, X and download only) is gone with `lib/shareCard.ts`; the run's Share button opens the new sheet.
+- Share posts rewritten (EN and PT): they say what happened and end on a challenge ("Think you can beat it?", "Your turn:").
 
 ## [2.2.0-rc.6] — 2026-11-27 · The established organisation: its own rules, its own screens (staging)
 

@@ -113,6 +113,18 @@ function displayParams(
       p[key] = formatMoney(p[key] as number);
     }
   }
+  // v2.2 MANDATE: the board's mandate mails carry the three goals as kinds and figures (boardFlow.mandateParams).
+  if (typeof raw.clsKind === "string" && typeof raw.moneyKind === "string" && typeof raw.squadKind === "string") {
+    const kind = raw.clsKind;
+    const count = Number(raw.clsCount);
+    const place = Number(raw.clsPlace);
+    const K = career.board.mandate;
+    if (p === raw) p = { ...raw };
+    p.cls = career.goals.seasonTotal(kind, count, place, Number(raw.clsTotal)) || career.goals.season(kind, count, place);
+    p.money = K.money(raw.moneyKind, String(p.amount ?? ""), Number(raw.moneyWeek));
+    p.squad = K.squad(raw.squadKind, Number(raw.squadValue), String(raw.squadPlayer ?? "").split(" · ").filter(Boolean));
+    p.demandWord = K.demandLine(String(raw.demand ?? ""));
+  }
   if (titleKey === "insertResolved" && typeof p.insert === "string") {
     p = { ...p, insert: insertTitle(career, p.insert) };
   }
