@@ -55,13 +55,13 @@ export const CAREER_MEDIA_PT = {
     body: {
       mediaOffer: (p: P) =>
         `A ${brandOf(p)} pediu ${p.player} para um dia de mídia, fora do clube ${rangeOf(p)} (${p.days} dias). Eles pagam ${p.cash}.\n\n` +
-        (p.event ? `Ele perderia ${eventsOf(p)}.` : "Nenhum evento do seu time cai nesses dias.") +
+        (p.event ? `Ele perderia o ${eventsOf(p)}.` : "Nenhum evento do seu time cai nesses dias.") +
         (Number(p.fatigue) ? `\n\nEle esteve num dia de mídia há pouco tempo, e ser enviado de novo tão cedo vai pesar no humor dele.` : "") +
         `\n\nVocê pode responder por esta mensagem até ${dayText(p.deadlineDow, p.deadlineD, p.deadlineM)}. Sem resposta, a oferta vence como recusada.`,
       mediaCalledOff: (p: P) =>
         p.why === "gone"
           ? `A ${brandOf(p)} cancelou o dia de mídia: ${p.player} não está mais no clube. Nada foi pago.`
-          : `A ${brandOf(p)} cancelou o dia de mídia com ${p.player}: outro jogador já está fora de ${p.event}, e o time não pode ficar desfalcado. Nada foi pago.`,
+          : `A ${brandOf(p)} cancelou o dia de mídia com ${p.player}: outro jogador já está fora do ${p.event}, e o time não pode ficar desfalcado. Nada foi pago.`,
     } as Record<string, (p: P) => string>,
   },
 };
