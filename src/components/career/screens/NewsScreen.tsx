@@ -29,6 +29,7 @@ import { dateOfDay, seasonLabelFor, useCareerSave } from "@/components/career/ca
 import { formatDateTiny } from "@/components/career/dateText";
 import { resolveMail } from "@/components/career/news/newsText";
 import { withMoneyParams } from "@/components/career/hub/hubShared";
+import { LockerTalkAnswers } from "@/components/career/locker/LockerTalkAnswers"; // v2.3 LOCKER
 
 type DatesCopy = CareerCopy["dates"];
 
@@ -293,6 +294,7 @@ function MailReader({ item, C, D, currentSeason }: { item: MailItem; C: CareerCo
       ) : resolved.body ? (
         <p className="mt-4 max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
       ) : null}
+      <LockerTalkAnswers item={item} C={C} /> {/* v2.3 LOCKER */}
       {item.linkTo ? (
         <Button variant="secondary" className="mt-5" onClick={() => router.push(item.linkTo!)}>
           {C.mail.open}

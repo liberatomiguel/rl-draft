@@ -5439,6 +5439,8 @@ export const FEATURES = {
    * for byte as before. ON in the staging build only; probes: NEXT_PUBLIC_ENDLESS_VARIETY=1.
    */
   endlessVariety: STAGING_BUILD || process.env.NEXT_PUBLIC_ENDLESS_VARIETY === "1",
+  /** v2.3 LOCKER: player morale, talks and promises (CAREER_LOCKER, engine/career/lockerRoom.ts). Off = no save field, no effect. Staging only; probes: NEXT_PUBLIC_LOCKER_ROOM=1. */
+  lockerRoom: STAGING_BUILD || process.env.NEXT_PUBLIC_LOCKER_ROOM === "1",
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
@@ -5574,3 +5576,5 @@ export const CAREER_ENDLESS = {
 
 /** v2.2 PROQA polish: the Pro's Continue plans the week by itself after his first confirmed plan, and stops at least this often with a digest. */
 export const CAREER_PRO_PLAN = { digestWeeks: 4 } as const;
+
+export * from "./balance.lockerRoom"; // v2.3 LOCKER

@@ -1905,6 +1905,8 @@ export interface CareerSave {
    * count from. Optional and additive: absent = from the career's start.
    */
   achievementBase?: { stats: Partial<CareerLifetimeStats>; seasonIndex: number };
+  /** v2.3 LOCKER (FEATURES.lockerRoom): morale, talks, promises, the word. Optional, additive: absent = everyone neutral. */
+  lockerRoom?: import("./lockerRoom").LockerRoomState;
 }
 
 /** v2.2 ENDLESS: what the front keeps between seasons. */

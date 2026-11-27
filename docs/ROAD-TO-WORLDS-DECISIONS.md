@@ -2820,3 +2820,35 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 
 - **Decidido:** a tela de escolha monta o mundo em `CAREER_ERA.takeoverDefaultStart` (6); no build de staging `?era=N` (0–6) troca a era para teste até existir o seletor (etapa 4). Org que volta é marcada no dossiê ("De volta, vista pela última vez em RLCS 2026"). O técnico de uma org na onda de 2027 é o da lineup de 2027.
 - **Não feito:** as telas da diretoria (contrato "até a temporada N", registro "S7 · W3") ainda mostram o índice absoluto +1; é a UI do front MANDATE.
+
+> Nota de numeração (27/11): R190–R194 são do front LOCKER (v2.3, onda 1, `v23/locker-room`); R195–R199 ficam com o FEED.
+
+## R190 — 27 de novembro de 2026: a conversa é um e-mail com respostas e nunca segura o calendário (v2.3.0-dev, LOCKER)
+
+- **Decidido:** a fila de decisões (`careerDecisions`) não carrega título, texto nem respostas (cada tipo tem a sua tela), e o e-mail não tinha ações. A conversa vira um e-mail da comissão (`lockerTalk_<tema>`, com `talkId` nos params) e o leitor da caixa de entrada ganhou o mínimo: `components/career/locker/LockerTalkAnswers.tsx`, um botão por resposta, e depois a resposta dada. Não entra na fila: nunca segura o relógio nem o autoplay. Sem resposta em `CAREER_LOCKER.talkDays` (7) dias, fecha sozinha com a resposta neutra e manda um e-mail dizendo qual foi.
+- **Por quê:** o spec pede que a conversa nunca trave o calendário e que o jogo funcione para quem ignora o sistema. Sem a sonda de soft lock nesta onda, a opção que não segura nada é a única segura.
+- **Não visto num navegador.** A onda 2 troca o componente pela tela do vestiário.
+
+## R191 — 27 de novembro de 2026: a "série" do spec é um evento que o clube jogou (v2.3.0-dev, LOCKER)
+
+- **Decidido:** a unidade do tempo de jogo e da promessa `minutes` é um evento do clube com resultado em `eventResults` (o sábado e o domingo de um fim de semana são dois). A escalação é a `fieldedIds` do evento (congelada desde o R40), senão os titulares. Evento lateral 1v1/2v2 não conta. A troca no meio da série (Matchday) não conta.
+- **Reservas:** quem tem overall abaixo do titular mais fraco escalado não espera jogar: o banco sozinho o leva só até `benchFloorReserve` (32, acima do limite do pedido de transferência) e ele não pede a conversa. Quem é melhor que um titular cai sem piso e pede a conversa no 3º evento seguido no banco (`benchRunTalk`), e continua caindo até jogar.
+- **Por quê:** contar séries pediria ler a chave do torneio por dentro; o evento já é o que o save registra com escalação.
+
+## R192 — 27 de novembro de 2026: os fatos do vestiário vêm do save antes e depois de cada escrita (v2.3.0-dev, LOCKER)
+
+- **Decidido:** nenhum fluxo da carreira mudou. A store chama `lockerRoomAfter(prev, next)` em `withSave` e `withResult` (duas linhas), e `store/lockerRoomFlow.ts` lê a diferença: segundas cruzadas (o tick semanal), resultado novo do clube (evento jogado), entrada nova na lista de transferências, jogador que saiu com `soldOn` novo (vendido; sem ele, liberado ou fim de contrato), proposta recebida que sumiu no mesmo dia com o jogador ainda no elenco (recusada). Se o passo falha, a escrita segue sem ele.
+- **Limite:** o que não passa por esses dois helpers (bots, sondas, testes que chamam fluxos direto) não roda o vestiário. Com a flag desligada nada roda e nada é gravado (teste de seis semanas, save igual byte a byte).
+
+## R193 — 27 de novembro de 2026: como uma promessa fecha, e a palavra do técnico (v2.3.0-dev, LOCKER)
+
+- **`minutes`** (3 dos próximos 4 eventos como titular): cumprida assim que ele soma 3; quebrada assim que não dá mais (2 eventos fora). Se em 70 dias o clube não jogou eventos suficientes, ela caduca sem contar para a palavra (senão prometer na pré-temporada seria palavra grátis).
+- **`stay`**: vale até o fim da janela aberta, ou da próxima. Lista ou venda antes disso quebra; a janela fechar cumpre. Vender um jogador quebra toda promessa feita a ele; liberar ou o fim do contrato só as apaga.
+- **Efeitos:** cumprida +8 para ele; quebrada −20 para ele e −4 para cada companheiro. A palavra é `(cumpridas + 1) / (cumpridas + quebradas + 2)`; uma promessa nova acalma 10 × `clamp((palavra − 0,3) / 0,2, 0, 1,25)`: 10 para um técnico novo, 2 depois de uma quebrada, 0 com duas quebradas e nenhuma cumprida. Promessa herdada (L5) conta para a palavra de quem a cumpre ou quebra.
+
+## R194 — 27 de novembro de 2026: as consequências e os números de partida (v2.3.0-dev, LOCKER)
+
+- **Pedido de transferência:** moral abaixo de 25 por 4 ticks semanais seguidos abre a conversa "vender, prometer, recusar" (neutra: recusar, −6). Depois de respondida, 8 semanas sem novo pedido. "Vender" coloca o jogador na lista pelo valor dele se a janela estiver aberta (sem a queda de ser listado); com a janela fechada, um e-mail manda listar quando abrir.
+- **Treino:** fator linear 0,94 (moral 0) a 1,06 (moral 100) no ganho bruto de todo tick que lê `growthCtxOf` (treino, scrims, XP de partida); nunca no declínio, então nenhum efeito de moral baixa overall ou potencial gravado. Moral neutra não entra no contexto: o tick é o antigo bit a bit.
+- **Partida:** `CAREER_LOCKER.matchEffect` existe e vale 0; `matchMoraleEffectOf` não está ligado em lugar nenhum.
+- **Outros números:** título regional, Major ou Worlds +6 para o elenco, top 4 sem título num Major ou Worlds +3, a partir do 3º evento seguido eliminado na Swiss −2 cada, listado −10, resposta seca −5, deriva semanal de 1 em direção a 50 (não para quem está emburrado no banco). Os cinco humores cortam em 20/40/60/80. Mudança de humor vira um e-mail por motivo, com os nomes e o humor novo. **Não medido:** nenhum desses números passou por bateria.
