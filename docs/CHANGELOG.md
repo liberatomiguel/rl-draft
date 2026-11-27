@@ -10,6 +10,23 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.3.0-dev, front FEED] — 2026-11-27 · The fan feed: rules and text, no screen yet (branch v23/fan-feed)
+
+### Added
+- Fan feed (R195-R199, `FEATURES.fanFeed`, staging only): `engine/career/fanFeed.ts` (`fanFeedFor`, pure and seeded) derives recent posts from the save: series won and lost, upsets, win and loss streaks, signings, sales, titles, lost finals, the fans' answer to the manager's post and the receipt. Posts are data, never stored.
+- 13 event kinds, 6 to 9 variants each (`fanFeedVariants.ts`), every variant naming two or more slots; no variant repeats inside the last 5 posts of its kind. "Dynasty", "best team in the region" and "first title" appear only when the save's ledger supports them.
+- Generated fan handles from a bank of our own (`fanHandles.ts`), checked in a test against every dataset and career-catalogue player and org name.
+- The manager's post (`store/fanFeedFlow.ts`): `postToFeedFlow(save, tone | "skip")` stores tone, opponent and week; a provocative post followed by a loss to that opponent becomes a receipt the fans quote back. Followers move with results, tone and receipts and have no other effect.
+- Copy: `copy.career.feed.en.ts` / `.pt.ts` (88 texts each, the Portuguese written as a Brazilian fan would post).
+
+### Changed
+- `finishEvent` calls `recordFeedSeries` (one line, a no-op with the flag off) to keep the user's last 40 series in the new optional `save.fanFeed`; recording of results is untouched. `stagingFlags.test.ts` lists the new flag.
+
+### Balance
+- BALANCE_VERSION 54: the new `CAREER_FEED` group only (feed tunables); no gameplay number moves.
+
+---
+
 ## [Unreleased, front ERA] — 2026-11-27 · A career can start at any era; the takeover starts in RLCS 2027 (branch v22/era-2027)
 
 ### Added
