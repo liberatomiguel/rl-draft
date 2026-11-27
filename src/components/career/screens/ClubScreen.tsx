@@ -517,7 +517,7 @@ export function ClubScreen() {
       >
         <p>{copy.club.abandonConfirm}</p>
         <p className="mt-2 text-xs text-faint">
-          {copy.saves.deleteConfirm(save.identity.orgName, save.clock.seasonIndex + 1)}
+          {copy.saves.deleteConfirm(save.identity.orgName, save.clock.seasonIndex - (save.startSeasonIndex ?? 0) + 1)}
         </p>
       </Modal>
     </div>

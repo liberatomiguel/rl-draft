@@ -13,13 +13,13 @@ import { careerSavesNoticeDue, settleCareerSavesNotice } from "@/lib/careerSaves
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 
-export function SavesNotice({ clock }: { clock: { seasonIndex: number; day: number } }) {
+export function SavesNotice({ clock, startSeasonIndex = 0 }: { clock: { seasonIndex: number; day: number }; startSeasonIndex?: number }) {
   const C = useCareerCopy().savesNotice;
   const router = useRouter();
   const [answered, setAnswered] = useState(false);
   // Read on the client only: the server export never knows the device's answer.
   const mounted = useMounted();
-  if (!mounted || answered || !careerSavesNoticeDue(clock)) return null;
+  if (!mounted || answered || !careerSavesNoticeDue(clock, startSeasonIndex)) return null;
   const settle = (outcome: "opened" | "dismissed") => {
     settleCareerSavesNotice(outcome);
     setAnswered(true);

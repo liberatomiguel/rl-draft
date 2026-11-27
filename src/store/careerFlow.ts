@@ -129,6 +129,7 @@ import {
   windowCloseDayFor,
   windowIndexOf,
 } from "@/engine/career/calendar";
+import { careerSeasonOf, clampStartEra, startSeasonOf } from "@/engine/career/era";
 import {
   compileEventResult,
   applyResultToStandings,
@@ -1125,8 +1126,8 @@ export function foundingHandoverOf(save: CareerSave): FoundingHandoverView | nul
   if (!fp || !foundingPartnerActive(fp) || fp.taperStep !== undefined || taper.length < 2) return null;
   if (foundingPartnerPerSplitOf(save) <= 0) return null;
   const through = CAREER_SPONSOR.founding.throughSeasonIndex;
-  const onSigning = foundingPartnerEnds(fp, save.clock.seasonIndex, true);
-  const startsOn = onSigning ? nextPaydayFor(save.clock) : { seasonIndex: through + 1, day: 1 };
+  const onSigning = foundingPartnerEnds(fp, careerSeasonOf(save), true);
+  const startsOn = onSigning ? nextPaydayFor(save.clock) : { seasonIndex: startSeasonOf(save) + through + 1, day: 1 };
   return {
     onSigning,
     throughSeason: through,
@@ -1245,7 +1246,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
 
     // --- 0a. rc.32 (M3): the founding partner opens on the founding day —
     //     rc.33 (ECO-07): none any more (`founding.enabled` false records null).
-    if (seasonIndex === 0 && day === 1 && save.foundingPartner === undefined) {
+    if (careerSeasonOf(save, seasonIndex) === 0 && day === 1 && save.foundingPartner === undefined) {
       if (CAREER_SPONSOR.founding.enabled) openFoundingPartner(save);
       else save.foundingPartner = null;
     }
@@ -1268,7 +1269,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
     // --- 0b. v2.0 WEEKLY PAYROLL (R20) — every Monday but the founding day --
     //     rc.33 (UX-07): every Monday's closing books go in the balance ring
     //     (the founding day records the start budget), once per Monday.
-    if (!(seasonIndex === 0 && week === 1)) {
+    if (!(careerSeasonOf(save, seasonIndex) === 0 && week === 1)) {
       runWeeklyPayroll(save);
       if (save.phase === "ended") return capNews(save);
     } else {
@@ -1314,7 +1315,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
         const signedNow = save.squad.some(
           (p) => p.id === beat.requiresPlayerFree && resaleLocked(p, seasonIndex, day),
         );
-        const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week)) || signedNow;
+        const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week), startSeasonOf(save)) || signedNow;
         if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree && !bidFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
@@ -1607,6 +1608,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
       world: save.world,
       squad: save.squad,
       seasonIndex,
+      startSeasonIndex: startSeasonOf(save),
       windowIdx: dayWindowIdx,
       day,
       careerSeed: save.careerSeed,
@@ -1794,7 +1796,7 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   const week = weekOfDay(day);
   const split = splitOfWeek(week) ?? 3;
   // Novice guard + one-per-split cap.
-  if (seasonIndex === 0 && split === 1) return;
+  if (careerSeasonOf(save, seasonIndex) === 0 && split === 1) return;
   const usedKey = `unav:${seasonIndex}:${split}`;
   if (save.flags[usedKey]) return;
   if (def.tier === "t3" || def.tier === "t2") return; // officials only
@@ -1815,7 +1817,7 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   const hasReserve = save.squad.some((p) => !save.starterIds.includes(p.id));
   if (
     !hasReserve &&
-    (CAREER_WORLD.unavailabilityWithoutReserve !== "short" || seasonIndex < CAREER_WORLD.unavailabilityNoReserveGraceSeasons)
+    (CAREER_WORLD.unavailabilityWithoutReserve !== "short" || careerSeasonOf(save, seasonIndex) < CAREER_WORLD.unavailabilityNoReserveGraceSeasons)
   ) {
     return;
   }
@@ -2452,7 +2454,7 @@ function runWeeklyPayroll(save: CareerSave): void {
   const week = weekOfDay(day);
   // rc.32 (M3): past season index throughSeasonIndex with a real deal signed, the founding partner steps back.
   // rc.34 (S6): over two splits, not at once (beginFoundingHandover).
-  if (foundingPartnerEnds(save.foundingPartner, seasonIndex, realDealSigned(save))) beginFoundingHandover(save);
+  if (foundingPartnerEnds(save.foundingPartner, careerSeasonOf(save, seasonIndex), realDealSigned(save))) beginFoundingHandover(save);
   const payroll = weeklyPayroll({
     fin: save.finances,
     squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
@@ -4520,7 +4522,7 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
     regionRank: rank,
     majorsQualified,
     worldsPlacement: userWorlds,
-    seasonIndex: save.clock.seasonIndex,
+    seasonIndex: careerSeasonOf(save), // the debut grace is the career's first season
     rep: save.reputation,
   });
 
@@ -4859,8 +4861,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.39 F6 (R103): the season the no-reserve rule starts, a squad without a reserve is told once.
   if (
     CAREER_WORLD.unavailabilityWithoutReserve === "short" &&
-    nextSeason === CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
-    nextSeason > 0 &&
+    careerSeasonOf(save, nextSeason) === CAREER_WORLD.unavailabilityNoReserveGraceSeasons &&
+    careerSeasonOf(save, nextSeason) > 0 &&
     !save.squad.some((p) => !save.starterIds.includes(p.id))
   ) {
     pushMail(save, { kind: "club", titleKey: "noReserve", bodyKey: "noReserve", params: {}, fromKey: "staff", linkTo: "/career/squad" });
@@ -4913,6 +4915,12 @@ export interface CreateCareerInput {
   realOrgRef?: string;
   /** v2.2: the hidden host of a Pro career (the board front is inert on it). */
   proHost?: boolean;
+  /**
+   * v2.2 ORGMODE-2027 (front ERA): the era the career starts at (absent = 0).
+   * Honoured for a takeover (`realOrgRef`, FEATURES.realOrgStart); a founded
+   * club starts at 0 in this stage (its founding money is season-0 money).
+   */
+  startSeasonIndex?: number;
 }
 
 /** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */
@@ -4984,6 +4992,7 @@ function squadFromOffer(
   offer: StarterOffer,
   input: CreateCareerInput,
   careerSeed: number,
+  start = 0,
 ): SquadPlayer[] {
   return offer.players.map((view) => ({
     id: view.id,
@@ -4991,7 +5000,7 @@ function squadFromOffer(
     name: view.name,
     country: view.country,
     region: view.region,
-    birthYear: seasonYear(0) - view.age,
+    birthYear: seasonYear(start) - view.age,
     archetype: view.archetype,
     overall: view.overall,
     attrOffsets: view.attrOffsets,
@@ -5005,12 +5014,12 @@ function squadFromOffer(
     // reads the pre-rc.33 team share. A founder who grows past
     // CAREER_PRIZE_SHARE.shareThresholdOverall asks one at his renewal.
     prizeSharePct: 0,
-    contractEndSeason: FOUNDING_DEAL_END_SEASON,
+    contractEndSeason: start + FOUNDING_DEAL_END_SEASON,
     trainingFocus: "auto" as const,
     trainingIntensity: "normal" as const,
     scoutLevel: FOUNDER_SCOUT_LEVEL,
     splitsTogether: 0,
-    joinedSeason: 0,
+    joinedSeason: start,
     gainedThisSplit: 0,
     gainedThisSeason: 0,
   }));
@@ -5040,12 +5049,14 @@ export function founderPotentialBandFor(
 }
 
 export function createCareerSave(input: CreateCareerInput, careerSeed: number): CareerSave {
-  let world = buildWorldAtCreation(careerSeed);
-  world = computeStars(world, { seasonIndex: 0, careerSeed, difficulty: input.difficulty });
+  // v2.2 ORGMODE-2027 (front ERA): a takeover may start at a later era; everything else starts at 0.
+  const start = input.realOrgRef && FEATURES.realOrgStart && !input.proHost ? clampStartEra(input.startSeasonIndex) : 0;
+  let world = buildWorldAtCreation(careerSeed, start);
+  world = computeStars(world, { seasonIndex: start, careerSeed, difficulty: input.difficulty });
 
   const offers = starterRosterOffers(input.identity.region, careerSeed);
   const offer = offers.find((o) => o.key === input.rosterKey) ?? offers[0];
-  const squad = squadFromOffer(offer, input, careerSeed);
+  const squad = squadFromOffer(offer, input, careerSeed, start);
 
   const save: CareerSave = {
     saveVersion: 5,
@@ -5055,7 +5066,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     difficulty: input.difficulty,
     prefs: prefsFor(input),
     flags: {},
-    clock: { seasonIndex: 0, day: 1 },
+    clock: { seasonIndex: start, day: 1 },
+    ...(start > 0 ? { startSeasonIndex: start } : {}),
     phase: "running",
     squad,
     starterIds: [squad[0].id, squad[1].id, squad[2].id],
@@ -5121,7 +5133,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     honors: [],
     honorsComplete: true,
     history: [],
-    seasonGoals: seasonGoalsFor({ rep: CAREER_REP.start, seasonIndex: 0 }),
+    seasonGoals: seasonGoalsFor({ rep: CAREER_REP.start, seasonIndex: start }),
     end: { ended: false, infinite: false },
     stats: {
       seriesWins: 0,
@@ -5145,7 +5157,9 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     lastPlayedAt: 0,
   };
   boardOnCreate(save, input); // v2.2 board front (store/boardFlow)
-  attachSeasonGoal(save, 0, null);
+  // v2.2 ORGMODE-2027: a career born inside the world-life era gets the caps its rollover would have set.
+  if (start > 0 && worldLifeOn(start)) save.competition.localCap = localCapsFor(save.world);
+  attachSeasonGoal(save, start, null);
 
   return processDayArrival(save);
 }
@@ -6030,6 +6044,7 @@ export function listingPlanFor(save: CareerSave, playerId: string): ListingPlan 
       player,
       listed: list.filter((l) => l.playerId !== playerId),
       seasonIndex: save.clock.seasonIndex,
+      startSeasonIndex: startSeasonOf(save),
       day: save.clock.day,
     });
     error = block ? LISTING_ERROR[block] : null;
@@ -6178,7 +6193,7 @@ export function tradePlanFor(
   const { seasonIndex, day } = save.clock;
   const windowIdx = windowIndexOf(weekOfDay(day));
   if (windowIdx === null) return { error: "windowClosed" };
-  if (userBidsBlocked(seasonIndex, windowIdx)) return { error: "listFirstWindow" };
+  if (userBidsBlocked(seasonIndex, windowIdx, startSeasonOf(save))) return { error: "listFirstWindow" };
   if (day >= windowCloseDayFor(windowIdx)) return { error: "listWindowClosing" };
   const give = save.squad.find((p) => p.id === giveId);
   if (!give) return { error: "unknown" };
@@ -7050,7 +7065,7 @@ function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
   });
   // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
   // rc.34 (S6): it hands over over two splits instead (beginFoundingHandover).
-  if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) beginFoundingHandover(save);
+  if (foundingPartnerEnds(save.foundingPartner, careerSeasonOf(save), true)) beginFoundingHandover(save);
   // v2.0 (C1): a deal with free bootcamps starts the first one on signing.
   startSponsorBootcamp(save);
 }
@@ -7391,7 +7406,7 @@ export function backfillEconomyOnLoad(save: CareerSave): void {
   const neverSigned =
     !realDealSigned(save) &&
     !(save.finances.ledger ?? []).some((l) => l.kind === "sponsorSigning" || l.kind === "sponsorBase");
-  if (save.phase !== "ended" && save.clock.seasonIndex <= CAREER_SPONSOR.founding.throughSeasonIndex && neverSigned) {
+  if (save.phase !== "ended" && careerSeasonOf(save) <= CAREER_SPONSOR.founding.throughSeasonIndex && neverSigned) {
     openFoundingPartner(save);
   } else {
     save.foundingPartner = null;
@@ -7541,9 +7556,10 @@ export function repairSponsorsOnLoad(save: CareerSave): void {
 export function repairFoundingShareOnLoad(save: CareerSave): void {
   if (!Array.isArray(save.squad) || !save.clock) return;
   const founders = save.foundingSquadIds ?? [];
-  if (save.clock.seasonIndex > FOUNDING_DEAL_END_SEASON) return;
+  if (careerSeasonOf(save) > FOUNDING_DEAL_END_SEASON) return;
+  const start = startSeasonOf(save);
   for (const p of save.squad) {
-    if (!founders.includes(p.id) || p.joinedSeason !== 0 || p.contractEndSeason !== FOUNDING_DEAL_END_SEASON) continue;
+    if (!founders.includes(p.id) || p.joinedSeason !== start || p.contractEndSeason !== start + FOUNDING_DEAL_END_SEASON) continue;
     if (p.prizeSharePct !== 0) p.prizeSharePct = 0;
   }
 }

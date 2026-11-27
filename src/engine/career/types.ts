@@ -436,6 +436,12 @@ export interface WorldOrgState {
    * Decided again at every rollover; absent = no project.
    */
   projectKit?: { since: number; items: import("./endless").KitItem[] };
+  /**
+   * v2.2 ORGMODE-2027 (front ERA): a real org that had no lineup in the start
+   * era and came back to complete its region, from its last lineup (this era
+   * index). Set at creation only; optional, additive.
+   */
+  returningFrom?: number;
 }
 
 export interface WorldState {
@@ -513,6 +519,13 @@ export interface WorldState {
    * built. Optional, additive.
    */
   userBuiltRefs?: string[];
+  /**
+   * v2.2 ORGMODE-2027 (front ERA): the era this world was built at, when a
+   * career started past Season X (absent = 0). Filler birth years read it, and
+   * a world built at the last era (no later dataset season) projects its young
+   * real players' potential and follows the long retirement window.
+   */
+  eraStart?: number;
 }
 
 /** A former founder as he left the user's squad (WorldState.formerSquad). */
@@ -1880,6 +1893,12 @@ export interface CareerSave {
   endless?: EndlessState | null;
   /** v2.2: the hidden manager save a Pro career runs his world on: the board and the endless bids never touch it. */
   proHost?: boolean;
+  /**
+   * v2.2 ORGMODE-2027 (front ERA): the era (season index) the career started
+   * at; absent = 0. `clock.seasonIndex` stays absolute; progress reads
+   * `era.careerSeasonOf`. Optional and additive (persist contract unchanged).
+   */
+  startSeasonIndex?: number;
   /**
    * rc.6 (R171): set when a manager founds a club after a dismissal: the
    * lifetime stats and the season the founded road's permanent achievements

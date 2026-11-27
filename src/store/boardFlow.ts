@@ -210,8 +210,9 @@ export function boardOnCreate(save: CareerSave, input: CreateCareerInput): void 
     openEstablishedSponsorDesk(save);
     return;
   }
-  save.board = boardFor(save, stature, 0);
-  save.manager = newManagerState(0, save.identity.orgName, save.identity.realOrgRef);
+  // v2.2 ORGMODE-2027: the board and the manager start at the career's own start era.
+  save.board = boardFor(save, stature, save.clock.seasonIndex);
+  save.manager = newManagerState(save.clock.seasonIndex, save.identity.orgName, save.identity.realOrgRef);
   offerSeason(save as CareerSave & { board: BoardState });
 }
 

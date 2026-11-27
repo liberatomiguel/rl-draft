@@ -18,13 +18,14 @@ import {
   CAREER_AGE,
   CAREER_CALENDAR,
   CAREER_DEV,
+  CAREER_ERA,
   CAREER_SCOUT,
   CAREER_SEASONS,
   CAREER_TRAINING,
   CAREER_WORLD,
   TEAM_RATING,
 } from "@/config/balance";
-import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards } from "@/data";
+import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards, subs } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/legacyNames";
 import { gamertagVariant, playerNameBankFor } from "./names";
 import type { Rng } from "@/lib/rng";
@@ -649,6 +650,26 @@ export function anchorOverall(playerId: string, seasonOrder: number): number | n
   return latest ? finalOverall(latest) : null;
 }
 
+/** v2.2 ORGMODE-2027: per start era, the best sub overall of each person in its free-agent window (memoized). */
+const eraSubAnchors = new Map<number, Map<string, number>>();
+function eraSubAnchorOf(playerId: string, start: number): number | null {
+  let map = eraSubAnchors.get(start);
+  if (!map) {
+    map = new Map();
+    const window = new Set<string>();
+    for (let back = 1; back <= CAREER_ERA.freeAgentSeasons; back++) {
+      const s = CAREER_SEASONS[start - back];
+      if (s) window.add(s.seasonId);
+    }
+    for (const sub of subs) {
+      if (!window.has(sub.seasonId)) continue;
+      map.set(sub.personId, Math.max(map.get(sub.personId) ?? -Infinity, sub.overall));
+    }
+    eraSubAnchors.set(start, map);
+  }
+  return map.get(playerId) ?? null;
+}
+
 /**
  * rc.34 (DEV-03 decision 5-A): a player's CAREER-BEST club card overall (the
  * ex-pro coach's quality reads it, not the last card); null = no card.
@@ -680,7 +701,10 @@ export interface ViewCtx {
  */
 export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView | null {
   if (ctx.world.retiredIds.includes(playerId)) return null;
-  const anchor = anchorOverall(playerId, seasonOrderFor(ctx.seasonIndex));
+  let anchor = anchorOverall(playerId, seasonOrderFor(ctx.seasonIndex));
+  // v2.2 ORGMODE-2027 (front ERA): a world built at a later era also knows the
+  // window's substitutes who never had a club card (their best sub overall).
+  if (anchor === null && (ctx.world.eraStart ?? 0) > 0) anchor = eraSubAnchorOf(playerId, ctx.world.eraStart!);
   if (anchor === null) return null;
   const player = playerById.get(playerId);
   if (!player) return null;
@@ -746,7 +770,8 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
     FILLER_AGE_RANGE[0],
     FILLER_AGE_RANGE[1],
   );
-  const birthYear = seasonYear(0) - age0;
+  // v2.2 ORGMODE-2027 (front ERA): a world built at a later era meets its fillers at their base age there.
+  const birthYear = seasonYear(ctx.world.eraStart ?? 0) - age0;
 
   const dev01 = isGrowthContract(growthModelOf(ctx.world));
   const profile = dev01 ? developmentProfileOf(id, ctx.careerSeed) : null;

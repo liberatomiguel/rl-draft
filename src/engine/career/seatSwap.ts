@@ -175,7 +175,7 @@ export function takeOrgSeat(save: CareerSave, ref: string): SeatTaken | null {
   const ctx = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, difficulty: save.difficulty, world };
   const squad = takeoverSquadOf(ref, stature, ctx);
   if (!squad) return null;
-  const coach = datasetCoachOf(ref, save.clock.seasonIndex, save.difficulty);
+  const coach = datasetCoachOf(ref, save.clock.seasonIndex, save.difficulty, save.world.eraStart);
   const usable = coach && !(save.retiredCoachIds ?? []).includes(coach.id) ? coach : null;
 
   delete world.orgs[ref];

@@ -115,7 +115,7 @@ export function HubScreen() {
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
       <ErrorBanner />
-      <SavesNotice clock={save.clock} />
+      <SavesNotice clock={save.clock} startSeasonIndex={save.startSeasonIndex ?? 0} />
 
       {/*
         rc.34 (HQ-CONTRACT H7): one column on a phone in the contract's order —

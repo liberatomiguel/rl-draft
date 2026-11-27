@@ -30,13 +30,15 @@ export function listingBlockFor(ctx: {
   player: { id: string; joinedSeason: number; signedDay?: number };
   listed: readonly { playerId: string }[];
   seasonIndex: number;
+  /** v2.2 ORGMODE-2027: the save's start era (absent = 0). */
+  startSeasonIndex?: number;
   day: number;
 }): ListingBlock | null {
   const L = CAREER_TRANSFER.listing;
   if (!L.enabled) return "disabled";
   const windowIdx = windowIndexOf(weekOfDay(ctx.day));
   if (windowIdx === null) return "windowClosed";
-  if (userBidsBlocked(ctx.seasonIndex, windowIdx)) return "firstWindow";
+  if (userBidsBlocked(ctx.seasonIndex, windowIdx, ctx.startSeasonIndex)) return "firstWindow";
   // An answer needs at least one more window day.
   if (ctx.day >= windowCloseDayFor(windowIdx)) return "windowClosing";
   if (resaleLocked(ctx.player, ctx.seasonIndex, ctx.day)) return "resaleLocked";
