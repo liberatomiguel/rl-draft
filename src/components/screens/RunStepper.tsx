@@ -141,7 +141,7 @@ export function RunStepper({ run }: { run: RunState }) {
           </>
         }
       >
-        {RUN_UI.resetBody}
+        {run.mode === "challenge" ? RUN_UI.resetBodyChallenge : run.mode === "daily" ? RUN_UI.resetBodyDaily : RUN_UI.resetBody}
       </Modal>
     </div>
   );

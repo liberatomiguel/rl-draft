@@ -44,7 +44,7 @@ import { rosterSlots } from "@/components/cards/rosterView";
 import { Logo } from "@/components/layout/AppShell";
 import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
-import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
+import { LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { ResearchInvite } from "@/components/ResearchInvite";
 import { DuelInvite } from "@/components/duel/DuelInvite";
 import { RunShareSheet } from "@/components/share/RunShareSheet";
@@ -52,23 +52,25 @@ import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 import { DailyOptimalPanel } from "./DailyOptimalPanel";
 import { OverallParts } from "./OverallParts";
+import { runEnd } from "./runEnd";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
   const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI, DUEL_UI } = useCopy();
-  const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
-    champion: { title: R.champion, sub: R.championSub, tone: "orange" },
-    runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
-    third: { title: R.third, sub: R.thirdSub, tone: "blue" },
+  // Only the placements that carry a fact get a line under the title (#285).
+  const PLACEMENT_COPY: Record<Placement, { title: string; sub?: string; tone: "orange" | "blue" }> = {
+    champion: { title: R.champion, tone: "orange" },
+    runner_up: { title: R.runnerUp, tone: "blue" },
+    third: { title: R.third, tone: "blue" },
     fourth: { title: R.fourth, sub: R.fourthSub, tone: "blue" },
-    top4: { title: R.top4, sub: R.top4Sub, tone: "blue" },
+    top4: { title: R.top4, tone: "blue" },
     top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
     top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
     // v2.2: career-only placement, never reached in the Draft.
-    top12: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
-    swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
+    top12: { title: R.swissExit, tone: "blue" },
+    swiss_exit: { title: R.swissExit, tone: "blue" },
   };
   const clearRun = useRunStore((s) => s.clearRun);
   const setSetupMode = useRunStore((s) => s.setSetupMode);
@@ -225,7 +227,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
               {R.legacyChampionBadge}
             </p>
           ) : null}
-          <p className="mt-3 text-sm text-sub">{placement.sub}</p>
+          {placement.sub ? <p className="mt-3 text-sm text-sub">{placement.sub}</p> : null}
           {run.daily ? (
             <p className="mt-1 text-xs text-orange-bright">{dailyRunTag(run.daily, DAILY_TEXT)}</p>
           ) : null}
@@ -478,7 +480,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {run.daily ? <DailyOptimalPanel run={run} /> : null}
 
       {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
-      {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
+      {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} tournament={run.tournament} /> : null}
 
       {/* Friend duel (v2.1): the same settings as a duel, to send to a friend. */}
       <DuelInvite run={run} />
@@ -836,8 +838,12 @@ function LegacyEmblem() {
  * cards, muted panel) so it informs without competing with the placement hero.
  * Renders nothing when `results.eliminatedBy` is null (champion / flag off).
  */
-function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
+function EliminatorReveal({ eliminator, tournament }: { eliminator: EliminatorTeam; tournament: RunState["tournament"] }) {
   const { RESULTS_UI: R, TOURNAMENT_UI: T } = useCopy();
+  const end = useMemo(() => runEnd(tournament), [tournament]);
+  // The overall the draft screens show for this rival, and what it played at.
+  const shownOverall = end?.shown ?? eliminator.overall;
+  const playedAt = end?.played ?? null;
   const lineup = lineupById.get(eliminator.lineupId);
   if (!lineup) return null;
   // The specials the eliminator actually fielded (AI upgrades player cards), keyed
@@ -860,33 +866,43 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
   ];
 
   return (
-    <Panel className="mt-8 p-5 opacity-90">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <Panel className="mt-8 p-4 sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="kicker !text-[10px]">{R.eliminatorKicker}</p>
-          <p className="display mt-1 truncate text-sm font-bold uppercase tracking-wide text-sub">
-            {R.eliminatedBy(eliminator.name)}
+          <p className="kicker">{R.eliminatorKicker}</p>
+          <h3 className="card-title mt-1 truncate">{R.eliminatedBy(eliminator.name)}</h3>
+          <p className="mt-1 text-sm text-sub">
+            {resultStageLabel(eliminator, T)} · {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="display text-2xl font-bold leading-none text-ink">
-            {eliminator.overall}
-            {eliminator.buffed ? (
-              <span
-                className="ml-0.5 inline-flex align-top text-amber-300"
-                title={R.eliminatorBuffed}
-                aria-label={R.eliminatorBuffed}
-              >
-                <BoltIcon className="h-4 w-4" />
-              </span>
-            ) : null}
-          </span>
-          <Badge tone="bad">
-            {resultStageLabel(eliminator, T)} ·{" "}
-            {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
-          </Badge>
+        <div className="shrink-0 text-right">
+          <p className="display text-4xl font-bold leading-none tabular-nums text-ink">{shownOverall}</p>
+          <p className="mt-1 text-xs text-faint">
+            {playedAt != null && playedAt !== shownOverall ? R.playedAt(playedAt) : R.rivalOverall}
+          </p>
         </div>
       </div>
+      {end && end.games.length > 0 ? (
+        <ul className="mb-5 flex flex-wrap gap-2" aria-label={R.gamesLabel}>
+          {end.games.map((g, i) => (
+            <li
+              key={i}
+              className={cx(
+                "flex min-w-[3.25rem] flex-col items-center rounded-md border px-2.5 py-1.5",
+                g.won ? "border-good/40" : "border-bad/40",
+              )}
+            >
+              <span className={cx("kicker !text-[11px]", g.won ? "!text-good" : "!text-bad")}>
+                {g.won ? R.gameWin : R.gameLoss}
+                {g.overtime ? ` ${R.gameOvertime}` : ""}
+              </span>
+              <span className="display text-base font-semibold tabular-nums text-ink">
+                {g.goals[0]}–{g.goals[1]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {/* Card row — uses the EXACT proven structure from the team-review screen
           (ReviewScreen): a fluid size="sm" card inside a max-w-32 cell, laid out
           3-up on mobile / 6-up on desktop. This is the layout that finally fixed
