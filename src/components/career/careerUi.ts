@@ -45,6 +45,7 @@ import {
   weeklyStatement,
   weeklyWage,
 } from "@/engine/career/economy";
+import { gateRepOf } from "@/engine/career/established";
 import type { CareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import {
@@ -633,7 +634,8 @@ export interface UnlockEntry {
 }
 
 export function unlockTrack(save: CareerSave): UnlockEntry[] {
-  const u = unlocksFor(save.reputation);
+  // rc.6 (ORGMODE E1): an established org has the whole track open (gateRepOf); the sponsor rows still read reputation.
+  const u = unlocksFor(gateRepOf(save));
   const gear = save.finances.gear;
   const gearEntries: UnlockEntry[] = CAREER_GEAR.items.map((item) => ({
     key: item.id,
@@ -647,13 +649,13 @@ export function unlockTrack(save: CareerSave): UnlockEntry[] {
       key: "bootcamp1",
       gate: CAREER_GEAR.bootcamp[0].repGate,
       unlocked: u.bootcamp1,
-      owned: bootcampTierFor(save.reputation) >= 1,
+      owned: bootcampTierFor(gateRepOf(save)) >= 1,
     },
     {
       key: "bootcamp2",
       gate: CAREER_GEAR.bootcamp[1].repGate,
       unlocked: u.bootcamp2,
-      owned: bootcampTierFor(save.reputation) >= 2,
+      owned: bootcampTierFor(gateRepOf(save)) >= 2,
     },
     {
       key: "psychologist",

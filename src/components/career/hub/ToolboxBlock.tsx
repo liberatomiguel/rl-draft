@@ -19,7 +19,7 @@ import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
+import { boardRefusalText, RAIL_HEAD, RAIL_TITLE } from "@/components/career/hub/hubShared";
 import { NewDot } from "@/components/ui/NewDot";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -67,7 +67,7 @@ function priceOf(C: CareerCopy, item: ToolboxItem): string {
 
 function refusalText(C: CareerCopy, key: string): string {
   const r = C.toolbox.refusal;
-  return key in r ? r[key as keyof typeof r] : r.other;
+  return boardRefusalText(C, key) ?? (key in r ? r[key as keyof typeof r] : r.other);
 }
 
 export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {

@@ -11,7 +11,7 @@
  * duplicate was removed with the v0.2 hub rebuild.
  */
 
-import { CAREER_POINTS } from "@/config/balance";
+import { CAREER_BOARD, CAREER_POINTS } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { prizePoolPaidFor, type BreachOutcome } from "@/engine/career/economy";
 import type {
@@ -75,7 +75,18 @@ export function TierChip({ tier, className }: { tier: EventTier; className?: str
 // lastError → inline dismissible warning (nearest copy key; see report)
 // ---------------------------------------------------------------------------
 
+/** rc.6 (ORGMODE E2): the board's sign-off refusals on a capital project (null for any other key). */
+export function boardRefusalText(C: CareerCopy, key: string): string | null {
+  const A = C.board.approval;
+  if (key === "boardApproval") return A.boardApproval(CAREER_BOARD.approval.capital);
+  if (key === "boardFlagship") return A.boardFlagship(CAREER_BOARD.approval.flagship);
+  if (key === "boardFrozen") return A.boardFrozen;
+  return null;
+}
+
 export function errorTextFor(C: CareerCopy, key: string, nextBreach: BreachOutcome): string {
+  const board = boardRefusalText(C, key);
+  if (board) return board;
   switch (key) {
     case "windowClosed":
       return C.market.windowClosed;

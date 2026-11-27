@@ -13,6 +13,7 @@
 
 import { CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
+import { gateRepOf, signCapOf } from "@/engine/career/established";
 import { insertById } from "@/data/career/inserts";
 import {
   DAYS_PER_SEASON,
@@ -23,7 +24,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
-import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, signingLevelOf, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signingLevelOf, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type {
   CareerDifficulty,
@@ -606,7 +607,7 @@ interface Candidate {
 }
 
 function candidatesFor(save: CareerSave): Candidate[] {
-  const cap = signableOverallCap(save.reputation);
+  const cap = signCapOf(save);
   // rc.32: the Market's own listing (a page of signable free agents always shown).
   const listing = listingFor({
     world: save.world,
@@ -815,10 +816,10 @@ function answerInsert(save: CareerSave, policy: ArcPolicy): CareerSave {
 }
 
 function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
-  if (policy.coach === "none" || save.reputation < CAREER_UNLOCKS.coachRep) return save;
+  if (policy.coach === "none" || gateRepOf(save) < CAREER_UNLOCKS.coachRep) return save;
   if (policy.prudent && save.finances.loan) return save;
   const candidates = coachCandidatesFor(save)
-    .filter((c) => c.id !== save.coach?.id && !coachHireRefusalFor(save.reputation, c))
+    .filter((c) => c.id !== save.coach?.id && !coachHireRefusalFor(gateRepOf(save), c))
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
   const budget = (c: { salaryPerSplit: number }) =>
     affordable(save, save.coach ? save.coach.salaryPerSplit : 0, c.salaryPerSplit - (save.coach?.salaryPerSplit ?? 0), policy);
@@ -917,7 +918,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   if (policy.infrastructure && !frozen && dow === 1 && !save.activeEvent) {
     for (const gear of CAREER_GEAR.items) {
       if (save.finances.gear[gear.id]) continue;
-      if (save.reputation < gear.repGate) break;
+      if (gateRepOf(save) < gear.repGate) break;
       const bought = buyGearFlow(save, gear.id);
       if (bought.error) break;
       const statement = statementOf(bought.save);
@@ -927,7 +928,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     }
   }
   if (policy.fullSupport && !frozen && dow === 1 && !save.activeEvent) {
-    const hired = !save.finances.gear.psychologist && save.reputation >= CAREER_GEAR.psychologistRep ? setPsychologistFlow(save, true) : null;
+    const hired = !save.finances.gear.psychologist && gateRepOf(save) >= CAREER_GEAR.psychologistRep ? setPsychologistFlow(save, true) : null;
     if (hired && !hired.error) {
       const extra = save.finances.gear.psychologist ? 0 : psychologistPerSplitFor(save.clock.seasonIndex);
       if (affordable(save, 0, extra, policy) && supportOk(save, policy)) save = hired.save;
@@ -951,7 +952,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
   if ((opts.bootcamp || policy.fullSupport) && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
-    const tier = bootcampTierFor(save.reputation);
+    const tier = bootcampTierFor(gateRepOf(save));
     if (tier !== 0 && affordable(save, bootcampCostFor(tier, save.clock.seasonIndex), 0, policy) && supportOk(save, policy, bootcampCostFor(tier, save.clock.seasonIndex))) {
       const res = runBootcampFlow(save);
       if (!res.error) {

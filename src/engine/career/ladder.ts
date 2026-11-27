@@ -10,6 +10,7 @@
  */
 
 import { CAREER_GEAR, CAREER_LADDER, CAREER_UNLOCKS, CAREER_STAFF } from "@/config/balance";
+import { gateRepOf } from "./established";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 
 export type LadderRungId =
@@ -128,8 +129,10 @@ function ownedOf(save: CareerSave, id: LadderRungId): boolean {
 
 /** Every rung with its state: owned (bought / in post / signed), open (reached), locked. */
 export function ladderOf(save: CareerSave): LadderRungState[] {
+  // rc.6 (ORGMODE E1): an established org has every rung open but the sponsor levels (they scale with Standing).
+  const open = gateRepOf(save);
   return ladderRungs().map((r) => {
-    if (save.reputation < r.gate) return { ...r, status: "locked" as const };
+    if ((r.kind === "sponsor" ? save.reputation : open) < r.gate) return { ...r, status: "locked" as const };
     return { ...r, status: ownedOf(save, r.id) ? ("owned" as const) : ("open" as const) };
   });
 }

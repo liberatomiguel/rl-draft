@@ -59,6 +59,33 @@ export interface BoardSeason {
   outCharged?: boolean;
   /** Settled at the review: met / missed (null before). */
   met: boolean | null;
+  /** rc.6 (ORGMODE E4): an established org's reason for this season's ask. Optional: older saves have none. */
+  brief?: SeasonBrief;
+}
+
+/** rc.6 (ORGMODE E4): why the board asks what it asks this season, read from last season. */
+export type BriefReason = "takeover" | "met" | "missed" | "title" | "promoted" | "relegated" | "ultimatumSurvived";
+
+export interface SeasonBrief {
+  reason: BriefReason;
+  /** The org's tier this season (Standing). */
+  tier: Stature;
+  /** Last season's chosen objective (absent in a takeover season). */
+  lastObjective?: SeasonGoalSpec;
+  /** Last season's region rank (the history record), when there was one. */
+  lastRegionalRank?: number;
+  /** Last season's best finish at an official event (Worlds, then Majors, then regionals). */
+  bestFinish?: { tier: "regional" | "major" | "worlds"; place: number };
+  /** Titles last season (the "title" reason). */
+  majors?: number;
+  worlds?: boolean;
+}
+
+/** rc.6 (ORGMODE E1): a Standing tier change at a season review. */
+export interface TierChange {
+  seasonIndex: number;
+  from: Stature;
+  to: Stature;
 }
 
 export interface ConfidenceLogEntry {
@@ -108,6 +135,8 @@ export interface BoardState {
   regionChangedAt?: number;
   /** The one-time board-funded upgrade: offered at top confidence (a season), then what was picked. */
   upgrade?: { offeredSeason: number; taken?: string };
+  /** rc.6 (ORGMODE E1): the last Standing tier change (an established org; optional, additive). */
+  tierChange?: TierChange;
 }
 
 export interface JobOffer {

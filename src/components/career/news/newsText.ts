@@ -179,9 +179,10 @@ export function resolveNews(
 
   const titles = career.news.tpl as unknown as TplMap;
   const bodies = career.news.body as unknown as TplMap;
-  const tpl = titles[key];
+  // rc.6 (ORGMODE E1): the tier change's news line lives with the board's copy.
+  const tpl = titles[key] ?? career.board.mail.tpl[key];
   const title = tpl ? tpl(p) : item.titleKey;
-  const bodyTpl = bodies[key];
+  const bodyTpl = bodies[key] ?? career.board.mail.body[key];
   return { title, body: bodyTpl ? bodyTpl(p) : undefined };
 }
 

@@ -62,6 +62,7 @@ import {
   type CreditOffer,
   type WeeklyStatement,
 } from "@/engine/career/economy";
+import { capitalApprovalFor, capitalRefusalOf, establishedOf, gateRepOf } from "@/engine/career/established";
 import {
   backerLineOf,
   creditOfferOf,
@@ -599,6 +600,9 @@ export function FinancesScreen() {
   const fin = save.finances;
   const gear = fin.gear;
   const rep = save.reputation;
+  // rc.6 (ORGMODE E1/E2): an established org's shelf is open: its gates read the ladder's top, its installations any order.
+  const established = establishedOf(save);
+  const gateRep = gateRepOf(save);
   const sponsorTier = save.sponsor?.tier ?? null;
 
   // --- statement (v2.0: THE weekly statement the Monday funnel books) --------
@@ -642,13 +646,17 @@ export function FinancesScreen() {
 
   // --- gear ladder state ------------------------------------------------------
   const nextGear = gearNextItem(gear);
-  const bootTier = bootcampTierFor(rep);
+  const bootTier = bootcampTierFor(gateRep);
   const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const freeLeft = Math.max(0, freeAllowance - fin.freeBootcampsUsedThisSeason);
   const [gearFront, perfCenter] = [CAREER_GEAR.items.slice(0, 3), CAREER_GEAR.items[3]];
 
   const gearStatus = (item: (typeof CAREER_GEAR.items)[number]): StepStatus =>
-    gear[item.id] ? "owned" : nextGear?.id === item.id && rep >= item.repGate ? "next" : "locked";
+    gear[item.id]
+      ? "owned"
+      : (established ? !capitalRefusalOf(save, item.id) : nextGear?.id === item.id) && gateRep >= item.repGate
+        ? "next"
+        : "locked";
 
   // One filled button on the screen: the next gear purchase, unless a sponsor
   // decision is waiting (its Sign buttons are the action then).
@@ -686,7 +694,11 @@ export function FinancesScreen() {
         ) : null}
         {status === "locked" ? (
           <p className="mt-1 text-xs text-faint">
-            {rep < item.repGate ? C.finances.lockedAtRep(item.repGate) : C.common.locked}
+            {capitalRefusalOf(save, item.id)
+              ? C.board.approval.needs(capitalApprovalFor(save, item.id) ?? 0)
+              : gateRep < item.repGate
+                ? C.finances.lockedAtRep(item.repGate)
+                : C.common.locked}
           </p>
         ) : null}
       </>
@@ -696,7 +708,7 @@ export function FinancesScreen() {
   const bootcampStep = (tier: 1 | 2): React.ReactNode => {
     const def = CAREER_GEAR.bootcamp[tier - 1];
     const campCost = bootcampCostFor(tier, seasonIndex);
-    const unlocked = rep >= def.repGate;
+    const unlocked = gateRep >= def.repGate;
     const isActiveTier = bootTier === tier;
     const superseded = bootTier > tier;
     const status: StepStatus = superseded ? "owned" : isActiveTier ? "next" : "locked";
@@ -765,7 +777,7 @@ export function FinancesScreen() {
     );
   };
 
-  const psychUnlocked = rep >= CAREER_GEAR.psychologistRep;
+  const psychUnlocked = gateRep >= CAREER_GEAR.psychologistRep;
   const psychStatus: StepStatus = gear.psychologist ? "owned" : psychUnlocked ? "next" : "locked";
 
   // --- ledger groups (newest first, grouped by day stamp) ---------------------
@@ -994,7 +1006,7 @@ export function FinancesScreen() {
             {CAREER_STAFF.order.map((id) => {
               const role = CAREER_STAFF.roles[id];
               const on = staffOn(gear, id);
-              const open = rep >= role.repGate;
+              const open = gateRep >= role.repGate;
               const weekly = formatMoney(weeklyOf(staffPerSplitFor(id, seasonIndex)), { compact: true });
               return (
                 <LadderStep

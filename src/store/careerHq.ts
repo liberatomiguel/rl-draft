@@ -20,6 +20,7 @@ import {
   weekAt,
   weekOfDay,
 } from "@/engine/career/calendar";
+import { establishedOf, gateRepOf } from "@/engine/career/established";
 import type { ToolboxItemId } from "@/engine/career/careerNew";
 import {
   bootcampCostFor,
@@ -161,6 +162,8 @@ export interface ToolboxItem {
 
 /** The gear ladder rung that has to be bought first (strict order), or null. */
 export function gearBlockerOf(save: CareerSave, id: ToolboxItemId): ToolboxItemId | null {
+  // rc.6 (ORGMODE E2): an established org buys installations in any order.
+  if (establishedOf(save)) return null;
   const next = gearNextItem(save.finances.gear);
   const item = CAREER_GEAR.items.find((i) => i.id === id);
   if (!item || !next || next.id === id || save.finances.gear[item.id]) return null;
@@ -170,7 +173,9 @@ export function gearBlockerOf(save: CareerSave, id: ToolboxItemId): ToolboxItemI
 /** Every toolbox item with its state, price, effect and duration — the HQ block and its sheet. */
 export function toolboxOf(save: CareerSave): ToolboxItem[] {
   const fin = save.finances;
-  const rep = save.reputation;
+  // rc.6 (ORGMODE E1/E2): an established org's shelf is open (no reputation gate, no ladder order).
+  const established = establishedOf(save);
+  const rep = gateRepOf(save);
   const seasonIndex = save.clock.seasonIndex;
   const sponsorTier = save.sponsor?.tier ?? null;
   const flatIndex = moneyIndex(seasonIndex, "flat");
@@ -183,7 +188,7 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
       ? "owned"
       : rep < item.repGate
         ? "locked"
-        : next?.id === item.id
+        : established || next?.id === item.id
           ? "buyable"
           : "queued";
     out.push({

@@ -3127,6 +3127,31 @@ export const CAREER_PT: CareerCopy = {
           return "";
       }
     },
+    // rc.6 (ORGMODE E4): a meta da diretoria de uma org consolidada com o total da temporada.
+    seasonTotal: (kind: string, count: number, place: number, total: number): string => {
+      switch (kind) {
+        case "regionalReach":
+          return count === 1 ? "Jogue um regional de domingo" : `Jogue ${count} dos ${total} regionais de domingo`;
+        case "regionalFinish":
+          if (place <= 1) return count === 1 ? "Vença um regional" : `Vença ${count} dos ${total} regionais`;
+          return count === 1 ? `Um top ${place} em regional` : `Top ${place} em ${count} dos ${total} regionais`;
+        case "majorQualify":
+          return count === 1 ? "Classifique-se para um Major" : count >= total ? `Classifique-se para os ${total} Majors` : `Classifique-se para ${count} dos ${total} Majors`;
+        case "majorFinish":
+          if (place <= 1) return count === 1 ? "Vença um Major" : `Vença ${count} dos ${total} Majors`;
+          return count === 1 ? `Um top ${place} em Major` : `Top ${place} em ${count} dos ${total} Majors`;
+        case "worldsQualify":
+          return "Classifique-se para o Worlds";
+        case "worldsFinish":
+          return place <= 1 ? "Vença o Worlds" : `Um top ${place} no Worlds`;
+        case "cupFinal":
+          return count === 1 ? "Chegue a uma final de Community Cup" : `Chegue a ${count} finais de Community Cup`;
+        case "cupWin":
+          return count === 1 ? "Vença uma Community Cup" : `Vença ${count} Community Cups`;
+        default:
+          return "";
+      }
+    },
     role: { target: "Meta", stretch: "Meta ousada" } as Record<string, string>,
     deadline: {
       lastCup: (w: number) => `Última chance: a última Community Cup · sem. ${w}`,
@@ -4037,6 +4062,7 @@ export const CAREER_PT: CareerCopy = {
       met: (goal: string) => `Objetivo cumprido: ${goal}.`,
       missed: (goal: string) => `Objetivo perdido: ${goal}.`,
       confidence: (n: number) => `A confiança da diretoria termina a temporada em ${n} / 100.`,
+      tier: (up: boolean, tier: string) => (up ? `Prestígio: sobe para ${tier}.` : `Prestígio: cai para ${tier}.`),
       open: "Abrir a diretoria",
     },
     band: (n: number): string => (n >= 80 ? "Forte" : n >= 40 ? "Estável" : n >= 25 ? "Sob pressão" : "Crítica"),
@@ -4057,6 +4083,7 @@ export const CAREER_PT: CareerCopy = {
       debt: "Dívida profunda",
       ultimatumMet: "Ultimato respondido",
       newSeason: "Nova temporada: a diretoria alivia a avaliação",
+      promoted: "Subiu de patamar",
     } as Record<string, string>,
     objectives: "Objetivos da temporada",
     sporting: "Objetivo da temporada",
@@ -4122,6 +4149,36 @@ export const CAREER_PT: CareerCopy = {
       pick: "Pagar",
       taken: (name: string) => `Paga pela diretoria: ${name}.`,
     },
+    // rc.6 (ORGMODE E1/E2/E4): o Prestígio da org consolidada, o recado da diretoria e a aprovação dela.
+    standing: {
+      title: "Prestígio",
+      tier: { elite: "Elite", contender: "Candidato", mid: "Meio de tabela", underdog: "Azarão" } as Record<string, string>,
+      phrase: { elite: "uma org de elite", contender: "uma candidata", mid: "uma org de meio de tabela", underdog: "uma azarã" } as Record<string, string>,
+      value: (n: number) => `Prestígio ${n}`,
+      next: (tier: string, line: number) => `${tier} a partir de ${line}`,
+      top: "O topo da cena",
+      relegation: (line: number) => `Abaixo de ${line} na revisão, a org cai de patamar`,
+    },
+    brief: {
+      heading: "O recado da diretoria",
+      takeover: (p: { org: string; tier: string; goal?: string }) => `Você assume a ${p.org}, ${p.tier}. A diretoria monta esta primeira temporada sobre o elenco que você herda.`,
+      met: (p: { org: string; tier: string; goal?: string }) => `O objetivo da última temporada foi cumprido${p.goal ? ` (${p.goal})` : ""}. A diretoria parte daí e espera que a ${p.org} mantenha esse nível.`,
+      missed: (p: { org: string; tier: string; goal?: string }) => `O objetivo da última temporada foi perdido${p.goal ? ` (${p.goal})` : ""}. A diretoria quer recuperar esse terreno nesta temporada.`,
+      title: (p: { org: string; tier: string; goal?: string }) => `Um título na última temporada elevou a régua na ${p.org}. A diretoria agora planeja como ${p.tier} que vence.`,
+      promoted: (p: { org: string; tier: string; goal?: string }) => `A ${p.org} subiu de patamar na revisão e agora planeja como ${p.tier}. A cobrança sobe junto.`,
+      relegated: (p: { org: string; tier: string; goal?: string }) => `A ${p.org} caiu de patamar na revisão e agora planeja como ${p.tier}. A diretoria refaz a cobrança para reconstruir.`,
+      ultimatumSurvived: (p: { org: string; tier: string; goal?: string }) => `Você respondeu ao ultimato da diretoria na última temporada. A ${p.org} segue com você e pede progresso constante.`,
+      lastRank: (n: number) => `Última temporada: #${n} na região.`,
+      bestFinish: (tier: string, place: number) => `Melhor resultado na última temporada: ${place <= 1 ? "título" : `top ${place}`} ${tier === "worlds" ? "no Worlds" : tier === "major" ? "em um Major" : "em um regional"}.`,
+    },
+    // rc.6: um jogador acima do alcance de uma org consolidada.
+    signCapLock: (cap: number) => `Acima do alcance da org: ela contrata até ${cap}`,
+    approval: {
+      boardApproval: (n: number) => `A diretoria não banca isso enquanto a confiança estiver abaixo de ${n}.`,
+      boardFlagship: (n: number) => `A diretoria só banca o centro de performance com a confiança em ${n} ou mais.`,
+      boardFrozen: "A diretoria congelou os investimentos nesta janela.",
+      needs: (n: number) => `Precisa da aprovação da diretoria: confiança ${n}`,
+    },
     mail: {
       tpl: {
         boardPackage: () => "A proposta da diretoria para a temporada",
@@ -4136,6 +4193,10 @@ export const CAREER_PT: CareerCopy = {
         boardApproach: (p: Record<string, string | number>) => `A ${p.org} faz uma sondagem`,
         boardNewJob: (p: Record<string, string | number>) => `Bem-vindo à ${p.org}`,
         boardUpgrade: () => "A diretoria vai pagar uma melhoria",
+        boardTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe de patamar`,
+        boardTierDown: (p: Record<string, string | number>) => `A ${p.org} cai de patamar`,
+        orgTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe para o patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}`,
+        orgTierDown: (p: Record<string, string | number>) => `A ${p.org} cai para o patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}`,
       } as Record<string, (p: Record<string, string | number>) => string>,
       body: {
         boardPackage: () => "Três pacotes estão na sua mesa: cauteloso, esperado e ambicioso. Mais ambição traz mais verba e um bônus maior, e custa mais confiança se o objetivo não for cumprido. O relógio espera a sua escolha.",
@@ -4157,6 +4218,12 @@ export const CAREER_PT: CareerCopy = {
           `A ${p.org} (${p.region}) pergunta se você comandaria o time na próxima temporada. Responda na revisão da temporada.`,
         boardNewJob: (p: Record<string, string | number>) => `Você assume a ${p.org}. A ${p.left} segue na liga sem você.`,
         boardUpgrade: (p: Record<string, string | number>) => `Com a confiança em ${p.confidence}, a diretoria vai pagar uma melhoria. Escolha na página da Diretoria.`,
+        boardTierUp: (p: Record<string, string | number>) =>
+          `O prestígio leva a org ao patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}. A base do orçamento e o teto salarial sobem junto, e a cobrança da diretoria também.`,
+        boardTierDown: (p: Record<string, string | number>) =>
+          `O prestígio deixa a org no patamar ${({ elite: "elite", contender: "candidato", mid: "meio de tabela", underdog: "azarão" } as Record<string, string>)[String(p.to)] ?? p.to}. A base do orçamento e o teto salarial caem junto, e a diretoria alivia a cobrança.`,
+        orgTierUp: (p: Record<string, string | number>) => `A ${p.org} sobe um patamar na cena depois da temporada.`,
+        orgTierDown: (p: Record<string, string | number>) => `A ${p.org} cai um patamar na cena depois da temporada.`,
       } as Record<string, (p: Record<string, string | number>) => string>,
     },
   },
