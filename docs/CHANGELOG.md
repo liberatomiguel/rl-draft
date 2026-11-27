@@ -10,6 +10,11 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## rc.9 (unreleased)
+
+### Fixed
+- **BUGS front: no live defect found among the five survey reports.** The sponsor goal that read as reset or out of reach was fixed in v2.0.34 (root cause there: `rolloverToNextSeason` emptied the results a contract goal counts). New regression over every signing week (`sponsorDeals.test.ts`). Challenge resets replaying the same teams is intended (fixed seed).
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

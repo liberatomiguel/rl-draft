@@ -520,3 +520,34 @@ describe("v2.0 (C1) — the sponsor goal runs for the deal, from signing", () =>
         }
   });
 });
+
+// rc9 (BUGS): a goal is never out of reach on the day it is offered.
+describe("rc9 (BUGS) — every goal can be met from any signing week, across the season boundary", () => {
+  const perfectResults = (goal: SponsorGoal): CompactEventResult[] => {
+    const out: CompactEventResult[] = [];
+    const last = goal.slot + goal.span! - 1;
+    for (let slot = slotOf(goal.from!.seasonIndex, 1); slot <= last; slot++) {
+      const season = slotSeason(slot);
+      const w = splitWeeksOf(slot);
+      for (const off of CAREER_CALENDAR.regionalOffsets)
+        out.push({ eventId: `r:${slot}:${off}`, tier: "regional", seasonIndex: season, week: w.start + off - 1, name: "T", rows: [], championRef: "user", userPlacement: "champion", fieldQuality: 1 });
+      out.push({ eventId: `m:${slot}`, tier: "major", seasonIndex: season, week: w.major, name: "T", rows: [], championRef: "user", userPlacement: "champion", fieldQuality: 1 });
+    }
+    return out;
+  };
+
+  it("the count never exceeds the events left, and winning every event after signing reaches it", () => {
+    for (let week = 1; week <= CAREER_CALENDAR.weeksPerSeason; week++) {
+      const today = { seasonIndex: 1, day: firstDayOfWeek(week) };
+      for (const m of MARGINS)
+        for (const o of sponsorDecisionFor({ tier: 2, today, careerSeed: 3, difficulty: "normal", level: levelAt(m) })) {
+          const g = o.terms!.goals[0];
+          const tries = contractTriesOf(g.from!, g.slot + g.span! - 1);
+          const cap = g.kind === "enterEvents" || g.kind === "regionalFinish" || g.kind === "regionalReach" ? tries.regionals : tries.majors;
+          expect(g.count, `week ${week} ${g.kind}`).toBeLessThanOrEqual(Math.max(1, cap));
+          // The signing day moves the window, not the goal: results carried over a rollover still count.
+          expect(goalProgressOf(g, { results: perfectResults(g) }).hit, `week ${week} ${g.kind} x${g.count}`).toBe(true);
+        }
+    }
+  });
+});
