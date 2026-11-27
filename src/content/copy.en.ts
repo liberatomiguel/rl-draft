@@ -2242,6 +2242,37 @@ export const DUEL_UI = {
   stepperTag: "Duel",
 };
 
+/** rc.9 (#225-#229): the team-against-team duel's words (engine/duelViews.ts). */
+// rc9 duel
+export const DUEL_MATCH_UI = {
+  modeClassic: "Classic draft",
+  modeQuick: "Quick draft",
+  rerollsNone: "No rerolls",
+  rerolls: (n: number) => (n === 1 ? "1 reroll" : `${n} rerolls`),
+  overallShown: "Overalls visible",
+  overallHidden: "Overalls hidden",
+  bestOf: (n: number) => `Best of ${n}`,
+  sideChallenger: "Challenger",
+  sideOpponent: "Opponent",
+  seriesWon: (name: string) => `${name} takes the series`,
+  gameLabel: (n: number) => `Game ${n}`,
+  overtime: "Overtime",
+  overtimeShort: "OT",
+  goldenGoal: "Golden goal",
+  regulationEnds: "Regulation ends",
+  exhibition: "Exhibition: a duel pays no XP, rating or cards.",
+  staleVersion: "This link was made on another version of the game, so the boards or the result may differ.",
+  newMatch: "New match",
+  errors: {
+    missing: "The link has no duel in it.",
+    malformed: "The link is incomplete or was cut short.",
+    tampered: "The link was edited after it was made.",
+    unsupported: "This link is from the older friend duel, which no longer exists.",
+    unknownCards: "The link has cards this version of the game doesn't know.",
+    region: "The link's region can't be drafted in this version.",
+  } as Record<string, string>,
+};
+
 /**
  * Share kit (v2.2, `components/share/ShareSheet`, `lib/share/*`): the share
  * sheet, the words drawn on the share images and the posts that go with them,
@@ -2367,6 +2398,7 @@ export const EN = {
   DATABASE_UI,
   RESEARCH_UI,
   DUEL_UI,
+  DUEL_MATCH_UI,
   SHARE_UI,
   PAGE_TITLES,
 };
