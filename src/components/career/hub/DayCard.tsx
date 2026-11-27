@@ -221,7 +221,7 @@ export function DayCard({
   const inserting = Boolean(decision) && !decision?.inline;
 
   return (
-    <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-hidden p-4 sm:p-5", inserting && "!border-cyan/40")}>
+    <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-clip p-4 sm:p-5", inserting && "!border-cyan/40")}>
       {/* header: date + season progress */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         {/* Phone: the career bar pinned right above already says the date, the

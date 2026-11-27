@@ -162,9 +162,12 @@ export function BoardPackageChoice({ save, C, titleAs = "h2" }: { save: CareerSa
           <PlanOption key={o.id} o={o} C={C} active={chosen === o.id} proposedLabel={own ? K.ownersRecommended : K.recommended} onPick={() => setPick(o.id)} />
         ))}
       </div>
-      <Button variant="primary" size="lg" className="mt-4 max-sm:w-full" onClick={() => choose(chosen)}>
-        {K.acceptPlan(K.name[chosen])}
-      </Button>
+      {/* On a phone the action stays on the bottom edge while the three plans scroll by (sticky inside its board). */}
+      <div className="mt-4 max-sm:sticky max-sm:bottom-[calc(57px+env(safe-area-inset-bottom))] max-sm:z-20 max-sm:-mx-4 max-sm:border-t max-sm:border-line max-sm:bg-surface-strong max-sm:px-4 max-sm:py-2.5">
+        <Button variant="primary" size="lg" className="max-sm:w-full" onClick={() => choose(chosen)}>
+          {K.acceptPlan(K.name[chosen])}
+        </Button>
+      </div>
     </div>
   );
 }
