@@ -109,7 +109,9 @@ describe("the three goals", () => {
   it("the money goal comes from a money problem, else the tier's default", () => {
     const base = takeover("EU", 3);
     const tier = base.board!.stature as "contender";
-    expect(mandateOn(base).money.kind).toBe(tier === "contender" ? "netSpend" : "cashFloor");
+    const m0 = mandateOn(base);
+    // A big org keeps its transfer spend in a budget, unless its board asks for a signing (then the cash floor).
+    expect(m0.money.kind).toBe(tier === "contender" && m0.squad.kind !== "signStarter" ? "netSpend" : "cashFloor");
     const short = structuredClone(base);
     short.finances.balance = 100;
     const m = buildMandate(short, { classification: expectedPkg(short), tier, demand: "medium", patience: 1 });

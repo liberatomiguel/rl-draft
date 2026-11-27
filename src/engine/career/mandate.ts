@@ -190,11 +190,13 @@ function terms(area: MandateArea, demand: DemandLevel, patience: number, weekWag
   };
 }
 
-function moneyGoalFor(save: IssueSave, issues: OrgIssue[], tier: Stature, demand: DemandLevel): Omit<MoneyGoal, "gain" | "loss" | "met"> {
+function moneyGoalFor(save: IssueSave, issues: OrgIssue[], tier: Stature, demand: DemandLevel, squadKind: SquadGoal["kind"]): Omit<MoneyGoal, "gain" | "loss" | "met"> {
   const s = save.clock.seasonIndex;
   const { running } = billsOf(save);
   const from = issues.find((i) => MONEY_FROM[i.kind]);
-  const kind: MoneyGoal["kind"] = from ? MONEY_FROM[from.kind]! : tier === "elite" || tier === "contender" ? "netSpend" : "cashFloor";
+  // A board that asks for a signing never caps the transfer spend that pays for it: the default is then the cash floor.
+  const big = (tier === "elite" || tier === "contender") && squadKind !== "signStarter";
+  const kind: MoneyGoal["kind"] = from ? MONEY_FROM[from.kind]! : big ? "netSpend" : "cashFloor";
   const issue = from ? { issue: from.kind } : {};
   if (kind === "wagesUnder") {
     const ceiling = save.board ? wageCeilingOf(save.board, s) : running;
@@ -247,8 +249,8 @@ export function buildMandate(save: IssueSave, input: MandateInput): BoardMandate
     loss: cls.loss,
     met: null,
   };
-  const money: MoneyGoal = { ...moneyGoalFor(save, issues, input.tier, input.demand), ...terms("money", input.demand, input.patience, wages), met: null };
   const squad: SquadGoal = { ...squadGoalFor(save, issues, input.tier, input.demand), ...terms("squad", input.demand, input.patience, wages), met: null };
+  const money: MoneyGoal = { ...moneyGoalFor(save, issues, input.tier, input.demand, squad.kind), ...terms("money", input.demand, input.patience, wages), met: null };
   const last = input.last && input.last.seasonIndex === s - 1
     ? { last: { demand: input.last.demand, tier: input.lastTier ?? input.tier, met: { classification: input.last.classification.met, money: input.last.money.met, squad: input.last.squad.met } } }
     : {};
