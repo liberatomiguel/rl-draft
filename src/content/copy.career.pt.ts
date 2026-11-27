@@ -4306,6 +4306,8 @@ export const CAREER_PT: CareerCopy = {
       allOrgs: "Todas as orgs",
       go: (org: string) => `Assumir a ${org}`,
       goShort: "Assumir",
+      /** v2.2 ORGMODE-2027: uma org que volta da sua última lineup para completar a região. */
+      returning: (season: string) => `De volta, vista pela última vez em ${season}`,
       loading: "Lendo o dossiê",
     },
     dossier: {

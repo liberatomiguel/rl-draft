@@ -4335,6 +4335,8 @@ export const CAREER_EN = {
       allOrgs: "All organizations",
       go: (org: string) => `Take over ${org}`,
       goShort: "Take over",
+      /** v2.2 ORGMODE-2027: an org back from its last lineup to complete the region. */
+      returning: (season: string) => `Returning, last seen in ${season}`,
       loading: "Reading the file",
     },
     dossier: {

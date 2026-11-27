@@ -24,6 +24,7 @@ import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { abbrevFor, realOrgChoicesFor, type RealOrgChoice } from "@/engine/career/orgProfile";
 import type { Stature } from "@/engine/career/boardTypes";
 import { takeoverStartEraFor } from "@/engine/career/era";
+import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerDifficulty } from "@/engine/career/types";
 import { buildWorldAtCreation, computeStars } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
@@ -193,6 +194,7 @@ function Dossier({
             <span className="text-sub"> · {copy.SETUP.regionNames[c.region]} · {P.rank(c.rank, c.teams)}</span>
           </p>
           <p className="mt-0.5 text-sm text-sub">{C.board.statureNote[c.stature]}</p>
+          {c.returningFrom !== undefined && <p className="mt-0.5 text-sm text-sub">{P.returning(seasonLabelFor(c.returningFrom))}</p>}
         </div>
       </div>
 

@@ -120,7 +120,7 @@ import {
 } from "./development";
 import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
 import { intakeSeasonIdFor } from "./calendar";
-import { clampStartEra, retirementTableOf } from "./era";
+import { clampStartEra, lastEraRulesOn, retirementTableOf } from "./era";
 import { invitationalRefsFor, isLegendRef, LEGEND_REF_PREFIX, legendTeamFor, projectKitEffect } from "./endless";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
@@ -572,6 +572,12 @@ function buildWorldAtEra(careerSeed: number, start: number): WorldState {
     eraStart: start,
   };
   addCreationFaProspects(world, careerSeed, ficNext, start);
+  // E3: past the end of the dataset no card will carry a real player again, so every one of them
+  // develops (worldGrowthWeek reads the off-script ids): his growth, plateau and decline from here.
+  if (lastEraRulesOn(world)) {
+    const ids = [...Object.values(world.orgs).flatMap((o) => o.playerIds), ...world.freeAgentIds];
+    for (const id of ids) if (!id.startsWith("fic:") && !id.startsWith("rook:")) world.overallDelta[id] = 0;
+  }
   return world;
 }
 
@@ -2096,6 +2102,7 @@ export function agePassAndIntake(
   // played. rc.32: the age clock steps exactly one year a season (rc.31's
   // was two across 2022-23 → 2024), so the step is 1 at every rollover.
   const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
+  const retireTable = retirementTableOf(world); // v2.2 ORGMODE-2027 (E3): the long window in a last-era world
   const lateWave = CAREER_WORLD.lateIntake;
   const lateWavePending =
     lateWave.enabled && toSeasonIndex >= CAREER_SEASONS.length && toSeasonIndex <= lateWave.atSeasonIndex;
@@ -2110,13 +2117,16 @@ export function agePassAndIntake(
       // rc.39 (R109): a player of the late wave plays its season first.
       if (lateWavePending && lateWavePlayers().has(view.id)) return false;
     }
-    const p = retirementChanceFor({
-      age: view.age - calendarStep,
-      nextAge: view.age,
-      peakAge: peakAgeOf(view),
-      overall: view.overall,
-      starOverall: CAREER_AGE.retirementStarOverallWorld,
-    });
+    const p = retirementChanceFor(
+      {
+        age: view.age - calendarStep,
+        nextAge: view.age,
+        peakAge: peakAgeOf(view),
+        overall: view.overall,
+        starOverall: CAREER_AGE.retirementStarOverallWorld,
+      },
+      retireTable,
+    );
     return p > 0 && rng.chance(p);
   };
 

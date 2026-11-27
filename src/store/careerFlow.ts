@@ -129,7 +129,7 @@ import {
   windowCloseDayFor,
   windowIndexOf,
 } from "@/engine/career/calendar";
-import { careerSeasonOf, clampStartEra, startSeasonOf } from "@/engine/career/era";
+import { careerSeasonOf, clampStartEra, retirementTableOf, startSeasonOf } from "@/engine/career/era";
 import {
   compileEventResult,
   applyResultToStandings,
@@ -3444,13 +3444,16 @@ export function seasonOutlookOf(save: CareerSave): SeasonOutlook {
       continue;
     }
     if (p.contractEndSeason <= s) continue; // leaving anyway
-    const chance = retirementChanceFor({
-      age: ageOf(p.birthYear, s + 1),
-      nextAge: ageOf(p.birthYear, s + 2),
-      peakAge: peakAgeOf(p),
-      overall: p.overall,
-      starOverall: CAREER_AGE.retirementStarOverallSquad,
-    });
+    const chance = retirementChanceFor(
+      {
+        age: ageOf(p.birthYear, s + 1),
+        nextAge: ageOf(p.birthYear, s + 2),
+        peakAge: peakAgeOf(p),
+        overall: p.overall,
+        starOverall: CAREER_AGE.retirementStarOverallSquad,
+      },
+      retirementTableOf(save.world),
+    );
     if (chance <= 0) continue;
     retirements.push({
       playerId: p.id,
@@ -5585,7 +5588,7 @@ export function emptySeatPriceFor(
       seasonIndex: save.clock.seasonIndex,
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
-      lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex) ? 1 : lengthSeasons,
+      lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex, save.world) ? 1 : lengthSeasons,
       growthModel: growthModelOf(save.world),
     });
     const cost = pack.fee + pack.signingBonus;
@@ -5671,7 +5674,7 @@ export function signingPlanFor(
   // DEV-02 (R48): a player whose season now must be his last (the coming
   // rollover retires him for sure) signs for that final season only — he
   // never plays at 30 for the user.
-  const finalSeason = signsForFinalSeason(view, save.clock.seasonIndex);
+  const finalSeason = signsForFinalSeason(view, save.clock.seasonIndex, save.world);
   const lengthSeasons = finalSeason ? 1 : opts.lengthSeasons;
 
   const pack = askPackOf(save, view, lengthSeasons, Boolean(onOrg));

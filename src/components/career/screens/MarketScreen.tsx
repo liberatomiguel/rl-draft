@@ -401,7 +401,7 @@ export function MarketScreen() {
 
   // DEV-02 (R48): a player whose current season must be his last signs for
   // it only — the sheet offers the 1-season deal and says why.
-  const finalSeason = target ? signsForFinalSeason(target.view, save.clock.seasonIndex) : false;
+  const finalSeason = target ? signsForFinalSeason(target.view, save.clock.seasonIndex, save.world) : false;
   const offerLen: 1 | 2 | 3 = finalSeason ? 1 : len;
 
   // --- live offer package (single target — cheap, always fresh) ---------------
