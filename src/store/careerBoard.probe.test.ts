@@ -58,6 +58,8 @@ interface SeasonRow {
   moved: boolean;
   balance: number;
   rank: number;
+  /** rc.6: the standing (reputation) at the season's review. */
+  rep?: number;
 }
 interface CareerRow {
   region: Region;
@@ -360,6 +362,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
         moved,
         balance: save.finances.balance,
         rank: h?.userRegionRank ?? 0,
+        rep: Math.round(save.reputation),
       });
     };
     const start = createCareerSave(input(job.region, job.diff, job.ref ?? undefined), job.seed);
@@ -368,7 +371,7 @@ it.skipIf(!env.BOARD_PROBE)("board probe", () => {
     const tag = `${job.region}/${job.diff}/${job.policy}/${job.stature}`;
     console.log(
       `${tag.padEnd(34)} ${out.softlock ? "SOFTLOCK " + out.softlock : (out.ended ?? "ok")} | ` +
-        seasonRows.map((r) => `S${r.s + 1}:${r.pkg?.[0] ?? "-"}${Math.round((r.chance ?? 0) * 100)}${r.met ? "+" : "-"}${r.conf}${r.ultimatum ? "U" : ""}${r.dismissed ? "D" : ""}${r.moved ? "M" : ""} $${Math.round(r.balance / 1000)}k#${r.rank}/${r.stature.slice(0, 3)}`).join(" "),
+        seasonRows.map((r) => `S${r.s + 1}:${r.pkg?.[0] ?? "-"}${Math.round((r.chance ?? 0) * 100)}${r.met ? "+" : "-"}${r.conf}${r.ultimatum ? "U" : ""}${r.dismissed ? "D" : ""}${r.moved ? "M" : ""} $${Math.round(r.balance / 1000)}k#${r.rank}/${r.stature.slice(0, 3)}${r.rep ?? ""}`).join(" "),
     );
     if (env.BOARD_OUT) writeFileSync(env.BOARD_OUT, JSON.stringify(rows));
     if (env.BOARD_CAL_OUT) writeFileSync(env.BOARD_CAL_OUT, JSON.stringify(cal));

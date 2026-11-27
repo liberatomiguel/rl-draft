@@ -56,16 +56,21 @@ export function gateRepOf(save: SaveLike): number {
 // Standing (E1)
 // ---------------------------------------------------------------------------
 
-/** The line a tier starts at (underdog: 0). */
+/** The floor a tier keeps (under it the review relegates; underdog: 0). */
 export function standingLineOf(tier: Stature): number {
-  return tier === "underdog" ? 0 : B.standing[tier];
+  return tier === "underdog" ? 0 : B.standing.keep[tier];
 }
 
-/** The tier a standing value sits in, read on the lines alone (no hysteresis). */
+/** The standing that promotes into a tier at the review (underdog: 0). */
+export function promoteLineOf(tier: Stature): number {
+  return tier === "underdog" ? 0 : B.standing.promote[tier];
+}
+
+/** The tier a standing value sits in on the keep floors alone (an org with no board to track a change). */
 export function standingTierFor(value: number): Stature {
-  if (value >= B.standing.elite) return "elite";
-  if (value >= B.standing.contender) return "contender";
-  if (value >= B.standing.mid) return "mid";
+  if (value >= B.standing.keep.elite) return "elite";
+  if (value >= B.standing.keep.contender) return "contender";
+  if (value >= B.standing.keep.mid) return "mid";
   return "underdog";
 }
 
@@ -80,11 +85,11 @@ export interface StandingView {
   tier: Stature;
   /** The standing (the engine's reputation, rounded). */
   value: number;
-  /** The current tier's line. */
+  /** The current tier's keep floor (0 for the underdog). */
   line: number;
-  /** The next tier and the line that promotes into it (null at the top). */
+  /** The next tier and the standing that promotes into it at a review (null at the top). */
   next: { tier: Stature; line: number } | null;
-  /** Under this the org is relegated at the review (null at the bottom). */
+  /** Under this the org is relegated at the review (the keep floor; null at the bottom). */
   relegationLine: number | null;
 }
 
@@ -102,19 +107,27 @@ export function standingViewFor(tier: Stature, rep: number): StandingView {
     tier,
     value: Math.round(rep),
     line: standingLineOf(tier),
-    next: nextTier ? { tier: nextTier, line: standingLineOf(nextTier) } : null,
-    relegationLine: i > 0 ? standingLineOf(tier) - B.standing.hysteresis : null,
+    next: nextTier ? { tier: nextTier, line: promoteLineOf(nextTier) } : null,
+    relegationLine: i > 0 ? standingLineOf(tier) : null,
   };
 }
 
 /**
  * The tier after the season review: one step at most, never in the board's
- * first season (the takeover's, a new job's). Null = no change.
+ * first season (the takeover's, a new job's). A promotion also needs the
+ * season's objective met (`standing.promoteNeedsObjective`; `objectiveMet`
+ * omitted = not required). Null = no change.
  */
-export function standingChangeFor(board: Pick<BoardState, "kind" | "stature" | "startSeason">, rep: number, seasonIndex: number): Stature | null {
+export function standingChangeFor(
+  board: Pick<BoardState, "kind" | "stature" | "startSeason">,
+  rep: number,
+  seasonIndex: number,
+  objectiveMet?: boolean,
+): Stature | null {
   if (board.kind !== "board" || board.stature === "owners" || seasonIndex <= board.startSeason) return null;
   const view = standingViewFor(board.stature, rep);
-  if (view.next && rep >= view.next.line) return view.next.tier;
+  const earned = !B.standing.promoteNeedsObjective || objectiveMet !== false;
+  if (view.next && rep >= view.next.line && earned) return view.next.tier;
   if (view.relegationLine !== null && rep < view.relegationLine) return STANDING_TIERS[STANDING_TIERS.indexOf(board.stature) - 1];
   return null;
 }

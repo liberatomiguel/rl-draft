@@ -5139,13 +5139,27 @@ export const CAREER_BOARD = {
     expectedRank: number; gear: number; signCap: number; staff: readonly ("assistant" | "analyst" | "physio" | "brand" | "psychologist")[];
   }>,
   /**
-   * rc.6 (ORGMODE E1): an established org's Standing (the engine's reputation, shown as a tier):
-   * the line each tier starts at. At the season review the tier is re-read: promoted at or above
-   * the next tier's line, relegated under its own line minus `hysteresis`, one step a season, never
-   * in the board's first season. A change steps `grantBase` and `wageRoom` by `budgetStep`;
-   * a promotion adds `promoteConfidence`.
+   * rc.6 (ORGMODE E1): an established org's Standing (the engine's reputation, shown as a tier).
+   * At the season review the tier is re-read: promoted at or above the next tier's `promote` line,
+   * relegated under its own `keep` floor, one step a season, never in the board's first season.
+   * A change steps `grantBase` and `wageRoom` by `budgetStep`; a promotion adds `promoteConfidence`.
+   * The keep floors sit under the starting values (14 / 24 / 36 / 50), which read as their own tier.
+   * Spec deviation (R167): one line per tier with a hysteresis could not hold both the starting
+   * values and the measured climb (a mid club's standing is 29-68 after its first season, 40-100
+   * after its second; competent bot, seeds 30000, NA/EU/SAM, Normal and Hard, 12 careers).
+   * Tuned so a good mid-table club reaches Contender in its second or third season.
    */
-  standing: { mid: 20, contender: 32, elite: 45, hysteresis: 3, budgetStep: { up: 1.2, down: 0.9 }, promoteConfidence: 5 },
+  standing: {
+    promote: { mid: 35, contender: 50, elite: 85 },
+    keep: { mid: 18, contender: 28, elite: 40 },
+    budgetStep: { up: 1.2, down: 0.9 },
+    promoteConfidence: 5,
+    /**
+     * A promotion also needs the season's objective met (R167): on standing alone, 3 of 4 competent
+     * dismissals came after a promotion the squad had not earned (BOARD_PROBE seeds 30000, 30 careers).
+     */
+    promoteNeedsObjective: true,
+  },
   /** rc.6 (ORGMODE E2): the board signs off capital projects: an installation at this confidence, the performance centre at `flagship`. */
   approval: { capital: 50, flagship: 65 },
   /**

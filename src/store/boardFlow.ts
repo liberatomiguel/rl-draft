@@ -506,7 +506,8 @@ function boardTierReview(save: CareerSave & { board: BoardState }): void {
   if (!establishedOf(save)) return;
   const board = save.board;
   const s = save.clock.seasonIndex;
-  const to = standingChangeFor(board, save.reputation, s);
+  // The season's sporting objective was settled at step 1 of the review (board.season.met).
+  const to = standingChangeFor(board, save.reputation, s, board.season?.seasonIndex === s ? board.season.met === true : false);
   if (!to) return;
   const change = applyTierChange(board, to, s);
   const up = to === nextTierUp(change.from);

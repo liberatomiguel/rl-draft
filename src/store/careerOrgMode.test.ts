@@ -193,10 +193,11 @@ describe("E4: objectives that read as that org's season", () => {
 });
 
 describe("E1: the tier change at the season review", () => {
-  function reviewAt(stature: Stature, rep: number, startSeason = -1) {
+  function reviewAt(stature: Stature, rep: number, startSeason = -1, met = true) {
     const save = chooseBoardPackageFlow(takeover("EU", stature), "expected").save as CareerSave & { board: BoardState };
     save.board.startSeason = startSeason;
     save.reputation = rep;
+    if (save.seasonGoals) save.seasonGoals.targetMet = met;
     save.phase = "seasonReview";
     const before = { grant: save.board.grantBase, room: save.board.wageRoom, conf: save.board.confidence };
     boardOnSeasonReview(save);
@@ -204,7 +205,7 @@ describe("E1: the tier change at the season review", () => {
   }
 
   it("a mid-table org at the contender line moves up: stature, budget base, wage ceiling, confidence, mail, news", () => {
-    const { save, before } = reviewAt("mid", CAREER_BOARD.standing.contender + 1);
+    const { save, before } = reviewAt("mid", CAREER_BOARD.standing.promote.contender + 1);
     expect(save.board.stature).toBe("contender");
     expect(save.board.tierChange).toEqual({ seasonIndex: 0, from: "mid", to: "contender" });
     expect(save.board.grantBase).toBe(Math.round(before.grant * CAREER_BOARD.standing.budgetStep.up));
@@ -214,10 +215,12 @@ describe("E1: the tier change at the season review", () => {
     expect(save.news.some((m) => m.titleKey === "orgTierUp")).toBe(true);
   });
 
-  it("a contender under its line minus the hysteresis drops; inside the band it holds; never in the board's first season", () => {
-    expect(reviewAt("contender", CAREER_BOARD.standing.contender - CAREER_BOARD.standing.hysteresis - 1).save.board.stature).toBe("mid");
-    expect(reviewAt("contender", CAREER_BOARD.standing.contender - CAREER_BOARD.standing.hysteresis).save.board.stature).toBe("contender");
+  it("a contender under its keep floor drops; at the floor it holds; never in the board's first season", () => {
+    expect(reviewAt("contender", CAREER_BOARD.standing.keep.contender - 1).save.board.stature).toBe("mid");
+    expect(reviewAt("contender", CAREER_BOARD.standing.keep.contender).save.board.stature).toBe("contender");
     expect(reviewAt("mid", 90, 0).save.board.stature).toBe("mid");
+    // A promotion is earned: standing over the line with the season's objective missed keeps the tier.
+    expect(reviewAt("mid", 90, -1, false).save.board.stature).toBe("mid");
   });
 });
 

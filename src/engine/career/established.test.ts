@@ -64,15 +64,21 @@ describe("standing (E1)", () => {
     for (const t of ["underdog", "mid", "contender", "elite"] as const) expect(standingTierFor(CAREER_BOARD.profiles[t].rep)).toBe(t);
   });
 
-  it("promotes at the next line, relegates under its own line minus the hysteresis, one step, never in the first season", () => {
-    expect(standingChangeFor(board("mid", 0), S.contender, 1)).toBe("contender");
-    expect(standingChangeFor(board("mid", 0), S.elite + 10, 1)).toBe("contender");
-    expect(standingChangeFor(board("mid", 0), S.contender - 1, 1)).toBeNull();
-    expect(standingChangeFor(board("mid", 0), S.mid - S.hysteresis, 1)).toBeNull();
-    expect(standingChangeFor(board("mid", 0), S.mid - S.hysteresis - 1, 1)).toBe("underdog");
+  it("promotes at the next tier's promote line, relegates under its own keep floor, one step, never in the first season", () => {
+    expect(standingChangeFor(board("mid", 0), S.promote.contender, 1)).toBe("contender");
+    expect(standingChangeFor(board("mid", 0), S.promote.elite + 10, 1)).toBe("contender");
+    expect(standingChangeFor(board("mid", 0), S.promote.contender - 1, 1)).toBeNull();
+    expect(standingChangeFor(board("mid", 0), S.keep.mid, 1)).toBeNull();
+    expect(standingChangeFor(board("mid", 0), S.keep.mid - 1, 1)).toBe("underdog");
     expect(standingChangeFor(board("elite", 0), 100, 1)).toBeNull();
     expect(standingChangeFor(board("underdog", 0), 0, 1)).toBeNull();
-    expect(standingChangeFor(board("mid", 1), S.contender + 5, 1)).toBeNull();
+    expect(standingChangeFor(board("mid", 1), S.promote.contender + 5, 1)).toBeNull();
+    // promoteNeedsObjective: a missed objective blocks the promotion, never the relegation.
+    expect(standingChangeFor(board("mid", 0), S.promote.contender, 1, false)).toBe(S.promoteNeedsObjective ? null : "contender");
+    expect(standingChangeFor(board("mid", 0), S.promote.contender, 1, true)).toBe("contender");
+    expect(standingChangeFor(board("mid", 0), S.keep.mid - 1, 1, false)).toBe("underdog");
+    // Every tier's starting standing holds it: above its keep floor, under the next tier's promote line.
+    for (const t of ["underdog", "mid", "contender", "elite"] as const) expect(standingChangeFor(board(t, 0), CAREER_BOARD.profiles[t].rep, 1), t).toBeNull();
     expect(standingChangeFor({ ...board("mid", 0), kind: "owners", stature: "owners" }, 90, 3)).toBeNull();
   });
 
@@ -90,8 +96,8 @@ describe("standing (E1)", () => {
   it("the track shows the next line and the relegation line", () => {
     const v = standingOf(fakeSave({ ref: "org", rep: 24, board: board("mid") }))!;
     expect(v.tier).toBe("mid");
-    expect(v.next).toEqual({ tier: "contender", line: S.contender });
-    expect(v.relegationLine).toBe(S.mid - S.hysteresis);
+    expect(v.next).toEqual({ tier: "contender", line: S.promote.contender });
+    expect(v.relegationLine).toBe(S.keep.mid);
     expect(standingOf(fakeSave({ rep: 24 }))).toBeNull();
   });
 });
