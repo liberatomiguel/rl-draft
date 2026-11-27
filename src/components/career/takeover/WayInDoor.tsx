@@ -10,7 +10,7 @@
  * card's picture window): the crest builder's own crests in three stages for
  * the founded club, the real logos of the first season's leading
  * organizations of EU, NA and SAM for the takeover. Under it the title, one
- * sentence, three facts as label / figure rows, and the action as the solid's
+ * sentence and the action as the solid's
  * inverse. The whole card is the hit area; the action is its label.
  */
 
@@ -85,7 +85,6 @@ function DoorCard({
   art,
   title,
   body,
-  facts,
   action,
   onEnter,
   disabled,
@@ -94,7 +93,6 @@ function DoorCard({
   art: React.ReactNode;
   title: string;
   body: string;
-  facts: readonly { label: string; value: string }[];
   action: string;
   onEnter: () => void;
   disabled?: boolean;
@@ -116,21 +114,9 @@ function DoorCard({
       <span className="flex h-12 items-center justify-center overflow-hidden rounded-[10px] border border-black/25 bg-bg sm:h-40">{art}</span>
 
       <span className="block flex-1">
-      <span className="display mt-3 block text-[1.6rem] uppercase leading-[0.95] sm:mt-6 sm:text-4xl">{title}</span>
-      {/* rc.6 (UI-B pass): on a phone the facts carry the door, so both doors and their actions fit the first screen at 375 x 812. */}
-      <span className={cx("mt-2 block max-w-md text-[15px] leading-snug max-sm:hidden", onOrange ? "font-semibold" : "font-medium")}>{body}</span>
-      </span>
-
-      <span className={cx("mt-3 block border-t sm:mt-6", onOrange ? "border-paper-ink/25" : "border-white/30")}>
-        {facts.map((f) => (
-          <span
-            key={f.label}
-            className={cx("flex min-h-8 items-center justify-between gap-3 border-b py-0.5 sm:min-h-10 sm:py-1.5", onOrange ? "border-paper-ink/25" : "border-white/30")}
-          >
-            <span className={cx("text-[13px] font-medium", onOrange ? "text-paper-ink/80" : "text-white/80")}>{f.label}</span>
-            <span className="display text-right text-lg font-bold uppercase leading-none">{f.value}</span>
-          </span>
-        ))}
+      <span className="display mt-3 block text-[1.6rem] font-bold uppercase leading-[1.05] sm:mt-6 sm:text-4xl">{title}</span>
+      {/* rc9 ORG-UI (#271): the sentence carries the door at every width; the three "facts" rows restated it. */}
+      <span className={cx("mt-2 block max-w-md text-sm leading-snug sm:text-[15px]", onOrange ? "font-semibold" : "font-medium")}>{body}</span>
       </span>
 
       <span
@@ -166,7 +152,6 @@ export function WayInDoor({ onPick, slotsFull }: { onPick: (door: "found" | "tak
           art={<CrestArt />}
           title={D.found.title}
           body={D.found.body}
-          facts={D.found.facts}
           action={D.found.action}
           onEnter={() => onPick("found")}
           disabled={slotsFull}
@@ -176,7 +161,6 @@ export function WayInDoor({ onPick, slotsFull }: { onPick: (door: "found" | "tak
           art={<LogoArt />}
           title={D.takeover.title}
           body={D.takeover.body}
-          facts={D.takeover.facts}
           action={D.takeover.action}
           onEnter={() => onPick("takeover")}
           disabled={slotsFull}

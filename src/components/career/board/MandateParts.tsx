@@ -90,9 +90,22 @@ function Terms({ t, tone, C, compact }: { t: MandateTerms; tone: "good" | "bad";
   if (t.confidence) items.push({ value: `${sign(t.confidence)}${Math.abs(t.confidence)}`, unit: K.confidenceUnit });
   if (t.budget) items.push({ value: `${sign(t.budget)}${Math.round(Math.abs(t.budget) * 100)}%`, unit: K.budgetUnit });
   if (t.bonus > 0) items.push({ value: formatMoney(t.bonus, { compact: true }), unit: K.bonusUnit });
-  if (!items.length) return <span className="text-faint">{K.noChange}</span>;
+  if (!items.length) return <span className="text-sm text-faint">{K.noChange}</span>;
+  if (!compact) {
+    // rc9 ORG-UI (#272): a term is a figure: the number in display type, its unit quiet beside it.
+    return (
+      <span className="flex flex-col gap-1">
+        {items.map((i) => (
+          <span key={i.unit} className="flex items-baseline gap-1.5 leading-none">
+            <span className={cx("display text-[17px] font-bold tabular-nums", color)}>{i.value}</span>
+            <span className="text-xs text-faint">{i.unit}</span>
+          </span>
+        ))}
+      </span>
+    );
+  }
   return (
-    <span className={cx(compact ? "flex flex-wrap gap-x-3 gap-y-0.5" : "flex flex-col gap-0.5")}>
+    <span className="flex flex-wrap gap-x-3 gap-y-0.5">
       {items.map((i) => (
         <span key={i.unit} className="leading-snug">
           <span className={cx("display text-[15px] font-bold tabular-nums", color)}>{i.value}</span> <span className="text-sub">{i.unit}</span>
@@ -128,34 +141,49 @@ function goalViewsOf(C: CareerCopy, m: BoardMandate): GoalView[] {
   ];
 }
 
-function GoalRow({ g, i, C }: { g: GoalView; i: number; C: CareerCopy }) {
+const GOAL_COLS = "sm:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem]";
+
+/**
+ * rc9 ORG-UI (#272): the three goals as three rows of one table: what each
+ * asks (the area as its label, the goal as a name in mixed case, the reason
+ * quiet under it), then what it pays and what missing it costs, as figures in
+ * two columns under one head. A phone keeps the two columns under the goal.
+ */
+function GoalTable({ views, C, className }: { views: GoalView[]; C: CareerCopy; className?: string }) {
   const K = C.board.mandate;
   return (
-    <li className="grid gap-x-6 gap-y-3 border-b border-line py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_13.5rem]">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-          <span className="display text-sm font-bold tabular-nums text-faint">{i + 1}</span>
-          <span className="display text-sm font-semibold uppercase tracking-[0.04em] text-ink">{K.area[g.key]}</span>
-          {g.key === "classification" ? <Badge>{K.weighsMost}</Badge> : null}
-        </p>
-        <p className="display mt-1.5 text-xl uppercase leading-[1.05] text-ink [overflow-wrap:break-word] sm:text-[1.45rem]">{g.text}</p>
-        {g.note ? <p className="mt-1.5 text-sm leading-snug text-sub">{g.note}</p> : null}
+    <div className={className}>
+      <div className={cx("hidden gap-x-5 border-b border-line pb-2 sm:grid", GOAL_COLS)}>
+        <span className="kicker">{K.goalLabel}</span>
+        <span className="kicker">{K.gainLabel}</span>
+        <span className="kicker">{K.lossLabel}</span>
       </div>
-      <dl className="grid grid-cols-2 gap-x-4 text-xs sm:grid-cols-1 sm:content-start sm:gap-y-3 sm:border-l sm:border-line sm:pl-5">
-        <div className="min-w-0">
-          <dt className="text-sub">{K.gainLabel}</dt>
-          <dd className="mt-1">
-            <Terms t={g.gain} tone="good" C={C} />
-          </dd>
-        </div>
-        <div className="min-w-0">
-          <dt className="text-sub">{K.lossLabel}</dt>
-          <dd className="mt-1">
-            <Terms t={g.loss} tone="bad" C={C} />
-          </dd>
-        </div>
-      </dl>
-    </li>
+      <ol>
+        {views.map((g, i) => (
+          <li key={g.key} className={cx("grid gap-x-5 gap-y-3 border-b border-line py-4 last:border-b-0", GOAL_COLS)}>
+            <div className="min-w-0">
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="kicker tabular-nums">{i + 1}</span>
+                <span className="kicker">{K.area[g.key]}</span>
+                {g.key === "classification" ? <Badge>{K.weighsMost}</Badge> : null}
+              </p>
+              <p className="display mt-1.5 text-[17px] font-bold leading-snug text-ink [overflow-wrap:break-word]">{g.text}</p>
+              {g.note ? <p className="mt-1 text-sm leading-snug text-sub">{g.note}</p> : null}
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 sm:contents">
+              <div className="min-w-0">
+                <p className="mb-1.5 text-xs text-faint sm:hidden">{K.gainLabel}</p>
+                <Terms t={g.gain} tone="good" C={C} />
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1.5 text-xs text-faint sm:hidden">{K.lossLabel}</p>
+                <Terms t={g.loss} tone="bad" C={C} />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -218,21 +246,17 @@ export function MandateSheet({
         </div>
         <DemandFigure demand={m.demand} C={C} />
       </div>
-      <h2 id={titleId} className="display mt-3 text-3xl uppercase leading-[0.95] text-ink sm:text-[2.6rem]">
+      <h2 id={titleId} className="display mt-4 text-3xl font-bold uppercase leading-[1.05] text-ink sm:text-[2.4rem]">
         {K.title}
       </h2>
       <p className="mt-2.5 max-w-xl text-sm leading-snug text-sub">
-        {K.body} <span className="text-ink">{K.demandNote[m.demand]}</span>
+        {K.body} {K.demandNote[m.demand]}
       </p>
     </div>
   );
   const goals = (
     <>
-      <ol className={cx(inline ? "mt-2" : "")}>
-        {views.map((g, i) => (
-          <GoalRow key={g.key} g={g} i={i} C={C} />
-        ))}
-      </ol>
+      <GoalTable views={views} C={C} className={cx(inline ? "mt-4" : "pt-4")} />
       <LastSeason m={m} C={C} why={briefLinesOf(C, save.board?.season?.brief, save.identity.orgName)?.reason ?? null} />
     </>
   );
@@ -427,7 +451,7 @@ export function MandateIssues({ issues, C, title, note, className }: { issues: r
   const K = C.board.mandate;
   return (
     <section className={className}>
-      <h3 className="card-title">{title ?? K.issuesTitle}</h3>
+      <h3 className="card-title">{title ?? K.issuesNow}</h3>
       {note ? <p className="mt-1 text-xs leading-snug text-sub">{note}</p> : null}
       {issues.length === 0 ? (
         <p className="mt-2 text-sm text-sub">{K.noIssues}</p>
@@ -523,29 +547,9 @@ export function MandateDossier({ m, C }: { m: BoardMandate; C: CareerCopy }) {
         </div>
         <DemandFigure demand={m.demand} C={C} />
       </div>
-      <p className="mt-3 text-sm text-ink">{K.demandNote[m.demand]}</p>
+      <p className="mt-3 text-sm text-sub">{K.demandNote[m.demand]}</p>
       <MandateIssues issues={m.issues} C={C} className="mt-5" />
-      <ol className="mt-5 border-t border-line">
-        {views.map((g, i) => (
-          <li key={g.key} className="border-b border-line py-3 last:border-b-0">
-            <p className="flex items-center gap-2 text-xs">
-              <span className="display text-sm font-bold tabular-nums text-faint">{i + 1}</span>
-              <span className="display text-sm font-semibold uppercase tracking-[0.04em] text-sub">{K.area[g.key]}</span>
-            </p>
-            <p className="mt-1 text-[15px] font-semibold leading-snug text-ink">{g.text}</p>
-            <p className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
-              <span className="flex flex-wrap items-baseline gap-x-1.5">
-                <span className="text-sub">{K.gainLabel}</span>
-                <Terms t={g.gain} tone="good" C={C} compact />
-              </span>
-              <span className="flex flex-wrap items-baseline gap-x-1.5">
-                <span className="text-sub">{K.lossLabel}</span>
-                <Terms t={g.loss} tone="bad" C={C} compact />
-              </span>
-            </p>
-          </li>
-        ))}
-      </ol>
+      <GoalTable views={views} C={C} className="mt-6" />
     </div>
   );
 }
