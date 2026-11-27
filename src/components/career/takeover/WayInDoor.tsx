@@ -59,7 +59,7 @@ const CREST_STAGES = [
 
 function CrestArt() {
   return (
-    <div className="flex items-center justify-center gap-5 max-sm:scale-[0.62] sm:gap-8" aria-hidden>
+    <div className="flex items-center justify-center gap-5 max-sm:scale-[0.5] sm:gap-8" aria-hidden>
       <UserCrest crestId={CREST_STAGES[0]} colors={KIT_COLORS} size="lg" className="opacity-40" />
       <UserCrest crestId={CREST_STAGES[1]} colors={KIT_COLORS} size="lg" className="opacity-70" />
       <UserCrest crestId={CREST_STAGES[2]} colors={KIT_COLORS} abbrev="NEW" size="xl" />
@@ -71,7 +71,7 @@ function LogoArt() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-3 sm:gap-x-4" aria-hidden>
       {leadingOrgs().map((orgId) => (
-        <TeamLogo key={orgId} orgId={orgId} size="md" loading="eager" className="max-sm:!h-9 max-sm:!w-9 lg:!h-12 lg:!w-12" />
+        <TeamLogo key={orgId} orgId={orgId} size="md" loading="eager" className="max-sm:!h-8 max-sm:!w-8 lg:!h-12 lg:!w-12" />
       ))}
     </div>
   );
@@ -105,25 +105,26 @@ function DoorCard({
       onClick={onEnter}
       disabled={disabled}
       className={cx(
-        "solid group flex h-full w-full flex-col p-4 text-left transition-transform duration-200 sm:p-6 lg:p-7",
+        "solid group flex h-full w-full flex-col p-3.5 text-left transition-transform duration-200 sm:p-6 lg:p-7",
         onOrange ? "solid-orange" : "solid-blue",
         !disabled && "hover:-translate-y-0.5",
         disabled && "opacity-60",
       )}
     >
       {/* The picture window: the card's own dark stock, cut into the solid. */}
-      <span className="flex h-[4.5rem] items-center justify-center overflow-hidden rounded-[10px] border border-black/25 bg-bg sm:h-40">{art}</span>
+      <span className="flex h-12 items-center justify-center overflow-hidden rounded-[10px] border border-black/25 bg-bg sm:h-40">{art}</span>
 
       <span className="block flex-1">
-      <span className="display mt-3.5 block text-[1.75rem] uppercase leading-[0.95] sm:mt-6 sm:text-4xl">{title}</span>
-      <span className={cx("mt-2 block max-w-md text-[15px] leading-snug", onOrange ? "font-semibold" : "font-medium")}>{body}</span>
+      <span className="display mt-3 block text-[1.6rem] uppercase leading-[0.95] sm:mt-6 sm:text-4xl">{title}</span>
+      {/* rc.6 (UI-B pass): on a phone the facts carry the door, so both doors and their actions fit the first screen at 375 x 812. */}
+      <span className={cx("mt-2 block max-w-md text-[15px] leading-snug max-sm:hidden", onOrange ? "font-semibold" : "font-medium")}>{body}</span>
       </span>
 
       <span className={cx("mt-3 block border-t sm:mt-6", onOrange ? "border-paper-ink/25" : "border-white/30")}>
         {facts.map((f) => (
           <span
             key={f.label}
-            className={cx("flex min-h-9 items-center justify-between gap-3 border-b py-1 sm:min-h-10 sm:py-1.5", onOrange ? "border-paper-ink/25" : "border-white/30")}
+            className={cx("flex min-h-8 items-center justify-between gap-3 border-b py-0.5 sm:min-h-10 sm:py-1.5", onOrange ? "border-paper-ink/25" : "border-white/30")}
           >
             <span className={cx("text-[13px] font-medium", onOrange ? "text-paper-ink/80" : "text-white/80")}>{f.label}</span>
             <span className="display text-right text-lg font-bold uppercase leading-none">{f.value}</span>
@@ -134,7 +135,7 @@ function DoorCard({
       <span
         className={cx(
           buttonClass("primary", "lg"),
-          "mt-4 w-full sm:mt-7 sm:w-fit sm:px-8",
+          "mt-3.5 w-full sm:mt-7 sm:w-fit sm:px-8",
           onOrange ? "!bg-paper-ink !text-paper group-hover:!bg-[#1b2030]" : "!bg-paper !text-paper-ink group-hover:!bg-white",
         )}
       >
@@ -158,7 +159,7 @@ export function WayInDoor({ onPick, slotsFull }: { onPick: (door: "found" | "tak
           </AppLink>
         </div>
       ) : null}
-      <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 lg:gap-5">
+      <div className="mt-4 grid gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:gap-5">
         <DoorCard
           tone="blue"
           art={<CrestArt />}

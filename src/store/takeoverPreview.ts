@@ -11,7 +11,7 @@
  */
 
 import { chanceBandOf, type ChanceBand } from "@/engine/career/board";
-import type { BoardPackage, BoardSecondary, PackageId, Stature } from "@/engine/career/boardTypes";
+import type { BoardPackage, BoardSecondary, PackageId, SeasonBrief, Stature } from "@/engine/career/boardTypes";
 import { weeklyWageBill } from "@/engine/career/economy";
 import type { CareerSave, CoachState, SeasonGoalSpec, SquadPlayer, StaffId } from "@/engine/career/types";
 import { createCareerSave, type CreateCareerInput } from "./careerFlow";
@@ -28,11 +28,8 @@ export interface TakeoverPlan {
   miss: number;
 }
 
-/** The board's reason for its ask (the ENGINE front's `board.season.brief`), when the save carries one. */
-export interface TakeoverBrief {
-  kind: string;
-  [fact: string]: unknown;
-}
+/** The board's reason for its ask (`board.season.brief`, engine `SeasonBrief`), when the save carries one. */
+export type TakeoverBrief = SeasonBrief;
 
 export interface TakeoverPreview {
   /** The save the takeover creates (the screens may read anything else from it). */
@@ -83,14 +80,15 @@ export function takeoverViewOf(save: CareerSave): TakeoverPreview {
   const starters = save.starterIds
     .map((id) => save.squad.find((p) => p.id === id))
     .filter((p): p is SquadPlayer => Boolean(p));
-  const brief = (season as { brief?: TakeoverBrief } | null)?.brief ?? null;
+  // rc.6 (UI-B): the engine's brief is keyed by `reason` (UI-A read a `kind` that never exists).
+  const brief = season?.brief ?? null;
   return {
     save,
     stature: board?.stature ?? null,
     plans,
     proposed: plans.find((p) => p.id === "expected") ?? plans[0] ?? null,
     secondary: season?.secondary ?? null,
-    brief: brief && typeof brief.kind === "string" ? brief : null,
+    brief: brief && typeof brief.reason === "string" ? brief : null,
     confidence: board ? board.confidence : null,
     cash: save.finances.balance,
     weekWages: weeklyWageBill(save.squad.map((p) => p.salaryPerSplit), save.coach?.salaryPerSplit ?? null),
