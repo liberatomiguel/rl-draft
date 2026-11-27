@@ -259,7 +259,7 @@ export function OperationsSummary({ save, C, className }: { save: CareerSave; C:
     {
       key: "facilities",
       figure: `${owned.length} / ${ops.facilities.length}`,
-      line: owned.length ? owned.map((i) => opsNameOf(C, i.id)).join(", ") : O.facilitiesOwned(0, ops.facilities.length),
+      line: owned.length ? owned.map((i) => opsNameOf(C, i.id)).join(", ") : O.facilitiesNone,
     },
     { key: "staff", figure: String(retained.length), line: retained.length ? retained.map((i) => opsNameOf(C, i.id)).join(", ") : O.staffNone },
     {

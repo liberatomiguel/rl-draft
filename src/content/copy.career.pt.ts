@@ -4434,6 +4434,7 @@ export const CAREER_PT: CareerCopy = {
       open: "Abrir operações",
       facilitiesOwned: (owned: number, total: number) => `${owned} de ${total} na org`,
       staffNone: "Nenhum staff contratado",
+      facilitiesNone: "Nenhuma instalação ainda",
       staffList: (names: string) => names,
     },
     club: {

@@ -4468,6 +4468,7 @@ export const CAREER_EN = {
       open: "Open operations",
       facilitiesOwned: (owned: number, total: number) => `${owned} of ${total} owned`,
       staffNone: "No staff retained",
+      facilitiesNone: "No installation yet",
       staffList: (names: string) => names,
     },
     club: {
