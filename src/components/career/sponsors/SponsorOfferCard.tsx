@@ -24,7 +24,7 @@
 
 import { goalDeadlineOf, goalSplitLabelOf, isContractGoal, slotsOfDeal, settleDayOf, slotSeason, slotSplit } from "@/engine/career/sponsorDeals";
 import { CAREER_SPONSOR } from "@/config/balance";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerSave, SponsorState } from "@/engine/career/types";
@@ -101,7 +101,7 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
 }
 
 function ContractGoals({ view }: { view: OfferView }) {
-  const C = useCareerCopy(); const T = C.finances.deal;
+  const C = useActiveCareerCopy(); const T = C.finances.deal;
   // v2.0 (C1): one goal for the whole contract, counted from the signature — a single entry, not one per split.
   const whole = view.goals.find(g => isContractGoal(g));
   if (whole) {
@@ -139,7 +139,7 @@ function OfferCard({
   disabled?: boolean;
   note?: React.ReactNode;
 }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
   const T = C.finances.deal;
   const brand = sponsorBrandById.get(view.sponsorId);
@@ -278,7 +278,7 @@ function OfferCards({
 
 /** The founding partner's net weekly change for one offer (an rc.32 career still running one). */
 function HandoverNet({ handover, offer }: { handover: FoundingHandoverView; offer: SponsorState }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const net = handoverNetWeeklyOf(handover, offer);
   return (
     <p className={cx("mb-2 text-[11px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
@@ -331,7 +331,7 @@ export function SponsorDecision({
   onSign: (sponsorId: string) => void;
   bare?: boolean;
 }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
   const T = C.finances.deal;
   const decision = sponsorDecisionOf(save);
@@ -419,7 +419,7 @@ function Tile({
 
 /** The running rc.34 deal on the Finances desk: stat tiles, the goal and its progress, the run, fines and patience. */
 export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: React.ReactNode }) {
-  const C = useCareerCopy();
+  const C = useActiveCareerCopy();
   const D = C.dates;
   const T = C.finances.deal;
   const lang = useSettings((s) => s.lang);
