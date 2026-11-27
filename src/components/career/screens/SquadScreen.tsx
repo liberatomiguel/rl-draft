@@ -428,9 +428,10 @@ export function SquadScreen() {
                     <span className="block">
                       <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
-                        <Badge tone="blue">
+                        {/* His speciality as a quiet line, not a tag: the name leads the card. */}
+                        <span className="text-blue-bright">
                           {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
-                        </Badge>
+                        </span>
                       </span>
                       <CoachEffectLines coach={save.coach} compact className="mt-1.5" />
                     </span>
