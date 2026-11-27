@@ -936,8 +936,15 @@ export function selectActiveSave(state: CareerStoreState): CareerSave | null {
   return state.activeSlot === null ? null : state.slots[state.activeSlot];
 }
 
+/**
+ * A slot card's data: the engine's meta plus, rc.6 (UI-A), the real org an
+ * established career runs (its logo on the card). Derived at render, never
+ * persisted (the persist contract is untouched).
+ */
+export type CareerSlotView = CareerSlotMeta & { realOrgRef?: string; seasonIndex: number };
+
 /** Slot cards for the saves picker — rendered without hydrating full saves. */
-export function slotMetaFor(slots: (CareerSave | null)[]): (CareerSlotMeta | null)[] {
+export function slotMetaFor(slots: (CareerSave | null)[]): (CareerSlotView | null)[] {
   return slots.map((save, slot) => {
     if (!save) return null;
     const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
@@ -949,6 +956,8 @@ export function slotMetaFor(slots: (CareerSave | null)[]): (CareerSlotMeta | nul
       abbrev: save.identity.abbrev,
       crestId: save.identity.crestId,
       colors: save.identity.colors,
+      ...(save.identity.realOrgRef ? { realOrgRef: save.identity.realOrgRef } : {}),
+      seasonIndex: save.clock.seasonIndex,
       managerName: save.identity.managerName,
       region: save.identity.region,
       difficulty: save.difficulty,

@@ -41,7 +41,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { FEATURES } from "@/config/balance";
 import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting";
 import { TeamStars } from "@/components/career/TeamStars";
-import { UserCrest } from "@/components/career/UserCrest";
+import { UserOrgMark } from "@/components/career/OrgMark";
 import { unlockTrack, useCareerSave, userStars } from "@/components/career/careerUi";
 
 // ---------------------------------------------------------------------------
@@ -197,10 +197,9 @@ export function ClubScreen() {
           records sit on the same board as a strip of figures. */}
       <Panel strong className="mb-4 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
         <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:gap-5">
-          <UserCrest
-            crestId={save.identity.crestId}
-            colors={save.identity.colors}
-            abbrev={save.identity.abbrev}
+          <UserOrgMark
+            identity={save.identity}
+            seasonIndex={save.clock.seasonIndex}
             size="xl"
             className="shrink-0"
           />

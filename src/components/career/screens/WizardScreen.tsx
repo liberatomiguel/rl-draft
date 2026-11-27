@@ -16,7 +16,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { CAREER_DIFFICULTY, CAREER_ECONOMY, FEATURES } from "@/config/balance";
-import { TakeoverWizard, WizardDoor } from "@/components/career/board/TakeoverWizard";
+import { TakeoverPick } from "@/components/career/takeover/TakeoverPick";
+import { WayInDoor } from "@/components/career/takeover/WayInDoor";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs, playerCardById } from "@/data";
@@ -261,6 +262,8 @@ export function WizardScreen() {
     setRosterKey("balanced");
     setDifficulty(CAREER_DIFFICULTY.defaultPreset);
     setStep(TOTAL_STEPS);
+    // rc.6 (UI-A): a linked quick start goes through the door to the founding road.
+    setDoor("found");
   };
 
   // v2.0.33: the search pages link here with ?start=quick (through CareerShell):
@@ -303,8 +306,8 @@ export function WizardScreen() {
   const onFounded = useCallback(() => router.push("/career"), [router]);
 
   if (!mounted) return <div className="min-h-[60vh]" />;
-  if (door === null) return <WizardDoor onPick={setDoor} />;
-  if (door === "takeover") return <TakeoverWizard onBack={() => setDoor(null)} onCreated={onFounded} />;
+  if (door === null) return <WayInDoor onPick={setDoor} slotsFull={slots.every(Boolean)} />;
+  if (door === "takeover") return <TakeoverPick onBack={() => setDoor(null)} onDone={onFounded} />;
 
   const canContinue = step === 1 ? step1Ok : true;
   const rivals = rivalsByRegion();
@@ -327,8 +330,9 @@ export function WizardScreen() {
         }
       />
 
-      {/* v2.2 Pro (R150): the player career's door, on the first step only (staging only). */}
-      {step === 1 ? <ProDoor compact /> : null}
+      {/* v2.2 Pro (R150): the player career's door, on the first step only (staging only).
+          rc.6 (UI-A): not when the takeover's door is on (the Pro is the next patch; /career/pro/new stays). */}
+      {step === 1 && !FEATURES.realOrgStart ? <ProDoor compact /> : null}
 
       {/* Progress: five flat segments (a finished one goes back to its step).
           The count reads under the title, as a sentence. */}
@@ -689,6 +693,11 @@ export function WizardScreen() {
       <div className="action-dock mt-6 flex items-center justify-between gap-3 sm:mt-8">
         {step > 1 ? (
           <Button variant="ghost" onClick={() => setStep(step - 1)}>
+            {C.common.back}
+          </Button>
+        ) : FEATURES.realOrgStart ? (
+          // rc.6 (UI-A): step 1 goes back to the door.
+          <Button variant="ghost" onClick={() => setDoor(null)}>
             {C.common.back}
           </Button>
         ) : (
