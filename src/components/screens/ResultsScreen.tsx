@@ -51,6 +51,7 @@ import { RunShareSheet } from "@/components/share/RunShareSheet";
 import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 import { DailyOptimalPanel } from "./DailyOptimalPanel";
+import { OverallParts } from "./OverallParts";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
@@ -324,28 +325,19 @@ export function ResultsScreen({ run }: { run: RunState }) {
         ) : null}
       </div>
 
-      {/* Team-overall breakdown — shown on results for ALL modes (v1.3.3; was
-          hidden runs only). A clean end-of-run summary of how the team's overall
-          was built, regardless of whether overalls were visible during play. */}
-      <Panel strong glow="blue" className="mb-6 p-4 sm:mb-10 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="kicker">{REVIEW.teamOverall}</p>
-          <p className="display text-4xl font-bold leading-none text-ink">
-            {displayTeamOverall(team.rating)}
-          </p>
+      {/* Team overall (#280): the number and the parts that add up to it, the
+          same list the Review shows. On a hidden-overall run this is the first
+          time the player sees it; the Team Reveal title above carries the tag. */}
+      <Panel strong className="mb-6 p-4 sm:mb-10 sm:p-6">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-6 gap-y-3 sm:gap-x-10">
+          <div>
+            <p className="display text-6xl font-bold leading-[0.9] text-ink sm:text-7xl">
+              {displayTeamOverall(team.rating)}
+            </p>
+            <p className="kicker mt-2">{REVIEW.teamOverall}</p>
+          </div>
+          <OverallParts rating={team.rating} quick={run.mode === "quick"} />
         </div>
-        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-sub sm:grid-cols-3">
-          <ResultRow label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
-          {run.mode !== "quick" ? (
-            <>
-              <ResultRow label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
-              <ResultRow label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
-              <ResultRow label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
-            </>
-          ) : null}
-          <ResultRow label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
-          <ResultRow label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
-        </dl>
       </Panel>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -539,15 +531,6 @@ export function ResultsScreen({ run }: { run: RunState }) {
         signals={{ activeDays, runsCompleted, careerSeasons: 0 }}
         text={RESEARCH_UI}
       />
-    </div>
-  );
-}
-
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2 border-b border-line/40 py-0.5">
-      <dt>{label}</dt>
-      <dd className="display font-bold text-ink">{value}</dd>
     </div>
   );
 }

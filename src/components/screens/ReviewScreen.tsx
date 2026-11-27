@@ -25,6 +25,7 @@ import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { rosterSlots } from "@/components/cards/rosterView";
 import { RunStepper } from "./RunStepper";
+import { OverallParts } from "./OverallParts";
 import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
 
 export function ReviewScreen({ run }: { run: RunState }) {
@@ -123,18 +124,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
                 <p className="mt-2 max-w-[6.5rem] text-xs leading-snug text-sub sm:max-w-none">{REVIEW.teamOverall}</p>
               </div>
               {run.showOverall ? (
-                <dl className="text-sm text-sub">
-                  <Row label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
-                  {!isQuick ? (
-                    <>
-                      <Row label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
-                      <Row label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
-                      <Row label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
-                    </>
-                  ) : null}
-                  <Row label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
-                  <Row label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
-                </dl>
+                <OverallParts rating={team.rating} quick={isQuick} />
               ) : (
                 <p className="text-sm leading-relaxed text-sub">{REVIEW.hiddenNote}</p>
               )}
@@ -217,15 +207,6 @@ export function ReviewScreen({ run }: { run: RunState }) {
           {startLabel}
         </Button>
       </div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-line py-1.5 last:border-b-0">
-      <dt>{label}</dt>
-      <dd className="display font-bold text-ink">{value}</dd>
     </div>
   );
 }
