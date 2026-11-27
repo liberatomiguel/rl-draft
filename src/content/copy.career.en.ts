@@ -2646,6 +2646,8 @@ export const CAREER_EN = {
   achievements: {
     title: "Career achievements",
     hint: "Permanent: they count across every save and survive a season reset. Each pays Season XP once; the big ones unlock cosmetics.",
+    // rc.6 (R171): an established org earns none of them; they belong to the founded road.
+    foundedOnly: "Earned on the founded road: a club you build yourself. Seasons at an established organization do not count toward them.",
     unlocked: "Achievement unlocked",
     lockedLabel: "Locked",
     unlockedOn: (date: string) => `Unlocked ${date}`,

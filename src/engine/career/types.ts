@@ -1880,6 +1880,12 @@ export interface CareerSave {
   endless?: EndlessState | null;
   /** v2.2: the hidden manager save a Pro career runs his world on: the board and the endless bids never touch it. */
   proHost?: boolean;
+  /**
+   * rc.6 (R171): set when a manager founds a club after a dismissal: the
+   * lifetime stats and the season the founded road's permanent achievements
+   * count from. Optional and additive: absent = from the career's start.
+   */
+  achievementBase?: { stats: Partial<CareerLifetimeStats>; seasonIndex: number };
 }
 
 /** v2.2 ENDLESS: what the front keeps between seasons. */

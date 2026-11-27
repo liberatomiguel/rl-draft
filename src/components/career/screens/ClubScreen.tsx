@@ -312,6 +312,8 @@ export function ClubScreen() {
               </span>
             </div>
             <p className="mt-1.5 max-w-prose text-sm leading-snug text-sub">{copy.achievements.hint}</p>
+            {/* rc.6 (R171): an established org earns none of them; the board stays (the account's collection). */}
+            {established ? <p className="mt-1 max-w-prose text-sm leading-snug text-ink">{copy.achievements.foundedOnly}</p> : null}
             <div data-all={allAchievements} className="club-achievements mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {CAREER_ACHIEVEMENTS.map((a) => {
                 const at = achievements.unlocked[a.id];

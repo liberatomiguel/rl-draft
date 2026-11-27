@@ -11,6 +11,7 @@ vi.mock("@/config/balance", async (orig) => {
   return { ...m, FEATURES: { ...m.FEATURES, board: true, realOrgStart: true } };
 });
 
+import { careerCosmeticMarks, evaluateCareerAchievements, startAchievementBaseline, worldsWonOnAfter } from "@/engine/career/achievements";
 import { seasonBudgetOf } from "@/engine/career/budget";
 import { operationsOf } from "@/engine/career/established";
 import { realOrgChoicesFor } from "@/engine/career/orgProfile";
@@ -105,5 +106,44 @@ describe("R170: the budget's lines and the camp", () => {
       expect(free.price).toBe(0);
       expect(free.state).toBe("available");
     } else expect(free.state).toBe("cantAfford");
+  });
+});
+
+describe("R171: permanent career achievements belong to the founded road", () => {
+  const memory = { unlocked: {}, worldsWonOn: {} };
+
+  it("an established org earns none of them, its cosmetic marks nor a Worlds-won difficulty", () => {
+    const elite = createCareerSave(input("EU", "easy", choices("EU", "easy")[0].ref), SEED);
+    expect(elite.reputation).toBeGreaterThanOrEqual(50);
+    elite.stats.titlesMajor = 3;
+    elite.stats.titlesWorlds = 1;
+    elite.clock.seasonIndex = 6;
+    expect(evaluateCareerAchievements(elite, memory)).toEqual([]);
+    expect(careerCosmeticMarks(elite)).toEqual([]);
+    expect(worldsWonOnAfter(elite, memory)).toEqual({});
+  });
+
+  it("a founded club earns them as before", () => {
+    const founded = createCareerSave(input("EU", "normal"), SEED);
+    founded.stats.titlesMajor = 1;
+    expect(evaluateCareerAchievements(founded, memory)).toContain("car-first-major");
+  });
+
+  it("a club founded after a dismissal counts from its founding: nothing retroactive, seasons with that club", () => {
+    const save = createCareerSave(input("EU", "normal"), SEED);
+    save.stats.titlesMajor = 2;
+    save.stats.titlesWorlds = 1;
+    (save.flags as Record<string, unknown>).achSponsorSigned = true;
+    save.clock.seasonIndex = 4;
+    startAchievementBaseline(save, 4);
+    expect(evaluateCareerAchievements(save, memory)).toEqual([]);
+    expect(worldsWonOnAfter(save, memory)).toEqual({});
+    save.stats.titlesMajor = 3;
+    save.clock.seasonIndex = 7;
+    const got = evaluateCareerAchievements(save, memory);
+    expect(got).toContain("car-first-major");
+    expect(got).toContain("car-three-seasons");
+    expect(got).not.toContain("car-first-sponsor");
+    expect(got).not.toContain("car-three-majors");
   });
 });

@@ -2619,6 +2619,8 @@ export const CAREER_PT: CareerCopy = {
   achievements: {
     title: "Conquistas da carreira",
     hint: "Permanentes: valem em todos os saves e sobrevivem ao reset de season. Cada uma paga Season XP uma vez; as grandes liberam cosméticos.",
+    // rc.6 (R171): uma org consolidada não ganha nenhuma; elas são do caminho do clube fundado.
+    foundedOnly: "Conquistadas no caminho do clube fundado, o clube que você monta. Temporadas numa organização consolidada não contam para elas.",
     unlocked: "Conquista desbloqueada",
     lockedLabel: "Bloqueada",
     unlockedOn: (date: string) => `Desbloqueada em ${date}`,

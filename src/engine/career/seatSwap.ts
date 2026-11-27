@@ -16,6 +16,7 @@
 
 import { CAREER_GEAR, FEATURES } from "@/config/balance";
 import { inheritedGearFor, structureWeeklyOf } from "./established";
+import { startAchievementBaseline } from "./achievements";
 import type { Region } from "../types";
 import { playerViewById } from "./development";
 import { quantize, weeklyWageBill } from "./economy";
@@ -242,6 +243,8 @@ export function foundNewSeat(save: CareerSave, name: string): SeatTaken | null {
   save.starterIds = [squad[0].id, squad[1].id, squad[2].id];
   save.coach = null;
   save.reputation = profileOf("owners").rep;
+  // rc.6 (R171): the founded road's permanent achievements count from here, nothing earned before.
+  startAchievementBaseline(save, save.clock.seasonIndex);
   const week = weeklyWageBill(squad.map((p) => p.salaryPerSplit), null);
   const money = orgMoneyFor("owners", week, save.difficulty, save.clock.seasonIndex);
   resetClubState(save, quantize(money.startCash), gearFor(0));

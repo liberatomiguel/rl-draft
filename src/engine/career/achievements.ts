@@ -9,6 +9,7 @@
 
 import { CAREER_ACHIEVEMENTS, careerAchievementById, type CareerAchievementDef } from "@/data/career/achievements";
 import type { CareerDifficulty, CareerSave } from "./types";
+import { establishedOf } from "./established";
 
 export interface CareerAchievementMemory {
   /** id → unlocked-at (ms epoch). Permanent, across saves. */
@@ -41,6 +42,28 @@ export const ACH_FLAGS = {
 
 const ALL_DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
 
+/**
+ * rc.6 (R171): the permanent career achievements belong to the founded road.
+ * An established org (a takeover, an accepted job) earns none of them, its
+ * cosmetic marks nor a Worlds-won-on difficulty. A manager who founds a club
+ * after a dismissal earns them there, counted from the moment he founded it
+ * (`save.achievementBase`): stats and seasons are deltas from that baseline,
+ * and the one-shot markers were cleared at the move. Nothing is retroactive.
+ */
+export function achievementsOpenFor(save: CareerSave): boolean {
+  return !establishedOf(save);
+}
+
+type CountedStat = "titlesRegional" | "titlesMajor" | "titlesWorlds" | "majorsQualified" | "worldsQualified";
+
+function statSince(save: CareerSave, stat: CountedStat): number {
+  return (save.stats[stat] ?? 0) - (save.achievementBase?.stats[stat] ?? 0);
+}
+
+function seasonsSince(save: CareerSave): number {
+  return save.clock.seasonIndex - (save.achievementBase?.seasonIndex ?? 0);
+}
+
 function satisfied(def: CareerAchievementDef, save: CareerSave, memory: CareerAchievementMemory): boolean {
   const c = def.condition;
   const flags = save.flags as Record<string, unknown>;
@@ -48,11 +71,11 @@ function satisfied(def: CareerAchievementDef, save: CareerSave, memory: CareerAc
     case "flag":
       return Boolean(flags[c.flag]);
     case "stat":
-      return (save.stats[c.stat] ?? 0) >= c.min;
+      return statSince(save, c.stat) >= c.min;
     case "reputation":
       return save.reputation >= c.min;
     case "seasonIndex":
-      return save.clock.seasonIndex >= c.min;
+      return seasonsSince(save) >= c.min;
     case "titleUnderdog": {
       const v = flags[ACH_FLAGS.underdogGap];
       return typeof v === "number" && v >= c.margin;
@@ -91,6 +114,7 @@ export function marksMissingFrom(memory: CareerAchievementMemory, marks: readonl
 
 /** Ids newly satisfied by this save that the memory has not unlocked yet (catalog order). */
 export function evaluateCareerAchievements(save: CareerSave, memory: CareerAchievementMemory): string[] {
+  if (!achievementsOpenFor(save)) return [];
   const out: string[] = [];
   for (const def of CAREER_ACHIEVEMENTS) {
     if (memory.unlocked[def.id]) continue;
@@ -104,21 +128,33 @@ export function worldsWonOnAfter(
   save: CareerSave,
   memory: CareerAchievementMemory,
 ): CareerAchievementMemory["worldsWonOn"] {
-  if (save.stats.titlesWorlds > 0) return { ...memory.worldsWonOn, [save.difficulty]: true };
+  if (achievementsOpenFor(save) && statSince(save, "titlesWorlds") > 0) return { ...memory.worldsWonOn, [save.difficulty]: true };
   return memory.worldsWonOn;
 }
 
 /** Cosmetic-only facts: do not replay old achievements, their XP or toasts. */
 export function careerCosmeticMarks(save: CareerSave): string[] {
+  if (!achievementsOpenFor(save)) return [];
   const flags = save.flags as Record<string, unknown>;
   const marks: string[] = [];
-  if (save.clock.seasonIndex >= 3) marks.push("car-four-seasons");
+  if (seasonsSince(save) >= 3) marks.push("car-four-seasons");
   // rc.51 (Passport Stamped): the berth counts the day the field is announced; a
   // save from before rc.51 that already played a Major has it too.
-  if (flags[ACH_FLAGS.majorBerth] || (save.stats.majorsQualified ?? 0) >= 1) marks.push("car-major-berth");
+  if (flags[ACH_FLAGS.majorBerth] || statSince(save, "majorsQualified") >= 1) marks.push("car-major-berth");
   if (flags[ACH_FLAGS.dayOne]) marks.push("car-day-one");
   if (flags[ACH_FLAGS.regionalDynasty]) marks.push("car-regional-dynasty");
   return marks;
+}
+
+/**
+ * rc.6 (R171): the founded spell's achievement baseline, set when a manager
+ * founds a club after a dismissal: the stats and the season it starts from,
+ * the one-shot markers cleared. Mutates.
+ */
+export function startAchievementBaseline(save: CareerSave, seasonIndex: number): void {
+  save.achievementBase = { stats: { ...save.stats }, seasonIndex };
+  const flags = save.flags as Record<string, unknown>;
+  for (const key of Object.values(ACH_FLAGS)) delete flags[key];
 }
 
 /** rc.51 (Day One): are the fielded players exactly the registered starters? */
