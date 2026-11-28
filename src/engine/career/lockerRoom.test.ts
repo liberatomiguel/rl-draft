@@ -10,12 +10,16 @@ import {
   answerLockerTalk,
   credibilityOf,
   emptyLockerRoom,
+  heldMoodOf,
   lockerIssuesOf,
+  lockerMatchBonusOf,
   lockerStep,
   matchMoraleEffectOf,
+  shownMoodOf,
   moodOf,
   moraleOf,
   moraleTrainingCtxOf,
+  nudgeMorale,
   openTalksOf,
   seedInheritedLockerRoom,
   stayDeadlineFrom,
@@ -135,9 +139,20 @@ describe("L2 drivers", () => {
     for (const entry of out.state.log) expect(entry.reason).toBeTruthy();
   });
 
-  it("the weekly drift moves toward neutral, never past it", () => {
-    const st = step(withMorale({ a: 70, b: 30, c: 50 }), { weeks: 3 }).state;
-    expect([st.players.a.morale, st.players.b.morale, st.players.c.morale]).toEqual([67, 33, 50]);
+  it("rc9 (R211): with nothing going on, the weekly pull moves toward neutral, never past it", () => {
+    const pull = (m: number) => {
+      const gap = L.neutral - m;
+      return Math.abs(gap) < L.pull.minGap ? m : m + Math.sign(gap) * Math.max(1, Math.round(Math.abs(gap) * L.pull.share));
+    };
+    const st = step(withMorale({ a: 70, b: 30, c: 50, d: 51 }), { weeks: 3 }).state;
+    expect([st.players.a.morale, st.players.b.morale, st.players.c.morale, st.players.d.morale]).toEqual([
+      pull(pull(pull(70))),
+      pull(pull(pull(30))),
+      50,
+      51,
+    ]);
+    expect(st.players.a.morale).toBeGreaterThan(L.neutral);
+    expect(st.players.b.morale).toBeLessThan(L.neutral);
   });
 });
 
@@ -293,9 +308,212 @@ describe("L4 consequences", () => {
     expect(low.player.potential).toBe(player.potential);
   });
 
-  it("the match effect ships at zero", () => {
+  it("wave 1's per-50-morale tunable still ships at zero (rc9 replaced it with the mood table)", () => {
     expect(L.matchEffect).toBe(0);
     for (const m of [0, 25, 50, 75, 100]) expect(matchMoraleEffectOf(m)).toBe(0);
+  });
+
+  it("rc9 (R217): the match bonus is the lineup's mean mood effect, clamped, damped in the first season, 0 with the flag off", () => {
+    const st = withMorale({ a: 90, b: 90, c: 90, d: 5, e: 5, f: 5 });
+    expect(lockerMatchBonusOf(st, ["a", "b", "c"], { firstSeason: false })).toBe(0); // flag off
+    (FEATURES as Record<string, unknown>).lockerRoom = true;
+    expect(lockerMatchBonusOf(st, ["a", "b", "c"], { firstSeason: false })).toBe(Math.min(L.match.byMood.delighted, L.match.teamMax));
+    expect(lockerMatchBonusOf(st, ["d", "e", "f"], { firstSeason: false })).toBe(Math.max(L.match.byMood.angry, L.match.teamMin));
+    expect(lockerMatchBonusOf(st, ["d", "e", "f"], { firstSeason: true })).toBeCloseTo(Math.max(L.match.byMood.angry, L.match.teamMin) * L.match.firstSeasonNegScale, 10);
+    expect(lockerMatchBonusOf(st, ["a", "d", "x"], { firstSeason: false })).toBeCloseTo((L.match.byMood.delighted + L.match.byMood.angry) / 3, 2);
+    expect(lockerMatchBonusOf(emptyLockerRoom(), ["a", "b", "c"], { firstSeason: false })).toBe(0);
+    // A recent Worlds champion is never lifted by its mood; a bad room still costs it.
+    expect(lockerMatchBonusOf(st, ["a", "b", "c"], { firstSeason: false, dynasty: true })).toBe(Math.min(L.match.byMood.delighted, L.match.teamMax) * L.match.dynastyPosScale);
+    expect(lockerMatchBonusOf(st, ["d", "e", "f"], { firstSeason: false, dynasty: true })).toBe(Math.max(L.match.byMood.angry, L.match.teamMin));
+    // Bounded for any morale, and the effect never depends on how long the save has run.
+    for (const m of [0, 10, 30, 50, 70, 90, 100]) {
+      const b = lockerMatchBonusOf(withMorale({ a: m, b: m, c: m }), ["a", "b", "c"], { firstSeason: false });
+      expect(b).toBeGreaterThanOrEqual(L.match.teamMin);
+      expect(b).toBeLessThanOrEqual(L.match.teamMax);
+    }
+  });
+});
+
+describe("rc9 LOCKER: morale that moves", () => {
+  const won = (p: number) => ({ won: true, p });
+  const lost = (p: number) => ({ won: false, p });
+  const weeksOf = (st: LockerRoomState, n: number, facts: Partial<LockerStepInput> = {}) => {
+    for (let w = 0; w < n; w++) {
+      day += 7;
+      st = step(st, { weeks: 1, ...facts }).state;
+    }
+    return st;
+  };
+
+  it("R215: the shown mood holds inside the hysteresis band and follows a clear crossing", () => {
+    const h = L.moodHysteresis;
+    expect(heldMoodOf("neutral", 60)).toBe("neutral");
+    expect(heldMoodOf("neutral", 60 + h)).toBe("content");
+    expect(heldMoodOf("content", 59)).toBe("content");
+    expect(heldMoodOf("content", 60 - h - 1)).toBe("neutral");
+    expect(heldMoodOf("neutral", 10)).toBe("angry"); // two moods away: no hold
+    expect(heldMoodOf(undefined, 61)).toBe("content");
+    // In a step: a small push over the bound shows nothing; the mood is stored only while it differs.
+    const ctx = { clock: clock(), careerSeed: SEED };
+    const dip = nudgeMorale(withMorale({ b: 61 }), ctx, "b", -3, "settling");
+    expect(dip.state.players.b.morale).toBe(58);
+    expect(shownMoodOf(dip.state, "b")).toBe("content");
+    expect(dip.state.players.b.mood).toBe("content");
+    expect(dip.notes.some((n) => n.kind === "mood")).toBe(false);
+    const back = nudgeMorale(dip.state, ctx, "b", 2, "settling");
+    expect(back.state.players.b.mood).toBeUndefined(); // 60: content again, nothing stored
+    const fall = nudgeMorale(dip.state, ctx, "b", -2, "settling");
+    expect(shownMoodOf(fall.state, "b")).toBe("neutral");
+    expect(fall.notes).toContainEqual({ kind: "mood", reason: "settling", changes: [{ playerId: "b", mood: "neutral" }] });
+  });
+
+  it("R212: results above expectation lift the target, below it lower it; a favourite's title lifts less", () => {
+    const beat = step(emptyLockerRoom(), { events: [{ ...event("top4"), series: [won(0.3), won(0.3), won(0.4)] }] }).state;
+    expect(beat.results).toBeGreaterThan(1.5);
+    const up = weeksOf(beat, 4);
+    expect(up.players.a.morale).toBeGreaterThan(L.neutral + L.played);
+    expect(up.players.a.last?.reason).toBe("goodResults");
+    // The bench feels it at benchShare (d has sat out one event).
+    expect(up.players.d.morale).toBeLessThan(up.players.a.morale);
+
+    const flop = step(emptyLockerRoom(), { events: [{ ...event("swiss_exit"), series: [lost(0.8), lost(0.75), lost(0.7)] }] }).state;
+    const down = weeksOf(flop, 4);
+    expect(down.players.a.morale).toBeLessThan(L.neutral);
+    expect(down.players.a.last?.reason).toBe("poorResults");
+
+    const fav = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: true }] }).state;
+    const dog = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: false }] }).state;
+    expect(dog.players.a.morale - fav.players.a.morale).toBe(L.titleLift - Math.round(L.titleLift * L.favouriteTitleShare));
+  });
+
+  it("R213: box-score form against the lineup's mean moves his target, and fades", () => {
+    const box = { a: { games: 3, ratingSum: 24 }, b: { games: 3, ratingSum: 18 }, c: { games: 3, ratingSum: 18 } };
+    const st = step(emptyLockerRoom(), { box }).state;
+    expect(st.players.a.form).toBeGreaterThan(0);
+    expect(st.players.b.form).toBeLessThan(0);
+    const later = weeksOf(st, 3);
+    expect(later.players.a.morale).toBeGreaterThan(later.players.b.morale);
+    expect(later.players.a.last?.reason).toBe("goodForm");
+    expect(Math.abs(later.players.a.form ?? 0)).toBeLessThan(Math.abs(st.players.a.form ?? 0));
+  });
+
+  it("R214: sustained heavy load tires him, then he asks for a lighter load; rest recovers", () => {
+    const heavy = { a: "heavy" as const, b: "normal" as const };
+    let st = emptyLockerRoom();
+    const notes: ReturnType<typeof step>["notes"] = [];
+    for (let w = 0; w < L.asks.loadAt; w++) {
+      day += 7;
+      const out = step(st, { weeks: 1, loads: heavy });
+      st = out.state;
+      notes.push(...out.notes);
+    }
+    expect(st.players.a.load).toBe(L.asks.loadAt);
+    expect(st.players.a.morale).toBeLessThan(L.neutral);
+    expect(st.log.some((e) => e.playerId === "a" && e.reason === "heavyLoad")).toBe(true);
+    const talk = openTalksOf(st).find((t) => t.playerId === "a")!;
+    expect(talk).toMatchObject({ topic: "load", answers: ["lighten", "keepLoad"], neutral: "keepLoad" });
+    expect(notes.some((n) => n.kind === "talk" && n.topic === "load")).toBe(true);
+    const yes = answer(st, talk.id, "lighten");
+    expect(yes.effect).toEqual({ kind: "load", playerId: "a", workload: "light" });
+    expect(yes.state.players.a.morale).toBe(st.players.a.morale + L.answers.heard);
+    const no = answer(st, talk.id, "keepLoad");
+    expect(no.effect).toBeNull();
+    expect(no.state.players.a.morale).toBe(st.players.a.morale - L.answers.passedOver);
+    const rested = weeksOf(no.state, 3, { loads: { a: "rest" } });
+    expect(rested.players.a.load ?? 0).toBe(0);
+    expect(rested.players.a.morale).toBeGreaterThan(no.state.players.a.morale);
+    expect(rested.players.a.last?.reason).toBe("rested");
+  });
+
+  it("R216: one new talk per gapWeeks for the whole squad; a refused bid is exempt", () => {
+    let st = emptyLockerRoom();
+    const loads = { a: "heavy" as const, b: "heavy" as const };
+    for (let w = 0; w < L.asks.loadAt; w++) {
+      day += 7;
+      st = step(st, { weeks: 1, loads }).state;
+    }
+    expect(openTalksOf(st).filter((t) => t.topic === "load")).toHaveLength(1);
+    const bid = step(st, { bidsRefused: ["c"] }).state;
+    expect(openTalksOf(bid).map((t) => t.topic).sort()).toEqual(["bid", "load"]);
+    // The other tired player asks once the gap has passed.
+    let later = st;
+    for (let w = 0; w < L.asks.gapWeeks; w++) {
+      day += 7;
+      later = step(later, { weeks: 1, loads }).state;
+    }
+    expect(later.talks.filter((t) => t.topic === "load").map((t) => t.playerId).sort()).toEqual(["a", "b"]);
+    expect(later.talks.find((t) => t.playerId === "a")).toMatchObject({ answer: "keepLoad", auto: true }); // a's lapsed after a week
+  });
+
+  it("R216: a player who feels good asks for more load now and then (seeded); the yes is a heavy tweak", () => {
+    const opened: string[] = [];
+    for (let w = 0; w < 40; w++) {
+      day = 10 + w * 7;
+      const out = step(withMorale({ a: 75 }), { weeks: 1, loads: { a: "normal" } });
+      if (openTalksOf(out.state).some((t) => t.playerId === "a" && t.topic === "more")) opened.push(String(w));
+    }
+    expect(opened.length).toBeGreaterThan(0);
+    expect(opened.length).toBeLessThan(40);
+    day = 10 + Number(opened[0]) * 7;
+    const st = step(withMorale({ a: 75 }), { weeks: 1, loads: { a: "normal" } }).state;
+    const talk = openTalksOf(st).find((t) => t.topic === "more")!;
+    expect(answer(st, talk.id, "pushHim").effect).toEqual({ kind: "load", playerId: "a", workload: "heavy" });
+    expect(answer(st, talk.id, "holdBack").state.players.a.morale).toBe(st.players.a.morale - L.answers.heldBack);
+  });
+
+  it("R216: a 1v1 / 2v2 cup surfacing: a reserve asks to play it; the yes enters him, the talk closes before the cup", () => {
+    let found: { st: LockerRoomState; talkId: string } | null = null;
+    for (let k = 0; k < 30 && !found; k++) {
+      const out = step(emptyLockerRoom(), { starters: LINEUP, sideOffer: { eventId: `cup${k}`, teamSize: 1, day: day + 5 } });
+      const t = openTalksOf(out.state).find((x) => x.topic === "side");
+      if (t) found = { st: out.state, talkId: t.id };
+    }
+    expect(found).not.toBeNull();
+    const talk = found!.st.talks.find((t) => t.id === found!.talkId)!;
+    expect(LINEUP).not.toContain(talk.playerId); // a reserve first
+    expect(talk.params).toMatchObject({ size: 1 });
+    const yes = answer(found!.st, talk.id, "enterHim");
+    expect(yes.effect).toEqual({ kind: "enterSide", playerId: talk.playerId, eventId: talk.params!.eventId });
+    expect(talk.deadline.day).toBeLessThan(day + 5);
+    // The cup played: its participants are lifted, the club's results memory is untouched.
+    const played = step(yes.state, { events: [{ eventId: "cupX", tier: "t3", placement: "champion", lineup: [talk.playerId], side: true }] }).state;
+    expect(played.players[talk.playerId].morale).toBe(yes.state.players[talk.playerId].morale + L.sideEvent.played + L.sideEvent.champion);
+    expect(played.results).toBeUndefined();
+    expect(played.losingRun).toBe(0);
+  });
+
+  it("R216: a benched reserve asks to start the regional; the yes swaps him in for that event, then back", () => {
+    let st = emptyLockerRoom();
+    for (let i = 0; i < L.asks.startBenchRun; i++) st = step(st, { events: [event("top8")] }).state;
+    // e (82, benched) is the candidate; drop his bench talk to isolate the start ask.
+    st.talks = [];
+    st.lastAskWeek = undefined;
+    for (const p of Object.values(st.players)) delete p.askedWeek;
+    let talk: ReturnType<typeof openTalksOf>[number] | undefined;
+    let base = st;
+    for (let k = 0; k < 30 && !talk; k++) {
+      base = step(st, { starters: LINEUP, nextOfficial: { eventId: `reg${k}`, tier: "regional", day: day + 4 } }).state;
+      talk = openTalksOf(base).find((t) => t.topic === "start");
+    }
+    expect(talk).toBeDefined();
+    expect(talk!.params).toMatchObject({ outId: "c" }); // the weakest starter
+    const yes = answer(base, talk!.id, "startHim");
+    expect(yes.effect).toEqual({ kind: "startSub", inId: talk!.playerId, outId: "c", eventId: talk!.params!.eventId });
+    expect(yes.state.players.c.morale).toBe((base.players.c?.morale ?? L.neutral) - L.answers.madeWay);
+    expect(yes.state.swap).toMatchObject({ inId: talk!.playerId, outId: "c" });
+    const after = step(yes.state, { events: [{ ...event("top4", "regional", ["a", "b", talk!.playerId]), eventId: String(talk!.params!.eventId) }] });
+    expect(after.notes).toContainEqual({ kind: "swapBack", inId: talk!.playerId, outId: "c" });
+    expect(after.state.swap).toBeUndefined();
+    // Not a regional: no ask.
+    const major = step(st, { starters: LINEUP, nextOfficial: { eventId: "m1", tier: "major", day: day + 4 } }).state;
+    expect(openTalksOf(major).some((t) => t.topic === "start")).toBe(false);
+  });
+
+  it("an event seen twice (same key) counts once", () => {
+    const ev = { ...event("champion"), key: "0:ev" };
+    const once = step(emptyLockerRoom(), { events: [ev] }).state;
+    const twice = step(once, { events: [ev] }).state;
+    expect(twice.players.a.morale).toBe(once.players.a.morale);
   });
 });
 

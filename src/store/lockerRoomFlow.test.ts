@@ -139,9 +139,11 @@ describe("flag on", () => {
     const refused = structuredClone(withBid);
     refused.pendingOffers = [];
     lockerRoomAfter(withBid, refused);
+    const bidTalk = openTalksOf(refused.lockerRoom)[0];
     const later = walk(refused, L.talkDays + 1, true);
-    expect(openTalksOf(later.lockerRoom)).toHaveLength(0);
-    expect(later.lockerRoom!.talks[0]).toMatchObject({ answer: "focus", auto: true });
+    // rc9: the walk may open other talks (the players' own requests); this one has closed itself.
+    expect(openTalksOf(later.lockerRoom).some((t) => t.id === bidTalk.id)).toBe(false);
+    expect(later.lockerRoom!.talks.find((t) => t.id === bidTalk.id)).toMatchObject({ answer: "focus", auto: true });
     expect(later.mail.some((m) => m.titleKey === "lockerTalkAuto")).toBe(true);
     expect(later.clock.day).toBeGreaterThanOrEqual(refused.clock.day + L.talkDays);
   }, 120_000);

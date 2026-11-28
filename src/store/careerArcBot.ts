@@ -76,6 +76,7 @@ import {
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
 import { boardAutoAnswer, mandateOf } from "./boardFlow";
+import { lockerRoomAfter } from "./lockerRoomFlow"; // rc9 LOCKER
 import type { BoardMandate, PackageId } from "@/engine/career/boardTypes";
 import { billsOf, squadProgressOf, transferMoneyOf } from "@/engine/career/mandate";
 import { seasonBudgetOf } from "@/engine/career/budget";
@@ -995,14 +996,14 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
       opts.onEvent?.(save);
-      save = finishEvent(save);
+      save = lockerAfterWrite(save, finishEvent(save)); // rc9 LOCKER: the finish write the store sees
     }
   } else if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) {
     save = simEventToEnd(startEvent(save, false));
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
       opts.onEvent?.(save);
-      save = finishEvent(save);
+      save = lockerAfterWrite(save, finishEvent(save)); // rc9 LOCKER: the finish write the store sees
     }
   }
   if (save.phase !== "running") return save;
@@ -1132,6 +1133,15 @@ function squadRows(save: CareerSave): ArcSquadRow[] {
   }));
 }
 
+/**
+ * rc9 LOCKER: the store's per-write hook on one write (a no-op with FEATURES.lockerRoom off). The
+ * finish write must be its own write: its prev holds the tournament the results are read from.
+ */
+function lockerAfterWrite(prev: CareerSave, next: CareerSave): CareerSave {
+  lockerRoomAfter(prev, next);
+  return next;
+}
+
 /** Plays `seasons` seasons (continuing past a title / the timeline like the store's "continue"). */
 export function playArcCareer(cfg: {
   region: Region;
@@ -1165,7 +1175,15 @@ export function playArcCareer(cfg: {
   boardPackage?: PackageId;
   /** v2.2 board front: accept an unsolicited off-season approach when one comes. */
   boardApproach?: boolean;
+  /** rc9 LOCKER (test-only): answer the locker room's talks each day (default: they lapse to the neutral answer). */
+  lockerDay?: (save: CareerSave) => CareerSave;
 }): ArcCareer {
+  // rc9 LOCKER: the store runs `lockerRoomAfter` on every write; the bot ran none, so no battery ever
+  // played the locker room. A no-op with FEATURES.lockerRoom off (flag-off careers stay bit-identical).
+  const locker = (prev: CareerSave, next: CareerSave): CareerSave => {
+    lockerRoomAfter(prev, next);
+    return next;
+  };
   const t0 = Date.now();
   const policy: ArcPolicy = {
     ...ARC_POLICIES[cfg.policy],
@@ -1203,14 +1221,15 @@ export function playArcCareer(cfg: {
         break;
       }
       save = boardAutoAnswer(save, cfg.boardPackage); // v2.2 board front: a no-op with the flag off
-      save = decide(save, policy, t, { bootcamp: cfg.bootcamp, onEvent: cfg.onEvent });
+      if (cfg.lockerDay) save = locker(save, cfg.lockerDay(save)); // rc9 LOCKER
+      save = locker(save, decide(save, policy, t, { bootcamp: cfg.bootcamp, onEvent: cfg.onEvent })); // rc9 LOCKER: the store's hook
       track(save, t);
       cfg.onDay?.(save);
       if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;
       if (save.phase !== "running") break;
       const before = save.clock.day;
       const wasMonday = dayOfWeekOf(before + 1) === 1;
-      save = advanceDayFlow(save);
+      save = locker(save, advanceDayFlow(save)); // rc9 LOCKER: the store's hook
       track(save, t);
       if (wasMonday && save.clock.day === before + 1 && save.finances.balance < 0) t.mondaysNegative += 1;
       if (save.clock.day === before && save.phase === "running") {
@@ -1293,7 +1312,7 @@ export function playArcCareer(cfg: {
         save.end.infinite = true;
         save.end.creditsShown = true;
       }
-      save = rolloverToNextSeason(save);
+      save = locker(save, rolloverToNextSeason(save)); // rc9 LOCKER: the store's hook
     }
   }
   out.ms = Date.now() - t0;
