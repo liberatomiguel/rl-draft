@@ -116,7 +116,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
         {/* Numbers column: one board, three parts divided by hairlines. */}
         <div className="space-y-4 max-sm:contents">
           <Panel strong className="divide-y divide-line max-sm:order-2">
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-6 gap-y-4 p-4 sm:gap-x-10 sm:p-5">
+            <div className={`grid ${run.showOverall ? "grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)]" : "grid-cols-[auto_minmax(0,1fr)]"} items-center gap-x-6 gap-y-4 p-4 sm:gap-x-10 sm:p-5`}>
               <div>
                 <p className="display text-6xl font-bold leading-[0.9] text-ink sm:text-7xl">
                   {run.showOverall ? displayTeamOverall(team.rating) : "??"}

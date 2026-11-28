@@ -153,7 +153,7 @@ export const HOME = {
 export const HOME_SEO = {
   heading: "A free RLCS draft game built from Rocket League esports history",
   intro:
-    "Rocket Draft is a free, fan-made RLCS draft game: part roster builder, part Rocket League esports history quiz, part tournament simulator. Draft a team from real RLCS lineups spanning 2016 to today, build chemistry, collect special cards from legendary moments, and run an RLCS-style bracket to a championship.",
+    "Rocket Draft is a free, fan-made RLCS draft game. Draft a team from real RLCS lineups from 2016 to today, build chemistry, collect special cards and play an RLCS-style bracket to the title.",
   sections: [
     {
       id: "how-it-works",
@@ -168,7 +168,7 @@ export const HOME_SEO = {
     {
       id: "special-cards",
       title: "Special cards from RLCS history",
-      body: "Beyond the base roster cards, Rocket Draft hides dozens of special cards tied to unforgettable Rocket League esports moments: Worlds and Major MVP runs, legendary players and iconic plays. Draft one, finish the run win or lose, and it is unlocked in your collection forever. The chase is part of the draft: a single special can swing a series.",
+      body: "Besides the base roster cards, dozens of special cards are tied to moments from RLCS history, such as Worlds and Major MVP runs. Draft one, finish the run win or lose, and it is added to your collection. A single special can swing a series.",
     },
     {
       id: "regions",
@@ -178,7 +178,7 @@ export const HOME_SEO = {
     {
       id: "ratings",
       title: "Transparent, hand-reviewed player ratings",
-      body: "Every overall is reviewed by hand, not scraped from a single stat line. Individual performance, results and historical context all feed the number, and special cards can climb above their base versions. We publish the methodology so the ratings stay honest and the community can push back on them.",
+      body: "Every overall is reviewed by hand, not scraped from one stat line. Individual performance, results and historical context feed the number, and special cards can rate above their base versions. The method is published.",
     },
     // v2.0 (WEB-01): shown only by a build that ships Road to Worlds (HomeSeoContent).
     {
@@ -496,7 +496,6 @@ export const TOURNAMENT_UI = {
   finals: "Finals",
   tbd: "TBD",
   toResults: "View results",
-  reviewHint: "Click any finished series to review it.",
   game: (n: number) => `Game ${n}`,
   overtime: "OT",
   matchPoint: "Match point",
@@ -598,11 +597,6 @@ export const RESULTS_UI = {
   share: "Share run",
   shareTitle: "Share your run",
   shareNative: "Share",
-  shareX: "Share on X",
-  shareDownload: "Download",
-  shareMsgChampion: "I'm a Rocket Draft champion 🏆. Build your own RLCS dream team at",
-  shareMsgPlacement: (placement: string) =>
-    `I made ${placement} on Rocket Draft. Build your own RLCS dream team at`,
   immaculateBadge: "Flawless run",
   legacyChampionBadge: "Legacy Champion",
   ceremonyKicker: "New card unlocked",
@@ -633,7 +627,6 @@ export const RESULTS_UI = {
   shareModeQuick: "Quick Draft",
   shareModeClassic: "Classic Draft",
   shareHiddenOvr: "Hidden OVR",
-  shareRoles: { coach: "Coach", sub: "Sub", org: "Org" } as Record<string, string>,
 };
 
 export const COLLECTION_UI = {
@@ -661,7 +654,7 @@ export const COLLECTION_UI = {
 
 export const SETTINGS_UI = {
   title: "Settings",
-  subtitle: "Tune the feel of the game. Saved on this device.",
+  subtitle: "Saved on this device.",
   soundSection: "Sound",
   soundEnabled: "Sound effects",
   soundEnabledHint: "Subtle cues on drafts, reveals and results.",
@@ -768,7 +761,6 @@ export const PROFILE_UI = {
 };
 
 export const ACH_UI = {
-  kicker: "Feats to chase across every run",
   title: "Achievements",
   unlocked: "Achievement unlocked",
   secretTitle: "???",
@@ -790,30 +782,30 @@ export const ACH_UI = {
    * their words live HERE only (the career screens and toasts read them too).
    */
   careerGroup: "Road to Worlds",
-  careerHint: "Earned in career mode, kept across every save and every Season reset.",
+  careerHint: "Kept across every save and Season reset",
   careerItems: {
-    "car-first-sponsor": { name: "Open for Business", desc: "Sign your first sponsor." },
-    "car-bank-cleared": { name: "Good Credit", desc: "Repay a bank loan in full." },
-    "car-first-qualifier": { name: "Through the Door", desc: "Get through a Saturday qualifier into Sunday's regional." },
-    "car-rep-50": { name: "A Name in the Scene", desc: "Reach 50 reputation." },
-    "car-three-seasons": { name: "Road Warrior", desc: "Reach your fourth season with one org." },
-    "car-major-qualified": { name: "International", desc: "Qualify for a Major." },
-    "car-first-regional": { name: "Regional Champion", desc: "Win a regional." },
-    "car-worlds-qualified": { name: "On the Big Stage", desc: "Qualify for the World Championship." },
-    "car-rep-100": { name: "Household Name", desc: "Reach 100 reputation." },
-    "car-first-major": { name: "Major Winner", desc: "Win an international Major." },
-    "car-first-worlds": { name: "World Champion", desc: "Win the World Championship." },
-    "car-worlds-underdog": { name: "Underdog", desc: "Win a regional, Major or Worlds as the underdog: a team overall 3+ below the field's average." },
-    "car-worlds-homegrown": { name: "Homegrown", desc: "Win Worlds with the roster you founded the org with: no signings, ever." },
-    "car-three-worlds": { name: "Dynasty", desc: "Win three World Championships with one org." },
-    "car-all-difficulties": { name: "Every Road", desc: "Win Worlds on Easy, Normal and Hard (across saves)." },
-    "car-seven-seasons": { name: "The Long Haul", desc: "Reach your seventh season with one org." },
-    "car-worlds-regular": { name: "Worlds Regular", desc: "Qualify for the World Championship three times with one org." },
-    "car-five-regionals": { name: "Regional Powerhouse", desc: "Win five regionals with one org." },
-    "car-three-majors": { name: "Major Collection", desc: "Win three international Majors with one org." },
-    "car-two-worlds": { name: "Back for More", desc: "Win a second World Championship with one org." },
-    "car-worlds-unchanged": { name: "Same Three", desc: "Win Worlds with the three starters you opened the season with, never changed." },
-    "car-perfect-season": { name: "Perfect Season", desc: "Win every main regional of a season, then the World Championship." },
+    "car-first-sponsor": { name: "Open for Business", desc: "Sign your first sponsor" },
+    "car-bank-cleared": { name: "Good Credit", desc: "Repay a bank loan in full" },
+    "car-first-qualifier": { name: "Through the Door", desc: "Get through a Saturday qualifier into Sunday's regional" },
+    "car-rep-50": { name: "A Name in the Scene", desc: "Reach 50 reputation" },
+    "car-three-seasons": { name: "Road Warrior", desc: "Reach your fourth season with one org" },
+    "car-major-qualified": { name: "International", desc: "Qualify for a Major" },
+    "car-first-regional": { name: "Regional Champion", desc: "Win a regional" },
+    "car-worlds-qualified": { name: "On the Big Stage", desc: "Qualify for the World Championship" },
+    "car-rep-100": { name: "Household Name", desc: "Reach 100 reputation" },
+    "car-first-major": { name: "Major Winner", desc: "Win an international Major" },
+    "car-first-worlds": { name: "World Champion", desc: "Win the World Championship" },
+    "car-worlds-underdog": { name: "Underdog", desc: "Win a regional, Major or Worlds rated below the field" },
+    "car-worlds-homegrown": { name: "Homegrown", desc: "Win Worlds with the roster you founded the org with: no signings, ever" },
+    "car-three-worlds": { name: "Dynasty", desc: "Win three World Championships with one org" },
+    "car-all-difficulties": { name: "Every Road", desc: "Win Worlds on Easy, Normal and Hard (across saves)" },
+    "car-seven-seasons": { name: "The Long Haul", desc: "Reach your seventh season with one org" },
+    "car-worlds-regular": { name: "Worlds Regular", desc: "Qualify for the World Championship three times with one org" },
+    "car-five-regionals": { name: "Regional Powerhouse", desc: "Win five regionals with one org" },
+    "car-three-majors": { name: "Major Collection", desc: "Win three international Majors with one org" },
+    "car-two-worlds": { name: "Back for More", desc: "Win a second World Championship with one org" },
+    "car-worlds-unchanged": { name: "Same Three", desc: "Win Worlds with the three starters you opened the season with, never changed" },
+    "car-perfect-season": { name: "Perfect Season", desc: "Win every main regional of a season, then the World Championship" },
   } as Record<string, { name: string; desc: string }>,
   careerTier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
   careerEarned: "Earned",
@@ -1509,7 +1501,7 @@ export const COSMETICS = {
   // rc.5: badge slots
   slotHintIdle: "Tap a badge to add or remove it",
   slotHintSelected: "Tap another slot to swap, or the bin to remove",
-  slotHintPending: "All three slots are full. Tap the one to replace.",
+  slotHintPending: "Slots full. Tap the one to replace",
   pickSlot: "Pick a slot",
   swapHere: "Swap",
   moveHere: "Move here",
@@ -1538,7 +1530,7 @@ export const COSMETICS = {
     tooltip: "Verified account",
     kicker: "Your account is verified",
     name: "Verified",
-    desc: "The blue seal now sits next to your name on your profile and on every leaderboard.",
+    desc: "The blue seal sits next to your name on your profile and the boards.",
     how: "Granted by the Rocket Draft team",
     permanent: "Part of your account: it is always shown and cannot be removed.",
   },
@@ -2223,9 +2215,6 @@ export const SHARE_UI = {
   download: "Download",
   downloaded: "Image saved.",
   imageCopied: "Image copied. Paste it into Discord or a chat.",
-  figChemistry: "Chemistry",
-  figSwiss: "Swiss",
-  figPlayoffWins: "Playoff wins",
   copyImageFailed: "This browser won't copy images. Use Download.",
   textCopied: "Text and link copied.",
   copyFailed: "The copy didn't go through. Select the text below.",
@@ -2234,6 +2223,9 @@ export const SHARE_UI = {
   roadPlayoffs: "Playoffs",
   // rc9 SHARE: the image says one thing first (the placement), the team second.
   figTeamOvr: "Team OVR",
+  figChemistry: "Chemistry",
+  figSwiss: "Swiss",
+  figPlayoffWins: "Playoff wins",
   dailyTag: (n: number) => `Daily #${n}`,
   headlineUndefeated: "Undefeated.",
   headlineChampion: (record: string) => `${record} in the Swiss, then won the playoffs.`,

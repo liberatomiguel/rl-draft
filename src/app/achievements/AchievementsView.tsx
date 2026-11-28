@@ -23,7 +23,6 @@ export function AchievementsView() {
     <div className="rise-in">
       <BackToMenu />
       <SectionTitle
-        kicker={ACH_UI.kicker}
         title={ACH_UI.title}
         right={
           <p className="display text-3xl font-bold leading-none text-ink">

@@ -12,6 +12,18 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## rc.9 (unreleased)
 
+### Changed — ORG-UI (the established org's screens; DESIGN-DECISIONS #270 to #278)
+- Pick an org: no grouping by tier; the region's orgs are one grid of cards (mark, name, problem, size, squad level) and a card opens the org's file in a modal with the action (Escape closes, focus returns to the card).
+- Finances for an established org: the board's budget leads as the large figure, the cash beside it, and one bar splits the season's money into still to pay, kept by the mandate and free to spend; three blocks (income to come, still to pay, wage bill) each led by a figure. The season budget card and the three-figure strip under it are gone from that path.
+- Operations: facility and department cards in the org catalogue's terms (levels as steps, effect, price, upkeep, board sign-off); no founded item name in an established save.
+- Board page: confidence first, then the mandate's progress, then the board's brief; the standing is a word (tier, drift, what it means), never a number.
+- Copy: dead keys removed in EN and PT for board, finances, orgmode and takeover; sponsor lines no longer print a brand's tier number.
+
+### Fixed — ORG-UI
+- The career nav wrapped "Careers" to a second row at 1280 once the Board tab was added. Root cause: tab padding grew at `xl` (1280) and the eleven tabs no longer fit; padding now grows at `2xl`.
+- The org file kept the previous org's logo when the next org had no art. Root cause: the `<img>` was reused across orgs and its failed-source list was not reset; the logo is now keyed by org.
+- Finances' ledger printed a sponsor's id ("gridlock") and founded ids. Root cause: `refName` was printed raw; it is now resolved to the brand or the catalogue name.
+
 ### Changed — DS front (type, spacing, chrome, Squad; DESIGN-DECISIONS #209 to #219)
 - The type ladder is one step lighter everywhere: Bold only for a screen's title and a block's key figure, Demi for section and card titles and buttons, Medium for nav, tags and labels. Caps track wider as they get smaller (0.05em to 0.08em), card titles and names are mixed case, body text is 15px / 1.55 on desktop (14px on a phone), secondary 13px. The ladder lives in CSS variables (`globals.css`), so the display face can be swapped.
 - Spacing scale (4 to 48) as tokens; standard boards get 24px of padding on desktop.
@@ -24,6 +36,19 @@ with the root cause — that section doubles as the project's bugfix log.
 - The news toast's blue band stopped short of the close button. Root cause: the X's 48px of room was reserved as padding on the whole toast, so the band inside it ended 48px early; the band now spans the card and reserves the X's room itself.
 - Toast titles and bodies were never clamped. Root cause: a `block` class beside `line-clamp-*` overrode the `-webkit-box` display the clamp needs.
 - Tracking utilities on display text never applied. Root cause: the unlayered `.display` rule set 0.02em and beat every layered `tracking-*` utility; tracking is now set by role.
+
+### HQ front (HQ, Calendar, Standings, Season review, tour; DESIGN-DECISIONS #240 to #247)
+
+**Changed**
+- HQ: the season plan is three cards (reach bars, the goal, the bonus as the large figure, budget and confidence), the board's proposal tagged and preselected. The season-goal board is not drawn while the plan or mandate waits. Season player stats on HQ with an empty state. The squad block's bootcamp blurb is cut.
+- Calendar: opens on the next stop with its action; event days as tier hairlines and icons, not orange fills; the stops after it as rows; season progress as one row per split.
+- Standings: the user's row is Demi between stronger hairlines (no fill, no "You" tag); form chips in one tint; a table of rows on a phone; the hero's org name in mixed case.
+- Season review: rebuilt in order of importance (outcome, grade and the season's figures, each event as a card with titles in gold, the goal, what changes next, the detail, the action). Balance and reputation are no longer printed twice.
+- The tour lists the Board tab for a save that has one.
+- Copy: `ceremonies` (champions line in sentence case, labels for the new figures), `sunday` (one briefing hint), `standings`, `calendar` and `hub` dead keys out. Words: hub 797 to 411, sunday 270 to 130, tour 516 to 445, calendar 101 to 84, standings 36 to 20, ceremonies 139 to 103 (rc9/int to now).
+
+**Fixed**
+- `SquadBlock` read `C.training.auto` / `balanced`, which the training copy pass removed (type error). Root cause: the HQ squad block built the focus label itself; it now uses the Training screen's `playerFocusLabel`.
 
 ### CLUB-NEWS front (inbox, newsroom, Club, saves, wizard, follow; DESIGN-DECISIONS #263 to #269)
 
@@ -93,6 +118,22 @@ with the root cause — that section doubles as the project's bugfix log.
 #### Fixed
 - The share sheet's copy-failed notice pointed to "the text above"; the text sits below it.
 - A founded club's crest monogram drew in a system serif on the career share image. Root cause: the crest is an SVG drawn as an image, a separate document that sees neither the page's fonts nor `var(--font-rajdhani)`; `svgElementToImage` now resolves each text's face on the live element, waits for it (Rajdhani is not preloaded) and embeds it in the SVG, with a sans fallback.
+
+### DRAFT-UI front (Home, Play, Review, Results, Challenges, Collection, Profile; DESIGN-DECISIONS #280 to #287)
+
+**Added**
+- Review and Results show the team overall large with its parts beside it: the players' average as a bar out of 99, every adjustment as a small bar from a centre line (green gain, red cost) with its signed figure in a chip, and one sentence for the top-end curve (#280).
+- Results: the series that ended the run shows both teams' marks around the score, then the game-by-game strip, the rival's overall and what it played at (#281).
+
+**Changed**
+- The reset modal in a challenge or the Daily says the same one restarts (EN and PT) (#283).
+- Names on Results are mixed case; the phone gets a full-row Worldwide key, stacked collection tabs, a type-only label on locked cards, a Draft Lab tag that fits and a roomier bottom nav under 360 px (#284, #285).
+- Copy passes (words before at `rc9/int` and now, EN / PT) HOME 646 / 687 to 357 / 385, SETUP 160 / 173 to 123 / 137, ONBOARDING 350 / 364 to 203 / 206, TUTORIAL 132 / 149 to 90 / 102, HOWTO 270 / 299 to 233 / 241, RESULTS_UI 292 / 318 to 211 / 238, COLLECTION_UI 92 / 98 to 59 / 62, PROFILE_UI 277 / 293 to 192 / 206, NARRATION 175 / 171 to 127 / 125, CHALLENGES_UI 575 / 611 to 518 / 559, LEADERBOARDS_UI 525 / 534 to 449 / 460, MISSIONS_UI 766 / 823 to 439 / 462, HOME_SEO 516 / 567 to 472 / 522, ACH_UI (EN) 285 to 267, COSMETICS 1,615 / 1,614 to 1,559 / 1,560, TOURNAMENT_UI 111 / 115 to 104 / 108, and the smaller groups (#286). Core groups total 8,477 / 9,866 to 6,985 / 8,302.
+
+**Fixed**
+- The eliminator's title was truncated on a phone ("Eliminated by Team Secr..."). Root cause: `truncate` on a title that is the screen's fact; it wraps now.
+- The collection's album tabs truncated both names at 320 px. Root cause: an `inline-flex` pair with a 10px count that could not shrink; the tabs now share the row.
+- "Challenges" and "Collection" overlapped in the bottom nav at 320 px. Root cause: six equal columns of 53 px for labels 55 and 50 px wide.
 
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 

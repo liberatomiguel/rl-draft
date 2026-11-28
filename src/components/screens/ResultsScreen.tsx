@@ -52,6 +52,7 @@ import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 import { DailyOptimalPanel } from "./DailyOptimalPanel";
 import { OverallParts } from "./OverallParts";
+import { TeamLogo } from "@/components/ui/TeamLogo";
 import { runEnd } from "./runEnd";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
@@ -91,6 +92,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const slots = useMemo(() => rosterSlots(run.draft.roster), [run.draft.roster]);
   const playerSlots = slots.slice(0, 3); // player1 · player2 · player3
   const benchSlots = slots.slice(3); // coach · sub · org (null in Quick)
+  // The player's own mark for the series strip: the org picked, else the first player's org.
+  const userOrgId = slots.find((x) => x.slot === "org")?.card?.orgId ?? playerSlots[0]?.card?.orgId;
   const [ceremonyOpen, setCeremonyOpen] = useState(
     () => (run.results?.unlockedSpecialIds.length ?? 0) > 0,
   );
@@ -331,7 +334,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
           same list the Review shows. On a hidden-overall run this is the first
           time the player sees it; the Team Reveal title above carries the tag. */}
       <Panel strong className="mb-6 p-4 sm:mb-10 sm:p-6">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-6 gap-y-3 sm:gap-x-10">
+        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-10">
           <div>
             <p className="display text-6xl font-bold leading-[0.9] text-ink sm:text-7xl">
               {displayTeamOverall(team.rating)}
@@ -480,7 +483,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {run.daily ? <DailyOptimalPanel run={run} /> : null}
 
       {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
-      {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} tournament={run.tournament} /> : null}
+      {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} tournament={run.tournament} userOrgId={userOrgId} userName={team?.name} /> : null}
 
       {/* Friend duel (v2.1): the same settings as a duel, to send to a friend. */}
       <DuelInvite run={run} />
@@ -838,7 +841,17 @@ function LegacyEmblem() {
  * cards, muted panel) so it informs without competing with the placement hero.
  * Renders nothing when `results.eliminatedBy` is null (champion / flag off).
  */
-function EliminatorReveal({ eliminator, tournament }: { eliminator: EliminatorTeam; tournament: RunState["tournament"] }) {
+function EliminatorReveal({
+  eliminator,
+  tournament,
+  userOrgId,
+  userName,
+}: {
+  eliminator: EliminatorTeam;
+  tournament: RunState["tournament"];
+  userOrgId?: string;
+  userName?: string;
+}) {
   const { RESULTS_UI: R, TOURNAMENT_UI: T } = useCopy();
   const end = useMemo(() => runEnd(tournament), [tournament]);
   // The overall the draft screens show for this rival, and what it played at.
@@ -881,6 +894,22 @@ function EliminatorReveal({ eliminator, tournament }: { eliminator: EliminatorTe
           {playedAt != null && playedAt !== shownOverall ? (
             <p className="text-xs text-faint">{R.playedAt(playedAt)}</p>
           ) : null}
+        </div>
+      </div>
+      {/* The series at a glance: the two marks around the score (rc9 DRAFT-UI #281). */}
+      <div className="mb-4 flex items-center justify-center gap-4 rounded-xl border border-line bg-white/[0.03] px-3 py-3 sm:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center">
+          {userOrgId ? <TeamLogo orgId={userOrgId} size="md" /> : null}
+          <span className="line-clamp-2 max-w-full break-words text-xs text-sub">{userName ?? T.yourTeam}</span>
+        </div>
+        <p className="display shrink-0 text-3xl font-bold leading-none tabular-nums text-ink sm:text-4xl">
+          <span className="text-bad">{eliminator.score[0]}</span>
+          <span className="px-1.5 text-faint">–</span>
+          <span>{eliminator.score[1]}</span>
+        </p>
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center">
+          <TeamLogo orgId={lineup.orgId} seasonId={lineup.seasonId} size="md" />
+          <span className="line-clamp-2 max-w-full break-words text-xs text-sub">{eliminator.name}</span>
         </div>
       </div>
       {end && end.games.length > 0 ? (

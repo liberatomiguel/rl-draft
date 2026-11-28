@@ -140,7 +140,7 @@ export const PT: Copy = {
   HOME_SEO: {
     heading: "Um jogo de draft da RLCS, gratuito e feito da história do Rocket League esports",
     intro:
-      "Rocket Draft é um jogo de draft da RLCS gratuito e fan-made: parte roster builder, parte quiz de história do Rocket League esports, parte simulador de torneio. Drafte um time com lineups reais da RLCS de 2016 até hoje, construa chemistry, colecione cartas especiais de momentos lendários e percorra uma chave no estilo RLCS até o título.",
+      "Rocket Draft é um jogo de draft da RLCS gratuito e fan-made. Drafte um time com lineups reais da RLCS de 2016 até hoje, construa chemistry, colecione cartas especiais e jogue uma chave no estilo RLCS até o título.",
     sections: [
       {
         id: "how-it-works",
@@ -155,7 +155,7 @@ export const PT: Copy = {
       {
         id: "special-cards",
         title: "Cartas especiais da história da RLCS",
-        body: "Além das cartas base do elenco, o Rocket Draft esconde dezenas de cartas especiais ligadas a momentos inesquecíveis do Rocket League esports: MVPs de Worlds e Majors, jogadores lendários e jogadas icônicas. Drafte uma, termine a run vencendo ou perdendo, e ela fica desbloqueada na sua coleção para sempre. A caçada faz parte do draft: uma única especial pode virar uma série.",
+        body: "Além das cartas base do elenco, dezenas de cartas especiais estão ligadas a momentos da história da RLCS, como MVPs de Worlds e Majors. Drafte uma, termine a run vencendo ou perdendo, e ela entra na sua coleção. Uma única especial pode virar uma série.",
       },
       {
         id: "regions",
@@ -165,7 +165,7 @@ export const PT: Copy = {
       {
         id: "ratings",
         title: "Ratings revisados à mão e transparentes",
-        body: "Cada overall é revisado à mão, não tirado de uma única linha de estatística. Desempenho individual, resultados e contexto histórico entram na conta, e cartas especiais podem subir acima das versões base. A gente publica a metodologia para os ratings ficarem honestos e a comunidade poder contestar.",
+        body: "Cada overall é revisado à mão, não tirado de uma única linha de estatística. Desempenho individual, resultados e contexto histórico entram na conta, e cartas especiais podem ter overall acima das versões base. O método é publicado.",
       },
       {
         id: "career",
@@ -710,7 +710,6 @@ export const PT: Copy = {
     finals: "Finais",
     tbd: "A definir",
     toResults: "Ver resultados",
-    reviewHint: "Clique em qualquer série finalizada para revê-la.",
     game: (n: number) => `Jogo ${n}`,
     overtime: "OT",
     matchPoint: "Match point",
@@ -807,11 +806,6 @@ export const PT: Copy = {
     share: "Compartilhar run",
     shareTitle: "Compartilhe sua run",
     shareNative: "Compartilhar",
-    shareX: "Compartilhar no X",
-    shareDownload: "Baixar",
-    shareMsgChampion: "Fui campeão no Rocket Draft 🏆. Monte seu time dos sonhos da RLCS em",
-    shareMsgPlacement: (placement: string) =>
-      `Peguei ${placement} no Rocket Draft. Monte seu time dos sonhos da RLCS em`,
     immaculateBadge: "Run impecável",
     legacyChampionBadge: "Campeão Legacy",
     ceremonyKicker: "Nova carta desbloqueada",
@@ -841,7 +835,6 @@ export const PT: Copy = {
     shareModeQuick: "Draft Rápido",
     shareModeClassic: "Draft Clássico",
     shareHiddenOvr: "OVR oculto",
-    shareRoles: { coach: "Técnico", sub: "Reserva", org: "Org" } as Record<string, string>,
   },
 
   COLLECTION_UI: {
@@ -867,7 +860,7 @@ export const PT: Copy = {
 
   SETTINGS_UI: {
     title: "Configurações",
-    subtitle: "Ajuste a sensação do jogo. Salvo neste dispositivo.",
+    subtitle: "Salvo neste dispositivo.",
     soundSection: "Som",
     soundEnabled: "Efeitos sonoros",
     soundEnabledHint: "Sons sutis em drafts, revelações e resultados.",
@@ -974,7 +967,6 @@ export const PT: Copy = {
   },
 
   ACH_UI: {
-    kicker: "Feitos para perseguir em cada run",
     title: "Conquistas",
     unlocked: "Conquista desbloqueada",
     secretTitle: "???",
@@ -991,30 +983,30 @@ export const PT: Copy = {
     modes: { all: "Todas", draft: "Draft", career: "Road to Worlds" } as Record<string, string>,
     modesLabel: "Mostrar conquistas de",
     careerGroup: "Road to Worlds",
-    careerHint: "Conquistadas no modo carreira, mantidas em todos os saves e em todo reset de Season.",
+    careerHint: "Mantidas em todos os saves e resets de Season",
     careerItems: {
-      "car-first-sponsor": { name: "Aberta para Negócios", desc: "Assine seu primeiro patrocínio." },
-      "car-bank-cleared": { name: "Bom Pagador", desc: "Quite um empréstimo bancário por completo." },
-      "car-first-qualifier": { name: "Pela Porta da Frente", desc: "Passe por uma qualificatória de sábado até o regional de domingo." },
-      "car-rep-50": { name: "Um Nome na Cena", desc: "Alcance 50 de reputação." },
-      "car-three-seasons": { name: "Road Warrior", desc: "Chegue à quarta temporada com uma mesma org." },
-      "car-major-qualified": { name: "Internacional", desc: "Classifique-se para um Major." },
-      "car-first-regional": { name: "Campeão Regional", desc: "Vença um regional." },
-      "car-worlds-qualified": { name: "No Grande Palco", desc: "Classifique-se para o Campeonato Mundial." },
-      "car-rep-100": { name: "Nome Conhecido", desc: "Alcance 100 de reputação." },
-      "car-first-major": { name: "Vencedor de Major", desc: "Vença um Major internacional." },
-      "car-first-worlds": { name: "Campeão Mundial", desc: "Vença o Campeonato Mundial." },
-      "car-worlds-underdog": { name: "Underdog", desc: "Vença um regional, Major ou Mundial como azarão: overall do time 3+ abaixo da média do campo." },
-      "car-worlds-homegrown": { name: "Prata da Casa", desc: "Vença o Mundial com o elenco que fundou a org: sem contratações, nunca." },
-      "car-three-worlds": { name: "Dinastia", desc: "Vença três Mundiais com uma mesma org." },
-      "car-all-difficulties": { name: "Todos os Caminhos", desc: "Vença o Mundial no Fácil, Normal e Difícil (entre saves)." },
-      "car-seven-seasons": { name: "Longa Estrada", desc: "Chegue à sétima temporada com uma mesma org." },
-      "car-worlds-regular": { name: "Presença no Mundial", desc: "Classifique-se para o Campeonato Mundial três vezes com uma mesma org." },
-      "car-five-regionals": { name: "Potência Regional", desc: "Vença cinco regionais com uma mesma org." },
-      "car-three-majors": { name: "Coleção de Majors", desc: "Vença três Majors internacionais com uma mesma org." },
-      "car-two-worlds": { name: "De Volta ao Topo", desc: "Vença um segundo Campeonato Mundial com uma mesma org." },
-      "car-worlds-unchanged": { name: "Os Mesmos Três", desc: "Vença o Mundial com os três titulares que abriram a temporada, sem nenhuma troca." },
-      "car-perfect-season": { name: "Temporada Perfeita", desc: "Vença todos os regionais principais de uma temporada e depois o Campeonato Mundial." },
+      "car-first-sponsor": { name: "Aberta para Negócios", desc: "Assine seu primeiro patrocínio" },
+      "car-bank-cleared": { name: "Bom Pagador", desc: "Quite um empréstimo bancário por completo" },
+      "car-first-qualifier": { name: "Pela Porta da Frente", desc: "Passe por uma qualificatória de sábado até o regional de domingo" },
+      "car-rep-50": { name: "Um Nome na Cena", desc: "Alcance 50 de reputação" },
+      "car-three-seasons": { name: "Road Warrior", desc: "Chegue à quarta temporada com uma mesma org" },
+      "car-major-qualified": { name: "Internacional", desc: "Classifique-se para um Major" },
+      "car-first-regional": { name: "Campeão Regional", desc: "Vença um regional" },
+      "car-worlds-qualified": { name: "No Grande Palco", desc: "Classifique-se para o Campeonato Mundial" },
+      "car-rep-100": { name: "Nome Conhecido", desc: "Alcance 100 de reputação" },
+      "car-first-major": { name: "Vencedor de Major", desc: "Vença um Major internacional" },
+      "car-first-worlds": { name: "Campeão Mundial", desc: "Vença o Campeonato Mundial" },
+      "car-worlds-underdog": { name: "Underdog", desc: "Vença um regional, Major ou Mundial com overall abaixo do campo" },
+      "car-worlds-homegrown": { name: "Prata da Casa", desc: "Vença o Mundial com o elenco que fundou a org: sem contratações, nunca" },
+      "car-three-worlds": { name: "Dinastia", desc: "Vença três Mundiais com uma mesma org" },
+      "car-all-difficulties": { name: "Todos os Caminhos", desc: "Vença o Mundial no Fácil, Normal e Difícil (entre saves)" },
+      "car-seven-seasons": { name: "Longa Estrada", desc: "Chegue à sétima temporada com uma mesma org" },
+      "car-worlds-regular": { name: "Presença no Mundial", desc: "Classifique-se para o Campeonato Mundial três vezes com uma mesma org" },
+      "car-five-regionals": { name: "Potência Regional", desc: "Vença cinco regionais com uma mesma org" },
+      "car-three-majors": { name: "Coleção de Majors", desc: "Vença três Majors internacionais com uma mesma org" },
+      "car-two-worlds": { name: "De Volta ao Topo", desc: "Vença um segundo Campeonato Mundial com uma mesma org" },
+      "car-worlds-unchanged": { name: "Os Mesmos Três", desc: "Vença o Mundial com os três titulares que abriram a temporada, sem nenhuma troca" },
+      "car-perfect-season": { name: "Temporada Perfeita", desc: "Vença todos os regionais principais de uma temporada e depois o Campeonato Mundial" },
     } as Record<string, { name: string; desc: string }>,
     careerTier: { common: "Comum", rare: "Rara", epic: "Épica", legend: "Lenda" } as Record<string, string>,
     careerEarned: "Conquistada",
@@ -1169,7 +1161,7 @@ export const PT: Copy = {
     seriesWinClose: [
       "Seu time sobrevive a uma série completa.",
       "Veio na menor das margens.",
-      "Um jogo decisivo, e seu elenco entrega.",
+      "Um jogo decisivo, e seu elenco resolve.",
     ],
     seriesLoss: [
       "Seu time não conseguiu fechar a série.",
@@ -1179,10 +1171,10 @@ export const PT: Copy = {
     seriesLossClose: [
       "Um jogo de diferença.",
       "Um jogo decisivo escapa no fim.",
-      "A centímetros da vitória, e a série vai para o outro lado.",
+      "Faltou muito pouco, e a série ficou com o adversário.",
     ],
     upsetWin: [
-      "O elenco menos cotado encontra a zebra.",
+      "Deu zebra: o time menos cotado venceu.",
       "Seu time derruba o favorito.",
     ],
     upsetLoss: [
@@ -1190,9 +1182,9 @@ export const PT: Copy = {
       "Um time de rating menor leva a série.",
     ],
     overtimeNote: "A prorrogação decidiu.",
-    specialNote: "Um efeito de carta especial ativou.",
+    specialNote: "Um efeito de carta especial entrou em ação.",
     starLine: (name: string) => `${name} liderou o ataque.`,
-    starLineOpponent: (name: string) => `${name} estava em todo lugar pela oposição.`,
+    starLineOpponent: (name: string) => `${name} apareceu em todo canto pelo adversário.`,
   },
 
   STAT_LABELS: {
@@ -1542,7 +1534,7 @@ export const PT: Copy = {
     showcase: "No seu banner",
     slotHintIdle: "Toque numa insígnia para adicioná-la ou removê-la",
     slotHintSelected: "Toque em outro slot para trocar de lugar, ou na lixeira para remover.",
-    slotHintPending: "Os três slots estão cheios. Toque no que vai ser trocado.",
+    slotHintPending: "Slots cheios. Toque no que vai ser trocado",
     pickSlot: "Escolha o slot",
     swapHere: "Trocar",
     moveHere: "Mover aqui",
@@ -1569,7 +1561,7 @@ export const PT: Copy = {
       tooltip: "Conta verificada",
       kicker: "Sua conta foi verificada",
       name: "Verificado",
-      desc: "O selo azul agora aparece ao lado do seu nome no seu perfil e em todos os rankings.",
+      desc: "O selo azul fica ao lado do seu nome no perfil e nos rankings.",
       how: "Concedido pela equipe do Rocket Draft",
       permanent: "Faz parte da sua conta: aparece sempre e não pode ser removido.",
     },
@@ -2221,9 +2213,6 @@ export const PT: Copy = {
     download: "Baixar",
     downloaded: "Imagem salva.",
     imageCopied: "Imagem copiada. Cole no Discord ou numa conversa.",
-    figChemistry: "Química",
-    figSwiss: "Suíço",
-    figPlayoffWins: "Vitórias nos playoffs",
     copyImageFailed: "Este navegador não copia imagens. Use Baixar.",
     textCopied: "Texto e link copiados.",
     copyFailed: "A cópia não funcionou. Selecione o texto abaixo.",
@@ -2232,6 +2221,9 @@ export const PT: Copy = {
     roadPlayoffs: "Playoffs",
     // rc9 SHARE: a imagem diz uma coisa primeiro (a colocação), o time em segundo.
     figTeamOvr: "OVR do time",
+    figChemistry: "Química",
+    figSwiss: "Suíço",
+    figPlayoffWins: "Vitórias nos playoffs",
     dailyTag: (n: number) => `Desafio Diário #${n}`,
     headlineUndefeated: "Invicto.",
     headlineChampion: (record: string) => `${record} no Suíço, depois venceu os playoffs.`,

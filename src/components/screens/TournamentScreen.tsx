@@ -318,7 +318,6 @@ export function TournamentScreen({ run }: { run: RunState }) {
         <Button variant="primary" size="lg" className={phone ? "w-full" : "min-w-64"} onClick={finishRun}>
           {T.toResults}
         </Button>
-        {phone ? null : <span className="text-xs text-faint">{T.reviewHint}</span>}
       </>
     );
 
