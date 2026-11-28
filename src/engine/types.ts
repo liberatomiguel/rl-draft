@@ -11,7 +11,7 @@
  * No React / UI types are allowed here.
  */
 
-import type { DuelLink } from "./duel";
+import type { DuelRules, DuelSideKey } from "./duelRules"; // rc9 duel-ui
 
 // ---------------------------------------------------------------------------
 // 1. Data entities
@@ -812,6 +812,21 @@ export interface DailyObjective {
   bonusXp: number;
 }
 
+// rc9 duel-ui: a duel's draft, as the run keeps it (plain JSON).
+export interface RunDuelMatch {
+  rules: DuelRules;
+  /** Who drafts: the challenger (first) or the friend answering. */
+  role: DuelSideKey;
+  /** The name this side shows (may be empty). */
+  name: string;
+  /** The opponent only: the challenge code being answered. */
+  challenge?: string;
+  /** The duel engine's board index of the current slot (`DuelDraft.boardIndex`). */
+  boardIndex: number;
+  /** Set when the draft is done and the run is on its way to /duel. */
+  done?: string;
+}
+
 /** The whole state of one run. Persisted so a refresh resumes the game. */
 export interface RunState {
   runId: string;
@@ -836,11 +851,18 @@ export interface RunState {
   /** Set on `mode: "challenge"` runs (v1.4) — the puzzle being attempted. */
   challengeId?: string;
   /**
-   * Friend duel (v2.1, `engine/duel.ts`): the link this Classic / Quick run was
-   * started from — its setup and the runs already in it (empty for the first).
-   * An exhibition: the run grants nothing. Absent on every other run.
+   * rc9 duel-ui: the v2.1 friend duel's field (a link setup and runs to beat).
+   * That duel is gone (DESIGN-DECISIONS #294); a stored run that still carries
+   * it is dropped when /play opens. Never written any more.
+   * @deprecated
    */
-  duel?: DuelLink;
+  duel?: unknown;
+  /**
+   * rc9 duel-ui (DESIGN-DECISIONS #294-#295): the team-against-team duel this
+   * draft belongs to. Set only on a duel's draft; the run never reaches a
+   * tournament (the match plays on /duel). An exhibition: it grants nothing.
+   */
+  duelMatch?: RunDuelMatch;
   draft: DraftState;
   /**
    * COL-02a (rc.33): the special cards of the current offer the player did not

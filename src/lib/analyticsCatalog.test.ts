@@ -57,7 +57,7 @@ describe("the catalogue", () => {
         "collection_milestone",
         "content_shared",
         "daily_insight",
-        "friend_duel",
+        "duel_played", // rc9 duel-ui (was friend_duel)
         "mission_completed",
         "onboarding_step",
         "quality_duplicate_reward",
@@ -141,7 +141,7 @@ describe("the catalogue", () => {
         "achievement_unlocked",
         "challenge_played",
         "daily_insight",
-        "friend_duel",
+        "duel_played", // rc9 duel-ui (was friend_duel)
         "mission_completed",
         "quiz_played",
         "run_abandoned",

@@ -25,10 +25,11 @@ const PHASE_IDS: RunPhase[] = ["draft", "review", "tournament", "results"];
 // A challenge is a constrained draft → review → single Bo7 (the "challenge"
 // phase) — no Swiss/playoffs, so its stepper is shorter (v1.4).
 const PHASE_IDS_CHALLENGE: RunPhase[] = ["draft", "review", "challenge"];
+const PHASE_IDS_DUEL: RunPhase[] = ["draft", "review"]; // rc9 duel-ui
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RUN_UI, SETUP, DIFFICULTY_LABELS, DUEL_UI } = useCopy();
+  const { RUN_UI, SETUP, DIFFICULTY_LABELS, DUEL_MATCH_UI } = useCopy();
   const restartRun = useRunStore((s) => s.restartRun);
   const [confirmReset, setConfirmReset] = useState(false);
   const phaseLabel: Record<RunPhase, string> = {
@@ -38,7 +39,8 @@ export function RunStepper({ run }: { run: RunState }) {
     results: RUN_UI.phaseResults,
     challenge: run.challengeId && challengeById.get(run.challengeId)?.kind === "draft" ? RUN_UI.phaseResults : RUN_UI.phaseChallenge,
   };
-  const phaseIds = run.mode === "challenge" ? PHASE_IDS_CHALLENGE : PHASE_IDS;
+  // rc9 duel-ui: a duel's draft is draft and review; the match plays on /duel.
+  const phaseIds = run.duelMatch ? PHASE_IDS_DUEL : run.mode === "challenge" ? PHASE_IDS_CHALLENGE : PHASE_IDS;
   const currentIndex = phaseIds.findIndex((p) => p === run.phase);
 
   return (
@@ -49,7 +51,8 @@ export function RunStepper({ run }: { run: RunState }) {
           size="sm"
           // Just navigate — AppShell resets the run when it sees we left /play
           // (clearing here first would flash the setup screen mid-transition).
-          onClick={() => router.push("/")}
+          // rc9 duel-ui: a duel's draft goes back to /duel, where it can be resumed.
+          onClick={() => router.push(run.duelMatch ? "/duel" : "/")}
           title={SETUP.back}
           aria-label={SETUP.back}
           className="h-11 !min-h-11 w-11 shrink-0 !px-0 sm:h-8 sm:!min-h-8 sm:w-8"
@@ -89,7 +92,10 @@ export function RunStepper({ run }: { run: RunState }) {
       </div>
 
       <div className="flex items-center gap-2">
-        {run.difficulty === "legacy" ? (
+        {run.duelMatch ? (
+          // rc9 duel-ui: a duel has no difficulty; its tag says what the run is.
+          <Badge tone="orange">{DUEL_MATCH_UI.stepperTag}</Badge>
+        ) : run.difficulty === "legacy" ? (
           // "You're in Legacy": the same prismatic emblem as the setup option
           // and the unlock ceremony, on the plain difficulty tag (the emblem
           // carries the colour, the tag stays flat). Shows on every phase.
@@ -101,7 +107,6 @@ export function RunStepper({ run }: { run: RunState }) {
           <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
         )}
         {!run.showOverall ? <Badge tone="neutral">{RUN_UI.hiddenOvr}</Badge> : null}
-        {run.duel ? <Badge tone="orange">{DUEL_UI.stepperTag}</Badge> : null}
         {/* Reset run — deliberate restart (the run is over on results). */}
         {run.phase !== "results" ? (
           <Button

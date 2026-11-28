@@ -29,8 +29,9 @@ import { OverallParts } from "./OverallParts";
 import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
 
 export function ReviewScreen({ run }: { run: RunState }) {
-  const { REVIEW, STAT_LABELS, CHEM_TIERS, CHALLENGES_UI } = useCopy();
+  const { REVIEW, STAT_LABELS, CHEM_TIERS, CHALLENGES_UI, DUEL_MATCH_UI } = useCopy();
   const startTournament = useRunStore((s) => s.startTournament);
+  const finishDuelDraft = useRunStore((s) => s.finishDuelDraft); // rc9 duel-ui
   const isQuick = run.mode === "quick";
 
   const team = useMemo(
@@ -77,10 +78,18 @@ export function ReviewScreen({ run }: { run: RunState }) {
   // Tournament is the screen's one action, on ground (`.action-dock`).
   const start = () => {
     sfx.start();
+    // rc9 duel-ui: a duel's draft ends here; PlayView takes the player to /duel.
+    if (run.duelMatch) {
+      finishDuelDraft();
+      return;
+    }
     startTournament();
   };
-  const startLabel =
-    run.mode === "challenge"
+  const startLabel = run.duelMatch
+    ? run.duelMatch.role === "challenger"
+      ? DUEL_MATCH_UI.lockChallenger
+      : DUEL_MATCH_UI.lockOpponent
+    : run.mode === "challenge"
       ? run.challengeId && challengeById.get(run.challengeId)?.kind === "draft"
         ? CHALLENGES_UI.checkDraft
         : CHALLENGES_UI.toMatch
@@ -126,7 +135,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
               {run.showOverall ? (
                 <OverallParts rating={team.rating} quick={isQuick} />
               ) : (
-                <p className="text-sm leading-relaxed text-sub">{REVIEW.hiddenNote}</p>
+                <p className="text-sm leading-relaxed text-sub">{run.duelMatch ? DUEL_MATCH_UI.overallSecretHint /* rc9 duel-ui */ : REVIEW.hiddenNote}</p>
               )}
             </div>
 

@@ -12,7 +12,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DIFFICULTY, DUEL, REGION_LOCK, regionFieldDepth, regionOpponentBoost, SPECIALS } from "@/config/balance";
+import { DIFFICULTY, DUEL_MATCH, REGION_LOCK, regionFieldDepth, regionOpponentBoost, SPECIALS } from "@/config/balance";
 import {
   challengeById,
   challenges,
@@ -46,7 +46,10 @@ import {
 } from "@/engine/challenges";
 import { createDailyDraft } from "@/engine/dailyOptimal";
 import { liveAchievements, teamAchievements } from "@/engine/achievements";
-import { capEntries, duelEntryFromResults, duelTournamentSeed, duelVerdict, type DuelLink } from "@/engine/duel";
+import { duelPick, duelReroll, duelTeamFromRoster, startDuelDraft } from "@/engine/duelDraft"; // rc9 duel-ui
+import { duelCodePath, encodeDuelCode, makeDuelChallenge, makeDuelReply, parseDuelCode, sanitizeDuelName } from "@/engine/duelLink";
+import type { DuelRules, DuelSideKey } from "@/engine/duelRules";
+import { rememberDuel, trackDuel } from "./duelStore";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
 import { runSeriesFacts } from "@/engine/runSeriesFacts";
@@ -178,11 +181,16 @@ interface RunStore {
   /** Start a challenge run (v1.4) — a constrained draft vs a fixed boss. */
   startChallenge: (challengeId: string) => void;
   /**
-   * Start a friend duel (v2.1, `engine/duel.ts`) from a parsed link — or a new
-   * one, with no entries yet. False when the link's region cannot be drafted
-   * (the run is not touched).
+   * rc9 duel-ui: start a duel's draft on the rules (the challenger's, or the
+   * friend's answer to `challenge`). False when the rules cannot be drafted
+   * here (a region this version lacks, a broken challenge): the run is not touched.
    */
-  startDuel: (link: DuelLink) => boolean;
+  startDuelMatch: (setup: { rules: DuelRules; role: DuelSideKey; name: string; challenge?: string }) => boolean;
+  /**
+   * rc9 duel-ui: the duel's draft is done. Returns the /duel path the player
+   * goes to (the challenge to send, or the match with the reply), or null.
+   */
+  finishDuelDraft: () => string | null;
   clearRun: () => void;
   /** Abandon the current run and immediately start a fresh one with the SAME
    *  mode/difficulty/visibility — drops straight into a new draft. */
@@ -344,44 +352,76 @@ export const useRunStore = create<RunStore>()(
         trackOnboardingStep("draft_started");
       },
 
-      startDuel: (link) => {
-        const { setup } = link;
-        if (setup.region && !REGION_LOCK.regions.includes(setup.region)) return false;
-        const poolLineupIds = setup.region ? lineupPoolForRegion(setup.region) : undefined;
-        if (poolLineupIds && poolLineupIds.length === 0) return false;
-        // The Daily's path: a fixed seed and a pool that reads nothing from the
-        // profile or the date (no rank-gated odds, no event window, no national
-        // teams), so both sides of the link draw the same offers.
-        const rng = createRng(setup.seed);
-        const draft = drawNextOffer(
-          createDraft(setup.difficulty, {
-            mode: setup.mode,
-            poolLineupIds,
-            specialChanceMult: DUEL.specialChanceMult,
-            specialRarities: [...DUEL.specialRarities],
-          }),
-          rng,
-        );
+      // rc9 duel-ui (DESIGN-DECISIONS #294-#295): a duel's draft is a run with
+      // `duelMatch`, so the game's own draft and review screens play it. The
+      // boards come from the duel engine and read nothing from the profile.
+      startDuelMatch: ({ rules, role, name, challenge }) => {
+        if (rules.region && !REGION_LOCK.regions.includes(rules.region)) return false;
+        if (rules.region && lineupPoolForRegion(rules.region).length === 0) return false;
+        if (role === "opponent") {
+          const parsed = parseDuelCode(challenge);
+          if (!parsed.ok || parsed.code.kind !== "challenge") return false;
+        }
+        let d;
+        try {
+          d = startDuelDraft(rules);
+        } catch {
+          return false;
+        }
         const run: RunState = {
           runId: uid("duel"),
-          mode: setup.mode,
-          ...(setup.region ? { regionLock: setup.region } : {}),
-          seed: setup.seed,
-          rngState: rng.state,
-          difficulty: setup.difficulty,
-          showOverall: DIFFICULTY[setup.difficulty].overallLockedHidden ? false : setup.showOverall,
+          mode: rules.mode,
+          ...(rules.region ? { regionLock: rules.region } : {}),
+          seed: rules.seed,
+          rngState: rules.seed,
+          difficulty: DUEL_MATCH.matchDifficulty,
+          showOverall: rules.showOverall,
           phase: "draft",
           startedAt: new Date().toISOString(),
-          xpAtStart: useProfileStore.getState().xp,
-          duel: { setup, entries: capEntries(link.entries) },
-          draft,
-          offerNew: offerNewOf(draft),
+          duelMatch: {
+            rules,
+            role,
+            name: sanitizeDuelName(name),
+            ...(role === "opponent" && challenge ? { challenge } : {}),
+            boardIndex: d.boardIndex,
+          },
+          draft: d.draft,
+          offerNew: offerNewOf(d.draft),
           tournament: null,
           challenge: null,
           results: null,
         };
         set({ run });
         return true;
+      },
+
+      finishDuelDraft: () => {
+        const { run } = get();
+        const dm = run?.duelMatch;
+        if (!run || !dm || run.phase !== "review" || !run.draft.complete) return null;
+        if (dm.done) return dm.done;
+        let path: string;
+        try {
+          const team = duelTeamFromRoster(run.draft.roster, dm.rules.mode);
+          const rerollsUsed = Math.max(0, dm.rules.rerolls - run.draft.rerollsLeft);
+          if (dm.role === "challenger") {
+            const code = makeDuelChallenge(dm.rules, { name: dm.name, team });
+            path = duelCodePath(code);
+            rememberDuel(encodeDuelCode(code), "challenger");
+            trackDuel("created", dm.rules, { rerollsUsed });
+          } else {
+            const parsed = parseDuelCode(dm.challenge);
+            if (!parsed.ok || parsed.code.kind !== "challenge") return null;
+            const reply = makeDuelReply(parsed.code, { name: dm.name, team });
+            path = duelCodePath(reply);
+            rememberDuel(encodeDuelCode(parsed.code), "opponent", encodeDuelCode(reply));
+            trackDuel("answered", dm.rules, { rerollsUsed });
+          }
+        } catch {
+          return null;
+        }
+        set({ run: { ...run, duelMatch: { ...dm, done: path } } });
+        return path;
       },
 
       clearRun: () => {
@@ -392,7 +432,10 @@ export const useRunStore = create<RunStore>()(
         // A challenge that was already played is reported by `challenge_played`:
         // leaving its result screen is not an abandonment (it has no "results" phase).
         const played = !!run?.challenge && (run.challenge.evaluated || !!run.challenge.series);
-        if (run && run.phase !== "results" && !played) {
+        // rc9 duel-ui: a duel's draft reports through `duel_played`, never as an abandoned run.
+        if (run?.duelMatch || run?.duel) {
+          takeRunResets();
+        } else if (run && run.phase !== "results" && !played) {
           trackEvent("run_abandoned", {
             runId: run.runId,
             mode: run.mode,
@@ -421,9 +464,10 @@ export const useRunStore = create<RunStore>()(
         const played = !!run.challenge && (run.challenge.evaluated || !!run.challenge.series);
         if (run.phase !== "results" && !played) noteRunReset();
         else takeRunResets();
-        // A duel replays the same link (same seed, same runs to beat).
-        if (run.duel) {
-          get().startDuel(run.duel);
+        // rc9 duel-ui: a duel's draft starts again on the same rules (the same boards).
+        if (run.duelMatch) {
+          const { rules, role, name, challenge } = run.duelMatch;
+          get().startDuelMatch({ rules, role, name, challenge });
           return;
         }
         // Daily restarts re-roll today's seeded run; everything else re-runs
@@ -449,10 +493,24 @@ export const useRunStore = create<RunStore>()(
       pickCard: (card, slot) => {
         const { run } = get();
         if (!run || run.phase !== "draft") return;
+        // rc9 duel-ui: a duel's boards come from the duel engine (seed, slot, board index).
+        if (run.duelMatch) {
+          const next = duelPick({ rules: run.duelMatch.rules, draft: run.draft, boardIndex: run.duelMatch.boardIndex }, card, slot);
+          set({
+            run: {
+              ...run,
+              draft: next.draft,
+              offerNew: offerNewOf(next.draft),
+              duelMatch: { ...run.duelMatch, boardIndex: next.boardIndex },
+              phase: next.draft.complete ? "review" : "draft",
+            },
+          });
+          return;
+        }
         const rng = createRng(run.rngState);
         const draft = applyPick(run.draft, card, slot, rng);
         // Missions (v2.0): "select a special card" counts at pick time.
-        if (card.specialId && !run.duel) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
+        if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
         const offerNew = offerNewOf(draft);
         discoverNationalOffer(draft);
         set({
@@ -469,6 +527,13 @@ export const useRunStore = create<RunStore>()(
       reroll: () => {
         const { run } = get();
         if (!run || run.phase !== "draft") return;
+        // rc9 duel-ui: the duel engine skips dead boards on its own; a reroll is the next board.
+        if (run.duelMatch) {
+          if (run.draft.rerollsLeft <= 0 || !run.draft.offer) return;
+          const next = duelReroll({ rules: run.duelMatch.rules, draft: run.draft, boardIndex: run.duelMatch.boardIndex });
+          set({ run: { ...run, draft: next.draft, offerNew: offerNewOf(next.draft), duelMatch: { ...run.duelMatch, boardIndex: next.boardIndex } } });
+          return;
+        }
         // rc.29: when nothing in the offer fits, the reroll is the free one — a
         // paid reroll is never spent on a dead offer.
         if (run.draft.offer && !run.draft.offer.hasPickableCard) {
@@ -487,6 +552,7 @@ export const useRunStore = create<RunStore>()(
         const { run } = get();
         if (!run || run.phase !== "draft") return;
         if (run.draft.offer?.hasPickableCard) return;
+        if (run.duelMatch) return; // rc9 duel-ui: the duel engine never shows a dead board
         const rng = createRng(run.rngState);
         const draft = applyFreeReroll(run.draft, rng);
         const offerNew = offerNewOf(draft);
@@ -497,9 +563,9 @@ export const useRunStore = create<RunStore>()(
       startTournament: () => {
         const { run } = get();
         if (!run || run.phase !== "review") return;
-        // A duel's bracket has its own seed: the field does not depend on the
-        // rerolls a side spent, so both sides of the link face the same teams.
-        const rng = createRng(run.duel ? duelTournamentSeed(run.seed) : run.rngState);
+        // rc9 duel-ui: a duel's draft ends on /duel (finishDuelDraft), never in a tournament.
+        if (run.duelMatch || run.duel) return;
+        const rng = createRng(run.rngState);
         const userTeam = buildUserTeam(run.draft.roster, run.difficulty, {
           mode: run.mode,
         });
@@ -536,14 +602,11 @@ export const useRunStore = create<RunStore>()(
 
         // Real-time: team-build achievements (perfect chemistry, all-one-region,
         // loaded-with-specials, etc.) pop the moment the team is locked in (v1.4).
-        // A duel is an exhibition: no achievements.
-        if (!run.duel) {
-          useProfileStore
-            .getState()
-            .awardAchievements(
-              teamAchievements(run.draft.roster, userTeam.chemistry, userTeam.specialIds.length, new Set()),
-            );
-        }
+        useProfileStore
+          .getState()
+          .awardAchievements(
+            teamAchievements(run.draft.roster, userTeam.chemistry, userTeam.specialIds.length, new Set()),
+          );
 
         const tournament = initTournament(userTeam, run.difficulty, rng, {
           mode: run.mode,
@@ -600,7 +663,7 @@ export const useRunStore = create<RunStore>()(
        */
       awardRevealedAchievements: (revealedUserSeries: number) => {
         const t = get().run?.tournament;
-        if (!t || get().run?.duel) return;
+        if (!t || get().run?.duel || get().run?.duelMatch) return;
         useProfileStore
           .getState()
           .awardAchievements(liveAchievements(t, new Set(), revealedUserSeries));
@@ -625,28 +688,11 @@ export const useRunStore = create<RunStore>()(
           rng,
         );
 
-        // A friend duel is an exhibition (DESIGN-DECISIONS #184): the result is
-        // shown and compared, nothing is granted (no XP, rating, cards,
-        // achievements, missions or history), since the seed is known in advance.
-        if (run.duel) {
-          const team = run.tournament.teams["user"];
-          const mine = duelEntryFromResults(results, team ? displayTeamOverall(team.rating) : 0);
-          const verdict = duelVerdict(mine, run.duel.entries);
-          set({ run: { ...run, rngState: rng.state, phase: "results", results: {
-            ...results, unlockedSpecialIds: [], newAchievementIds: [], runMarks: [],
-            xp: { ...results.xp, lines: [], total: 0 },
-          } } });
-          trackEvent("friend_duel", {
-            action: "completed",
-            mode: run.mode,
-            difficulty: run.difficulty,
-            region: regionLabelOf(run),
-            entries: run.duel.entries.length,
-            placement: results.placement,
-            beat: verdict.beat,
-            lost: verdict.lost,
-            resets: takeRunResets(),
-          });
+        // rc9 duel-ui: a duel is an exhibition (DESIGN-DECISIONS #184, kept) and
+        // never plays a tournament; a stored run of the old duel that got here
+        // anyway is dropped, so nothing is granted.
+        if (run.duel || run.duelMatch) {
+          set({ run: null });
           return;
         }
 

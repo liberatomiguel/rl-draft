@@ -103,7 +103,7 @@ export interface RunShareInput {
 export interface RunShareBundle {
   image: RunImageData;
   text: string;
-  campaign: "run" | "daily" | "duel";
+  campaign: "run" | "daily"; // rc9 duel-ui: the duel shares from /duel
   fileName: string;
 }
 
@@ -130,7 +130,6 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
   // rc9 SHARE (#258): the meta is the mode and the difficulty.
   const meta = [
     input.dailyNumber ? S.dailyTag(input.dailyNumber) : input.modeLabel,
-    run.duel ? copy.DUEL_UI.stepperTag : null,
     input.difficultyLabel,
     run.showOverall ? null : copy.RESULTS_UI.shareHiddenOvr,
   ]
@@ -161,10 +160,7 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
 
   let text: string;
   let campaign: RunShareBundle["campaign"];
-  if (run.duel) {
-    text = S.textDuel(input.placementLabel);
-    campaign = "duel";
-  } else if (input.dailyNumber) {
+  if (input.dailyNumber) {
     text = S.textDaily(input.dailyNumber, input.placementLabel, roadGrid(road));
     campaign = "daily";
   } else {

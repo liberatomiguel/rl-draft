@@ -200,26 +200,27 @@ export const EVENT_CATALOG = {
     computeMs: "number?",
   }),
   /**
-   * Friend duel (v2.1, `engine/duel.ts`), one event name for the whole loop:
-   * `action` = opened (a valid link landed on /duel), invalid (a broken or
-   * edited link fell back to a normal draft; `reason`), completed (a duel run
-   * reached its results; `beat` / `lost` = earlier runs in the link it beat or
-   * lost to) or shared (the link went out; `method` native | copy).
-   * `entries` = runs already in the link. Never the seed or the link itself.
+   * rc9 duel-ui (`store/duelStore.ts`, DESIGN-DECISIONS #297): the
+   * team-against-team duel, one event name for the whole loop. `action` =
+   * created (the challenger finished the draft), answered (the friend finished
+   * theirs), finished (a series was watched to its end; `viewer`, `winner`,
+   * `games`), rematch (New match was pressed; `viewer` = who asked) or invalid
+   * (a link that does not open; `reason`). The rules ride along: `mode`,
+   * `region`, `rerolls`, `showOverall`. Never the seed, the names or the link.
+   * Replaces the v2.1 `friend_duel`.
    */
-  friend_duel: spec("draft", "standard", {
+  duel_played: spec("draft", "standard", {
     action: "string",
-    entries: "number",
     mode: "string?",
-    difficulty: "string?",
     region: "string?",
-    placement: "string?",
-    beat: "number?",
-    lost: "number?",
-    resets: "number?",
-    method: "string?",
+    rerolls: "number?",
+    showOverall: "boolean?",
+    rerollsUsed: "number?",
+    games: "number?",
+    winner: "string?",
+    viewer: "string?",
     reason: "string?",
-    /** The link was made on another BALANCE_VERSION (the offers may differ). */
+    /** The link was made on another BALANCE_VERSION (the boards or the result may differ). */
     staleVersion: "boolean?",
   }),
   /**

@@ -7,6 +7,7 @@
  * The active run is persisted, so reloading resumes in place.
  */
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useMounted } from "@/store/useMounted";
 import { useOverlayHold } from "@/store/overlayHoldStore";
@@ -17,8 +18,6 @@ import { ReviewScreen } from "@/components/screens/ReviewScreen";
 import { TournamentScreen } from "@/components/screens/TournamentScreen";
 import { ResultsScreen } from "@/components/screens/ResultsScreen";
 import { ChallengeScreen } from "@/components/screens/ChallengeScreen";
-import { DuelLinkNotice } from "@/components/duel/DuelLinkNotice";
-import { useDuelNotice } from "@/store/duelStore";
 
 export function PlayView() {
   const mounted = useMounted();
@@ -53,21 +52,18 @@ export function PlayView() {
     };
   }, [immersive]);
 
-  // A refused duel link's notice (v2.1) belongs to the setup it landed on.
-  const hasRun = !!run;
+  // rc9 duel-ui: a finished duel draft goes on to /duel (the challenge or the
+  // match); a stored run of the v2.1 duel (gone) is dropped, it grants nothing.
+  const router = useRouter();
+  const duelDone = run?.duelMatch?.done ?? null;
+  const legacyDuel = Boolean(run?.duel);
   useEffect(() => {
-    if (hasRun) useDuelNotice.getState().setNotice(null);
-  }, [hasRun]);
+    if (duelDone) router.replace(duelDone);
+    else if (legacyDuel) useRunStore.getState().clearRun();
+  }, [duelDone, legacyDuel, router]);
 
-  if (!mounted) return <PageSkeleton />;
-  if (!run) {
-    return (
-      <>
-        <DuelLinkNotice />
-        <SetupScreen />
-      </>
-    );
-  }
+  if (!mounted || duelDone || legacyDuel) return <PageSkeleton />;
+  if (!run) return <SetupScreen />;
 
   switch (run.phase) {
     case "draft":

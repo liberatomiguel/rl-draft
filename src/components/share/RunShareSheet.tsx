@@ -2,16 +2,15 @@
 
 /**
  * Share kit (v2.2): the share sheet of a finished draft run (Classic, Quick,
- * the Daily and a duel run). The image is the run's own: the placement on the
- * slab, the road through the bracket, three figures and the drafted cards.
- * The link goes to the game, tagged with the share's campaign; a duel run
- * sends the duel link itself, so the friend plays the same draft.
+ * the Daily). The image is the run's own: the placement on the slab, the road
+ * through the bracket, three figures and the drafted cards. The link goes to
+ * the game, tagged with the share's campaign. (rc9 duel-ui: the duel sends its
+ * own links from /duel, through the same ShareSheet.)
  */
 
 import { useMemo, useState } from "react";
 import { SITE } from "@/config/site";
 import { useCopy, useUiLocale } from "@/content/copy";
-import { capEntries, duelEntryFromResults, duelPath } from "@/engine/duel";
 import type { RunState } from "@/engine/types";
 import { resolveShareFonts } from "@/lib/share/canvasKit";
 import { renderRunImage, type ShareFormat } from "@/lib/share/runImage";
@@ -79,19 +78,12 @@ export function RunShareSheet({
     return { post: draw("post"), story: draw("story") };
   }, [bundle]);
   if (!bundle) return null;
-  // A duel run sends the duel itself (its seed and the runs so far, this one
-  // included), on this site: the friend plays the same draft.
-  const url =
-    run.duel && run.results && typeof window !== "undefined"
-      ? `${window.location.origin}${duelPath({
-          setup: run.duel.setup,
-          entries: capEntries([...run.duel.entries, duelEntryFromResults(run.results, teamOverall)]),
-        })}`
-      : shareLinkOf(SITE.url, locale === "pt" ? "/pt" : "/", bundle.campaign);
-  const title = bundle.campaign === "daily" ? S.titleDaily : bundle.campaign === "duel" ? S.titleDuel : S.titleRun;
-  // rc9 SHARE: a won run (not a duel) may offer the image; a podium may invite, once.
+  // rc9 duel-ui: a duel never reaches the results (its link is sent from /duel).
+  const url = shareLinkOf(SITE.url, locale === "pt" ? "/pt" : "/", bundle.campaign);
+  const title = bundle.campaign === "daily" ? S.titleDaily : S.titleRun;
+  // rc9 SHARE: a won run may offer the image; a podium may invite, once.
   const placement = run.results?.placement ?? null;
-  const titleKey = placement === "champion" && !run.duel ? `run:${run.seed}:${run.startedAt}` : null;
+  const titleKey = placement === "champion" ? `run:${run.seed}:${run.startedAt}` : null;
   return (
     <>
       <ShareSheet
@@ -109,7 +101,7 @@ export function RunShareSheet({
         gameMode="draft"
         ready={!sheetOpen}
         titleKey={titleKey}
-        invite={{ activeDays, runsCompleted, careerSeasons: 0, moment: "run", placement, ordinaryRun: !run.duel }}
+        invite={{ activeDays, runsCompleted, careerSeasons: 0, moment: "run", placement, ordinaryRun: true }}
         preview={formats?.post}
         onShareImage={() => setPromptOpened(true)}
       />

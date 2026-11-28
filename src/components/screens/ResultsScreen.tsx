@@ -46,9 +46,7 @@ import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
 import { LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { ResearchInvite } from "@/components/ResearchInvite";
-import { DuelInvite } from "@/components/duel/DuelInvite";
 import { RunShareSheet } from "@/components/share/RunShareSheet";
-import { DuelResultsPanel } from "@/components/duel/DuelResultsPanel";
 import { RunStepper } from "./RunStepper";
 import { DailyOptimalPanel } from "./DailyOptimalPanel";
 import { OverallParts } from "./OverallParts";
@@ -59,7 +57,7 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI, DUEL_UI } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT, ACH_UI, DIFFICULTY_LABELS, RESEARCH_UI } = useCopy();
   // Only the placements that carry a fact get a line under the title (#285).
   const PLACEMENT_COPY: Record<Placement, { title: string; sub?: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, tone: "orange" },
@@ -234,7 +232,6 @@ export function ResultsScreen({ run }: { run: RunState }) {
           {run.daily ? (
             <p className="mt-1 text-xs text-orange-bright">{dailyRunTag(run.daily, DAILY_TEXT)}</p>
           ) : null}
-          {run.duel ? <p className="mt-1 text-xs text-orange-bright">{DUEL_UI.kicker}</p> : null}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             {/* Quick Draft has no Swiss stage (single-elim bracket) — DRAFT-09. */}
             {run.mode !== "quick" ? (
@@ -256,9 +253,6 @@ export function ResultsScreen({ run }: { run: RunState }) {
           ) : null}
         </div>
       </Panel>
-
-      {/* Friend duel (v2.1): the standings and the link, where the XP would be. */}
-      {run.duel ? <DuelResultsPanel run={run} /> : null}
 
       {/* Highlights */}
       <div className="phone-rows mb-6 grid grid-cols-1 sm:mb-8 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
@@ -485,8 +479,6 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
       {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} tournament={run.tournament} userOrgId={userOrgId} userName={team?.name} /> : null}
 
-      {/* Friend duel (v2.1): the same settings as a duel, to send to a friend. */}
-      <DuelInvite run={run} />
 
       {/* CTAs */}
       <div className="action-dock mt-6 flex items-stretch justify-center gap-2 sm:mt-10 sm:flex-row sm:gap-3">

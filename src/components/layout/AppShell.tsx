@@ -81,7 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // /play on load. Idempotent and safe under React strict mode (no cleanup).
   // The run store (dataset + engine) loads only when a run exists (#60).
   useEffect(() => {
-    if (pathname !== "/play") clearRunInProgress();
+    // rc9 duel-ui: /duel keeps a duel's draft in progress (to resume it) and clears any other run itself.
+    if (pathname !== "/play" && pathname !== "/duel") clearRunInProgress();
   }, [pathname]);
 
   // T1 (v2.0): the single-URL pages (no /pt mirror) carry an English <title>
