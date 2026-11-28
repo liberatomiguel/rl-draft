@@ -168,6 +168,8 @@ The release is named **2.1**: the staging series numbered 2.2.0-rc.1 to rc.8 con
 - The share images are redrawn (run and career, Post 1200 x 630 and Story 1080 x 1920) around the team: every drafted card (players, coach, sub, org) in a straight row of the game's own cards, none hidden; the placement as a title-sized line with the mode and difficulty, the path in one sentence and the road as small squares; team overall, chemistry and the Swiss record as figures. A career shows the crest, the club and the manager, the title or the season, the series record and prize money, the trophy shelf, and the starting three and the coach as cards wearing the crest. No tilt, no overlap, no glow beyond the cards' rarity; one signature at the foot. (A first redraw with a poster-sized headline and three tilted cards was refused on 27/11.)
 - The player's equipped profile banner sits as a faded band behind the top of the image, at the strongest opacity (0.5 down to 0.12) that keeps every line over it at 4.5:1 or better; no banner = plain stock.
 - The share sheet's message box is labelled "The message" when there is no image.
+- Draft and Road to Worlds share images lead with the result. Wins use a gold headline, with slimmer card borders, smaller ratings and crests, and the equipped banner faded behind the title in Post and Story.
+- Share cards follow GameCard's rating, role and uppercase nameplate. Post and Story use the Rocket Draft brand mark, group the run's stats with its series results, and show the career's win/loss split and trophy counts together.
 
 #### Added
 - One invite prompt per player, ever: from the second day the game is open, after a podium run (five runs in) or a career season review. One tap closes it for good.

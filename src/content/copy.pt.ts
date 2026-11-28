@@ -2255,6 +2255,7 @@ export const PT: Copy = {
     figSwiss: "Suíço",
     figPlayoffWins: "Vitórias nos playoffs",
     dailyTag: (n: number) => `Desafio Diário #${n}`,
+    championTitle: "Campeão",
     headlineUndefeated: "Invicto.",
     headlineChampion: (record: string) => `${record} no Suíço, depois venceu os playoffs.`,
     headlineChampionQuick: "Venceu a chave.",

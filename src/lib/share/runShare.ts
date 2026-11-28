@@ -40,8 +40,8 @@ export function shareFaceOf(card: ResolvedCard, roleLabel: string): ShareCardFac
     frame,
     value,
     name: card.name,
-    line: special ? special.title : isOrg ? null : [card.orgName, card.seasonShort].filter(Boolean).join(" · ") || null,
-    lineIsTitle: Boolean(special),
+    line: isOrg ? null : [card.orgName, card.seasonShort].filter(Boolean).join(" · ") || null,
+    specialTitle: special?.title ?? null,
     role: card.kind as RoleKind,
     roleLabel,
     flagUrl: flag,
@@ -137,7 +137,7 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
     .join("  ·  ");
 
   const image: RunImageData = {
-    placementLabel: input.placementLabel,
+    placementLabel: champion ? S.championTitle : input.placementLabel,
     champion,
     meta,
     headline,

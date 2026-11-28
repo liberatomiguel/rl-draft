@@ -3,36 +3,32 @@
  * (1200 × 630: X, Discord, WhatsApp, Reddit) and the story (1080 × 1920:
  * Instagram, TikTok and WhatsApp status).
  *
- * rc9 (#258, revised after Miguel's review of 27/11: "limpas, elegantes ...
- * mostrar bem o time usado"): the team is the centre, every drafted card in a
- * straight row (players, coach, sub, org), none hidden; above it the result
- * as a title-sized line with the mode and the difficulty, the path in one
- * sentence and the road as quiet squares; the three figures of the run (team
- * overall in paper white, chemistry, the Swiss record); the wordmark and the
- * link small. No tilt, no overlap, no glow beyond the cards' rarity. The
- * equipped profile banner is a faded band behind the top (#259).
+ * The result leads, framed by the equipped profile banner. Every drafted card
+ * gets its own space, with the run figures and wordmark set below the roster.
  */
 
 import {
   INK,
+  GOLD,
+  ORANGE,
   PAPER,
-  SUB,
-  FAINT,
+  CAPTION,
   drawBannerBand,
+  drawBoard,
   drawCardRows,
   drawFigure,
   drawFloor,
   drawHairline,
+  drawHeadline,
   drawImageFrame,
   drawLabel,
   drawRoad,
   drawSentence,
-  drawTitleLine,
-  drawWordmark,
+  drawSignature,
   loadImage,
   loadImages,
+  loadShareMark,
   makeCanvas,
-  textFont,
   type Rect,
   type RoadStageMarks,
   type ShareCardFace,
@@ -71,32 +67,6 @@ export interface RunImageData {
   site: string;
 }
 
-/** The wordmark, then the link in `--faint`. */
-export function drawSignature(
-  g: CanvasRenderingContext2D,
-  fonts: ShareFonts,
-  site: string,
-  x: number,
-  baseline: number,
-  size: number,
-  align: "left" | "center",
-): void {
-  if (align === "center") {
-    drawWordmark(g, fonts, x, baseline, size, "center");
-    g.font = textFont(fonts, size * 0.72, 400);
-    g.fillStyle = FAINT;
-    g.textAlign = "center";
-    g.fillText(site, x, baseline + size * 1.25);
-    g.textAlign = "left";
-    return;
-  }
-  const end = drawWordmark(g, fonts, x, baseline, size, "left");
-  g.font = textFont(fonts, size * 0.78, 400);
-  g.fillStyle = FAINT;
-  g.textAlign = "left";
-  g.fillText(site, end + size * 0.7, baseline);
-}
-
 /**
  * Figures side by side, hairlines between them: the first in paper white
  * (the one figure), the others in ink. `x` is the left edge, `span` the width
@@ -119,6 +89,7 @@ export function drawFigureStrip(
       align: opts.align ?? "left",
       color: first ? PAPER : INK,
       labelSize: opts.labelSize,
+      maxW: span - size * 0.75,
     });
     if (i > 0) drawHairline(g, x + span * i, baseline - size * 0.9, x + span * i, baseline + size * 0.55, true);
   });
@@ -141,35 +112,53 @@ export async function renderRunImage(
 ): Promise<HTMLCanvasElement> {
   const { w, h } = SHARE_SIZES[format];
   const { canvas, g } = makeCanvas(w, h);
-  const [images, banner] = await Promise.all([loadImages(imageUrls(data.cards)), loadImage(data.bannerUrl)]);
+  const [images, banner, mark] = await Promise.all([
+    loadImages(imageUrls(data.cards)),
+    loadImage(data.bannerUrl),
+    loadShareMark(),
+  ]);
   drawFloor(g, w, h);
-  const figures = data.figures.slice(0, 3);
+  const titleColor = data.champion ? GOLD : PAPER;
+  const cards = data.cards.slice(0, 6);
+  const hasRoad = data.road.some((stage) => stage.series.length > 0);
+  const figures = data.figures.slice(0, hasRoad ? 2 : 3);
 
   if (format === "post") {
     const inset = 22;
     drawImageFrame(g, w, h, inset, data.champion);
     const left = 64;
     const right = w - 64;
-    const span = 128;
-    const figX = right - span * figures.length;
-    const colW = figX - left - 32;
+    const width = right - left;
+    const titleWidth = width - 240;
     if (banner) {
       const over: { rect: Rect; color: string }[] = [
-        { rect: { x: left, y: 64, w: colW, h: 22 }, color: SUB },
-        { rect: { x: left, y: 98, w: colW, h: 50 }, color: INK },
-        { rect: { x: figX, y: 104, w: right - figX, h: 46 }, color: INK },
+        { rect: { x: left, y: 51, w: titleWidth, h: 24 }, color: CAPTION },
+        { rect: { x: left, y: 72, w: titleWidth, h: 94 }, color: titleColor },
+        { rect: { x: left, y: 176, w: titleWidth, h: 25 }, color: CAPTION },
+        { rect: { x: right - 164, y: 55, w: 164, h: 27 }, color: ORANGE },
+        { rect: { x: right - 164, y: 86, w: 164, h: 20 }, color: CAPTION },
       ];
-      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 170, radius: 24 }, over);
+      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 304, radius: 24 }, over, { fadeLeft: true });
       if (report) report.banner = out;
     }
-    drawLabel(g, fonts, data.meta, left, 82, 15, colW);
-    drawTitleLine(g, fonts, data.placementLabel, left, 142, 52, colW, { min: 36 });
-    drawSentence(g, fonts, data.headline, left, 182, 20, colW, { lines: 1 });
-    drawRoad(g, fonts, data.road, left, 200, 14, "left");
-    drawFigureStrip(g, fonts, figures, figX, 140, span, 30, { labelSize: 12, firstSize: 44 });
-    drawCardRows(g, fonts, data.cards.slice(0, 6), images, { x: left, y: 244, w: right - left, h: 266 }, { gap: 16, maxW: 176 });
-    drawHairline(g, left, 540, right, 540);
-    drawSignature(g, fonts, data.site, left, 578, 20, "left");
+    drawLabel(g, fonts, data.meta, left, 69, 16, titleWidth, { color: CAPTION });
+    drawHeadline(g, fonts, data.placementLabel, left, 159, data.champion ? 98 : 79, titleWidth, { color: titleColor });
+    drawSentence(g, fonts, data.headline, left, 196, 23, titleWidth, { lines: 1, color: CAPTION });
+    drawSignature(g, fonts, mark, data.site, right, 56, 49, "right");
+    drawCardRows(g, fonts, cards, images, { x: left, y: 224, w: width, h: 246 }, { gap: 14, maxW: 170 });
+    drawBoard(g, left, 493, width, 96, { radius: 14 });
+    const statsWidth = hasRoad ? 400 : width - 48;
+    drawFigureStrip(g, fonts, figures, left + 24, 547, statsWidth / Math.max(1, figures.length), 31, {
+      align: hasRoad ? "left" : "center",
+      labelSize: 13,
+      firstSize: 42,
+    });
+    if (hasRoad) {
+      const roadLeft = left + statsWidth + 48;
+      const roadWidth = right - roadLeft - 24;
+      drawHairline(g, roadLeft - 20, 513, roadLeft - 20, 569);
+      drawRoad(g, fonts, data.road, roadLeft + roadWidth / 2, 529, roadWidth, 22);
+    }
     return canvas;
   }
 
@@ -177,24 +166,31 @@ export async function renderRunImage(
   const inset = 34;
   drawImageFrame(g, w, h, inset, data.champion);
   const cx = w / 2;
+  const left = 96;
+  const width = w - left * 2;
   if (banner) {
     const over: { rect: Rect; color: string }[] = [
-      { rect: { x: 96, y: 278, w: w - 192, h: 30 }, color: SUB },
-      { rect: { x: 96, y: 330, w: w - 192, h: 70 }, color: INK },
+      { rect: { x: left, y: 252, w: width, h: 34 }, color: CAPTION },
+      { rect: { x: left, y: 300, w: width, h: 137 }, color: titleColor },
+      { rect: { x: left, y: 451, w: width, h: 74 }, color: CAPTION },
     ];
-    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 400, radius: 24 }, over);
+    const out = drawBannerBand(g, banner, { x: inset + 2, y: 152, w: w - inset * 2 - 4, h: 498, radius: 24 }, over);
     if (report) report.banner = out;
   }
-  drawLabel(g, fonts, data.meta, cx, 302, 22, w - 192, { align: "center" });
-  drawTitleLine(g, fonts, data.placementLabel, cx, 392, 72, w - 192, { align: "center", min: 48 });
-  drawSentence(g, fonts, data.headline, cx, 450, 28, w - 192, { align: "center", lines: 1 });
-  drawRoad(g, fonts, data.road, cx, 482, 24, "center");
-  drawCardRows(g, fonts, data.cards.slice(0, 6), images, { x: 96, y: 560, w: w - 192, h: 840 }, { perRow: 3, gap: 24, maxW: 280 });
-  drawFigureStrip(g, fonts, figures, 96, 1520, (w - 192) / Math.max(1, figures.length), 44, {
+  drawLabel(g, fonts, data.meta, cx, 280, 23, width, { align: "center", color: CAPTION });
+  drawHeadline(g, fonts, data.placementLabel, cx, 430, data.champion ? 132 : 101, width, { align: "center", color: titleColor });
+  drawSentence(g, fonts, data.headline, cx, 482, 30, width, { align: "center", lines: 2, lineHeight: 36, color: CAPTION });
+  drawCardRows(g, fonts, cards, images, { x: left, y: 553, w: width, h: 712 }, { perRow: 3, gap: 24, maxW: 264 });
+  drawBoard(g, left, 1304, width, hasRoad ? 246 : 138, { radius: 20 });
+  drawFigureStrip(g, fonts, figures, left + 18, 1380, (width - 36) / Math.max(1, figures.length), 43, {
     align: "center",
     labelSize: 18,
-    firstSize: 64,
+    firstSize: 56,
   });
-  drawSignature(g, fonts, data.site, cx, 1640, 34, "center");
+  if (hasRoad) {
+    drawHairline(g, left + 32, 1430, w - left - 32, 1430);
+    drawRoad(g, fonts, data.road, cx, 1474, width - 72, 28);
+  }
+  drawSignature(g, fonts, mark, data.site, cx, hasRoad ? 1605 : 1502, 65, "center");
   return canvas;
 }

@@ -14,6 +14,7 @@
 export const INK = "#e9eef8";
 export const SUB = "#8d9ab3";
 export const FAINT = "#7c8aa3";
+export const CAPTION = "#a9b7ce";
 export const ORANGE = "#ff6a1a";
 export const BLUE = "#7aa5ff";
 export const GOOD = "#34d399";
@@ -325,7 +326,7 @@ export function drawBoard(
     g.save();
     roundRect(g, x, y, w, h, r);
     g.clip();
-    drawTexture(g, x, y, w, h, 12, 0.022);
+    drawTexture(g, x, y, w, h, 12, 0.008);
     g.restore();
   }
   roundRect(g, x + 1, y + 1, w - 2, h - 2, r - 1);
@@ -344,8 +345,9 @@ export function drawImageFrame(g: CanvasRenderingContext2D, w: number, h: number
   drawBoard(g, inset, inset, w - inset * 2, h - inset * 2, { radius: 26, strong: true, texture: true });
   if (!gold) return;
   g.save();
+  g.globalAlpha = 0.78;
   roundRect(g, inset + 1, inset + 1, w - inset * 2 - 2, h - inset * 2 - 2, 25);
-  g.lineWidth = 2;
+  g.lineWidth = 1.5;
   g.strokeStyle = cssGradient(g, 165, inset, inset, w - inset * 2, h - inset * 2, ["#f3c969", "#8a6224", "#d9a943"]);
   g.stroke();
   g.restore();
@@ -404,8 +406,8 @@ export function worstContrast(g: CanvasRenderingContext2D, rect: Rect, fg: strin
 /**
  * The equipped banner as a quiet band behind the top of the image: the art
  * covers the band, fades into the stock towards the content, and is laid at
- * the highest strength (from `maxAlpha` down) at which every text box that
- * will sit over it keeps `minRatio` against its worst pixel. Text is drawn
+ * the highest strength at which every text box that will sit over it
+ * keeps a 4.5:1 contrast ratio. Text is drawn
  * after, so the measure is of the background alone.
  */
 export function drawBannerBand(
@@ -413,18 +415,15 @@ export function drawBannerBand(
   img: HTMLImageElement,
   band: Rect & { radius: number },
   textOver: { rect: Rect; color: string }[],
-  opts: { maxAlpha?: number; minAlpha?: number; minRatio?: number } = {},
+  opts: { fadeLeft?: boolean } = {},
 ): { alpha: number; worst: number } {
-  const maxAlpha = opts.maxAlpha ?? 0.5;
-  const minAlpha = opts.minAlpha ?? 0.12;
-  const minRatio = opts.minRatio ?? 4.5;
   const bx = Math.floor(band.x);
   const by = Math.floor(band.y);
   const bw = Math.ceil(band.w);
   const bh = Math.ceil(band.h);
   const under = g.getImageData(bx, by, bw, bh);
 
-  // The art, covered into the band and masked: full at the top, gone at the foot.
+  // Keep the art visible through the hero, then blend it into the card area.
   const layer = document.createElement("canvas");
   layer.width = bw;
   layer.height = bh;
@@ -434,15 +433,23 @@ export function drawBannerBand(
   drawCover(lg, img, 0, 0, bw, bh, 0.5);
   lg.globalCompositeOperation = "destination-in";
   const fade = lg.createLinearGradient(0, 0, 0, bh);
-  fade.addColorStop(0, "rgba(0,0,0,1)");
-  fade.addColorStop(0.45, "rgba(0,0,0,0.75)");
-  fade.addColorStop(1, "rgba(0,0,0,0)");
+  fade.addColorStop(0, "transparent");
+  fade.addColorStop(0.22, "#000");
+  fade.addColorStop(0.5, "#000");
+  fade.addColorStop(1, "transparent");
   lg.fillStyle = fade;
   lg.fillRect(0, 0, bw, bh);
+  if (opts.fadeLeft) {
+    const side = lg.createLinearGradient(0, 0, bw, 0);
+    side.addColorStop(0, "rgba(0,0,0,0.24)");
+    side.addColorStop(0.36, "rgba(0,0,0,0.55)");
+    side.addColorStop(0.76, "#000");
+    lg.fillStyle = side;
+    lg.fillRect(0, 0, bw, bh);
+  }
 
-  let alpha = maxAlpha;
-  let worst = 21;
-  for (; alpha >= minAlpha - 1e-6; alpha -= 0.04) {
+  for (let step = 12; step >= 3; step--) {
+    const alpha = step * 0.04;
     g.putImageData(under, bx, by);
     g.save();
     roundRect(g, band.x, band.y, band.w, band.h + band.radius, band.radius);
@@ -450,38 +457,50 @@ export function drawBannerBand(
     g.globalAlpha = alpha;
     g.drawImage(layer, bx, by);
     g.restore();
-    worst = Math.min(21, ...textOver.map((t) => worstContrast(g, t.rect, t.color)));
-    if (worst >= minRatio) return { alpha, worst };
+    const worst = Math.min(21, ...textOver.map((t) => worstContrast(g, t.rect, t.color)));
+    if (worst >= 4.5) return { alpha, worst };
   }
   // Even the faintest band fails somewhere: leave the stock plain.
   g.putImageData(under, bx, by);
   return { alpha: 0, worst: Math.min(21, ...textOver.map((t) => worstContrast(g, t.rect, t.color))) };
 }
 
-/** The ROCKET DRAFT wordmark (the header logo: upright, ink and orange). */
-export function drawWordmark(
+/** The same hexagon used in AppShell and in the app manifest. */
+export function loadShareMark(): Promise<HTMLImageElement | null> {
+  return loadImage("/icon.svg");
+}
+
+export function drawSignature(
   g: CanvasRenderingContext2D,
   fonts: ShareFonts,
+  mark: HTMLImageElement | null,
+  site: string,
   x: number,
-  baseline: number,
+  y: number,
   size: number,
-  align: "left" | "center" = "left",
-): number {
-  g.font = displayFont(fonts, size, 700);
-  setTracking(g, 0.04, size);
+  align: "center" | "right",
+): void {
+  const wordSize = size * 0.44;
+  g.font = displayFont(fonts, wordSize, 700);
+  setTracking(g, 0.04, wordSize);
   g.textBaseline = "alphabetic";
   g.textAlign = "left";
   const a = g.measureText("ROCKET").width;
-  const gap = size * 0.22;
+  const gap = wordSize * 0.22;
   const b = g.measureText("DRAFT").width;
-  const total = a + gap + b;
-  const left = align === "center" ? x - total / 2 : x;
+  const markSpace = mark ? size * 1.22 : 0;
+  const total = markSpace + a + gap + b;
+  const left = align === "center" ? x - total / 2 : x - total;
+  const wordX = left + markSpace;
+  if (mark) drawContained(g, mark, left, y, size, size);
   g.fillStyle = INK;
-  g.fillText("ROCKET", left, baseline);
+  g.fillText("ROCKET", wordX, y + size * 0.45);
   g.fillStyle = ORANGE;
-  g.fillText("DRAFT", left + a + gap, baseline);
+  g.fillText("DRAFT", wordX + a + gap, y + size * 0.45);
   resetTracking(g);
-  return left + total;
+  g.font = textFont(fonts, size * 0.37);
+  g.fillStyle = CAPTION;
+  g.fillText(site, wordX, y + size * 0.85);
 }
 
 /** Cuts a line to `max` px with an ellipsis. */
@@ -540,18 +559,22 @@ export function drawFigure(
   x: number,
   baseline: number,
   size: number,
-  opts: { align?: CanvasTextAlign; color?: string; labelSize?: number } = {},
+  opts: { align?: CanvasTextAlign; color?: string; labelSize?: number; maxW?: number } = {},
 ): void {
   g.textAlign = opts.align ?? "left";
   g.textBaseline = "alphabetic";
-  g.font = displayFont(fonts, size, 600);
+  const maxW = opts.maxW ?? Infinity;
+  fitFontSize(g, value, maxW, size, size * 0.65, (n) => displayFont(fonts, n, 600));
   g.fillStyle = opts.color ?? INK;
-  g.fillText(value, x, baseline);
+  g.fillText(fitText(g, value, maxW), x, baseline);
   const ls = opts.labelSize ?? Math.max(15, size * 0.3);
-  g.font = displayFont(fonts, ls, 500);
-  setTracking(g, 0.08, ls);
-  g.fillStyle = FAINT;
-  g.fillText(label.toUpperCase(), x, baseline + ls * 1.9);
+  const caption = label.toUpperCase();
+  fitFontSize(g, caption, maxW, ls, ls * 0.77, (n) => {
+    setTracking(g, 0.08, n);
+    return displayFont(fonts, n, 500);
+  });
+  g.fillStyle = CAPTION;
+  g.fillText(fitText(g, caption, maxW), x, baseline + ls * 1.7);
   resetTracking(g);
   g.textAlign = "left";
 }
@@ -643,14 +666,16 @@ export function drawSentence(
   g.textBaseline = "alphabetic";
   g.fillStyle = opts.color ?? SUB;
   const lh = opts.lineHeight ?? size * 1.38;
-  const lines = wrapText(g, text, max).slice(0, opts.lines ?? 2);
-  lines.forEach((line, i) => g.fillText(line, x, baseline + i * lh));
+  const limit = opts.lines ?? 2;
+  const wrapped = wrapText(g, text, max);
+  const lines = wrapped.slice(0, limit - 1).concat(wrapped.slice(limit - 1).join(" "));
+  lines.forEach((line, i) => g.fillText(fitText(g, line, max), x, baseline + i * lh));
   g.textAlign = "left";
   return baseline + (lines.length - 1) * lh;
 }
 
-/** The card's height for a width (the game's card proportion). */
-export const CARD_RATIO = 4.3 / 3;
+/** Match GameCard's aspect-[3/4.3]. */
+const CARD_RATIO = 4.3 / 3;
 
 /**
  * The team as the game's cards, straight, side by side, none behind another
@@ -684,90 +709,59 @@ export function drawCardRows(
   return y0 + blockH;
 }
 
-/**
- * The result as a title-sized line (not a poster): display Demi caps at open
- * tracking, fitted to `max`. Returns the width drawn.
- */
-export function drawTitleLine(
-  g: CanvasRenderingContext2D,
-  fonts: ShareFonts,
-  text: string,
-  x: number,
-  baseline: number,
-  size: number,
-  max: number,
-  opts: { align?: CanvasTextAlign; color?: string; min?: number } = {},
-): number {
-  const label = text.toUpperCase();
-  const font = (n: number) => {
-    setTracking(g, 0.05, n);
-    return displayFont(fonts, n, 600);
-  };
-  const s = fitFontSize(g, label, max, size, opts.min ?? size * 0.7, font);
-  g.font = font(s);
-  g.textAlign = opts.align ?? "left";
-  g.textBaseline = "alphabetic";
-  g.fillStyle = opts.color ?? INK;
-  const t = fitText(g, label, max);
-  g.fillText(t, x, baseline);
-  const width = g.measureText(t).width;
-  resetTracking(g);
-  g.textAlign = "left";
-  return width;
-}
-
-/** One stage of the road: its label, then a square per series (green won, red lost). */
+/** One stage of the road, in chronological order. */
 export interface RoadStageMarks {
   label: string;
   series: boolean[];
 }
 
-/** The road through the bracket as quiet squares. `align` places the line on `x`. Returns its width. */
+/** Stage labels above the series. A check or dash also identifies each result. */
 export function drawRoad(
   g: CanvasRenderingContext2D,
   fonts: ShareFonts,
   road: RoadStageMarks[],
   x: number,
   y: number,
-  size: number,
-  align: "left" | "center" | "right" = "left",
-): number {
+  maxW: number,
+  tileSize: number,
+): void {
   const stages = road.filter((st) => st.series.length > 0);
-  if (stages.length === 0) return 0;
-  const gap = size * 0.32;
-  const stageGap = size * 1.3;
-  const labelSize = Math.max(11, size * 0.7);
-  const labelW = (t: string) => {
-    g.font = displayFont(fonts, labelSize, 500);
-    setTracking(g, 0.08, labelSize);
-    const wd = g.measureText(t.toUpperCase()).width;
-    resetTracking(g);
-    return wd;
-  };
-  const widths = stages.map((st) => labelW(st.label) + size * 0.55 + st.series.length * (size + gap) - gap);
-  const total = widths.reduce((a, b) => a + b, 0) + stageGap * (stages.length - 1);
-  let cx = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
+  if (stages.length === 0) return;
+  const size = Math.min(tileSize, maxW / (stages.reduce((n, st) => n + Math.max(5, st.series.length), 0) * 1.3 + (stages.length - 1) * 1.75));
+  const gap = size * 0.3;
+  const stageGap = size * 1.75;
+  const span = (n: number) => Math.max(5, n) * (size + gap) - gap;
+  const width = stages.reduce((n, st) => n + span(st.series.length), 0) + stageGap * (stages.length - 1);
+  let cx = x - width / 2;
   for (const st of stages) {
-    g.font = displayFont(fonts, labelSize, 500);
-    setTracking(g, 0.08, labelSize);
-    g.fillStyle = FAINT;
-    g.textAlign = "left";
-    g.textBaseline = "middle";
-    g.fillText(st.label.toUpperCase(), cx, y + size / 2 + 1);
-    cx += g.measureText(st.label.toUpperCase()).width + size * 0.55;
-    resetTracking(g);
-    for (const won of st.series) {
-      roundRect(g, cx, y, size, size, Math.max(2, size * 0.18));
-      g.fillStyle = won ? GOOD : BAD;
-      g.globalAlpha = won ? 0.9 : 0.75;
+    const stageW = span(st.series.length);
+    const wins = st.series.filter(Boolean).length;
+    const stageLabel = `${st.label}  ·  ${wins}–${st.series.length - wins}`;
+    drawLabel(g, fonts, stageLabel, cx, y, Math.max(11, tileSize * 0.63), stageW, { color: CAPTION });
+    const ty = y + tileSize * 0.57;
+    st.series.forEach((won, i) => {
+      const tx = cx + i * (size + gap);
+      g.save();
+      g.strokeStyle = g.fillStyle = won ? GOOD : BAD;
+      roundRect(g, tx, ty, size, size, size * 0.17);
+      g.globalAlpha = 0.15;
       g.fill();
+      g.globalAlpha = 0.48;
+      g.lineWidth = 1;
+      g.stroke();
       g.globalAlpha = 1;
-      cx += size + gap;
-    }
-    cx += stageGap - gap;
+      g.lineWidth = Math.max(1, size * 0.09);
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(tx + size * 0.28, ty + size * 0.52);
+      if (won) g.lineTo(tx + size * 0.44, ty + size * 0.68);
+      g.lineTo(tx + size * 0.73, ty + size * (won ? 0.35 : 0.52));
+      g.stroke();
+      g.restore();
+    });
+    cx += stageW + stageGap;
   }
-  g.textBaseline = "alphabetic";
-  return total;
 }
 
 /** A hairline, vertical or horizontal. */
@@ -835,11 +829,11 @@ export const FRAMES: Record<FrameKey, FrameSpec> = {
 
 export type RoleKind = "player" | "coach" | "sub" | "org";
 
-const ROLE_TAG: Record<RoleKind, { border: string; fill: string; text: string }> = {
-  player: { border: "rgba(96,165,250,0.45)", fill: "rgba(96,165,250,0.12)", text: "#bfdbfe" },
-  coach: { border: "rgba(251,191,36,0.45)", fill: "rgba(251,191,36,0.12)", text: "#fde68a" },
-  sub: { border: "rgba(52,211,153,0.45)", fill: "rgba(52,211,153,0.12)", text: "#a7f3d0" },
-  org: { border: LINE_STRONG, fill: "rgba(255,255,255,0.05)", text: SUB },
+const ROLE_COLOR: Record<RoleKind, string> = {
+  player: "#bfdbfe",
+  coach: "#fde68a",
+  sub: "#a7f3d0",
+  org: CAPTION,
 };
 
 /** A card as the image draws it: everything resolved, nothing looked up. */
@@ -848,9 +842,9 @@ export interface ShareCardFace {
   /** "87", "+3", "-" or "??". */
   value: string;
   name: string;
-  /** Special title (rarity accent) or the org · season line. */
+  /** The org and season, or the player's career archetype. */
   line: string | null;
-  lineIsTitle: boolean;
+  specialTitle: string | null;
   role: RoleKind;
   roleLabel: string;
   /** Country flag URL, or a short code drawn as a tag when there is no flag. */
@@ -863,10 +857,8 @@ export interface ShareCardFace {
 }
 
 /**
- * One card, drawn the way GameCard shows it: the frame in its rarity, the
- * overall top left over the role tag, the flag top right, the crest on the
- * card's texture (or the special's photo over the whole face) and the name
- * plate at the foot.
+ * Match GameCard's overall and role at the top, art in the center, and
+ * uppercase nameplate at the foot.
  */
 export function drawGameCard(
   g: CanvasRenderingContext2D,
@@ -881,28 +873,38 @@ export function drawGameCard(
   const s = w / 176;
   const r = 14 * s;
   const spec = FRAMES[face.frame];
-  const bw = Math.max(2, 2.2 * s);
+  const bw = Math.max(1.2, 1.35 * s);
   const photo = face.photoUrl ? images.get(face.photoUrl) : undefined;
 
   // Halo (rarity only).
   if (spec.glow) {
     g.save();
     g.shadowColor = spec.glow;
-    g.shadowBlur = 34 * s;
+    g.shadowBlur = 12 * s;
+    g.globalAlpha = 0.35;
     roundRect(g, x, y, w, h, r);
     g.fillStyle = spec.border[0];
     g.fill();
     g.restore();
   }
-  // Border, then the body inside it.
+  // A thin rarity rim over the dark stock.
+  g.save();
+  g.globalAlpha = 0.72;
   roundRect(g, x, y, w, h, r);
   g.fillStyle = cssGradient(g, face.frame === "legendary" ? 110 : 165, x, y, w, h, spec.border);
   g.fill();
+  g.restore();
   const ix = x + bw;
   const iy = y + bw;
   const iw = w - bw * 2;
   const ih = h - bw * 2;
   const ir = r - bw * 0.7;
+  const pad = 12 * s;
+  const nameSize = 17 * s;
+  const lineSize = 11.5 * s;
+  const foot = iy + ih - pad;
+  const titleY = foot - (face.line ? 16 * s : 0);
+  const nameY = foot - (face.line ? 16 * s : 0) - (face.specialTitle ? 17 * s : 0);
   g.save();
   roundRect(g, ix, iy, iw, ih, ir);
   g.clip();
@@ -914,7 +916,7 @@ export function drawGameCard(
     // The photo's foot darkens under the name plate (`.special-photo::after`).
     const shade = g.createLinearGradient(0, iy + ih * 0.38, 0, iy + ih);
     shade.addColorStop(0, "rgba(5,7,13,0)");
-    shade.addColorStop(0.55, "rgba(5,7,13,0.62)");
+    shade.addColorStop(0.55, "rgba(5,7,13,0.68)");
     shade.addColorStop(1, "rgba(5,7,13,0.94)");
     g.fillStyle = shade;
     g.fillRect(ix, iy, iw, ih);
@@ -941,86 +943,74 @@ export function drawGameCard(
   g.fillRect(ix, iy, iw, ih * 0.38);
   g.restore();
 
-  const pad = 12 * s;
-  // Centre: the crest on the card's texture (base cards only).
+  // The crest sits inside GameCard's textured center, at share-image scale.
   if (!photo) {
-    const tx = ix + pad * 0.55;
-    const ty = iy + 64 * s;
-    const tw = iw - pad * 1.1;
-    const th = ih - 64 * s - 60 * s;
-    if (th > 20 * s) {
-      g.save();
-      roundRect(g, tx, ty, tw, th, 8 * s);
-      g.clip();
-      drawTexture(g, tx, ty, tw, th, 9 * s, 0.035);
-      g.restore();
-      const logo = face.logoUrl ? images.get(face.logoUrl) : undefined;
-      if (logo) {
-        const box = Math.min(tw * 0.62, th * 0.78);
-        drawContained(g, logo, tx + (tw - box) / 2, ty + (th - box) / 2, box, box);
-      } else {
-        g.font = displayFont(fonts, 40 * s, 700);
-        g.fillStyle = "rgba(255,255,255,0.12)";
-        g.textAlign = "center";
-        g.textBaseline = "middle";
-        g.fillText("?", tx + tw / 2, ty + th / 2);
-        g.textBaseline = "alphabetic";
-        g.textAlign = "left";
-      }
+    const panelTop = iy + 74 * s;
+    const panelBottom = nameY - nameSize - 9 * s;
+    const box = Math.min(iw * 0.38, (panelBottom - panelTop) * 0.7);
+    const centerY = (panelTop + panelBottom) / 2;
+    g.save();
+    roundRect(g, ix + pad, panelTop, iw - pad * 2, panelBottom - panelTop, 7 * s);
+    g.clip();
+    drawTexture(g, ix + pad, panelTop, iw - pad * 2, panelBottom - panelTop, 9 * s, 0.025);
+    g.restore();
+    const logo = face.logoUrl ? images.get(face.logoUrl) : undefined;
+    if (logo) {
+      drawContained(g, logo, ix + (iw - box) / 2, centerY - box / 2, box, box, 0.93);
+    } else {
+      g.font = displayFont(fonts, 24 * s, 600);
+      g.fillStyle = "rgba(255,255,255,0.22)";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText("?", ix + iw / 2, centerY);
     }
   }
 
-  // Top row: the overall and the role tag, the flag.
+  // The rating and role anchor the left, with the flag across from them.
   g.textBaseline = "alphabetic";
   g.textAlign = "left";
-  const valueSize = 40 * s;
+  const valueSize = (face.role === "org" ? 28 : 33) * s;
+  const valueY = iy + pad + valueSize * 0.82;
   g.font = displayFont(fonts, valueSize, 700);
   g.save();
   if (photo) {
     g.shadowColor = "rgba(0,0,0,0.9)";
-    g.shadowBlur = 6 * s;
+    g.shadowBlur = 8 * s;
     g.shadowOffsetY = 1 * s;
   }
-  if (face.frame === "legendary" || face.frame === "national") {
-    g.fillStyle = cssGradient(
-      g,
-      165,
-      ix + pad,
-      iy + pad,
-      valueSize * 1.2,
-      valueSize,
-      face.frame === "legendary" ? ["#fffefa", "#fde68a", "#f6c652", "#fffaf0"] : ["#fef9c3", "#fde047", "#eab308", "#fef08a"],
-    );
-  } else {
-    g.fillStyle = face.role === "org" ? (face.value === "-" || face.value === "??" ? FAINT : "#ff8a3d") : spec.ovr;
-  }
-  g.fillText(face.value, ix + pad, iy + pad + valueSize * 0.82);
+  g.fillStyle = face.role === "org"
+    ? (face.value.startsWith("+") ? "#ffab79" : FAINT)
+    : (!face.specialTitle && Number(face.value) >= 90 ? "#67c5fb" : spec.ovr);
+  g.fillText(face.value, ix + pad, valueY);
   g.restore();
 
-  // Role tag.
-  const tagSize = 10.5 * s;
-  g.font = displayFont(fonts, tagSize, 600);
-  setTracking(g, 0.12, tagSize);
-  const tagText = face.roleLabel.toUpperCase();
-  const tagW = g.measureText(tagText).width + 9 * s;
-  const tagH = tagSize * 1.5;
-  const tagY = iy + pad + valueSize * 0.98;
-  const tag = ROLE_TAG[face.role];
-  roundRect(g, ix + pad, tagY, tagW, tagH, 3 * s);
-  g.fillStyle = photo ? "rgba(5,7,13,0.55)" : tag.fill;
+  const roleSize = 10.5 * s;
+  const roleX = ix + pad;
+  const roleY = valueY + 7 * s;
+  const roleH = 16 * s;
+  const roleColor = ROLE_COLOR[face.role];
+  g.save();
+  g.font = displayFont(fonts, roleSize, 600);
+  setTracking(g, 0.09, roleSize);
+  const role = fitText(g, face.roleLabel.toUpperCase(), iw - pad * 3);
+  const roleW = g.measureText(role).width + 10 * s;
+  roundRect(g, roleX, roleY, roleW, roleH, 3 * s);
+  g.fillStyle = photo ? "rgba(5,7,13,0.68)" : "rgba(255,255,255,0.035)";
   g.fill();
-  g.lineWidth = Math.max(1, 1 * s);
-  g.strokeStyle = tag.border;
+  g.strokeStyle = roleColor;
+  g.globalAlpha = 0.42;
+  g.lineWidth = 1;
   g.stroke();
-  g.fillStyle = tag.text;
-  g.fillText(tagText, ix + pad + 4.5 * s, tagY + tagH * 0.74);
-  resetTracking(g);
+  g.globalAlpha = 1;
+  g.fillStyle = roleColor;
+  g.fillText(role, roleX + 5 * s, roleY + 11.5 * s);
+  g.restore();
 
   // Flag (or a region code tag).
   const flag = face.flagUrl ? images.get(face.flagUrl) : undefined;
   if (flag) {
-    const fw = 30 * s;
-    const fh = 20 * s;
+    const fw = 24 * s;
+    const fh = 16 * s;
     const fx = ix + iw - pad - fw;
     const fy = iy + pad + 2 * s;
     g.save();
@@ -1052,21 +1042,23 @@ export function drawGameCard(
   }
 
   // Name plate.
-  const nameSize = 17 * s;
-  // The card's name plate is `font-bold` in GameCard, which the rc9 ladder sets in Demi.
   g.font = displayFont(fonts, nameSize, 600);
-  setTracking(g, 0.03, nameSize);
+  setTracking(g, 0.05, nameSize);
   g.fillStyle = photo ? "#ffffff" : INK;
-  const nameY = iy + ih - pad - (face.line ? 17 * s : 4 * s);
   g.fillText(fitText(g, face.name.toUpperCase(), iw - pad * 2), ix + pad, nameY);
   resetTracking(g);
+  if (face.specialTitle) {
+    g.font = displayFont(fonts, lineSize, 600);
+    setTracking(g, 0.06, lineSize);
+    g.fillStyle = spec.accent ?? "#ff8a3d";
+    g.fillText(fitText(g, face.specialTitle.toUpperCase(), iw - pad * 2), ix + pad, titleY);
+    resetTracking(g);
+  }
   if (face.line) {
-    const ls = 11.5 * s;
-    g.font = face.lineIsTitle ? displayFont(fonts, ls, 600) : textFont(fonts, ls, 400);
-    if (face.lineIsTitle) setTracking(g, 0.06, ls);
-    g.fillStyle = face.lineIsTitle ? (spec.accent ?? "#ff8a3d") : photo ? "rgba(255,255,255,0.65)" : SUB;
-    const line = face.lineIsTitle ? face.line.toUpperCase() : face.line;
-    g.fillText(fitText(g, line, iw - pad * 2), ix + pad, iy + ih - pad);
+    g.font = textFont(fonts, lineSize, 400);
+    setTracking(g, 0.04, lineSize);
+    g.fillStyle = photo ? "rgba(255,255,255,0.75)" : CAPTION;
+    g.fillText(fitText(g, face.line.toUpperCase(), iw - pad * 2), ix + pad, foot);
     resetTracking(g);
   }
 }

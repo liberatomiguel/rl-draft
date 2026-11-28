@@ -44,7 +44,7 @@ function runData(variant: "title" | "placement", locale: BenchLocale, bannerId: 
   ];
   const title = variant === "title";
   return {
-    placementLabel: title ? C.RESULTS_UI.champion : C.RESULTS_UI.runnerUp,
+    placementLabel: title ? S.championTitle : C.RESULTS_UI.runnerUp,
     champion: title,
     meta: [locale === "pt" ? "Draft Clássico" : "Classic draft", locale === "pt" ? "Difícil" : "Hard"].join("  ·  "),
     headline: title ? S.headlineChampion("3-1") : S.headlineOut("Team Vitality", locale === "pt" ? "Grande Final" : "Grand Final", "2-4"),

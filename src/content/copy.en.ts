@@ -2257,6 +2257,7 @@ export const SHARE_UI = {
   figSwiss: "Swiss",
   figPlayoffWins: "Playoff wins",
   dailyTag: (n: number) => `Daily #${n}`,
+  championTitle: "Champion",
   headlineUndefeated: "Undefeated.",
   headlineChampion: (record: string) => `${record} in the Swiss, then won the playoffs.`,
   headlineChampionQuick: "Won the bracket.",
