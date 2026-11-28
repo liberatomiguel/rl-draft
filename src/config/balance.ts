@@ -5143,6 +5143,9 @@ export const CAREER_MATCHDAY = {
   markProcCut: 0.6,
   /** Marking anyone else costs the marking side this much defence per game. */
   markWrongCost: -0.15,
+  // rc9 MATCHDAY (R242): marking the right player ties a defender up too, so
+  // the mark is a trade-off (worth it against a playmaker with real mechanics).
+  markRightCost: -0.08,
   /**
    * Momentum meter (§6), −momentumMax..+momentumMax per side. It replaces
    * SIMULATION.momentumBounce in career series: a side reads perPoint × meter
@@ -5194,6 +5197,25 @@ export const CAREER_MATCHDAY = {
    * "every" is the player's opt-in.
    */
   customStopDefault: "playoffs" as "every" | "playoffs",
+} as const;
+
+// rc9 MATCHDAY (R244, #234): the live game view (src/components/match). Pacing
+// at 1×, ÷ the speed toggle. Presentation only: no result reads these.
+export const MATCH_LIVE = {
+  /** ms per game second: an empty 5:00 runs in 12 s. */
+  msPerGameSecond: 40,
+  /** The board holds on each goal (the score lands, the feed adds the line). */
+  goalHoldMs: 900,
+  /** 0:00 tied: the overtime beat holds this long before the OT clock runs. */
+  overtimeHoldMs: 1200,
+  /** OT runs faster than regulation, and never longer than this. */
+  overtimeMsPerGameSecond: 20,
+  overtimeMaxMs: 9000,
+  /** The final whistle holds before the next step (break, next game, the end). */
+  finalHoldMs: 1600,
+  /** A break with a call to make waits this long, then the coach decides. */
+  breakMs: 6000,
+  speeds: [1, 2, 4] as const,
 } as const;
 
 // ---------------------------------------------------------------------------

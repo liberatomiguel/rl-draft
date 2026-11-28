@@ -127,6 +127,9 @@ import {
   userSeriesAdjustFlow,
   userSeriesSubFlow,
   delegateUserSeriesFlow,
+  playUserSeriesNextFlow, // rc9 MATCHDAY
+  setMatchdayLevelFlow, // rc9 MATCHDAY
+  type MatchdayLevel, // rc9 MATCHDAY
   type CreateCareerInput,
 } from "./careerFlow";
 import {
@@ -273,6 +276,9 @@ interface CareerStoreState {
   seriesSub: (outId: string, inId: string) => void;
   /** Slice 3: "leave it to the coach" for the rest of the paused series. */
   delegateSeries: () => void;
+  // rc9 MATCHDAY: the next game with the coach's break calls first; the one matchday setting.
+  playSeriesNext: () => void;
+  setMatchdayLevel: (level: MatchdayLevel) => void;
   completeEvent: () => void;
   passUnofficial: () => void;
   /** Accept this week's unofficial invite when auto-enter is off. */
@@ -700,6 +706,9 @@ export const useCareerStore = create<CareerStoreState>()(
         seriesAdjust: (change) => withSave((s) => userSeriesAdjustFlow(s, change)),
         seriesSub: (outId, inId) => withSave((s) => userSeriesSubFlow(s, outId, inId)),
         delegateSeries: () => withSave(delegateUserSeriesFlow),
+        // rc9 MATCHDAY
+        playSeriesNext: () => withSave(playUserSeriesNextFlow),
+        setMatchdayLevel: (level) => withSave((s) => setMatchdayLevelFlow(s, level)),
         completeEvent: () => {
           withSave(finishEvent);
           // v2.2 share kit: a browser that came through a friend's link counts once it plays.

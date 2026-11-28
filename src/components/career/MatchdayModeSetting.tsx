@@ -1,69 +1,59 @@
 "use client";
 
 /**
- * Road to Worlds v2.1 Matchday slice 5: the career's matchday mode. Quick (the
- * default, every existing career) never stops: the coach makes the plan and
- * the calls. Custom stops before the user's series (by default in the
- * playoffs and at LAN events; "every series" is the opt-in). Switching back
- * to quick with a series paused lets the coach play it out (careerFlow).
+ * rc9 MATCHDAY (R245, DESIGN-DECISIONS #236): the one matchday setting, on the
+ * Training screen (it used to sit at the foot of Club). Three levels:
+ * result only (events go to the result), watch (your series play live, the
+ * coach plans), manage (a plan before every series, then it plays live).
+ * BETA is a real status: the matchday flags are staging-only.
+ *
+ * The lobby's main button follows it; each event can still be played the
+ * other way from the lobby.
  */
 
-import { CAREER_MATCHDAY } from "@/config/balance";
+import { FEATURES } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
-import type { CareerSave, MatchdayMode, MatchdayStopAt } from "@/engine/career/types";
+import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
-import { matchdayModeOf } from "@/store/careerFlow";
+import { matchdayLevelOf, type MatchdayLevel } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
+import { Badge } from "@/components/ui/Badge";
 
-export function MatchdayModeSetting({ save }: { save: CareerSave }) {
+const LEVELS: readonly MatchdayLevel[] = ["result", "watch", "manage"];
+
+export function MatchdayModeSetting({ save, className }: { save: CareerSave; className?: string }) {
   const M = useCareerCopy().club.matchdayMode;
-  const setMode = useCareerStore((s) => s.setMatchdayMode);
-  const mode = matchdayModeOf(save);
-  const stopAt: MatchdayStopAt = save.prefs.matchdayStopAt ?? CAREER_MATCHDAY.customStopDefault;
-  const modes: { id: MatchdayMode; label: string; hint: string }[] = [
-    { id: "quick", label: M.quick, hint: M.quickHint },
-    { id: "custom", label: M.custom, hint: M.customHint },
-  ];
+  const setLevel = useCareerStore((s) => s.setMatchdayLevel);
+  if (!FEATURES.matchdayDecisions) return null;
+  const level = matchdayLevelOf(save);
 
   return (
-    <fieldset className="w-full">
-      <legend className="kicker mb-2">{M.label}</legend>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {modes.map((m) => (
+    <section className={cx("panel p-5", className)} aria-labelledby="matchday-setting-title">
+      <div className="card-head">
+        <h2 id="matchday-setting-title" className="card-title">
+          {M.label}
+        </h2>
+        <Badge tone="blue">{M.beta}</Badge>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-labelledby="matchday-setting-title">
+        {LEVELS.map((l) => (
           <button
-            key={m.id}
+            key={l}
             type="button"
-            aria-pressed={mode === m.id}
-            onClick={() => setMode(m.id)}
+            role="radio"
+            aria-checked={level === l}
+            onClick={() => setLevel(l)}
             className={cx(
-              "flex min-h-11 flex-col items-start rounded-md border px-3 py-2 text-left transition-colors",
-              mode === m.id ? "border-orange" : "border-line-strong hover:border-blue/60",
+              "display min-h-11 rounded-[7px] border px-2 text-sm font-semibold transition-colors",
+              level === l ? "border-orange text-ink" : "border-line-strong text-sub hover:border-blue/60 hover:text-ink",
             )}
           >
-            <span className="display text-sm font-semibold uppercase tracking-wide text-ink">{m.label}</span>
-            <span className="mt-0.5 text-xs text-sub">{m.hint}</span>
+            {M.levels[l]}
           </button>
         ))}
       </div>
-      {mode === "custom" ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-sub">{M.stopAt}</span>
-          {(["playoffs", "every"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-pressed={stopAt === s}
-              onClick={() => setMode("custom", s)}
-              className={cx(
-                "display min-h-11 rounded-md border px-3 text-xs font-semibold uppercase tracking-wide sm:min-h-8",
-                stopAt === s ? "border-orange text-ink" : "border-line-strong text-sub hover:text-ink",
-              )}
-            >
-              {s === "every" ? M.stopEvery : M.stopPlayoffs}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </fieldset>
+      <p className="mt-3 text-sm text-sub">{M.notes[level]}</p>
+      <p className="mt-1 text-xs text-faint">{M.betaNote}</p>
+    </section>
   );
 }

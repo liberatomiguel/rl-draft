@@ -58,6 +58,8 @@ import { OperationsBlock } from "@/components/career/hub/OperationsBlock";
 import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { establishedOf } from "@/engine/career/established";
 import { SeasonGoalBlock } from "@/components/career/hub/SeasonGoalBlock";
+import { HubPlayerStats } from "@/components/career/hub/HubPlayerStats";
+import { WeeklyScrimLine } from "@/components/career/hub/WeeklyScrimLine";
 import { ICON_TONE, MailKindIcon } from "../news/MailKindIcon";
 import { resolveMail } from "@/components/career/news/newsText";
 import { NewsFeed } from "@/components/career/news/NewsFeed";
@@ -154,8 +156,14 @@ export function HubScreen() {
             <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
             <div data-tour="hub-training" className="border-t border-line">
               <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
+              {/* rc9 HQ (#240): the cycle's growth and the week's scrims, under the plan they come from. */}
+              <WeeklyScrimLine save={save} C={C} className="border-t border-line px-4 py-4 sm:px-5" />
             </div>
           </Panel>
+
+          {/* rc9 HQ (#244): the season's player stats, on a phone too (Miguel: "no HQ também devemos ver as estatísticas"):
+              there it follows the season goal (order 7) and comes before the wire (9). */}
+          <HubPlayerStats save={save} C={C} className="order-8" />
 
           {/* 9 — THE WIRE (rc.36, UX-03: the visual feed — lead story, crests, subject, action) */}
           <div className="hq-wire order-9">

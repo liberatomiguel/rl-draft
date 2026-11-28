@@ -45,6 +45,9 @@ import { formatDateShort } from "@/components/career/dateText";
 import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
+import { SeasonPlanChoice } from "@/components/career/hub/SeasonPlanChoice";
+import { DECISION_TITLE } from "@/components/career/hub/hubShared";
+import { pendingMandateOf, pendingPackageOf } from "@/store/boardFlow";
 import { NowFollow, NowSunday } from "@/components/career/hub/SundayCard";
 import {
   NowBacker,
@@ -97,6 +100,19 @@ function LaterRow({ C, d, onLater }: { C: CareerCopy; d: PendingDecision; onLate
   );
 }
 
+/** rc9 HQ (#243): one warning that is not a decision, as a row that opens its tab. */
+function WarnRow({ href, tone, tab, children }: { href: string; tone: "orange" | "bad"; tab: string; children: React.ReactNode }) {
+  return (
+    <li className="border-b border-line last:border-b-0">
+      <AppLink href={href} className="flex min-h-12 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.03] sm:px-5">
+        <span aria-hidden className={cx("h-2 w-2 shrink-0 rounded-full", tone === "bad" ? "bg-bad" : "bg-orange")} />
+        <div className="min-w-0 flex-1 text-sm leading-snug text-ink">{children}</div>
+        <span className="shrink-0 text-xs font-semibold text-blue-bright">{tab}</span>
+      </AppLink>
+    </li>
+  );
+}
+
 export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const router = useRouter();
   const enterEvent = useCareerStore(s => s.enterEvent);
@@ -134,9 +150,11 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
     setFocusId(null);
   };
 
-  const body = (d: PendingDecision): React.ReactNode => {
-    switch (d.kind) {
-      case "event": {
+  // rc9 HQ (#242): one table of decision kinds. `Record` over the queue's kind
+  // makes TypeScript ask for a row when a kind is added, so a new decision is
+  // added here and in its copy (`C.hub.decisionKind`), nowhere else.
+  const VIEWS: Record<PendingDecision["kind"], (d: PendingDecision) => React.ReactNode> = {
+    event: () => {
         const ev = save.activeEvent?.def ?? save.pendingEventDef;
         if (!ev) return null;
         // R40 / rc.29 (CAR-02): a Saturday the playback has not finished revealing reads as the Swiss stage.
@@ -173,11 +191,10 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 router.push("/career/event");
               }}
             />
-
           </>
         );
-      }
-      case "sunday": {
+    },
+    sunday: () => {
         // rc.36 (SUN-01): Saturday evening — the briefing and "Start Sunday". While the event
         // screen still reveals Saturday (CAR-02), the card would spoil it: the event's own Continue.
         const ahead = sundayAheadOf(save);
@@ -198,30 +215,21 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           );
         }
         return <NowSunday key={ahead.def.id} save={save} C={C} ahead={ahead} />;
-      }
-      case "follow":
-        // rc.36 (SUN-03): an event the user is out of — never holds, shown above the clock.
-        return <NowFollow save={save} C={C} out={sundayWithoutYouOf(save)} follow={followCardOf(save)} />;
-      case "seasonReview":
-        return <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />;
-      case "notice":
-        return (
+    },
+    // rc.36 (SUN-03): an event the user is out of — never holds, shown above the clock.
+    follow: () => <NowFollow save={save} C={C} out={sundayWithoutYouOf(save)} follow={followCardOf(save)} />,
+    seasonReview: () => <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />,
+    // rc9 HQ: the title says what is due; the button under it says the rest (the old blurb restated both).
+    notice: () => <h2 className={DECISION_TITLE}>{C.hub.noticeTitle}</h2>,
+    contractReview: () => (
           <div>
-            <p className="kicker mb-1 text-orange-bright">{C.hub.decisionKind.notice}</p>
-            <h2 className="display text-xl font-bold uppercase tracking-wide text-ink">{C.hub.noticeTitle}</h2>
-            <p className="mt-2 max-w-xl text-sm text-sub">{C.hub.noticeBody}</p>
-          </div>
-        );
-      case "contractReview":
-        return (
-          <div>
-            <h2 className="display text-xl font-bold uppercase tracking-wide text-ink">{C.squad.reviewTitle}</h2>
-            <Button variant="primary" size="md" className="mt-4 min-h-11" onClick={() => router.push("/career/season")}>
+            <h2 className={DECISION_TITLE}>{C.squad.reviewTitle}</h2>
+            <Button variant="primary" size="lg" className="mt-5 max-sm:w-full" onClick={() => router.push("/career/season")}>
               {C.hub.continue}
             </Button>
           </div>
-        );
-      case "squadShort": {
+    ),
+    squadShort: () => {
         const def = squadHoldFor(save);
         if (!def) return null;
         return (
@@ -233,16 +241,16 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
             onSkip={canSkipShortSquadEvent(save) ? skipShortSquadEvent : undefined}
           />
         );
-      }
-      case "insert":
-        return save.pendingInsert ? (
-          <NowInsert C={C} id={save.pendingInsert.id} onChoose={resolveInsert} seasonIndex={save.clock.seasonIndex} />
-        ) : null;
-      case "invite":
-        return save.unofficialOffer ? (
-          <NowInvite save={save} C={C} D={D} def={save.unofficialOffer} onAccept={acceptUnofficial} onPass={passUnofficial} />
-        ) : null;
-      case "training": {
+    },
+    insert: () =>
+      save.pendingInsert ? (
+        <NowInsert C={C} id={save.pendingInsert.id} onChoose={resolveInsert} seasonIndex={save.clock.seasonIndex} />
+      ) : null,
+    invite: () =>
+      save.unofficialOffer ? (
+        <NowInvite save={save} C={C} D={D} def={save.unofficialOffer} onAccept={acceptUnofficial} onPass={passUnofficial} />
+      ) : null,
+    training: () => {
         // DEV-03 (front E): the coach's plan for the period — approve, adjust on Training, or keep the base.
         const decision = trainingDecisionOf(save);
         return decision ? (
@@ -255,8 +263,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
             onKeepBase={keepBaseTraining}
           />
         ) : null;
-      }
-      case "bid": {
+    },
+    bid: (d) => {
         const offer = save.pendingOffers.find((o) => o.id === d.id);
         if (!offer) {
           // R135 (ECO-06): no bid by this id, so it is a trade the org agreed to or countered.
@@ -293,10 +301,11 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
             <LaterRow C={C} d={d} onLater={() => later(d)} />
           </>
         );
-      }
-      case "board":
-        return <BoardDecision save={save} C={C} />;
-      case "sponsor": {
+    },
+    // rc9 HQ (#241): the season plan is HQ's own one-choice table; the mandate and a dismissal keep the board's pieces.
+    board: () =>
+      !pendingMandateOf(save) && pendingPackageOf(save) ? <SeasonPlanChoice save={save} C={C} /> : <BoardDecision save={save} C={C} />,
+    sponsor: (d) => {
         if (!d.parked) return null; // The shell owns the priority popup globally.
         const offers = save.sponsorOffers ?? [];
         if (offers.length === 0) return null;
@@ -311,9 +320,9 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
             onLater={() => later(d)}
           />
         );
-      }
-    }
+    },
   };
+  const body = (d: PendingDecision): React.ReactNode => VIEWS[d.kind](d);
 
   const topBody = top && top.kind !== "sponsor" ? body(top) : null;
   const index = top ? queue.indexOf(top) : -1;
@@ -328,8 +337,9 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
   const footer =
     others.length > 0 ? (
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="kicker mr-1">{C.hub.alsoDue}</span>
+        {/* rc9 HQ: quiet outlines (a tinted blue chip read as a second action); the name in ink, the deadline faint. */}
         {others.map((d) => {
           const due = deadlineTextOf(C, save, d);
           return (
@@ -337,13 +347,10 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
               key={d.id}
               type="button"
               onClick={() => setFocusId(d.id)}
-              className={cx(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md border px-2.5 text-left text-[11px] transition-colors",
-                d.parked ? "border-line text-faint hover:text-sub" : "border-blue/40 bg-blue/10 text-blue-bright hover:bg-blue/15",
-              )}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-line px-3 text-left text-xs transition-colors hover:border-line-strong"
             >
-              <span className="font-semibold">{decisionLabelOf(C, save, d)}</span>
-              {due ? <span className="text-faint">· {due}</span> : null}
+              <span className={cx("display font-semibold", d.parked ? "text-sub" : "text-ink")}>{decisionLabelOf(C, save, d)}</span>
+              {due ? <span className="text-faint">{due}</span> : null}
               {d.parked ? <span className="text-faint">· {C.hub.parked}</span> : null}
             </button>
           );
@@ -371,21 +378,23 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         footer={footer}
       />
 
-      {expiring > 0 ? (
-        <AppLink href="/career/squad" className="flex min-h-11 items-center rounded-lg border border-orange/30 bg-white/[0.02] px-3.5 text-sm text-ink transition-colors hover:border-orange/60">
-          {C.hub.contractsExpiring(expiring)}
-        </AppLink>
-      ) : null}
-      {cashTight ? (
-        <AppLink href="/career/finances" className="flex min-h-11 items-center rounded-lg border border-bad/40 bg-white/[0.02] px-3.5 text-sm text-bad transition-colors hover:border-bad/70">
-          {C.hub.cashWarningCard(runway ?? 0)}
-        </AppLink>
-      ) : null}
-      {backerOwed ? (
-        <AppLink href="/career/finances" className="block rounded-lg border border-orange/30 bg-white/[0.02] px-3.5 py-2.5 text-sm text-sub transition-colors hover:border-orange/60">
-          {/* rc.32 (M4): the debt and what the next breach means. */}
-          <NowBacker save={save} C={C} owed={formatMoney(backerOwed.remaining)} />
-        </AppLink>
+      {/* rc9 HQ (#243): the warnings that are not decisions are rows of one board, each a link to its tab:
+          a dot for the state (orange to watch, red for money running out), the fact in ink, the tab's name on the right. */}
+      {expiring > 0 || cashTight || backerOwed ? (
+        <ul className="panel overflow-hidden !p-0">
+          {expiring > 0 ? (
+            <WarnRow href="/career/squad" tone="orange" tab={C.nav.squad}>{C.hub.contractsExpiring(expiring)}</WarnRow>
+          ) : null}
+          {cashTight ? (
+            <WarnRow href="/career/finances" tone="bad" tab={C.nav.finances}>{C.hub.cashWarningCard(runway ?? 0)}</WarnRow>
+          ) : null}
+          {backerOwed ? (
+            <WarnRow href="/career/finances" tone="orange" tab={C.nav.finances}>
+              {/* rc.32 (M4): the debt and what the next breach means. */}
+              <NowBacker save={save} C={C} owed={formatMoney(backerOwed.remaining)} />
+            </WarnRow>
+          ) : null}
+        </ul>
       ) : null}
 
       {/* Accept-bid confirm: cost + balance-after BEFORE commit (principle 4). */}

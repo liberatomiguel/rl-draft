@@ -23,12 +23,11 @@ import type { CareerEventDef, CareerSave, TradeProposal, TransferOffer } from "@
 import { insertById, type InsertEffects } from "@/data/career/inserts";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { REGION_BADGE } from "@/components/regionStyle";
 import { dateOfDay, nameOfRef, squadAge } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { TeamStars } from "@/components/career/TeamStars";
-import { TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
+import { DECISION_TITLE, TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
 import { formatLineOf } from "@/components/career/event/WeekendPlan";
 import { Badge } from "@/components/ui/Badge";
 import { MarketValueTag } from "@/components/career/MarketValueTag";
@@ -57,21 +56,19 @@ export function NowInsert({
   return (
     <div>
       <EventBrand name={id} size="lg" className="mb-3" />
-      <p className="kicker mb-1 text-cyan">{C.inserts.kinds[def.kind]}</p>
-      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
+      <p className="kicker mb-1">{C.inserts.kinds[def.kind]}</p>
+      <h2 className={DECISION_TITLE}>{item.title}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
+      {/* rc9 HQ: two equal answers, so two equal outlines (option A's orange tint read as the recommended one). */}
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {def.options.map((o) => (
           <button
             key={o.key}
             type="button"
             onClick={() => onChoose(o.key)}
-            className={cx(
-              "flex min-h-24 flex-col rounded-xl border px-4 py-3 text-left transition-colors",
-              o.key === "a" ? "border-orange/50 bg-orange/10 hover:bg-orange/15" : "border-line bg-white/[0.03] hover:border-line-strong",
-            )}
+            className="flex min-h-24 flex-col rounded-lg border border-line px-4 py-3 text-left transition-colors hover:border-orange/60"
           >
-            <span className="display text-sm font-bold uppercase tracking-[0.1em] text-ink">{o.key === "a" ? item.a : item.b}</span>
+            <span className="display text-[15px] font-semibold leading-snug text-ink">{o.key === "a" ? item.a : item.b}</span>
             <InsertEffectRows fx={o.effects} C={C} seasonIndex={seasonIndex} />
           </button>
         ))}
@@ -101,8 +98,9 @@ function InsertEffectRows({ fx, C, seasonIndex }: { fx: InsertEffects; C: Career
   return (
     <ul className="mt-2 space-y-1">
       {rows.map((r) => (
-        <li key={r.key} className="flex items-center gap-2 text-[11px]">
-          <span className={cx("flex h-5 w-5 items-center justify-center rounded-md", r.good ? "bg-good/15 text-good" : "bg-bad/15 text-bad")}>{r.icon}</span>
+        <li key={r.key} className="flex items-center gap-2 text-xs">
+          {/* rc9 HQ: the icon names the subject, so it sits plain; the signed value carries the colour. */}
+          <span className="flex h-5 w-5 items-center justify-center text-faint">{r.icon}</span>
           <span className="text-sub">{r.label}</span>
           <span className={cx("display ml-auto font-bold", r.good ? "text-good" : "text-bad")}>{r.value}</span>
         </li>
@@ -157,14 +155,14 @@ export function NowInvite({
   return (
     <div>
       <EventBrand name={def.name} className="mb-2.5" />
-      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
-        {C.hub.inviteTitle(def.name)}
-      </h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <h2 className={DECISION_TITLE}>{C.hub.inviteTitle(def.name)}</h2>
+      {/* rc9 HQ: one tag (the tier) and one line of facts, in place of four tinted badges. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <TierChip tier={def.tier} />
-        <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
-        <Badge tone="blue">{formatDaysAway(D, daysAway)}</Badge>
-        <Badge tone="orange">{formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}</Badge>
+        <span className="text-sm text-sub">
+          {formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))} · {formatDaysAway(D, daysAway)} ·{" "}
+          <span className="display font-semibold text-ink">{formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}</span>
+        </span>
       </div>
       <p className="mt-3 max-w-md text-sm text-sub">
         {C.hub.inviteBody(formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day)))}
@@ -214,9 +212,7 @@ export function NowSquadShort({
   return (
     <div>
       <p className="kicker mb-1 text-bad">{C.hub.squadShortKicker}</p>
-      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">
-        {absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}
-      </h2>
+      <h2 className={DECISION_TITLE}>{absent ? C.hub.squadShortAbsentTitle : C.hub.squadShortTitle}</h2>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">
         {absent ? C.hub.squadShortAbsentBody(absent.name, def.name, C.hub.absenceReasons[save.pendingUnavailability?.reason ?? "fitness"]) : C.hub.squadShortBody(save.squad.length, def.name)}
       </p>
@@ -256,9 +252,7 @@ export function NowSeason({ save, C, onGo }: { save: CareerSave; C: CareerCopy; 
   const ended = save.phase === "ended";
   return (
     <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
-        {ended ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
-      </h2>
+      <h2 className={DECISION_TITLE}>{ended ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}</h2>
       <Button variant="primary" size="lg" className="mt-5 w-full sm:w-auto" onClick={onGo}>
         {C.hub.continue}
       </Button>
@@ -311,41 +305,35 @@ export function NowEvent({
   return (
     <div>
       <EventBrand name={def.name} className="mb-2.5" />
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
-        {def.name}
-      </h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {stage ? (
-          <Badge tone={stage.tone} className={cx(stage.live && "animate-pulse")}>
-            {stage.label}
-          </Badge>
-        ) : (
-          <Badge tone="orange" className={cx(daysAway === 0 && "animate-pulse")}>
-            {C.hub.matchdayIn(daysAway)}
-          </Badge>
-        )}
+      <h2 className={DECISION_TITLE}>{def.name}</h2>
+      {/* rc9 HQ: two tags at most (the day's stage, the tier); region and date read in the line under them. No pulse: the chrome does not loop. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        {stage ? <Badge tone={stage.tone}>{stage.label}</Badge> : <Badge tone="orange">{C.hub.matchdayIn(daysAway)}</Badge>}
         <TierChip tier={def.tier} />
-        {def.region ? <Badge className={REGION_BADGE[def.region]}>{def.region}</Badge> : null}
-        <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, day ?? def.day))}</Badge>
+        <span className="ml-1 text-sm text-sub">
+          {def.region ? `${def.region} · ` : ""}
+          {formatDateShort(D, dateOfDay(save.clock.seasonIndex, day ?? def.day))}
+        </span>
       </div>
 
-      {/* Phone: three rows on hairlines (`.stat-trio`); as boxes a third of the screen wide the labels wrapped to three lines. */}
-      <div className="stat-trio mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker">{C.calendar.prizePool}</p>
-          <p className="display text-lg font-bold text-orange-bright">
+      {/* rc9 HQ: three figures with their labels under them, ruled off by one hairline, no box per number.
+          Phone: three rows on hairlines (`.stat-trio`). */}
+      <div className="stat-trio mt-5 grid grid-cols-3 gap-4 border-t border-line pt-4">
+        <div>
+          <p className="display text-2xl font-bold leading-none tabular-nums text-ink">
             {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
           </p>
+          <p className="kicker mt-1.5">{C.calendar.prizePool}</p>
         </div>
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker">{C.common.seasonPoints}</p>
-          <p className="card-title">
+        <div>
+          <p className="display text-[15px] font-bold leading-none tabular-nums text-ink sm:mt-2">
             {points !== null ? `${points} ${C.standings.ptsShort}` : "-"}
           </p>
+          <p className="kicker mt-1.5">{C.common.seasonPoints}</p>
         </div>
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker">{C.calendar.fieldQuality}</p>
-          <TeamStars stars={Math.round(fieldStars)} size="md" className="mt-1" />
+        <div>
+          <TeamStars stars={Math.round(fieldStars)} size="md" className="sm:mt-1.5" />
+          <p className="kicker mt-1.5">{C.calendar.fieldQuality}</p>
         </div>
       </div>
       <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
@@ -450,7 +438,7 @@ export function NowBid({
         </div>
         <div className="text-right">
           <p className="kicker">{C.market.fee}</p>
-          <p className="display text-2xl font-bold text-orange-bright">
+          <p className="display text-2xl font-bold tabular-nums text-ink">
             {formatMoney(offer.fee, { compact: true })}
           </p>
         </div>
@@ -514,7 +502,7 @@ export function NowTrade({
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sub">{C.market.trade.cash}</span>
-          <span className="display font-bold text-orange-bright">{cash > 0 ? formatMoney(cash, { compact: true }) : C.market.trade.noCash}</span>
+          <span className="display font-bold text-ink">{cash > 0 ? formatMoney(cash, { compact: true }) : C.market.trade.noCash}</span>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-3">
@@ -560,7 +548,7 @@ export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; 
           <p className={cx("text-xs font-semibold", loan.covered ? "text-orange-bright" : "text-bad")}>
             {C.hub.loanDue(deadlineDateText(C.dates, loan.deadline, save.clock), loan.weeksLeft ?? 0)}
           </p>
-          <p className="text-xs text-faint">{C.hub.loanDueRule}</p>
+          {/* rc9 HQ: the bank's rule is told on Finances (the row opens it), not again on HQ. */}
         </>
       ) : null}
       {endAt !== null && breaches >= 1 ? (

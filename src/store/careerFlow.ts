@@ -99,6 +99,7 @@ import {
   openUserSeries,
   playOutWithCoach,
   playUserGame,
+  playUserNext, // rc9 MATCHDAY
   setSeriesPlan,
   type SeriesControl,
 } from "@/engine/career/matchdaySeries";
@@ -4172,6 +4173,39 @@ export function userSeriesSubFlow(input: CareerSave, outId: string, inId: string
     return { ...us, userTeam: edged, sub: { outId, inId } };
   });
 }
+
+// rc9 MATCHDAY ---------------------------------------------------------------
+
+/**
+ * R240: the next game of the paused series with the coach making the user's
+ * break calls first (as quick mode does); the user's own timeout, called just
+ * before, stands. The live view plays each game this returns.
+ */
+export function playUserSeriesNextFlow(input: CareerSave): CareerSave {
+  return withUserSeries(input, (us, { teamA, teamB }, save) => {
+    if (isSeriesOver(us.state)) return null;
+    const played = playUserNext(us.state, us.rngState, teamA, teamB, userControlOf(save, us.userSide));
+    return { ...us, state: played.state, rngState: played.rngState };
+  });
+}
+
+/** R245: the one matchday setting. "result" = instant results, "watch" = the coach plans, "manage" = your plan before every series. */
+export type MatchdayLevel = "result" | "watch" | "manage";
+
+export function matchdayLevelOf(save: CareerSave): MatchdayLevel {
+  if (matchdayModeOf(save) === "custom") return "manage";
+  return save.prefs.playbackDefault === "instant" ? "result" : "watch";
+}
+
+export function setMatchdayLevelFlow(input: CareerSave, level: MatchdayLevel): CareerSave {
+  if (matchdayLevelOf(input) === level) return input;
+  const save = setMatchdayModeFlow(input, level === "manage" ? "custom" : "quick", level === "manage" ? "every" : undefined);
+  const out = save === input ? clone(input) : save;
+  out.prefs.playbackDefault = level === "result" ? "instant" : "full";
+  return out;
+}
+
+// --- end rc9 MATCHDAY ---------------------------------------------------------
 
 /** "Leave it to the coach" from here: he makes every remaining call and plays the series out. */
 export function delegateUserSeriesFlow(input: CareerSave): CareerSave {

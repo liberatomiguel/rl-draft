@@ -15,6 +15,7 @@ import { cx } from "@/lib/util";
 import { goalTotalOf } from "@/engine/career/board";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
+import { Badge } from "@/components/ui/Badge";
 
 /**
  * The words of a goal: the season's own, rc.35's split model, or a legacy key.
@@ -46,12 +47,6 @@ function familyOf(label: SeasonGoalLabel): Family {
   return "regional";
 }
 
-const FAMILY_TONE: Record<Family, string> = {
-  cup: "text-cyan",
-  regional: "text-blue-bright",
-  major: "text-orange-bright",
-  worlds: "text-amber-300",
-};
 
 /** One glyph per goal family — 24×24 currentColor, round caps (the house style). */
 function GoalIcon({ family, className }: { family: Family; className?: string }) {
@@ -105,41 +100,34 @@ function statusOf(row: SeasonGoalRowView): Status | null {
   return row.progress.out ? "out" : "open";
 }
 
-const STATUS_TONE: Record<Status, string> = {
-  done: "border-good/40 bg-good/10 text-good",
-  met: "border-good/40 bg-good/10 text-good",
-  open: "border-blue/40 bg-blue/10 text-blue-bright",
-  out: "border-bad/40 bg-bad/10 text-bad",
-  missed: "border-bad/40 bg-bad/10 text-bad",
+// rc9 HQ (#245): the status is a Badge (a real state: met, missed, out of reach). "Open" is the
+// normal state of a goal in progress, so it gets no tag at all.
+const STATUS_TONE: Record<Status, "good" | "bad" | null> = {
+  done: "good",
+  met: "good",
+  open: null,
+  out: "bad",
+  missed: "bad",
 };
 
-/** The meter: one pip per count (up to nine), else a bar. */
-function Meter({ done, target, tone }: { done: number; target: number; tone: string }) {
+/** The meter: one pip per count (up to nine), else a bar. One tone: the ink fills, the line is the rest. */
+function Meter({ done, target, hit }: { done: number; target: number; hit: boolean }) {
+  const fill = hit ? "bg-good" : "bg-ink/80";
   if (target <= 9) {
     return (
       <span className="flex items-center gap-1" aria-hidden>
         {Array.from({ length: target }, (_, i) => (
-          <span
-            key={i}
-            className={cx("h-2 w-4 rounded-sm sm:w-5", i < done ? tone : "bg-white/10")}
-          />
+          <span key={i} className={cx("h-1.5 w-4 rounded-sm sm:w-5", i < done ? fill : "bg-white/10")} />
         ))}
       </span>
     );
   }
   return (
-    <span className="block h-2 w-24 overflow-hidden rounded-full bg-white/10" aria-hidden>
-      <span className={cx("block h-full rounded-full", tone)} style={{ width: `${Math.min(100, (100 * done) / target)}%` }} />
+    <span className="block h-1.5 w-24 overflow-hidden rounded-full bg-white/10" aria-hidden>
+      <span className={cx("block h-full rounded-full", fill)} style={{ width: `${Math.min(100, (100 * done) / target)}%` }} />
     </span>
   );
 }
-
-const METER_TONE: Record<Family, string> = {
-  cup: "bg-cyan",
-  regional: "bg-blue-bright",
-  major: "bg-orange-bright",
-  worlds: "bg-amber-300",
-};
 
 function GoalRow({
   row,
@@ -170,58 +158,39 @@ function GoalRow({
   const deadlineDate = row.deadline
     ? formatDateTiny(C.dates, dateOfDay(seasonIndex, row.deadline.on.day))
     : null;
+  const tone = status && showStatus ? STATUS_TONE[status] : null;
+  // rc9 HQ (#245): three text steps. The label line is faint (role, then what it pays), the goal is the
+  // row's name (Demi, mixed case, ink for the target and sub for the stretch), the count and the
+  // deadline are secondary. The family icon names the competition, so it stays, in the label's grey.
   return (
-    <div className={cx("flex gap-3", !primary && "opacity-90")}>
-      <span
-        className={cx(
-          "flex shrink-0 items-center justify-center",
-          primary ? "mt-0.5 h-6 w-6" : "mt-0.5 h-5 w-5",
-          FAMILY_TONE[family],
-        )}
-      >
+    <div className="flex gap-3">
+      <span className={cx("mt-0.5 flex shrink-0 items-center justify-center text-faint", primary ? "h-6 w-6" : "h-5 w-5")}>
         <GoalIcon family={family} className={primary ? "h-5 w-5" : "h-4 w-4"} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="kicker">{C.goals.role[row.role]} <span className="ml-1.5 normal-case tracking-normal text-orange-bright">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span></span>
-          {status && showStatus ? (
-            <span
-              className={cx(
-                "display shrink-0 rounded border px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.12em]",
-                STATUS_TONE[status],
-              )}
-            >
-              {C.goals.status[status]}
-            </span>
-          ) : null}
+          <span className="text-xs text-faint">
+            <span className="kicker">{C.goals.role[row.role]}</span>
+            <span className="ml-2">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span>
+          </span>
+          {tone && status ? <Badge tone={tone} className="shrink-0">{C.goals.status[status]}</Badge> : null}
         </div>
-        <p
-          className={cx(
-            "display font-bold uppercase tracking-wide",
-            primary ? "text-base leading-tight text-ink" : "text-sm leading-tight text-sub",
-          )}
-        >
+        <p className={cx("display mt-1 font-bold leading-snug", primary ? "text-[15px] text-ink" : "text-sm text-sub")}>
           {seasonGoalText(row.label, C, totals)}
         </p>
         {p ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Meter done={p.done} target={p.target} tone={METER_TONE[family]} />
-            <span className="text-[11px] font-semibold text-sub">
-              {p.done}/{p.target}
-              {left ? <span className="font-normal text-faint"> · {left}</span> : null}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <Meter done={p.done} target={p.target} hit={p.hit} />
+            <span className="text-xs text-sub">
+              <span className="display font-semibold tabular-nums text-ink">{p.done}/{p.target}</span>
+              {left ? <span className="text-faint"> · {left}</span> : null}
             </span>
           </div>
         ) : null}
         {deadline && row.met === null && primary ? (
-          <p className="mt-1 flex items-start gap-1 text-[11px] leading-snug text-faint">
-            <svg viewBox="0 0 24 24" className="mt-px h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-              <circle cx="12" cy="13" r="7" />
-              <path d="M12 9.5V13l2.5 1.5M10 3h4" strokeLinecap="round" />
-            </svg>
-            <span className="min-w-0">
-              {deadline}
-              {deadlineDate ? <span className="text-faint/80"> · {deadlineDate}</span> : null}
-            </span>
+          <p className="mt-1.5 text-xs leading-snug text-faint">
+            {deadline}
+            {deadlineDate ? <> · {deadlineDate}</> : null}
           </p>
         ) : null}
       </div>
@@ -255,24 +224,17 @@ export function SeasonGoalRows({
     if (b.last) chips.push(C.goals.why.last[b.last]);
   }
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary showStatus={showStatus} totals={totals} />
-      <div className="border-t border-line/60 pt-3">
+      <div className="border-t border-line pt-4">
         <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} showStatus={showStatus} totals={totals} />
       </div>
       {showWhy ? (
-        <div className="space-y-1.5 border-t border-line/60 pt-2.5">
-          {chips.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {chips.map((c) => (
-                <span key={c} className="rounded border border-line bg-white/[0.03] px-1.5 py-0.5 text-[11px] text-sub">
-                  {c}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <p className="text-[11px] leading-snug text-faint">
-            <span className={cx("font-semibold", view.repRisk > 0 ? "text-bad/90" : "text-sub")}>
+        // rc9 HQ: what the board read, as one secondary line (no chip per reason), then what a miss costs.
+        <div className="space-y-1 border-t border-line pt-3">
+          {chips.length > 0 ? <p className="text-xs leading-snug text-sub">{chips.join(" · ")}</p> : null}
+          <p className="text-xs leading-snug text-faint">
+            <span className={view.repRisk > 0 ? "text-bad" : "text-sub"}>
               {view.repRisk > 0 ? C.goals.missCost(view.repRisk) : C.goals.noCost}
             </span>
             {b ? <> · {C.goals.fixedNote}</> : null}

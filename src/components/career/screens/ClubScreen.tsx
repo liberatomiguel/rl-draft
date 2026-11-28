@@ -38,11 +38,10 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { REGION_BADGE } from "@/components/regionStyle";
-import { CAREER_BOARD, FEATURES } from "@/config/balance";
+import { CAREER_BOARD } from "@/config/balance";
 import { establishedOf, standingOf } from "@/engine/career/established";
 import { StandingTrack } from "@/components/career/board/BoardParts";
 import { OperationsSummary } from "@/components/career/finances/Operations";
-import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserOrgMark } from "@/components/career/OrgMark";
 import { CareerShareButton } from "@/components/career/share/CareerShareButton";
@@ -484,12 +483,7 @@ export function ClubScreen() {
       {/* 5. Career settings: one destructive action, kept apart at the foot of the page. */}
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
         <h3 className="card-title">{copy.club.settings}</h3>
-        {/* v2.1 Matchday slice 5: quick or custom (staging flag). */}
-        {FEATURES.matchdayDecisions ? (
-          <div className="order-last w-full">
-            <MatchdayModeSetting save={save} />
-          </div>
-        ) : null}
+        {/* rc9 MATCHDAY: the matchday setting moved to the Training screen. */}
         <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
           {copy.club.abandonCareer}
         </Button>
