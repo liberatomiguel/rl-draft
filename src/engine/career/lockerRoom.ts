@@ -648,7 +648,12 @@ export function lockerStep(input: LockerRoomState, facts: LockerStepInput): Lock
     st.losingRun = poor ? st.losingRun + 1 : 0;
     if (poor && st.losingRun >= L.losingRunFrom) for (const m of squad) step.move(m.id, -L.losingRunDrop, "losingRun");
     // rc9 (R212): the results memory, from the series against what the ratings expected.
-    if (ev.series && ev.series.length > 0) st.results = round2((st.results ?? 0) * L.results.decay + surpriseOf(ev.series));
+    // A favourite beating the ratings counts × favouriteUpShare: the top side of a field wins more than p says.
+    if (ev.series && ev.series.length > 0) {
+      const surprise = surpriseOf(ev.series);
+      const counted = surprise > 0 && ev.favourite ? surprise * L.results.favouriteUpShare : surprise;
+      st.results = round2((st.results ?? 0) * L.results.decay + counted);
+    }
     // rc9 (R216): the reserve who started this event goes back to the bench.
     if (st.swap && st.swap.eventId === ev.eventId) {
       step.notes.push({ kind: "swapBack", inId: st.swap.inId, outId: st.swap.outId });

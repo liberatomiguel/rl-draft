@@ -129,7 +129,22 @@ export const CAREER_LOCKER = {
    * `weeklyDecay` per week). The target moves `perUnit` per unit of memory, at
    * most `cap` either way; a player on a bench run takes `benchShare` of it.
    */
-  results: { expectScale: 3, decay: 0.75, weeklyDecay: 0.95, perUnit: 20, cap: 30, benchShare: 0.5 },
+  results: {
+    expectScale: 3,
+    decay: 0.75,
+    weeklyDecay: 0.95,
+    perUnit: 20,
+    cap: 30,
+    benchShare: 0.5,
+    /**
+     * An event the user side entered as the field's top-rated team: its series
+     * above expectation count × this (below expectation count in full).
+     * Measured (rc9 probe, the strongest org of NA / EU / SAM from season 6):
+     * those sides win 75–80 % of series against p = 65–68 %, so in full a
+     * dynasty sat content or delighted all season on results alone.
+     */
+    favouriteUpShare: 0,
+  },
   /**
    * R212 the difficulty's own edge, which the series' ratingDiff does not carry
    * (rating points added to the user side's edge before p is read). Measured on

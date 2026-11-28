@@ -385,6 +385,12 @@ describe("rc9 LOCKER: morale that moves", () => {
     const fav = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: true }] }).state;
     const dog = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: false }] }).state;
     expect(dog.players.a.morale - fav.players.a.morale).toBe(L.titleLift - Math.round(L.titleLift * L.favouriteTitleShare));
+
+    // The favourite beating the ratings counts × favouriteUpShare; losing below them counts in full.
+    const favBeat = step(emptyLockerRoom(), { events: [{ ...event("top4"), favourite: true, series: [won(0.3), won(0.3), won(0.4)] }] }).state;
+    expect(favBeat.results ?? 0).toBeCloseTo(beat.results! * L.results.favouriteUpShare, 1);
+    const favFlop = step(emptyLockerRoom(), { events: [{ ...event("swiss_exit"), favourite: true, series: [lost(0.8), lost(0.75), lost(0.7)] }] }).state;
+    expect(favFlop.results).toBe(flop.results);
   });
 
   it("R212: the difficulty's edge shifts the expectation (Hard expects less), none without a difficulty", () => {
