@@ -6,7 +6,6 @@ import type { CareerSave } from "@/engine/career/types";
 import { honorsTableOf } from "@/engine/career/honors";
 import { Panel } from "@/components/ui/Panel";
 import { AppLink } from "@/components/ui/AppLink";
-import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EventTierIcon } from "./event/EventTierIcon";
 import { OrgMark } from "./OrgMark";
@@ -24,7 +23,7 @@ function filterClass(selected: boolean): string {
 /**
  * Shared title race: short HQ card or the full standings list. A real table:
  * the titles column decides the order, so it is the largest thing in a row;
- * the player's own row is a fill.
+ * the player's own row is set in Demi between two stronger hairlines.
  */
 export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSave; C: CareerCopy; compact?: boolean }) {
   const [mode, setMode] = useState<"orgs" | "players">("orgs");
@@ -41,9 +40,10 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
       <div className="card-head"><h3 className="card-title">{C.club.honorsTitle}</h3></div>
       {!compact ? <p className="max-w-prose text-sm leading-snug text-sub">{C.club.honorsHint}</p> : null}
 
-      <div className={cx("mb-4 mt-4 grid gap-3", !compact && "sm:max-w-xl sm:grid-cols-2")}>
+      {/* rc9 HQ: the two filters are their own labels (the words on the buttons); the group names stay for a screen reader. */}
+      <div className={cx("mb-4 mt-4 grid gap-2", !compact && "sm:max-w-xl sm:grid-cols-2 sm:gap-3")}>
         <fieldset className="min-w-0">
-          <legend className="mb-1.5 text-xs text-sub">{C.club.honorsEntityFilter}</legend>
+          <legend className="sr-only">{C.club.honorsEntityFilter}</legend>
           <div role="group" aria-label={C.club.honorsEntityFilter} className="flex gap-1.5">
             {(["orgs", "players"] as const).map(k => (
               <button key={k} type="button" aria-pressed={mode === k} onClick={() => setMode(k)} className={filterClass(mode === k)}>
@@ -53,7 +53,7 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
           </div>
         </fieldset>
         <fieldset className="min-w-0">
-          <legend className="mb-1.5 text-xs text-sub">{C.club.honorsEventFilter}</legend>
+          <legend className="sr-only">{C.club.honorsEventFilter}</legend>
           <div role="group" aria-label={C.club.honorsEventFilter} className="flex gap-1.5">
             {(["major", "worlds"] as const).map(k => (
               <button key={k} type="button" aria-pressed={tier === k} onClick={() => setTier(k)} className={filterClass(tier === k)}>
@@ -79,16 +79,16 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
               {leaders.map(r => {
                 const isUser = r.id === "user";
                 return (
-                  <tr key={r.id} className={cx("border-b border-line last:border-0", isUser && "bg-white/[0.07]")}>
-                    <td className="display px-2 py-2.5 text-sm font-semibold text-faint">{r[field] > 0 ? rows.indexOf(r) + 1 : "–"}</td>
+                  // The user's row: his name in Demi and a stronger hairline above and below, no fill or tag.
+                  <tr key={r.id} className={cx("border-b last:border-b-0", isUser ? "border-y border-line-strong" : "border-line")}>
+                    <td className="display px-2 py-2.5 text-sm font-semibold tabular-nums text-faint">{r[field] > 0 ? rows.indexOf(r) + 1 : "–"}</td>
                     <th scope="row" className="px-2 py-2.5 text-left font-normal">
                       <span className="flex min-w-0 items-center gap-2">
                         {mode === "orgs" ? <OrgMark save={save} orgRef={r.id} size="xs" /> : null}
-                        <span className={cx("min-w-0 truncate", isUser ? "font-semibold text-ink" : "text-ink")}>{r.name}</span>
-                        {isUser ? <Badge tone="orange" className="shrink-0">{C.standings.userChip}</Badge> : null}
+                        <span className={cx("min-w-0 truncate", isUser ? "display font-bold text-ink" : "text-sub")}>{r.name}</span>
                       </span>
                     </th>
-                    <td className="display px-2 py-2.5 text-right text-xl font-bold leading-none text-ink">{r[field]}</td>
+                    <td className={cx("display px-2 py-2.5 text-right text-xl font-bold tabular-nums leading-none", isUser || r[field] > 0 ? "text-ink" : "text-faint")}>{r[field]}</td>
                   </tr>
                 );
               })}
@@ -101,13 +101,12 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
 
       {compact ? (
         <>
-          <div className="mt-2 flex items-center gap-2 border-t border-line-strong bg-white/[0.07] px-2 py-2.5 text-sm">
+          <div className="mt-1 flex items-center gap-2 border-y border-line-strong px-2 py-2.5 text-sm">
             <OrgMark save={save} orgRef="user" size="xs" />
-            <span className="min-w-0 flex-1 truncate font-semibold text-ink">{save.identity.orgName}</span>
-            <Badge tone="orange" className="shrink-0">{C.standings.userChip}</Badge>
-            <span className="display ml-2 text-xl font-bold leading-none text-ink">{ownTitles}</span>
+            <span className="display min-w-0 flex-1 truncate font-bold text-ink">{save.identity.orgName}</span>
+            <span className="display ml-2 text-xl font-bold tabular-nums leading-none text-ink">{ownTitles}</span>
           </div>
-          <AppLink href="/career/standings#history" className="mt-3 block text-right text-xs font-semibold text-blue-bright hover:text-ink">
+          <AppLink href="/career/standings#history" className="mt-3 block text-right text-xs font-semibold text-blue-bright underline-offset-4 hover:underline">
             {C.club.honorsAll}
           </AppLink>
         </>

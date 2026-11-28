@@ -228,7 +228,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
           (the picked one in the orange hairline); the icons name the plan, so they sit plain. */}
       {save.coach ? <div className="mt-5 border-t border-line pt-4">
         <p className="card-title flex items-center gap-2"><WhistleIcon className="h-4 w-4 text-faint" />{C.sunday.briefingTitle}</p>
-        <p className="mt-1.5 text-xs text-sub">{championship ? C.sunday.championshipHint : C.sunday.briefingHint}</p>
+        <p className="mt-1.5 text-xs text-sub">{C.sunday.briefingHint}</p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={C.sunday.briefingTitle}>
           {SUNDAY_BRIEFINGS.map((c) => {
             const Icon = BRIEFING_ICON[c];

@@ -3,10 +3,11 @@
 /**
  * Road to Worlds — Calendar (v0.2 day clock, FIFA-style month view).
  *
- * Top → bottom: date header + window banner · "Next for you" stops strip ·
- * one navigable month in a 7-col grid (Mon-Sun) with day markers and a tap-to-open
- * day-detail panel · unofficial invite · season overview pips · advance
- * actions directly beneath the month. The legend stays below the grid.
+ * rc9 HQ (#243). What the player decides here: how far to move the clock.
+ * What he must see first: the next stop that needs him (its name, its date,
+ * how far away) with the action that moves there. So the screen opens on that
+ * one board, then the month he is in, then the stops after it as rows, the
+ * invite when there is one and the season's progress.
  * v2.0 (R40): the weekend reads per day — Saturday Qualifier / Swiss stage,
  * Sunday Regional / Championship Sunday; a spectated Major is a muted cell;
  * qualifier results read Qualified / Eliminated (never a champion).
@@ -15,7 +16,7 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { playoffsDayFor } from "@/engine/career/calendar";
 import { hasChampion } from "@/engine/career/careerResults";
 import type {
@@ -34,7 +35,6 @@ import {
   agendaDays,
   clockLabel,
   dateOfDay,
-  daysUntilWindowCloses,
   isEventPaused,
   isUserEventDef,
   nameOfRef,
@@ -44,6 +44,7 @@ import {
   visibleContinueKind,
   type AgendaDay,
   type DayKind,
+  type UpcomingStop,
 } from "@/components/career/careerUi";
 import {
   formatDateShort,
@@ -55,19 +56,23 @@ import { formatLineOf, roleTitleOf } from "@/components/career/event/WeekendPlan
 import { placementLabelOf, weekendRoleOf } from "@/components/career/event/weekendView";
 import { EventTierIcon, TIER_ICON_TONE } from "@/components/career/event/EventTierIcon";
 import { OrgMark } from "@/components/career/OrgMark";
-import { TrophyIcon } from "@/components/ui/icons";
+import { CloseIcon, TrophyIcon } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 
-/** Matchday cell fill, tinted by tier (orange = action; Worlds goes gold). */
-const MATCHDAY_FILL: Record<EventTier, string> = {
-  worlds: "border-amber-400/70 bg-amber-400/20",
-  major: "border-orange/80 bg-orange/25",
-  regional: "border-orange/60 bg-orange/15",
-  qualifier: "border-blue/60 bg-blue/15",
-  t2: "border-orange/45 bg-orange/10",
-  t3: "border-orange/45 bg-orange/10",
+/**
+ * rc9 HQ (#243): an event day is marked by a hairline in its tier's tone and its
+ * tier icon, not a tinted fill (a month of orange boxes was the loudest thing on
+ * the screen). Worlds keeps its gold: it is the reward.
+ */
+const MATCHDAY_EDGE: Record<EventTier, string> = {
+  worlds: "border-amber-400/70",
+  major: "border-orange/80",
+  regional: "border-orange/55",
+  qualifier: "border-blue/60",
+  t2: "border-line-strong",
+  t3: "border-line-strong",
 };
 
 interface MonthGroup {
@@ -82,6 +87,15 @@ function revealDay(detail: HTMLElement | null, reduced: boolean): void {
   if (!detail) return;
   detail.style.scrollMarginBottom = "96px";
   detail.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+}
+
+/** A stop's name: the event's, or the calendar's word for it. */
+function stopTitleOf(C: CareerCopy, stop: UpcomingStop | null): string {
+  if (!stop) return C.calendar.seasonEnd;
+  if (stop.event) return stop.event.name;
+  if (stop.kind === "window") return C.calendar.window;
+  if (stop.kind === "payday") return C.calendar.payday;
+  return C.calendar.seasonEnd;
 }
 
 export function CalendarScreen() {
@@ -134,7 +148,7 @@ export function CalendarScreen() {
     );
   }, [save]);
 
-  const stops = useMemo(() => (save ? upcomingStops(save, 4) : []), [save]);
+  const stops = useMemo(() => (save ? upcomingStops(save, 5) : []), [save]);
 
   /** rc.36 (CAL-01): the season's transfer windows as day ranges (the month headers name their end). */
   const windowRanges = useMemo(() => {
@@ -155,15 +169,22 @@ export function CalendarScreen() {
   }, [selectedDay, reducedMotion]);
 
   if (!mounted || !save) {
+    // Loading: the shapes of the next-stop board, the month and the rail.
     return (
-      <div className="mx-auto max-w-3xl px-3 py-5 sm:px-4">
-        <div className="h-[60vh] animate-pulse rounded-2xl bg-white/5" aria-busy />
+      <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4" aria-busy>
+        <div className="mb-5 h-9 w-48 animate-pulse rounded-lg bg-white/5" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+          <div className="space-y-4">
+            <div className="h-44 animate-pulse rounded-xl bg-white/5" />
+            <div className="h-96 animate-pulse rounded-xl bg-white/5" />
+          </div>
+          <div className="h-64 animate-pulse rounded-xl bg-white/5" />
+        </div>
       </div>
     );
   }
 
   const clk = clockLabel(save);
-  const windowDaysLeft = daysUntilWindowCloses(save);
   const currentMonthKey = `${clk.date.y}-${clk.date.m}`;
   const requestedMonth = viewedMonth ?? currentMonthKey;
   const requestedMonthIndex = months.findIndex((g) => g.key === requestedMonth);
@@ -197,15 +218,8 @@ export function CalendarScreen() {
       : null);
 
   const nextStop = stops[0] ?? null;
-  const nextStopLabel = nextStop
-    ? nextStop.event
-      ? nextStop.event.name
-      : nextStop.kind === "window"
-        ? C.calendar.window
-        : nextStop.kind === "payday"
-          ? C.calendar.payday
-          : C.calendar.seasonEnd
-    : C.calendar.seasonEnd;
+  const nextStopLabel = stopTitleOf(C, nextStop);
+  const laterStops = stops.slice(1);
 
   // rc.29 (CAR-09): the opened detail scrolls itself into view (revealAboveBar);
   // re-selecting the open day scrolls back to it.
@@ -233,7 +247,47 @@ export function CalendarScreen() {
     }
   };
 
-  // --- day detail panel (rendered under the month that owns the day) -------
+  // --- the one action: what moves the clock from here -----------------------
+  const actionDisabled = save.phase !== "running" || scrimPlaying;
+  const actions =
+    continueState === "decision" ? (
+      <Button variant="primary" onClick={() => router.push("/career")}>
+        {C.hub.nowDecision}
+      </Button>
+    ) : continueState === "seasonReview" || continueState === "ended" ? (
+      <Button variant="primary" onClick={() => router.push("/career/season")}>
+        {continueState === "ended" ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
+      </Button>
+    ) : sundayStop ? (
+      <Button variant="primary" onClick={() => router.push("/career")}>
+        {C.calendar.sundayAhead}
+      </Button>
+    ) : paused ? (
+      <Button
+        variant="primary"
+        onClick={() => {
+          continueEventToNextDay();
+          router.push("/career/event");
+        }}
+      >
+        {C.calendar.advanceToStop(C.event.championshipSunday)}
+      </Button>
+    ) : eventDue ? (
+      <AppLink href="/career/event" className={buttonClass("primary")}>
+        {C.calendar.advanceToStop(eventDue.name)}
+      </AppLink>
+    ) : (
+      <>
+        <Button variant="primary" onClick={() => advanceToNextStop()} disabled={actionDisabled}>
+          {C.calendar.advanceToStop(nextStopLabel)}
+        </Button>
+        <Button variant="ghost" onClick={() => advanceDay()} disabled={actionDisabled}>
+          {C.calendar.advanceDay}
+        </Button>
+      </>
+    );
+
+  // --- day detail (rendered under the month that owns the day) -------------
   const renderDayDetail = (day: AgendaDay) => {
     const event = day.event;
     const result = event ? resultByEvent.get(event.id) : undefined;
@@ -242,26 +296,25 @@ export function CalendarScreen() {
     const role = event ? weekendRoleOf(event, day.day) : null;
     const twoDayRole = role === "swissDay" || role === "championshipSunday" ? role : null;
     const kindBadges = day.kinds.filter((k) => k !== "matchday" && k !== "idle");
+    const booked = save.scheduledScrims.filter((s) => s.day === day.day);
+    const played = save.scrimLog.filter(
+      (e) => e.seasonIndex === save.clock.seasonIndex && e.day === day.day,
+    );
 
     return (
       <div ref={detailRef} className="scroll-mt-28">
-        <Panel className="rise-in mt-2 p-4 sm:p-5">
+        <div className="rise-in mt-4 border-t border-line-strong pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="kicker mb-1">
+              <p className="text-xs text-faint">
                 {formatDateShort(D, day.date)}
                 {day.isToday ? ` · ${C.calendar.today}` : ""}
               </p>
               {event ? (
                 <>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      aria-hidden
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white/[0.04]"
-                    >
-                      <EventTierIcon tier={event.tier} className={cx("h-4 w-4", TIER_ICON_TONE[event.tier])} />
-                    </span>
-                    <span className="display text-base font-bold text-ink">{event.name}</span>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <EventTierIcon tier={event.tier} className={cx("h-4 w-4 shrink-0", TIER_ICON_TONE[event.tier])} />
+                    <span className="display text-lg font-bold leading-tight text-ink">{event.name}</span>
                     <TierChip tier={event.tier} />
                     {twoDayRole ? (
                       <Badge tone={twoDayRole === "championshipSunday" ? "gold" : "orange"}>
@@ -272,77 +325,67 @@ export function CalendarScreen() {
                       <Badge className={REGION_BADGE[event.region]}>{event.region}</Badge>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-xs text-sub">{formatLineOf(C, event)}</p>
+                  <p className="mt-1 text-sm text-sub">{formatLineOf(C, event)}</p>
                 </>
               ) : kindBadges.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {kindBadges.map((k) => {
-                    const label = kindLabel(k);
-                    if (!label) return null;
-                    return (
-                      <Badge
-                        key={k}
-                        tone={k === "windowOpen" ? "blue" : "neutral"}
-                      >
-                        {label}
-                      </Badge>
-                    );
-                  })}
-                </div>
+                <p className="display mt-1 text-lg font-bold leading-tight text-ink">
+                  {kindBadges.map((k) => kindLabel(k)).filter(Boolean).join(" · ")}
+                </p>
               ) : (
-                <p className="text-sm text-faint">{C.calendar.openWeek}</p>
+                <p className="mt-1 text-sm text-sub">{C.calendar.openWeek}</p>
               )}
             </div>
             <button
               type="button"
               onClick={() => setSelectedDay(null)}
               aria-label={C.common.close}
-              className="shrink-0 rounded-md px-2 py-1 text-sub transition-colors hover:bg-white/10 hover:text-ink"
+              className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sub transition-colors hover:bg-white/10 hover:text-ink"
             >
-              ✕
+              <CloseIcon className="h-4 w-4" />
             </button>
           </div>
 
           {event ? (
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
-              <span>
-                <span className="text-faint">{C.calendar.prizePool} </span>
-                <span className="font-semibold text-ink">
+            // The stakes as figures: the value in Demi, its label quiet beside it.
+            <dl className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+              <div className="flex items-baseline gap-1.5">
+                <dd className="display text-[15px] font-bold tabular-nums text-ink">
                   {formatMoney(prizePoolOf(event, save.difficulty), { compact: true })}
-                </span>
-              </span>
+                </dd>
+                <dt className="text-xs text-faint">{C.calendar.prizePool}</dt>
+              </div>
               {points !== null ? (
-                <span>
-                  <span className="text-faint">{C.calendar.points} </span>
-                  <span className="font-semibold text-ink">{points}</span>
-                </span>
+                <div className="flex items-baseline gap-1.5">
+                  <dd className="display text-[15px] font-bold tabular-nums text-ink">{points}</dd>
+                  <dt className="text-xs text-faint">{C.calendar.points}</dt>
+                </div>
               ) : null}
               {result?.userPlacement ? (
                 <Badge tone="blue">{placementLabelOf(placementLabels, event.tier, result.userPlacement)}</Badge>
               ) : save.pendingEventDef?.id === event.id ? (
                 <Badge tone="orange">{C.calendar.registered}</Badge>
               ) : !isUserEventDef(save, event) ? (
-                <span className="text-faint">{C.calendar.notQualified}</span>
+                <span className="text-xs text-faint">{C.calendar.notQualified}</span>
               ) : null}
-            </div>
+            </dl>
           ) : null}
 
           {/* rc.36 (CAL-01): a finished event names its champion, with the crest. */}
           {event && result && hasChampion(result) ? (
-            <div className="mt-2.5 flex items-center gap-2 text-xs">
-              <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <TrophyIcon className="h-4 w-4 shrink-0 text-amber-300" />
               <span className="text-faint">{C.common.placement.champion}</span>
               <OrgMark save={save} orgRef={result.championRef} size="xs" className="shrink-0" />
-              <span className="min-w-0 truncate font-semibold text-ink">{nameOfRef(save, result.championRef)}</span>
+              <span className="display min-w-0 truncate font-bold text-ink">{nameOfRef(save, result.championRef)}</span>
             </div>
           ) : null}
 
           {/* rc.36 (SUN-03): the event the user is out of that resolved this day — follow it. */}
           {followed && followed.day === day.day ? (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue/30 bg-blue/[0.06] px-3 py-2">
-              <span className="flex min-w-0 items-center gap-2 text-xs">
-                <EventTierIcon tier={followed.def.tier} className="h-3.5 w-3.5 shrink-0 text-blue-bright" />
-                <span className="min-w-0 truncate font-semibold text-ink">{followed.def.name}</span>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+              <span className="flex min-w-0 items-center gap-2 text-sm">
+                <EventTierIcon tier={followed.def.tier} className="h-4 w-4 shrink-0 text-sub" />
+                <span className="min-w-0 truncate text-ink">{followed.def.name}</span>
               </span>
               <Button
                 size="sm"
@@ -357,51 +400,38 @@ export function CalendarScreen() {
             </div>
           ) : null}
 
-          {/* v0.3 — booked scrim on this day (future: cancellable) */}
-          {(() => {
-            const booked = save.scheduledScrims.filter((s) => s.day === day.day);
-            if (booked.length === 0) return null;
-            return (
-              <div className="mt-3 border-t border-line pt-2.5">
-                {booked.map((s) => (
-                  <div key={s.oppRef} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-semibold text-sub">
-                      {C.scrim.title} · {C.scrim.vs(nameOfRef(save, s.oppRef))}
-                    </span>
-                    {day.day > save.clock.day ? (
-                      <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
-                        {C.scrim.cancel}
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
+          {/* v0.3 — a booked scrim on this day (cancellable before it is played) */}
+          {booked.length > 0 ? (
+            <ul className="mt-3 border-t border-line">
+              {booked.map((s) => (
+                <li key={s.oppRef} className="flex min-h-11 items-center justify-between gap-2 border-b border-line py-1.5 last:border-b-0">
+                  <span className="text-sm text-ink">
+                    {C.scrim.title} <span className="text-sub">· {C.scrim.vs(nameOfRef(save, s.oppRef))}</span>
+                  </span>
+                  {day.day > save.clock.day ? (
+                    <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
+                      {C.scrim.cancel}
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {/* v0.3 — scrim results played on this day */}
-          {(() => {
-            const played = save.scrimLog.filter(
-              (e) => e.seasonIndex === save.clock.seasonIndex && e.day === day.day,
-            );
-            if (played.length === 0) return null;
-            return (
-              <div className="mt-3 border-t border-line pt-2.5 space-y-1.5">
-                {played.map((e) => (
-                  <div key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
-                    <Badge tone={e.won ? "good" : "neutral"}>
-                      {e.won
-                        ? C.scrim.won(e.oppName, e.scoreA, e.scoreB)
-                        : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
-                    </Badge>
-                    <span className="text-faint">{C.scrim.gameLine(e.games.join(" · "))}</span>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-
-    </Panel>
+          {played.length > 0 ? (
+            <ul className="mt-3 border-t border-line">
+              {played.map((e) => (
+                <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line py-2 last:border-b-0">
+                  <span className={cx("text-sm", e.won ? "text-good" : "text-sub")}>
+                    {e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
+                  </span>
+                  <span className="text-xs text-faint">{C.scrim.gameLine(e.games.join(" · "))}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -409,69 +439,79 @@ export function CalendarScreen() {
   const splits = [1, 2, 3] as const;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-4">
-      {/* 1 — header: date chip + season/split badges ------------------------ */}
-      <div className="rise-in">
-        <SectionTitle
-          
-          title={C.calendar.title}
-          right={
-            <Badge tone="orange">
-              {C.calendar.today} · {formatDateShort(D, clk.date)}
-            </Badge>
-          }
-        />
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <Badge>{clk.season}</Badge>
-          {clk.split ? <Badge tone="blue">{C.calendar.split(clk.split)}</Badge> : null}
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4">
+      <SectionTitle
+        title={C.calendar.title}
+        className="mb-5"
+        right={
+          <span className="text-sm text-sub">
+            {clk.season}
+            {clk.split ? ` · ${C.calendar.split(clk.split)}` : ""}
+          </span>
+        }
+      />
 
-      {windowDaysLeft !== null ? (
-        <Panel glow="blue" className="rise-in flex flex-wrap items-center gap-2.5 px-4 py-3">
-          <Badge tone="blue">{C.calendar.windowOpen}</Badge>
-          <span className="text-sm text-sub">{C.calendar.windowCloses(windowDaysLeft)}</span>
-        </Panel>
-      ) : null}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)] lg:gap-6">
+        <div className="min-w-0 space-y-4">
+          {/* 1 — THE NEXT STOP: the screen's focal point and its one filled action. */}
+          <Panel strong data-tour="calendar-next" className="p-4 sm:p-6">
+            <p className="kicker">{C.calendar.nextForYou}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              {nextStop?.event ? (
+                <EventTierIcon tier={nextStop.event.tier} className={cx("h-6 w-6 shrink-0", TIER_ICON_TONE[nextStop.event.tier])} />
+              ) : null}
+              <h2 className="display text-2xl font-bold leading-none text-ink sm:text-3xl">{nextStopLabel}</h2>
+              {nextStop?.event ? <TierChip tier={nextStop.event.tier} /> : null}
+            </div>
+            {nextStop ? (
+              <p className="mt-2 text-sm text-sub">
+                {formatDateShort(D, nextStop.date)}
+                <span className="text-faint"> · {formatDaysAway(D, nextStop.daysAway)}</span>
+              </p>
+            ) : null}
+            <div className="mt-5 flex flex-wrap items-center gap-2 [&>*]:max-w-full [&>*]:whitespace-normal">{actions}</div>
+          </Panel>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
-        <div className="min-w-0">      {/* 3 — month calendar grid -------------------------------------------- */}
-      <section data-tour="calendar-month" className="min-w-0 rounded-2xl border border-line bg-panel p-3 sm:p-5">
-        <div>
-          {months.filter((g) => g.key === visibleMonth?.key).map((g) => {
-            return (
-              <div
-                key={g.key}
-                id={`cal-month-${g.key}`}
-                className="scroll-mt-24"
-              >
-                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => changeMonth(visibleMonthIndex - 1)} disabled={visibleMonthIndex === 0} aria-label={C.calendar.previousMonth} className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-25">‹</button>
-                    <h2 className="display min-w-36 text-center text-sm font-bold uppercase tracking-wide text-ink" aria-live="polite">
-                      {D.months[g.m - 1]} <span className="font-semibold text-faint">{g.y}</span>
-                    </h2>
-                    <button type="button" onClick={() => changeMonth(visibleMonthIndex + 1)} disabled={visibleMonthIndex === months.length - 1} aria-label={C.calendar.nextMonth} className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-25">›</button>
+          {/* 2 — THE MONTH: the grid, the day it opens, the key. */}
+          <Panel data-tour="calendar-month" className="min-w-0 p-3 sm:p-5">
+            {months.filter((g) => g.key === visibleMonth?.key).map((g) => (
+              <div key={g.key} id={`cal-month-${g.key}`} className="scroll-mt-24">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => changeMonth(visibleMonthIndex - 1)}
+                      disabled={visibleMonthIndex === 0}
+                      aria-label={C.calendar.previousMonth}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <span aria-hidden className="text-lg leading-none">‹</span>
+                    </button>
+                    <h3 className="card-title min-w-36 text-center" aria-live="polite">
+                      {D.months[g.m - 1]} <span className="text-faint">{g.y}</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => changeMonth(visibleMonthIndex + 1)}
+                      disabled={visibleMonthIndex === months.length - 1}
+                      aria-label={C.calendar.nextMonth}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <span aria-hidden className="text-lg leading-none">›</span>
+                    </button>
                   </div>
                   {/* rc.36 (CAL-01): the window(s) running through this month, end date named. */}
                   {windowRanges
                     .filter((r) => r.start <= g.days[g.days.length - 1].day && r.end >= g.days[0].day)
                     .map((r) => (
-                      <span
-                        key={r.start}
-                        className="inline-flex items-center gap-1.5 rounded-sm border border-blue/40 bg-blue/15 px-2 py-0.5 text-[11px] font-semibold text-blue-bright"
-                      >
-                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-blue-bright" />
+                      <span key={r.start} className="text-xs text-blue-bright">
                         {C.calendar.windowUntil(formatDateTiny(D, dateOfDay(save.clock.seasonIndex, r.end)))}
                       </span>
                     ))}
                 </div>
-                <div className="-mx-3 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-1">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                   {D.weekdays.map((w) => (
-                    <div
-                      key={w}
-                      className="pb-0.5 text-center text-[10px] font-semibold uppercase tracking-wider text-faint"
-                    >
+                    <div key={w} className="kicker pb-1 text-center">
                       {w}
                     </div>
                   ))}
@@ -497,48 +537,42 @@ export function CalendarScreen() {
                         aria-pressed={isSelected}
                         aria-label={
                           formatDateShort(D, d.date) +
+                          (d.isToday ? ` · ${C.calendar.today}` : "") +
                           (cellLabel ? `: ${cellLabel}` : "") +
                           (spectating ? ` · ${C.calendar.notQualified}` : "") +
                           (d.windowOpen ? ` · ${C.calendar.window}` : "")
                         }
                         title={spectating ? `${cellLabel} · ${C.calendar.notQualified}` : cellLabel}
                         className={cx(
-                          "relative flex min-h-11 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
+                          "relative flex min-h-12 flex-col items-center rounded-md border pb-1.5 pt-1.5 text-xs leading-none transition-colors hover:bg-white/[0.06] sm:min-h-14",
                           // rc.49: an event day wears its tier (a spectated Major / Worlds too), even inside a transfer window.
-                          ev
-                            ? MATCHDAY_FILL[ev.tier]
-                            : d.windowOpen
-                              ? "border-blue/50 bg-blue/15 hover:bg-blue/20"
-                              : "border-line/50 bg-white/[0.015] hover:bg-white/[0.05]",
+                          ev ? cx(MATCHDAY_EDGE[ev.tier], "bg-white/[0.03]") : d.windowOpen ? "border-blue/30 bg-blue/[0.06]" : "border-line/60",
+                          spectating && "opacity-60",
                           d.isPast && !d.isToday && "opacity-40",
-                          d.windowOpen && "shadow-[inset_0_-2px_0_#60a5fa]",
-                          d.isToday && "ring-2 ring-orange",
-                          isSelected && "border-white/60",
+                          d.isToday && "!border-orange",
+                          isSelected && "!border-ink/70 bg-white/[0.06]",
                         )}
                       >
-                        <span className={cx(ev ? "font-bold text-ink" : d.windowOpen ? "font-semibold text-blue-bright" : "font-semibold text-sub")}>
+                        <span
+                          className={cx(
+                            "display tabular-nums",
+                            d.isToday || ev ? "font-bold text-ink" : d.windowOpen ? "font-semibold text-blue-bright" : "font-semibold text-sub",
+                          )}
+                        >
                           {d.date.d}
                         </span>
-                        <span className="mt-auto flex h-3 items-center gap-0.5 pt-0.5">
+                        <span className="mt-auto flex h-3.5 items-center gap-0.5 pt-1">
                           {ev ? (
-                            <EventTierIcon
-                              tier={ev.tier}
-                              className={cx("h-3 w-3", TIER_ICON_TONE[ev.tier])}
-                            />
+                            <EventTierIcon tier={ev.tier} className={cx("h-3.5 w-3.5", TIER_ICON_TONE[ev.tier])} />
                           ) : followed && followed.day === d.day ? (
                             // rc.36 (SUN-03): an event the user is out of — muted, tap to follow it.
-                            <EventTierIcon tier={followed.def.tier} className="h-3 w-3 text-white/40" />
+                            <EventTierIcon tier={followed.def.tier} className="h-3.5 w-3.5 text-white/40" />
                           ) : d.kinds.includes("scrim") ? (
-                            // v0.3: a booked scrim reads as a ringed training dot.
-                            <span
-                              className="h-1.5 w-1.5 rounded-full bg-cyan/80 ring-1 ring-cyan/40"
-                              title={C.calendar.scrimDay}
-                            />
+                            // v0.3: a booked scrim is the blue dot.
+                            <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" />
                           ) : d.kinds.includes("training") ? (
                             <span className="h-1 w-1 rounded-full bg-white/25" />
                           ) : null}
-
-
                         </span>
                       </button>
                     );
@@ -546,226 +580,139 @@ export function CalendarScreen() {
                 </div>
                 {sel && sel.date.m === g.m && sel.date.y === g.y ? renderDayDetail(sel) : null}
               </div>
-            );
-          })}
-        </div>
-        {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
-            (payroll stays in Finances) */}
-        <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">{C.launch.calendarLegend}</p>
-        <div
-          className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-faint"
-          aria-label={C.calendar.legend}
-        >
-          <span className="inline-flex items-center gap-1">
-            <span className="flex h-3.5 w-3.5 items-center justify-center rounded border border-orange/70 bg-orange/25">
-              <EventTierIcon tier="regional" className="h-2.5 w-2.5 text-orange-bright" />
-            </span>
-            {C.calendar.matchday}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-3.5 w-5 rounded border border-blue/45 bg-blue/25" />
-            {C.calendar.window}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-1 w-1 rounded-full bg-white/30" />
-            {C.calendar.trainingDay}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full ring-2 ring-orange" />
-            {C.calendar.today}
-          </span>
-        </div>
+            ))}
 
-        </div>
-      </section>
-
-      {/* 6 — footer actions ----------------------------------------------------- */}
-      {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
-          half of this bar — it now sits above it. */}
-      <div className="mt-3">
-        <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-4 sm:p-5 [&_button]:min-h-11 [&_button]:max-w-full [&_button]:whitespace-normal">
-          {continueState === "decision" ? (
-            <Button variant="primary" onClick={() => router.push("/career")}>
-              {C.hub.nowDecision}
-            </Button>
-          ) : continueState === "seasonReview" || continueState === "ended" ? (
-            <Button variant="primary" onClick={() => router.push("/career/season")}>
-              {continueState === "ended" ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
-            </Button>
-          ) : sundayStop ? (
-            <Button variant="primary" onClick={() => router.push("/career")}>
-              {C.calendar.sundayAhead}
-            </Button>
-          ) : paused ? (
-            <Button
-              variant="primary"
-              onClick={() => {
-                continueEventToNextDay();
-                router.push("/career/event");
-              }}
+            {/* The key: what each mark in the grid means (rc.36, CAL-01: no payroll marker). */}
+            <div
+              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-xs text-faint"
+              aria-label={C.calendar.legend}
             >
-              {C.calendar.advanceToStop(C.event.championshipSunday)}
-            </Button>
-          ) : eventDue ? (
-            <AppLink
-              href="/career/event"
-              className={cx(
-                "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
-                "bg-orange text-paper-ink",
-                "transition-colors hover:bg-orange-bright",
-              )}
-            >
-              {C.calendar.advanceToStop(eventDue.name)}
-            </AppLink>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => advanceDay()}
-                disabled={save.phase !== "running" || scrimPlaying}
-              >
-                {C.calendar.advanceDay}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => advanceToNextStop()}
-                disabled={save.phase !== "running" || scrimPlaying}
-              >
-                {C.calendar.advanceToStop(nextStopLabel)}
-              </Button>
-            </>
-          )}
-        </Panel>
-      </div>
-</div><aside className="min-w-0 space-y-4">      {/* 2 — next for you (plan-ahead strip) -------------------------------- */}
-      <section data-tour="calendar-next" className="rise-in">
-        <p className="card-title mb-3">{C.calendar.nextForYou}</p>
-        <div className="grid grid-cols-1 gap-2">
-          {stops.map((stop, i) => {
-            const title = stop.event
-              ? stop.event.name
-              : stop.kind === "window"
-                ? C.calendar.window
-                : stop.kind === "payday"
-                  ? C.calendar.payday
-                  : C.calendar.seasonEnd;
-            return (
-              <button
-                key={`${stop.kind}-${stop.day}`}
-                type="button"
-                onClick={() => selectDay(stop.day)}
-                className={cx(
-                  "w-full min-w-0 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                  i === 0
-                    ? "border-orange/50 bg-orange/[0.06] hover:bg-orange/10"
-                    : "border-line bg-white/[0.02] hover:border-line-strong",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    {stop.event ? (
-                      <EventTierIcon tier={stop.event.tier} className={cx("h-3.5 w-3.5 shrink-0", TIER_ICON_TONE[stop.event.tier])} />
-                    ) : null}
-                    <span className="display text-xs font-bold text-ink">{title}</span>
-                  </span>
-                  {stop.event ? (
-                    <TierChip tier={stop.event.tier} className="!px-1.5 !text-[10px]" />
-                  ) : stop.kind === "window" ? (
-                    <Badge tone="blue" className="!px-1.5 !text-[10px]">
-                      {C.calendar.windowOpen}
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-[11px] text-sub">
-                  {formatDateTiny(D, stop.date)}
-                  <span className="text-faint"> · {formatDaysAway(D, stop.daysAway)}</span>
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 4 — unofficial invite ------------------------------------------------ */}
-      {save.unofficialOffer && !save.pendingEventDef ? (
-        <Panel glow="blue" className="rise-in p-4 sm:p-5">
-          <p className="kicker mb-1">{C.calendar.offerTitle}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="display text-base font-bold text-ink">
-              {save.unofficialOffer.name}
-            </span>
-            <TierChip tier={save.unofficialOffer.tier} />
-            <span className="text-xs text-faint">
-              {formatDateShort(
-                D,
-                dateOfDay(save.clock.seasonIndex, save.unofficialOffer.day),
-              )}{" "}
-              · {formatDaysAway(D, Math.max(0, save.unofficialOffer.day - save.clock.day))}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-sub">{C.calendar.skipHint}</p>
-          <div className="mt-3 flex gap-2">
-            <Button size="sm" onClick={() => acceptUnofficial()}>
-              {C.calendar.enter}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => passUnofficial()}>
-              {C.calendar.skip}
-            </Button>
-          </div>
-        </Panel>
-      ) : null}
-
-      {/* 5 — season overview strip -------------------------------------------- */}
-      <Panel className="p-4 sm:p-5">
-        <div className="card-head"><h3 className="card-title">{C.launch.calendarOverview}</h3></div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {splits.map((sp) => (
-            <div key={sp} className="flex items-center gap-1.5">
-              <span
-                className={cx(
-                  "text-[11px] font-semibold",
-                  clk.split === sp ? "text-orange-bright" : "text-faint",
-                )}
-              >
-                {C.calendar.split(sp)}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="flex h-4 w-4 items-center justify-center rounded border border-orange/60">
+                  <EventTierIcon tier="regional" className="h-2.5 w-2.5 text-orange-bright" />
+                </span>
+                {C.calendar.matchday}
               </span>
-              {[1, 2, 3].map((ord) => {
-                const id = `${save.clock.seasonIndex}:${sp}:reg${ord}:${save.identity.region}`;
-                return (
-                  <span
-                    key={ord}
-                    title={C.calendar.regional(ord)}
-                    className={cx(
-                      "h-2.5 w-2.5 rounded-full",
-                      resultByEvent.has(id) ? "bg-blue" : "bg-white/12",
-                    )}
-                  />
-                );
-              })}
-              <span
-                title={C.calendar.major}
-                className={cx(
-                  "h-2.5 w-2.5 rotate-45",
-                  resultByEvent.has(`${save.clock.seasonIndex}:${sp}:major`)
-                    ? "bg-orange"
-                    : "bg-white/12",
-                )}
-              />
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-4 w-5 rounded border border-blue/30 bg-blue/[0.12]" />
+                {C.calendar.window}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" />
+                {C.calendar.scrimDay}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-white/30" />
+                {C.calendar.trainingDay}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-4 w-4 rounded border border-orange" />
+                {C.calendar.today}
+              </span>
             </div>
-          ))}
-          <Badge
-            tone={resultByEvent.has(`${save.clock.seasonIndex}:worlds`) ? "gold" : "neutral"}
-          >
-            ★ {C.calendar.worlds}
-          </Badge>
+          </Panel>
         </div>
-      </Panel>
 
-</aside></div>
+        <aside className="min-w-0 space-y-4">
+          {/* 3 — the stops after the next one: rows in one board, each opens its day. */}
+          {laterStops.length > 0 ? (
+            <Panel className="p-4 sm:p-5">
+              <div className="card-head">
+                <h3 className="card-title">{C.calendar.later}</h3>
+              </div>
+              <ul className="-my-1">
+                {laterStops.map((stop) => (
+                  <li key={`${stop.kind}-${stop.day}`} className="border-b border-line last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => selectDay(stop.day)}
+                      className="flex min-h-14 w-full min-w-0 items-center gap-3 py-2 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                        {stop.event ? (
+                          <EventTierIcon tier={stop.event.tier} className={cx("h-4 w-4", TIER_ICON_TONE[stop.event.tier])} />
+                        ) : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="display block truncate text-[15px] font-bold leading-tight text-ink">{stopTitleOf(C, stop)}</span>
+                        <span className="mt-0.5 block text-xs text-faint">{formatDateTiny(D, stop.date)}</span>
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums text-sub">{formatDaysAway(D, stop.daysAway)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          ) : null}
 
+          {/* 4 — unofficial invite: one object he acts on (enter or pass). */}
+          {save.unofficialOffer && !save.pendingEventDef ? (
+            <Panel className="p-4 sm:p-5">
+              <div className="card-head">
+                <h3 className="card-title">{C.calendar.offerTitle}</h3>
+                <TierChip tier={save.unofficialOffer.tier} />
+              </div>
+              <p className="display text-lg font-bold leading-tight text-ink">{save.unofficialOffer.name}</p>
+              <p className="mt-1 text-sm text-sub">
+                {formatDateShort(D, dateOfDay(save.clock.seasonIndex, save.unofficialOffer.day))}
+                <span className="text-faint"> · {formatDaysAway(D, Math.max(0, save.unofficialOffer.day - save.clock.day))}</span>
+              </p>
+              <p className="mt-2 text-xs text-faint">{C.calendar.skipHint}</p>
+              <div className="mt-4 flex gap-2">
+                <Button size="sm" variant="secondary" onClick={() => acceptUnofficial()}>
+                  {C.calendar.enter}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => passUnofficial()}>
+                  {C.calendar.skip}
+                </Button>
+              </div>
+            </Panel>
+          ) : null}
 
-
+          {/* 5 — the season so far: a row per split, a mark per regional and its Major. */}
+          <Panel className="p-4 sm:p-5">
+            <div className="card-head">
+              <h3 className="card-title">{C.launch.calendarOverview}</h3>
+            </div>
+            <ul>
+              {splits.map((sp) => (
+                <li key={sp} className="flex min-h-10 items-center justify-between gap-3 border-b border-line py-2">
+                  <span className={cx("text-sm", clk.split === sp ? "display font-bold text-ink" : "text-sub")}>
+                    {C.calendar.split(sp)}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    {[1, 2, 3].map((ord) => {
+                      const done = resultByEvent.has(`${save.clock.seasonIndex}:${sp}:reg${ord}:${save.identity.region}`);
+                      return (
+                        <span
+                          key={ord}
+                          role="img"
+                          aria-label={`${C.calendar.regional(ord)}${done ? ` · ${C.calendar.done}` : ""}`}
+                          className={cx("h-2.5 w-2.5 rounded-full", done ? "bg-ink" : "border border-line-strong")}
+                        />
+                      );
+                    })}
+                    <span
+                      role="img"
+                      aria-label={`${C.calendar.major}${resultByEvent.has(`${save.clock.seasonIndex}:${sp}:major`) ? ` · ${C.calendar.done}` : ""}`}
+                      className={cx(
+                        "ml-1 h-2.5 w-2.5 rotate-45",
+                        resultByEvent.has(`${save.clock.seasonIndex}:${sp}:major`) ? "bg-orange" : "border border-line-strong",
+                      )}
+                    />
+                  </span>
+                </li>
+              ))}
+              <li className="flex min-h-10 items-center justify-between gap-3 pt-2">
+                <span className="text-sm text-sub">{C.calendar.worlds}</span>
+                <TrophyIcon
+                  className={cx("h-4 w-4", resultByEvent.has(`${save.clock.seasonIndex}:worlds`) ? "text-amber-300" : "text-faint")}
+                />
+              </li>
+            </ul>
+          </Panel>
+        </aside>
+      </div>
     </div>
   );
 }

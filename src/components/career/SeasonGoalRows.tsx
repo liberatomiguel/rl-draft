@@ -136,6 +136,7 @@ function GoalRow({
   primary,
   showStatus = true,
   totals = false,
+  showReward = true,
 }: {
   row: SeasonGoalRowView;
   C: CareerCopy;
@@ -143,6 +144,7 @@ function GoalRow({
   primary: boolean;
   showStatus?: boolean;
   totals?: boolean;
+  showReward?: boolean;
 }) {
   const family = familyOf(row.label);
   const status = statusOf(row);
@@ -171,7 +173,7 @@ function GoalRow({
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs text-faint">
             <span className="kicker">{C.goals.role[row.role]}</span>
-            <span className="ml-2">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span>
+            {showReward ? <span className="ml-2">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span> : null}
           </span>
           {tone && status ? <Badge tone={tone} className="shrink-0">{C.goals.status[status]}</Badge> : null}
         </div>
@@ -227,7 +229,18 @@ export function SeasonGoalRows({
     <div className="space-y-4">
       <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary showStatus={showStatus} totals={totals} />
       <div className="border-t border-line pt-4">
-        <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} showStatus={showStatus} totals={totals} />
+        <GoalRow
+          row={view.stretch}
+          C={C}
+          seasonIndex={seasonIndex}
+          primary={false}
+          showStatus={showStatus}
+          totals={totals}
+          // rc9 HQ: an org's board words both rewards alike; the line is said once, on the target.
+          showReward={
+            C.goals.reward(CAREER_SEASON_GOAL.reward.stretch) !== C.goals.reward(CAREER_SEASON_GOAL.reward.target)
+          }
+        />
       </div>
       {showWhy ? (
         // rc9 HQ: what the board read, as one secondary line (no chip per reason), then what a miss costs.

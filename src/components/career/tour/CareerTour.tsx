@@ -50,7 +50,7 @@ import {
 import { type CareerCopy } from "@/content/careerCopy";
 import { useActiveCareerCopy } from "@/components/career/orgCopy";
 import { Button, buttonClass } from "@/components/ui/Button";
-import { DiscordIcon } from "@/components/ui/icons";
+import { DiscordIcon, ScaleIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 import { SITE } from "@/config/site";
 import { careerTourId, tourSeen } from "@/lib/tours";
@@ -82,7 +82,7 @@ function step(id: string, words: Words, target: string | undefined, icon: ReactN
   };
 }
 
-function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
+function stepsOf(chapter: Chapter, C: CareerCopy, hasBoard = false): TourStep[] {
   const T = C.tour;
   switch (chapter) {
     case "hub": {
@@ -96,6 +96,8 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         standings: <TargetIcon className={SMALL} />,
         news: <ClipboardIcon className={SMALL} />,
         club: <TrophyIcon className={SMALL} />,
+        // rc9 HQ: the tab bar shows Board for a save that has one, so the tour does too.
+        ...(hasBoard ? { board: <ScaleIcon className={SMALL} /> } : {}),
       };
       return [
         step("welcome", T.hub.welcome, undefined, <TrophyIcon className={BIG} />, [
@@ -195,7 +197,8 @@ export function CareerTour() {
     return () => window.clearTimeout(timer);
   }, [chapter, route, seen, open, running, navigating, C]);
 
-  const steps = useMemo(() => (open ? stepsOf(open, C) : []), [open, C]);
+  const hasBoard = Boolean(save?.board);
+  const steps = useMemo(() => (open ? stepsOf(open, C, hasBoard) : []), [open, C, hasBoard]);
 
   const close = () => {
     // Done or Skip, the automatic opening or the help button: seen for good.

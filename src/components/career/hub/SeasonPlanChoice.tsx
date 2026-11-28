@@ -3,11 +3,10 @@
 /**
  * rc9 HQ (DESIGN-DECISIONS #241): the season plan as HQ's decision. Miguel on
  * rc.8 named the goals screen as careless: three boxes of four bold figures
- * each, every label printed three times. Here it is one choice: three rows of
- * one table, the column heads said once (budget now, bonus if met, the
- * confidence it moves), the board's proposal preselected and tagged, the picked
- * row in the orange hairline, one filled action. On a phone each row keeps its
- * figures on one line with quiet labels.
+ * each, every label printed three times. Here it is one choice: three cards
+ * side by side (stacked on a phone), each marked by its reach, its bonus the one
+ * large figure, the board's proposal preselected and tagged, the picked card in
+ * the orange hairline, one filled action under them.
  *
  * Reads the same flow as the Board page's BoardPackageChoice (pendingPackageOf,
  * chooseBoardPackage); only HQ's presentation lives here.
@@ -27,17 +26,23 @@ import { DECISION_TITLE } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
-/** The three figure columns from `sm`: the plan takes the rest. */
-const COLS = "sm:grid sm:grid-cols-[minmax(0,1fr)_5rem_7rem_7rem] sm:items-center sm:gap-x-4";
-
 function money(n: number): string {
   return n > 0 ? formatMoney(n, { compact: true }) : "–";
 }
 
-function PlanRow({ o, active, proposed, onPick, C }: { o: BoardPackage; active: boolean; proposed: string | null; onPick: () => void; C: CareerCopy }) {
+/** How far each plan reaches: one, two or three bars (the plan's mark, read before its words). */
+const REACH: Record<string, number> = { cautious: 1, expected: 2, ambitious: 3 };
+
+/**
+ * rc9 HQ (#241, amended after Miguel's "simplificamos demais"): each plan is a card the
+ * player picks, not a text row. The card's mark is its reach (bars), its one large figure
+ * the bonus if the goal is met; the budget and the confidence swing sit under a hairline.
+ * The board's proposal wears its tag on the card's top edge; the picked card is the orange hairline.
+ */
+function PlanCard({ o, active, proposed, onPick, C }: { o: BoardPackage; active: boolean; proposed: string | null; onPick: () => void; C: CareerCopy }) {
   const K = C.board.packages;
   const band = chanceBandOf(o.objective.chance ?? 0);
-  const value = active ? "text-ink" : "text-sub";
+  const reach = REACH[o.id] ?? 2;
   return (
     <button
       type="button"
@@ -45,40 +50,49 @@ function PlanRow({ o, active, proposed, onPick, C }: { o: BoardPackage; active: 
       aria-checked={active}
       onClick={onPick}
       className={cx(
-        COLS,
-        "block w-full rounded-lg border px-3 py-3 text-left transition-colors sm:py-3.5",
-        active ? "border-orange/60 bg-white/[0.03]" : "border-transparent hover:border-line-strong",
+        "card-texture relative flex h-full w-full flex-col rounded-xl border bg-white/[0.02] p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-bright",
+        active ? "border-orange bg-white/[0.04]" : "border-line-strong hover:border-ink/40",
       )}
     >
-      <span className="flex min-w-0 gap-3">
-        {/* The radio's own mark: a ring, filled when picked (the state is also the row's hairline). */}
-        <span aria-hidden className={cx("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border", active ? "border-orange" : "border-line-strong")}>
-          {active ? <span className="h-2 w-2 rounded-full bg-orange" /> : null}
-        </span>
-        <span className="min-w-0">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className={cx("display text-[15px] font-bold leading-tight", value)}>{K.name[o.id]}</span>
-            {proposed ? <Badge tone="neutral">{proposed}</Badge> : null}
+      <span className="flex items-start justify-between gap-2">
+        <span className="flex items-center gap-2.5">
+          {/* The radio's own mark: a ring, filled when picked. */}
+          <span aria-hidden className={cx("flex h-4 w-4 shrink-0 items-center justify-center rounded-full border", active ? "border-orange" : "border-line-strong")}>
+            {active ? <span className="h-2 w-2 rounded-full bg-orange" /> : null}
           </span>
-          <span className={cx("mt-1 block text-sm leading-snug", active ? "text-ink" : "text-sub")}>{goalText(C, o.objective)}</span>
-          <span className="block text-xs text-faint">{K.band(band)}</span>
+          <span className="display text-lg font-bold leading-none text-ink">{K.name[o.id]}</span>
+        </span>
+        <span aria-hidden className="flex items-end gap-0.5 pt-0.5">
+          {[1, 2, 3].map((i) => (
+            <span key={i} className={cx("w-1.5 rounded-sm", i <= reach ? (active ? "bg-orange" : "bg-ink/70") : "bg-white/10")} style={{ height: 4 + i * 4 }} />
+          ))}
         </span>
       </span>
-      {/* Phone: the three figures on one line, each with its quiet label; from `sm` they are the columns. */}
-      <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1 pl-7 sm:contents">
-        <span className="sm:text-right">
-          <span className={cx("display text-[15px] font-bold tabular-nums", value)}>{money(o.grant)}</span>
-          <span className="ml-1 text-xs text-faint sm:hidden">{K.budgetLabel}</span>
+      {proposed ? (
+        <span className="mt-2.5">
+          <Badge tone="orange">{proposed}</Badge>
         </span>
-        <span className="sm:text-right">
-          <span className={cx("display text-[15px] font-bold tabular-nums", value)}>{money(o.bonus)}</span>
-          <span className="ml-1 text-xs text-faint sm:hidden">{K.bonusLabel}</span>
+      ) : null}
+      <span className="mt-3 block text-sm leading-snug text-ink">{goalText(C, o.objective)}</span>
+      <span className="mt-1 block text-xs text-faint">{K.band(band)}</span>
+
+      {/* The plan's figure: what the goal pays. */}
+      <span className="mt-auto block pt-5">
+        <span className={cx("display block text-3xl font-bold tabular-nums leading-none", o.bonus > 0 ? "text-good" : "text-faint")}>{money(o.bonus)}</span>
+        <span className="mt-1.5 block text-xs text-faint">{K.bonusLabel}</span>
+      </span>
+      <span className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3">
+        <span>
+          <span className="display block text-[15px] font-bold tabular-nums text-ink">{money(o.grant)}</span>
+          <span className="mt-0.5 block text-xs text-faint">{K.budgetLabel}</span>
         </span>
-        <span className="sm:text-right">
-          <span className="display text-[15px] font-bold tabular-nums text-good">+{o.hit}</span>
-          <span className="text-faint"> / </span>
-          <span className="display text-[15px] font-bold tabular-nums text-bad">−{Math.abs(o.miss)}</span>
-          <span className="ml-1 text-xs text-faint sm:hidden">{K.confidenceLabel}</span>
+        <span>
+          <span className="display block text-[15px] font-bold tabular-nums">
+            <span className="text-good">+{o.hit}</span>
+            <span className="text-faint"> / </span>
+            <span className="text-bad">−{Math.abs(o.miss)}</span>
+          </span>
+          <span className="mt-0.5 block text-xs text-faint">{K.confidenceLabel}</span>
         </span>
       </span>
     </button>
@@ -99,15 +113,9 @@ export function SeasonPlanChoice({ save, C }: { save: CareerSave; C: CareerCopy 
       <p className="mt-2 max-w-2xl text-sm leading-snug text-sub">{own ? K.ownersBody : K.body}</p>
       <BoardBrief save={save} C={C} className="mt-4" />
       <div role="radiogroup" aria-label={K.title} className="mt-5">
-        <div aria-hidden className={cx(COLS, "hidden px-3 pb-2")}>
-          <span />
-          <span className="kicker text-right">{K.budgetLabel}</span>
-          <span className="kicker text-right">{K.bonusLabel}</span>
-          <span className="kicker text-right">{K.confidenceLabel}</span>
-        </div>
-        <div className="space-y-1 border-t border-line pt-1">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {offers.map((o) => (
-            <PlanRow
+            <PlanCard
               key={o.id}
               o={o}
               C={C}

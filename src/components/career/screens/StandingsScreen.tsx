@@ -75,16 +75,18 @@ function formMap(save: CareerSave, keep: number): Map<string, Placement[]> {
 // language-neutral; the full placement label rides on the title/tooltip).
 // ---------------------------------------------------------------------------
 
+// rc9 HQ (#246): form is a quiet column, so one tint for every chip; only a title keeps its gold
+// (a reward) and an early exit its red (a loss). The points column stays the row's one loud figure.
 const FORM_CHIP: Record<Placement, { label: string; cls: string }> = {
-  champion: { label: "1", cls: "bg-amber-400/15 text-amber-300" },
-  runner_up: { label: "2", cls: "bg-good/15 text-good" },
-  third: { label: "3", cls: "bg-good/10 text-good" },
-  fourth: { label: "4", cls: "bg-blue/15 text-blue-bright" },
-  top4: { label: "4", cls: "bg-blue/15 text-blue-bright" },
-  top6: { label: "6", cls: "bg-white/[0.07] text-sub" },
-  top8: { label: "8", cls: "bg-white/[0.07] text-sub" },
-  top12: { label: "12", cls: "bg-white/[0.07] text-sub" },
-  swiss_exit: { label: "9+", cls: "bg-bad/15 text-bad" },
+  champion: { label: "1", cls: "bg-white/[0.05] text-amber-300" },
+  runner_up: { label: "2", cls: "bg-white/[0.05] text-ink" },
+  third: { label: "3", cls: "bg-white/[0.05] text-ink" },
+  fourth: { label: "4", cls: "bg-white/[0.05] text-sub" },
+  top4: { label: "4", cls: "bg-white/[0.05] text-sub" },
+  top6: { label: "6", cls: "bg-white/[0.05] text-sub" },
+  top8: { label: "8", cls: "bg-white/[0.05] text-sub" },
+  top12: { label: "12", cls: "bg-white/[0.05] text-sub" },
+  swiss_exit: { label: "9+", cls: "bg-white/[0.05] text-bad" },
 };
 
 function FormChips({
@@ -178,13 +180,13 @@ function StandingsTable({
           }
         }}
         className={cx(
-          "cursor-pointer border-b border-line transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
-          // The player's own row is a fill (DESIGN.md: a state is a fill or a hairline, never a glow or an edge bar).
-          isUser ? "bg-white/[0.07] hover:bg-white/[0.1]" : "hover:bg-white/[0.04]",
+          "cursor-pointer border-b transition-colors hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
+          // rc9 HQ (#246): the player's own row is his name in Demi between two stronger hairlines (no fill, no tag).
+          isUser ? "border-y border-line-strong" : "border-line",
           expanded && "!border-b-0",
         )}
       >
-        <td className="w-10 px-2 py-2.5 text-center">
+        <td className="w-9 px-1 py-2.5 text-center sm:w-12 sm:px-2">
           <span
             className={cx(
               "display text-base font-bold leading-none",
@@ -194,36 +196,32 @@ function StandingsTable({
             {table.started ? row.rank : "–"}
           </span>
         </td>
-        <td className="px-2 py-2.5">
-          <span className="flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-2.5">
-            <OrgMark save={save} orgRef={row.ref} />
-            <span
-              className={cx(
-                "min-w-0 basis-[calc(100%-3rem)] break-words text-sm sm:basis-auto sm:truncate",
-                isUser ? "font-semibold text-ink" : row.inCut ? "text-ink" : "text-sub",
-              )}
-            >
-              {row.name}
+        {/* The row recipe: the crest, the name, its stars (or the Local tag) as the quiet line under it. */}
+        <td className="w-full max-w-0 px-1 py-2.5 sm:px-2">
+          <span className="flex min-w-0 items-center gap-2.5">
+            <OrgMark save={save} orgRef={row.ref} className="shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span
+                className={cx(
+                  "block truncate",
+                  isUser ? "display text-[15px] font-bold text-ink" : row.inCut ? "text-sm text-ink" : "text-sm text-sub",
+                )}
+              >
+                {row.name}
+              </span>
+              <span className="mt-1 flex items-center gap-2">
+                <RowMarks row={row} stars={stars} localTag={copy.race.localTag} />
+                {row.qualified ? <Badge tone="good" className="shrink-0">{copy.race.qualifiedTag}</Badge> : null}
+              </span>
             </span>
-            <RowMarks row={row} stars={stars} localTag={copy.race.localTag} />
-            {isUser ? (
-              <Badge tone="orange" className="shrink-0">
-                {copy.standings.userChip}
-              </Badge>
-            ) : null}
-            {row.qualified ? (
-              <Badge tone="good" className="hidden shrink-0 sm:inline-flex">
-                {copy.race.qualifiedTag}
-              </Badge>
-            ) : null}
           </span>
         </td>
-        <td className="hidden px-2 py-2.5 text-right sm:table-cell">
+        <td className="hidden whitespace-nowrap px-2 py-2.5 text-right sm:table-cell">
           <FormChips placements={form.get(row.ref)} labels={placementLabels} />
         </td>
         {/* The deciding column: the points, set larger than anything else in the row. */}
-        <td className="whitespace-nowrap px-3 py-2.5 text-right">
-          <span className="display text-xl font-bold leading-none text-ink">{row.points}</span>
+        <td className="whitespace-nowrap py-2.5 pl-2 pr-1 text-right sm:px-3">
+          <span className="display text-xl font-bold tabular-nums leading-none text-ink">{row.points}</span>
           <span className="ml-1 text-xs text-faint">{copy.standings.ptsShort}</span>
         </td>
       </tr>,
@@ -232,7 +230,7 @@ function StandingsTable({
       const splitPts = save.competition.splitPoints[region]?.[row.ref] ?? 0;
       const seasonPts = save.competition.seasonPoints[region]?.[row.ref] ?? 0;
       trs.push(
-        <tr key={`x:${row.ref}`} className="border-b border-line bg-white/[0.07]">
+        <tr key={`x:${row.ref}`} className="border-b border-line-strong">
           <td colSpan={4} className="px-3 pb-3 pt-0">
             <dl className="rise-in flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-line pt-3">
               <RaceFigure label={copy.race.majorTab}>
@@ -267,7 +265,8 @@ function StandingsTable({
 
   return (
     <div className="min-w-0">
-      <table className="mobile-list-table w-full border-collapse">
+      {/* rc9 HQ: a table on a phone too: rows under hairlines, not a card per team. */}
+      <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-line-strong">
             <th className="kicker w-10 px-2 pb-2 text-center">#</th>
@@ -307,14 +306,9 @@ function FieldList({
           const inner = (
             <>
               <OrgMark save={save} orgRef={ref} />
-              <span className={cx("min-w-0 flex-1 truncate text-sm", isUser ? "font-semibold text-ink" : "text-ink")}>
+              <span className={cx("min-w-0 flex-1 truncate", isUser ? "display text-[15px] font-bold text-ink" : "text-sm text-sub")}>
                 {nameOfRef(save, ref)}
               </span>
-              {isUser ? (
-                <Badge tone="orange" className="shrink-0">
-                  {copy.standings.userChip}
-                </Badge>
-              ) : null}
               {isLocalRef(ref) ? (
                 <Badge className="shrink-0">{copy.race.localTag}</Badge>
               ) : (
@@ -327,9 +321,9 @@ function FieldList({
             </>
           );
           return (
-            <li key={ref} className="border-b border-line">
+            <li key={ref} className={cx("border-b", isUser ? "border-y border-line-strong" : "border-line")}>
               {isUser ? (
-                <div className={cx(rowClass, "bg-white/[0.07]")}>{inner}</div>
+                <div className={rowClass}>{inner}</div>
               ) : (
                 <button
                   type="button"
@@ -497,9 +491,9 @@ export function StandingsScreen() {
           <Panel strong className="mb-4 p-4 sm:p-5">
             <div className="grid items-center gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
               <div className="flex min-w-0 items-center gap-3">
-                <OrgMark save={save} orgRef="user" size="lg" />
+                <OrgMark save={save} orgRef="user" size="md" />
                 <div className="min-w-0">
-                  <h3 className="display truncate text-xl uppercase leading-none text-ink">
+                  <h3 className="display truncate text-xl font-bold leading-none text-ink">
                     {save.identity.orgName}
                   </h3>
                   <TeamStars stars={userStarCount} size="sm" className="mt-1.5" />
@@ -507,12 +501,13 @@ export function StandingsScreen() {
               </div>
               <dl className="grid min-w-0 grid-cols-2 items-start gap-x-6 gap-y-4 border-t border-line pt-4 sm:grid-cols-3 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
                 <RaceFigure label={isMajor ? copy.race.majorTab : copy.race.worldsTab}>
-                  <span className="display block whitespace-nowrap text-3xl font-extrabold leading-none text-ink">
+                  <span className="display block whitespace-nowrap text-3xl font-bold tabular-nums leading-none text-ink">
                     {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
                   </span>
                 </RaceFigure>
                 <RaceFigure label={cutLabel}>
-                  <span className={cx("display block text-xl font-bold leading-tight", LINE_TONE[line ?? "unscored"])}>
+                  {/* Before any points the line is a sentence, not a figure. */}
+                  <span className={cx("block leading-tight", line && line !== "unscored" ? "display text-xl font-bold" : "text-sm", LINE_TONE[line ?? "unscored"])}>
                     {lineText(line, homeTable.userGap)}
                   </span>
                 </RaceFigure>
@@ -533,10 +528,12 @@ export function StandingsScreen() {
           </Panel>
         ) : null}
 
-        <Panel data-tour="standings-table" className="p-2 sm:p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-            <Badge className={REGION_BADGE[region]}>{region}</Badge>
-            <span className="text-xs text-sub">{fixtures}</span>
+        <Panel data-tour="standings-table" className="p-4 sm:p-5">
+          {/* The board's title is the region; its one right-hand fact is what is left to play
+              (said in the hero already for the home region, so only another region's shows). */}
+          <div className="card-head">
+            <h3 className="card-title">{region}</h3>
+            {region !== home ? <span className="text-xs text-sub">{fixtures}</span> : null}
           </div>
           <StandingsTable
             // A new table (tab or region) closes the user row's detail.
@@ -561,9 +558,10 @@ export function StandingsScreen() {
             onOpenOrg={setSheetRef}
           />
         ) : (
-          <p className="mt-4 text-sm text-sub">
-            <span className="font-semibold text-ink">{isMajor ? copy.race.majorField : copy.standings.worldsField}.</span>{" "}
-            {isMajor ? copy.race.majorFieldPending : copy.standings.fieldRevealPending}
+          // The field before it is known: its name and when it is announced, one quiet line.
+          <p className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="kicker">{isMajor ? copy.race.majorField : copy.standings.worldsField}</span>
+            <span className="text-sm text-sub">{isMajor ? copy.race.majorFieldPending : copy.standings.fieldRevealPending}</span>
           </p>
         )}
       </div>

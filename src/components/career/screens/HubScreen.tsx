@@ -193,7 +193,7 @@ export function HubScreen() {
 
           {/* 7 — season goal (rc.36, UX-02: progress, deadline and the board's reasons) */}
           {save.seasonGoals ? (
-            <div className={cx("order-7", RAIL_SECTION)}>
+            <div className={cx("order-7 empty:hidden", RAIL_SECTION)}>
               <SeasonGoalBlock save={save} C={C} />
             </div>
           ) : null}

@@ -383,7 +383,6 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
           <div className="min-w-0 flex-1 basis-36">
             <p className="text-xs font-semibold text-ink">{camp.id === "bootcamp2" ? C.finances.bootcampT2 : C.finances.bootcampT1}</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-sub">{C.toolbox.rating(camp.ratingEdge.toFixed(1))} · {C.toolbox.chemistry}</p>
-            <p className="mt-1 text-xs leading-relaxed text-sub">{C.toolbox.bootcampHint}</p>
             <p className="mt-0.5 text-[11px] text-faint">{campNote}</p>
           </div>
           <div className="flex items-center gap-2">
