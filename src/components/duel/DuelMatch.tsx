@@ -67,9 +67,14 @@ export function DuelMatch({ reply, viewer }: { reply: DuelReply; viewer: DuelSid
   const stageRef = useRef<HTMLDivElement>(null);
   const tracked = useRef(false);
 
-  // Focus follows the stage, so a keyboard player lands on the new step.
+  // Focus follows the stage, so a keyboard player lands on the new step (not on first load).
+  const firstStage = useRef(true);
   useEffect(() => {
-    stageRef.current?.focus({ preventScroll: true });
+    if (firstStage.current) {
+      firstStage.current = false;
+      return;
+    }
+    if (stage === "live") stageRef.current?.focus({ preventScroll: true });
   }, [stage]);
 
   useEffect(() => {

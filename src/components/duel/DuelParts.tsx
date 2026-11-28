@@ -57,9 +57,9 @@ export function DuelRoster({ view, showOverall, className }: { view: DuelTeamVie
         ))}
       </div>
       {bench.length > 0 ? (
-        <div className="mx-auto grid max-w-[80%] grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {bench.map((card) => (
-            <div key={`${card.kind}-${card.refId}`} className="mx-auto w-full max-w-24">
+            <div key={`${card.kind}-${card.refId}`} className="mx-auto w-full max-w-28">
               <GameCard card={card} showOverall={showOverall} size="sm" fluid lite tilt="off" />
             </div>
           ))}

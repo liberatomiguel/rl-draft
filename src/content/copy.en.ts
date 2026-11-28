@@ -2203,7 +2203,7 @@ export const DUEL_MATCH_UI = {
   skipSeries: "Skip series",
   seriesMvp: "Series MVP",
   gamesTitle: "Games",
-  sendResult: (name: string) => `Send the result to ${name}`,
+  sendResult: (name: string) => `Send it back to ${name}`,
   shareResult: "Share the series",
   resultText: "Our Rocket Draft duel is done. Open the link to watch the series:",
   watchAgain: "Watch again",

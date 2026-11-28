@@ -12,6 +12,15 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## rc.9 (unreleased)
 
+### Changed - DUEL-UI (team against team; DESIGN-DECISIONS #294 to #300)
+- The friend duel is now team against team: the challenger sets the rules on /duel (rerolls 0, 3 or 7, overalls visible or hidden, Classic or Quick, region, optional name), drafts on the game's own draft screens, and sends a link. The friend drafts on the same boards, then both teams play a best of 7 on the clock (the career's live game view), with face-off, auto-advance, pause, speed, skip game and skip series. The reply link carries both teams, so the challenger watches the very same series. New match: same rules, new boards, the asker drafts first.
+- A duel's draft half-way can be resumed or dropped from /duel or from the challenge link.
+- Broken, edited or old-format duel links get their own screen with what to do.
+- Analytics: `duel_played` replaces `friend_duel`.
+
+### Removed - DUEL-UI
+- The rc.6 friend duel (same seed, standings compared): its engine, screens, results panels, Setup button, run-share branch and copy.
+
 ### Changed - ORG (R226)
 - The sponsor deal in force on a takeover now follows the save's difficulty (easy steady, normal balanced, hard bold) instead of the org's tier; the tier still scales the money.
 
