@@ -156,6 +156,8 @@ export const CAREER_LOCKER = {
    * the next bound (no weekly flapping at a bound).
    */
   moodHysteresis: 3,
+  /** R218 the screens' trend: the log window it reads (days) and the net change that makes it rise or fall. */
+  view: { recentDays: 21, trendMin: 3 },
   /**
    * R216 the players' own requests (talks). One new talk at most per
    * `gapWeeks` weeks for the whole squad (a refused bid is the manager's doing

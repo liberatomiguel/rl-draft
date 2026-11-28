@@ -41,10 +41,9 @@ export interface LockerPlayerView {
   matchEffect: number;
 }
 
-/** The window the trend and the reason read, in days. */
-const RECENT_DAYS = 21;
-/** A trend needs this much net change in the window. */
-const TREND_MIN = 3;
+/** The window the trend and the reason read, in days; a trend needs this much net change in it. */
+const RECENT_DAYS = L.view.recentDays;
+const TREND_MIN = L.view.trendMin;
 
 export function lockerPlayerViewOf(
   save: { clock: LockerDate; lockerRoom?: LockerRoomState | null },
