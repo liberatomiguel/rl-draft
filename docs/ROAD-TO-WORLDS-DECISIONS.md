@@ -2993,6 +2993,7 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 
 - **Decidido:** cada série do usuário conta `venceu − p`, com `p = 1 / (1 + e^(−diferença de rating / 3))` lida das ratings no momento da simulação. A soma de um evento entra numa memória do time (× 0,75 por evento, × 0,95 por semana); o alvo anda 20 por unidade, no máximo 30 para cada lado; quem está numa sequência de banco sente metade.
 - **Calibração:** nas carreiras medidas, vitórias e esperado batem (NA 23 de 63 contra 23,5; EU 17 de 55 contra 16,6; SAM 33 de 81 contra 31,7). Um time fraco que perde o esperado não fica triste; um time forte que ganha o esperado não fica eufórico.
+- **A dificuldade entra no esperado (`expectShift`):** a diferença de rating da série não carrega a vantagem que a dificuldade dá à IA. Na probe (temporada 1, NA, EU e SAM, 5 carreiras por célula) o Normal ganhou 1 ponto de aproveitamento acima do `p` e o Difícil 3,1 abaixo (EU 23,5 % contra 28,2 %), então todo elenco no Difícil lia "abaixo do esperado" e afundava (36 % das semanas-jogador "Insatisfeito" na EU). O Difícil soma −0,45 de rating ao lado do usuário antes de ler o `p`; Fácil e Muito difícil não foram medidos e ficam em 0.
 - **Favorito:** um título ou campanha longa do time de maior rating do campo é o esperado e não levanta ninguém (`favouriteTitleShare` 0; a primeira versão com 0,5 deixou uma dinastia "Empolgada" a temporada inteira com 24 títulos por ano).
 
 ## R213 — 27 de novembro de 2026: forma pelo box score (rc.9 LOCKER)

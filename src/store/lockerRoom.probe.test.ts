@@ -133,6 +133,12 @@ function runCareer(region: Region, difficulty: CareerDifficulty, seed: number, a
   const savedMatch = { ...(L.match as Record<string, unknown> | undefined) };
   flags.lockerRoom = arm !== "off";
   if (arm === "zero" && L.match) (L.match as Record<string, unknown>).enabled = false;
+  // LOCKER_PROBE_MATCH='{"byMood":{...},"teamMax":0.5}': a candidate match table for the "on" arm.
+  if (arm === "on" && L.match && env.LOCKER_PROBE_MATCH) {
+    const over = JSON.parse(env.LOCKER_PROBE_MATCH) as Record<string, unknown>;
+    const m = L.match as Record<string, unknown>;
+    Object.assign(m, over, over.byMood ? { byMood: { ...(m.byMood as object), ...(over.byMood as object) } } : {});
+  }
   const seasons = new Map<number, SeasonTally>();
   const lastMood = new Map<string, { mood: MoodId; week: number; prev?: MoodId; prevWeek?: number }>();
   const seenLog = new Set<string>();
@@ -154,6 +160,7 @@ function runCareer(region: Region, difficulty: CareerDifficulty, seed: number, a
         if (!ev || ev.def.teamSize) return;
         const tally = seasons.get(save.clock.seasonIndex) ?? blankSeason(save.clock.seasonIndex);
         seasons.set(save.clock.seasonIndex, tally);
+        // The raw rating expectation (no difficulty shift), so the calibration stays visible.
         for (const s of seriesOfUser(ev.tournament)) {
           tally.series += 1;
           tally.wins += s.won ? 1 : 0;

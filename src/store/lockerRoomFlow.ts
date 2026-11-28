@@ -84,7 +84,7 @@ export function lockerFactsOf(prev: CareerSave, next: CareerSave): LockerStepInp
       placement: r.userPlacement,
       lineup: active?.fieldedIds ?? [...prev.starterIds],
       key,
-      ...(tournament ? { series: seriesOfUser(tournament), favourite: userWasFavourite(tournament) } : {}),
+      ...(tournament ? { series: seriesOfUser(tournament, "user", prev.difficulty), favourite: userWasFavourite(tournament) } : {}),
     });
   }
 

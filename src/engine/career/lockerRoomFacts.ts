@@ -28,15 +28,20 @@ export function expectedWinOf(ratingDiff: number): number {
   return 1 / (1 + Math.exp(-ratingDiff / L.results.expectScale));
 }
 
-/** R212: every finished series the user side played in a tournament, in order. */
-export function seriesOfUser(t: TournamentState | null | undefined, userId = "user"): SeriesFact[] {
+/**
+ * R212: every finished series the user side played in a tournament, in order.
+ * `difficulty` adds CAREER_LOCKER.expectShift (the difficulty's edge the
+ * ratingDiff does not carry); absent = no shift.
+ */
+export function seriesOfUser(t: TournamentState | null | undefined, userId = "user", difficulty?: string): SeriesFact[] {
   if (!t) return [];
   const out: SeriesFact[] = [];
+  const shift = (difficulty && L.expectShift[difficulty]) || 0;
   const read = (s: { teamAId: string; teamBId: string; winnerTeamId: string; ratingDiff: number }) => {
     if (s.teamAId !== userId && s.teamBId !== userId) return;
     if (!s.winnerTeamId) return;
     const diff = s.teamAId === userId ? s.ratingDiff : -s.ratingDiff;
-    out.push({ won: s.winnerTeamId === userId, p: expectedWinOf(Number.isFinite(diff) ? diff : 0) });
+    out.push({ won: s.winnerTeamId === userId, p: expectedWinOf((Number.isFinite(diff) ? diff : 0) + shift) });
   };
   for (const r of t.swiss?.rounds ?? []) for (const s of r.series ?? []) read(s);
   for (const r of t.playoffs?.rounds ?? []) for (const s of r.series ?? []) read(s);

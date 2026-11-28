@@ -131,6 +131,14 @@ export const CAREER_LOCKER = {
    */
   results: { expectScale: 3, decay: 0.75, weeklyDecay: 0.95, perUnit: 20, cap: 30, benchShare: 0.5 },
   /**
+   * R212 the difficulty's own edge, which the series' ratingDiff does not carry
+   * (rating points added to the user side's edge before p is read). Measured on
+   * the rc9 probe, season 1, NA / EU / SAM: Normal won 1 point of win rate above
+   * p on average, Hard 3.1 below (every Hard squad read "below expectation" and
+   * sagged). Easy and Very Hard are not measured and stay 0.
+   */
+  expectShift: { normal: 0, hard: -0.45 } as Record<string, number>,
+  /**
    * R212 a title won as the top-rated side of its field is expected: it lifts
    * the squad by `titleLift × favouriteTitleShare` instead of the full lift
    * (0: a dynasty winning every cup stayed delighted all season otherwise).

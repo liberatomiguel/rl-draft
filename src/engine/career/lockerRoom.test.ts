@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { CAREER_LOCKER as L, FEATURES } from "@/config/balance";
 import { createRng } from "@/lib/rng";
+import { expectedWinOf, seriesOfUser } from "./lockerRoomFacts";
 import {
   answerLockerTalk,
   credibilityOf,
@@ -384,6 +385,17 @@ describe("rc9 LOCKER: morale that moves", () => {
     const fav = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: true }] }).state;
     const dog = step(emptyLockerRoom(), { events: [{ ...event("champion"), favourite: false }] }).state;
     expect(dog.players.a.morale - fav.players.a.morale).toBe(L.titleLift - Math.round(L.titleLift * L.favouriteTitleShare));
+  });
+
+  it("R212: the difficulty's edge shifts the expectation (Hard expects less), none without a difficulty", () => {
+    const t = {
+      teams: {},
+      swiss: { rounds: [{ series: [{ teamAId: "user", teamBId: "x", winnerTeamId: "user", ratingDiff: 0 }] }] },
+    } as unknown as Parameters<typeof seriesOfUser>[0];
+    expect(seriesOfUser(t)[0].p).toBeCloseTo(0.5, 6);
+    expect(seriesOfUser(t, "user", "normal")[0].p).toBeCloseTo(expectedWinOf(L.expectShift.normal ?? 0), 6);
+    expect(seriesOfUser(t, "user", "hard")[0].p).toBeLessThan(0.5);
+    expect(seriesOfUser(t, "user", "hard")[0].p).toBeCloseTo(expectedWinOf(L.expectShift.hard), 6);
   });
 
   it("R213: box-score form against the lineup's mean moves his target, and fades", () => {
