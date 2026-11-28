@@ -434,7 +434,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                         <AchievementIcon group={def.group} />
                       </span>
                       <span>
-                        <span className="display block text-sm font-bold uppercase tracking-wide text-ink">
+                        <span className="display block text-[15px] font-semibold text-ink">
                           {ACH_UI.items[def.id]?.name ?? def.title}
                         </span>
                         <span className="text-xs text-sub">{ACH_UI.items[def.id]?.desc ?? def.description} · +{def.xp} XP</span>
@@ -870,16 +870,17 @@ function EliminatorReveal({ eliminator, tournament }: { eliminator: EliminatorTe
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="kicker">{R.eliminatorKicker}</p>
-          <h3 className="card-title mt-1 truncate">{R.eliminatedBy(eliminator.name)}</h3>
+          <h3 className="card-title mt-1 break-words">{R.eliminatedBy(eliminator.name)}</h3>
           <p className="mt-1 text-sm text-sub">
             {resultStageLabel(eliminator, T)} · {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
           </p>
         </div>
         <div className="shrink-0 text-right">
           <p className="display text-4xl font-bold leading-none tabular-nums text-ink">{shownOverall}</p>
-          <p className="mt-1 text-xs text-faint">
-            {playedAt != null && playedAt !== shownOverall ? R.playedAt(playedAt) : R.rivalOverall}
-          </p>
+          <p className="mt-1 text-xs text-faint">{R.rivalOverall}</p>
+          {playedAt != null && playedAt !== shownOverall ? (
+            <p className="text-xs text-faint">{R.playedAt(playedAt)}</p>
+          ) : null}
         </div>
       </div>
       {end && end.games.length > 0 ? (
@@ -929,7 +930,7 @@ function HighlightTile({ label, value, detail }: { label: string; value: string;
         {detail ? <span className="mt-0.5 block font-normal normal-case tracking-normal text-faint sm:hidden">{detail}</span> : null}
       </p>
       <p
-        className="display min-w-0 truncate text-sm font-bold uppercase tracking-wide text-ink max-sm:text-right"
+        className="display min-w-0 truncate text-[15px] font-semibold text-ink max-sm:text-right"
         title={value}
       >
         {value}

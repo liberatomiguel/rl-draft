@@ -163,6 +163,7 @@ export function SetupScreen() {
             onClick={() => setRegionLock(null)}
             className={cx(
               REGION_KEY,
+              "max-sm:col-span-4",
               regionLock === null ? "panel-glow-orange max-sm:bg-orange/10" : "sm:hover:!border-line-strong",
             )}
           >

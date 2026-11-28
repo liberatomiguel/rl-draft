@@ -301,7 +301,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label={t.NAV_UI.ariaMain}
           className="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] md:hidden"
         >
-          <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
+          <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6 max-[360px]:[grid-template-columns:0.9fr_0.7fr_0.95fr_1.35fr_1.3fr_0.95fr]" : "grid-cols-5")}>
             {NAV_ITEMS.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);

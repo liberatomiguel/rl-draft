@@ -262,7 +262,7 @@ export function CollectionView() {
 
       {/* Album switch (v2.0): special cards · national teams. Each tab carries
           its own count, so the second album reads as a place with content. */}
-      <div className="mb-6 inline-flex max-w-full rounded-xl border border-line bg-white/3 p-1" role="tablist">
+      <div className="mb-6 flex w-full max-w-full rounded-xl sm:inline-flex sm:w-auto border border-line bg-white/3 p-1" role="tablist">
         {(["specials", "national"] as Album[]).map((a) => (
           <button
             key={a}
@@ -271,7 +271,7 @@ export function CollectionView() {
             aria-selected={album === a}
             onClick={() => setAlbum(a)}
             className={cx(
-              "display relative flex min-w-0 items-baseline gap-2 rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+              "display relative flex min-w-0 flex-1 items-baseline justify-center gap-2 rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors max-sm:flex-col max-sm:items-center max-sm:gap-0 max-sm:px-2 max-sm:tracking-[0.06em] sm:flex-none",
               album === a
                 ? a === "national"
                   ? "bg-yellow-300/15 text-yellow-100"
@@ -280,7 +280,7 @@ export function CollectionView() {
             )}
           >
             <span className="truncate">{a === "specials" ? N.tabSpecials : N.tabNational}</span>
-            <span className={cx("shrink-0 text-[10px] font-semibold tracking-normal", album === a ? "opacity-70" : "text-faint")}>
+            <span className={cx("shrink-0 text-[11px] font-semibold tracking-normal", album === a ? "opacity-70" : "text-faint")}>
               {a === "specials"
                 ? `${unlockedCount}/${collectibleCards.length}`
                 : `${nationalFound}/${NATIONAL_TEAMS.length}`}
@@ -483,16 +483,21 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
           <LockGlyph />
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center bg-gradient-to-br sm:h-[72px] sm:w-[72px] from-slate-700/50 to-slate-900/60 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]">
+          <div className="flex h-9 w-9 items-center justify-center bg-gradient-to-br sm:h-[72px] sm:w-[72px] from-slate-700/50 to-slate-900/60 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]">
             <span className="display text-2xl font-bold text-faint">?</span>
           </div>
         </div>
         <p className="display truncate text-sm font-bold uppercase tracking-wide text-faint">???</p>
-        <div className="mt-1.5 min-w-0 overflow-hidden">
-          <Badge tone="neutral" className="max-w-full truncate !text-[9px]">
-            {isSecretRarity(sp.rarity)
-              ? RARITY_LABELS[sp.rarity]
-              : `${SPECIAL_TYPE_LABELS[sp.cardType]} · ${RARITY_LABELS[sp.rarity]}`}
+        <div className="mt-1 min-w-0 overflow-hidden sm:mt-1.5">
+          <Badge tone="neutral" className="max-w-full truncate !text-[9px] max-sm:!text-[11px]">
+            {isSecretRarity(sp.rarity) ? (
+              RARITY_LABELS[sp.rarity]
+            ) : (
+              <>
+                {SPECIAL_TYPE_LABELS[sp.cardType]}
+                <span className="max-sm:hidden"> · {RARITY_LABELS[sp.rarity]}</span>
+              </>
+            )}
           </Badge>
         </div>
       </div>

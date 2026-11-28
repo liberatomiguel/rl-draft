@@ -265,7 +265,7 @@ function ChallengeCard({
     <span className={cx("flex flex-1 flex-col sm:hidden", locked && "opacity-75")}>
       <span className="flex items-center justify-between gap-2">
         {ch.kind === "draft" ? (
-          <span className={cx("min-w-0 truncate rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{CH.formats.draft}</span>
+          <span className={cx("shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.04em]", style.chip)}>{CH.formats.draft}</span>
         ) : (
           <TeamLogo orgId={lineupById.get(ch.opponentLineupId)!.orgId} size="sm" />
         )}
