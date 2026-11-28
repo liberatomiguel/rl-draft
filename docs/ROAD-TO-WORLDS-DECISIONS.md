@@ -2982,3 +2982,34 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 - **Regras de engenharia:** o formato é carimbado no `TournamentState` quando o evento começa (`layout`), então um save no meio de um Major termina no formato em que começou. A eliminação dupla de 16 joga quatro rodadas no sábado (até sobrarem oito) e pausa como as outras. Persist e saveVersion não mudam.
 - **Medido:** `eventLayouts.test.ts` (todo formato chega a um campeão com o número certo de séries e as contagens de colocação que a tabela de prêmio paga, determinístico, total de pontos e prêmio igual ao clássico); `careerEventFormats.test.ts` (o usuário joga o Major em cada formato pelo fluxo real: sábado até a pausa, domingo até o fim, liquidação pela chave); probe de carreira EU Normal, 7 temporadas, 13 eventos nos formatos certos, sem travar. Telas vistas no navegador em 800 px e 375 px.
 - **Não verificado:** chance de título por formato (bateria pareada antes/depois em NA/EU/SAM, Normal/Hard), o probe de soft-lock completo com a flag, e o caminho do usuário além do primeiro Major (o bot da probe não chegou a um Major em 7 temporadas).
+
+## R230 — 28 de novembro de 2026: treinadores se aposentam entre 28 e 35 anos, desde a primeira temporada (rc.9, front ENDGAME; flag `worldLife`)
+
+- **Decidido (Miguel, número obrigatório):** um treinador se aposenta entre 28 e 35 anos, espalhado dentro da faixa. `CAREER_WORLD_LIFE.coaches`: idade na primeira vista 24 a 32 (ex-pro 26 a 31), chance por idade 10 % aos 28, 20 % aos 30, 35 % aos 32, 60 % aos 34, 100 % aos 35. Vale da virada para a temporada 1 (`lifeFromSeasonIndex: 1`), não só a partir de 2027; a demissão por temporadas ruins continua só nas temporadas infinitas.
+- **Na timeline (temporadas 1 a 6)** só o ciclo de vida dos treinadores roda (`coachLifecycle`): envelhecem e se aposentam; a org contrata um sucessor no máximo 2 pontos pior. Elencos e orgs do dataset não mudam.
+- **O treinador do usuário** avisa uma temporada antes pelo e-mail existente (`coachRetireAnnounce`, depois `coachRetired`, EN e PT já existiam) e só sai numa virada de temporada. Um save em andamento não perde o treinador ao carregar: um treinador visto pela primeira vez só pode anunciar.
+- **Sem onda na temporada 1:** o dataset não tem idade de treinador; dos 146 treinadores reais, 43 têm data de nascimento (eram jogadores) e nenhum passa de 35 em 2020 nem em 2026. As idades são sorteadas abaixo da janela, então 0 treinadores reais começam acima de 35. Num save antigo das temporadas infinitas (idades de 30 a 46 da rc.8), quem já passou de 35 sai com 35 % de chance por temporada (`pastWindowChance`), não todos de uma vez.
+- **Medido:** idade de saída de 400 treinadores gerados: 28: 24, 29: 26, 30: 56, 31: 57, 32: 82, 33: 69, 34: 57, 35: 29 (`worldLife.test.ts`). Carreira NA, flags de staging, 12 temporadas: 57 das 123 orgs têm treinador; trocas por temporada (todas as regiões) 5, 11, 6, 8, 6 nas temporadas 1 a 5 (só aposentadoria), 9 a 30 a partir de 2027 (aposentadoria, demissão e projetos somados). Mercado em todas as 7 regiões, toda temporada: 6 nomes (2 do dataset, 2 ex-pros, 2 gerados), melhor 80 a 91.
+
+## R231 — 28 de novembro de 2026: os treinadores reais do mercado também envelhecem (rc.9, ENDGAME)
+
+- Um treinador do dataset sai do mercado quando o mesmo sorteio que o treinador do usuário teria (idade da primeira vista + temporadas desde a primeira aparição no dataset) diz que ele se aposentou (`marketCoachRetiredBy`). Contratado, ele leva a idade do mercado (`marketCoachAge`, campo `age` já existente no `CoachState`), então anuncia na temporada em que teria saído do mercado (teste). Flag desligada: nada muda.
+
+## R232 — 28 de novembro de 2026: os formatos giram nas temporadas infinitas (rc.9, ENDGAME; flag `eventFormats`)
+
+- **Verificado, sem mudança de regra:** carreira NA até a temporada 11 com `eventFormats`: 2027 joga a linha da Season X, 2028 a de 2021-22, e assim por diante até 2032 = linha de 2026; os Majors e o Worlds que o usuário jogou estavam nesses formatos (o evento da IA usa o mesmo `def.layout`). `eventFormats` entrou em `stagingFlags.test.ts`.
+
+## R233 — 28 de novembro de 2026: orgs reais no Worlds ao longo do tempo (rc.9, ENDGAME)
+
+- **Medido, sem regra nova:** 6 carreiras (NA, EU, SAM; `worldLife` ligado e desligado), temporadas 1 a 11. Orgs reais ocupam 11 a 16 das 16 vagas do Worlds; os times Local ocupam 0 a 3, e só nas temporadas 1 a 6; de 2028 em diante 0 ou 1. Top 8 regional: NA e EU com 4 a 8 orgs reais, SAM com 3 a 8. Não houve desaparecimento das orgs até a temporada 11, então não adicionei regra.
+- **O que explica os Locals que o jogador vê:** o time local se ancora no rating do usuário nas regionais da região do usuário (R49, faixa -1 a +4, teto 96); com o usuário acima de 93 eles entram no top 8 regional da região dele (SAM temporadas 10 e 11: 1 a 2). Com `worldLife` o teto `localCap` (mediana da região) vale só a partir de 2027. Não medido além da temporada 11.
+
+## R234 — 28 de novembro de 2026: projetos rivais mais fortes a partir da temporada 8 (rc.9, ENDGAME; flag `endlessVariety`)
+
+- **Decidido (por mim, dentro de `CAREER_ENDLESS`):** de 2029 em diante (`late.fromSeasonIndex: 8`, um ano depois do início dos projetos) cada temporada respondida ganha o kit inteiro, três contratações de qualquer região, resposta a partir de 1 ponto de vantagem, um projeto a mais por meio ponto acima de 2, e até seis projetos (APAC entra). As temporadas 0 a 7 não leem nada disso (teste).
+- **Medido** (chão 99 no elenco a partir da temporada 6, Normal, NA/EU/SAM × 2 seeds, todas as flags de staging, temporadas 8 a 15 retomadas do mesmo save da temporada 7; time do usuário 100+): base 23/42 Worlds (55 %), 2,8 lados da IA a 3 pontos, séries 89,9 %; braço A1 (kit inteiro, mais projetos) 16/39 (41 %), 3,8, 86,6 %; braço A2, o que fica, 13/37 (35 %), 3,7, 86,7 %. Melhor lado da IA 99,0 → 99,8. **Meta de 30 % não atingida**; a de 3 lados próximos, sim.
+- **Nada tira rating do usuário:** só muda a IA.
+
+## R235 — 28 de novembro de 2026: onde gastar dinheiro no fim de carreira (proposta, nada construído)
+
+- Carreira NA do bot, temporadas 8 a 11: receita de 2,6 a 3,4 milhões por temporada, saldo de 0,6 a 1,3 milhão, manutenção de instalações só 25 a 38 mil (1 %). Propostas: (1) salário de dinastia: na renovação, +10 % por título mundial consecutivo do clube, até +40 % (0,2 a 0,7 milhão por temporada com a folha de 1,8 milhão); (2) cachê e viagem dos convites das temporadas infinitas (Legends e Intercontinental), uns 60 mil cada, 4 por temporada; (3) manutenção do centro de performance subindo com a reputação acima de 75 (2.500 → 10.000 por split), pequena mas visível. Miguel escolhe; nenhuma é poucas linhas num sistema existente sem mexer em `budget.ts` ou UI.

@@ -150,7 +150,9 @@ export function kitFor(strength: number, seasonIndex = 0): KitItem[] {
 }
 
 /** rc9 ENDGAME (R234): the project rules of a season (CAREER_ENDLESS.late from its season on). */
-type ProjectRules = { [K in keyof typeof E.projects]: (typeof E.projects)[K] extends number ? number : (typeof E.projects)[K] };
+type ProjectRules = {
+  [K in keyof typeof E.projects]: K extends "regions" ? readonly Region[] : (typeof E.projects)[K] extends number ? number : (typeof E.projects)[K];
+};
 export function projectsAt(seasonIndex: number): ProjectRules {
   return seasonIndex >= E.late.fromSeasonIndex ? { ...E.projects, ...E.late.projects } : E.projects;
 }
