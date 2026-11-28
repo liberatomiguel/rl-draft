@@ -100,7 +100,7 @@ export interface FeedManagerPost {
  * rc9 STORIES (R253): the moments worth a statement. The offer to post comes
  * only after one of these (fanFeedMoments.postMomentOf), never after every series.
  */
-export type PostMoment = "title" | "finalLost" | "exit" | "missedQualification" | "upsetWin" | "upsetLoss" | "streak";
+export type PostMoment = "title" | "finalLost" | "exit" | "missedQualification" | "breakthrough" | "upsetWin" | "upsetLoss" | "streak";
 
 /** rc9 STORIES (R254): the standing offer to post, written when a moment qualifies. */
 export interface FeedOffer {
@@ -140,4 +140,6 @@ export interface FanFeedSave {
   offer?: FeedOffer | null;
   /** rc9 STORIES: when the offers surfaced, newest last (the gap and the season cap read it). */
   offerLog?: { seasonIndex: number; day: number }[];
+  /** rc9 STORIES: the steps the club has already taken once ("qualified": through a qualifier; "playoffs": a regional's playoffs). */
+  reached?: ("qualified" | "playoffs")[];
 }

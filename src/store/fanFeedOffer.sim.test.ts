@@ -4,6 +4,7 @@
  * a handful a season (about three to six), never one after every event.
  * FEED_SIM_SEEDS / FEED_SIM_SEASONS / FEED_SIM_REGION size the run.
  */
+import { writeFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/config/balance", async (importOriginal) => {
@@ -33,8 +34,8 @@ describe("post offers per season", () => {
         let seenResults = 0;
         const out = playArcCareer({
           region,
-          difficulty: "normal",
-          policy: "tuned",
+          difficulty: (env.FEED_SIM_DIFF ?? "normal") as never,
+          policy: (env.FEED_SIM_POLICY ?? "tuned") as never,
           seed,
           seasons,
           budgetMs: 540_000,
@@ -57,13 +58,14 @@ describe("post offers per season", () => {
               return;
             }
             const offers = (save.fanFeed?.offerLog ?? []).filter((x) => x.seasonIndex === save.clock.seasonIndex).length;
-            rows.push({ region, seed, season: save.clock.seasonIndex, offers, events, moments });
+            rows.push({ region, seed, season: save.clock.seasonIndex, offers, events, moments, series: save.fanFeed?.seq ?? -1, res: save.eventResults.filter((r) => r.seasonIndex === save.clock.seasonIndex && r.userPlacement).map((r) => `${r.tier}:${r.userPlacement}`), ups: save.fanFeed?.series.filter((x) => x.upset).length, log: save.fanFeed?.offerLog?.length ?? -1 } as never);
           },
         } as never);
         expect(out.softlock).toBeNull();
       }
     }
     console.log("FEED_SIM", JSON.stringify(rows));
+    if (env.FEED_SIM_OUT) writeFileSync(env.FEED_SIM_OUT, JSON.stringify(rows));
     const avg = rows.reduce((n, r) => n + r.offers, 0) / Math.max(1, rows.length);
     console.log("FEED_SIM avg offers/season", avg.toFixed(2), "cap", CAREER_FEED.offer.perSeason);
     for (const r of rows) expect(r.offers).toBeLessThanOrEqual(CAREER_FEED.offer.perSeason);

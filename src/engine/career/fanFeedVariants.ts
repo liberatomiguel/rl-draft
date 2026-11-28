@@ -38,13 +38,14 @@ export const MOMENT_RESULT: Record<PostMoment, SeriesResult> = {
   finalLost: "lost",
   exit: "lost",
   missedQualification: "lost",
+  breakthrough: "won",
   upsetWin: "won",
   upsetLoss: "lost",
   streak: "won",
 };
 
 /** rc9 STORIES (R255): the slots of each moment's variants, per tone (one row = one variant). */
-const MOMENT_SLOTS: Record<PostMoment, readonly (readonly FeedSlot[])[]> = {
+const MOMENT_SLOTS: Record<Exclude<PostMoment, "breakthrough">, readonly (readonly FeedSlot[])[]> = {
   title: [["event", "opponent", "score"], ["event", "opponent"]],
   finalLost: [["event", "opponent"], ["event", "opponent", "score"]],
   exit: [["event", "opponent"], ["event", "opponent", "score"], ["opponent", "event"]],
@@ -54,7 +55,7 @@ const MOMENT_SLOTS: Record<PostMoment, readonly (readonly FeedSlot[])[]> = {
   streak: [["streak", "opponent", "event"], ["streak", "opponent", "score"]],
 };
 
-const MOMENTS = Object.keys(MOMENT_SLOTS) as PostMoment[];
+const MOMENTS = Object.keys(MOMENT_SLOTS) as Exclude<PostMoment, "breakthrough">[];
 const TONES: FanTone[] = ["humble", "confident", "provocative"];
 
 /** Every moment x tone x its slot rows, in a fixed order (the keys follow the generic twelve). */
@@ -167,6 +168,11 @@ export const FEED_VARIANTS: Record<FeedKind, readonly VariantDef[]> = {
     { needs: [OPP, SCORE], tone: "provocative", result: "won" },
     { needs: [OPP, EVENT], tone: "provocative", result: "lost" },
     { needs: [OPP, SCORE], tone: "provocative", result: "lost" },
+    // rc9 STORIES (R253): .70 to .75, a breakthrough (a step the club never took), per tone.
+    ...(["humble", "confident", "provocative"] as const).flatMap((tone): Row[] => [
+      { needs: [EVENT, OPP], tone, result: "won", moment: "breakthrough" },
+      { needs: [EVENT, OPP, ORG], tone, result: "won", moment: "breakthrough" },
+    ]),
   ]),
   managerReply: defs("managerReply", [
     { needs: [OPP, ORG], tone: "humble", result: "won" },

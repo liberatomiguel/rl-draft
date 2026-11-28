@@ -72,7 +72,7 @@ export const CAREER_FEED = {
     /** A qualifier lost by a club seeded this high or higher in its field (the favourite missing the regional). */
     qualifierFavouriteRank: 4,
     /** An upset (either way) at these tiers, with at least this rating gap between the sides. */
-    upsetTiers: ["regional", "major", "worlds"],
+    upsetTiers: ["qualifier", "regional", "major", "worlds"],
     upsetMinGap: 3,
     /** A run of series wins reaching exactly one of these lengths. */
     streakMilestones: [6, 10, 15],

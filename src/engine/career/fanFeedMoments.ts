@@ -9,6 +9,8 @@
  *   exit                out of a Major or Worlds before the final (exitTiers)
  *   missedQualification a qualifier lost by one of its favourites (seeded in
  *                       the top qualifierFavouriteRank of the field)
+ *   breakthrough        a step the club never took before: through a
+ *                       qualifier, or into a regional's playoffs
  *   upsetWin/upsetLoss  an upset at upsetTiers with a rating gap of at least
  *                       upsetMinGap between the sides
  *   streak              a run of series wins reaching a streakMilestone
@@ -42,6 +44,8 @@ export interface MomentInput {
   runBefore: number;
   /** The user's rank by rating in the event's field (1 = the strongest). */
   seedRank: number;
+  /** The steps already taken once (a breakthrough is the first time only). */
+  reached?: readonly string[];
 }
 
 export interface Moment {
@@ -65,6 +69,11 @@ export function postMomentOf(input: MomentInput): Moment | null {
   if (tier === "qualifier" && placement === "swiss_exit" && input.seedRank <= O.qualifierFavouriteRank) {
     return { moment: "missedQualification", seriesN: last.n };
   }
+  const step = breakthroughStepOf(tier, placement);
+  if (step && !(input.reached ?? []).includes(step)) {
+    const won = [...series].reverse().find((x) => x.won);
+    if (won) return { moment: "breakthrough", seriesN: won.n };
+  }
   if (has(O.upsetTiers, tier)) {
     let best: MomentSeries | null = null;
     for (const s of series) {
@@ -82,6 +91,14 @@ export function postMomentOf(input: MomentInput): Moment | null {
     if (run > 0 && (O.streakMilestones as readonly number[]).includes(run)) hit = { moment: "streak", seriesN: s.n, streak: run };
   }
   return hit;
+}
+
+/** The step an event's result takes: through a qualifier, or into a regional's playoffs. */
+export function breakthroughStepOf(tier: string, placement: Placement): "qualified" | "playoffs" | null {
+  if (placement === "swiss_exit") return null;
+  if (tier === "qualifier") return "qualified";
+  if (tier === "regional") return "playoffs";
+  return null;
 }
 
 /** A day on one line across seasons. */

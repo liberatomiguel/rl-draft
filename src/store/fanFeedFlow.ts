@@ -23,7 +23,7 @@ import { applyConfidence } from "@/engine/career/board";
 import { weekOfDay } from "@/engine/career/calendar";
 import { deliverMail } from "@/engine/career/communications";
 import { feedSeriesOf, followersMove, managerPostForOffer } from "@/engine/career/fanFeed";
-import { offerAllowed, offerLastDay, postMomentOf, runOf, userSeedRankOf, userSeriesGapsOf } from "@/engine/career/fanFeedMoments";
+import { breakthroughStepOf, offerAllowed, offerLastDay, postMomentOf, runOf, userSeedRankOf, userSeriesGapsOf } from "@/engine/career/fanFeedMoments";
 import type { FanFeedSave, FanTone, FeedOffer, FeedSeries } from "@/engine/career/fanFeedTypes";
 import { placementOf } from "@/engine/career/careerResults";
 import { emptyLockerRoom, moraleOf, nudgeMorale } from "@/engine/career/lockerRoom";
@@ -33,8 +33,11 @@ import type { TournamentState } from "@/engine/types";
 const F = CAREER_FEED.followers;
 const TONES: readonly FanTone[] = ["humble", "confident", "provocative"];
 
-function freshFeed(save: CareerSave): FanFeedSave {
-  return { v: 1, seq: 1, series: [], posts: [], answered: 0, followers: F.start + Math.round(Math.max(0, save.reputation) * F.perReputation), offer: null };
+function freshFeed(save: CareerSave, seriesNow: number): FanFeedSave {
+  // A feed that starts on a career already under way (the flag turned on later) counts its steps as taken: no false "never before".
+  // finishEvent counts this event's series into the stats before this hook runs.
+  const played = save.stats.seriesWins + save.stats.seriesLosses > seriesNow;
+  return { v: 1, seq: 1, series: [], posts: [], answered: 0, followers: F.start + Math.round(Math.max(0, save.reputation) * F.perReputation), offer: null, reached: played ? ["qualified", "playoffs"] : [] };
 }
 
 /** The followers number, or null when the feed never ran for this save (or the flag is off). */
@@ -72,7 +75,7 @@ export function recordFeedSeries(save: CareerSave, t: TournamentState, def: Care
   if (!FEATURES.fanFeed) return;
   const facts = feedSeriesOf(t, def, { seasonIndex: def.seasonIndex, week: def.week });
   if (facts.length === 0 && t.playoffs?.championTeamId !== "user") return;
-  const feed = (save.fanFeed ??= freshFeed(save));
+  const feed = (save.fanFeed ??= freshFeed(save, facts.length));
   const runBefore = runOf(feed.series);
   const logged: FeedSeries[] = [];
   for (const fact of facts) {
@@ -104,9 +107,14 @@ export function recordFeedSeries(save: CareerSave, t: TournamentState, def: Care
 function offerAfterEvent(save: CareerSave, feed: FanFeedSave, t: TournamentState, def: CareerEventDef, logged: FeedSeries[], runBefore: number): void {
   if (logged.length === 0) return;
   const gaps = userSeriesGapsOf(t);
+  const placement = placementOf(t, "user");
+  const reached = feed.reached ?? ["qualified", "playoffs"];
+  const step = breakthroughStepOf(def.tier, placement);
+  if (step && !reached.includes(step)) feed.reached = [...reached, step];
   const found = postMomentOf({
     tier: def.tier,
-    placement: placementOf(t, "user"),
+    placement,
+    reached,
     series: logged.map((s, i) => ({ n: s.n, won: s.won, upset: s.upset, gap: gaps[i] ?? 0 })),
     runBefore,
     seedRank: userSeedRankOf(t),
@@ -135,7 +143,8 @@ function offerAfterEvent(save: CareerSave, feed: FanFeedSave, t: TournamentState
 }
 
 /** The tone's effect row for the offer's result. */
-const effectOf = (tone: FanTone, offer: FeedOffer) => CAREER_FEED.effects[tone][offer.won ? "won" : "lost"];
+const effectOf = (tone: FanTone, offer: FeedOffer): { followers: number; morale: number; board: number } =>
+  CAREER_FEED.effects[tone][offer.won ? "won" : "lost"];
 
 /**
  * The one action: the manager posts for the standing offer in a tone, or lets
@@ -250,4 +259,6 @@ export function repairFanFeedOnLoad(save: CareerSave): void {
   const last = save.fanFeed.series[save.fanFeed.series.length - 1];
   if (last && last.n > save.fanFeed.answered) save.fanFeed.answered = last.n;
   save.fanFeed.offer = null;
+  // Its steps are unknown to the feed: counted as taken, so no "never before" post is offered for them.
+  save.fanFeed.reached ??= ["qualified", "playoffs"];
 }

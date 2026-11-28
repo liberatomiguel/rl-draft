@@ -13,7 +13,7 @@ import type { PostMoment } from "./fanFeedTypes";
 
 const O = CAREER_FEED.offer;
 const s = (n: number, won: boolean, upset = false, gap = 0): MomentSeries => ({ n, won, upset, gap });
-const input = (over: Partial<MomentInput>): MomentInput => ({ tier: "regional", placement: "top8", series: [s(1, true), s(2, false)], runBefore: 0, seedRank: 6, ...over });
+const input = (over: Partial<MomentInput>): MomentInput => ({ tier: "regional", placement: "top8", series: [s(1, true), s(2, false)], runBefore: 0, seedRank: 6, reached: ["qualified", "playoffs"], ...over });
 
 describe("postMomentOf: only the moments worth a statement", () => {
   it("a title, a final lost and a Major or Worlds exit, anchored on the last series", () => {
@@ -49,6 +49,13 @@ describe("postMomentOf: only the moments worth a statement", () => {
     expect(postMomentOf(input({ runBefore: m - 2, series: [s(7, true), s(8, true)] }))).toEqual({ moment: "streak", seriesN: 8, streak: m });
     expect(postMomentOf(input({ runBefore: m - 3, series: [s(7, true), s(8, true)] }))).toBeNull();
     expect(postMomentOf(input({ runBefore: m - 1, series: [s(7, false)] }))).toBeNull();
+  });
+
+  it("a breakthrough: the first time through a qualifier or into a regional's playoffs, anchored on the last win", () => {
+    expect(postMomentOf(input({ tier: "qualifier", placement: "top8", reached: [], series: [s(1, true), s(2, true), s(3, false)] }))).toEqual({ moment: "breakthrough", seriesN: 2 });
+    expect(postMomentOf(input({ placement: "top8", reached: ["qualified"] }))).toEqual({ moment: "breakthrough", seriesN: 1 });
+    expect(postMomentOf(input({ tier: "qualifier", placement: "top8", reached: ["qualified"] }))).toBeNull();
+    expect(postMomentOf(input({ placement: "top8", reached: ["playoffs"] }))).toBeNull();
   });
 
   it("no series, no moment", () => {
