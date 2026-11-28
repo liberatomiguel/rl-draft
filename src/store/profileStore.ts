@@ -618,6 +618,8 @@ export const useProfileStore = create<ProfileState>()(
             difficulty: entry.difficulty,
             placement: results.placement,
             mode: entry.mode,
+            // rc9 LEGACY: a Region-only run can pay its cell's row (DRAFT_UPSET_GUARD.ratingRows, #221).
+            region: entry.region,
             hiddenOverall: entry.hiddenOverall,
             seasonRunsBefore: state.season.runs,
             ratingBefore: state.mmr,
