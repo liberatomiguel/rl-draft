@@ -18,7 +18,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { it } from "vitest";
-import { FEATURES } from "@/config/balance";
+import { CAREER_WORLD_LIFE, FEATURES } from "@/config/balance";
 import { officialEventDefsForWeek, seasonSchedule } from "@/engine/career/calendar";
 import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
@@ -60,6 +60,10 @@ it.runIf(env.RC9_ENDGAME === "1")("rc9 endgame probe", { timeout: 3_600_000 }, (
   const seasons = Number(env.RC9_SEASONS ?? 12);
   const difficulty = (env.RC9_DIFF ?? "normal") as CareerDifficulty;
   const policy = (env.RC9_POLICY ?? "strong") as ArcPolicyId;
+  // RC9_COACH_FROM=null: the rc.8 coach life (infinite seasons only), the guard arm's base.
+  if (env.RC9_COACH_FROM !== undefined) {
+    (CAREER_WORLD_LIFE.coaches as { lifeFromSeasonIndex: number | null }).lifeFromSeasonIndex = env.RC9_COACH_FROM === "null" ? null : Number(env.RC9_COACH_FROM);
+  }
   const rows: Rc9Row[] = [];
   const userLayouts = new Map<number, string[]>();
   const seen = new Set<string>();
@@ -132,7 +136,18 @@ it.runIf(env.RC9_ENDGAME === "1")("rc9 endgame probe", { timeout: 3_600_000 }, (
   });
   for (const s of res.seasons) {
     const r = rows.find((x) => x.season === s.seasonIndex);
-    if (r) Object.assign(r, { rating: s.teamRating, balance: s.balanceEnd, payroll: s.payrollPerSplit, income: s.income, spend: s.spend });
+    if (r)
+      Object.assign(r, {
+        rating: s.teamRating,
+        balance: s.balanceEnd,
+        payroll: s.payrollPerSplit,
+        income: s.income,
+        spend: s.spend,
+        worldsPlace: s.worlds,
+        titles: s.titles,
+        regionRank: s.regionRank,
+        majorsQualified: s.majorsQualified,
+      });
   }
   const out = { region, seed, difficulty, policy, worldLife: FEATURES.worldLife, eventFormats: (FEATURES as Record<string, unknown>).eventFormats, ended: res.ended, softlock: Boolean(res.softlock), ms: res.ms, mails, rows };
   if (env.RC9_OUT) writeFileSync(env.RC9_OUT, JSON.stringify(out));

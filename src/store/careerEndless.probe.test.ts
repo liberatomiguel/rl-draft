@@ -17,7 +17,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { it } from "vitest";
-import { FEATURES } from "@/config/balance";
+import { CAREER_ENDLESS, FEATURES } from "@/config/balance";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import { playerViewById } from "@/engine/career/development";
 import { orgTeamFor } from "@/engine/career/worldSim";
@@ -71,6 +71,11 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
   const seasons = Number(env.EP_SEASONS ?? 14);
   const seedBase = Number(env.EP_SEED_BASE ?? 9100);
   console.log(`flags worldLife=${FEATURES.worldLife} styles=${FEATURES.matchdayStyles} decisions=${FEATURES.matchdayDecisions} endless=${(FEATURES as Record<string, unknown>).endlessVariety}`);
+  // rc9 ENDGAME: EP_LATE='{"kitBase":5}' sets CAREER_ENDLESS.late.projects for an arm (probe-only).
+  if (env.EP_LATE) {
+    (CAREER_ENDLESS.late as { projects: Record<string, unknown> }).projects = JSON.parse(env.EP_LATE);
+    console.log(`late ${JSON.stringify(CAREER_ENDLESS.late)}`);
+  }
   const out: { region: Region; difficulty: CareerDifficulty; seed: number; ended: string | null; ms: number; rows: EndlessSeason[] }[] = [];
   for (const region of regions)
     for (const difficulty of diffs)

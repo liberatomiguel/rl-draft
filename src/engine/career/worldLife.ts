@@ -465,6 +465,11 @@ export function marketCoachRetiredBy(coachId: string, firstSeason: number, seaso
   return false;
 }
 
+/** rc9 ENDGAME (R231): that market coach's age in `seasonIndex`, on the clock `marketCoachRetiredBy` reads (a hired coach keeps it). */
+export function marketCoachAge(coachId: string, firstSeason: number, seasonIndex: number, careerSeed: number): number {
+  return coachAgeOnFirstSight(coachId, false, careerSeed) + Math.max(0, seasonIndex - firstSeason);
+}
+
 /**
  * The user's coach at the rollover into `nextSeason`: an announced coach
  * leaves now (never mid-season); otherwise he ages and may announce that this

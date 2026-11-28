@@ -6,6 +6,7 @@ import {
   coachLifeOn,
   coachLifecycle,
   marketCoachRetiredBy,
+  marketCoachAge,
   coachRetireChance,
   eliteRenewalPass,
   localCapsFor,
@@ -176,6 +177,33 @@ describe("rc9 ENDGAME (R230-R231): coaches age and retire from the first season"
     const at3 = on(() => ids.filter((id) => marketCoachRetiredBy(id, 0, 3, SEED)));
     expect(at12.length).toBeGreaterThan(at3.length);
     for (const id of at3) expect(at12).toContain(id); // once retired, retired for good
+    // A coach hired off the market keeps his market age, so he announces in the season he would have left it.
+    on(() => {
+      for (const id of at12.slice(0, 10)) {
+        let s = 1;
+        while (!marketCoachRetiredBy(id, 0, s, SEED)) s += 1;
+        const hired: CoachState = { id, name: "C", overall: 80, bonusType: "shooting" as never, bonusLevel: "+", salaryPerSplit: 1, source: "dataset", age: marketCoachAge(id, 0, s - 1, SEED) };
+        expect(userCoachRollover(hired, s, SEED).announced).toBe(true);
+      }
+    });
+  });
+
+  it("first-sight ages give retirements spread over 28-35, none earlier, none later", () => {
+    const at = new Map<number, number>();
+    for (let i = 0; i < 400; i++) {
+      let c: CoachState | null = { id: `coach:gen:x:${i}`, name: "C", overall: 80, bonusType: "shooting" as never, bonusLevel: "+", salaryPerSplit: 1, source: "generated" };
+      for (let s = 1; c && s < 40; s++) {
+        const r = userCoachRollover(c, s, SEED);
+        if (r.announced) at.set(r.coach!.age!, (at.get(r.coach!.age!) ?? 0) + 1);
+        c = r.announced ? null : r.coach;
+      }
+    }
+    if (process.env.RC9_PRINT) process.stderr.write(`retire ages ${JSON.stringify([...at.entries()].sort((a, b) => a[0] - b[0]))}\n`);
+    const ages = [...at.keys()];
+    expect(Math.min(...ages)).toBeGreaterThanOrEqual(28);
+    expect(Math.max(...ages)).toBeLessThanOrEqual(35);
+    // Spread: no single age takes half of the exits.
+    for (const n of at.values()) expect(n).toBeLessThan(200);
   });
 
   it("a save in progress keeps its coach on load: a coach seen for the first time can only announce", () => {

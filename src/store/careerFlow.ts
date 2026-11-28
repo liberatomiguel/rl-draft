@@ -368,6 +368,7 @@ import {
   coachLifeOn, // rc9 ENDGAME
   coachLifecycle, // rc9 ENDGAME
   marketCoachRetiredBy, // rc9 ENDGAME
+  marketCoachAge, // rc9 ENDGAME
 } from "@/engine/career/worldLife";
 import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessProjectBid, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
@@ -6594,7 +6595,10 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     reputation: save.reputation,
     // rc9 ENDGAME (R231): the dataset's coaches retire from the market too (false with the flag off).
     ...(coachLifeOn(save.clock.seasonIndex)
-      ? { staffRetired: (id: string, first: number) => marketCoachRetiredBy(`coach:staff:${id}`, first, save.clock.seasonIndex, save.careerSeed) }
+      ? {
+          staffRetired: (id: string, first: number) => marketCoachRetiredBy(`coach:staff:${id}`, first, save.clock.seasonIndex, save.careerSeed),
+          staffAge: (id: string, first: number) => marketCoachAge(`coach:staff:${id}`, first, save.clock.seasonIndex, save.careerSeed),
+        }
       : {}),
   }).filter((c) => !save.retiredCoachIds?.includes(c.id));
 }
