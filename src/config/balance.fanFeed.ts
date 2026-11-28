@@ -31,8 +31,7 @@ export const CAREER_FEED = {
     upsetLoss: -0.01,
     /** A title won (the event's playoffs champion). */
     title: 0.1,
-    /** The manager's post, by tone, when it is made. */
-    tone: { humble: 0.01, confident: 0.02, provocative: 0.04 },
+    /** rc9 STORIES: the manager's post moves them by `effects` below (tone x result). */
     /** A provocative post answered by a loss to that opponent / by a win. */
     receipt: -0.08,
     backedUp: 0.06,
@@ -60,4 +59,48 @@ export const CAREER_FEED = {
   /** Reach: likes scale with followers / `reachUnit`, from 1 up to `reachMax`. */
   reachUnit: 400,
   reachMax: 12,
+
+  // rc9 STORIES (R253): when the manager is offered a post. Only after a
+  // moment worth a statement, never after every series.
+  offer: {
+    /** A title won at these tiers. */
+    titleTiers: ["regional", "major", "worlds"],
+    /** A final lost at these tiers. */
+    finalTiers: ["regional", "major", "worlds"],
+    /** Out of these events before the final (a Major or Worlds exit). */
+    exitTiers: ["major", "worlds"],
+    /** A qualifier lost by a club seeded this high or higher in its field (the favourite missing the regional). */
+    qualifierFavouriteRank: 4,
+    /** An upset (either way) at these tiers, with at least this rating gap between the sides. */
+    upsetTiers: ["regional", "major", "worlds"],
+    upsetMinGap: 3,
+    /** A run of series wins reaching exactly one of these lengths. */
+    streakMilestones: [6, 10, 15],
+    /** Days between two offers (a title skips the gap), and offers per season at most. */
+    minGapDays: 21,
+    perSeason: 6,
+    /** Unanswered, the offer lapses quietly this many days after it surfaced. */
+    expireDays: 4,
+    /** Offer days kept for the gap and the cap. */
+    logKept: 12,
+  },
+
+  // rc9 STORIES (R256): what a post does, by tone and by the result it answers.
+  // `followers` is a relative move; `morale` moves every squad player's morale
+  // (FEATURES.lockerRoom); `board` moves the board's confidence (a save with a
+  // board). Small on purpose: a title is +6 morale and +6 to +15 confidence.
+  effects: {
+    humble: {
+      won: { followers: 0.01, morale: 1, board: 0 },
+      lost: { followers: 0.01, morale: 2, board: 1 },
+    },
+    confident: {
+      won: { followers: 0.02, morale: 2, board: 0 },
+      lost: { followers: 0.015, morale: 1, board: 0 },
+    },
+    provocative: {
+      won: { followers: 0.04, morale: 1, board: -1 },
+      lost: { followers: 0.03, morale: -2, board: -2 },
+    },
+  },
 } as const;

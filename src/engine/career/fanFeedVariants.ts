@@ -16,7 +16,7 @@
  *
  * Keys are `${kind}.${n}`; the copy has exactly these keys, EN and PT.
  */
-import type { FanTone, FeedClaim, FeedKind, FeedSlot } from "./fanFeedTypes";
+import type { FanTone, FeedClaim, FeedKind, FeedSlot, PostMoment } from "./fanFeedTypes";
 
 export interface VariantDef {
   key: string;
@@ -24,11 +24,44 @@ export interface VariantDef {
   claim?: FeedClaim;
   tone?: FanTone;
   result?: SeriesResult;
+  /** rc9 STORIES: a manager's post written for one moment (a title, an exit...). Absent = any series. */
+  moment?: PostMoment;
 }
 
 export type SeriesResult = "won" | "lost";
 
-type Row = { needs: readonly FeedSlot[]; claim?: FeedClaim; tone?: FanTone; result?: SeriesResult };
+type Row = { needs: readonly FeedSlot[]; claim?: FeedClaim; tone?: FanTone; result?: SeriesResult; moment?: PostMoment };
+
+/** rc9 STORIES (R255): the result each moment answers. */
+export const MOMENT_RESULT: Record<PostMoment, SeriesResult> = {
+  title: "won",
+  finalLost: "lost",
+  exit: "lost",
+  missedQualification: "lost",
+  upsetWin: "won",
+  upsetLoss: "lost",
+  streak: "won",
+};
+
+/** rc9 STORIES (R255): the slots of each moment's variants, per tone (one row = one variant). */
+const MOMENT_SLOTS: Record<PostMoment, readonly (readonly FeedSlot[])[]> = {
+  title: [["event", "opponent", "score"], ["event", "opponent"]],
+  finalLost: [["event", "opponent"], ["event", "opponent", "score"]],
+  exit: [["event", "opponent"], ["event", "opponent", "score"], ["opponent", "event"]],
+  missedQualification: [["event", "opponent"], ["event", "opponent", "org"]],
+  upsetWin: [["opponent", "score"], ["opponent", "event"]],
+  upsetLoss: [["opponent", "score"], ["opponent", "event"]],
+  streak: [["streak", "opponent", "event"], ["streak", "opponent", "score"]],
+};
+
+const MOMENTS = Object.keys(MOMENT_SLOTS) as PostMoment[];
+const TONES: FanTone[] = ["humble", "confident", "provocative"];
+
+/** Every moment x tone x its slot rows, in a fixed order (the keys follow the generic twelve). */
+const momentRows = (): Row[] =>
+  MOMENTS.flatMap((moment) =>
+    TONES.flatMap((tone) => MOMENT_SLOTS[moment].map((needs) => ({ needs, tone, result: MOMENT_RESULT[moment], moment }))),
+  );
 
 const defs = (kind: string, rows: Row[]): VariantDef[] => rows.map((r, i) => ({ key: `${kind}.${i + 1}`, ...r }));
 
@@ -118,6 +151,22 @@ export const FEED_VARIANTS: Record<FeedKind, readonly VariantDef[]> = {
     { needs: [OPP, EVENT], tone: "provocative", result: "won" },
     { needs: [OPP, SCORE], tone: "provocative", result: "lost" },
     { needs: [OPP, EVENT], tone: "provocative", result: "lost" },
+    // rc9 STORIES (R255): managerPost.13 to .57, one per moment x tone x slot row.
+    ...momentRows(),
+    // rc9 STORIES (R255): .58 to .69, two more for any series per tone x result, so a
+    // season's six posts never repeat one (a moment's own two, then these four).
+    { needs: [OPP, EVENT], tone: "humble", result: "won" },
+    { needs: [OPP, SCORE], tone: "humble", result: "won" },
+    { needs: [OPP, EVENT], tone: "humble", result: "lost" },
+    { needs: [OPP, SCORE], tone: "humble", result: "lost" },
+    { needs: [OPP, EVENT], tone: "confident", result: "won" },
+    { needs: [OPP, SCORE], tone: "confident", result: "won" },
+    { needs: [OPP, EVENT], tone: "confident", result: "lost" },
+    { needs: [OPP, SCORE], tone: "confident", result: "lost" },
+    { needs: [OPP, EVENT], tone: "provocative", result: "won" },
+    { needs: [OPP, SCORE], tone: "provocative", result: "won" },
+    { needs: [OPP, EVENT], tone: "provocative", result: "lost" },
+    { needs: [OPP, SCORE], tone: "provocative", result: "lost" },
   ]),
   managerReply: defs("managerReply", [
     { needs: [OPP, ORG], tone: "humble", result: "won" },
@@ -132,6 +181,13 @@ export const FEED_VARIANTS: Record<FeedKind, readonly VariantDef[]> = {
     { needs: [OPP, SCORE], tone: "provocative", result: "won" },
     { needs: [OPP, ORG], tone: "provocative", result: "lost" },
     { needs: [OPP, ORG, "week"], tone: "provocative", result: "lost" },
+    // rc9 STORIES (R257): a third reply per tone x result, so a post gets two different ones.
+    { needs: [OPP, EVENT], tone: "humble", result: "won" },
+    { needs: [OPP, EVENT], tone: "humble", result: "lost" },
+    { needs: [OPP, EVENT], tone: "confident", result: "won" },
+    { needs: [OPP, EVENT], tone: "confident", result: "lost" },
+    { needs: [OPP, EVENT], tone: "provocative", result: "won" },
+    { needs: [OPP, EVENT], tone: "provocative", result: "lost" },
   ]),
   receipt: defs("receipt", [
     { needs: [OPP, ORG] },

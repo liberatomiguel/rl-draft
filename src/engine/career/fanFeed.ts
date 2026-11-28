@@ -15,7 +15,7 @@ import { createRng } from "@/lib/rng";
 import type { TournamentState } from "../types";
 import { handleFrom } from "./fanHandles";
 import { FEED_VARIANTS, type SeriesResult, type VariantDef } from "./fanFeedVariants";
-import type { FanTone, FeedClaim, FeedKind, FeedManagerPost, FeedPost, FeedSeries, FeedSlots } from "./fanFeedTypes";
+import type { FanTone, FeedClaim, FeedKind, FeedManagerPost, FeedOffer, FeedPost, FeedSeries, FeedSlots, PostMoment } from "./fanFeedTypes";
 import { deriveSeed, streams } from "./seeds";
 import type { CareerEventDef, CareerSave } from "./types";
 import { weekOfDay } from "./calendar";
@@ -141,6 +141,8 @@ interface Candidate {
   tone?: FanTone;
   /** A manager's post or reply: the result of the series it came after (v2.3 FIX). */
   result?: SeriesResult;
+  /** rc9 STORIES: a manager's post made through the offer carries the copy key it went out with. */
+  variant?: string;
 }
 
 /** "$1.2M" / "$350k". */
@@ -214,9 +216,12 @@ function candidatesOf(save: CareerSave): Candidate[] {
   for (const p of feed?.posts ?? []) {
     const { result, slots: seriesSlots } = postFactsOf(p, feed?.series ?? []);
     const slots: FeedSlots = { ...seriesSlots, opponent: p.opponentName, org, week: String(p.week) };
+    if (p.streak !== undefined) slots.streak = String(p.streak); // rc9 STORIES
     const ctx = ctxAt(save, ledger, p.seasonIndex, p.week);
-    out.push({ id: `post:${p.seriesN}`, kind: "managerPost", seasonIndex: p.seasonIndex, week: p.week, rank: 4, slots, ctx, tone: p.tone, result });
+    out.push({ id: `post:${p.seriesN}`, kind: "managerPost", seasonIndex: p.seasonIndex, week: p.week, rank: 4, slots, ctx, tone: p.tone, result, variant: p.variant });
     out.push({ id: `reply:${p.seriesN}`, kind: "managerReply", seasonIndex: p.seasonIndex, week: p.week, rank: 5, slots, ctx, tone: p.tone, result });
+    // rc9 STORIES (R257): a post made through the offer gets a second fan reply (a different variant: the window).
+    if (p.variant) out.push({ id: `reply2:${p.seriesN}`, kind: "managerReply", seasonIndex: p.seasonIndex, week: p.week, rank: 5, slots, ctx, tone: p.tone, result });
     if (p.settled?.kind === "receipt") {
       const r = p.settled;
       out.push({
@@ -260,13 +265,16 @@ export function eligibleVariants(
   ctx: FeedCtx,
   tone?: FanTone,
   result: SeriesResult = "won",
+  /** rc9 STORIES: only the variants of this moment (absent: only the ones written for any series). */
+  moment?: PostMoment,
 ): VariantDef[] {
   return FEED_VARIANTS[kind].filter(
     (v) =>
       v.needs.every((s) => slots[s] !== undefined) &&
       (!v.claim || claimHolds(v.claim, ctx, slots)) &&
       (!v.tone || v.tone === tone) &&
-      (!v.result || v.result === result),
+      (!v.result || v.result === result) &&
+      v.moment === moment,
   );
 }
 
@@ -297,6 +305,31 @@ export function managerPostDraftOf(
 }
 
 /**
+ * rc9 STORIES (R255): the manager's post for a standing offer, in one tone:
+ * a variant written for the offer's moment, never one already posted this
+ * season (then a variant written for any series, then any). Pure: the sheet's
+ * preview and the stored post are this same call.
+ */
+export function managerPostForOffer(
+  save: Pick<CareerSave, "identity" | "careerSeed" | "fanFeed">,
+  offer: FeedOffer,
+  tone: FanTone,
+): Pick<FeedPost, "variant" | "slots"> {
+  const slots: FeedSlots = { opponent: offer.opponentName, org: save.identity.orgName, score: scoreOf(offer.us, offer.them), event: offer.event };
+  if (offer.streak !== undefined) slots.streak = String(offer.streak);
+  const used = new Set((save.fanFeed?.posts ?? []).filter((p) => p.seasonIndex === offer.seasonIndex && p.variant).map((p) => p.variant!));
+  const ctx = { ledger: 0, regionalChampion: false };
+  const result: SeriesResult = offer.won ? "won" : "lost";
+  const fresh = (vs: VariantDef[]) => vs.filter((v) => !used.has(v.key));
+  const own = eligibleVariants("managerPost", slots, ctx, tone, result, offer.moment);
+  const any = eligibleVariants("managerPost", slots, ctx, tone, result);
+  const pool = [fresh(own), fresh(any), own, any].find((p) => p.length > 0) ?? [];
+  if (pool.length === 0) return { variant: "", slots };
+  const rng = createRng(deriveSeed(save.careerSeed, streams.gen("fanFeed", `offer:${offer.seriesN}:${tone}`)));
+  return { variant: rng.pick(pool).key, slots };
+}
+
+/**
  * The feed, newest first. `limit` caps what is returned (default CAREER_FEED.limit);
  * the whole history is walked either way so a post never changes with the cap.
  * Nothing here reads the clock, and nothing is stored.
@@ -312,7 +345,9 @@ export function fanFeedFor(save: CareerSave, opts: { limit?: number } = {}): Fee
     let variant: string;
     if (c.kind === "managerPost") {
       if (!c.tone) continue;
-      const key = managerPostVariant(save.careerSeed, Number(c.id.slice("post:".length)), c.slots, c.tone, c.result ?? "won");
+      // rc9 STORIES: a post made through the offer reads the key it went out with.
+      const stored = c.variant && FEED_VARIANTS.managerPost.some((v) => v.key === c.variant) ? c.variant : null;
+      const key = stored ?? managerPostVariant(save.careerSeed, Number(c.id.slice("post:".length)), c.slots, c.tone, c.result ?? "won");
       if (!key) continue;
       variant = key;
     } else {

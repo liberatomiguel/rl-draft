@@ -89,6 +89,37 @@ export interface FeedManagerPost {
   settled?:
     | { kind: "receipt"; seriesN: number; seasonIndex: number; week: number; event: string; us: number; them: number }
     | { kind: "backedUp"; seriesN: number };
+  /** rc9 STORIES: the moment the post answered and the copy key it went out with (absent on older posts). */
+  moment?: PostMoment;
+  variant?: string;
+  /** rc9 STORIES: the win streak a streak post names. */
+  streak?: number;
+}
+
+/**
+ * rc9 STORIES (R253): the moments worth a statement. The offer to post comes
+ * only after one of these (fanFeedMoments.postMomentOf), never after every series.
+ */
+export type PostMoment = "title" | "finalLost" | "exit" | "missedQualification" | "upsetWin" | "upsetLoss" | "streak";
+
+/** rc9 STORIES (R254): the standing offer to post, written when a moment qualifies. */
+export interface FeedOffer {
+  /** The series the post answers (`FeedSeries.n`): the final, the exit, the upset. */
+  seriesN: number;
+  moment: PostMoment;
+  /** The day it surfaced; it lapses quietly CAREER_FEED.offer.expireDays later. */
+  seasonIndex: number;
+  day: number;
+  eventId: string;
+  event: string;
+  tier: string;
+  opponentRef: string;
+  opponentName: string;
+  us: number;
+  them: number;
+  won: boolean;
+  /** The win streak, for a streak moment. */
+  streak?: number;
 }
 
 /** The save's one additive optional field. Absent = the feed never ran for this save. */
@@ -102,4 +133,11 @@ export interface FanFeedSave {
   answered: number;
   /** A number with no effect on anything (R198). */
   followers: number;
+  /**
+   * rc9 STORIES: the standing offer to post (null = none). Absent on a save
+   * from before rc.9; the load repair sets it (`repairFanFeedOnLoad`).
+   */
+  offer?: FeedOffer | null;
+  /** rc9 STORIES: when the offers surfaced, newest last (the gap and the season cap read it). */
+  offerLog?: { seasonIndex: number; day: number }[];
 }

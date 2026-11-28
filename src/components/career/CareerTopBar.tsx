@@ -30,6 +30,7 @@ import { NewDot } from "@/components/ui/NewDot";
 import { useNewTab } from "@/store/useNewItems";
 import { careerNewSummary } from "@/engine/career/careerNew";
 import { formatDateShort } from "@/components/career/dateText";
+import { feedPostSurfacedToday } from "@/store/fanFeedFlow"; // rc9 STORIES
 import {
   clockLabel,
   upcomingStops,
@@ -104,7 +105,9 @@ export function CareerTopBar() {
   const tabs = TABS.filter((t) => t.key !== "board" || Boolean(save.board));
   const clock = clockLabel(save);
   // R40 review: no spoiler while the event screen still reveals Saturday.
-  const kind = visibleContinueKind(save, revealHeldEventId);
+  const routed = visibleContinueKind(save, revealHeldEventId);
+  // rc9 STORIES (R254): the post offer reads as the decision due on the day it surfaces (it never holds the clock).
+  const kind = routed === "advance" && feedPostSurfacedToday(save) ? "decision" : routed;
   const unreadMail = save.mail.filter((m) => !m.read).length;
 
   // Plain advance names its destination: the next stop ahead of the clock.

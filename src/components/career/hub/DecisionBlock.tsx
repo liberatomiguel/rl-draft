@@ -60,6 +60,7 @@ import {
   NowTrade,
 } from "@/components/career/hub/NowCards";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { PostDecision } from "@/components/career/feed/PostDecision"; // rc9 STORIES
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -321,6 +322,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           />
         );
     },
+    // rc9 STORIES (R254): the post after a big moment; it never holds, so it sits above the clock (inline).
+    post: () => <PostDecision save={save} C={C} />,
   };
   const body = (d: PendingDecision): React.ReactNode => VIEWS[d.kind](d);
 
@@ -371,7 +374,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
                 // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
                 // Nonblocking sponsor prompts, invites and followed events keep the clock controls.
-                inline: top?.kind === "follow" || (top?.kind === "sunday" && sundayAheadOf(save)?.playing === false && revealHeld === null) || ((top?.kind === "invite" || top?.kind === "sponsor") && !top.holds),
+                inline: top?.kind === "follow" || top?.kind === "post" /* rc9 STORIES */ || (top?.kind === "sunday" && sundayAheadOf(save)?.playing === false && revealHeld === null) || ((top?.kind === "invite" || top?.kind === "sponsor") && !top.holds),
               }
             : null
         }

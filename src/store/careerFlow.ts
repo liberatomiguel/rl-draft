@@ -431,7 +431,7 @@ import { peakAgeOf, retirementChanceFor } from "@/engine/career/development";
 import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergencySale";
 import { noteFinishedTournament } from "./careerAnalytics";
 import { proHooks } from "./proHooks";
-import { recordFeedSeries } from "./fanFeedFlow"; // v2.3 FEED
+import { recordFeedSeries, repairFanFeedOnLoad } from "./fanFeedFlow"; // v2.3 FEED, rc9 STORIES
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -7419,6 +7419,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairFollowState(save); // rc.36 (SUN-03): every load, idempotent, no version bump
   repairCommunicationsOnLoad(save);
   repairEstablishedOnLoad(save); // rc9 org (R225): every load, idempotent, no version bump
+  repairFanFeedOnLoad(save); // rc9 STORIES (R254): every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {

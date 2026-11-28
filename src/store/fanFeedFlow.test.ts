@@ -135,12 +135,15 @@ describe("recordFeedSeries: what the finishEvent hook writes", () => {
   });
 });
 
+/** rc9 STORIES: an event that leaves a moment (a Major exit), so an offer stands; the gap log is cleared first. */
+function offered(save: CareerSave, rows: [string, boolean, boolean?][], over: Partial<CareerEventDef> = {}): CareerSave {
+  if (save.fanFeed) save.fanFeed.offerLog = [];
+  recordFeedSeries(save, tournament(rows), DEF({ tier: "major", ...over }));
+  return save;
+}
+
 describe("postToFeedFlow: the one action", () => {
-  const played = (...rows: [string, boolean][]): CareerSave => {
-    const save = base();
-    recordFeedSeries(save, tournament(rows), DEF());
-    return save;
-  };
+  const played = (...rows: [string, boolean][]): CareerSave => offered(base(), rows);
 
   it("stores tone, opponent and week on the one field, and answers the series", () => {
     const save = played(["a", true], ["b", false]);
@@ -172,9 +175,10 @@ describe("postToFeedFlow: the one action", () => {
     expect(pendingFeedPostOf(next)).toBeNull();
   });
 
-  it("tone moves the followers: provocative more than confident more than humble", () => {
+  it("tone moves the followers: provocative more than confident more than humble (rc9: CAREER_FEED.effects)", () => {
     const after = (tone: "humble" | "confident" | "provocative") => {
-      const save = played(["a", true]);
+      const save = played(["a", true], ["b", false]);
+      save.fanFeed!.followers = 4000; // large enough that the relative moves are distinct
       return feedOf(postToFeedFlow(save, tone)).followers - feedOf(save).followers;
     };
     const [h, c, p] = [after("humble"), after("confident"), after("provocative")];
@@ -191,7 +195,7 @@ describe("postToFeedFlow: the one action", () => {
   it("keeps the last postsKept posts", () => {
     let save = base();
     for (let i = 0; i < CAREER_FEED.postsKept + 3; i++) {
-      recordFeedSeries(save, tournament([[`o${i}`, true]]), DEF({ id: `ev${i}` }));
+      save = offered(save, [[`o${i}`, true]], { id: `ev${i}` });
       save = postToFeedFlow(save, "humble");
     }
     expect(feedOf(save).posts).toHaveLength(CAREER_FEED.postsKept);
@@ -200,11 +204,7 @@ describe("postToFeedFlow: the one action", () => {
 });
 
 describe("the receipt", () => {
-  const provoked = (): CareerSave => {
-    const save = base();
-    recordFeedSeries(save, tournament([["rival", true]]), DEF());
-    return postToFeedFlow(save, "provocative");
-  };
+  const provoked = (): CareerSave => postToFeedFlow(offered(base(), [["rival", true]]), "provocative");
 
   it("provoke, then lose to that opponent: the post is settled as a receipt, the followers fall, the feed quotes it", () => {
     const save = provoked();
@@ -232,9 +232,7 @@ describe("the receipt", () => {
     recordFeedSeries(other, tournament([["somebody", false]]), DEF({ id: "e2" }));
     expect(feedOf(other).posts[0].settled).toBeUndefined();
     for (const tone of ["humble", "confident"] as const) {
-      const save = base();
-      recordFeedSeries(save, tournament([["rival", true]]), DEF());
-      const posted = postToFeedFlow(save, tone);
+      const posted = postToFeedFlow(offered(base(), [["rival", true]]), tone);
       recordFeedSeries(posted, tournament([["rival", false]]), DEF({ id: "e2" }));
       expect(feedOf(posted).posts[0].settled).toBeUndefined();
     }

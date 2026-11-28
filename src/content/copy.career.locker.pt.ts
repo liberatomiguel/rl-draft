@@ -40,6 +40,7 @@ const REASONS_PT: Record<string, string> = {
   settling: "a poeira baixou com o tempo",
   inherited: "o técnico anterior deixou o clima pesado",
   mediaFatigue: "ele foi enviado a outro dia de mídia logo depois do último", // v2.3 MEDIA
+  managerPost: "o técnico falou com a torcida depois da série", // rc9 STORIES
 };
 
 const changesOf = (p: P, moods: Record<string, string>): string =>

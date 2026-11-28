@@ -37,6 +37,7 @@ const REASONS_EN: Record<string, string> = {
   settling: "time has passed",
   inherited: "the previous manager left the room unsettled",
   mediaFatigue: "he was sent to another media day so soon after the last", // v2.3 MEDIA
+  managerPost: "the manager spoke to the fans after the series", // rc9 STORIES
 };
 
 const changesOf = (p: P, moods: Record<string, string>): string =>

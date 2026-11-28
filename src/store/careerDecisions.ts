@@ -41,6 +41,8 @@ import {
 import { trainingDecisionOf } from "./careerTraining";
 import { boardDecisionOf } from "./boardFlow";
 import { followCardOf, sundayStopHolds, sundayWithoutYouOf } from "./careerSunday";
+import { pendingFeedPostOf } from "./fanFeedFlow"; // rc9 STORIES
+import { offerLastDay } from "@/engine/career/fanFeedMoments"; // rc9 STORIES
 
 export type DecisionKind =
   | "event" // today's matchday, an event in progress, the Saturday pause (R40)
@@ -55,7 +57,8 @@ export type DecisionKind =
   | "bid" // an incoming bid for a squad player
   | "sponsor" // the sponsor offers (front F's deals replace rc.33's)
   | "follow" // rc.36 (SUN-03): an event the user is out of — watch / results / skip (never holds)
-  | "board"; // v2.2 board front: the pre-season package, or the job choice after a dismissal (store/boardFlow)
+  | "board" // v2.2 board front: the pre-season package, or the job choice after a dismissal (store/boardFlow)
+  | "post"; // rc9 STORIES (R254): the offer to post after a big moment (store/fanFeedFlow): never holds, lapses quietly
 
 /** A day of the save's calendar. */
 export interface DecisionDate {
@@ -314,6 +317,7 @@ const KIND_ORDER: DecisionKind[] = [
   "sponsor",
   "follow",
   "board",
+  "post", // rc9 STORIES
 ];
 
 /**
@@ -330,6 +334,7 @@ function groupOf(d: PendingDecision): number {
   if (d.kind === "event") return d.holds ? 0 : 6;
   if (d.kind === "sunday") return 6;
   if (d.kind === "follow") return 8;
+  if (d.kind === "post") return 5; // rc9 STORIES: it can wait (by its last day), after what is due today
   if (d.kind === "seasonReview") return 0;
   if (d.kind === "notice") return 1;
   if (d.kind === "contractReview") return 2;
@@ -373,6 +378,9 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
   const sponsor = DECISION_SOURCES.sponsor(save);
   if (sponsor) out.push(decisionFrom("sponsor", sponsor, save));
   push(followDecisionOf(save));
+  // rc9 STORIES (R254): the post offer, listed with the others; it never holds the clock and lapses on its last day.
+  const post = pendingFeedPostOf(save);
+  if (post) out.push({ kind: "post", id: `post:${post.seriesN}`, deadline: { seasonIndex: post.seasonIndex, day: offerLastDay(post.day) }, canWait: false, parked: false, holds: false });
   return out.sort(compareDecisions);
 }
 

@@ -93,7 +93,7 @@ describe("locker room views", () => {
     // v2.3 FIX: the draft is written after the series (its result, score, event)
     const series = { n: 1, opponentName: "FURIA", us: 3, them: 1, won: true, event: "Garage Series" };
     const draft = managerPostDraftOf({ identity: { orgName: "Kestrel Gaming" } as never, careerSeed: 5 }, series, "confident");
-    expect(draft.variant).toMatch(/^managerPost\.(5|6)$/);
+    expect(draft.variant).toMatch(/^managerPost\.(5|6|62|63)$/); // rc9 STORIES: two more confident-after-a-win variants
     expect(feedTextOf(draft, CAREER_FEED_EN.feed)).toMatch(/FURIA/);
   });
 });

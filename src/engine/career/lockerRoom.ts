@@ -55,7 +55,8 @@ export type MoraleReason =
   | "agreedSale"
   | "settling"
   | "inherited"
-  | "mediaFatigue"; // v2.3 MEDIA
+  | "mediaFatigue" // v2.3 MEDIA
+  | "managerPost"; // rc9 STORIES: the manager's post to the fans (store/fanFeedFlow.moveSquadMorale)
 
 export interface LockerDate {
   seasonIndex: number;

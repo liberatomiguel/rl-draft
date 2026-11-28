@@ -3,7 +3,6 @@ import { NowFollow } from "../hub/SundayCard";
 import { followCardOf } from "@/store/careerSunday";
 import { CareerHonorsTable } from "../CareerHonorsTable";
 import { NowLocker } from "@/components/career/locker/NowLocker"; // v2.3 UI
-import { NowFeedPost } from "@/components/career/feed/NowFeedPost"; // v2.3 UI
 
 /**
  * v2.0 hub rebuild (R26), re-cut in rc.2 and rc.34 (ROADMAP UX-01, HQ-CONTRACT
@@ -145,8 +144,8 @@ export function HubScreen() {
           <div data-tour="hub-day" className="order-1">
             {follow ? <Panel className="mb-4 p-4 sm:p-5"><NowFollow save={save} C={C} out={null} follow={follow} /></Panel> : null}
             <DecisionBlock save={save} C={C} />
-            {/* v2.3 UI: the locker room and the manager's post, only when they need him (empty: no box, no gap). */}
-            <div className="mt-4 space-y-4 empty:hidden"><NowLocker save={save} C={C} /><NowFeedPost save={save} C={C} /></div>
+            {/* v2.3 UI: the locker room, only when it needs him (empty: no box, no gap). rc9 STORIES: the manager's post moved into the decision block. */}
+            <div className="mt-4 space-y-4 empty:hidden"><NowLocker save={save} C={C} /></div>
           </div>
 
           {/* 2 — THE SQUAD as Draft cards (UX-01b) + 3 — TRAINING (DEV-03's block):
