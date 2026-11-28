@@ -150,6 +150,16 @@ to 40 (`--section-gap`, `.stack-sections`); between boards in a column 24 to 32.
   only around things that are one object.
 - Sections on one page do not share a template: a pair of cards, a list, a
   strip of figures.
+- **Clean is not bare** (Miguel, 27/11, after the first rc.9 screens: "telas
+  simplificamos demais, deixando só texto puro, sem nenhum visual, nenhuma
+  hierarquia, não é isso"). Short text and no jargon, yes; but every screen
+  keeps something to look at: a lead block with a large figure, cards for
+  people and teams with their marks, bars and meters, colour for state.
+- **Things the player chooses among are a grid of cards** (market candidates,
+  orgs to take over, training options, season plans), with the detail in the
+  sheet or modal the card opens. Rows are for ledgers, standings and history.
+- A money screen leads with one large figure (the budget) and shows how the
+  rest relates to it with a bar, not with sentences.
 - Numbers are set as numbers: a large figure with a quiet label under it.
 - A label above a title is used only when it says what the title does not;
   otherwise the line goes under the title as a sentence.
@@ -210,4 +220,7 @@ rules above still hold; these are added.
 - Blurred colour orbs behind a panel; a glow on a state (selected, live, win).
 - A tiny wide-tracked caps label above a title that repeats the title.
 - A grid of identical boxes as the default answer to "show several things".
+- A screen of text rows on a dark board with nothing to look at; a choice
+  among people or teams shown as a text list; explanatory paragraphs where a
+  figure and a bar would do.
 - Inter, Geist, Space Grotesk as the text face.

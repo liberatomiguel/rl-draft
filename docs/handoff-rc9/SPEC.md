@@ -214,6 +214,16 @@ committed as WIP and merged; agents now FINISH fronts that others started.
   (Demi, open tracking; `.card-title` does it); names stay mixed case. Tags
   are small and smart ("++DEF", not a sentence). Coaches retire between 28
   and 35. Challenges keep their fixed seed.
+- **Clean is not bare** (Miguel, 27/11, on the first screens of this pass):
+  "algumas telas simplificamos demais agora, deixando só texto puro, sem
+  nenhum visual, nenhuma hierarquia, não é isso que é para acontecer." He
+  rejected Training as text-only rows, the Market as a list instead of its
+  grid of cards, Finances without its large budget figure and with paragraphs
+  of explanation, a timeout prompt that stopped the series between games, and
+  share images with a poster headline that hid the team. Read DESIGN.md
+  "Composition": lead block, large figures, cards with marks, bars, colour
+  for state; choices are a grid of cards; rows are for ledgers. "The look"
+  item 4 above ("a list is rows") applies to ledgers only.
 - Start by reading what exists: `git log --oneline rc9/int..HEAD -- <your
   files>` and the files themselves. Do not redo finished work; finish it.
 
