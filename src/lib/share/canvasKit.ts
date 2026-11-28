@@ -336,17 +336,16 @@ export function drawBoard(
 
 /**
  * rc9 SHARE (#258): the image's own frame. A board cut from the cards' stock
- * (body gradient, diagonal hairlines, hairline frame); a title gets the gold
- * frame with its soft light, the one glow DESIGN.md allows here.
+ * (body gradient, diagonal hairlines, hairline frame); a title gets a gold
+ * hairline instead of the grey one, with no light around it (the only glow
+ * left on the image is the cards' own rarity finish).
  */
 export function drawImageFrame(g: CanvasRenderingContext2D, w: number, h: number, inset: number, gold: boolean): void {
   drawBoard(g, inset, inset, w - inset * 2, h - inset * 2, { radius: 26, strong: true, texture: true });
   if (!gold) return;
   g.save();
-  g.shadowColor = "rgba(243,201,105,0.4)";
-  g.shadowBlur = 26;
   roundRect(g, inset + 1, inset + 1, w - inset * 2 - 2, h - inset * 2 - 2, 25);
-  g.lineWidth = 3;
+  g.lineWidth = 2;
   g.strokeStyle = cssGradient(g, 165, inset, inset, w - inset * 2, h - inset * 2, ["#f3c969", "#8a6224", "#d9a943"]);
   g.stroke();
   g.restore();
@@ -650,54 +649,135 @@ export function drawSentence(
   return baseline + (lines.length - 1) * lh;
 }
 
+/** The card's height for a width (the game's card proportion). */
+export const CARD_RATIO = 4.3 / 3;
+
 /**
- * The cards as a hand (rc9, #258): the middle card in front and larger, the
- * two beside it tilted behind it, so three cards read as one team instead of a
- * grid. `cx`/`cy` is the middle card's centre.
+ * The team as the game's cards, straight, side by side, none behind another
+ * (rc9 SHARE, #258 revised after Miguel's 27/11 review). `perRow` cards to a
+ * row, rows stacked; the block is centred in `box` and no card grows past
+ * `maxW`. Returns the block's bottom edge.
  */
-export function drawCardHand(
+export function drawCardRows(
   g: CanvasRenderingContext2D,
   fonts: ShareFonts,
   cards: ShareCardFace[],
   images: Map<string, HTMLImageElement>,
-  cx: number,
-  cy: number,
-  frontW: number,
-  opts: { spread?: number; tilt?: number; sideScale?: number } = {},
-): void {
-  if (cards.length === 0) return;
-  const ratio = 4.3 / 3;
-  const spread = opts.spread ?? frontW * 0.72;
-  const tilt = ((opts.tilt ?? 7) * Math.PI) / 180;
-  const sideW = frontW * (opts.sideScale ?? 0.9);
-  const draw = (face: ShareCardFace, x: number, y: number, w: number, angle: number) => {
-    const h = w * ratio;
-    g.save();
-    g.translate(x, y);
-    g.rotate(angle);
-    // The card's own shadow on the stock: an object lying on the table, not a glow.
-    g.shadowColor = "rgba(0,0,0,0.55)";
-    g.shadowBlur = w * 0.12;
-    g.shadowOffsetY = w * 0.04;
-    roundRect(g, -w / 2, -h / 2, w, h, w * 0.08);
-    g.fillStyle = FLOOR;
-    g.fill();
-    g.restore();
-    g.save();
-    g.translate(x, y);
-    g.rotate(angle);
-    drawGameCard(g, fonts, face, images, -w / 2, -h / 2, w, h);
-    g.restore();
-  };
-  if (cards.length === 1) {
-    draw(cards[0], cx, cy, frontW, 0);
-    return;
+  box: Rect,
+  opts: { perRow?: number; gap?: number; maxW?: number } = {},
+): number {
+  if (cards.length === 0) return box.y;
+  const perRow = Math.min(opts.perRow ?? cards.length, cards.length);
+  const rows = Math.ceil(cards.length / perRow);
+  const gap = opts.gap ?? 16;
+  let cw = Math.min(opts.maxW ?? Infinity, (box.w - gap * (perRow - 1)) / perRow);
+  if (cw * CARD_RATIO * rows + gap * (rows - 1) > box.h) cw = (box.h - gap * (rows - 1)) / rows / CARD_RATIO;
+  const ch = cw * CARD_RATIO;
+  const blockH = ch * rows + gap * (rows - 1);
+  const y0 = box.y + (box.h - blockH) / 2;
+  for (let r = 0; r < rows; r++) {
+    const row = cards.slice(r * perRow, r * perRow + perRow);
+    const rowW = cw * row.length + gap * (row.length - 1);
+    const x0 = box.x + (box.w - rowW) / 2;
+    row.forEach((face, i) => drawGameCard(g, fonts, face, images, x0 + i * (cw + gap), y0 + r * (ch + gap), cw, ch));
   }
-  // Order: the second and third behind, the first (the best pick) in front.
-  const [front, left, right] = cards;
-  if (left) draw(left, cx - spread, cy + frontW * 0.08, sideW, -tilt);
-  if (right) draw(right, cx + spread, cy + frontW * 0.08, sideW, tilt);
-  draw(front, cx, cy, frontW, 0);
+  return y0 + blockH;
+}
+
+/**
+ * The result as a title-sized line (not a poster): display Demi caps at open
+ * tracking, fitted to `max`. Returns the width drawn.
+ */
+export function drawTitleLine(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  text: string,
+  x: number,
+  baseline: number,
+  size: number,
+  max: number,
+  opts: { align?: CanvasTextAlign; color?: string; min?: number } = {},
+): number {
+  const label = text.toUpperCase();
+  const font = (n: number) => {
+    setTracking(g, 0.05, n);
+    return displayFont(fonts, n, 600);
+  };
+  const s = fitFontSize(g, label, max, size, opts.min ?? size * 0.7, font);
+  g.font = font(s);
+  g.textAlign = opts.align ?? "left";
+  g.textBaseline = "alphabetic";
+  g.fillStyle = opts.color ?? INK;
+  const t = fitText(g, label, max);
+  g.fillText(t, x, baseline);
+  const width = g.measureText(t).width;
+  resetTracking(g);
+  g.textAlign = "left";
+  return width;
+}
+
+/** One stage of the road: its label, then a square per series (green won, red lost). */
+export interface RoadStageMarks {
+  label: string;
+  series: boolean[];
+}
+
+/** The road through the bracket as quiet squares. `align` places the line on `x`. Returns its width. */
+export function drawRoad(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  road: RoadStageMarks[],
+  x: number,
+  y: number,
+  size: number,
+  align: "left" | "center" | "right" = "left",
+): number {
+  const stages = road.filter((st) => st.series.length > 0);
+  if (stages.length === 0) return 0;
+  const gap = size * 0.32;
+  const stageGap = size * 1.3;
+  const labelSize = Math.max(11, size * 0.7);
+  const labelW = (t: string) => {
+    g.font = displayFont(fonts, labelSize, 500);
+    setTracking(g, 0.08, labelSize);
+    const wd = g.measureText(t.toUpperCase()).width;
+    resetTracking(g);
+    return wd;
+  };
+  const widths = stages.map((st) => labelW(st.label) + size * 0.55 + st.series.length * (size + gap) - gap);
+  const total = widths.reduce((a, b) => a + b, 0) + stageGap * (stages.length - 1);
+  let cx = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
+  for (const st of stages) {
+    g.font = displayFont(fonts, labelSize, 500);
+    setTracking(g, 0.08, labelSize);
+    g.fillStyle = FAINT;
+    g.textAlign = "left";
+    g.textBaseline = "middle";
+    g.fillText(st.label.toUpperCase(), cx, y + size / 2 + 1);
+    cx += g.measureText(st.label.toUpperCase()).width + size * 0.55;
+    resetTracking(g);
+    for (const won of st.series) {
+      roundRect(g, cx, y, size, size, Math.max(2, size * 0.18));
+      g.fillStyle = won ? GOOD : BAD;
+      g.globalAlpha = won ? 0.9 : 0.75;
+      g.fill();
+      g.globalAlpha = 1;
+      cx += size + gap;
+    }
+    cx += stageGap - gap;
+  }
+  g.textBaseline = "alphabetic";
+  return total;
+}
+
+/** A hairline, vertical or horizontal. */
+export function drawHairline(g: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, strong = false): void {
+  g.strokeStyle = strong ? LINE_STRONG : LINE;
+  g.lineWidth = 1.5;
+  g.beginPath();
+  g.moveTo(x1, y1);
+  g.lineTo(x2, y2);
+  g.stroke();
 }
 
 // ---------------------------------------------------------------------------

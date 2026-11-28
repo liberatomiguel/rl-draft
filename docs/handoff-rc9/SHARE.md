@@ -5,12 +5,13 @@ Finished from the WIP in `10b23ca4`. DESIGN-DECISIONS #255 to #262, CHANGELOG "S
 ## What changed
 - Invite: `components/share/InviteSheet.tsx`, `lib/share/inviteText.ts` (three first-person messages: won, career, draft; EN and PT). `inviteImage.ts` deleted. `ShareSheet` labels the box "The message" when there is no image.
 - Prompts: `lib/share/sharePrompts.ts` (+test), `components/share/SharePrompts.tsx`, numbers in `config/balance.sharePrompts.ts`, record in the plain key `rocket-draft:share-prompts:v1`. Mounted from `RunShareSheet` and `CareerShareButton` (event title screen, season review). The opt-out moved under the preview (three buttons wrapped on desktop).
-- Images: `canvasKit.ts` (two-line headline), `runImage.ts`, `careerImage.ts`, `careerShare.ts`; the banner through `shareBanner.ts`. This pass: no truncated headline, one wordmark per story, the career story without the crest-on-every-card hand.
+- Images, redone after Miguel refused the poster version on 27/11 (`canvasKit.ts` `drawCardRows` / `drawTitleLine` / `drawRoad`, `runImage.ts`, `careerImage.ts`, `runShare.ts`, `careerShare.ts`): the original content drawn quietly. Run: every drafted card straight in a row, placement as a title line, mode and difficulty, path sentence, road squares, team OVR / chemistry / Swiss. Career: crest, club, manager, title or season, series and prize, trophy shelf, starters plus coach as crest cards. The banner goes through `shareBanner.ts`. The refused set is in `shots/share/rejected-v1/`.
+- Crest monogram: `svgElementToImage` embeds the crest's Rajdhani face (an SVG image cannot see page fonts).
 - Copy: `copyFailed` pointed up at text that sits below. Audit items for `SHARE_UI` were already applied in the WIP; `share.buttonTitle` kept (it is the title screen's label, not a tooltip).
 
 ## Evidence
-- 32 PNGs from the running app in `.claude/rc9/shots/share/` (run title / placement, career title / season; Post and Story; EN and PT; plain and with the worst-contrast banner, `challenge-banner-back-to-basics`), plus `wip-*` (the state I found). Each one opened and checked.
-- Banner contrast over all 27 banners: worst text box 4.52:1.
+- 32 PNGs from the running app (second design) in `.claude/rc9/shots/share/` (run title / placement, career title / season; Post and Story; EN and PT; plain and with the worst-contrast banner, `challenge-banner-back-to-basics`), plus `wip-*` (the state I found). Opened and checked: run title Post and Story (EN, banner), run placement Post (PT, plain), career title Post and Story (EN, banner), career season Post (PT, banner) and Story (PT, plain). The other 25 use the same layouts with other words and were not opened one by one.
+- Banner contrast: worst text box 4.53:1 over the worst banner.
 - Prompts and invite sheet at 1280 and 375: measured in the DOM (no sideways scroll, 44 px targets on the phone, two actions in one row on desktop, Escape closes, focus ring on Tab, accept opens the invite sheet). The shared pane is 482 px wide, so the saved jpgs are partial views.
 
 ## Not verified

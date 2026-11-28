@@ -4,9 +4,13 @@
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
+import { baseRarityOf } from "@/engine/cards";
 import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerSave, EventTier } from "@/engine/career/types";
-import type { CareerImageData } from "@/lib/share/careerImage";
+import { flagSrc } from "@/lib/assets";
+import { formatMoney } from "@/lib/format";
+import { CREST_KEY, type CareerImageData } from "@/lib/share/careerImage";
+import type { FrameKey, ShareCardFace } from "@/lib/share/canvasKit";
 
 export interface CareerShareBundle {
   image: CareerImageData;
@@ -31,15 +35,11 @@ export function careerTitles(
 }
 
 /**
- * rc9 SHARE (#258): the one headline. A title just won names that title; a
- * club's best title otherwise; a club with none leads with its series record.
+ * rc9 SHARE (#258): the result line. A title just won names that title; a
+ * club's best title otherwise; a club with none names its season (the series
+ * record is a figure beside it).
  */
-export function careerHeadline(
-  t: ReturnType<typeof careerTitles>,
-  record: string,
-  T: CareerCopy["share"],
-  pending?: EventTier | null,
-): string {
+export function careerHeadline(t: ReturnType<typeof careerTitles>, season: number, T: CareerCopy["share"], pending?: EventTier | null): string {
   if (pending === "worlds") return T.headlineWorlds(t.worlds);
   if (pending === "major") return T.headlineMajors(t.majors);
   if (pending === "regional") return T.headlineRegionals(t.regionals);
@@ -47,12 +47,13 @@ export function careerHeadline(
   if (t.majors > 0) return T.headlineMajors(t.majors);
   if (t.regionals > 0) return T.headlineRegionals(t.regionals);
   if (t.total > 0) return T.headlineTitles(t.total);
-  return record;
+  return T.headlineSeason(season);
 }
 
 export function buildCareerShare(
   save: CareerSave,
   C: CareerCopy,
+  labels: { player: string; coach: string },
   pending?: EventTier | null,
   bannerUrl: string | null = null,
 ): CareerShareBundle {
@@ -60,18 +61,64 @@ export function buildCareerShare(
   const t = careerTitles(save, pending);
   const { seriesWins: w, seriesLosses: l } = save.stats;
   const org = save.identity.orgName;
-  const record = `${w}-${l}`;
-  const headline = careerHeadline(t, record, T, pending);
   // The season review has already filed this season in `history`.
-  const seasons = Math.max(1, save.history.length + (save.phase === "seasonReview" ? 0 : 1));
+  const season = Math.max(1, save.history.length + (save.phase === "seasonReview" ? 0 : 1));
+
+  // rc9 SHARE (#258 revised): the starting three and the coach, as cards wearing the crest.
+  const starters: ShareCardFace[] = save.starterIds
+    .map((id) => save.squad.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => {
+      const ovr = Math.round(p.overall);
+      const flag = p.country ? flagSrc(p.country) : null;
+      return {
+        frame: baseRarityOf(ovr) as FrameKey,
+        value: String(ovr),
+        name: p.name,
+        line: C.player.archetype[p.archetype] ?? null,
+        lineIsTitle: false,
+        role: "player" as const,
+        roleLabel: labels.player,
+        flagUrl: flag,
+        flagCode: flag ? null : (p.country ?? null),
+        logoUrl: CREST_KEY,
+        photoUrl: null,
+      };
+    });
+  if (save.coach) {
+    const ovr = Math.round(save.coach.overall);
+    starters.push({
+      frame: baseRarityOf(ovr) as FrameKey,
+      value: String(ovr),
+      name: save.coach.name,
+      line: null,
+      lineIsTitle: false,
+      role: "coach",
+      roleLabel: labels.coach,
+      flagUrl: null,
+      flagCode: null,
+      logoUrl: CREST_KEY,
+      photoUrl: null,
+    });
+  }
 
   const image: CareerImageData = {
     meta: `${T.kicker} · ${T.meta(save.identity.region, seasonLabelFor(save.clock.seasonIndex))}`,
     orgName: org,
     manager: T.manager(save.identity.managerName),
-    headline,
-    sentence: t.total > 0 ? T.sentenceTitles(t.total, w, l) : T.sentenceRecord(seasons),
+    headline: careerHeadline(t, season, T, pending),
     worldsChampion: t.worlds > 0,
+    figures: [
+      { value: `${w}-${l}`, label: T.figSeries },
+      { value: formatMoney(save.stats.totalPrize, { compact: true }), label: T.figPrize },
+    ],
+    shelf: [
+      { value: String(t.worlds), label: T.shelfWorlds, gold: t.worlds > 0 },
+      { value: String(t.majors), label: T.shelfMajors },
+      { value: String(t.regionals), label: T.shelfRegionals },
+      { value: String(t.other), label: T.shelfOther },
+    ],
+    cards: starters,
     bannerUrl,
     site: "rocketdraft.app",
   };

@@ -100,16 +100,6 @@ export interface RunShareInput {
   bannerUrl?: string | null;
 }
 
-/** rc9 SHARE: the three drafted players, the run's best pick first (the front card). */
-export function playerFaces(run: RunState, playerLabel: string): ShareCardFace[] {
-  const best = run.results?.bestPlayerCardId ?? null;
-  const players = rosterSlots(run.draft.roster)
-    .filter((s) => s.card && s.card.kind === "player")
-    .map((s) => s.card!);
-  players.sort((a, b) => Number(b.refId === best) - Number(a.refId === best));
-  return players.slice(0, 3).map((c) => shareFaceOf(c, playerLabel));
-}
-
 export interface RunShareBundle {
   image: RunImageData;
   text: string;
@@ -127,7 +117,6 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
   const champion = results.placement === "champion";
   const quick = run.mode === "quick";
   const record = `${results.swissRecord.wins}-${results.swissRecord.losses}`;
-  // The chemistry tier stays in the post's words; the image no longer carries it.
   const chem = copy.CHEM_TIERS[input.chemistryTier] ?? input.chemistryTier;
 
   let headline: string;
@@ -138,8 +127,7 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
     headline = S.headlineOut(e.name, stage, `${e.score[0]}-${e.score[1]}`);
   } else headline = S.headlineFallback;
 
-  // rc9 SHARE (#258): the meta is the mode and the difficulty (the date and the
-  // chemistry were noise on the image).
+  // rc9 SHARE (#258): the meta is the mode and the difficulty.
   const meta = [
     input.dailyNumber ? S.dailyTag(input.dailyNumber) : input.modeLabel,
     run.duel ? copy.DUEL_UI.stepperTag : null,
@@ -154,8 +142,19 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
     champion,
     meta,
     headline,
-    teamFigure: { value: String(input.teamOverall), label: S.figTeamOvr },
-    cards: playerFaces(run, copy.DRAFT_UI.player),
+    road,
+    // rc9 SHARE (#258 revised): the run's three figures and every drafted card are back.
+    figures: [
+      { value: String(input.teamOverall), label: S.figTeamOvr },
+      { value: chem, label: S.figChemistry },
+      quick ? { value: String(results.playoffWins), label: S.figPlayoffWins } : { value: record, label: S.figSwiss },
+    ],
+    cards: runFaces(run, {
+      player: copy.DRAFT_UI.player,
+      coach: copy.DRAFT_UI.slotCoach,
+      sub: copy.DRAFT_UI.slotSub,
+      org: copy.DRAFT_UI.slotOrg,
+    }),
     bannerUrl: input.bannerUrl ?? null,
     site: "rocketdraft.app",
   };

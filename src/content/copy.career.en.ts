@@ -2750,10 +2750,14 @@ export const CAREER_EN = {
     headlineMajors: (n: number) => (n > 1 ? `${n}× Major champions` : "Major champions"),
     headlineRegionals: (n: number) => (n > 1 ? `${n} regional titles` : "Regional champions"),
     headlineTitles: (n: number) => (n > 1 ? `${n} titles` : "First silverware"),
-    // rc9 SHARE: a club with no title leads with its series record (the headline is the figure).
-    sentenceTitles: (titles: number, w: number, l: number) =>
-      `${titles} ${titles === 1 ? "title" : "titles"} so far, ${w}-${l} in series.`,
-    sentenceRecord: (seasons: number) => (seasons > 1 ? `Series won and lost over ${seasons} seasons.` : "Series won and lost this season."),
+    // rc9 SHARE (#258 revised): a club with no title leads with its season; the record is a figure.
+    headlineSeason: (n: number) => `Season ${n}`,
+    shelfWorlds: "Worlds",
+    shelfMajors: "Majors",
+    shelfRegionals: "Regionals",
+    shelfOther: "Other titles",
+    figSeries: "Series",
+    figPrize: "Prize money",
     textWorlds: (org: string, n: number) =>
       `${org} ${n > 1 ? `have won the Worlds ${n} times` : "are world champions"} in Road to Worlds, the RLCS career mode on Rocket Draft. Build your own org from nothing:`,
     textTitles: (org: string, n: number) =>

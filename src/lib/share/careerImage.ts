@@ -1,36 +1,44 @@
 /**
  * Share kit: the image of a Road to Worlds career, post and story.
  *
- * rc9 (#258): one thing first. The headline is the title won (or, for a club
- * with no title yet, its series record) in Bold paper white, one sentence
- * under it; the club is the second thing (its crest large, its name in mixed
- * case, the manager quiet under it). The trophy shelf, the prize money and the
- * coach line are gone, and so is the hand of starters the WIP story drew (each
- * card repeated the crest). A club that has won the Worlds gets the gold
- * frame, and the equipped profile banner is a quiet band behind the top (#259).
+ * rc9 (#258, revised after Miguel's review of 27/11): the club and its team
+ * are the centre. The crest, the club's name in mixed case and the manager;
+ * the result as a title-sized line (the title won, or the season); the series
+ * record (paper white, the one figure) and the prize money; the trophy shelf
+ * as four quiet figures; the starting three and the coach as the game's cards
+ * wearing the crest, straight and side by side. A Worlds-winning club gets the
+ * gold hairline; the equipped profile banner is a faded band behind the top
+ * (#259).
  */
 
 import {
+  GOLD,
   INK,
-  PAPER,
   SUB,
   displayFont,
   drawBannerBand,
+  drawCardRows,
   drawContained,
+  drawFigure,
   drawFloor,
-  drawHeadline,
+  drawHairline,
   drawImageFrame,
   drawLabel,
-  drawSentence,
+  drawTitleLine,
   fitFontSize,
   fitText,
   loadImage,
+  loadImages,
   makeCanvas,
   textFont,
   type Rect,
+  type ShareCardFace,
   type ShareFonts,
 } from "./canvasKit";
-import { SHARE_SIZES, drawSignature, type RenderReport, type ShareFormat } from "./runImage";
+import { SHARE_SIZES, drawFigureStrip, drawSignature, type RenderReport, type ShareFigure, type ShareFormat } from "./runImage";
+
+/** The cards' crest: the club's mark, passed in as an image under this key. */
+export const CREST_KEY = "career:crest";
 
 export interface CareerImageData {
   /** "Road to Worlds · SAM · RLCS 2027" (drawn in caps). */
@@ -38,10 +46,15 @@ export interface CareerImageData {
   orgName: string;
   /** "Manager Sam Okoye". */
   manager: string;
-  /** The one headline: "World champions", or the series record "34-12". */
+  /** The result line: "2× Major champions", or "Season 3". */
   headline: string;
-  sentence: string;
   worldsChampion: boolean;
+  /** Series record first (the one figure), then prize money. */
+  figures: ShareFigure[];
+  /** Worlds, Majors, Regionals, other titles. */
+  shelf: { value: string; label: string; gold?: boolean }[];
+  /** The starting three, then the coach (their crest is CREST_KEY). */
+  cards: ShareCardFace[];
   bannerUrl: string | null;
   site: string;
 }
@@ -64,6 +77,25 @@ function drawManager(g: CanvasRenderingContext2D, fonts: ShareFonts, text: strin
   g.textAlign = "left";
 }
 
+/** The trophy shelf: four small figures, hairlines between; a Worlds title in gold. */
+function drawShelf(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  shelf: CareerImageData["shelf"],
+  x: number,
+  baseline: number,
+  span: number,
+  size: number,
+  labelSize: number,
+  align: "left" | "center",
+): void {
+  shelf.forEach((s, i) => {
+    const fx = align === "center" ? x + span * i + span / 2 : x + span * i + (i > 0 ? size * 0.5 : 0);
+    drawFigure(g, fonts, s.value, s.label, fx, baseline, size, { align, color: s.gold ? GOLD : INK, labelSize });
+    if (i > 0) drawHairline(g, x + span * i, baseline - size * 0.9, x + span * i, baseline + size * 0.55);
+  });
+}
+
 export async function renderCareerImage(
   data: CareerImageData,
   crest: HTMLImageElement | null,
@@ -73,32 +105,37 @@ export async function renderCareerImage(
 ): Promise<HTMLCanvasElement> {
   const { w, h } = SHARE_SIZES[format];
   const { canvas, g } = makeCanvas(w, h);
-  const banner = await loadImage(data.bannerUrl);
+  const [images, banner] = await Promise.all([
+    loadImages(data.cards.flatMap((c) => [c.flagUrl, c.photoUrl])),
+    loadImage(data.bannerUrl),
+  ]);
+  if (crest) images.set(CREST_KEY, crest);
   drawFloor(g, w, h);
 
   if (format === "post") {
     const inset = 22;
     drawImageFrame(g, w, h, inset, data.worldsChampion);
-    const left = 76;
-    const col = 600;
-    const metaY = 98;
+    const left = 64;
+    const col = 540;
     if (banner) {
       const over: { rect: Rect; color: string }[] = [
-        { rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB },
-        // A long headline breaks upwards into the band's foot.
-        { rect: { x: left, y: 140, w: col, h: 78 }, color: PAPER },
+        { rect: { x: left, y: 64, w: col, h: 22 }, color: SUB },
+        { rect: { x: 160, y: 108, w: col - 96, h: 76 }, color: INK },
       ];
-      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 196, radius: 24 }, over);
+      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 190, radius: 24 }, over);
       if (report) report.banner = out;
     }
-    drawLabel(g, fonts, data.meta, left, metaY, 17, col);
-    drawHeadline(g, fonts, data.headline, left, 262, 104, col, { min: 56, twoLineMax: 72 });
-    drawSentence(g, fonts, data.sentence, left, 326, 26, col, { lines: 2, lineHeight: 36 });
-    drawClubName(g, fonts, data.orgName, left, 452, 44, col, "left");
-    drawManager(g, fonts, data.manager, left, 490, 20, col, "left");
-    drawSignature(g, fonts, data.site, left, 566, 24, "left");
-    // The club's crest, large, on the right: the image's object.
-    if (crest) drawContained(g, crest, 790, 150, 330, 330);
+    drawLabel(g, fonts, data.meta, left, 82, 15, col);
+    // The club: its crest, its name, the manager.
+    if (crest) drawContained(g, crest, left, 106, 80, 80);
+    drawClubName(g, fonts, data.orgName, 160, 144, 32, col - 96, "left");
+    drawManager(g, fonts, data.manager, 160, 174, 17, col - 96, "left");
+    drawTitleLine(g, fonts, data.headline, left, 270, 44, col, { min: 30 });
+    drawFigureStrip(g, fonts, data.figures, left, 356, 190, 30, { labelSize: 12, firstSize: 44 });
+    drawShelf(g, fonts, data.shelf, left, 460, 128, 26, 12, "left");
+    // The team: the starting three and the coach, two to a row.
+    drawCardRows(g, fonts, data.cards.slice(0, 4), images, { x: 660, y: 64, w: 476, h: 502 }, { perRow: 2, gap: 16, maxW: 180 });
+    drawSignature(g, fonts, data.site, left, 578, 20, "left");
     return canvas;
   }
 
@@ -106,21 +143,23 @@ export async function renderCareerImage(
   const inset = 34;
   drawImageFrame(g, w, h, inset, data.worldsChampion);
   const cx = w / 2;
-  // The meta line opens the story; the wordmark signs it once, at the foot.
-  const metaY = 330;
   if (banner) {
-    const over: { rect: Rect; color: string }[] = [{ rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB }];
-    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 380, radius: 24 }, over);
+    const over: { rect: Rect; color: string }[] = [{ rect: { x: 96, y: 278, w: w - 192, h: 30 }, color: SUB }];
+    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 400, radius: 24 }, over);
     if (report) report.banner = out;
   }
-  drawLabel(g, fonts, data.meta, cx, metaY, 24, w - 180, { align: "center" });
-  drawHeadline(g, fonts, data.headline, cx, 640, 150, w - 160, { align: "center", min: 84, twoLineMax: 128 });
-  drawSentence(g, fonts, data.sentence, cx, 724, 36, w - 220, { align: "center", lines: 2, lineHeight: 48 });
-  // The club is the second thing: its crest large, its name, the manager quiet.
-  // The starting three are left out: each card would repeat the crest.
-  if (crest) drawContained(g, crest, cx - 180, 860, 360, 360);
-  drawClubName(g, fonts, data.orgName, cx, 1336, 72, w - 180, "center");
-  drawManager(g, fonts, data.manager, cx, 1390, 30, w - 180, "center");
-  drawSignature(g, fonts, data.site, cx, 1648, 40, "center");
+  drawLabel(g, fonts, data.meta, cx, 302, 22, w - 192, { align: "center" });
+  if (crest) drawContained(g, crest, cx - 80, 344, 160, 160);
+  drawClubName(g, fonts, data.orgName, cx, 584, 56, w - 192, "center");
+  drawManager(g, fonts, data.manager, cx, 630, 26, w - 192, "center");
+  drawTitleLine(g, fonts, data.headline, cx, 736, 64, w - 192, { align: "center", min: 44 });
+  drawCardRows(g, fonts, data.cards.slice(0, 4), images, { x: 96, y: 800, w: w - 192, h: 340 }, { gap: 20, maxW: 210 });
+  drawFigureStrip(g, fonts, data.figures, 96, 1272, (w - 192) / Math.max(1, data.figures.length), 44, {
+    align: "center",
+    labelSize: 18,
+    firstSize: 64,
+  });
+  drawShelf(g, fonts, data.shelf, 96, 1430, (w - 192) / Math.max(1, data.shelf.length), 36, 16, "center");
+  drawSignature(g, fonts, data.site, cx, 1640, 34, "center");
   return canvas;
 }

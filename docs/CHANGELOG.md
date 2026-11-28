@@ -81,7 +81,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 #### Changed
 - The invitation is a message and the link, no image (`InviteSheet`, `lib/share/inviteText.ts`): first person, in the player's language, picked by context (just won a title, plays the career, plays the draft). Referral code and `utm_medium=share` kept. The old invite card (`inviteImage.ts`) is gone.
-- The share images are redrawn (run and career, Post 1200 x 630 and Story 1080 x 1920): the placement or the title first in Bold paper white, one sentence under it, the team second (the three drafted cards, or the club's crest and name), the meta line, the wordmark and the link small. The trophy shelf, prize money, coach line and the story's second wordmark are gone. A long headline breaks into two lines instead of being cut.
+- The share images are redrawn (run and career, Post 1200 x 630 and Story 1080 x 1920) around the team: every drafted card (players, coach, sub, org) in a straight row of the game's own cards, none hidden; the placement as a title-sized line with the mode and difficulty, the path in one sentence and the road as small squares; team overall, chemistry and the Swiss record as figures. A career shows the crest, the club and the manager, the title or the season, the series record and prize money, the trophy shelf, and the starting three and the coach as cards wearing the crest. No tilt, no overlap, no glow beyond the cards' rarity; one signature at the foot. (A first redraw with a poster-sized headline and three tilted cards was refused on 27/11.)
 - The player's equipped profile banner sits as a faded band behind the top of the image, at the strongest opacity (0.5 down to 0.12) that keeps every line over it at 4.5:1 or better; no banner = plain stock.
 - The share sheet's message box is labelled "The message" when there is no image.
 
@@ -91,7 +91,6 @@ with the root cause — that section doubles as the project's bugfix log.
 - `share_prompt` analytics event (kind, action shown / accepted / dismissed / optedOut).
 
 #### Fixed
-- The career Post cut "2× Major champions" to "2× MAJOR CHAMPIO…". Root cause: the headline shrank only to a floor and was then ellipsised; it now breaks into two lines below that floor.
 - The share sheet's copy-failed notice pointed to "the text above"; the text sits below it.
 - A founded club's crest monogram drew in a system serif on the career share image. Root cause: the crest is an SVG drawn as an image, a separate document that sees neither the page's fonts nor `var(--font-rajdhani)`; `svgElementToImage` now resolves each text's face on the live element, waits for it (Rajdhani is not preloaded) and embeds it in the SVG, with a sans fallback.
 

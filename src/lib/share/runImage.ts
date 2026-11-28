@@ -3,32 +3,38 @@
  * (1200 × 630: X, Discord, WhatsApp, Reddit) and the story (1080 × 1920:
  * Instagram, TikTok and WhatsApp status).
  *
- * rc9 (#258): one thing first. The placement is the headline, in Bold paper
- * white; one sentence says how it went; the team is the second thing (the
- * three drafted players as a hand of the game's cards, and the team rating as
- * one figure). The meta line, the wordmark and the link are small. Orange
- * appears once, in the wordmark. The player's equipped banner, when there is
- * one, is a quiet band behind the top (#259).
+ * rc9 (#258, revised after Miguel's review of 27/11: "limpas, elegantes ...
+ * mostrar bem o time usado"): the team is the centre, every drafted card in a
+ * straight row (players, coach, sub, org), none hidden; above it the result
+ * as a title-sized line with the mode and the difficulty, the path in one
+ * sentence and the road as quiet squares; the three figures of the run (team
+ * overall in paper white, chemistry, the Swiss record); the wordmark and the
+ * link small. No tilt, no overlap, no glow beyond the cards' rarity. The
+ * equipped profile banner is a faded band behind the top (#259).
  */
 
 import {
-  FAINT,
+  INK,
   PAPER,
   SUB,
+  FAINT,
   drawBannerBand,
-  drawCardHand,
+  drawCardRows,
   drawFigure,
   drawFloor,
-  drawHeadline,
+  drawHairline,
   drawImageFrame,
   drawLabel,
+  drawRoad,
   drawSentence,
+  drawTitleLine,
   drawWordmark,
   loadImage,
   loadImages,
   makeCanvas,
   textFont,
   type Rect,
+  type RoadStageMarks,
   type ShareCardFace,
   type ShareFonts,
 } from "./canvasKit";
@@ -40,10 +46,11 @@ export const SHARE_SIZES: Record<ShareFormat, { w: number; h: number }> = {
   story: { w: 1080, h: 1920 },
 };
 
-export interface RoadStage {
+export type RoadStage = RoadStageMarks;
+
+export interface ShareFigure {
+  value: string;
   label: string;
-  /** One entry per series, in order: true = won. */
-  series: boolean[];
 }
 
 export interface RunImageData {
@@ -52,18 +59,19 @@ export interface RunImageData {
   champion: boolean;
   /** "Classic draft · Hard" (drawn in caps). */
   meta: string;
-  /** One sentence under the headline ("Undefeated.", "Out to Vitality (2-4) in the Grand Final."). */
+  /** The path in one sentence ("3-1 in the Swiss, then won the playoffs."). */
   headline: string;
-  /** The team rating, the image's second figure. */
-  teamFigure: { value: string; label: string };
-  /** The three drafted players (the best pick first). */
+  road: RoadStage[];
+  /** Team overall first (the one figure in paper white), then chemistry and the record. */
+  figures: ShareFigure[];
+  /** Every drafted card: players first, then coach, sub and org. */
   cards: ShareCardFace[];
   /** The player's equipped profile banner (an asset URL), or null for the plain stock. */
   bannerUrl: string | null;
   site: string;
 }
 
-/** Where the site line sits: the wordmark, then the link in `--faint`. */
+/** The wordmark, then the link in `--faint`. */
 export function drawSignature(
   g: CanvasRenderingContext2D,
   fonts: ShareFonts,
@@ -73,24 +81,51 @@ export function drawSignature(
   size: number,
   align: "left" | "center",
 ): void {
-  if (align === "left") {
-    const end = drawWordmark(g, fonts, x, baseline, size, "left");
-    g.font = textFont(fonts, size * 0.78, 400);
+  if (align === "center") {
+    drawWordmark(g, fonts, x, baseline, size, "center");
+    g.font = textFont(fonts, size * 0.72, 400);
     g.fillStyle = FAINT;
+    g.textAlign = "center";
+    g.fillText(site, x, baseline + size * 1.25);
     g.textAlign = "left";
-    g.fillText(site, end + size * 0.7, baseline);
     return;
   }
-  drawWordmark(g, fonts, x, baseline, size, "center");
-  g.font = textFont(fonts, size * 0.72, 400);
+  const end = drawWordmark(g, fonts, x, baseline, size, "left");
+  g.font = textFont(fonts, size * 0.78, 400);
   g.fillStyle = FAINT;
-  g.textAlign = "center";
-  g.fillText(site, x, baseline + size * 1.25);
   g.textAlign = "left";
+  g.fillText(site, end + size * 0.7, baseline);
 }
 
-function imageUrls(data: RunImageData): string[] {
-  return data.cards.flatMap((c) => [c.flagUrl, c.logoUrl, c.photoUrl]).filter((u): u is string => Boolean(u));
+/**
+ * Figures side by side, hairlines between them: the first in paper white
+ * (the one figure), the others in ink. `x` is the left edge, `span` the width
+ * of each.
+ */
+export function drawFigureStrip(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  figures: ShareFigure[],
+  x: number,
+  baseline: number,
+  span: number,
+  size: number,
+  opts: { align?: "left" | "center"; labelSize?: number; firstSize?: number } = {},
+): void {
+  figures.forEach((f, i) => {
+    const fx = opts.align === "center" ? x + span * i + span / 2 : x + span * i + (i > 0 ? size * 0.5 : 0);
+    const first = i === 0;
+    drawFigure(g, fonts, f.value, f.label, fx, baseline, first ? (opts.firstSize ?? size) : size, {
+      align: opts.align ?? "left",
+      color: first ? PAPER : INK,
+      labelSize: opts.labelSize,
+    });
+    if (i > 0) drawHairline(g, x + span * i, baseline - size * 0.9, x + span * i, baseline + size * 0.55, true);
+  });
+}
+
+function imageUrls(cards: ShareCardFace[]): string[] {
+  return cards.flatMap((c) => [c.flagUrl, c.logoUrl, c.photoUrl]).filter((u): u is string => Boolean(u));
 }
 
 export interface RenderReport {
@@ -106,30 +141,35 @@ export async function renderRunImage(
 ): Promise<HTMLCanvasElement> {
   const { w, h } = SHARE_SIZES[format];
   const { canvas, g } = makeCanvas(w, h);
-  const [images, banner] = await Promise.all([loadImages(imageUrls(data)), loadImage(data.bannerUrl)]);
+  const [images, banner] = await Promise.all([loadImages(imageUrls(data.cards)), loadImage(data.bannerUrl)]);
   drawFloor(g, w, h);
+  const figures = data.figures.slice(0, 3);
 
   if (format === "post") {
     const inset = 22;
     drawImageFrame(g, w, h, inset, data.champion);
-    const left = 76;
-    const col = 540;
-    const metaY = 98;
+    const left = 64;
+    const right = w - 64;
+    const span = 128;
+    const figX = right - span * figures.length;
+    const colW = figX - left - 32;
     if (banner) {
       const over: { rect: Rect; color: string }[] = [
-        { rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB },
-        // A long placement breaks upwards into the band's foot.
-        { rect: { x: left, y: 140, w: col, h: 78 }, color: PAPER },
+        { rect: { x: left, y: 64, w: colW, h: 22 }, color: SUB },
+        { rect: { x: left, y: 98, w: colW, h: 50 }, color: INK },
+        { rect: { x: figX, y: 104, w: right - figX, h: 46 }, color: INK },
       ];
-      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 196, radius: 24 }, over);
+      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 170, radius: 24 }, over);
       if (report) report.banner = out;
     }
-    drawLabel(g, fonts, data.meta, left, metaY, 17, col);
-    drawHeadline(g, fonts, data.placementLabel, left, 262, 112, col, { min: 60, twoLineMax: 72 });
-    const last = drawSentence(g, fonts, data.headline, left, 326, 26, col, { lines: 2, lineHeight: 36 });
-    drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, left, Math.max(470, last + 120), 54, { labelSize: 15 });
-    drawSignature(g, fonts, data.site, left, 566, 24, "left");
-    drawCardHand(g, fonts, data.cards.slice(0, 3), images, 902, 330, 206, { spread: 146, tilt: 7, sideScale: 0.88 });
+    drawLabel(g, fonts, data.meta, left, 82, 15, colW);
+    drawTitleLine(g, fonts, data.placementLabel, left, 142, 52, colW, { min: 36 });
+    drawSentence(g, fonts, data.headline, left, 182, 20, colW, { lines: 1 });
+    drawRoad(g, fonts, data.road, left, 200, 14, "left");
+    drawFigureStrip(g, fonts, figures, figX, 140, span, 30, { labelSize: 12, firstSize: 44 });
+    drawCardRows(g, fonts, data.cards.slice(0, 6), images, { x: left, y: 244, w: right - left, h: 266 }, { gap: 16, maxW: 176 });
+    drawHairline(g, left, 540, right, 540);
+    drawSignature(g, fonts, data.site, left, 578, 20, "left");
     return canvas;
   }
 
@@ -137,18 +177,24 @@ export async function renderRunImage(
   const inset = 34;
   drawImageFrame(g, w, h, inset, data.champion);
   const cx = w / 2;
-  // The meta line opens the story; the wordmark signs it once, at the foot.
-  const metaY = 330;
   if (banner) {
-    const over: { rect: Rect; color: string }[] = [{ rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB }];
-    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 380, radius: 24 }, over);
+    const over: { rect: Rect; color: string }[] = [
+      { rect: { x: 96, y: 278, w: w - 192, h: 30 }, color: SUB },
+      { rect: { x: 96, y: 330, w: w - 192, h: 70 }, color: INK },
+    ];
+    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 400, radius: 24 }, over);
     if (report) report.banner = out;
   }
-  drawLabel(g, fonts, data.meta, cx, metaY, 24, w - 180, { align: "center" });
-  drawHeadline(g, fonts, data.placementLabel, cx, 600, 168, w - 160, { align: "center", min: 90, twoLineMax: 128 });
-  drawSentence(g, fonts, data.headline, cx, 684, 38, w - 220, { align: "center", lines: 2, lineHeight: 50 });
-  drawCardHand(g, fonts, data.cards.slice(0, 3), images, cx, 1100, 330, { spread: 250, tilt: 6, sideScale: 0.88 });
-  drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, cx, 1488, 92, { align: "center", labelSize: 24 });
-  drawSignature(g, fonts, data.site, cx, 1648, 40, "center");
+  drawLabel(g, fonts, data.meta, cx, 302, 22, w - 192, { align: "center" });
+  drawTitleLine(g, fonts, data.placementLabel, cx, 392, 72, w - 192, { align: "center", min: 48 });
+  drawSentence(g, fonts, data.headline, cx, 450, 28, w - 192, { align: "center", lines: 1 });
+  drawRoad(g, fonts, data.road, cx, 482, 24, "center");
+  drawCardRows(g, fonts, data.cards.slice(0, 6), images, { x: 96, y: 560, w: w - 192, h: 840 }, { perRow: 3, gap: 24, maxW: 280 });
+  drawFigureStrip(g, fonts, figures, 96, 1520, (w - 192) / Math.max(1, figures.length), 44, {
+    align: "center",
+    labelSize: 18,
+    firstSize: 64,
+  });
+  drawSignature(g, fonts, data.site, cx, 1640, 34, "center");
   return canvas;
 }

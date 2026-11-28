@@ -10,7 +10,7 @@ import { cosmeticById } from "@/data/cosmetics";
 import { specialCards } from "@/data";
 import { EN } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
-import { resolvePlayerCard, resolveSpecial } from "@/engine/cards";
+import { resolveCoach, resolveOrg, resolvePlayerCard, resolveSpecial, resolveSub } from "@/engine/cards";
 import { bannerArtSrc, hasSpecialPhoto } from "@/lib/assets";
 import { resolveShareFonts } from "./canvasKit";
 import { renderRunImage, type RenderReport, type RunImageData, type ShareFormat } from "./runImage";
@@ -33,15 +33,31 @@ function runData(variant: "title" | "placement", locale: BenchLocale, bannerId: 
   const C = locale === "pt" ? PT : EN;
   const S = C.SHARE_UI;
   const sp = specialCards.find((s) => hasSpecialPhoto(s.id) && s.rarity === "legendary") ?? specialCards[0];
-  const cards = [resolveSpecial(sp), resolvePlayerCard("zen-team-vitality-2223"), resolvePlayerCard("kaydop-dignitas-s5")];
+  const D = C.DRAFT_UI;
+  const cards = [
+    shareFaceOf(resolveSpecial(sp), D.player),
+    shareFaceOf(resolvePlayerCard("zen-team-vitality-2223"), D.player),
+    shareFaceOf(resolvePlayerCard("kaydop-dignitas-s5"), D.player),
+    shareFaceOf(resolveCoach("gregan-coach-team-vitality-s7"), D.slotCoach),
+    shareFaceOf(resolveSub("reepex-sub-dignitas-s5"), D.slotSub),
+    shareFaceOf(resolveOrg("team-vitality"), D.slotOrg),
+  ];
   const title = variant === "title";
   return {
     placementLabel: title ? C.RESULTS_UI.champion : C.RESULTS_UI.runnerUp,
     champion: title,
-    meta: [locale === "pt" ? "Draft Clássico" : "Classic draft", "Hard"].join("  ·  "),
+    meta: [locale === "pt" ? "Draft Clássico" : "Classic draft", locale === "pt" ? "Difícil" : "Hard"].join("  ·  "),
     headline: title ? S.headlineChampion("3-1") : S.headlineOut("Team Vitality", locale === "pt" ? "Grande Final" : "Grand Final", "2-4"),
-    teamFigure: { value: "91", label: S.figTeamOvr },
-    cards: cards.map((c) => shareFaceOf(c, C.DRAFT_UI.player)),
+    road: [
+      { label: S.roadSwiss, series: [true, false, true, true] },
+      { label: S.roadPlayoffs, series: title ? [true, true, true] : [true, true, false] },
+    ],
+    figures: [
+      { value: "91", label: S.figTeamOvr },
+      { value: C.CHEM_TIERS.Great, label: S.figChemistry },
+      { value: "3-1", label: S.figSwiss },
+    ],
+    cards,
     bannerUrl: benchBannerUrl(bannerId),
     site: "rocketdraft.app",
   };

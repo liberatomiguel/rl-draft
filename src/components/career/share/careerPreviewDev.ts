@@ -37,7 +37,7 @@ function benchSave(variant: "title" | "season"): CareerSave {
     identity: BENCH_IDENTITY,
     starterIds: squad.map((p) => p.id),
     squad,
-    coach: null,
+    coach: { id: "c1", name: "Gustavo Lima", overall: 79.6 },
     clock: { seasonIndex: 2, day: 180 },
     phase: "seasonReview",
     history: [{}, {}, {}],
@@ -63,7 +63,8 @@ export async function renderCareerBench(
   crestSvg: SVGSVGElement | null,
 ): Promise<{ url: string; report: RenderReport }> {
   const C = (locale === "pt" ? CAREER_PT : CAREER_EN) as unknown as CareerCopy;
-  const bundle = buildCareerShare(benchSave(variant), C, variant === "title" ? "major" : null, bannerUrl);
+  const labels = locale === "pt" ? { player: "Jogador", coach: "Técnico" } : { player: "Player", coach: "Coach" };
+  const bundle = buildCareerShare(benchSave(variant), C, labels, variant === "title" ? "major" : null, bannerUrl);
   const report: RenderReport = { banner: null };
   const [fonts, crest] = await Promise.all([resolveShareFonts(), svgElementToImage(crestSvg, 512)]);
   const canvas = await renderCareerImage(bundle.image, crest, format, fonts, report);

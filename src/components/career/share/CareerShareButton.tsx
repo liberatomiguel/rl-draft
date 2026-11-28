@@ -15,7 +15,7 @@
 import { useId, useMemo, useState } from "react";
 import { SITE } from "@/config/site";
 import { useCareerCopy } from "@/content/careerCopy";
-import { useUiLocale } from "@/content/copy";
+import { useCopy, useUiLocale } from "@/content/copy";
 import type { CareerSave, EventTier } from "@/engine/career/types";
 import { orgLogoSrc } from "@/lib/assets";
 import { loadImage, resolveShareFonts, svgElementToImage } from "@/lib/share/canvasKit";
@@ -52,6 +52,7 @@ export function CareerShareButton({
 }) {
   const C = useCareerCopy();
   const locale = useUiLocale();
+  const { DRAFT_UI } = useCopy();
   const [open, setOpen] = useState(false);
   const cosmetics = useProfileStore((s) => s.cosmetics);
   const activeDays = useProfileStore((s) => s.login.total);
@@ -62,8 +63,9 @@ export function CareerShareButton({
   const titlePrompt = careerTitlePrompts(pendingTitle);
   const prompting = titlePrompt || promptAt === "season";
   const bundle = useMemo(
-    () => (open || prompting ? buildCareerShare(save, C, pendingTitle, bannerUrl) : null),
-    [open, prompting, save, C, pendingTitle, bannerUrl],
+    () =>
+      open || prompting ? buildCareerShare(save, C, { player: DRAFT_UI.player, coach: DRAFT_UI.slotCoach }, pendingTitle, bannerUrl) : null,
+    [open, prompting, save, C, DRAFT_UI.player, DRAFT_UI.slotCoach, pendingTitle, bannerUrl],
   );
   const mark = userMarkOf(save.identity);
   const logoOrg = mark.kind === "logo" ? mark.orgId : null;

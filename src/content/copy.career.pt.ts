@@ -2723,10 +2723,14 @@ export const CAREER_PT: CareerCopy = {
     headlineMajors: (n: number) => (n > 1 ? `${n}× campeões de Major` : "Campeões de Major"),
     headlineRegionals: (n: number) => (n > 1 ? `${n} títulos regionais` : "Campeões regionais"),
     headlineTitles: (n: number) => (n > 1 ? `${n} títulos` : "O primeiro troféu"),
-    // rc9 SHARE: um clube sem título abre com o retrospecto em séries (o título é o número).
-    sentenceTitles: (titles: number, w: number, l: number) =>
-      `${titles} ${titles === 1 ? "título" : "títulos"} até aqui, ${w}-${l} em séries.`,
-    sentenceRecord: (seasons: number) => (seasons > 1 ? `Séries vencidas e perdidas em ${seasons} temporadas.` : "Séries vencidas e perdidas nesta temporada."),
+    // rc9 SHARE (#258 revisada): um clube sem título abre com a temporada; o retrospecto vira número.
+    headlineSeason: (n: number) => `Temporada ${n}`,
+    shelfWorlds: "Mundiais",
+    shelfMajors: "Majors",
+    shelfRegionals: "Regionais",
+    shelfOther: "Outros títulos",
+    figSeries: "Séries",
+    figPrize: "Premiação",
     textWorlds: (org: string, n: number) =>
       `${org} ${n > 1 ? `já ganhou o Mundial ${n} vezes` : "é campeã mundial"} no Road to Worlds, o modo carreira da RLCS do Rocket Draft. Monte a sua org do zero:`,
     textTitles: (org: string, n: number) =>
