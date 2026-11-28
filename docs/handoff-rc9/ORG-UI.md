@@ -26,7 +26,9 @@ Click-through: door "Choose an org"; region tabs; card opens modal (keyboard foc
 - The sponsor offers modal for a renewal or a founded club at 1280/375/320 (no save reached a decision; needs a sim to August).
 - Upgrade / staff / close / camp actions pressed in a save; Club page summary on screen; HQ operations block on screen.
 - 375 board, 375/320 modal of the founded wizard.
-- `tsc` and tests: see the final message.
+- Tests: `rc9Org`, `orgCopy` (after removing four overlays whose base keys other fronts deleted), `hqPolish`, `launchPolish` green. `careerSponsors` has 1 failure in the mail group (`sponsorDecision` wording, not ORG-UI). `tsc`: no error in ORG-UI files; another front's file had one (`SquadScreen.tsx`) at the time.
+- Club page: the standing board and the operations summary render; at 1280 the operations card's head sat tight under the standing board (seen through the scaled screenshot only).
+- The emergency-loan board's long rule paragraph (`finances.loanRule`) is unchanged.
 
 ## Rules that read wrong
 
