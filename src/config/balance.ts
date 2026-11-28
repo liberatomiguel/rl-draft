@@ -5691,10 +5691,26 @@ export const CAREER_ENDLESS = {
    * rc9 ENDGAME (R234): from `fromSeasonIndex` (one season after the projects
    * start, so 2027 and the first endless year keep their difficulty) these
    * project fields replace `projects`. Empty = the round-2 answer.
+   * R234 arm A2 (28/11, floor 99, Normal, NA/EU/SAM x 2 seeds, S8-S15): every
+   * answered season gets the full kit, three signings from every region, and
+   * up to six projects (APAC joins). A 100+ team won 13 of 37 Worlds (35 %;
+   * round 2: 23 of 42, 55 %), 3.7 AI sides within 3 points (2.8), series 86.7 %.
    */
   late: {
     fromSeasonIndex: 8,
-    projects: {} as Partial<Record<"dominanceFloor" | "defenceFloor" | "bigGap" | "gapStep" | "maxProjects" | "kitBase" | "candidateOrgs" | "buysBase" | "maxBuys" | "topUpBuys" | "importFromStrength", number>>,
+    projects: {
+      kitBase: 5,
+      bigGap: 2,
+      gapStep: 0.5,
+      dominanceFloor: 1,
+      defenceFloor: 1,
+      buysBase: 3,
+      importFromStrength: 1,
+      maxProjects: 6,
+      regions: ["NA", "EU", "SAM", "MENA", "OCE", "APAC"],
+    } as Partial<Record<"dominanceFloor" | "defenceFloor" | "bigGap" | "gapStep" | "maxProjects" | "kitBase" | "candidateOrgs" | "buysBase" | "maxBuys" | "topUpBuys" | "importFromStrength", number>> & {
+      regions?: readonly ("NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC")[];
+    },
   },
   /**
    * M2.1 in a long dynasty: from `fromTitles` consecutive Worlds, the season's
