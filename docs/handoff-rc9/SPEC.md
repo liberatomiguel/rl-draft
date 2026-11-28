@@ -190,3 +190,84 @@ Approved 27/11: "pode ser o time x time. seria legal um modo com por exemplo 7
 rerolls (overalls visíveis ou não), seed fixo. os jogos depois precisam ter o
 tempo, como na carreira, para ser mais emocionante. com opção de nova partida
 depois de terminar."
+
+## Working arrangement since the 27/11 restart (overrides the dev-server paragraph above)
+
+The machine was restarted mid-pass and every agent was killed. All work was
+committed as WIP and merged; agents now FINISH fronts that others started.
+
+- UI worktree: `C:\Users\Miguel\CLAUDE\rocket-draft\.claude\worktrees\v22-pro-qa`,
+  branch `rc9/ui`, real `node_modules`. Several agents share it: touch only
+  your files, commit only your paths (`git add <paths>`, then
+  `git commit -m "v2.2.0-dev - <FRONT>: ..." -- <paths>`), commit after every
+  coherent step, never `git add -A`, never stash or reset. On `index.lock`,
+  wait a few seconds and retry. Nothing goes on drive E:.
+- The planner keeps ONE dev server on port 3210 from that worktree: never
+  start, stop or restart it, never delete `.next`. Open
+  `http://<front>.localhost:3210` in the built-in browser (your front's own
+  origin and saves) and pass your own `tabId` to every browser call.
+- Heavy lock as in rule 6, for `npx tsc --noEmit` and multi-file vitest. If it
+  stays taken for 10 minutes, run `tsc` once before your final commit anyway.
+  A type error in a file you do not own is another agent mid-edit.
+- Scratch files: `C:/Users/Miguel/CLAUDE/rocket-draft/.claude/rc9/tmp-<front>/`.
+- Miguel's later calls, binding: card, section and screen titles are in CAPS
+  (Demi, open tracking; `.card-title` does it); names stay mixed case. Tags
+  are small and smart ("++DEF", not a sentence). Coaches retire between 28
+  and 35. Challenges keep their fixed seed.
+- Start by reading what exists: `git log --oneline rc9/int..HEAD -- <your
+  files>` and the files themselves. Do not redo finished work; finish it.
+
+## State of each front at the restart
+
+**MATCHDAY** (files recovered from drive E:, uncommitted when it stopped, never
+type-checked or tested; `tsc` shows 4 errors in `event/SeriesRoom.tsx`).
+Baseline measured: a custom-mode Bo5 cost 5 to 7 clicks, games never animated.
+Built: engine `matchTimeline.ts` (`timelineSeed` hashes only games up to the
+current one, presentation only), `balance.ts` (`markRightCost` -0.08, new
+`MATCH_LIVE` pacing group), `matchday.ts` (`planShift` charges the mark,
+`markValue`, `markWorthIt`, the coach marks only when worth it, `applyTimeout`
+records the cut, optional `userLog`), `matchdaySeries.ts` (`logUserGame`,
+`playUserNext`, `planReport`), marked blocks in `careerFlow.ts` and
+`careerStore.ts` (`playUserSeriesNextFlow`, `MatchdayLevel` result / watch /
+manage, `setMatchdayLevelFlow`). Plan directives: approach (our style or the
+answer to theirs), risk (steady / normal / all in = `kickoffScale`), shut
+down (nobody or mark their playmaker). UI: `components/match/LiveGameView.tsx`
+with `liveModel.ts` (+test) and `useMatchReducedMotion.ts`; `event/SeriesRoom.tsx`
+(plan, live games, end; one optional timeout between games only when the
+opponent has momentum, auto-continue after 6 s; pause, speed, skip game, skip
+series); `planLine.ts`; `EventStatsCard.tsx`; `SeriesDesk.tsx` deleted;
+`EventScreen.tsx` rewired; `MatchdayModeSetting.tsx` as three levels with a
+BETA tag, placed on Training by one marked line, removed from Club. Copy
+`seriesDesk`, `club.matchdayMode`, `eventStats`. Target: 2 clicks per managed
+series, 1 to skip (not measured). Left: `tsc`, tests, the browser pass,
+screenshots, keyboard, the NARRATION / event / scrim copy-audit items,
+R240 to R249, #233 to #239, CHANGELOG, handoff.
+
+**HQ** (recovered from E:, never type-checked). Done: `hub/SeasonPlanChoice.tsx`
+(the three plans as one table: column heads once, a row per plan, the board's
+proposal preselected, one Accept), `hub/HubPlayerStats.tsx` (season stats,
+empty state, nothing when `matchdayBoxScore` is off), `DecisionBlock` (kinds
+in one typed table), `DayCard` (the date as the focal figure), `WeeklyScrimLine`,
+`HubScreen`, `SeasonGoalBlock`, `SeasonGoalRows`, `NowCards`, `SundayCard`,
+`CareerTour`; copy `hub` (about 65 dead keys out), `sunday`, `calendar`,
+`ceremonies`, `tour`, `explainers` deleted. `tsc` shows 1 error in
+`hub/SquadBlock.tsx`. Left: Calendar, Standings and Season review (not
+started), tests (`hqPolish`, tour), 320 shots, click-through, #240 to #247,
+CHANGELOG, handoff, word counts.
+
+**TRAIN-MARKET** (recovered from E:, never type-checked). Done:
+`TrainingScreen.tsx` and `training/TrainingPackageParts.tsx` rebuilt around
+one decision; Market as rows (`market/MarketRows.tsx`), deals as rows, the
+offer modal's consequences as three rows; copy `career.training` and
+`career.market` cleaned. `tsc` shows 2 errors in `SalaryNegotiator.test.ts`
+(`negotiation.asks` was removed). The lock line in `MarketRows.tsx` is still
+orange and should be faint. Left: `PlayerSheet`, `MoneyNoticeModal` and its
+copy, `ListPlayerSheet`, `TradeSheet`, `SaleConsequences`, `MarketValueTag`,
+`RenewalReadout`, phone checks, tests, #248 to #254, CHANGELOG, handoff.
+
+**SHARE, CLUB-NEWS, ORG-UI, DRAFT-UI**: killed without a report. Their state is
+their commits plus the commit "WIP at the 27/11 restart" (`10b23ca4`).
+
+**Engine, merged into `rc9/ui`:** ORG, DUEL, BUGS, LEGACY (handoffs in this
+folder). **Still on their own branches:** LOCKER (`rc9/locker`), ENDGAME
+(`rc9/endgame`), each with a WIP commit.
