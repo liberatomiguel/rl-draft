@@ -65,7 +65,7 @@ export function SharePreviewDev() {
           <UserOrgMark identity={identity} size="xl" />
         </div>
       ) : null}
-      <SharePrompts gameMode="draft" ready={false} titleKey="bench" invite={null} preview={preview} forceShow={force} />
+      <SharePrompts gameMode="draft" ready={false} titleKey="bench" invite={null} preview={preview} forceShow={force} onForcedClose={() => setForce(null)} />
     </>
   );
 }

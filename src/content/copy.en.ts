@@ -2211,6 +2211,8 @@ export const SHARE_UI = {
   rendering: "Drawing the image",
   renderFailed: "This browser couldn't draw the image. The text and the link still work.",
   caption: "Goes with the post",
+  // rc9 SHARE: a sheet with no image (the invitation) shows only the message.
+  captionMessage: "The message",
   share: "Share",
   whatsapp: "WhatsApp",
   x: "X",
@@ -2223,7 +2225,7 @@ export const SHARE_UI = {
   imageCopied: "Image copied. Paste it into Discord or a chat.",
   copyImageFailed: "This browser won't copy images. Use Download.",
   textCopied: "Text and link copied.",
-  copyFailed: "The copy didn't go through. Select the text above.",
+  copyFailed: "The copy didn't go through. Select the text below.",
   storyTip: "Instagram and TikTok: save the story, then post it from your gallery.",
   roadSwiss: "Swiss",
   roadPlayoffs: "Playoffs",

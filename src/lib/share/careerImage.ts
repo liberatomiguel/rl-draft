@@ -5,37 +5,32 @@
  * with no title yet, its series record) in Bold paper white, one sentence
  * under it; the club is the second thing (its crest large, its name in mixed
  * case, the manager quiet under it). The trophy shelf, the prize money and the
- * coach line are gone; the story adds the starting three as a hand of cards
- * wearing the crest. A club that has won the Worlds gets the gold frame, and
- * the equipped profile banner is a quiet band behind the top (#259).
+ * coach line are gone, and so is the hand of starters the WIP story drew (each
+ * card repeated the crest). A club that has won the Worlds gets the gold
+ * frame, and the equipped profile banner is a quiet band behind the top (#259).
  */
 
 import {
   INK,
+  PAPER,
   SUB,
   displayFont,
   drawBannerBand,
-  drawCardHand,
   drawContained,
   drawFloor,
   drawHeadline,
   drawImageFrame,
   drawLabel,
   drawSentence,
-  drawWordmark,
   fitFontSize,
   fitText,
   loadImage,
-  loadImages,
   makeCanvas,
   textFont,
   type Rect,
-  type ShareCardFace,
   type ShareFonts,
 } from "./canvasKit";
 import { SHARE_SIZES, drawSignature, type RenderReport, type ShareFormat } from "./runImage";
-
-export const CREST_KEY = "career:crest";
 
 export interface CareerImageData {
   /** "Road to Worlds · SAM · RLCS 2027" (drawn in caps). */
@@ -47,8 +42,6 @@ export interface CareerImageData {
   headline: string;
   sentence: string;
   worldsChampion: boolean;
-  /** The starting three (their crest is CREST_KEY); drawn on the story only. */
-  starters: ShareCardFace[];
   bannerUrl: string | null;
   site: string;
 }
@@ -80,11 +73,7 @@ export async function renderCareerImage(
 ): Promise<HTMLCanvasElement> {
   const { w, h } = SHARE_SIZES[format];
   const { canvas, g } = makeCanvas(w, h);
-  const [images, banner] = await Promise.all([
-    loadImages(data.starters.flatMap((c) => [c.flagUrl, c.photoUrl])),
-    loadImage(data.bannerUrl),
-  ]);
-  if (crest) images.set(CREST_KEY, crest);
+  const banner = await loadImage(data.bannerUrl);
   drawFloor(g, w, h);
 
   if (format === "post") {
@@ -94,12 +83,16 @@ export async function renderCareerImage(
     const col = 600;
     const metaY = 98;
     if (banner) {
-      const over: { rect: Rect; color: string }[] = [{ rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB }];
+      const over: { rect: Rect; color: string }[] = [
+        { rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB },
+        // A long headline breaks upwards into the band's foot.
+        { rect: { x: left, y: 140, w: col, h: 78 }, color: PAPER },
+      ];
       const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 196, radius: 24 }, over);
       if (report) report.banner = out;
     }
     drawLabel(g, fonts, data.meta, left, metaY, 17, col);
-    drawHeadline(g, fonts, data.headline, left, 262, 104, col, { min: 56 });
+    drawHeadline(g, fonts, data.headline, left, 262, 104, col, { min: 56, twoLineMax: 72 });
     drawSentence(g, fonts, data.sentence, left, 326, 26, col, { lines: 2, lineHeight: 36 });
     drawClubName(g, fonts, data.orgName, left, 452, 44, col, "left");
     drawManager(g, fonts, data.manager, left, 490, 20, col, "left");
@@ -113,23 +106,21 @@ export async function renderCareerImage(
   const inset = 34;
   drawImageFrame(g, w, h, inset, data.worldsChampion);
   const cx = w / 2;
-  const metaY = 356;
+  // The meta line opens the story; the wordmark signs it once, at the foot.
+  const metaY = 330;
   if (banner) {
-    const over: { rect: Rect; color: string }[] = [
-      { rect: { x: cx - 260, y: 262, w: 520, h: 50 }, color: INK },
-      { rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB },
-    ];
+    const over: { rect: Rect; color: string }[] = [{ rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB }];
     const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 380, radius: 24 }, over);
     if (report) report.banner = out;
   }
-  drawWordmark(g, fonts, cx, 304, 42, "center");
   drawLabel(g, fonts, data.meta, cx, metaY, 24, w - 180, { align: "center" });
-  drawHeadline(g, fonts, data.headline, cx, 580, 150, w - 160, { align: "center", min: 84 });
-  drawSentence(g, fonts, data.sentence, cx, 662, 36, w - 220, { align: "center", lines: 2, lineHeight: 48 });
-  if (crest) drawContained(g, crest, cx - 130, 750, 260, 260);
-  drawClubName(g, fonts, data.orgName, cx, 1094, 68, w - 180, "center");
-  drawManager(g, fonts, data.manager, cx, 1142, 30, w - 180, "center");
-  drawCardHand(g, fonts, data.starters.slice(0, 3), images, cx, 1380, 250, { spread: 200, tilt: 6, sideScale: 0.88 });
+  drawHeadline(g, fonts, data.headline, cx, 640, 150, w - 160, { align: "center", min: 84, twoLineMax: 128 });
+  drawSentence(g, fonts, data.sentence, cx, 724, 36, w - 220, { align: "center", lines: 2, lineHeight: 48 });
+  // The club is the second thing: its crest large, its name, the manager quiet.
+  // The starting three are left out: each card would repeat the crest.
+  if (crest) drawContained(g, crest, cx - 180, 860, 360, 360);
+  drawClubName(g, fonts, data.orgName, cx, 1336, 72, w - 180, "center");
+  drawManager(g, fonts, data.manager, cx, 1390, 30, w - 180, "center");
   drawSignature(g, fonts, data.site, cx, 1648, 40, "center");
   return canvas;
 }

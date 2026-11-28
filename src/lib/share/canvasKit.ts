@@ -482,7 +482,9 @@ export function drawFigure(
 
 /**
  * The image's one headline (rc9, #258): display Bold caps at 0.03em in paper
- * white, shrunk to fit `max` (never under `min`). Returns the size used.
+ * white, shrunk to fit `max`. A headline that would shrink under `min` on one
+ * line ("2× Major champions" in a 600px column) breaks into two lines instead,
+ * growing upwards so the last line stays on `baseline`. Returns the size used.
  */
 export function drawHeadline(
   g: CanvasRenderingContext2D,
@@ -492,19 +494,34 @@ export function drawHeadline(
   baseline: number,
   size: number,
   max: number,
-  opts: { align?: CanvasTextAlign; min?: number; color?: string } = {},
+  opts: { align?: CanvasTextAlign; min?: number; color?: string; twoLineMax?: number } = {},
 ): number {
   const label = text.toUpperCase();
+  const min = opts.min ?? size * 0.5;
+  // Two lines are set smaller, so the block keeps the air above it.
+  const twoLineMax = opts.twoLineMax ?? size;
   const font = (n: number) => {
     setTracking(g, 0.03, n);
     return displayFont(fonts, n, 700);
   };
-  const s = fitFontSize(g, label, max, size, opts.min ?? size * 0.5, font);
+  let s = fitFontSize(g, label, max, size, min, font);
+  let lines = [label];
+  if (g.measureText(label).width > max && label.includes(" ")) {
+    for (let n = twoLineMax; n >= min * 0.8; n -= 2) {
+      g.font = font(n);
+      const wrapped = wrapText(g, label, max);
+      if (wrapped.length <= 2 && wrapped.every((l) => g.measureText(l).width <= max)) {
+        s = n;
+        lines = wrapped;
+        break;
+      }
+    }
+  }
   g.font = font(s);
   g.textAlign = opts.align ?? "left";
   g.textBaseline = "alphabetic";
   g.fillStyle = opts.color ?? PAPER;
-  g.fillText(fitText(g, label, max), x, baseline);
+  lines.forEach((line, i) => g.fillText(fitText(g, line, max), x, baseline - (lines.length - 1 - i) * s * 1.04));
   resetTracking(g);
   g.textAlign = "left";
   return s;

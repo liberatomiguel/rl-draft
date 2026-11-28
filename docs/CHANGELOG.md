@@ -63,6 +63,23 @@ with the root cause — that section doubles as the project's bugfix log.
 - A team shown 10-14 below the player won 27.5% of its series in MENA Legacy. Root cause: `REGION_LOCK.fieldDepth` lifts every rival by half its gap to the best team, so the weakest-looking rivals carried the largest hidden lift (up to +13 over the shown overall), and nothing on screen said so.
 - The Review and Results breakdown did not add up to the team overall above 94 (three 99 cards read 97). Root cause: the superteam curve, the 99 cap and the rounding were applied but never listed. The breakdown now has those lines (engine side; the screen lands in wave 2).
 
+### SHARE front (invite, prompts, share images; DESIGN-DECISIONS #255 to #262)
+
+#### Changed
+- The invitation is a message and the link, no image (`InviteSheet`, `lib/share/inviteText.ts`): first person, in the player's language, picked by context (just won a title, plays the career, plays the draft). Referral code and `utm_medium=share` kept. The old invite card (`inviteImage.ts`) is gone.
+- The share images are redrawn (run and career, Post 1200 x 630 and Story 1080 x 1920): the placement or the title first in Bold paper white, one sentence under it, the team second (the three drafted cards, or the club's crest and name), the meta line, the wordmark and the link small. The trophy shelf, prize money, coach line and the story's second wordmark are gone. A long headline breaks into two lines instead of being cut.
+- The player's equipped profile banner sits as a faded band behind the top of the image, at the strongest opacity (0.5 down to 0.12) that keeps every line over it at 4.5:1 or better; no banner = plain stock.
+- The share sheet's message box is labelled "The message" when there is no image.
+
+#### Added
+- One invite prompt per player, ever: from the second day the game is open, after a podium run (five runs in) or a career season review. One tap closes it for good.
+- A share-image prompt after a draft title or a career regional, Major or Worlds title: never the first title, never on the next two titles after a prompted one, seven days apart, five times at most, never twice in a session (one prompt of either kind per session), never over another dialog or reward, and "Don't show again" ends it. A lost run never prompts. Numbers in `config/balance.sharePrompts.ts`, record in one plain `localStorage` key (`rocket-draft:share-prompts:v1`), persist contract untouched.
+- `share_prompt` analytics event (kind, action shown / accepted / dismissed / optedOut).
+
+#### Fixed
+- The career Post cut "2× Major champions" to "2× MAJOR CHAMPIO…". Root cause: the headline shrank only to a floor and was then ellipsised; it now breaks into two lines below that floor.
+- The share sheet's copy-failed notice pointed to "the text above"; the text sits below it.
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

@@ -13,7 +13,7 @@
 
 import {
   FAINT,
-  INK,
+  PAPER,
   SUB,
   drawBannerBand,
   drawCardHand,
@@ -116,12 +116,16 @@ export async function renderRunImage(
     const col = 540;
     const metaY = 98;
     if (banner) {
-      const over: { rect: Rect; color: string }[] = [{ rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB }];
+      const over: { rect: Rect; color: string }[] = [
+        { rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB },
+        // A long placement breaks upwards into the band's foot.
+        { rect: { x: left, y: 140, w: col, h: 78 }, color: PAPER },
+      ];
       const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 196, radius: 24 }, over);
       if (report) report.banner = out;
     }
     drawLabel(g, fonts, data.meta, left, metaY, 17, col);
-    drawHeadline(g, fonts, data.placementLabel, left, 262, 112, col, { min: 60 });
+    drawHeadline(g, fonts, data.placementLabel, left, 262, 112, col, { min: 60, twoLineMax: 72 });
     const last = drawSentence(g, fonts, data.headline, left, 326, 26, col, { lines: 2, lineHeight: 36 });
     drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, left, Math.max(470, last + 120), 54, { labelSize: 15 });
     drawSignature(g, fonts, data.site, left, 566, 24, "left");
@@ -133,18 +137,15 @@ export async function renderRunImage(
   const inset = 34;
   drawImageFrame(g, w, h, inset, data.champion);
   const cx = w / 2;
-  const metaY = 356;
+  // The meta line opens the story; the wordmark signs it once, at the foot.
+  const metaY = 330;
   if (banner) {
-    const over: { rect: Rect; color: string }[] = [
-      { rect: { x: cx - 260, y: 262, w: 520, h: 50 }, color: INK },
-      { rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB },
-    ];
+    const over: { rect: Rect; color: string }[] = [{ rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB }];
     const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 380, radius: 24 }, over);
     if (report) report.banner = out;
   }
-  drawWordmark(g, fonts, cx, 304, 42, "center");
   drawLabel(g, fonts, data.meta, cx, metaY, 24, w - 180, { align: "center" });
-  drawHeadline(g, fonts, data.placementLabel, cx, 600, 168, w - 160, { align: "center", min: 90 });
+  drawHeadline(g, fonts, data.placementLabel, cx, 600, 168, w - 160, { align: "center", min: 90, twoLineMax: 128 });
   drawSentence(g, fonts, data.headline, cx, 684, 38, w - 220, { align: "center", lines: 2, lineHeight: 50 });
   drawCardHand(g, fonts, data.cards.slice(0, 3), images, cx, 1100, 330, { spread: 250, tilt: 6, sideScale: 0.88 });
   drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, cx, 1488, 92, { align: "center", labelSize: 24 });

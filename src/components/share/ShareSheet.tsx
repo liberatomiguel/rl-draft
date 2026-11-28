@@ -271,7 +271,7 @@ export function ShareSheet({ open, onClose, title, surface, gameMode, text, url:
 
         {/* What goes with the post, after the actions (a phone sees the actions first). */}
         <div className="rounded-lg border border-line bg-white/[0.02] px-3 py-2.5">
-          <p className="display text-[11px] font-semibold uppercase tracking-[0.06em] text-faint">{S.caption}</p>
+          <p className="display text-[11px] font-semibold uppercase tracking-[0.06em] text-faint">{hasImage ? S.caption : S.captionMessage}</p>
           <p className="mt-1 whitespace-pre-line text-sm leading-snug text-ink">{text}</p>
           <p className="mt-1 break-all text-xs text-blue-bright">{displayUrl(url)}</p>
         </div>

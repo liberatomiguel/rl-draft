@@ -2209,6 +2209,8 @@ export const PT: Copy = {
     rendering: "Desenhando a imagem",
     renderFailed: "Este navegador não conseguiu desenhar a imagem. O texto e o link continuam funcionando.",
     caption: "Vai junto com o post",
+    // rc9 SHARE: uma folha sem imagem (o convite) mostra só a mensagem.
+    captionMessage: "A mensagem",
     share: "Compartilhar",
     whatsapp: "WhatsApp",
     x: "X",
@@ -2221,7 +2223,7 @@ export const PT: Copy = {
     imageCopied: "Imagem copiada. Cole no Discord ou numa conversa.",
     copyImageFailed: "Este navegador não copia imagens. Use Baixar.",
     textCopied: "Texto e link copiados.",
-    copyFailed: "A cópia não funcionou. Selecione o texto acima.",
+    copyFailed: "A cópia não funcionou. Selecione o texto abaixo.",
     storyTip: "Instagram e TikTok: salve o story e poste a partir da galeria.",
     roadSwiss: "Suíço",
     roadPlayoffs: "Playoffs",

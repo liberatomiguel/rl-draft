@@ -4,12 +4,9 @@
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
-import { baseRarityOf } from "@/engine/cards";
 import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerSave, EventTier } from "@/engine/career/types";
-import { flagSrc } from "@/lib/assets";
-import { CREST_KEY, type CareerImageData } from "@/lib/share/careerImage";
-import type { FrameKey, ShareCardFace } from "@/lib/share/canvasKit";
+import type { CareerImageData } from "@/lib/share/careerImage";
 
 export interface CareerShareBundle {
   image: CareerImageData;
@@ -56,7 +53,6 @@ export function careerHeadline(
 export function buildCareerShare(
   save: CareerSave,
   C: CareerCopy,
-  playerLabel: string,
   pending?: EventTier | null,
   bannerUrl: string | null = null,
 ): CareerShareBundle {
@@ -69,27 +65,6 @@ export function buildCareerShare(
   // The season review has already filed this season in `history`.
   const seasons = Math.max(1, save.history.length + (save.phase === "seasonReview" ? 0 : 1));
 
-  const starters: ShareCardFace[] = save.starterIds
-    .map((id) => save.squad.find((p) => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => {
-      const ovr = Math.round(p.overall);
-      const flag = p.country ? flagSrc(p.country) : null;
-      return {
-        frame: baseRarityOf(ovr) as FrameKey,
-        value: String(ovr),
-        name: p.name,
-        line: C.player.archetype[p.archetype] ?? null,
-        lineIsTitle: false,
-        role: "player" as const,
-        roleLabel: playerLabel,
-        flagUrl: flag,
-        flagCode: flag ? null : (p.country ?? null),
-        logoUrl: CREST_KEY,
-        photoUrl: null,
-      };
-    });
-
   const image: CareerImageData = {
     meta: `${T.kicker} · ${T.meta(save.identity.region, seasonLabelFor(save.clock.seasonIndex))}`,
     orgName: org,
@@ -97,7 +72,6 @@ export function buildCareerShare(
     headline,
     sentence: t.total > 0 ? T.sentenceTitles(t.total, w, l) : T.sentenceRecord(seasons),
     worldsChampion: t.worlds > 0,
-    starters,
     bannerUrl,
     site: "rocketdraft.app",
   };

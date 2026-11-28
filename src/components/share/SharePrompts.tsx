@@ -51,9 +51,11 @@ export interface SharePromptsProps {
   onShareImage?: () => void;
   /** The dev bench only: open this prompt now, without the rules or the record. */
   forceShow?: "image" | "invite" | null;
+  /** The dev bench only: a forced prompt was closed. */
+  onForcedClose?: () => void;
 }
 
-export function SharePrompts({ gameMode, ready, titleKey, invite, preview, onShareImage, forceShow = null }: SharePromptsProps) {
+export function SharePrompts({ gameMode, ready, titleKey, invite, preview, onShareImage, forceShow = null, onForcedClose }: SharePromptsProps) {
   const { SHARE_UI: S } = useCopy();
   const clear = useScreenClear(ready);
   const [claimed, setShown] = useState<"image" | "invite" | null>(null);
@@ -98,6 +100,7 @@ export function SharePrompts({ gameMode, ready, titleKey, invite, preview, onSha
   const close = (kind: "image" | "invite", action: "accepted" | "dismissed" | "optedOut") => {
     trackEvent("share_prompt", { kind, action, gameMode });
     setShown(null);
+    if (forceShow) onForcedClose?.();
   };
 
   return (
@@ -132,17 +135,7 @@ export function SharePrompts({ gameMode, ready, titleKey, invite, preview, onSha
         onClose={() => close("image", "dismissed")}
         actions={
           <>
-            <Button
-              variant="ghost"
-              className="mr-auto max-sm:w-full"
-              onClick={() => {
-                optOutImagePrompt();
-                close("image", "optedOut");
-              }}
-            >
-              {S.promptImageNever}
-            </Button>
-            <Button variant="secondary" onClick={() => close("image", "dismissed")}>
+            <Button variant="ghost" onClick={() => close("image", "dismissed")}>
               {S.promptLater}
             </Button>
             <Button
@@ -165,6 +158,17 @@ export function SharePrompts({ gameMode, ready, titleKey, invite, preview, onSha
             {S.rendering}
           </div>
         )}
+        {/* The opt-out is a quiet line under the preview, so the actions stay two. */}
+        <button
+          type="button"
+          className="mt-2 inline-flex min-h-11 items-center text-sm text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
+          onClick={() => {
+            optOutImagePrompt();
+            close("image", "optedOut");
+          }}
+        >
+          {S.promptImageNever}
+        </button>
       </Modal>
 
       <InviteSheet open={inviteSheet} onClose={() => setInviteSheet(false)} justWon={titleKey !== null} gameMode={gameMode} />

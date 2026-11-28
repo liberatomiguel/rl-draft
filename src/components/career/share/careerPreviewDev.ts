@@ -63,8 +63,7 @@ export async function renderCareerBench(
   crestSvg: SVGSVGElement | null,
 ): Promise<{ url: string; report: RenderReport }> {
   const C = (locale === "pt" ? CAREER_PT : CAREER_EN) as unknown as CareerCopy;
-  const playerLabel = locale === "pt" ? "Jogador" : "Player";
-  const bundle = buildCareerShare(benchSave(variant), C, playerLabel, variant === "title" ? "major" : null, bannerUrl);
+  const bundle = buildCareerShare(benchSave(variant), C, variant === "title" ? "major" : null, bannerUrl);
   const report: RenderReport = { banner: null };
   const [fonts, crest] = await Promise.all([resolveShareFonts(), svgElementToImage(crestSvg, 512)]);
   const canvas = await renderCareerImage(bundle.image, crest, format, fonts, report);
