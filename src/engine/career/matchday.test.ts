@@ -80,7 +80,9 @@ describe("matchday slice 3 — engine", () => {
     const a = team("a", 88, { style: { natural: "pressure", fit: fits("pressure", 1, 0) } });
     const b = team("b", 88);
     expect(planShift(a, b, { kickoff: "standard", style: "counter", mark: 0 })).toBeCloseTo(-MD.planCap);
-    expect(planShift(a, b, { kickoff: "standard", mark: 1 })).toBe(0);
+    // rc9 MATCHDAY (R242): the right mark costs markRightCost too (it ties a defender up).
+    expect(planShift(a, b, { kickoff: "standard", mark: 1 })).toBeCloseTo(MD.markRightCost);
+    expect(Math.abs(MD.markRightCost)).toBeLessThanOrEqual(MD.planCap);
   });
 
   it("no coach plans at the floor (R145); quality 1 counters the opponent and marks its playmaker", () => {

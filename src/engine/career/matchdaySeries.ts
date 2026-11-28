@@ -168,7 +168,7 @@ function logUserGame(before: SeriesState, after: SeriesState, teamA: TournamentT
     marked: myPlan.mark !== undefined && myPlan.mark === (opp.playmakerIndex ?? 0),
     kickoff: myPlan.kickoff,
     won: game.winnerTeamId === me.id,
-    ...(cut ? { timeoutCut: cut } : {}),
+    ...(cut !== undefined ? { timeoutCut: cut } : {}),
   };
   const nextMd = { ...after.matchday, userLog: [...(md.userLog ?? []), entry] };
   if (userSide === "a") delete nextMd.cutA;

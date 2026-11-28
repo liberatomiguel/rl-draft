@@ -1,22 +1,29 @@
 "use client";
 
 /**
- * rc9 MATCHDAY (R244, DESIGN-DECISIONS #234): one game, live. Reusable: it
- * takes a game timeline (engine/career/matchTimeline), the two sides' names
- * and marks and, optionally, the game's box score lines; it imports nothing
- * from the career (the friend duel can mount it as is).
+ * rc9 MATCHDAY (R244, DESIGN-DECISIONS #234, #238): one game, live. Reusable:
+ * it takes a game timeline (engine/career/matchTimeline), the two sides'
+ * names, marks and tones and, optionally, the game's box score lines; it
+ * imports nothing from the career's screens or store (the friend duel mounts
+ * it as is). Its contract is in docs/handoff-rc9/MATCHDAY.md.
  *
- * The clock runs down, goals land at their minute with the scorer, the score
- * and the stats climb with the clock (liveModel.ts), overtime is its own
- * beat. Motion sits where the event is: the score that changes and the goal
- * line that lands; the board itself never pulses. Reduced motion (OS setting,
- * `html.reduce-fx`, `html.lite-fx`) shows the finished game at once: the
- * same goals, minutes and numbers, nothing moving.
+ * The broadcast board: both crests and names large, the score as the figure,
+ * the clock under it, the 5:00 as a line that fills and takes each goal at its
+ * minute. Under it the goals, each on its side; then the team comparison (one
+ * stat per row, the label in the centre, each side's value on its side, a
+ * proportional bar under the row); then each team's players. Everything
+ * climbs with the clock (liveModel.ts). Side A is blue and side B orange
+ * unless a side says otherwise (the career gives the player's side orange).
+ *
+ * Motion sits where the event is: a score that changes, a goal that lands,
+ * overtime. Nothing loops. Reduced motion (OS setting, `html.reduce-fx`,
+ * `html.lite-fx`) shows the finished game at once: the same goals, minutes and
+ * numbers, nothing moving.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MATCH_LIVE } from "@/config/balance";
-import type { GameTimeline } from "@/engine/career/matchTimeline";
+import type { GameTimeline, TimelineGoal } from "@/engine/career/matchTimeline";
 import { cx } from "@/lib/util";
 import {
   formatLiveClock,
@@ -25,36 +32,53 @@ import {
   liveFrameAt,
   liveSchedule,
   sideTotals,
+  type LiveFrame,
   type LiveLine,
   type LiveSide,
 } from "./liveModel";
 import { useMatchReducedMotion } from "./useMatchReducedMotion";
 
+export type LiveTone = "blue" | "orange";
+
 export interface LiveSideInfo {
   name: string;
-  /** The side's crest / logo, already sized (24 to 40 px). */
+  /** The side's crest / logo, already sized (40 to 64 px reads best). */
   mark?: ReactNode;
   players: string[];
-  /** The player's own side: its name in the accent. */
+  /** Side colour. Default: A blue, B orange. */
+  tone?: LiveTone;
+  /** The player's own side (its name carries the weight). */
   own?: boolean;
 }
 
 export interface LiveLabels {
+  /** The head's kicker ("Game 2 · Best of 5"). */
   game: string;
   overtime: string;
   final: string;
-  goal: string;
+  /** The team comparison's rows, in words. */
+  strip: { shots: string; saves: string; assists: string; demos: string; score: string };
+  /** The player table's column heads (short: "G", "A", "Sv", "Sh", "Pts"). */
+  goals: string;
+  assists: string;
   shots: string;
   saves: string;
-  demos: string;
-  assists: string;
-  goals: string;
+  score: string;
   player: string;
   /** Screen-reader name of the running clock. */
   clock: string;
   /** Screen-reader line for a goal: "{scorer} scores, 2-1". */
   goalLine: (scorer: string, a: number, b: number) => string;
   noGoalsYet: string;
+}
+
+const TONE = {
+  blue: { text: "text-blue-bright", bg: "bg-blue-bright", soft: "bg-blue-bright/25" },
+  orange: { text: "text-orange-bright", bg: "bg-orange-bright", soft: "bg-orange-bright/25" },
+} as const;
+
+function toneOf(sides: Record<LiveSide, LiveSideInfo>, side: LiveSide): LiveTone {
+  return sides[side].tone ?? (side === "a" ? "blue" : "orange");
 }
 
 export function LiveGameView({
@@ -143,6 +167,7 @@ export function LiveGameView({
   const clockText = frame.over ? labels.final : formatLiveClock(frame.period, frame.clock);
   const scorer = (side: LiveSide, idx: number | null) => (idx !== null ? sides[side].players[idx] : undefined) ?? sides[side].name;
   const lastGoal = goals[goals.length - 1];
+  const tones = { a: toneOf(sides, "a"), b: toneOf(sides, "b") };
 
   return (
     <div className="min-w-0">
@@ -151,21 +176,22 @@ export function LiveGameView({
         {context ? <div className="text-sm text-sub">{context}</div> : null}
       </div>
 
-      {/* The board: names, the score, the clock. */}
-      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
-        <SideName side={sides.a} align="left" />
+      {/* The board: crests and names, the score, the clock. */}
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
+        <SideName side={sides.a} tone={tones.a} align="left" />
         <div className="flex flex-col items-center">
           <div className="flex items-baseline gap-3 sm:gap-4">
-            <Score value={frame.score[0]} />
-            <span className="text-faint" aria-hidden>
+            {/* At the whistle the loser's figure steps back, so the end reads at a glance. */}
+            <Score value={frame.score[0]} dim={frame.over && frame.score[0] < frame.score[1]} />
+            <span className="text-3xl text-faint" aria-hidden>
               :
             </span>
-            <Score value={frame.score[1]} />
+            <Score value={frame.score[1]} dim={frame.over && frame.score[1] < frame.score[0]} />
           </div>
           <p
             className={cx(
-              "display mt-1 rounded-[3px] px-2 py-0.5 text-sm font-semibold tabular-nums",
-              frame.overtime && !frame.over ? "text-orange-bright" : "text-sub",
+              "display mt-2 text-2xl font-semibold leading-none tabular-nums sm:text-[28px]",
+              frame.overtime && !frame.over ? "text-orange-bright" : frame.over ? "text-sub" : "text-ink",
             )}
             role="timer"
             aria-label={labels.clock}
@@ -173,116 +199,190 @@ export function LiveGameView({
             <ClockText text={clockText} />
           </p>
           {frame.overtime ? (
-            <p key="ot" className={cx("kicker mt-1 !text-orange-bright", !reduced && "pop-in")}>
+            <p key="ot" className={cx("kicker mt-1.5 !text-orange-bright", !reduced && "pop-in")}>
               {labels.overtime}
             </p>
           ) : null}
         </div>
-        <SideName side={sides.b} align="right" />
+        <SideName side={sides.b} tone={tones.b} align="right" />
       </div>
 
-      {/* Team figures: shots, saves, demos, read across the board. */}
+      {/* The 5:00 as a line: it fills with the clock and each goal lands on it at its minute. */}
+      <GameTrack frame={frame} goals={goals} tones={tones} reduced={reduced} />
+
+      {/* The goals, in order, each on its side. */}
+      <ol className="mx-auto mt-4 min-h-[3.5rem] max-w-md space-y-1" aria-live="polite" aria-relevant="additions">
+        {goals.length === 0 ? <li className="text-center text-sm text-faint">{labels.noGoalsYet}</li> : null}
+        {goals.map((g, i) => (
+          <li
+            key={i}
+            className={cx(
+              "flex items-baseline gap-2 text-sm",
+              g.side === "b" && "flex-row-reverse text-right",
+              g === lastGoal && !reduced && "pop-in",
+            )}
+          >
+            <span className={cx("h-2 w-2 shrink-0 self-center rounded-[2px]", TONE[tones[g.side]].bg)} aria-hidden />
+            <span className="display shrink-0 text-xs font-semibold tabular-nums text-faint">{formatLiveClock(g.period, g.clock)}</span>
+            <span className="min-w-0 truncate text-ink">
+              <span className="sr-only">{labels.goalLine(scorer(g.side, g.playerIdx), g.scoreAfter[0], g.scoreAfter[1])}</span>
+              <span aria-hidden>{scorer(g.side, g.playerIdx)}</span>
+            </span>
+            <span className="display shrink-0 text-xs font-semibold tabular-nums text-sub" aria-hidden>
+              {g.scoreAfter[0]}-{g.scoreAfter[1]}
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      {/* The team comparison: one stat a row, the label in the centre, each side on its side. */}
       {totals ? (
-        <dl className="mt-4 grid grid-cols-3 border-y border-line py-2 text-center">
-          {(["shots", "saves", "demos"] as const).map((k) => (
-            <div key={k} className="min-w-0">
-              <dt className="kicker">{labels[k]}</dt>
-              <dd className="display mt-0.5 text-base font-semibold tabular-nums text-ink">
-                {totals.a[k]}
-                <span className="mx-1.5 text-faint">·</span>
-                {totals.b[k]}
-              </dd>
-            </div>
+        <dl className="mx-auto mt-5 max-w-md space-y-2.5 border-t border-line pt-4">
+          {(["shots", "saves", "assists", "demos", "score"] as const).map((k) => (
+            <CompareRow key={k} label={labels.strip[k]} a={totals.a[k]} b={totals.b[k]} tones={tones} />
           ))}
         </dl>
       ) : null}
 
-      <div className="mt-4 grid gap-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        {/* The goals, in the order they went in. */}
-        <ol className="min-h-[7rem] space-y-1" aria-live="polite" aria-relevant="additions">
-          {goals.length === 0 ? <li className="text-sm text-faint">{labels.noGoalsYet}</li> : null}
-          {goals.map((g, i) => (
-            <li
-              key={i}
-              className={cx(
-                "flex items-baseline gap-3 text-sm",
-                g === lastGoal && !reduced && "pop-in",
-              )}
-            >
-              <span className="display w-12 shrink-0 text-xs font-semibold tabular-nums text-faint">
-                {formatLiveClock(g.period, g.clock)}
-              </span>
-              <span className={cx("min-w-0 truncate", sides[g.side].own ? "text-ink" : "text-sub")}>
-                <span className="sr-only">{labels.goalLine(scorer(g.side, g.playerIdx), g.scoreAfter[0], g.scoreAfter[1])}</span>
-                <span aria-hidden>{scorer(g.side, g.playerIdx)}</span>
-              </span>
-              <span className="display ml-auto shrink-0 text-xs font-semibold tabular-nums text-sub" aria-hidden>
-                {g.scoreAfter[0]}-{g.scoreAfter[1]}
-              </span>
-            </li>
+      {/* The players' numbers, climbing with the clock: each team on its side. */}
+      {lines ? (
+        <div className="mt-5 grid gap-4 border-t border-line pt-4 md:grid-cols-2 md:gap-6">
+          {(["a", "b"] as const).map((side) => (
+            <PlayerTable key={side} side={sides[side]} tone={tones[side]} lines={lines[side]} labels={labels} />
           ))}
-        </ol>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
-        {/* The players' numbers, climbing with the clock. */}
-        {lines ? (
-          <div className="min-w-0 space-y-3">
-            {(["a", "b"] as const).map((side) => (
-              <table key={side} className="w-full table-fixed text-sm">
-                <caption className={cx("display truncate pb-1 text-left text-xs font-semibold", sides[side].own ? "text-orange-bright" : "text-sub")}>
-                  {sides[side].name}
-                </caption>
-                <thead>
-                  <tr className="kicker">
-                    <th scope="col" className="w-[46%] pb-1 text-left font-medium">
-                      <span className="sr-only">{labels.player}</span>
-                    </th>
-                    <th scope="col" className="pb-1 text-right font-medium">{labels.goals}</th>
-                    <th scope="col" className="pb-1 text-right font-medium">{labels.assists}</th>
-                    <th scope="col" className="hidden pb-1 text-right font-medium min-[400px]:table-cell">{labels.shots}</th>
-                    <th scope="col" className="pb-1 text-right font-medium">{labels.saves}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines[side].map((l, i) => (
-                    <tr key={i} className="border-t border-line">
-                      <td className="truncate py-1.5 pr-2 text-ink">{sides[side].players[i] ?? ""}</td>
-                      <td className="py-1.5 text-right tabular-nums text-ink">{l.goals}</td>
-                      <td className="py-1.5 text-right tabular-nums text-sub">{l.assists}</td>
-                      <td className="hidden py-1.5 text-right tabular-nums text-sub min-[400px]:table-cell">{l.shots}</td>
-                      <td className="py-1.5 text-right tabular-nums text-sub">{l.saves}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ))}
-          </div>
-        ) : null}
+function SideName({ side, tone, align }: { side: LiveSideInfo; tone: LiveTone; align: "left" | "right" }) {
+  return (
+    <div className={cx("flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3", align === "right" && "sm:flex-row-reverse")}>
+      {side.mark ? <span className="shrink-0">{side.mark}</span> : null}
+      <div className={cx("min-w-0", align === "left" ? "sm:text-left" : "sm:text-right")}>
+        <p className={cx("display break-words text-[15px] leading-tight sm:text-xl", side.own ? "font-bold text-ink" : "font-semibold text-ink")}>
+          {side.name}
+        </p>
+        <span className={cx("mt-1.5 inline-block h-1 w-8 rounded-[1px]", TONE[tone].bg)} aria-hidden />
       </div>
     </div>
   );
 }
 
-function SideName({ side, align }: { side: LiveSideInfo; align: "left" | "right" }) {
+/** One stat, broadcast style: A's value, the label, B's value; a bar split by share under it. */
+function CompareRow({ label, a, b, tones }: { label: string; a: number; b: number; tones: Record<LiveSide, LiveTone> }) {
+  const total = a + b;
+  const shareA = total > 0 ? a / total : 0.5;
   return (
-    <div className={cx("flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row", align === "right" && "sm:flex-row-reverse")}>
-      {side.mark ? <span className="shrink-0">{side.mark}</span> : null}
-      <p
-        className={cx(
-          "display min-w-0 break-words text-sm font-semibold leading-tight sm:text-lg",
-          align === "left" ? "sm:text-left" : "sm:text-right",
-          side.own ? "text-orange-bright" : "text-ink",
-        )}
-      >
-        {side.name}
-      </p>
+    <div>
+      <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-baseline">
+        <dd className={cx("display text-left text-base font-semibold tabular-nums", a > b ? "text-ink" : "text-sub")}>{a}</dd>
+        <dt className="kicker text-center">{label}</dt>
+        <dd className={cx("display text-right text-base font-semibold tabular-nums", b > a ? "text-ink" : "text-sub")}>{b}</dd>
+      </div>
+      <div className="mt-1 flex h-1 gap-0.5 overflow-hidden rounded-[1px]" aria-hidden>
+        <span className={cx("h-full transition-[width] duration-300", total > 0 ? TONE[tones.a].bg : "bg-line-strong")} style={{ width: `${shareA * 100}%` }} />
+        <span className={cx("h-full flex-1", total > 0 ? TONE[tones.b].bg : "bg-line-strong")} />
+      </div>
+    </div>
+  );
+}
+
+function PlayerTable({ side, tone, lines, labels }: { side: LiveSideInfo; tone: LiveTone; lines: LiveLine[]; labels: LiveLabels }) {
+  const best = lines.reduce((m, l, i) => (l.score > lines[m].score ? i : m), 0);
+  return (
+    <table className="w-full table-fixed text-sm">
+      <caption className="pb-2 text-left">
+        <span className="flex items-center gap-2">
+          <span className={cx("h-2 w-2 shrink-0 rounded-[2px]", TONE[tone].bg)} aria-hidden />
+          <span className="display truncate text-[13px] font-semibold text-sub">{side.name}</span>
+        </span>
+      </caption>
+      <thead>
+        <tr className="kicker">
+          <th scope="col" className="w-[40%] pb-1 text-left font-medium">
+            <span className="sr-only">{labels.player}</span>
+          </th>
+          <th scope="col" className="pb-1 text-right font-medium">{labels.goals}</th>
+          <th scope="col" className="pb-1 text-right font-medium">{labels.assists}</th>
+          <th scope="col" className="pb-1 text-right font-medium">{labels.saves}</th>
+          <th scope="col" className="hidden pb-1 text-right font-medium min-[400px]:table-cell">{labels.shots}</th>
+          <th scope="col" className="pb-1 text-right font-medium">{labels.score}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lines.map((l, i) => (
+          <tr key={i} className="border-t border-line">
+            <td className={cx("truncate py-1.5 pr-2", i === best && l.score > 0 ? "display font-semibold text-ink" : "text-ink")}>
+              {side.players[i] ?? ""}
+            </td>
+            <td className={cx("py-1.5 text-right tabular-nums", l.goals > 0 ? cx("font-semibold", TONE[tone].text) : "text-sub")}>{l.goals}</td>
+            <td className="py-1.5 text-right tabular-nums text-sub">{l.assists}</td>
+            <td className="py-1.5 text-right tabular-nums text-sub">{l.saves}</td>
+            <td className="hidden py-1.5 text-right tabular-nums text-sub min-[400px]:table-cell">{l.shots}</td>
+            <td className="py-1.5 text-right tabular-nums text-ink">{l.score}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/**
+ * The regulation clock as a track. The filled part is the time played; each
+ * goal shown sits on it at its minute in its side's tone. Overtime goals sit
+ * at the end. It moves only with the clock, so a paused game holds it and
+ * reduced motion shows it full.
+ */
+function GameTrack({
+  frame,
+  goals,
+  tones,
+  reduced,
+}: {
+  frame: LiveFrame;
+  goals: TimelineGoal[];
+  tones: Record<LiveSide, LiveTone>;
+  reduced: boolean;
+}) {
+  const REG = 300;
+  const played = frame.over || frame.period === "overtime" ? 1 : Math.min(1, Math.max(0, (REG - frame.clock) / REG));
+  return (
+    <div className="relative mx-auto mt-5 h-4 w-full max-w-md" aria-hidden>
+      <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-[1px] bg-line-strong" />
+      <div
+        className={cx("absolute left-0 top-1/2 h-0.5 -translate-y-1/2 rounded-[1px]", frame.overtime ? "bg-orange-bright" : "bg-sub")}
+        style={{ width: `${played * 100}%` }}
+      />
+      {goals.map((g, i) => {
+        const at = g.period === "overtime" ? 1 : Math.min(1, Math.max(0, (REG - g.clock) / REG));
+        return (
+          <span
+            key={i}
+            className={cx(
+              "absolute top-1/2 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-[1px]",
+              TONE[tones[g.side]].bg,
+              !reduced && i === goals.length - 1 && "pop-in",
+            )}
+            style={{ left: `${at * 100}%` }}
+          />
+        );
+      })}
     </div>
   );
 }
 
 /** A score figure: re-keyed per value so a goal lands on it (and only then). */
-function Score({ value }: { value: number }) {
+function Score({ value, dim = false }: { value: number; dim?: boolean }) {
   return (
-    <span key={value} className="display pop-in min-w-[1ch] text-center text-5xl font-bold leading-none tabular-nums text-ink sm:text-6xl">
+    <span
+      key={value}
+      className={cx(
+        "display pop-in min-w-[1ch] text-center text-6xl font-bold leading-none tabular-nums transition-colors sm:text-7xl",
+        dim ? "text-faint" : "text-ink",
+      )}
+    >
       {value}
     </span>
   );

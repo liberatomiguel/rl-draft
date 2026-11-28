@@ -35,13 +35,13 @@ export function MatchdayModeSetting({ save, className }: { save: CareerSave; cla
         </h2>
         <Badge tone="blue">{M.beta}</Badge>
       </div>
-      <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-labelledby="matchday-setting-title">
+      {/* Toggle buttons (aria-pressed), so Tab and Enter work without a radio group's arrow keys. */}
+      <div className="grid grid-cols-3 gap-1.5" role="group" aria-labelledby="matchday-setting-title">
         {LEVELS.map((l) => (
           <button
             key={l}
             type="button"
-            role="radio"
-            aria-checked={level === l}
+            aria-pressed={level === l}
             onClick={() => setLevel(l)}
             className={cx(
               "display min-h-11 rounded-[7px] border px-2 text-sm font-semibold transition-colors",

@@ -157,7 +157,6 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
                   {C.event.continueToHq}
                 </Button>
               </div>
-              <p className="mt-3 text-xs text-faint">{C.event.pauseHint}</p>
             </>
           )}
         </div>

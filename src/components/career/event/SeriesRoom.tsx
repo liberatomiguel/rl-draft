@@ -1,27 +1,29 @@
 "use client";
 
 /**
- * rc9 MATCHDAY (R240-R246, DESIGN-DECISIONS #233-#235): the user's series when
+ * rc9 MATCHDAY (R240-R247, DESIGN-DECISIONS #233-#238): the user's series when
  * the career is set to Manage. It replaces the slice-5 desk (a choice screen
  * per game). Three moments, one board:
  *
- *  1. THE PLAN: three directives with the coach's call preselected (approach,
- *     risk, who to shut down), the opponent read in one line, one button that
- *     plays the series and one that skips to the result.
+ *  1. THE PLAN: the matchup (both crests, names and ratings), the opponent
+ *     read in one line, three directives with the coach's call preselected
+ *     (approach, risk, who to shut down), each with its trade-off; one button
+ *     that plays the series and one that skips to the result.
  *  2. LIVE: every game on the clock (components/match/LiveGameView), one after
- *     the other. Between games the coach makes the calls; the board stops only
- *     when the opponent carries momentum and the timeout is unused, for one
- *     optional call that waits a few seconds and then goes on by itself.
- *  3. THE END: the result, one line on what the plan did (from the engine's
- *     own log), the players' numbers, Continue.
+ *     the other, with no stop between them (Miguel, 27/11). The coach makes
+ *     the calls at each break. The Timeout button is always there: pressed,
+ *     it is called at the next break (and can be taken back until then).
+ *  3. THE END: the matchup and the series score, the games one by one, one
+ *     line on what the plan did (from the engine's own log), the players'
+ *     numbers, Continue.
  *
  * Every rule lives in the flow and the engine (careerFlow rc9 block,
  * matchdaySeries): a series watched, skipped or left to the coach with the
- * same choices plays the same games.
+ * same choices plays the same games (careerMatchday.rc9.test.ts).
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CAREER_MATCHDAY, FEATURES, MATCH_LIVE } from "@/config/balance";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { FEATURES, MATCH_LIVE } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { buildGameBoxScore, buildSeriesBoxScore } from "@/engine/career/boxScore";
 import { coachPlanFor, coachQualityOf, shownStyle } from "@/engine/career/matchday";
@@ -73,21 +75,11 @@ export function SeriesRoom({
   /** After the end: play the round on. */
   onContinue: () => void;
 }) {
-  const C = useCareerCopy();
-  const D = C.seriesDesk;
+  const D = useCareerCopy().seriesDesk;
   const us = pendingUserSeriesOf(save);
   const teams = userSeriesTeamsOf(save);
   if (!us || !teams || !us.state.matchday) return null;
-  return (
-    <Room
-      key={us.roundKey}
-      save={save}
-      D={D}
-      label={label}
-      onStart={onStart}
-      onContinue={onContinue}
-    />
-  );
+  return <Room key={us.roundKey} save={save} D={D} label={label} onStart={onStart} onContinue={onContinue} />;
 }
 
 function Room({
@@ -108,13 +100,14 @@ function Room({
   const [watched, setWatched] = useState(() => pendingUserSeriesOf(save)?.state.games.length ?? 0);
   const setPlan = useCareerStore((s) => s.setSeriesPlan);
   const playNext = useCareerStore((s) => s.playSeriesNext);
-  const timeout = useCareerStore((s) => s.seriesTimeout);
+  const callTimeout = useCareerStore((s) => s.seriesTimeout);
   const delegate = useCareerStore((s) => s.delegateSeries);
   const [speed, setSpeed] = useState<number>(1);
   const [paused, setPaused] = useState(false);
   const [skipIdx, setSkipIdx] = useState<number | null>(null);
-  const [coachBreaks, setCoachBreaks] = useState(false);
-  const askedRef = useRef<number>(-1);
+  /** The Timeout button: called for the next break. */
+  const [queued, setQueued] = useState(false);
+  const playedRef = useRef<number>(-1);
 
   const us = pendingUserSeriesOf(save)!;
   const { teamA, teamB } = userSeriesTeamsOf(save)!;
@@ -133,17 +126,23 @@ function Room({
     () => partialSeries(teamA, teamB, state.games, [state.winsA, state.winsB]),
     [teamA, teamB, state.games, state.winsA, state.winsB],
   );
-
-  // Between games: the one call, or straight on.
   const spent = side === "a" ? md.timeoutA : md.timeoutB;
-  const oppMeter = side === "a" ? md.momentumB : md.momentumA;
-  const callWorthAsking = !coachBreaks && !spent && oppMeter >= CAREER_MATCHDAY.timeoutTrigger;
+
+  // The break: once the game on screen is over, the next one is played, with
+  // the timeout first when it was called. No stop.
   const atBreak = played > 0 && !over && watched >= played;
   useEffect(() => {
-    if (!atBreak || callWorthAsking || askedRef.current === played) return;
-    askedRef.current = played;
+    if (!atBreak || playedRef.current === played) return;
+    playedRef.current = played;
+    if (queued && !spent) callTimeout();
+    setQueued(false);
     playNext();
-  }, [atBreak, callWorthAsking, played, playNext]);
+  }, [atBreak, played, queued, spent, callTimeout, playNext]);
+
+  const marks = {
+    a: <OrgMark save={save} orgRef={state.teamAId} size="lg" />,
+    b: <OrgMark save={save} orgRef={state.teamBId} size="lg" />,
+  };
 
   if (played === 0) {
     return (
@@ -153,6 +152,8 @@ function Room({
         label={label}
         me={me}
         opp={opp}
+        meMark={side === "a" ? marks.a : marks.b}
+        oppMark={side === "a" ? marks.b : marks.a}
         oppPlan={side === "a" ? md.planB : md.planA}
         current={side === "a" ? md.planA : md.planB}
         seed={us.seed}
@@ -174,18 +175,22 @@ function Room({
   const myWins = side === "a" ? state.winsA : state.winsB;
   const oppWins = side === "a" ? state.winsB : state.winsA;
   const ended = over && watched >= played;
-
+  // The head shows the games on screen so far, never one the engine has played but the view has not.
+  const seen = state.games.slice(0, Math.min(watched, played));
+  const seenMine = seen.filter((g) => g.winnerTeamId === me.id).length;
+  const seenTheirs = seen.length - seenMine;
+  const B = C.boxScore;
   const labels: LiveLabels = {
     game: D.gameOf(Math.min(watched + 1, played), bestOf),
     overtime: C.event.overtime,
     final: D.final,
-    goal: "",
-    shots: "",
-    saves: "",
-    demos: "",
-    assists: "",
-    goals: "",
-    player: "",
+    strip: D.strip,
+    goals: B.goals,
+    assists: B.assists,
+    shots: B.shots,
+    saves: B.saves,
+    score: B.score,
+    player: B.player,
     clock: D.clock,
     goalLine: D.goalLine,
     noGoalsYet: D.noGoalsYet,
@@ -195,43 +200,41 @@ function Room({
     <Panel strong className="p-5" aria-label={label}>
       <div className="card-head">
         <h2 className="card-title">{ended ? (myWins > oppWins ? D.seriesWon : D.seriesLost) : label}</h2>
-        <span className="display text-sm font-semibold tabular-nums text-sub">{D.series(myWins, oppWins)}</span>
+        {!ended ? <SeriesPips myWins={seenMine} oppWins={seenTheirs} target={state.target} label={D.series(seenMine, seenTheirs)} /> : null}
       </div>
       {ended ? (
-        <SeriesEnd save={save} D={D} series={series} roundKey={us.roundKey} boxSides={boxSides} side={side} myWins={myWins} oppWins={oppWins} onContinue={onContinue} />
+        <SeriesEnd
+          save={save}
+          D={D}
+          series={series}
+          roundKey={us.roundKey}
+          boxSides={boxSides}
+          side={side}
+          me={me}
+          opp={opp}
+          meMark={side === "a" ? marks.a : marks.b}
+          oppMark={side === "a" ? marks.b : marks.a}
+          myWins={myWins}
+          oppWins={oppWins}
+          onContinue={onContinue}
+        />
       ) : watched < played ? (
         <LiveGame
           key={watched}
-          save={save}
           D={D}
           labels={labels}
           series={series}
           gameIdx={watched}
           roundKey={us.roundKey}
           boxSides={boxSides}
+          marks={marks}
           speed={speed}
           paused={paused}
           skip={skipIdx === watched}
           onEnd={() => setWatched((w) => w + 1)}
         />
-      ) : callWorthAsking ? (
-        <BreakCall
-          D={D}
-          after={played}
-          oppName={opp.name}
-          speed={speed}
-          paused={paused}
-          onTimeout={() => {
-            timeout();
-            playNext();
-          }}
-          onNext={() => playNext()}
-          onCoach={() => {
-            setCoachBreaks(true);
-          }}
-        />
       ) : (
-        <div className="min-h-[18rem]" aria-busy />
+        <div className="min-h-[24rem]" aria-busy />
       )}
 
       {!ended ? (
@@ -239,6 +242,8 @@ function Room({
           D={D}
           paused={paused}
           speed={speed}
+          timeout={spent ? "used" : queued ? "called" : "ready"}
+          onTimeout={() => setQueued((q) => !q)}
           onPause={() => setPaused((p) => !p)}
           onSpeed={setSpeed}
           onSkipGame={watched < played ? () => setSkipIdx(watched) : undefined}
@@ -252,32 +257,51 @@ function Room({
   );
 }
 
+/** The series score as pips: the games each side needs, filled as they win them (ours orange, theirs blue). */
+function SeriesPips({ myWins, oppWins, target, label }: { myWins: number; oppWins: number; target: number; label: string }) {
+  const row = (wins: number, tone: string) => (
+    <span className="flex gap-1">
+      {Array.from({ length: target }, (_, i) => (
+        <span key={i} className={cx("h-2 w-4 rounded-[1px]", i < wins ? tone : "bg-line-strong")} />
+      ))}
+    </span>
+  );
+  return (
+    <span className="flex items-center gap-3" role="img" aria-label={label}>
+      {row(myWins, "bg-orange-bright")}
+      <span className="display text-sm font-semibold tabular-nums text-ink" aria-hidden>
+        {myWins}-{oppWins}
+      </span>
+      {row(oppWins, "bg-blue-bright")}
+    </span>
+  );
+}
+
 function LiveGame({
-  save,
   D,
   labels,
   series,
   gameIdx,
   roundKey,
   boxSides,
+  marks,
   speed,
   paused,
   skip,
   onEnd,
 }: {
-  save: CareerSave;
   D: Desk;
   labels: LiveLabels;
   series: SeriesResult;
   gameIdx: number;
   roundKey: string;
   boxSides: { a?: TournamentTeam; b?: TournamentTeam };
+  marks: { a: ReactNode; b: ReactNode };
   speed: number;
   paused: boolean;
   skip: boolean;
   onEnd: () => void;
 }) {
-  const B = useCareerCopy().boxScore;
   const game = series.games[gameIdx];
   const timeline = useMemo(() => buildGameTimeline(series, game, roundKey), [series, game, roundKey]);
   const finals = useMemo(() => {
@@ -292,15 +316,16 @@ function LiveGame({
   );
   const a = boxSides.a;
   const b = boxSides.b;
+  const ownA = series.teamAId === "user";
   return (
     <LiveGameView
       timeline={timeline}
       sides={{
-        a: { name: a?.name ?? "", players: a?.playerNames ?? [], own: series.teamAId === "user", mark: <OrgMark save={save} orgRef={series.teamAId} size="md" /> },
-        b: { name: b?.name ?? "", players: b?.playerNames ?? [], own: series.teamBId === "user", mark: <OrgMark save={save} orgRef={series.teamBId} size="md" /> },
+        a: { name: a?.name ?? "", players: a?.playerNames ?? [], own: ownA, tone: ownA ? "orange" : "blue", mark: marks.a },
+        b: { name: b?.name ?? "", players: b?.playerNames ?? [], own: !ownA, tone: ownA ? "blue" : "orange", mark: marks.b },
       }}
       finals={finals}
-      labels={{ ...labels, goals: B.goals, assists: B.assists, shots: B.shots, saves: B.saves, demos: B.demos, player: B.player }}
+      labels={labels}
       context={<span className="tabular-nums">{D.series(winsBefore[0], winsBefore[1])}</span>}
       speed={speed}
       paused={paused}
@@ -314,6 +339,8 @@ function LiveControls({
   D,
   paused,
   speed,
+  timeout,
+  onTimeout,
   onPause,
   onSpeed,
   onSkipGame,
@@ -322,17 +349,50 @@ function LiveControls({
   D: Desk;
   paused: boolean;
   speed: number;
+  timeout: "ready" | "called" | "used";
+  onTimeout: () => void;
   onPause: () => void;
   onSpeed: (s: number) => void;
   onSkipGame?: () => void;
   onSkipSeries: () => void;
 }) {
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+    // Phone: docked, so the Timeout stays in reach while the game runs.
+    <div className="action-dock mt-6 flex flex-wrap items-center gap-2 sm:border-t sm:border-line sm:pt-4">
+      {/* The timeout: called for the next break, taken back with a second press; once a series. */}
+      <button
+        type="button"
+        aria-pressed={timeout === "called"}
+        disabled={timeout === "used"}
+        onClick={onTimeout}
+        className={cx(
+          "display inline-flex min-h-11 items-center gap-2 rounded-[7px] border px-3 text-sm font-semibold uppercase tracking-[0.05em] transition-colors sm:min-h-9",
+          timeout === "called"
+            ? "border-orange bg-orange/10 text-orange-bright"
+            : timeout === "used"
+              ? "cursor-not-allowed border-line text-faint"
+              : "border-line-strong text-ink hover:border-orange/70",
+        )}
+      >
+        {timeout === "called" ? D.timeoutCalled : timeout === "used" ? D.timeoutUsed : D.timeout}
+        {timeout === "ready" ? <span className="text-xs font-medium normal-case tracking-normal text-faint">{D.timeoutLeft}</span> : null}
+      </button>
       <Button variant="secondary" size="sm" onClick={onPause} aria-pressed={paused}>
         {paused ? D.resume : D.pause}
       </Button>
-      <div className="flex overflow-hidden rounded-[7px] border border-line" role="group" aria-label={D.speed}>
+      {/* Phone: one button that steps through the speeds, so the dock keeps to two rows. */}
+      <button
+        type="button"
+        aria-label={`${D.speed} ${speed}×`}
+        onClick={() => {
+          const all = MATCH_LIVE.speeds as readonly number[];
+          onSpeed(all[(all.indexOf(speed) + 1) % all.length]);
+        }}
+        className="display min-h-11 min-w-11 rounded-[7px] border border-line px-3 text-xs font-semibold tabular-nums text-ink sm:hidden"
+      >
+        {speed}×
+      </button>
+      <div className="hidden overflow-hidden rounded-[7px] border border-line sm:flex" role="group" aria-label={D.speed}>
         {MATCH_LIVE.speeds.map((s) => (
           <button
             key={s}
@@ -340,7 +400,7 @@ function LiveControls({
             aria-pressed={speed === s}
             onClick={() => onSpeed(s)}
             className={cx(
-              "display min-h-11 min-w-11 px-3 text-xs font-semibold tabular-nums transition-colors sm:min-h-8",
+              "display min-h-11 min-w-11 px-3 text-xs font-semibold tabular-nums transition-colors sm:min-h-9",
               speed === s ? "bg-white/[0.08] text-ink" : "text-sub hover:text-ink",
             )}
           >
@@ -362,69 +422,16 @@ function LiveControls({
   );
 }
 
-/** The one call between games: it waits `breakMs`, then the coach takes it. */
-function BreakCall({
-  D,
-  after,
-  oppName,
-  speed,
-  paused,
-  onTimeout,
-  onNext,
-  onCoach,
-}: {
-  D: Desk;
-  after: number;
-  oppName: string;
-  speed: number;
-  paused: boolean;
-  onTimeout: () => void;
-  onNext: () => void;
-  onCoach: () => void;
-}) {
-  const total = MATCH_LIVE.breakMs;
-  const [left, setLeft] = useState(total);
-  const doneRef = useRef(false);
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => setLeft((l) => Math.max(0, l - 250 * speed)), 250);
-    return () => clearInterval(id);
-  }, [paused, speed]);
-  useEffect(() => {
-    if (left > 0 || doneRef.current) return;
-    doneRef.current = true;
-    onNext();
-  }, [left, onNext]);
-  const once = (fn: () => void) => () => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    fn();
-  };
+/** One side of a matchup: crest, name, rating figure. */
+function MatchSide({ mark, name, rating, tone, align }: { mark: ReactNode; name: string; rating?: number; tone: "orange" | "blue"; align: "left" | "right" }) {
   return (
-    <div className="flex min-h-[18rem] flex-col justify-center" role="group" aria-labelledby="break-title">
-      <p id="break-title" className="kicker">{D.breakTitle(after)}</p>
-      <p className="mt-2 max-w-prose text-[15px] text-ink">{D.theirMomentum(oppName)}</p>
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={once(onTimeout)}>
-          {D.timeout}
-        </Button>
-        <Button variant="secondary" onClick={once(onNext)}>
-          {D.nextGame(after + 1)}
-        </Button>
-        <span className="text-sm tabular-nums text-faint" aria-live="off">
-          {D.nextIn(Math.ceil(left / 1000))}
-        </span>
+    <div className={cx("flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3", align === "right" && "sm:flex-row-reverse")}>
+      <span className="shrink-0">{mark}</span>
+      <div className={cx("min-w-0", align === "left" ? "sm:text-left" : "sm:text-right")}>
+        <p className="display break-words text-[15px] font-semibold leading-tight text-ink sm:text-xl">{name}</p>
+        <span className={cx("mt-1.5 inline-block h-1 w-8 rounded-[1px]", tone === "orange" ? "bg-orange-bright" : "bg-blue-bright")} aria-hidden />
+        {rating !== undefined ? <p className="display mt-1 text-2xl font-bold leading-none tabular-nums text-ink">{rating}</p> : null}
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          onCoach();
-          once(onNext)();
-        }}
-        className="mt-4 inline-flex min-h-11 items-center self-start text-sm text-sub underline-offset-4 hover:text-ink hover:underline"
-      >
-        {D.coachBreaks}
-      </button>
     </div>
   );
 }
@@ -436,6 +443,10 @@ function SeriesEnd({
   roundKey,
   boxSides,
   side,
+  me,
+  opp,
+  meMark,
+  oppMark,
   myWins,
   oppWins,
   onContinue,
@@ -446,6 +457,10 @@ function SeriesEnd({
   roundKey: string;
   boxSides: { a?: TournamentTeam; b?: TournamentTeam };
   side: "a" | "b";
+  me: TournamentTeam;
+  opp: TournamentTeam;
+  meMark: ReactNode;
+  oppMark: ReactNode;
   myWins: number;
   oppWins: number;
   onContinue: () => void;
@@ -464,10 +479,39 @@ function SeriesEnd({
   useEffect(() => rootRef.current?.querySelector<HTMLButtonElement>("[data-continue]")?.focus({ preventScroll: true }), []);
   return (
     <div ref={rootRef}>
-      <p className={cx("display text-5xl font-bold leading-none tabular-nums", won ? "text-good" : "text-bad")}>
-        {myWins}-{oppWins}
-      </p>
-      {line ? <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-sub">{line}</p> : null}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
+        <MatchSide mark={meMark} name={me.name} tone="orange" align="left" />
+        <p className={cx("display pop-in text-6xl font-bold leading-none tabular-nums sm:text-7xl", won ? "text-good" : "text-bad")}>
+          {myWins}-{oppWins}
+        </p>
+        <MatchSide mark={oppMark} name={opp.name} tone="blue" align="right" />
+      </div>
+
+      {/* The games, one by one: the winner's colour, the score from our side. */}
+      <ol className="mt-5 flex flex-wrap justify-center gap-2">
+        {series.games.map((g, i) => {
+          const ours = g.winnerTeamId === "user";
+          const [w, l] = g.score;
+          return (
+            <li
+              key={i}
+              className={cx(
+                "display flex min-w-[4.5rem] flex-col items-center rounded-[7px] border px-3 py-1.5",
+                ours ? "border-orange/60" : "border-blue-bright/50",
+              )}
+            >
+              <span className="kicker">{B.game(i + 1)}</span>
+              <span className={cx("text-base font-semibold tabular-nums", ours ? "text-orange-bright" : "text-blue-bright")}>
+                {ours ? `${w}-${l}` : `${l}-${w}`}
+                {g.overtime ? <span className="ml-1 text-xs text-faint">OT</span> : null}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      {line ? <p className="mx-auto mt-5 max-w-prose text-center text-[15px] leading-relaxed text-sub">{line}</p> : null}
+
       {box ? (
         <table className="mt-5 w-full table-fixed text-sm">
           <thead>
@@ -485,26 +529,29 @@ function SeriesEnd({
               const mvp = box.mvp?.side === side && box.mvp.playerIdx === i;
               return (
                 <tr key={i} className="border-t border-line">
-                  <td className="py-2 pr-2">
+                  <td className="py-2.5 pr-2">
                     <span className="flex min-w-0 items-center gap-2">
+                      <span className="h-2 w-2 shrink-0 rounded-[2px] bg-orange-bright" aria-hidden />
                       <span className="display truncate text-[15px] font-semibold text-ink">{names[i] ?? ""}</span>
                       {mvp ? <Badge tone="gold">{B.mvp}</Badge> : null}
                     </span>
                   </td>
-                  <td className="py-2 text-right tabular-nums text-ink">{l.goals}</td>
-                  <td className="py-2 text-right tabular-nums text-sub">{l.assists}</td>
-                  <td className="py-2 text-right tabular-nums text-sub">{l.saves}</td>
-                  <td className="hidden py-2 text-right tabular-nums text-sub sm:table-cell">{l.shots}</td>
-                  <td className="display py-2 text-right font-semibold tabular-nums text-ink">{l.avgRating.toFixed(1)}</td>
+                  <td className="py-2.5 text-right tabular-nums text-ink">{l.goals}</td>
+                  <td className="py-2.5 text-right tabular-nums text-sub">{l.assists}</td>
+                  <td className="py-2.5 text-right tabular-nums text-sub">{l.saves}</td>
+                  <td className="hidden py-2.5 text-right tabular-nums text-sub sm:table-cell">{l.shots}</td>
+                  <td className="display py-2.5 text-right text-base font-semibold tabular-nums text-ink">{l.avgRating.toFixed(1)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       ) : null}
-      <Button data-continue variant="primary" className="mt-6 w-full sm:w-auto" onClick={onContinue}>
-        {D.continue}
-      </Button>
+      <div className="action-dock mt-6">
+        <Button data-continue variant="primary" className="w-full sm:w-auto" onClick={onContinue}>
+          {D.continue}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -519,6 +566,8 @@ function PlanStep({
   label,
   me,
   opp,
+  meMark,
+  oppMark,
   oppPlan,
   current,
   seed,
@@ -530,6 +579,8 @@ function PlanStep({
   label: string;
   me: TournamentTeam;
   opp: TournamentTeam;
+  meMark: ReactNode;
+  oppMark: ReactNode;
   oppPlan: SeriesPlan;
   current: SeriesPlan;
   seed: number;
@@ -574,7 +625,7 @@ function PlanStep({
   const pm = opp.playmakerIndex !== undefined ? opp.playerNames[opp.playmakerIndex] : undefined;
   const read = oppStyle ? (answer && answer !== natural ? D.read(D.styles[oppStyle], D.styles[answer]) : D.readPlain(D.styles[oppStyle])) : null;
 
-  const set = (patch: Partial<SeriesPlan> & { style?: PlayStyleId | null; mark?: number | null }) =>
+  const set = (patch: { style?: PlayStyleId | null; kickoff?: KickoffPlan; mark?: number | null }) =>
     setPlanState((p) => {
       const next: SeriesPlan = { ...p };
       if ("style" in patch) {
@@ -598,17 +649,18 @@ function PlanStep({
         <span className="text-sm text-sub">{label}</span>
       </div>
 
-      {/* The opponent: who, how strong, how they play. */}
-      <div className="flex items-center gap-4">
-        <OrgMark save={save} orgRef={opp.id} size="lg" className="shrink-0" />
-        <div className="min-w-0">
-          <p className="display text-2xl font-bold leading-tight text-ink">{opp.name}</p>
-          <p className="mt-0.5 text-sm text-sub">{stakes}</p>
-          {read ? <p className="text-sm text-sub">{read}</p> : null}
-        </div>
+      {/* The matchup: who, how strong, how they play. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
+        <MatchSide mark={meMark} name={me.name} rating={Math.round(me.rating.total)} tone="orange" align="left" />
+        <span className="display text-lg font-semibold text-faint">vs</span>
+        <MatchSide mark={oppMark} name={opp.name} rating={Math.round(opp.rating.total)} tone="blue" align="right" />
+      </div>
+      <div className="mt-4 text-center">
+        <p className="text-[15px] text-ink">{stakes}</p>
+        {read ? <p className="mt-0.5 text-sm text-sub">{read}</p> : null}
       </div>
 
-      <div className="mt-6 space-y-5">
+      <div className="mt-6 space-y-5 border-t border-line pt-5">
         {styleOptions.length > 1 ? (
           <Directive label={D.approach} note={selectedStyle?.note}>
             {styleOptions.map((o) => (
@@ -643,7 +695,8 @@ function PlanStep({
         ) : null}
       </div>
 
-      <div className="mt-7 flex flex-col gap-2 border-t border-line pt-5 sm:flex-row sm:items-center">
+      {/* Phone: docked over the bottom bar, so the decision is one thumb away (DESIGN.md "Phone"). */}
+      <div className="action-dock mt-7 flex flex-col gap-2 sm:flex-row sm:items-center sm:border-t sm:border-line sm:pt-5">
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => onPlay(plan)}>
           {D.play}
         </Button>
@@ -690,7 +743,7 @@ function Choice({
       onClick={onClick}
       className={cx(
         "flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-[7px] border px-3 py-2 text-left transition-colors",
-        selected ? "border-orange text-ink" : "border-line-strong text-sub hover:border-blue/60 hover:text-ink",
+        selected ? "border-orange bg-orange/[0.06] text-ink" : "border-line-strong text-sub hover:border-blue/60 hover:text-ink",
       )}
     >
       <span className="display text-[15px] font-semibold">{children}</span>

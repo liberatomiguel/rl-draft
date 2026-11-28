@@ -3101,14 +3101,11 @@ export const CAREER_EN = {
     skipSeries: "Skip series",
     gameOf: (n: number, bo: number) => `Game ${n} · Best of ${bo}`,
     series: (a: number, b: number) => `Series ${a}-${b}`,
-    breakTitle: (n: number) => `After game ${n}`,
-    theirMomentum: (name: string) => `${name} carry the momentum. A timeout clears it, once a series.`,
-    timeout: "Call timeout",
-    playOn: "Play on",
-    nextIn: (s: number) => `The coach decides in ${s}`,
-    nextInCaptain: (s: number) => `The captain decides in ${s}`,
-    coachBreaks: "Leave the breaks to the coach",
-    captainBreaks: "Leave the breaks to the captain",
+    // The Timeout button: called for the next break, once a series.
+    timeout: "Timeout",
+    timeoutLeft: "1 left",
+    timeoutCalled: "Timeout called",
+    timeoutUsed: "Timeout used",
     seriesWon: "Series won",
     seriesLost: "Series lost",
     continue: "Continue",
@@ -3116,7 +3113,7 @@ export const CAREER_EN = {
     final: "Final",
     goalLine: (scorer: string, a: number, b: number) => `${scorer} scores, ${a}-${b}`,
     clock: "Game clock",
-    strip: { shots: "Shots", saves: "Saves", demos: "Demos" },
+    strip: { shots: "Shots", saves: "Saves", assists: "Assists", demos: "Demos", score: "Points" },
     styles: {
       pressure: "Pressure",
       possession: "Possession",
@@ -3129,6 +3126,8 @@ export const CAREER_EN = {
     and: "and",
     lineEdge: (style: string, theirs: string, games: string, won: number) =>
       `${style} had the edge on their ${theirs} in ${games}, and you won ${won} of them.`,
+    lineEdgeLost: (style: string, theirs: string, games: string) =>
+      `${style} had the edge on their ${theirs} in ${games}, but those games went their way.`,
     lineEdgeAll: (style: string, theirs: string, won: number, n: number) =>
       `${style} had the edge on their ${theirs} in every game. You won ${won} of ${n}.`,
     lineSwitch: (style: string, theirs: string, games: string, to: string) =>

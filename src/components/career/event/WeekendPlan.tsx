@@ -56,7 +56,7 @@ export function roleSubOf(C: CareerCopy, role: WeekendRole, def?: CareerEventDef
     case "regional":
       return C.event.roleRegionalSub(CAREER_QUALIFIER.directSlots, CAREER_QUALIFIER.advanceSlots);
     case "swissDay":
-      return C.event.roleSwissSub(TOURNAMENT.swiss.teams, TOURNAMENT.swiss.winsToAdvance);
+      return C.event.formats.stageSub.swiss(TOURNAMENT.swiss.teams, TOURNAMENT.swiss.winsToAdvance);
     case "championshipSunday":
       return C.event.roleSundaySub(TOURNAMENT.playoffs.teams);
     default:

@@ -24,6 +24,7 @@ export function planLine(D: Desk, r: PlanReport | null): string | null {
     if (r.edgeGames.length > 0) {
       const games = D.games(list(D, r.edgeGames));
       if (r.oppSwitchedAt !== null && r.oppSwitchedTo) parts.push(D.lineSwitch(mine, theirs, games, D.styles[r.oppSwitchedTo]));
+      else if (r.edgeWins === 0) parts.push(D.lineEdgeLost(mine, theirs, games));
       else if (r.edgeGames.length === r.games) parts.push(D.lineEdgeAll(mine, theirs, r.edgeWins, r.games));
       else parts.push(D.lineEdge(mine, theirs, games, r.edgeWins));
     } else if (r.againstGames.length > 0) {

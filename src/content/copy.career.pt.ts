@@ -3071,14 +3071,11 @@ export const CAREER_PT: CareerCopy = {
     skipSeries: "Pular série",
     gameOf: (n: number, bo: number) => `Jogo ${n} · Melhor de ${bo}`,
     series: (a: number, b: number) => `Série ${a}-${b}`,
-    breakTitle: (n: number) => `Depois do jogo ${n}`,
-    theirMomentum: (name: string) => `${name} está embalado. Um tempo técnico corta o embalo, uma vez por série.`,
+    // O botão de tempo técnico: pedido para o próximo intervalo, um por série.
     timeout: "Pedir tempo",
-    playOn: "Seguir sem tempo",
-    nextIn: (s: number) => `O técnico decide em ${s}`,
-    nextInCaptain: (s: number) => `O capitão decide em ${s}`,
-    coachBreaks: "Deixar os intervalos com o técnico",
-    captainBreaks: "Deixar os intervalos com o capitão",
+    timeoutLeft: "resta 1",
+    timeoutCalled: "Tempo pedido",
+    timeoutUsed: "Tempo usado",
     seriesWon: "Série vencida",
     seriesLost: "Série perdida",
     continue: "Continuar",
@@ -3086,7 +3083,7 @@ export const CAREER_PT: CareerCopy = {
     final: "Fim",
     goalLine: (scorer: string, a: number, b: number) => `Gol de ${scorer}, ${a}-${b}`,
     clock: "Relógio do jogo",
-    strip: { shots: "Chutes", saves: "Defesas", demos: "Demolições" },
+    strip: { shots: "Chutes", saves: "Defesas", assists: "Assistências", demos: "Demolições", score: "Pontos" },
     styles: {
       pressure: "Pressão",
       possession: "Posse",
@@ -3099,6 +3096,8 @@ export const CAREER_PT: CareerCopy = {
     and: "e",
     lineEdge: (style: string, theirs: string, games: string, won: number) =>
       `O estilo ${style} levou vantagem sobre o ${theirs} deles ${games}, e vocês venceram ${won}.`,
+    lineEdgeLost: (style: string, theirs: string, games: string) =>
+      `O estilo ${style} levou vantagem sobre o ${theirs} deles ${games}, mas esses jogos ficaram com eles.`,
     lineEdgeAll: (style: string, theirs: string, won: number, n: number) =>
       `O estilo ${style} levou vantagem sobre o ${theirs} deles em todos os jogos. Vocês venceram ${won} de ${n}.`,
     lineSwitch: (style: string, theirs: string, games: string, to: string) =>

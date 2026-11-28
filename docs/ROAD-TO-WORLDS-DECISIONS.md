@@ -3014,3 +3014,41 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 ## R225 — 27 de novembro de 2026: um save de tomada do rc.8 abre e continua (v2.2.0-dev, rc.9 ORG)
 
 - **Decidido:** um reparo a cada carregamento (`repairEstablishedOnLoad`, idempotente, sem mudar versão): a abertura de caixa da temporada é reconstruída do razão (o caixa antes da linha da verba da diretoria, quando ela ainda está no razão; com o mandato ainda não lido, o caixa em mãos). Nada mais é escrito: o catálogo lê os itens como níveis, a mesa de patrocínio aberta (ou o contrato assinado) do rc.8 segue, o patamar lê a estatura da diretoria. Um save do rc.8 com a mesa aberta continua com a mesa; não recebe um contrato herdado por cima da escolha do jogador.
+
+## R240 — 27 de novembro de 2026: a série no modo Comandar é um plano e um jogo ao vivo (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** a mesa jogo a jogo do slice 5 sai. No modo Comandar, a série é um plano antes do jogo 1 (três diretrizes) e depois roda sozinha, jogo após jogo, sem parada entre eles (Miguel, 27/11: "a pausa entre cada jogo ... quebra muito o fluxo"). O técnico faz as escolhas de intervalo (o tempo técnico, o ajuste depois de uma derrota), como no modo rápido. Cliques por série: 2 (Jogar a série, Continuar); pular: 1. O motor: `playUserNext` / `playUserSeriesNextFlow` jogam o próximo jogo com o intervalo do técnico antes, exatamente como `playOutWithCoach`.
+- **Prova:** `careerMatchday.rc9.test.ts`: assistida jogo a jogo, pulada no plano, pulada depois de um jogo e o modo rápido dão o mesmo evento com o plano do técnico; com o plano do jogador, as três formas dão o mesmo evento; recarregar entre os jogos não muda nada.
+
+## R241 — 27 de novembro de 2026: a história de um jogo não depende dos jogos seguintes (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** `timelineSeed` passa a ler só os jogos até o atual. Assim o jogo ao vivo (a série ainda pela metade) e a súmula depois da série contam a mesma história. Só apresentação: nenhum resultado lê esse seed.
+- **O que muda para quem já jogou:** os minutos dos gols, a ordem dos artilheiros dentro do jogo, assistências, chutes, defesas e demolições dos jogos que não são o último de uma série passam a ser outros na Match Center, na súmula (`SeriesBoxScoreView`), no replay de desafios (`ChallengeMatchBoard`) e no duelo (`duelMatch`, que chama `buildGameTimeline`). Placar, vencedor e artilheiros por jogo não mudam. As estatísticas da temporada já gravadas (`boxStats`) ficam como estão; eventos novos somam com a história nova.
+
+## R242 — 27 de novembro de 2026: marcar o armador é uma troca (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** marcar o jogador certo custa `markRightCost` = −0,08 por jogo (prende um defensor). O valor da marcação é `markValue` (as jogadas especiais cortadas, a mesma fórmula de `match.ts`); o técnico só marca quando vale (`markWorthIt`). Dentro do teto do plano (±0,4, `planCap`, MATCHDAY-SPEC §7); `matchday.test.ts` confere.
+
+## R243 — 27 de novembro de 2026: a linha do plano vem do registro do motor (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** cada jogo da série do usuário grava o que o plano fez (`userLog`: estilos, vantagem de confronto calculada, marcação, risco, vitória, quanto embalo o tempo técnico cortou). A linha depois da série (`planLine`) só monta frases a partir desses fatos. Campo opcional, nunca lido pela simulação.
+
+## R244 — 27 de novembro de 2026: o jogo ao vivo (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** `components/match/LiveGameView` (reutilizável no duelo): o relógio corre, os gols entram no minuto com o autor, placar e estatísticas sobem com o relógio, a prorrogação é um momento próprio, o fim apaga o placar do perdedor. Ritmo em `MATCH_LIVE` (balance.ts): 5:00 vazio em 12 s a 1×; velocidades 1×, 2×, 4×.
+
+## R245 — 27 de novembro de 2026: um ajuste de dia de jogo, no Treino, marcado BETA (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** três níveis: Só o resultado (eventos vão ao resultado), Assistir (suas séries passam ao vivo, o técnico monta o plano), Comandar (você faz o plano antes de cada série). Mora no Treino (saiu do Clube). O botão principal do lobby segue o nível; o outro caminho fica a um toque.
+
+## R246 — 27 de novembro de 2026: o evento não para de novo depois da série (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido:** a parada do slice 5 depois de uma série jogada na mesa sai: o fim da série já mostrou resultado e súmula. Continuar marca a rodada como vista (mesmo depois de um remount), então a série não é reprisada na Match Center.
+
+## R247 — 27 de novembro de 2026: o tempo técnico é um botão sempre à mão (v2.2.0-dev, rc.9 MATCHDAY)
+
+- **Decidido (Miguel, 27/11):** "o botão deve estar disponível o tempo todo, e ao clicar você pede o timeout no próximo intervalo." O botão fica nos controles do jogo ao vivo; pedido, ele é gasto no próximo intervalo (`callTimeout`, um por série) e pode ser desfeito até lá; depois mostra "usado". Sem modal, sem contagem.
+
+## R248 — 27 de novembro de 2026: sem número
+
+## R249 — 27 de novembro de 2026: sem número

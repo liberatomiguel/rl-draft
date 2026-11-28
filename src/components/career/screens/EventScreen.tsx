@@ -942,7 +942,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   else if (saturdayOfTwoDay && paused) revealStage = "swiss";
   else if (animRound) revealStage = animRound.stage;
   else if (effRevealed >= rounds.length) revealStage = t.stage === "swiss" ? "swiss" : "playoffs";
-  else revealStage = rounds[effRevealed - 1]?.stage ?? "swiss";
+  // rc9 MATCHDAY: a knockout event (no Swiss) reads "Playoffs" before its first round is revealed too.
+  else revealStage = rounds[effRevealed - 1]?.stage ?? (hasSwiss ? "swiss" : "playoffs");
 
   // rc.29 (CAR-10): in the playoffs the header badge is the user's seed —
   // Saturday's Swiss record (unlabelled) read like a playoff score; without a
@@ -972,6 +973,9 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     if (pendingSeries) liveRoundsRef.current.add(pendingSeries.roundKey);
   };
   const continueFromDesk = () => {
+    // rc9 MATCHDAY: the room showed this series, whatever happened to the ref
+    // since its start (a remount, a reload mid-series): never replay it.
+    markLive();
     setRunning(true);
     playEventRound();
   };
@@ -1376,7 +1380,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           save={save}
           t={t}
           rows={advancedSeedsOf(t)}
-          title={C.event.qualifiedEight}
+          title={C.event.qualifiedForSunday}
           style={{ animationDelay: "60ms" }}
         />
       ) : null}
