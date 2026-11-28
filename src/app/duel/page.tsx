@@ -15,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
   description: `You've been challenged in ${SITE.name}: draft a roster from RLCS history on the same boards as your friend, then watch your two teams play a best of 7. Free, no sign-up.`,
   path: "/duel",
   index: false,
-  image: { url: duelShareSrc(), alt: "Rocket Draft friend duel" },
+  image: { url: duelShareSrc(), alt: "Rocket Draft friend duel: draft a team from RLCS history and play your friend's team in a best of 7" },
 });
 
 export default function DuelPage() {

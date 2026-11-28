@@ -156,7 +156,7 @@ function GoalRow({
         ? C.goals.splitLeft(p.left)
         : C.goals.left(p.left, kind)
       : null;
-  const deadline = row.deadline ? C.goals.deadline[row.deadline.event]?.(row.deadline.week) : null;
+  const deadline = row.deadline ? C.goals.deadline[row.deadline.event] ?? null : null;
   const deadlineDate = row.deadline
     ? formatDateTiny(C.dates, dateOfDay(seasonIndex, row.deadline.on.day))
     : null;

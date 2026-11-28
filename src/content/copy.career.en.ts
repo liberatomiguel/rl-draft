@@ -2902,13 +2902,14 @@ export const CAREER_EN = {
     },
     role: { target: "Target", stretch: "Stretch" } as Record<string, string>,
     deadline: {
-      lastCup: (w: number) => `Last chance: the final Community Cup · W${w}`,
-      lastRegional: (w: number) => `Last chance: Split 3's last regional · W${w}`,
-      majorField: (w: number) => `Decided when the Split 3 Major field is set · W${w}`,
-      majorFinal: (w: number) => `Last chance: the Split 3 Major · W${w}`,
-      worldsField: (w: number) => `Decided when the Worlds field is set · W${w}`,
-      worldsFinal: (w: number) => `Last chance: Worlds · W${w}`,
-    } as Record<string, (w: number) => string>,
+      // rc.9 integration: the event in words; the row adds its date (no "W32").
+      lastCup: "Last chance: the final Community Cup",
+      lastRegional: "Last chance: Split 3's last regional",
+      majorField: "Decided when the Split 3 Major field is set",
+      majorFinal: "Last chance: the Split 3 Major",
+      worldsField: "Decided when the Worlds field is set",
+      worldsFinal: "Last chance: Worlds",
+    } as Record<string, string>,
     status: { done: "Done", open: "In play", out: "Out of reach", met: "Met", missed: "Missed" } as Record<string, string>,
     left: (n: number, kind: string): string => {
       if (kind === "cupFinal" || kind === "cupWin") return n === 1 ? "1 cup left" : `${n} cups left`;

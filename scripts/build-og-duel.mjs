@@ -44,9 +44,10 @@ const CARDS = [
   {
     out: "public/landing/duel-share.jpg",
     lang: "en",
-    title: ["Same draft.", "Same bracket."],
+    // rc.9: the team-against-team duel (DESIGN-DECISIONS #294). Text only; the art is regenerated later.
+    title: ["Your team.", "Their team."],
     size: 88,
-    points: ["Your friend drafted this seed", "Same offers, same field", "Beat their run, send it back"],
+    points: ["Draft from the same boards", "Your two teams play a best of 7", "Win it, send the rematch"],
   },
 ];
 
@@ -85,10 +86,10 @@ li::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;backgro
 <h1 style="font-size:${card.size}px">${card.title.join("<br>")}</h1>
 <ul>${card.points.map((p) => `<li>${p}</li>`).join("")}</ul>
 </div>
-<p class="vs">Standings</p>
+<p class="vs">Best of 7</p>
 <div class="board">
-<div class="row top"><span class="rank">1</span><span class="who"><small>Run 1</small><b>On the board</b></span></div>
-<div class="row"><span class="rank">2</span><span class="who"><small>You</small><b>Your turn</b></span></div>
+<div class="row top"><span class="rank">A</span><span class="who"><small>Friend</small><b>Their roster</b></span></div>
+<div class="row"><span class="rank">B</span><span class="who"><small>You</small><b>Your turn</b></span></div>
 </div>
 <div class="brand"><img src="${ICON}" alt="">Rocket Draft <span>rocketdraft.app</span></div>
 <script>document.fonts.ready.then(() => {

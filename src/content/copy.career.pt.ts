@@ -2873,13 +2873,14 @@ export const CAREER_PT: CareerCopy = {
     },
     role: { target: "Meta", stretch: "Meta ousada" } as Record<string, string>,
     deadline: {
-      lastCup: (w: number) => `Última chance: a última Community Cup · sem. ${w}`,
-      lastRegional: (w: number) => `Última chance: o último regional do Split 3 · sem. ${w}`,
-      majorField: (w: number) => `Decidida quando o campo do Major do Split 3 sai · sem. ${w}`,
-      majorFinal: (w: number) => `Última chance: o Major do Split 3 · sem. ${w}`,
-      worldsField: (w: number) => `Decidida quando o campo do Worlds sai · sem. ${w}`,
-      worldsFinal: (w: number) => `Última chance: o Worlds · sem. ${w}`,
-    } as Record<string, (w: number) => string>,
+      // rc.9 integração: o evento por extenso; a linha soma a data (sem "sem. 32").
+      lastCup: "Última chance: a última Community Cup",
+      lastRegional: "Última chance: o último regional do Split 3",
+      majorField: "Decidida quando o campo do Major do Split 3 sai",
+      majorFinal: "Última chance: o Major do Split 3",
+      worldsField: "Decidida quando o campo do Worlds sai",
+      worldsFinal: "Última chance: o Worlds",
+    } as Record<string, string>,
     status: { done: "Feita", open: "Em jogo", out: "Fora de alcance", met: "Cumprida", missed: "Não cumprida" } as Record<string, string>,
     left: (n: number, kind: string): string => {
       if (kind === "cupFinal" || kind === "cupWin") return n === 1 ? "Falta 1 copa" : `Faltam ${n} copas`;

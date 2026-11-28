@@ -137,6 +137,33 @@ export interface DialogKeys {
 }
 
 /**
+ * rc.9 integration: the control the pointer pressed last. A click does not
+ * always focus the button it lands on (Safari, a script's `click()`), so the
+ * dialog opened by it found `<body>` as the active element and had nowhere
+ * to send the focus back. Watched in the capture phase, once per page.
+ */
+let lastPressed: { el: HTMLElement; at: number } | null = null;
+/** A press older than this did not open the dialog (a notice that opens on its own). */
+const PRESS_FRESH_MS = 1_000;
+function watchPresses(doc: Document): void {
+  const note = (e: Event) => {
+    const el = e.target instanceof Element ? e.target.closest<HTMLElement>(FOCUSABLE) : null;
+    if (el) lastPressed = { el, at: Date.now() };
+  };
+  doc.addEventListener("pointerdown", note, true);
+  doc.addEventListener("click", note, true);
+}
+if (typeof document !== "undefined") watchPresses(document);
+
+/** The element a dialog opening now returns the focus to: the focused one, else the control just pressed. */
+export function openerOf(doc: Document, now = Date.now()): HTMLElement | null {
+  const active = doc.activeElement;
+  if (active instanceof HTMLElement && active !== doc.body) return active;
+  if (!lastPressed || now - lastPressed.at > PRESS_FRESH_MS || !lastPressed.el.isConnected) return null;
+  return lastPressed.el;
+}
+
+/**
  * Dialog focus handling for `ref` (the element that holds the dialog's
  * content; give it `tabIndex={-1}`) while `active`.
  */
@@ -147,7 +174,7 @@ export function useDialogFocus(ref: RefObject<HTMLElement | null>, active: boole
   useEffect(() => {
     const root = ref.current;
     if (!active || !root) return;
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const opener = openerOf(document);
     pushDialog(root);
     // A child with autoFocus keeps it; otherwise the dialog takes the focus.
     if (!root.contains(document.activeElement)) root.focus({ preventScroll: true });
