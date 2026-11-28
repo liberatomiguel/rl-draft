@@ -529,7 +529,7 @@ export function SquadScreen() {
                   {/* rc.34 (UX-06b): the time left in a final-season contract. */}
                   {expiring && contractWarnsFor(save, p) ? (
                     <p className="text-xs text-orange-bright">{C.squad.weeksLeft(contractClockOf(save, p).weeksLeft ?? 0)}</p>
-                  ) : p.prizeSharePct > 0 ? (
+                  ) : (p.prizeSharePct ?? 0) > 0 ? (
                     // rc.33 (ECO-10): the prize share this contract carries, shown when there is one.
                     <p className="text-xs text-faint">{prizeShareLabelOf(C, p)}</p>
                   ) : null}
