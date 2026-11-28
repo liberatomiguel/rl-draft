@@ -360,9 +360,10 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 review: a regra de dinheiro inteira do preset (economy.moneyRuleFor) — os empréstimos
     // emergenciais da carreira (null = sem limite), as semanas para quitar cada um, ou sem prazo.
     presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
-      const head = r.loans === null ? "o banco empresta" : r.loans === 1 ? "você tem um empréstimo do banco" : `você tem até ${countWordPt(r.loans)} empréstimos do banco`;
-      if (r.deadlineWeeks === null) return `Se o dinheiro acabar, ${head}. Sem prazo: prêmios e vendas pagam`;
-      return `Se o dinheiro acabar, ${head}. Pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba`;
+      // rc.9 integração: as frases simples do CLUB-NEWS, de volta abaixo das 18 palavras do item.
+      const head = r.loans === null ? "o banco empresta" : r.loans === 1 ? "um empréstimo do banco" : `até ${countWordPt(r.loans)} empréstimos do banco`;
+      if (r.deadlineWeeks === null) return `Sem dinheiro: ${head}. Sem prazo: prêmios e vendas pagam`;
+      return `Sem dinheiro: ${head}. Pague em até ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "semana" : "semanas"} ou a carreira acaba`;
     },
     // CAREER_LOAN.breachesToEnd 1: a primeira segunda abaixo do piso encerra a carreira — sem empréstimo.
     presetMoneyNoLoan: "Se o dinheiro acabar, a carreira acaba",
@@ -1203,7 +1204,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.33 (UX-07): a Bombástica explicada numa frase, só numa proposta Bombástica
     // (com o custo de recusar — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `${org} oferece ${Math.round((Number(mult) - 1) * 100)}% acima do valor dele. Se você recusar, ele fica, mas pede ${pct}% a mais na próxima renovação`,
+      `${org} oferece ${Math.round((Number(mult) - 1) * 100)}% acima do valor dele: se você recusar, ele fica, mas pede ${pct}% a mais na próxima renovação`,
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
     // rc.32 (M4, provisório): o fôlego que a contratação deixa.

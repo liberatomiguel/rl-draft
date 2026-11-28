@@ -108,7 +108,7 @@ const AUTHORED_DAILIES: Record<string, (date: string) => DailyPlan> = {
       label: "Loaded Draft",
       templateId: "loadedDraft",
       description:
-        "Two special cards are guaranteed to show up in your draft, but the bracket bites back with a stronger, sharper field. Make the star power count.",
+        "Two special cards are guaranteed in your draft, against a stronger field.",
       objective: { type: "win_title", label: "Win the whole thing", bonusXp: 100 },
     },
     difficulty: "hard",
@@ -183,7 +183,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
         {
           templateId: "oldSchool",
           label: "Old School",
-          description: "2016-2019 lineups only. The classics decide it.",
+          description: "2016-2019 lineups only.",
           difficulty: "normal",
           hiddenOverall: false,
         },
@@ -194,7 +194,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
         {
           templateId: "modern",
           label: "Modern Era",
-          description: "RLCS X and later only. Today's game, today's stars.",
+          description: "RLCS X and later only.",
           difficulty: "normal",
           hiddenOverall: false,
         },
@@ -209,7 +209,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
     () => ({
       templateId: "noSafetyNet",
       label: "No Safety Net",
-      description: "Zero rerolls. The first read has to be the right one.",
+      description: "Zero rerolls.",
       difficulty: "normal",
       hiddenOverall: false,
       rerollsOverride: 0,
@@ -259,7 +259,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
         {
           templateId: "championsOnly",
           label: "Champions Only",
-          description: "Only the all-time great rosters are in the pool. Greatness vs greatness.",
+          description: "Only the all-time great rosters are in the pool.",
           difficulty: "hard",
           hiddenOverall: false,
         },

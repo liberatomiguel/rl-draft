@@ -162,7 +162,8 @@ describe("rc.36.6 — occasional community 1v1 and 2v2", () => {
     expect(done.activeEvent).toBeNull();
     expect(done.eventResults[0].userPlacement).toBeDefined();
     const headline = done.news.find(n => n.titleKey === "resultUser")!;
-    expect(resolveNews(headline, CAREER_EN, "en").body).not.toContain("Every placement pays");
+    // rc.9 CLUB-NEWS (#263-#269): a story whose title carries the fact has no body.
+    expect(resolveNews(headline, CAREER_EN, "en").body ?? "").not.toContain("Every placement pays");
   });
 
   it("generates side events occasionally alongside normal cups and rotates the 50/50 cup", () => {

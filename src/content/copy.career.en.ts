@@ -381,10 +381,11 @@ export const CAREER_EN = {
     // rc.34 review: the preset's whole money rule (economy.moneyRuleFor) — the emergency loans a
     // career gets (null = no cap), the weeks to repay each, or no deadline (the loan never ends it).
     presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
-      const head = r.loans === null ? "the bank lends it" : r.loans === 1 ? "you get one bank loan" : `you get up to ${countWordEn(r.loans)} bank loans`;
-      if (r.deadlineWeeks === null) return `If you run out of money, ${head}. No deadline: prizes and sales repay ${r.loans === null || r.loans === 1 ? "it" : "them"}`;
+      // rc.9 integration: CLUB-NEWS's plain sentences, back under the bullet's 18 words.
+      const head = r.loans === null ? "the bank lends it" : r.loans === 1 ? "one bank loan" : `up to ${countWordEn(r.loans)} bank loans`;
+      if (r.deadlineWeeks === null) return `Out of money: ${head}. No deadline: prizes and sales repay ${r.loans === null || r.loans === 1 ? "it" : "them"}`;
       const repay = r.loans === null || r.loans === 1 ? "it" : "each";
-      return `If you run out of money, ${head}. Repay ${repay} within ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "week" : "weeks"} or the career ends`;
+      return `Out of money: ${head}. Repay ${repay} within ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "week" : "weeks"} or the career ends`;
     },
     // CAREER_LOAN.breachesToEnd 1: the first Monday below the floor ends the career — no loan.
     presetMoneyNoLoan: "If you run out of money, the career ends",
@@ -1225,7 +1226,7 @@ export const CAREER_EN = {
     // rc.33 (UX-07): the Blockbuster explained in one sentence, on a Blockbuster bid only
     // (its refusal cost included — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `${org} bid ${Math.round((Number(mult) - 1) * 100)}% above his value. Refuse and he stays, but his next renewal asks ${pct}% more`,
+      `${org} bid ${Math.round((Number(mult) - 1) * 100)}% above his value: refuse and he stays, but his next renewal asks ${pct}% more`,
     consequences: "After this deal",
     balanceAfter: (s: string) => `Balance after: ${s}`,
     // rc.32 (M4, provisional): the runway a signing leaves.

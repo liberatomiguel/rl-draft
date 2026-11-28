@@ -190,8 +190,9 @@ describe("v2.0 (C1) — the sponsor's free bootcamp runs by itself", () => {
     // The first one is a bombshell, worded in both languages.
     const mail = save.mail.find((m) => m.titleKey === "sponsorBootcamp")!;
     expect(mail.headline).toBe(true);
-    expect(CAREER_EN.mail.body.sponsorBootcamp(mail.params!)).toContain("no cost");
-    expect(CAREER_PT.mail.body.sponsorBootcamp(mail.params!)).toContain("sem custo");
+    // rc.9 integration: the copy pass says who pays ("the sponsor pays"), not "at no cost".
+    expect(CAREER_EN.mail.body.sponsorBootcamp(mail.params!)).toContain("sponsor pays");
+    expect(CAREER_PT.mail.body.sponsorBootcamp(mail.params!)).toContain("patrocinador paga");
     // Buying one on top is refused: the split's camp already ran.
     expect(runBootcampFlow(save).error).toBe("used");
     // The next split: the edge ended, and a deal with a second one starts it by itself (no second bombshell).

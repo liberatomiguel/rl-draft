@@ -707,9 +707,11 @@ describe("rc.32 — a refused Blockbuster raises that deal's renewal ask (and th
   it("the offer and the mail explain it — the scripted moment, ×1.5 his value, +10 % at renewal (EN and PT, from balance.ts; rc.33: one sentence)", () => {
     const pct = Math.round((CAREER_SALARY.blockbusterRefusalRenewalMult - 1) * 100);
     const mult = String(CAREER_TRANSFER.blockbusterFeeMult);
+    // rc.9 integration: the copy pass says the multiplier as a percent above his value (×1.5 = 50%).
+    const above = Math.round((CAREER_TRANSFER.blockbusterFeeMult - 1) * 100);
     for (const [C, shown] of [
-      [CAREER_EN, `×${mult}`],
-      [CAREER_PT, `×${mult.replace(".", ",")}`], // PT: the decimal comma
+      [CAREER_EN, `${above}% above`],
+      [CAREER_PT, `${above}% acima`],
     ] as const) {
       const offerLine = C.market.blockbusterWhat("FaZe Clan", mult, pct);
       expect(offerLine).toContain(shown);
