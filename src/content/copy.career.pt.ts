@@ -2664,7 +2664,9 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-03, R88) — /career/follow: um evento sem você.
   follow: {
-    results: "Os eventos da temporada",
+    results: "Pódios",
+    otherEvents: (n: number) => (n === 1 ? "Mais 1 evento disputado" : `Mais ${n} eventos disputados`),
+    noPodium: "Nenhum pódio na temporada",
     swissStandings: "Classificação do Swiss",
     kicker: "Da arquibancada",
     reasonEliminated: "Fora na qualificatória",

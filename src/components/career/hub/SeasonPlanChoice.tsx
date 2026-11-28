@@ -50,6 +50,8 @@ function PlanCard({ o, active, proposed, onPick, C }: { o: BoardPackage; active:
       aria-checked={active}
       onClick={onPick}
       className={cx(
+        // Phone: the board's proposal comes first (the cards stack), so the first screen holds it and Accept.
+        proposed && "max-sm:order-first",
         "card-texture relative flex h-full w-full flex-col rounded-xl border bg-white/[0.02] p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-bright",
         active ? "border-orange bg-white/[0.04]" : "border-line-strong hover:border-ink/40",
       )}
@@ -77,8 +79,8 @@ function PlanCard({ o, active, proposed, onPick, C }: { o: BoardPackage; active:
       <span className="mt-1 block text-xs text-faint">{K.band(band)}</span>
 
       {/* The plan's figure: what the goal pays. */}
-      <span className="mt-auto block pt-5">
-        <span className={cx("display block text-3xl font-bold tabular-nums leading-none", o.bonus > 0 ? "text-good" : "text-faint")}>{money(o.bonus)}</span>
+      <span className="mt-auto block pt-3 sm:pt-5">
+        <span className={cx("display block text-2xl font-bold sm:text-3xl tabular-nums leading-none", o.bonus > 0 ? "text-good" : "text-faint")}>{money(o.bonus)}</span>
         <span className="mt-1.5 block text-xs text-faint">{K.bonusLabel}</span>
       </span>
       <span className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3">

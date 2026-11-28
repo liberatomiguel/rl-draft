@@ -32,7 +32,7 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
         <div className="flex items-center gap-2.5">
           <TrophyIcon className="h-5 w-5 shrink-0 text-amber-300" />
           <h3 className="card-title">{C.launch.seasonTitles}</h3>
-          <span className="display ml-auto text-4xl font-extrabold leading-none text-amber-300">{save.history.at(-1)?.titles ?? season.titles.length}</span>
+          <span className="display ml-auto text-4xl font-bold tabular-nums leading-none text-amber-300">{save.history.at(-1)?.titles ?? season.titles.length}</span>
         </div>
         <dl className="mt-4 grid grid-cols-3 gap-x-6 border-t border-line pt-4">
           <Metric label={C.launch.events} value={season.detailed ? season.events : "-"} />
@@ -57,7 +57,8 @@ export function SeasonStatistics({ save, C }: { save: CareerSave; C: CareerCopy 
                   </span>
                 </th>
                 <td className="display text-right text-lg font-semibold leading-none text-ink">{season.detailed ? season.titles.filter(e => e.tier === tier).length : "-"}</td>
-                <td className="display pl-4 text-right text-lg font-bold leading-none text-amber-300">{totals[tier]}</td>
+                {/* Gold only where there is a title to show; a zero stays quiet. */}
+                <td className={`display pl-4 text-right text-lg font-bold tabular-nums leading-none ${totals[tier] > 0 ? "text-amber-300" : "text-faint"}`}>{totals[tier]}</td>
               </tr>
             ))}
           </tbody>

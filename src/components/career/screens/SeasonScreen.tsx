@@ -130,7 +130,7 @@ export function SeasonScreen() {
             {wonWorlds ? <MilestoneMoment title={C.launch.worldsChampion} kind="worlds" /> : null}
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-4">
-                {!isInsolvent ? <OrgMark save={save} orgRef="user" size="lg" className="shrink-0" /> : null}
+                {!isInsolvent ? <OrgMark save={save} orgRef="user" size="lg" className="shrink-0 max-sm:hidden" /> : null}
                 <div className="min-w-0">
                   <p className={cx("kicker", isInsolvent && "text-bad")}>{seasonLabel}</p>
                   <h1
@@ -244,7 +244,7 @@ export function SeasonScreen() {
         <SeasonStatistics save={save} C={C} />
 
         {/* The one action (rc.34: the rollover waits for the contract review), docked on a phone. */}
-        <div className="action-dock flex flex-wrap items-center justify-center gap-3 sm:pt-2">
+        <div className="action-dock flex flex-wrap items-center justify-center gap-3 max-sm:flex-col max-sm:items-stretch max-sm:gap-2 sm:pt-2">
           {ended ? (
             <>
               {/* ECO-02 (R46): an insolvency is final — only the archive remains. */}
@@ -282,7 +282,7 @@ export function SeasonScreen() {
                 variant="primary"
                 size="lg"
                 disabled={blocked}
-                className="max-sm:flex-1"
+                className="max-sm:w-full"
                 onClick={() => {
                   continueToNextSeason();
                   router.push("/career");
@@ -352,11 +352,20 @@ function SeasonResults({ save, C }: { save: CareerSave; C: ReturnType<typeof use
     .sort((a, b) => a.week - b.week);
   if (events.length === 0) return null;
   const labels = { placement: C.common.placement, qualifierOutcome: C.common.qualifierOutcome };
+  // Only the podiums are moments (titles first); the rest is one count, not a wall of equal boxes.
+  const podiums = events
+    .filter((e) => PODIUM.has(e.userPlacement!))
+    .sort((a, b) => Number(b.userPlacement === "champion") - Number(a.userPlacement === "champion") || a.week - b.week);
+  const others = events.length - podiums.length;
   return (
     <section>
-      <h2 className="kicker mb-3">{C.ceremonies.results}</h2>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="kicker">{C.ceremonies.results}</h2>
+        {others > 0 ? <span className="text-xs text-faint">{C.ceremonies.otherEvents(others)}</span> : null}
+      </div>
+      {podiums.length === 0 ? <p className="text-sm text-sub">{C.ceremonies.noPodium}</p> : null}
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {events.map((e) => {
+        {podiums.map((e) => {
           const p = e.userPlacement!;
           const won = p === "champion";
           const podium = PODIUM.has(p);
@@ -439,7 +448,7 @@ function SnapshotRow({
   const copy = useActiveCareerCopy();
   const isUser = orgRef === "user";
   return (
-    <li className={cx("flex min-h-11 items-center gap-2.5 border-b py-2 last:border-b-0", isUser ? "border-y border-line-strong" : "border-line")}>
+    <li className={cx("flex min-h-11 items-center gap-2.5 border-b py-2 last:border-b-0", isUser ? "border-y border-orange/45" : "border-line")}>
       <span className={cx("display w-7 shrink-0 text-center text-sm font-bold tabular-nums", isUser ? "text-ink" : "text-faint")}>{rank}</span>
       <OrgMark save={save} orgRef={orgRef} size="xs" className="shrink-0" />
       <span className={cx("min-w-0 flex-1 truncate", isUser ? "display text-[15px] font-bold text-ink" : "text-sm text-sub")}>{name}</span>

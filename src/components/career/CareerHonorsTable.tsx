@@ -80,7 +80,7 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
                 const isUser = r.id === "user";
                 return (
                   // The user's row: his name in Demi and a stronger hairline above and below, no fill or tag.
-                  <tr key={r.id} className={cx("border-b last:border-b-0", isUser ? "border-y border-line-strong" : "border-line")}>
+                  <tr key={r.id} className={cx("border-b last:border-b-0", isUser ? "border-y border-orange/45 shadow-[inset_0_1px_0_rgb(255_106_26_/_0.45)]" : "border-line")}>
                     <td className="display px-2 py-2.5 text-sm font-semibold tabular-nums text-faint">{r[field] > 0 ? rows.indexOf(r) + 1 : "–"}</td>
                     <th scope="row" className="px-2 py-2.5 text-left font-normal">
                       <span className="flex min-w-0 items-center gap-2">
@@ -101,7 +101,7 @@ export function CareerHonorsTable({ save, C, compact = false }: { save: CareerSa
 
       {compact ? (
         <>
-          <div className="mt-1 flex items-center gap-2 border-y border-line-strong px-2 py-2.5 text-sm">
+          <div className="mt-1 flex items-center gap-2 border-y border-orange/45 px-2 py-2.5 text-sm">
             <OrgMark save={save} orgRef="user" size="xs" />
             <span className="display min-w-0 flex-1 truncate font-bold text-ink">{save.identity.orgName}</span>
             <span className="display ml-2 text-xl font-bold tabular-nums leading-none text-ink">{ownTitles}</span>

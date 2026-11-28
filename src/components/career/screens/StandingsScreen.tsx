@@ -182,7 +182,8 @@ function StandingsTable({
         className={cx(
           "cursor-pointer border-b transition-colors hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
           // rc9 HQ (#246): the player's own row is his name in Demi between two stronger hairlines (no fill, no tag).
-          isUser ? "border-y border-line-strong" : "border-line",
+          // (the top hairline is a 1px inset shadow: in a collapsed table the row above owns that border)
+          isUser ? "border-y border-orange/45 shadow-[inset_0_1px_0_rgb(255_106_26_/_0.45)]" : "border-line",
           expanded && "!border-b-0",
         )}
       >
@@ -321,7 +322,7 @@ function FieldList({
             </>
           );
           return (
-            <li key={ref} className={cx("border-b", isUser ? "border-y border-line-strong" : "border-line")}>
+            <li key={ref} className={cx("border-b", isUser ? "border-y border-orange/45" : "border-line")}>
               {isUser ? (
                 <div className={rowClass}>{inner}</div>
               ) : (
@@ -500,7 +501,7 @@ export function StandingsScreen() {
                 </div>
               </div>
               <dl className="grid min-w-0 grid-cols-2 items-start gap-x-6 gap-y-4 border-t border-line pt-4 sm:grid-cols-3 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                <RaceFigure label={isMajor ? copy.race.majorTab : copy.race.worldsTab}>
+                <RaceFigure label={isMajor ? copy.race.majorTab : copy.race.worldsTab} className="col-span-2 sm:col-span-1">
                   <span className="display block whitespace-nowrap text-3xl font-bold tabular-nums leading-none text-ink">
                     {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
                   </span>

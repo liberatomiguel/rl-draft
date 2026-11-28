@@ -2690,7 +2690,9 @@ export const CAREER_EN = {
 
   // rc.36 (SUN-03, R88) — /career/follow: an event the user is out of.
   follow: {
-    results: "The season's events",
+    results: "Podiums",
+    otherEvents: (n: number) => (n === 1 ? "1 more event played" : `${n} more events played`),
+    noPodium: "No podium this season",
     swissStandings: "Swiss standings",
     kicker: "From the stands",
     reasonEliminated: "Out at the qualifier",

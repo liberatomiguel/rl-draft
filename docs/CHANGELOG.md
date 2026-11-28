@@ -12,6 +12,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## rc.9 (unreleased)
 
+### Changed — MATCHDAY (the series room and the live game; R240 to R247, DESIGN-DECISIONS #233 to #239)
+- Manage: one plan before the series (approach, risk, who to shut down, the coach's call preselected), then every game plays live on its own, with no stop between games. Two clicks per series (Play the series, Continue), one to skip; it was 5 to 7.
+- The live game: crests, score and clock large, the 5:00 as a track with each goal at its minute, goals on their side, team stats as a centre-label comparison with proportional bars, each team's players climbing with the clock, overtime as its own beat.
+- Timeout: a button always in the live controls; pressed, it is called at the next break (once a series) and can be taken back until then.
+- The end: series score, one chip per game, what the plan did (from the engine's log), the players' numbers.
+- The matchday setting (Result only, Watch, Manage) moved from Club to Training, tagged BETA. The lobby's main button follows it.
+- "Your players" card on the Event screen, with an empty state.
+- Marking the right playmaker costs 0.08 rating a game (R242); the coach marks only when it pays.
+- Copy: event, scrim, matchday and narration findings from the copy audit (dead keys out in EN and PT, "next man up" and other tells rewritten, PT rewritten where it read as a translation).
+
+### Fixed — MATCHDAY
+- A series played in the room could be replayed by the Match Center after Continue. Root cause: "played live" was kept only in a ref set at the series' start, lost on a remount or a reload mid-series; Continue now marks the round too.
+- A knockout event's title read "Swiss stage" until its first round was revealed. Root cause: the reveal stage fell back to "swiss" with no revealed round; it now falls back to the event's own format.
+- The timeout line after a series never showed when the timeout found no momentum to clear. Root cause: a cut of 0 was dropped as falsy when logged.
+
 ### Changed — ORG-UI (the established org's screens; DESIGN-DECISIONS #270 to #278)
 - Pick an org: no grouping by tier; the region's orgs are one grid of cards (mark, name, problem, size, squad level) and a card opens the org's file in a modal with the action (Escape closes, focus returns to the card).
 - Finances for an established org: the board's budget leads as the large figure, the cash beside it, and one bar splits the season's money into still to pay, kept by the mandate and free to spend; three blocks (income to come, still to pay, wage bill) each led by a figure. The season budget card and the three-figure strip under it are gone from that path.
@@ -42,10 +57,10 @@ with the root cause — that section doubles as the project's bugfix log.
 **Changed**
 - HQ: the season plan is three cards (reach bars, the goal, the bonus as the large figure, budget and confidence), the board's proposal tagged and preselected. The season-goal board is not drawn while the plan or mandate waits. Season player stats on HQ with an empty state. The squad block's bootcamp blurb is cut.
 - Calendar: opens on the next stop with its action; event days as tier hairlines and icons, not orange fills; the stops after it as rows; season progress as one row per split.
-- Standings: the user's row is Demi between stronger hairlines (no fill, no "You" tag); form chips in one tint; a table of rows on a phone; the hero's org name in mixed case.
-- Season review: rebuilt in order of importance (outcome, grade and the season's figures, each event as a card with titles in gold, the goal, what changes next, the detail, the action). Balance and reputation are no longer printed twice.
+- Standings: the user's row is Demi between orange hairlines (no fill, no "You" tag); form chips in one tint; a table of rows on a phone; the hero's org name in mixed case.
+- Season review: rebuilt in order of importance (outcome, grade and the season's figures, the podiums as cards with titles in gold, the goal, what changes next, the detail, the action). Balance and reputation are no longer printed twice; career-title zeros are faint.
 - The tour lists the Board tab for a save that has one.
-- Copy: `ceremonies` (champions line in sentence case, labels for the new figures), `sunday` (one briefing hint), `standings`, `calendar` and `hub` dead keys out. Words: hub 797 to 411, sunday 270 to 130, tour 516 to 445, calendar 101 to 84, standings 36 to 20, ceremonies 139 to 103 (rc9/int to now).
+- Copy: `ceremonies` (champions line in sentence case, labels for the new figures), `sunday` (one briefing hint), `standings`, `calendar` and `hub` dead keys out. Words: hub 797 to 411, sunday 270 to 130, tour 516 to 445, calendar 101 to 84, standings 36 to 20, ceremonies 139 to 113 (rc9/int to now).
 
 **Fixed**
 - `SquadBlock` read `C.training.auto` / `balanced`, which the training copy pass removed (type error). Root cause: the HQ squad block built the focus label itself; it now uses the Training screen's `playerFocusLabel`.
