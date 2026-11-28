@@ -170,6 +170,7 @@ The release is named **2.1**: the staging series numbered 2.2.0-rc.1 to rc.8 con
 - The share sheet's message box is labelled "The message" when there is no image.
 - Draft and Road to Worlds share images lead with the result. Wins use a gold headline, with slimmer card borders, smaller ratings and crests, and the equipped banner faded behind the title in Post and Story.
 - Share cards follow GameCard's rating, role and uppercase nameplate. Post and Story use the Rocket Draft brand mark, group the run's stats with its series results, and show the career's win/loss split and trophy counts together.
+- Road to Worlds share cards keep the original capitalization of names and archetypes. Draft cards retain uppercase nameplates.
 
 #### Added
 - One invite prompt per player, ever: from the second day the game is open, after a podium run (five runs in) or a career season review. One tap closes it for good.

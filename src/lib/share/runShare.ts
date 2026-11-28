@@ -39,8 +39,8 @@ export function shareFaceOf(card: ResolvedCard, roleLabel: string): ShareCardFac
   return {
     frame,
     value,
-    name: card.name,
-    line: isOrg ? null : [card.orgName, card.seasonShort].filter(Boolean).join(" · ") || null,
+    name: card.name.toUpperCase(),
+    line: isOrg ? null : [card.orgName, card.seasonShort].filter(Boolean).join(" · ").toUpperCase() || null,
     specialTitle: special?.title ?? null,
     role: card.kind as RoleKind,
     roleLabel,

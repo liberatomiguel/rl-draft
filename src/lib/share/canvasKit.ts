@@ -858,7 +858,7 @@ export interface ShareCardFace {
 
 /**
  * Match GameCard's overall and role at the top, art in the center, and
- * uppercase nameplate at the foot.
+ * nameplate at the foot.
  */
 export function drawGameCard(
   g: CanvasRenderingContext2D,
@@ -1045,7 +1045,7 @@ export function drawGameCard(
   g.font = displayFont(fonts, nameSize, 600);
   setTracking(g, 0.05, nameSize);
   g.fillStyle = photo ? "#ffffff" : INK;
-  g.fillText(fitText(g, face.name.toUpperCase(), iw - pad * 2), ix + pad, nameY);
+  g.fillText(fitText(g, face.name, iw - pad * 2), ix + pad, nameY);
   resetTracking(g);
   if (face.specialTitle) {
     g.font = displayFont(fonts, lineSize, 600);
@@ -1058,7 +1058,7 @@ export function drawGameCard(
     g.font = textFont(fonts, lineSize, 400);
     setTracking(g, 0.04, lineSize);
     g.fillStyle = photo ? "rgba(255,255,255,0.75)" : CAPTION;
-    g.fillText(fitText(g, face.line.toUpperCase(), iw - pad * 2), ix + pad, foot);
+    g.fillText(fitText(g, face.line, iw - pad * 2), ix + pad, foot);
     resetTracking(g);
   }
 }
