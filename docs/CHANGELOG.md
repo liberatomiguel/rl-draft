@@ -25,6 +25,20 @@ with the root cause — that section doubles as the project's bugfix log.
 - Toast titles and bodies were never clamped. Root cause: a `block` class beside `line-clamp-*` overrode the `-webkit-box` display the clamp needs.
 - Tracking utilities on display text never applied. Root cause: the unlayered `.display` rule set 0.02em and beat every layered `tracking-*` utility; tracking is now set by role.
 
+### CLUB-NEWS front (inbox, newsroom, Club, saves, wizard, follow; DESIGN-DECISIONS #263 to #269)
+
+**Changed**
+- Inbox: a list and a reader, "Reply needed" on the mails that wait for an answer, two figures when nothing is open, Escape closes the open message.
+- Newsroom: headline rows under hairlines, quiet filters, a mixed-case lead; a story whose title carries the fact has no body.
+- Club: the club's name and four figures at the top; boards titled in caps; Saves as rows of one board with the account state as one quiet line; wizard and follow step titles in the type system.
+- Copy (`career.mail`, `news`, `club`, `wizard`, `cloud`, `saves`, `savesNotice`, `follow`): EN words 5,493 to 3,845 (-30%), PT 5,671 to 4,021 (-29%). Bodies end on their fact; PT names take their article (orgs "a/à/da/na", events "o/do/no"). Dead keys removed: `spectate`, `news.feed.newIn`, `leftScene`, `tpl.sponsorDropped`.
+
+**Fixed**
+- The newsroom masthead was squeezed on a 320 phone (the desk's name wrapped to five lines beside "Mark all read"). Root cause: one non-wrapping row held the mark, the unread count and the button; it now wraps to two rows and the count never breaks.
+- The open mail could not be closed from the keyboard on a phone. Root cause: only the Back button returned to the list; Escape now does (and yields to any dialog).
+- PT headlines left events and orgs after a bare preposition ("fora de Garage Series", "assina com Kite Esports"). Root cause: the strings were translated word for word from EN; they now carry the article.
+- The board's package mail ended on a closer ("The clock waits for your choice"); cut.
+
 ### ORG front (established orgs; `realOrgStart`, `board`; R220-R225)
 
 **Added**

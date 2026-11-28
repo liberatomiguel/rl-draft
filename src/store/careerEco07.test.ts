@@ -358,7 +358,6 @@ describe("rc.33 review — the investor in the mail and in the projections", () 
       expect(body).toContain(RESCUE_PARTNER_BRAND.name);
       expect(body).not.toContain(` ${partner.weekly} `);
       // Every other amount of the loan mail is money too.
-      expect(body).toContain(formatMoney(Number(mail.params!.rescueTo)));
       expect(body).toContain(formatMoney(Number(mail.params!.owed)));
       expect(body).toContain(formatMoney(Number(mail.params!.lent)));
     }
