@@ -51,6 +51,14 @@ export function PostDecision({ save, C }: { save: CareerSave; C: CareerCopy }) {
     setOpen(false);
     post(tone);
     router.push("/career/news#fans");
+    // The News screen picks its view from the hash on mount or on "hashchange"; a client push fires neither
+    // once the screen is up, so it is told when the new page is there.
+    let tries = 0;
+    const nudge = () => {
+      if (window.location.pathname.startsWith("/career/news")) window.dispatchEvent(new HashChangeEvent("hashchange"));
+      else if (++tries < 20) window.setTimeout(nudge, 50);
+    };
+    window.setTimeout(nudge, 50);
   };
 
   return (
@@ -59,7 +67,11 @@ export function PostDecision({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <div className="min-w-0 flex-1 basis-60">
           <Badge tone={tagTone}>{U.tag[offer.moment]}</Badge>
           <h2 className={cx(DECISION_TITLE, "mt-2.5")}>{postHeadlineOf(C, offer)}</h2>
-          <p className="mt-2 text-sm text-sub">{offer.event}</p>
+          {/* The event is in the headline for a title, a final or an exit; the line under it says the series. */}
+          <p className="mt-2 text-sm text-sub">
+            {U.result(offer.won, `${Math.max(offer.us, offer.them)}-${Math.min(offer.us, offer.them)}`, offer.opponentName)}
+            {offer.moment === "upsetWin" || offer.moment === "upsetLoss" || offer.moment === "streak" ? ` · ${offer.event}` : ""}
+          </p>
         </div>
         {/* The series as the block's figure: our crest, the score (ours first), theirs. */}
         <div className="flex shrink-0 items-center gap-3" aria-label={U.result(offer.won, `${offer.us}-${offer.them}`, offer.opponentName)}>

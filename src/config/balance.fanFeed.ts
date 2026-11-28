@@ -96,7 +96,7 @@ export const CAREER_FEED = {
     },
     confident: {
       won: { followers: 0.02, morale: 2, board: 0 },
-      lost: { followers: 0.015, morale: 1, board: 0 },
+      lost: { followers: 0.02, morale: 1, board: 0 },
     },
     provocative: {
       won: { followers: 0.04, morale: 1, board: -1 },

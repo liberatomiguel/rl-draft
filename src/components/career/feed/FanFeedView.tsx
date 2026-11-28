@@ -76,10 +76,9 @@ export function FanFeedView({ save, C, lang }: { save: CareerSave; C: CareerCopy
   return (
     <div className="space-y-4">
       {/* The lead block: the followers are the view's figure. */}
+      {/* The desk's section slab already says "Fans": no card title repeats it. */}
       <Panel strong className="p-4 sm:p-5">
-        <div className="card-head">
-          <h2 className="card-title">{U.tab}</h2>
-        </div>
+        <h2 className="sr-only">{U.tab}</h2>
         <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
           <div>
             <p className="display text-[2.5rem] font-bold leading-none tabular-nums text-ink">{followers !== null ? compactCount(followers, lang) : "0"}</p>

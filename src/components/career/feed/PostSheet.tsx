@@ -77,7 +77,8 @@ export function PostSheet({
       <div className="space-y-6">
         <section>
           <p className="kicker mb-2.5">{U.tone}</p>
-          <div className="grid grid-cols-3 gap-2" role="group" aria-label={U.tone}>
+          {/* Three cards side by side; under 360 px the names do not fit a third, so they stack as one-line cards. */}
+          <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-3" role="group" aria-label={U.tone}>
             {TONES.map((t) => {
               const e = effects[t];
               return (
@@ -87,11 +88,11 @@ export function PostSheet({
                   aria-pressed={tone === t}
                   onClick={() => setTone(t)}
                   className={cx(
-                    "flex min-h-14 min-w-0 flex-col items-start justify-between rounded-[7px] border px-3 py-2.5 text-left transition-colors",
+                    "flex min-h-14 min-w-0 flex-col items-start justify-between rounded-[7px] border px-3 py-2.5 text-left transition-colors max-sm:px-2 max-[359px]:min-h-11 max-[359px]:flex-row max-[359px]:items-center max-[359px]:px-3 max-[359px]:py-2",
                     tone === t ? "border-orange bg-orange/[0.06]" : "border-line hover:border-line-strong",
                   )}
                 >
-                  <span className="display truncate text-[13px] font-semibold uppercase tracking-[0.05em] text-ink max-[359px]:text-[11px]">
+                  <span className="display truncate text-[13px] font-semibold uppercase tracking-[0.05em] text-ink max-sm:text-[11px] max-sm:tracking-[0.04em]">
                     {F.tones[t].label}
                   </span>
                   {e ? <span className={cx("mt-1 text-xs tabular-nums", toneClass(e.followers))}>{pct(e.followersPct)}</span> : null}

@@ -99,7 +99,10 @@ export function ManagerPostBody({
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <span className="flex min-w-0 flex-wrap items-baseline gap-x-2">
               <span className="display truncate text-[15px] font-semibold text-ink">{save.identity.orgName}</span>
-              <span className="text-xs text-faint">{F.manager}</span>
+              <span className="text-xs text-faint">
+                {save.identity.managerName ? `${save.identity.managerName} · ` : ""}
+                {F.manager}
+              </span>
             </span>
             <span className="flex shrink-0 items-center gap-2">
               {toneLabel ? <Badge tone="blue">{toneLabel}</Badge> : null}

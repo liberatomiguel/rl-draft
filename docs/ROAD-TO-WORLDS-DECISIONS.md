@@ -3056,3 +3056,29 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 ## R248 — 27 de novembro de 2026: sem número
 
 ## R249 — 27 de novembro de 2026: sem número
+
+## R253 — 28 de novembro de 2026: o post só depois de um momento (v2.2.0-dev, rc.9 STORIES)
+
+- **Decidido (Miguel, 27/11: "aparece demais, deveria aparecer somente de vez em quando, depois de campeonatos importantes"):** a oferta de post não segue mais toda série. `fanFeedMoments.postMomentOf` (puro, números em `CAREER_FEED.offer`): título em regional/Major/Mundial, final perdida, eliminação de Major ou Mundial, classificatório perdido por um dos 4 mais fortes do campo, um passo inédito (passar de um classificatório ou chegar aos playoffs de um regional pela primeira vez), zebra com diferença de 3+ de rating (a favor ou contra, do classificatório ao Mundial), sequência de 6, 10 ou 15 séries vencidas. Depois `offerAllowed`: 21 dias entre ofertas (título pula o intervalo), no máximo 6 por temporada.
+- **Medido** (bot do arco, 6 temporadas, 2 seeds por região): tuned EU 0,3/temporada; professional EU/SAM 1,0; professional SAM/NA (4 temporadas) 1,4; professional fácil SAM/EU 1,6. Nenhum desses clubes chegou a uma final ou a um Major, então título, final e eliminação de Major não foram vistos na medição. Abaixo da meta de 3 a 6 para clubes que não ganham nada; um clube que disputa títulos vai somar esses momentos (teto 6). Decisão para o Miguel: aceitar, ou baixar o intervalo / incluir top 4 de regional.
+
+## R254 — 28 de novembro de 2026: uma decisão entre as principais, que não segura o relógio (v2.2.0-dev, rc.9 STORIES)
+
+- **Decidido:** a oferta é o tipo `post` da fila de decisões (`careerDecisions`, um bloco marcado) e uma linha na tabela do `DecisionBlock` (componente `feed/PostDecision.tsx`). Nunca segura o relógio (os bots e o autoplay não mudam), aparece acima do relógio no QG, na linha "Também" quando outra decisão está em cima, e a barra do topo mostra "Decisão pendente" só no dia em que surge. Ignorada, some 4 dias depois (`expireDays`) ou na virada da temporada, sem efeito. "Desta vez não" responde sem post. O cartão extra `NowFeedPost` saiu.
+- **Saves do rc.8:** a oferta implícita (última série sem resposta) é aposentada no load (`repairFanFeedOnLoad`, idempotente, sem versão nova): a série fica respondida e `offer` vira null.
+
+## R255 — 28 de novembro de 2026: o texto do post (v2.2.0-dev, rc.9 STORIES)
+
+- **Decidido:** posts escritos por momento × tom (2 ou 3 cada, EN e PT), mais 4 genéricos por tom × resultado. O post escolhe um do momento que não saiu nesta temporada, depois um genérico novo; com o teto de 6, nenhuma frase se repete numa temporada (teste). A chave fica gravada no post, então a prévia é o post.
+
+## R256 — 28 de novembro de 2026: o que cada tom faz (v2.2.0-dev, rc.9 STORIES)
+
+- **Decidido:** `CAREER_FEED.effects[tom][resultado]`: seguidores (humilde +1%, confiante +2%, provocador +4% depois de vitória; +1/+2/+3% depois de derrota), moral de cada jogador (humilde +1/+2, confiante +2/+1, provocador +1/−2; com `lockerRoom`) e confiança da diretoria (humilde 0/+1, confiante 0/0, provocador −1/−2; com uma diretoria). O provocador ainda arma o print que já existia (próxima série contra o rival até a temporada seguinte: −8% ou +6% de seguidores). Antes do rc.9 o tom só mexia nos seguidores (R198); moral e diretoria são novos, pequenos de propósito (um título dá +6 de moral). A folha mostra os números do próprio `postToFeedFlow` rodado no save, então nunca mostra um efeito que o jogo não aplica.
+
+## R257 — 28 de novembro de 2026: duas respostas da torcida (v2.2.0-dev, rc.9 STORIES)
+
+- **Decidido:** um post feito pela oferta recebe duas respostas de torcedores, variantes diferentes, pelo tom e pelo resultado (terceira resposta por célula adicionada).
+
+## R258 — 28 de novembro de 2026: sem número
+
+## R259 — 28 de novembro de 2026: sem número

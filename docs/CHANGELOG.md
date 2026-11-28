@@ -12,6 +12,19 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## rc.9 (unreleased)
 
+### Changed - STORIES (the manager's post and the Fans tab; R253 to R257, DESIGN-DECISIONS #288 to #293)
+- The offer to post comes only after a moment: a title, a final lost, a Major or Worlds exit, a favourite out of a qualifier, a first qualification or first playoffs, an upset with a real rating gap, a long win streak. At least 21 days apart (a title skips the gap), at most 6 a season, and it lapses quietly after 4 days.
+- It is one of HQ's decisions (never holds the clock), with the top bar's "Decision required" on the day it appears. The extra HQ card is gone.
+- The sheet shows the post as the feed will show it, per tone, and what it does: followers, each player's morale (locker room on), the board's confidence (with a board), the receipt risk for a provocative post. The figures come from the action itself.
+- 63 manager posts written or rewritten, by moment and tone (EN and PT), 6 more fan replies; a post gets two replies; no sentence repeats in a season.
+- Fans tab rebuilt: followers as the figure, posts as rows, the manager's post as a thread with its replies, an honest empty state.
+
+### Balance - STORIES
+- A post now moves morale and board confidence a little by tone and result (`CAREER_FEED.effects`); followers by tone and result instead of by tone only.
+
+### Fixed - STORIES
+- Publishing a post from HQ now lands on the Fans view. Root cause: News reads its view from the hash only on mount or on "hashchange", and a client navigation to `/career/news#fans` fires neither.
+
 ### Changed - DUEL-UI (team against team; DESIGN-DECISIONS #294 to #300)
 - The friend duel is now team against team: the challenger sets the rules on /duel (rerolls 0, 3 or 7, overalls visible or hidden, Classic or Quick, region, optional name), drafts on the game's own draft screens, and sends a link. The friend drafts on the same boards, then both teams play a best of 7 on the clock (the career's live game view), with face-off, auto-advance, pause, speed, skip game and skip series. The reply link carries both teams, so the challenger watches the very same series. New match: same rules, new boards, the asker drafts first.
 - A duel's draft half-way can be resumed or dropped from /duel or from the challenge link.
