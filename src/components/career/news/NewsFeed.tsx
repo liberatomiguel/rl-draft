@@ -373,8 +373,8 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
   return (
     <Panel id="career-news" className="rise-in scroll-mt-36 overflow-hidden" style={{ animationDelay: "120ms" }}>
       {/* Masthead: the desk's mark and name, ruled off from the stories. */}
-      <div className="flex min-h-[3.25rem] items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3.5">
+      <div className="flex min-h-[3.25rem] flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-line px-4 py-3 sm:flex-nowrap sm:px-6">
+        <div className="flex min-w-0 flex-1 basis-52 items-center gap-3.5">
           {/* The partner's mark, with its credit line right under it. */}
           <span className="flex shrink-0 flex-col items-start gap-1">
             <BrandMark brand={brand} name={B.name} />
@@ -384,13 +384,13 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
             <span className="flex items-center gap-2">
               {full ? null : <span className="card-title">{C.news.feed.name}</span>}
               {unread > 0 ? (
-                <span className="rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] text-orange-bright">{full ? C.news.unread(unread) : unread}</span>
+                <span className="whitespace-nowrap rounded-sm bg-orange/20 px-1.5 py-px tabular-nums text-[11px] text-orange-bright">{full ? C.news.unread(unread) : unread}</span>
               ) : null}
             </span>
             {B.credit ? <span className={cx("block text-xs text-sub", !full && "mt-1.5")}>{B.credit}</span> : null}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 max-sm:ml-auto">
           {open && unread > 0 ? (
             <Button size="sm" variant="ghost" onClick={markNewsRead}>
               {C.news.markAllRead}

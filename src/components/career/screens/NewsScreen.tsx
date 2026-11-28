@@ -83,6 +83,15 @@ export function NewsScreen() {
     const el = list?.querySelector<HTMLElement>('[aria-selected="true"]');
     if (list && el && list.scrollWidth > list.clientWidth) list.scrollLeft += el.getBoundingClientRect().left - list.getBoundingClientRect().left - (list.clientWidth - el.offsetWidth) / 2;
   }, [view, mounted]);
+  // rc9 CLUB-NEWS: Escape closes the open message (the phone shows it full screen, the desk shows the empty reader again).
+  useEffect(() => {
+    if (!selectedId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[role="dialog"]')) setSelectedId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId]);
   const setView = (v: DeskView) => {
     setViewState(v);
     window.history.replaceState(null, "", v === "inbox" ? window.location.pathname : `#${v}`);
