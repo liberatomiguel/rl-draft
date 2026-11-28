@@ -1046,7 +1046,6 @@ export const CAREER_EN = {
       steps: { objective: "Objective", focus: "Focus", intensity: "Intensity", scrims: "Scrims" } as Record<string, string>,
       // rc.36 (front T2, Miguel): Evolve / Gel / Recover.
       objectives: { development: "Evolve", preparation: "Gel", recovery: "Recover" } as Record<string, string>,
-      objectiveHint: "What the squad works on",
       objectiveEffect: {
         development: "Faster growth toward each player's peak",
         preparation: "Scrims build chemistry faster, with a little growth",
@@ -1064,9 +1063,7 @@ export const CAREER_EN = {
       focusBalanced: "Overall growth only",
       focusEffect: (stats: string, perWeek: string) => `+${perWeek} ${stats} a week for everyone`,
       focusHint: "The attribute everyone sharpens, at no cost to overall growth",
-      scrimsHint: "Practice only: no points, prizes or reputation",
       intensities: { light: "Light", normal: "Normal", heavy: "Heavy" } as Record<string, string>,
-      intensityHint: "How hard the squad trains",
       intensityEffect: {
         light: "Slower growth, less wear",
         normal: "Standard growth, no added risk",
@@ -1190,7 +1187,6 @@ export const CAREER_EN = {
     emptySeatCheapest: (name: string, wage: string) =>
       `Short of money? ${name} (${wage} / week) is the cheapest free agent for the seat`,
     // rc9 TRAIN-MARKET: the candidate board's heads, and what a candidate changes in the team.
-    col: { player: "Player", potential: "Potential", cost: "Cost", team: "In your team" },
     feeLine: (fee: string) => `Fee ${fee}`,
     teamUp: (n: number, name: string) => `+${n} over ${name}`,
     teamSub: "Joins as sub",
@@ -1301,7 +1297,7 @@ export const CAREER_EN = {
     justSignedTag: "Just signed",
     viewSheet: "View sheet",
     noResults: "No players match the filters",
-    dealsEmpty: "No active deals. Offers land here when a window is open",
+    dealsEmpty: "No offers on the table. Bids for your players arrive during transfer windows",
     // v0.3 rep-gated signings (visible lock)
     lockedAtRep: (rep: number) => `Signs at ${rep} reputation`,
     lockedHint: "Needs more reputation",
@@ -1489,7 +1485,6 @@ export const CAREER_EN = {
     net: "Net / week",
     projected: "Projected after Monday",
     weeklyStatement: "Weekly statement",
-    statementHint: "Every Monday the books move: the sponsor in; wages, staff, upkeep and instalments out.",
     runway: (weeks: number) => (weeks === 1 ? "Runway: 1 week at this burn" : `Runway: ${weeks} weeks at this burn`),
     runwayOk: "The books run in the black",
     nextPayday: (s: string) => `Next payday ${s}`,
@@ -1531,7 +1526,6 @@ export const CAREER_EN = {
     // The next breach of the floor ends the career — no emergency loan to fall back on.
     loansHintEnd: "Only the voluntary loan is left. Breaking the floor again ends the career.",
     bankTitle: "Bank loan",
-    bankNone: "No bank loan open",
     bankHint: (weeks: number, pct: number) =>
       `Credit sized by your reputation: ${weeks} weekly instalments, ${pct}% interest.`,
     bankHintEnd: (weeks: number, pct: number) =>
@@ -1620,16 +1614,8 @@ export const CAREER_EN = {
     // rc.34 (ECO-04, SPONSOR-CONTRACT S5): the deals — the comparison card's five rows and the desk.
     deal: {
       profile: { steady: "Steady", balanced: "Balanced", bold: "Bold" } as Record<string, string>,
-      profileHint: {
-        steady: "Most of the money is sure. A small bonus per goal, no fines.",
-        balanced: "A solid weekly base, a real bonus per goal, a small fine for a miss.",
-        bold: "Less guaranteed money, a big bonus per goal and an extra on the first one you hit. A miss is fined.",
-      } as Record<string, string>,
       word: SPONSOR_WORD_EN,
-      rowStability: "Stability",
-      rowTotal: "Total return",
       rowLength: "Length",
-      rowRisk: "Risk",
       rowGoal: "Goal",
       // rc.35 (front S): the visual comparison — one band per row, icons first.
       rowWeekly: "Weekly pay",
@@ -1646,7 +1632,6 @@ export const CAREER_EN = {
         splits === 1 ? "1 split" : splits === 3 ? "1 season" : splits === 6 ? "2 seasons" : `${splits} splits`,
       difficultyMeter: (word: string) => `Goal difficulty: ${word}`,
       profileTag: { steady: "Safest", balanced: "Middle ground", bold: "Biggest pay" } as Record<string, string>,
-      compareRule: "Compare guaranteed income and the potential total. Goals and fines determine the risk.",
       boldLocked: "Bold deals open as your reputation grows.",
       globalSponsor: "Global",
       nextPay: "Next payment",
@@ -1655,15 +1640,9 @@ export const CAREER_EN = {
       finesShort: (mondays: number) => `over ${mondays} Mondays`,
       seasonFineCap: (s: string) => `Fines: ${s} a season at most`,
       dealRun: (paid: number, total: number) => `${paid} of ${total} Mondays paid`,
-      weeklySure: (s: string) => `${s} a week, sure`,
-      plusSigning: (s: string) => `+ ${s} on signing`,
-      plusMilestone: (s: string) => `+ ${s} the day you reach a first goal`,
       total: (sure: string, upTo: string) => `${sure} sure · up to ${upTo}`,
       length: (splits: number, date: string) =>
         `${splits === 1 ? "One split" : splits === 3 ? "One season" : splits === 6 ? "Two seasons" : `${splits} splits`} · ends ${date}`,
-      riskSteady: (n: number) => `No fines · ${n} missed goals lower the next offer a tier`,
-      riskFine: (s: string, mondays: number) => `A missed goal costs up to ${s}, paid over ${mondays} Mondays`,
-      riskNone: "No fines on this difficulty",
       goal: sponsorGoalEn,
       goalBy: (date: string) => `by ${date}`,
       laterGoals: "Then a new goal every split, at the same difficulty",
@@ -1674,13 +1653,13 @@ export const CAREER_EN = {
       compareHint:
         "All three are worth about the same on average. They differ in guaranteed money, length and goals.",
       // rc.34: a Tier 3 / 4 brand pays a side below its level less (sponsorDeals.levelValueShareOf).
+      // rc9 ORG-UI (#273): said without the brand's tier number.
       levelScaled: (tier: number, pct: number) =>
         tier >= 4
-          ? `Tier 4 brands pay world contenders in full. Today the team gets ${pct}%.`
+          ? `These brands pay ${pct}% today. Full pay needs a squad that contends for Worlds.`
           : tier === 3
-            ? `Tier 3 brands pay Major-level sides in full. Today the team gets ${pct}%.`
-            : `Tier 2 brands pay regional top-8 sides in full. Today the team gets ${pct}%.`,
-      stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
+            ? `These brands pay ${pct}% today. Full pay needs a squad at Major level.`
+            : `These brands pay ${pct}% today. Full pay needs a regional top-8 squad.`,
       handover: (first: number, second: number) =>
         `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
       // rc.34 review (S6): before season index 2 signing does not start the handover — the partner pays in full through its term.
@@ -1695,7 +1674,6 @@ export const CAREER_EN = {
       dealEnds: "Ends",
       dealGoing: "How it is going",
       endsOn: (date: string) => `Ends ${date}`,
-      signingPaid: (s: string) => `${s} paid on signing`,
       milestonePending: (s: string) => `${s} the day you reach a first goal`,
       milestonePaid: (s: string) => `Milestone of ${s} paid`,
       thisGoal: "This split's goal",
@@ -1704,8 +1682,6 @@ export const CAREER_EN = {
       goalReached: "Reached",
       goalMissed: "Missed",
       goalOpen: "Open",
-      bonusIfHit: (s: string) => `${s} if reached`,
-      fineIfMissed: (s: string) => `up to ${s} if missed`,
       record: (hits: number, misses: number) => `Goals so far: ${hits} reached, ${misses} missed`,
       finesOwed: (s: string, mondays: number) => `Fines still to pay: ${s} over the next ${mondays} Mondays`,
       fineFloorNote: "paid in weekly instalments",
@@ -1827,7 +1803,6 @@ export const CAREER_EN = {
     },
     psychologistDesc: (clutch: number, consistency: number) => `+${clutch} Clutch, +${consistency} Consistency while retained. Support for deciding games.`,
     bootcamp: "Bootcamp",
-    bootcampDesc: "Permanent chemistry bump + a sharper next official event.",
     bootcampUsed: "Bootcamp already run this split.",
     upkeepLabel: (s: string) => `Upkeep ${s} / week`,
     lockedAtRep: (rep: number) => `Unlocks at ${rep} Reputation`,
@@ -1839,7 +1814,6 @@ export const CAREER_EN = {
     buy: "Purchase",
     // v0.2 gear & staff ladder
     gearLadder: "The org's toolbox",
-    gearLadderHint: "Bought in order, unlocked by reputation: a garage org becomes a powerhouse.",
     gear: {
       peripherals: "Pro peripherals",
       monitors: "240Hz monitors",
@@ -2690,9 +2664,6 @@ export const CAREER_EN = {
 
   // rc.36 (SUN-03, R88) — /career/follow: an event the user is out of.
   follow: {
-    results: "Podiums",
-    otherEvents: (n: number) => (n === 1 ? "1 more event played" : `${n} more events played`),
-    noPodium: "No podium this season",
     swissStandings: "Swiss standings",
     kicker: "From the stands",
     reasonEliminated: "Out at the qualifier",
@@ -4156,7 +4127,7 @@ export const CAREER_EN = {
     },
     pick: {
       title: "Take over an organization",
-      kicker: (season: string) => `The organizations as they stand in ${season}, by tier. Pick one to read its file.`,
+      kicker: (season: string) => `The organizations as they stand in ${season}. Pick one to read its file.`,
       regions: "Region",
       orgs: "Organizations",
       rank: (rank: number, teams: number) => `#${rank} of ${teams}`,
@@ -4216,52 +4187,15 @@ export const CAREER_EN = {
   orgmode: {
     standing: "Standing",
     budget: {
-      title: "Season budget",
+    // rc9 ORG-UI (#272): the money board's remaining labels (SeasonMoney.tsx); the season budget card's went with it.
       when: (season: string, mondays: number) =>
         mondays > 1 ? `${season} · ${mondays} Mondays to go` : mondays === 1 ? `${season} · the last Monday to go` : `${season} · no Monday left to book`,
-      allocation: "The board's budget this season",
-      bonus: (amount: string) => `${amount} more if the objective is met`,
-      barLabel: "The season's money",
-      barNote: "Cash in hand and the income still contracted, against what is booked to the season's end.",
-      spent: "Spent",
-      committed: "Committed",
-      free: "Free",
-      short: "Short",
-      shortBy: (amount: string) => `The commitments run ${amount} past the season's money.`,
-      pendingTitle: "Pending the season plan",
-      pendingBody: "The board pays the budget when you choose one of the three plans. Until then the books run on the cash in hand.",
-      allocationProposed: "The board's proposal, paid when you choose the plan",
-      pendingLink: "Choose the plan",
-      projected: "At the season's end",
-      projectedBasis: "At this pace, before prizes and player sales",
-      projectedIfMet: (amount: string) => `${amount} if the objective is met`,
-      projectedPending: (amount: string) => `With the proposed plan's ${amount}`,
       wagesTitle: "Wage bill",
       wagesUnit: "a week, squad and coach",
       ceiling: (amount: string) => `The board's ceiling: ${amount} a week`,
       room: (amount: string) => `${amount} a week of room`,
       over: (amount: string) => `${amount} a week over the ceiling`,
       noCeiling: "The owners set no ceiling.",
-      linesTitle: "By department",
-      colSpent: "Spent",
-      colCommitted: "To come",
-      line: {
-        wages: "Squad wages",
-        coach: "Coach",
-        staff: "Staff",
-        facilities: "Facilities and upkeep",
-        camps: "Bootcamps",
-        transfers: "Transfers",
-        loan: "Loan repayments",
-        other: "Other",
-      } as Record<string, string>,
-      total: "Total",
-      incomeTitle: "Income",
-      colReceived: "Received",
-      colContracted: "Contracted",
-      income: { sponsor: "Sponsors", prizes: "Prize money", fanbase: "Fanbase", sales: "Player sales" } as Record<string, string>,
-      incomeNote: "Prizes and sales are counted when they are booked.",
-      ledgerFrom: (week: number) => `Counted from week ${week}: the ledger keeps its latest entries.`,
       sponsorNone: "No sponsor deal yet. New offers reach this desk when the next split opens.",
     },
     ops: {
@@ -4301,6 +4235,7 @@ export const CAREER_EN = {
       addsUpkeep: (amount: string) => `+${amount} a week upkeep`,
     },
     club: {
+      weekly: "a week",
       promotes: (pct: number, cap: number) =>
         `A promotion raises the budget base and the wage ceiling by ${pct}%, raises what the board expects, and lets the org sign players up to ${cap}.`,
       top: (pct: number) => `At the top tier the board expects titles. A drop cuts the budget base and the wage ceiling by ${pct}%.`,
@@ -4318,7 +4253,6 @@ export const CAREER_EN = {
       },
       inserts: { fx: { rep: (n: number): string => (n > 0 ? "Standing rises" : n < 0 ? "Standing slips" : "Standing holds"), repLabel: "Standing" } },
       event: { digestRep: "Standing" },
-      hub: { edgesEmpty: "No edges yet: the coach, the facilities and the departments are run in Finances." },
       // rc9 org (R220): the founded shelf's names, as the org catalogue names them (every screen and mail that still reads the founded ids).
       club: {
         unlockables: {
@@ -4367,7 +4301,6 @@ export const CAREER_EN = {
         refusal: { maxed: "Every facility is fully built.", locked: "Not available at this org." },
       },
       market: {
-        filterSignable: "Signable at this org's pull",
         lockedHint: "Players above this level will not join the org at its current standing.",
         errors: {
           bankLimit: "That is above what the bank offers at the org's standing.",
@@ -4407,8 +4340,6 @@ export const CAREER_EN = {
           bootcampRun: () => "Event bootcamp concluded",
         },
         body: {
-          unlock: (p: Record<string, string | number>) => `The org's standing brings a new sponsor level: ${p.name}.`,
-          repDown: (p: Record<string, string | number>) => `Expectations were stated and missed; ${p.org}'s standing takes the hit. Results win it back.`,
           gearBought: (p: Record<string, string | number>) => `${p.name} is open. The players train in it from this week.`,
         },
       },
@@ -4513,11 +4444,13 @@ export const CAREER_EN = {
         none: () => "The board's plan sets no line on the cash",
       } as Record<string, (amount: string) => string>,
       freeToSpend: "Free to spend",
-      freeNote: "What you can spend this season and still meet the board's mandate",
       short: "Short of the mandate",
       readMandate: "Read the mandate",
-      bonusIfMet: (amount: string) => `Plus ${amount} if the board's objective is met`,
-      mondayNote: (income: string, out: string) => `Each Monday ${income} comes in and ${out} goes out.`,
+      bonusIfMet: (amount: string) => `+${amount} if the objective is met`,
+      // rc9 ORG-UI (#272) second pass: the lead's labels.
+      budgetLabel: "The board's budget",
+      pool: "Cash and income still to come",
+      kept: "Kept by the mandate",
       budgetPaid: "The board's budget, paid into the cash",
       budgetProposed: "The board's budget, paid when you read the mandate",
       gap: {

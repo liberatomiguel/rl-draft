@@ -1027,7 +1027,6 @@ export const CAREER_PT: CareerCopy = {
       steps: { objective: "Objetivo", focus: "Foco", intensity: "Intensidade", scrims: "Scrims" } as Record<string, string>,
       // rc.36 (front T2, Miguel): Evoluir / Entrosar / Recuperar.
       objectives: { development: "Evoluir", preparation: "Entrosar", recovery: "Recuperar" } as Record<string, string>,
-      objectiveHint: "No que o elenco trabalha",
       objectiveEffect: {
         development: "Evolução mais rápida rumo ao auge de cada jogador",
         preparation: "Os scrims entrosam o elenco mais rápido, com um pouco de evolução",
@@ -1045,9 +1044,7 @@ export const CAREER_PT: CareerCopy = {
       focusBalanced: "Só evolução geral",
       focusEffect: (stats: string, perWeek: string) => `+${perWeek} de ${stats} por semana para todos`,
       focusHint: "O atributo que todos afiam, sem custo na evolução geral",
-      scrimsHint: "Só treino: sem pontos, prêmios ou reputação",
       intensities: { light: "Leve", normal: "Normal", heavy: "Pesada" } as Record<string, string>,
-      intensityHint: "O quanto o elenco treina",
       intensityEffect: {
         light: "Evolução mais lenta, menos desgaste",
         normal: "Evolução padrão, sem risco extra",
@@ -1168,7 +1165,6 @@ export const CAREER_PT: CareerCopy = {
     emptySeatCheapest: (name: string, wage: string) =>
       `Sem dinheiro? ${name} (${wage} / semana) é o agente livre mais barato para a vaga`,
     // rc9 TRAIN-MARKET: os títulos do quadro de candidatos e o que um candidato muda no time.
-    col: { player: "Jogador", potential: "Potencial", cost: "Custo", team: "No seu time" },
     feeLine: (fee: string) => `Taxa ${fee}`,
     teamUp: (n: number, name: string) => `+${n} sobre ${name}`,
     teamSub: "Entra como reserva",
@@ -1279,7 +1275,7 @@ export const CAREER_PT: CareerCopy = {
     justSignedTag: "Recém-contratado",
     viewSheet: "Ver ficha",
     noResults: "Nenhum jogador com esses filtros",
-    dealsEmpty: "Nenhuma negociação ativa. Propostas chegam aqui com a janela aberta",
+    dealsEmpty: "Nenhuma proposta na mesa. Os lances pelos seus jogadores chegam nas janelas de transferência",
     // v0.3 contratações travadas por reputação (cadeado visível)
     lockedAtRep: (rep: number) => `Assina com ${rep} de reputação`,
     lockedHint: "Precisa de mais reputação",
@@ -1463,7 +1459,6 @@ export const CAREER_PT: CareerCopy = {
     net: "Líquido / semana",
     projected: "Projeção após segunda-feira",
     weeklyStatement: "Extrato semanal",
-    statementHint: "Toda segunda-feira o caixa se move: o patrocínio entra; salários, staff, manutenção e parcelas saem.",
     runway: (weeks: number) => (weeks === 1 ? "Fôlego: 1 semana nesse ritmo" : `Fôlego: ${weeks} semanas nesse ritmo`),
     runwayOk: "As contas fecham no azul",
     nextPayday: (s: string) => `Próximo pagamento ${s}`,
@@ -1505,7 +1500,6 @@ export const CAREER_PT: CareerCopy = {
     // A próxima quebra do piso encerra a carreira — sem empréstimo emergencial para socorrer.
     loansHintEnd: "Só resta o empréstimo voluntário. Romper o piso de novo encerra a carreira.",
     bankTitle: "Empréstimo bancário",
-    bankNone: "Nenhum empréstimo bancário aberto",
     bankHint: (weeks: number, pct: number) =>
       `Crédito do tamanho da sua reputação: ${weeks} parcelas semanais, ${pct}% de juros.`,
     bankHintEnd: (weeks: number, pct: number) =>
@@ -1593,16 +1587,8 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 (ECO-04, SPONSOR-CONTRACT S5): os contratos — as cinco linhas do comparativo e a mesa.
     deal: {
       profile: { steady: "Estável", balanced: "Equilibrado", bold: "Ousado" } as Record<string, string>,
-      profileHint: {
-        steady: "Quase todo o dinheiro é garantido. Bônus pequeno por meta, sem multas.",
-        balanced: "Uma base semanal sólida, um bônus de verdade por meta e uma multa pequena por meta perdida.",
-        bold: "Menos dinheiro garantido, bônus grande por meta e um extra na primeira meta batida. Meta perdida gera multa.",
-      } as Record<string, string>,
       word: SPONSOR_WORD_PT,
-      rowStability: "Estabilidade",
-      rowTotal: "Retorno total",
       rowLength: "Duração",
-      rowRisk: "Risco",
       rowGoal: "Meta",
       // rc.35 (front S): a comparação visual — uma faixa por linha, ícones primeiro.
       rowWeekly: "Pagamento semanal",
@@ -1619,7 +1605,6 @@ export const CAREER_PT: CareerCopy = {
         splits === 1 ? "1 split" : splits === 3 ? "1 temporada" : splits === 6 ? "2 temporadas" : `${splits} splits`,
       difficultyMeter: (word: string) => `Dificuldade da meta: ${word}`,
       profileTag: { steady: "Mais seguro", balanced: "Meio-termo", bold: "Maior pagamento" } as Record<string, string>,
-      compareRule: "Compare a renda garantida e o total possível. Metas e multas determinam o risco.",
       boldLocked: "Contratos ousados liberam conforme a reputação cresce.",
       globalSponsor: "Global",
       nextPay: "Próximo pagamento",
@@ -1628,15 +1613,9 @@ export const CAREER_PT: CareerCopy = {
       finesShort: (mondays: number) => `em ${mondays} segundas`,
       seasonFineCap: (s: string) => `Multas: no máximo ${s} por temporada`,
       dealRun: (paid: number, total: number) => `${paid} de ${total} segundas pagas`,
-      weeklySure: (s: string) => `${s} por semana, garantido`,
-      plusSigning: (s: string) => `+ ${s} na assinatura`,
-      plusMilestone: (s: string) => `+ ${s} no dia da primeira meta batida`,
       total: (sure: string, upTo: string) => `${sure} garantido · até ${upTo}`,
       length: (splits: number, date: string) =>
         `${splits === 1 ? "Um split" : splits === 3 ? "Uma temporada" : splits === 6 ? "Duas temporadas" : `${splits} splits`} · termina ${date}`,
-      riskSteady: (n: number) => `Sem multas · ${n} metas perdidas baixam a próxima proposta em um tier`,
-      riskFine: (s: string, mondays: number) => `Meta perdida custa até ${s}, pago em ${mondays} segundas`,
-      riskNone: "Sem multas nesta dificuldade",
       goal: sponsorGoalPt,
       goalBy: (date: string) => `até ${date}`,
       laterGoals: "Depois, uma meta nova a cada split, na mesma dificuldade",
@@ -1647,13 +1626,13 @@ export const CAREER_PT: CareerCopy = {
       compareHint:
         "As três valem parecido em média. Muda o quanto é garantido, a duração e a meta.",
       // rc.34: uma marca de Tier 3 / 4 paga menos a um time abaixo do nível dela (sponsorDeals.levelValueShareOf).
+      // rc9 ORG-UI (#273): sem o número de tier da marca.
       levelScaled: (tier: number, pct: number) =>
         tier >= 4
-          ? `Marcas de Tier 4 pagam o valor cheio a candidatos ao título mundial. Hoje o time recebe ${pct}%.`
+          ? `Estas marcas pagam ${pct}% hoje. O valor cheio pede um elenco que brigue pelo Worlds.`
           : tier === 3
-            ? `Marcas de Tier 3 pagam o valor cheio a times que competem em Majors. Hoje o time recebe ${pct}%.`
-            : `Marcas de Tier 2 pagam o valor cheio a times de top 8 regional. Hoje o time recebe ${pct}%.`,
-      stabilityBar: (pct: number) => `${pct}% do máximo é garantido`,
+            ? `Estas marcas pagam ${pct}% hoje. O valor cheio pede um elenco de nível de Major.`
+            : `Estas marcas pagam ${pct}% hoje. O valor cheio pede um elenco de top 8 regional.`,
       handover: (first: number, second: number) =>
         `Seu parceiro fundador sai aos poucos quando este contrato começar: ${first}%, depois ${second}% do valor, um split cada.`,
       // rc.34 review (S6): antes da temporada de índice 2, assinar não inicia a transição — o parceiro paga integralmente até o fim do prazo.
@@ -1668,7 +1647,6 @@ export const CAREER_PT: CareerCopy = {
       dealEnds: "Termina",
       dealGoing: "Como está indo",
       endsOn: (date: string) => `Termina ${date}`,
-      signingPaid: (s: string) => `${s} pagos na assinatura`,
       milestonePending: (s: string) => `${s} no dia da primeira meta batida`,
       milestonePaid: (s: string) => `Marco de ${s} pago`,
       thisGoal: "Meta deste split",
@@ -1677,8 +1655,6 @@ export const CAREER_PT: CareerCopy = {
       goalReached: "Batida",
       goalMissed: "Perdida",
       goalOpen: "Em aberto",
-      bonusIfHit: (s: string) => `${s} se bater`,
-      fineIfMissed: (s: string) => `até ${s} se perder`,
       record: (hits: number, misses: number) => `Metas até aqui: ${hits} batidas, ${misses} perdidas`,
       finesOwed: (s: string, mondays: number) => `Multas a pagar: ${s} nas próximas ${mondays} segundas`,
       fineFloorNote: "pagas em parcelas semanais",
@@ -1803,7 +1779,6 @@ export const CAREER_PT: CareerCopy = {
     },
     psychologistDesc: (clutch: number, consistency: number) => `+${clutch} Clutch, +${consistency} Consistência enquanto contratada. Apoio para jogos decisivos.`,
     bootcamp: "Bootcamp",
-    bootcampDesc: "Ganho permanente de química + próximo evento oficial mais afiado.",
     bootcampUsed: "Bootcamp já realizado neste split.",
     upkeepLabel: (s: string) => `Manutenção ${s} / semana`,
     lockedAtRep: (rep: number) => `Desbloqueia com ${rep} de Reputação`,
@@ -1815,7 +1790,6 @@ export const CAREER_PT: CareerCopy = {
     buy: "Comprar",
     // Escada de equipamentos & staff (v0.2)
     gearLadder: "O arsenal da org",
-    gearLadderHint: "Comprado em ordem, desbloqueado por reputação: uma org de garagem vira potência.",
     gear: {
       peripherals: "Periféricos pro",
       monitors: "Monitores 240Hz",
@@ -2664,9 +2638,6 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-03, R88) — /career/follow: um evento sem você.
   follow: {
-    results: "Pódios",
-    otherEvents: (n: number) => (n === 1 ? "Mais 1 evento disputado" : `Mais ${n} eventos disputados`),
-    noPodium: "Nenhum pódio na temporada",
     swissStandings: "Classificação do Swiss",
     kicker: "Da arquibancada",
     reasonEliminated: "Fora na qualificatória",
@@ -4125,7 +4096,7 @@ export const CAREER_PT: CareerCopy = {
     },
     pick: {
       title: "Assumir uma org existente",
-      kicker: (season: string) => `As orgs como estão na ${season}, por patamar. Escolha uma para ler o dossiê.`,
+      kicker: (season: string) => `As orgs como estão na ${season}. Escolha uma para ler o dossiê.`,
       regions: "Região",
       orgs: "Organizações",
       rank: (rank: number, teams: number) => `${rank}º de ${teams}`,
@@ -4180,52 +4151,15 @@ export const CAREER_PT: CareerCopy = {
   orgmode: {
     standing: "Prestígio",
     budget: {
-      title: "Orçamento da temporada",
+    // rc9 ORG-UI (#272)
       when: (season: string, mondays: number) =>
         mondays > 1 ? `${season} · faltam ${mondays} segundas` : mondays === 1 ? `${season} · falta a última segunda` : `${season} · nenhuma segunda a lançar`,
-      allocation: "O orçamento da diretoria nesta temporada",
-      bonus: (amount: string) => `Mais ${amount} se a meta for cumprida`,
-      barLabel: "O dinheiro da temporada",
-      barNote: "O caixa e as receitas já contratadas, contra o que está lançado até o fim da temporada.",
-      spent: "Gasto",
-      committed: "Comprometido",
-      free: "Livre",
-      short: "Falta",
-      shortBy: (amount: string) => `Os compromissos passam ${amount} do dinheiro da temporada.`,
-      pendingTitle: "Aguardando as metas da temporada",
-      pendingBody: "A diretoria paga o orçamento quando você escolhe uma das três metas. Até lá, as contas correm com o caixa.",
-      allocationProposed: "A proposta da diretoria, paga quando você escolher as metas",
-      pendingLink: "Escolher as metas",
-      projected: "No fim da temporada",
-      projectedBasis: "Neste ritmo, antes de prêmios e vendas de jogadores",
-      projectedIfMet: (amount: string) => `${amount} se a meta for cumprida`,
-      projectedPending: (amount: string) => `Com os ${amount} das metas propostas`,
       wagesTitle: "Folha salarial",
       wagesUnit: "por semana, elenco e coach",
       ceiling: (amount: string) => `Teto da diretoria: ${amount} por semana`,
       room: (amount: string) => `${amount} por semana de folga`,
       over: (amount: string) => `${amount} por semana acima do teto`,
       noCeiling: "Os donos não fixam teto.",
-      linesTitle: "Por departamento",
-      colSpent: "Gasto",
-      colCommitted: "A lançar",
-      line: {
-        wages: "Salários do elenco",
-        coach: "Coach",
-        staff: "Staff",
-        facilities: "Instalações e manutenção",
-        camps: "Bootcamps",
-        transfers: "Transferências",
-        loan: "Parcelas de empréstimo",
-        other: "Outros",
-      } as Record<string, string>,
-      total: "Total",
-      incomeTitle: "Receitas",
-      colReceived: "Recebido",
-      colContracted: "Contratado",
-      income: { sponsor: "Patrocínio", prizes: "Premiações", fanbase: "Torcida", sales: "Vendas de jogadores" } as Record<string, string>,
-      incomeNote: "Prêmios e vendas contam quando são lançados.",
-      ledgerFrom: (week: number) => `Contado a partir da semana ${week}: o extrato guarda os lançamentos mais recentes.`,
       sponsorNone: "Nenhum patrocínio ainda. Novas ofertas chegam a esta mesa quando o próximo split abrir.",
     },
     ops: {
@@ -4265,6 +4199,7 @@ export const CAREER_PT: CareerCopy = {
       addsUpkeep: (amount: string) => `+${amount} por semana de manutenção`,
     },
     club: {
+      weekly: "por semana",
       promotes: (pct: number, cap: number) =>
         `Uma promoção aumenta a base do orçamento e o teto da folha em ${pct}%, aumenta o que a diretoria espera e deixa a org contratar jogadores até ${cap}.`,
       top: (pct: number) => `No topo, a diretoria espera títulos. Uma queda corta a base do orçamento e o teto da folha em ${pct}%.`,
@@ -4281,7 +4216,6 @@ export const CAREER_PT: CareerCopy = {
       },
       inserts: { fx: { rep: (n: number) => (n > 0 ? "O prestígio sobe" : n < 0 ? "O prestígio cai" : "O prestígio se mantém"), repLabel: "Prestígio" } },
       event: { digestRep: "Prestígio" },
-      hub: { edgesEmpty: "Nenhuma vantagem ainda: o coach, as estruturas e os departamentos se administram em Finanças." },
       // rc9 org (R220): os nomes da prateleira do clube fundado, como o catálogo da org os chama.
       club: {
         unlockables: {
@@ -4330,7 +4264,6 @@ export const CAREER_PT: CareerCopy = {
         refusal: { maxed: "Todas as estruturas estão completas.", locked: "Não está disponível nesta org." },
       },
       market: {
-        filterSignable: "Ao alcance desta org",
         lockedHint: "Jogadores acima deste nível não vêm para a org com o prestígio atual.",
         errors: {
           bankLimit: "Acima do que o banco oferece com o prestígio da org.",
@@ -4370,8 +4303,6 @@ export const CAREER_PT: CareerCopy = {
           bootcampRun: () => "Bootcamp de evento concluído",
         },
         body: {
-          unlock: (p: Record<string, string | number>) => `O prestígio da org traz um novo nível de patrocínio: ${p.name}.`,
-          repDown: (p: Record<string, string | number>) => `As expectativas foram ditas e não cumpridas; o prestígio da ${p.org} sente o golpe. Os resultados o recuperam.`,
           gearBought: (p: Record<string, string | number>) => `${p.name} já está funcionando. Os jogadores treinam lá a partir desta semana.`,
         },
       },
@@ -4476,11 +4407,13 @@ export const CAREER_PT: CareerCopy = {
         none: () => "O plano da diretoria não fixa um piso de caixa",
       } as Record<string, (amount: string) => string>,
       freeToSpend: "Livre para gastar",
-      freeNote: "O que dá para gastar nesta temporada sem descumprir o mandato",
       short: "Abaixo do mandato",
       readMandate: "Ler o mandato",
-      bonusIfMet: (amount: string) => `Mais ${amount} se a meta da diretoria for cumprida`,
-      mondayNote: (income: string, out: string) => `Toda segunda entram ${income} e saem ${out}.`,
+      bonusIfMet: (amount: string) => `+${amount} se a meta for cumprida`,
+      // rc9 ORG-UI (#272), segunda passada
+      budgetLabel: "O orçamento da diretoria",
+      pool: "Caixa e receitas ainda por vir",
+      kept: "Guardado pelo mandato",
       budgetPaid: "A verba da diretoria, já no caixa",
       budgetProposed: "A verba da diretoria, paga quando você ler o mandato",
       gap: {
