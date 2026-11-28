@@ -1142,7 +1142,7 @@ export function otherIncomeRoomOf(input: {
 /**
  * The deal an established org already runs when the manager arrives: one of
  * the offers its tier's desk would make today (`sponsorDecisionFor`, the same
- * brands, money and goal), the profile its tier keeps (CAREER_ORG.inheritedSponsor),
+ * brands, money and goal), the profile the save's difficulty keeps (CAREER_ORG.inheritedSponsor, R226),
  * signed before the takeover. The terms are the offer's, marked `inherited`,
  * its contract goal counted from the takeover day and no decision deadline.
  * Null when the desk has no offer of that profile (the first offer then).

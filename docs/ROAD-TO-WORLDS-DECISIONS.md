@@ -3015,6 +3015,10 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 
 - **Decidido:** um reparo a cada carregamento (`repairEstablishedOnLoad`, idempotente, sem mudar versão): a abertura de caixa da temporada é reconstruída do razão (o caixa antes da linha da verba da diretoria, quando ela ainda está no razão; com o mandato ainda não lido, o caixa em mãos). Nada mais é escrito: o catálogo lê os itens como níveis, a mesa de patrocínio aberta (ou o contrato assinado) do rc.8 segue, o patamar lê a estatura da diretoria. Um save do rc.8 com a mesa aberta continua com a mesa; não recebe um contrato herdado por cima da escolha do jogador.
 
+## R226 — 27 de novembro de 2026: o perfil do patrocínio herdado segue a dificuldade, não o patamar (v2.2.0-dev, rc.9 ORG)
+
+- **Decidido (o dono, 27/11: "no fácil, o mais fácil. no normal, o do meio. no difícil, o mais difícil"):** o contrato em vigor numa tomada de controle tem o perfil da dificuldade do save: fácil Steady, normal Balanced, difícil Bold (`CAREER_ORG.inheritedSponsor.profile`, por dificuldade). Substitui o mapa por patamar do R221. O patamar continua só escalando o dinheiro, como a mesa faz. Org fundada e flag desligada não mudam. A renovação segue o perfil do contrato herdado. O mail não nomeia o perfil (só diz se há multa), então o texto não muda; a tela de escolha não mostra o contrato.
+
 ## R240 — 27 de novembro de 2026: a série no modo Comandar é um plano e um jogo ao vivo (v2.2.0-dev, rc.9 MATCHDAY)
 
 - **Decidido:** a mesa jogo a jogo do slice 5 sai. No modo Comandar, a série é um plano antes do jogo 1 (três diretrizes) e depois roda sozinha, jogo após jogo, sem parada entre eles (Miguel, 27/11: "a pausa entre cada jogo ... quebra muito o fluxo"). O técnico faz as escolhas de intervalo (o tempo técnico, o ajuste depois de uma derrota), como no modo rápido. Cliques por série: 2 (Jogar a série, Continuar); pular: 1. O motor: `playUserNext` / `playUserSeriesNextFlow` jogam o próximo jogo com o intervalo do técnico antes, exatamente como `playOutWithCoach`.

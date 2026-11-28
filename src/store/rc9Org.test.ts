@@ -218,7 +218,7 @@ describe("R221: a sponsor already in force", () => {
         const tag = `${region} ${tier}`;
         expect(save.sponsor, tag).not.toBeNull();
         expect(save.sponsor!.terms?.inherited, tag).toBe(true);
-        expect(save.sponsor!.terms?.profile, tag).toBe(CAREER_ORG.inheritedSponsor.profile[tier]);
+        expect(save.sponsor!.terms?.profile, tag).toBe(CAREER_ORG.inheritedSponsor.profile[save.difficulty]);
         expect(save.sponsor!.terms?.decideBy, tag).toBeUndefined();
         expect(save.sponsorOffers ?? null, tag).toBeNull();
         expect(pendingDecisionsOf(save).some((d) => d.kind === "sponsor"), tag).toBe(false);
@@ -232,6 +232,19 @@ describe("R221: a sponsor already in force", () => {
           expect(r.body, tag).not.toMatch(/undefined|NaN|\$\{|—/);
           expect(r.title.length).toBeGreaterThan(5);
         }
+      }
+    }
+  });
+
+  it("R226: the deal's profile follows the difficulty (easy steady, normal balanced, hard bold), whatever the tier", () => {
+    const want = { easy: "steady", normal: "balanced", hard: "bold" } as const;
+    for (const difficulty of ["easy", "normal", "hard"] as const) {
+      for (const tier of TIERS) {
+        const pick = choices("EU").find((c) => c.stature === tier);
+        if (!pick) continue;
+        const save = createCareerSave({ ...input("EU", pick.ref), difficulty }, SEED);
+        expect(save.sponsor!.terms?.profile, `${difficulty} ${tier}`).toBe(want[difficulty]);
+        expect(save.sponsor!.terms?.inherited).toBe(true);
       }
     }
   });

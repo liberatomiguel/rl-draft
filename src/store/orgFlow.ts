@@ -78,8 +78,8 @@ export function orgRefNameOf(save: CareerSave, foundedId: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * A takeover arrives with a running sponsor deal fit for its tier: the offer
- * of the tier's profile its desk would make today (same brands, money, goal
+ * A takeover arrives with a running sponsor deal: the offer
+ * of the difficulty's profile (R226: easy steady, normal balanced, hard bold) its desk would make today (same brands, money, goal
  * and fines), signed before the manager arrived. Its fixed part is booked
  * today as a signing books it; a mail from Sponsor Relations says what the
  * deal pays, what it asks and when it ends. No desk opens: the first
@@ -89,7 +89,8 @@ export function signInheritedSponsor(save: CareerSave): boolean {
   const tier = tierOf(save);
   if (!tier || save.sponsor || save.phase === "ended") return false;
   const today = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
-  const access = sponsorAccessFor(sponsorLadderLevelOf(save.reputation));
+  // R226: every profile is on the day's desk, the bold one too (its ladder level does not gate an inherited deal).
+  const access = { ...sponsorAccessFor(sponsorLadderLevelOf(save.reputation)), offers: 3 as const, boldAllowed: true };
   const offers = sponsorDecisionFor({
     tier: offerTierFor(save.reputation, false),
     today,
@@ -98,7 +99,7 @@ export function signInheritedSponsor(save: CareerSave): boolean {
     level: sponsorLevelOf(save),
     access: staffOn(save.finances.gear, "brand") ? { ...access, valueMult: access.valueMult * CAREER_STAFF.roles.brand.sponsorValueMult } : access,
   });
-  const deal = inheritedDealOf(offers, CAREER_ORG.inheritedSponsor.profile[tier] ?? "steady", today);
+  const deal = inheritedDealOf(offers, CAREER_ORG.inheritedSponsor.profile[save.difficulty] ?? "balanced", today);
   if (!deal || !deal.terms) return false;
   save.sponsor = deal;
   save.sponsorOffers = null;

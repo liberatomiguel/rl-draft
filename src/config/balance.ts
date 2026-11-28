@@ -5547,13 +5547,14 @@ export const CAREER_BOARD = {
 // rc9 org: the established org's own rules (R220-R224). Read only when `establishedOf(save)`.
 export const CAREER_ORG = {
   /**
-   * R221: the deal in force on the takeover day: the profile each tier keeps, taken from the offers
-   * its desk would make that day (same brand pool, money and goal). Steady for the smaller orgs (no
-   * fines), Balanced for the bigger ones (a goal with a fine). Its fixed part is booked on the day,
-   * as a signing would have booked it, so the money matches a desk signed on day one.
+   * R221, R226: the deal in force on the takeover day, taken from the offers its desk would make that
+   * day (same brand pool, money and goal). The profile follows the save's DIFFICULTY (the owner, 27/11:
+   * easy gets the easiest, normal the middle, hard the hardest); the tier only scales the money, as the
+   * desk does. Its fixed part is booked on the day, as a signing would have booked it, so the money
+   * matches a desk signed on day one.
    */
   inheritedSponsor: {
-    profile: { elite: "balanced", contender: "balanced", mid: "steady", underdog: "steady" } as Record<string, "steady" | "balanced" | "bold">,
+    profile: { easy: "steady", normal: "balanced", hard: "bold" } as Record<string, "steady" | "balanced" | "bold">,
   },
 } as const;
 

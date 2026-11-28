@@ -12,6 +12,9 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## rc.9 (unreleased)
 
+### Changed - ORG (R226)
+- The sponsor deal in force on a takeover now follows the save's difficulty (easy steady, normal balanced, hard bold) instead of the org's tier; the tier still scales the money.
+
 ### Changed — MATCHDAY (the series room and the live game; R240 to R247, DESIGN-DECISIONS #233 to #239)
 - Manage: one plan before the series (approach, risk, who to shut down, the coach's call preselected), then every game plays live on its own, with no stop between games. Two clicks per series (Play the series, Continue), one to skip; it was 5 to 7.
 - The live game: crests, score and clock large, the 5:00 as a track with each goal at its minute, goals on their side, team stats as a centre-label comparison with proportional bars, each team's players climbing with the clock, overtime as its own beat.
