@@ -4167,7 +4167,9 @@ export const CAREER_EN = {
       grace: (n: number) => (n <= 1 ? "No ultimatum in the first season" : `No ultimatum for ${n} seasons`),
       noBoard: "This organization's board sets its plan on day one.",
       difficulty: "Difficulty",
-      manager: "Manager name",
+      manager: "Your name",
+      // rc9 ORG-UI: the fallback when the field is left blank.
+      managerHint: (name: string) => `Left blank, you start as ${name}.`,
       // rc9 ORG-UI: the structure in the org catalogue's terms, the deal in force.
       structure: "Structure",
       departments: "Departments",

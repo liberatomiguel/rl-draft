@@ -4136,7 +4136,9 @@ export const CAREER_PT: CareerCopy = {
       grace: (n: number) => (n <= 1 ? "Sem ultimato na primeira temporada" : `Sem ultimato por ${n} temporadas`),
       noBoard: "A diretoria desta org define o plano no primeiro dia.",
       difficulty: "Dificuldade",
-      manager: "Nome do manager",
+      manager: "Seu nome",
+      // rc9 ORG-UI: o nome usado se o campo ficar em branco.
+      managerHint: (name: string) => `Em branco, você começa como ${name}.`,
       // rc9 ORG-UI
       structure: "Estrutura",
       departments: "Departamentos",

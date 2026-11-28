@@ -4,11 +4,13 @@
  * v2.2 rc.6 (ORGMODE UI-A): the pick. rc9 ORG-UI (#270): rebuilt around the
  * decision the player makes here, which house to take over.
  *
- * rc9 ORG-UI second pass (Miguel, 27/11): no grouping by tier and a shorter
- * page. The region filter, then the region's orgs as ONE grid of cards (the
- * mark large, the name, its size as a tag, the squad's level as the figure, its
- * problem in a line). A card opens the org's file in a modal with the action;
- * Escape closes it and the focus returns to the card (Modal's own focus trap).
+ * rc9 ORG-UI third pass (Miguel, 27/11, reversing the grid of the second:
+ * "times na esquerda, e os dados na direita"): the region filter and the
+ * region's orgs as one list of rows on the left (no grouping by tier), the
+ * selected org's file always on the right with the action. A phone reads the
+ * list, then the file as its own step with the action docked. The file ends
+ * with the manager's name (the account's name when there is one, the
+ * generated name if left blank) and the difficulty, just above the action.
  *
  * The file is read from the save the takeover would create (`takeoverPreviewOf`,
  * same input and seed as the button), so it is day one: the starters as the
@@ -18,11 +20,11 @@
  * The rows' problem lines are read the same way, one org per idle slice.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CAREER_DIFFICULTY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import { abbrevFor, realOrgChoicesFor, type RealOrgChoice } from "@/engine/career/orgProfile";
+import { realOrgChoicesFor, type RealOrgChoice } from "@/engine/career/orgProfile";
 import { orgIssuesOf } from "@/engine/career/mandate";
 import { takeoverStartEraFor } from "@/engine/career/era";
 import { seasonLabelFor } from "@/engine/career/calendar";
@@ -34,7 +36,6 @@ import { formatMoney } from "@/lib/format";
 import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
 import { SquadCard } from "@/components/career/hub/SquadBlock";
-import { proceduralCrestFor } from "@/components/career/OrgMark";
 import { QUICKSTART_MANAGER_NAMES, regionForCountry } from "@/components/career/wizard/countries";
 import { formatDateShort } from "@/components/career/dateText";
 import { moneyGapSentenceOf } from "@/components/career/finances/budgetLines";
@@ -42,40 +43,20 @@ import { dealViewOf } from "@/components/career/sponsors/dealView";
 import { WhistleIcon } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { useCareerStore } from "@/store/careerStore";
-import type { CreateCareerInput } from "@/store/careerFlow";
+import { useAccountStore } from "@/store/accountStore";
 import { takeoverPreviewOf, type TakeoverPreview } from "@/store/takeoverPreview";
 import { ArrivalSplash } from "./ArrivalSplash";
+import { MANAGER_NAME_MAX, managerNameFor, takeoverInputOf } from "./takeoverInput";
 import { MandateDossier } from "@/components/career/board/MandateParts";
 
 const REGIONS: Region[] = ["EU", "NA", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
 
-/** The takeover's input: the button and the dossier build the SAME one (the manager's name aside, which no rule reads). */
-export function takeoverInputOf(c: RealOrgChoice, difficulty: CareerDifficulty, managerName: string, startSeasonIndex?: number): CreateCareerInput {
-  const crest = proceduralCrestFor(c.ref, c.name);
-  return {
-    identity: {
-      orgName: c.name,
-      abbrev: abbrevFor(c.name),
-      managerName,
-      // The roster's nationality; the org's procedural crest is kept for old readers (UserOrgMark shows the real logo).
-      country: c.country,
-      region: c.region,
-      crestId: crest.crestId,
-      colors: crest.colors,
-      buffType: "offense",
-    },
-    difficulty,
-    rosterKey: "balanced",
-    realOrgRef: c.ref,
-    ...(startSeasonIndex ? { startSeasonIndex } : {}),
-  };
-}
+export { takeoverInputOf } from "./takeoverInput";
 
 /** v2.2 ORGMODE-2027 (E4): the takeover's era: the default, or the staging build's `?era=N`. */
 function startEraOfPage(): number {
@@ -107,34 +88,49 @@ function topProblemOf(preview: TakeoverPreview, C: CareerCopy): string {
 // ---------------------------------------------------------------------------
 
 /**
- * rc9 ORG-UI (#270, Miguel 27/11: "não precisa separar por tier ... em formato de grid, abrindo
- * as estatísticas do time que você clicar em um modal"): one card per org, the mark large, the
- * name, its size as a word, the squad's level as the figure, its problem in one line.
+ * rc9 ORG-UI third pass (Miguel 27/11: "vamos voltar ... times na esquerda, e os dados na
+ * direita"): one compact row per org in one list, no grouping by tier. The mark, the name, its
+ * standing as a word (tag) and its problem in one line, the squad's level as the figure. The
+ * selected row is the orange hairline; the arrow keys move the pick (a radiogroup).
  */
-function OrgCard({ c, problem, onOpen, C }: { c: RealOrgChoice; problem: string | undefined; onOpen: () => void; C: CareerCopy }) {
+function OrgRow({ c, problem, active, focusable, onPick, onKey, C }: {
+  c: RealOrgChoice;
+  problem: string | undefined;
+  active: boolean;
+  focusable: boolean;
+  onPick: () => void;
+  onKey: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  C: CareerCopy;
+}) {
   const P = C.takeover.pick;
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={active}
+      tabIndex={focusable ? 0 : -1}
       data-ref={c.ref}
-      onClick={onOpen}
-      aria-label={`${c.name}, ${C.board.stature[c.stature]}, ${P.squadLabel} ${Math.round(c.rating)}`}
+      onClick={onPick}
+      onKeyDown={onKey}
       className={cx(
-        "panel group flex h-full min-h-44 w-full min-w-0 flex-col items-center p-3 text-center transition-colors sm:p-4",
-        "hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-bright",
+        "flex min-h-16 w-full items-center gap-3 border-b border-line px-3 py-2.5 text-left transition-colors last:border-b-0",
+        "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright",
+        active ? "bg-white/[0.04] outline outline-1 -outline-offset-1 outline-orange" : "hover:bg-white/[0.03]",
       )}
     >
-      <TeamLogo orgId={c.ref} size="lg" className="mt-1" />
-      <span className="display mt-2.5 block w-full truncate text-[15px] font-bold leading-tight text-ink">{c.name}</span>
-      <span className={cx("mt-1 block min-h-4 w-full truncate text-xs", problem ? "text-sub" : "text-faint")}>
-        {problem === undefined ? "" : problem || P.problemNone}
-      </span>
-      <span className="mt-auto flex w-full items-end justify-between gap-2 border-t border-line pt-2.5">
-        <Badge tone={c.stature === "elite" ? "orange" : c.stature === "contender" ? "blue" : "neutral"} className="whitespace-nowrap">{C.board.stature[c.stature]}</Badge>
-        <span className="text-right leading-none">
-          <span className="display block text-xl font-bold tabular-nums text-ink">{Math.round(c.rating)}</span>
-          <span className="mt-0.5 block text-[11px] text-faint">{P.squadLabel}</span>
+      <TeamLogo orgId={c.ref} size="md" />
+      <span className="min-w-0 flex-1">
+        <span className="display block truncate text-[15px] font-bold leading-tight text-ink">{c.name}</span>
+        <span className="mt-1 flex min-w-0 items-center gap-2">
+          <Badge tone={c.stature === "elite" ? "orange" : c.stature === "contender" ? "blue" : "neutral"} className="shrink-0 whitespace-nowrap">
+            {C.board.stature[c.stature]}
+          </Badge>
+          <span className={cx("min-w-0 truncate text-xs", problem ? "text-sub" : "text-faint")}>{problem === undefined ? "" : problem || P.problemNone}</span>
         </span>
+      </span>
+      <span className="shrink-0 text-right leading-none">
+        <span className="display block text-2xl font-bold tabular-nums text-ink">{Math.round(c.rating)}</span>
+        <span className="mt-1 block text-[11px] text-faint">{P.squadLabel}</span>
       </span>
     </button>
   );
@@ -309,8 +305,21 @@ function Dossier({
         <p className="mt-8 text-sm text-sub">{D.noBoard}</p>
       )}
 
-      {/* The career's two settings: difficulty and the manager's name. */}
+      {/* The career's two settings, just above the action: the manager's name, then the difficulty. */}
       <div className="mt-8 grid gap-5 border-t border-line pt-5 sm:grid-cols-2">
+        <label className="block" htmlFor="takeover-manager">
+          <span className="kicker mb-2 block">{D.manager}</span>
+          <input
+            id="takeover-manager"
+            value={manager}
+            maxLength={MANAGER_NAME_MAX}
+            autoComplete="nickname"
+            onChange={(e) => onManager(e.target.value)}
+            placeholder={managerDefault}
+            className="h-11 w-full rounded-[7px] border border-line-strong bg-white/5 px-3 text-sm text-ink placeholder:text-faint transition-colors focus:border-orange/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-bright"
+          />
+          <span className="mt-1 block text-xs text-faint">{D.managerHint(managerDefault)}</span>
+        </label>
         <div>
           <p className="kicker mb-2" id="takeover-difficulty">{D.difficulty}</p>
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="takeover-difficulty">
@@ -332,16 +341,6 @@ function Dossier({
             ))}
           </div>
         </div>
-        <label className="block">
-          <span className="kicker mb-2 block">{D.manager}</span>
-          <input
-            value={manager}
-            maxLength={24}
-            onChange={(e) => onManager(e.target.value)}
-            placeholder={managerDefault}
-            className="h-11 w-full rounded-[7px] border border-line-strong bg-white/5 px-3 text-sm text-ink placeholder:text-faint transition-colors focus:border-orange/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-bright"
-          />
-        </label>
       </div>
     </div>
   );
@@ -362,9 +361,17 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
   const [managerDefault] = useState(() => QUICKSTART_MANAGER_NAMES[Math.floor(Math.random() * QUICKSTART_MANAGER_NAMES.length)]);
   const [region, setRegion] = useState<Region>(initialRegion);
   const [difficulty, setDifficulty] = useState<CareerDifficulty>(CAREER_DIFFICULTY.defaultPreset);
-  // The org whose file is open in the modal (null: the grid alone).
+  // The org whose file is read on the right (the region's first until the player picks).
   const [pick, setPick] = useState<string | null>(null);
-  const [manager, setManager] = useState("");
+  // A phone reads the list, then the file as its own step.
+  const [phoneStep, setPhoneStep] = useState<"list" | "file">("list");
+  // The manager's name: the account's name when there is one, else empty (the generated name if left blank).
+  const accountName = useAccountStore((s) => s.username);
+  // null until the player types: the field shows the account's name (it may arrive after the first render).
+  const [typed, setManager] = useState<string | null>(null);
+  const manager = typed ?? (accountName ?? "").slice(0, MANAGER_NAME_MAX);
+  const listRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [arrived, setArrived] = useState(false);
   // The cards' problem lines, read one org per idle slice (key: ref|difficulty).
@@ -381,7 +388,7 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
     () => realOrgChoicesFor(regionShown, { careerSeed: seed, seasonIndex: era, difficulty, world }),
     [regionShown, seed, era, difficulty, world],
   );
-  const chosen = choices.find((c) => c.ref === pick) ?? null;
+  const chosen = choices.find((c) => c.ref === pick) ?? choices[0] ?? null;
 
   // The dossier: the save this org's takeover creates (memoized per org, difficulty and seed).
   const preview = useMemo(
@@ -419,8 +426,26 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
       setFull(true);
       return;
     }
-    createCareer(slot, takeoverInputOf(chosen, difficulty, manager.trim().length >= 2 ? manager.trim() : managerDefault, era), seed);
+    createCareer(slot, takeoverInputOf(chosen, difficulty, managerNameFor(manager, managerDefault), era), seed);
     setArrived(true);
+  };
+
+  const choose = (ref: string) => {
+    setPick(ref);
+    setPhoneStep("file");
+    // On a phone the file replaces the list: start it at its top.
+    if (globalThis.matchMedia?.("(max-width: 1023px)").matches) topRef.current?.scrollIntoView({ block: "start" });
+  };
+
+  /** Arrow keys move the pick inside the list (the radiogroup's own keys). */
+  const onKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const i = choices.findIndex((c) => c.ref === chosen?.ref);
+    const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+    if (!step || i < 0) return;
+    e.preventDefault();
+    const next = choices[(i + step + choices.length) % choices.length];
+    setPick(next.ref);
+    listRef.current?.querySelector<HTMLButtonElement>(`[data-ref="${CSS.escape(next.ref)}"]`)?.focus();
   };
 
   const action = chosen ? (
@@ -431,13 +456,13 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
   ) : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
-      <SectionTitle title={P.title} kicker={P.kicker(seasonLabelFor(era))} />
+    <div ref={topRef} className="mx-auto max-w-6xl scroll-mt-16 px-3 py-4 sm:px-4 sm:py-6">
+      <SectionTitle title={P.title} kicker={P.kicker(seasonLabelFor(era))} className={cx(phoneStep === "file" && "max-lg:hidden")} />
 
-      <div className="mt-5 lg:mt-6">
-        {/* ---- The region filter, then the region's orgs as a grid of cards ---- */}
-        <div className="min-w-0">
-          <div className="phone-tabs flex max-w-xl border-b border-line" role="tablist" aria-label={P.regions}>
+      <div className={cx("mt-5 grid grid-cols-1 gap-6 lg:mt-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-8", phoneStep === "file" && "max-lg:mt-0")}>
+        {/* ---- The list: the region filter, then the region's orgs as rows (a step of its own on a phone) ---- */}
+        <div className={cx("min-w-0", phoneStep === "file" && "max-lg:hidden")}>
+          <div className="phone-tabs flex border-b border-line" role="tablist" aria-label={P.regions}>
             {regions.map((r) => (
               <button
                 key={r}
@@ -460,54 +485,63 @@ export function TakeoverPick({ onBack, onDone }: { onBack: () => void; onDone: (
             ))}
           </div>
 
-          <div className="mt-5" aria-label={P.orgs} role="list">
+          <div ref={listRef} className="mt-4" role="radiogroup" aria-label={P.orgs}>
             {choices.length === 0 ? <p className="py-6 text-sm text-sub">{P.empty(seasonLabelFor(era))}</p> : null}
             {choices.length > 0 && choices.length < 4 ? <p className="mb-3 text-xs text-sub">{P.fewOrgs(choices.length)}</p> : null}
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-6">
-              {choices.map((c) => (
-                <div key={c.ref} role="listitem" className="min-w-0">
-                  <OrgCard c={c} C={C} problem={problems[`${c.ref}|${difficulty}`]} onOpen={() => setPick(c.ref)} />
-                </div>
-              ))}
+            {choices.length ? (
+              <div className="overflow-hidden rounded-xl border border-line bg-surface">
+                {choices.map((c) => (
+                  <OrgRow
+                    key={c.ref}
+                    c={c}
+                    C={C}
+                    problem={problems[`${c.ref}|${difficulty}`]}
+                    active={c.ref === chosen?.ref}
+                    focusable={c.ref === chosen?.ref}
+                    onPick={() => choose(c.ref)}
+                    onKey={onKey}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* ---- The selected org's file, always on the right (the next step on a phone) ---- */}
+        <div className={cx("min-w-0", phoneStep === "list" && "max-lg:hidden")}>
+          <Button variant="ghost" size="sm" className="mb-2 lg:hidden" onClick={() => setPhoneStep("list")}>
+            {P.allOrgs}
+          </Button>
+          {chosen && preview ? (
+            <div className="panel p-4 sm:p-6">
+              <Dossier
+                c={chosen}
+                preview={preview}
+                difficulty={difficulty}
+                onDifficulty={setDifficulty}
+                manager={manager}
+                onManager={setManager}
+                managerDefault={managerDefault}
+              />
             </div>
+          ) : (
+            <div className="panel p-6 text-sm text-sub">{choices.length === 0 ? P.empty(seasonLabelFor(era)) : P.none}</div>
+          )}
+          {full ? <p className="mt-3 text-sm text-bad">{C.takeover.door.slotsFull}</p> : null}
+          <div className="sticky bottom-0 z-10 mt-4 hidden items-center justify-between gap-3 border-t border-line bg-bg py-3 lg:flex">
+            <Button variant="ghost" onClick={onBack}>{P.back}</Button>
+            {action}
           </div>
         </div>
       </div>
 
-      <div className="mt-6">
-        <Button variant="ghost" onClick={onBack}>{P.back}</Button>
+      {/* The action, docked on the phone's bottom edge (the list step has only the way back). */}
+      <div className="action-dock mt-6 flex items-center justify-between gap-3 lg:hidden">
+        <Button variant="ghost" onClick={phoneStep === "file" ? () => setPhoneStep("list") : onBack}>
+          {P.back}
+        </Button>
+        {phoneStep === "file" ? action : null}
       </div>
-
-      {/* ---- The org's file, in a modal: Escape closes it and the focus returns to its card ---- */}
-      <Modal
-        open={Boolean(chosen && preview) && !arrived}
-        title={P.title}
-        wide
-        className="sm:!max-w-4xl"
-        onClose={() => {
-          setPick(null);
-          setFull(false);
-        }}
-        actions={
-          <>
-            {full ? <p className="mr-auto self-center text-sm text-bad">{C.takeover.door.slotsFull}</p> : null}
-            <Button variant="ghost" onClick={() => setPick(null)}>{P.back}</Button>
-            {action}
-          </>
-        }
-      >
-        {chosen && preview ? (
-          <Dossier
-            c={chosen}
-            preview={preview}
-            difficulty={difficulty}
-            onDifficulty={setDifficulty}
-            manager={manager}
-            onManager={setManager}
-            managerDefault={managerDefault}
-          />
-        ) : null}
-      </Modal>
 
       {arrived ? <ArrivalSplash onDone={onDone} /> : null}
     </div>
