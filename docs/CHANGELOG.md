@@ -176,6 +176,33 @@ with the root cause — that section doubles as the project's bugfix log.
 - The collection's album tabs truncated both names at 320 px. Root cause: an `inline-flex` pair with a 10px count that could not shrink; the tabs now share the row.
 - "Challenges" and "Collection" overlapped in the bottom nav at 320 px. Root cause: six equal columns of 53 px for labels 55 and 50 px wide.
 
+### LOCKER: player morale that moves (branch `rc9/locker`, FEATURES.lockerRoom, R211–R219)
+
+- **Fixed:** morale read flat in play ("parece que o emocional não muda").
+  Root cause: a starter had two drivers that cancelled out (+1 per event
+  played, −1 per week back to neutral), so 100 % of player-weeks in the probe
+  read neutral; and the arc bot never called the store's `lockerRoomAfter`, so
+  no battery had ever played the locker room at all.
+- **Changed:** each Monday morale moves 30 % of the way to a target set by the
+  team's series results against what the ratings expected (with a
+  per-difficulty edge), the player's box-score form against his teammates and
+  his training load (sustained heavy weeks tire, light weeks and rest
+  recover). A favourite's series above expectation do not count (the top
+  side of a field beats the ratings by about 10 points of win rate, and a
+  dynasty sat delighted on that alone). Bench, results, promises and the
+  market stay as one-off shocks.
+  The mood a screen shows holds 3 points past a bound (no weekly flapping).
+- **Added:** four requests through the existing talk machinery, at most one
+  new talk per two weeks for the squad: a lighter load, more load, entering a
+  1v1 / 2v2 Community Cup, a reserve starting the regional. Every answer has a
+  consequence (a load tweak, a cup entry, a one-event lineup change, morale).
+- **Added:** a bounded match effect by the shown mood (per player −1.5 to
+  +0.25, team mean clamped to −1 / +0.25, the negative side halved in a save's
+  first season, the positive side off for a recent Worlds champion),
+  temporary, never written to a rating.
+- **Added:** `lockerRoomView.ts` (mood, trend, reason as a copy key, what
+  waits for the manager) for the screens; the arc bot runs the locker room.
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

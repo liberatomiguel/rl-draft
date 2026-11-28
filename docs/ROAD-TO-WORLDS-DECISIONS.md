@@ -3082,3 +3082,52 @@ Absorve o polimento do PROQA (itens 1–10) e a correção da rodada 3 do PROSPI
 ## R258 — 28 de novembro de 2026: sem número
 
 ## R259 — 28 de novembro de 2026: sem número
+
+## R211 — 27 de novembro de 2026: a moral persegue um alvo, e o alvo é o que a temporada dá ao jogador (rc.9 LOCKER)
+
+- **Achado (Miguel: "parece que o emocional não muda"):** medido com o `LOCKER_PROBE` (NA, EU e SAM, Normal, duas temporadas), 100 % das semanas-jogador eram "Tranquilo". Para um titular só existiam dois motores, e eles se anulavam: +1 por evento jogado e −1 por semana de volta ao neutro (63 pontos de cada lado na NA, 60 e 60 na EU). Banco, títulos e promessas existem, mas o bot nem tinha banco. E nenhuma bateria tinha medido nada: o bot de carreira nunca chamava o `lockerRoomAfter` da store, então toda probe com `LOCKER_ROOM=1` jogava sem vestiário.
+- **Decidido:** toda segunda-feira a moral anda `pull.share` (0,3) do caminho até um alvo. O alvo é o neutro mais os resultados contra a expectativa (R212), a forma (R213) e a carga de treino (R214). Sem contexto o alvo é o neutro, então isso substitui o `weeklyDrift`. O motivo de cada passo é a parte que mais puxa para aquele lado, desde que tenha ao menos `pull.reasonFrom` (3) pontos; senão é "o tempo passou".
+- **Mantido:** banco, promessas, mercado, título e pedido de transferência continuam como choques que somam ou tiram de uma vez; o alvo só decide para onde a moral volta depois.
+
+## R212 — 27 de novembro de 2026: resultado é contra o que o rating esperava (rc.9 LOCKER)
+
+- **Decidido:** cada série do usuário conta `venceu − p`, com `p = 1 / (1 + e^(−diferença de rating / 3))` lida das ratings no momento da simulação. A soma de um evento entra numa memória do time (× 0,75 por evento, × 0,95 por semana); o alvo anda 20 por unidade, no máximo 30 para cada lado; quem está numa sequência de banco sente metade.
+- **Calibração:** nas carreiras medidas, vitórias e esperado batem (NA 23 de 63 contra 23,5; EU 17 de 55 contra 16,6; SAM 33 de 81 contra 31,7). Um time fraco que perde o esperado não fica triste; um time forte que ganha o esperado não fica eufórico.
+- **A dificuldade entra no esperado (`expectShift`):** a diferença de rating da série não carrega a vantagem que a dificuldade dá à IA. Na probe (temporada 1, NA, EU e SAM, 5 carreiras por célula) o Normal ganhou 1 ponto de aproveitamento acima do `p` e o Difícil 3,1 abaixo (EU 23,5 % contra 28,2 %), então todo elenco no Difícil lia "abaixo do esperado" e afundava (36 % das semanas-jogador "Insatisfeito" na EU). O Difícil soma −0,45 de rating ao lado do usuário antes de ler o `p`; Fácil e Muito difícil não foram medidos e ficam em 0.
+- **Favorito vencendo o esperado (`favouriteUpShare` 0):** o time de maior rating do campo ganha mais do que o `p` diz (as orgs mais fortes de NA, EU e SAM a partir da temporada 6 ganham 75 a 80 % das séries contra um `p` de 65 a 68 %). As séries acima do esperado de um favorito não contam; abaixo do esperado contam inteiras.
+- **Favorito:** um título ou campanha longa do time de maior rating do campo é o esperado e não levanta ninguém (`favouriteTitleShare` 0; a primeira versão com 0,5 deixou uma dinastia "Empolgada" a temporada inteira com 24 títulos por ano).
+
+## R213 — 27 de novembro de 2026: forma pelo box score (rc.9 LOCKER)
+
+- **Decidido:** com o box score ligado, cada escrita com jogos novos dá a cada jogador a média dele menos a média da escalação, numa memória (× 0,5 por escrita, × 0,85 por semana). O alvo anda 10 por ponto de rating, no máximo 12. Sem box score não há forma individual; o resultado do time continua valendo.
+
+## R214 — 27 de novembro de 2026: carga de treino cansa e descanso recupera (rc.9 LOCKER)
+
+- **Decidido:** a carga é a do pacote que roda (o ajuste do jogador primeiro; sem pacote, normal; pacote de recuperação conta como leve). Semana pesada soma 1 na conta de carga, normal tira 1, leve ou descanso tira 2. Passadas 2 semanas, cada semana de carga tira 4 do alvo (no máximo 12); semana leve ou descanso soma 3.
+- **Não medido em jogo:** o bot de bateria treina em carga normal, então o caminho da carga pesada só está provado nos testes.
+
+## R215 — 27 de novembro de 2026: o humor mostrado segura na fronteira (rc.9 LOCKER)
+
+- **Decidido:** o humor que a tela mostra só muda quando a moral passa 3 pontos da fronteira (`moodHysteresis`); um salto de dois humores cai direto onde a moral diz. Fica gravado no jogador só enquanto difere do humor da moral. As mensagens de humor seguem o humor mostrado. Medido: 0 idas e voltas em duas semanas em todas as carreiras da probe.
+
+## R216 — 27 de novembro de 2026: os jogadores pedem coisas, de vez em quando (rc.9 LOCKER)
+
+- **Decidido:** quatro pedidos novos pela caixa de entrada, sempre relatados pela comissão (um jogador pode ser um pro real; nenhuma frase é posta na boca dele): carga mais leve (conta de carga 4 e semana pesada), mais carga (moral 64 ou mais, forma não negativa, sem carga acumulada; 20 % por semana), jogar a copa 1v1 / 2v2 da semana (60 %, um reserva primeiro) e um reserva pedir para ser titular no regional (banco em 2 eventos seguidos, até 6 de overall abaixo do titular mais fraco; 60 %). No máximo uma conversa nova a cada 2 semanas para o elenco todo, e o mesmo jogador só pede de novo depois de 8 semanas; a proposta recusada é ato do técnico e não conta.
+- **O que cada resposta faz:** sim à carga leve ou pesada vira o ajuste dele no pacote até o fim do bloco (menos ou mais evolução e desgaste reais); sim à copa inscreve o time com ele; sim ao regional troca o titular mais fraco por ele só naquele evento, e a escalação volta depois (química menor, o titular que sai perde 3). Ouvido: +4 (titular no regional, +6); recusado: −3; "manter a carga" para quem quer mais: −1. Sem resposta, vale a neutra (nada muda no plano).
+- **A copa 1v1 / 2v2 existe:** é a Community Cup de `teamSize` 1 ou 2 (`unofficialOfferFor`, 16 % das semanas abertas, só abaixo da reputação da t2). Acima dela o pedido não aparece; não inventei evento novo.
+
+## R217 — 27 de novembro de 2026: o humor vale rating na partida, pouco para cima e mais para baixo (rc.9 LOCKER)
+
+- **Decidido:** por jogador escalado, pelo humor mostrado: Irritado −1,5, Insatisfeito −0,5, Tranquilo 0, Satisfeito +0,1, Empolgado +0,25. A média da escalação, limitada a −1 / +0,25, entra no canal plano de rating do time num evento oficial de três (nunca na copa 1v1 / 2v2), é temporária e nunca grava rating. Na primeira temporada do save o lado negativo vale metade; um campeão do Worlds dentro de `CAREER_DYNASTY.windowSeasons` não ganha o lado positivo.
+- **Por que tão pouco para cima:** medido (`LOCKER_PRICE`, chave de domingo Bo5/Bo7/Bo7): +0,17 de rating do time são cerca de +3 pontos de chance de título para um favorito ao Worlds, +0,25 são +4. O ponto de "não mais que um ponto" para uma dinastia só cabe com o lado positivo pequeno e desligado para quem já ganhou o Worlds. A diferença que o humor faz é sobretudo um vestiário ruim custar resultado. Tabelas no handoff `docs/handoff-rc9/LOCKER.md`.
+- **Medido com a probe (28/11, NA, EU e SAM, 5 carreiras por célula):** na temporada 1 de uma carreira fundada o bônus médio fica entre −0,05 e +0,01 (faixa −0,25 a +0,10) e o aproveitamento de séries com a flag fica dentro do ruído da flag desligada (de −1,3 a +2,1 pontos, erro de 0,3 a 1,6). Numa "dinastia" (a org mais forte da região assumida na temporada 6, temporadas 6 a 8) o bônus médio é +0,02 a +0,06, o que pela tabela de preço dá menos de um ponto de chance de título; no Difícil o aproveitamento pende para cima (NA +1,5 ± 0,6, SAM +3,0 ± 1,9), Worlds 4 de 45 contra 3 de 45. Isso só ficou assim depois de o favorito deixar de ganhar humor por vencer o esperado (`results.favouriteUpShare` 0, R212): antes, 70 a 80 % das semanas de uma dinastia eram Satisfeito ou Empolgado.
+- **Não seguido do briefing:** o +1,0 por jogador do lado positivo. Com o humor medido de uma dinastia (cerca de 35 % Satisfeito, 8 % Empolgado), Satisfeito +0,5 / Empolgado +1,0 dariam cerca de +0,25 ao time, uns 4 pontos de título. Fica para o Miguel decidir.
+
+## R218 — 27 de novembro de 2026: o que as telas leem (rc.9 LOCKER)
+
+- **Decidido:** `lockerRoomView.ts` dá, por jogador, a moral, o humor mostrado, a tendência das últimas 3 semanas (sobe / cai / estável, 3 pontos líquidos), o motivo principal como chave de cópia (`locker.why`) e se algo espera o técnico (conversa aberta, promessa de minutos a um banco de quebrar). As conversas novas guardam `params` (tamanho da copa, evento, titular que sai) para a tela. Nomes antigos continuam exportados.
+
+## R219 — 27 de novembro de 2026: o bot joga o vestiário que a store joga (rc.9 LOCKER)
+
+- **Decidido:** `playArcCareer` chama `lockerRoomAfter` em cada escrita (o dia, a decisão, o fim de evento como escrita própria, a virada de temporada). Desligado, é um no-op: carreiras com a flag desligada seguem idênticas. Um evento visto em duas escritas conta uma vez (`doneEvents`).
+- **Efeito colateral:** toda bateria com `LOCKER_ROOM=1` (soft-lock, mandatos) passa a jogar com vestiário e com o efeito na partida.

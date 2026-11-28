@@ -78,6 +78,7 @@ import {
   rocketStreetWindowWrap,
 } from "@/engine/career/rocketStreet";
 import { communityParticipantsFor, communityTeamFor } from "@/engine/career/community";
+import { lockerMatchBonusOf } from "@/engine/career/lockerRoom"; // rc9 LOCKER
 import { statsFromView as communityStats } from "@/engine/career/development";
 import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
 import {
@@ -3513,7 +3514,7 @@ export function userTeamForEvent(
   }
   const unavailable =
     save.pendingUnavailability?.eventId === def.id ? save.pendingUnavailability.playerId : null;
-  return userTeamFor({
+  const input = {
     identity: save.identity,
     squad: save.squad,
     starterIds: save.starterIds,
@@ -3524,6 +3525,19 @@ export function userTeamForEvent(
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
     unavailablePlayerId: unavailable,
+  };
+  const built = userTeamFor(input);
+  // rc9 LOCKER (R217): the fielded players' moods, a temporary bonus for this event (0 with the flag off).
+  const moraleBonus = lockerMatchBonusFor(save, built.fieldedIds);
+  return moraleBonus === 0 ? built : userTeamFor({ ...input, moraleBonus });
+}
+
+/** rc9 LOCKER (R217): the locker room's match bonus for a fielded trio (the save's first season damps the negative side). */
+export function lockerMatchBonusFor(save: CareerSave, fieldedIds: readonly string[]): number {
+  if (!FEATURES.lockerRoom || !save.lockerRoom) return 0;
+  return lockerMatchBonusOf(save.lockerRoom, fieldedIds, {
+    firstSeason: save.clock.seasonIndex === (save.startSeasonIndex ?? 0),
+    dynasty: recentWorldsTitlesOf(save) > 0,
   });
 }
 
@@ -4162,6 +4176,7 @@ export function userSeriesSubFlow(input: CareerSave, outId: string, inId: string
       careerSeed: save.careerSeed,
       difficulty: save.difficulty,
       unavailablePlayerId: null,
+      moraleBonus: lockerMatchBonusFor(save, starterIds), // rc9 LOCKER (R217): the new trio's moods
     });
     const roundUser = roundTeamsFor(save, ev.tournament).teams.user;
     const edged: TournamentTeam = {

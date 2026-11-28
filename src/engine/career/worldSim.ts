@@ -760,6 +760,8 @@ export interface UserTeamInput {
   difficulty: CareerDifficulty;
   /** A starter (or the sub) ruled out for this event by a random event. */
   unavailablePlayerId?: string | null;
+  /** rc9 LOCKER (R217): the locker room's temporary match bonus (rating points), on the flat channel. Absent = 0. */
+  moraleBonus?: number;
 }
 
 function squadMemberView(p: SquadPlayer, psychologist: boolean): MemberView {
@@ -969,7 +971,10 @@ export function userTeamFor(input: UserTeamInput): {
     specialIds: [],
     difficulty: input.difficulty,
     difficultyShift: 0,
-    ratingBonus: gearCompetitiveBonus(input.gear) + Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
+    ratingBonus:
+      gearCompetitiveBonus(input.gear) +
+      Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax) +
+      (input.moraleBonus ?? 0), // rc9 LOCKER (R217): + 0 when absent, so the sum is unchanged bit for bit
     // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
     chemistryMaxBonus: careerMatchProfile(input.difficulty).chemistryMaxBonus,
     rollRange: careerMatchProfile(input.difficulty).userRollRange,

@@ -38,7 +38,53 @@ const REASONS_EN: Record<string, string> = {
   inherited: "the previous manager left the room unsettled",
   mediaFatigue: "he was sent to another media day so soon after the last", // v2.3 MEDIA
   managerPost: "the manager spoke to the fans after the series", // rc9 STORIES
+  // rc9 LOCKER
+  goodResults: "the team is winning more series than its rating promised",
+  poorResults: "the team is losing series it was expected to win",
+  goodForm: "he has outplayed his teammates in recent games",
+  poorForm: "his recent games have been below his teammates'",
+  heavyLoad: "the heavy training load is wearing him down",
+  rested: "he had a lighter training week",
+  heard: "the manager said yes to what he asked for",
+  passedOver: "the manager turned down what he asked for",
+  madeWay: "he lost his seat to a reserve for one event",
+  sideEvent: "he played a side event",
 };
+
+/**
+ * rc9 LOCKER (R218): one line per reason for the mood chip on Squad and HQ,
+ * read as "Why: …". Present tense, what the save shows.
+ */
+const WHY_EN: Record<string, string> = {
+  bench: "Sitting out events",
+  played: "Playing",
+  backInSide: "Back in the lineup",
+  title: "A title won",
+  deepRun: "A deep run at a big event",
+  losingRun: "A run of early exits",
+  listed: "Put on the transfer list",
+  promiseMade: "You made him a promise",
+  promiseKept: "You kept your word",
+  promiseBroken: "You broke a promise to him",
+  teammateBroken: "You broke a promise to a teammate",
+  blunt: "Your blunt answer",
+  refused: "His transfer request refused",
+  agreedSale: "You agreed to let him go",
+  settling: "Time has passed",
+  inherited: "Left unsettled by the previous manager",
+  mediaFatigue: "Too many media days",
+  goodResults: "Results above the team's rating",
+  poorResults: "Results below the team's rating",
+  goodForm: "Playing above his teammates",
+  poorForm: "Playing below his teammates",
+  heavyLoad: "A heavy training load",
+  rested: "A lighter training week",
+  heard: "You said yes to his request",
+  passedOver: "You turned down his request",
+  madeWay: "Benched for a reserve",
+  sideEvent: "Played a side event",
+};
+// rc9 LOCKER end
 
 const changesOf = (p: P, moods: Record<string, string>): string =>
   String(p.changes ?? "")
@@ -58,11 +104,29 @@ const ANSWER_LABELS_EN = {
   blunt: () => "Tell him the lineup is not up for discussion",
   sell: () => "Agree to sell him",
   refuse: () => "Refuse the request",
+  // rc9 LOCKER
+  lighten: () => "Give him a light load until the training block ends",
+  keepLoad: () => "Keep the plan as it is",
+  pushHim: () => "Give him a heavy load until the training block ends",
+  holdBack: () => "Keep his load where it is",
+  enterHim: () => "Enter the cup with him",
+  passCup: () => "Leave the cup this time",
+  startHim: () => "Start him in the regional",
+  notYet: () => "Keep the lineup",
 };
+
+/** rc9 LOCKER: "the 1v1 cup" / "the 2v2 cup" when the size is known, else "the cup". */
+const cupOf = (p: P): string => (Number(p.size) === 1 || Number(p.size) === 2 ? `the ${p.size}v${p.size} cup` : "the cup");
 
 export const CAREER_LOCKER_EN = {
   moods: MOODS_EN as Record<string, string>,
   reasons: REASONS_EN,
+  /** rc9 LOCKER (R218): the mood chip's reason line. */
+  why: WHY_EN,
+  /** rc9 LOCKER (R217): the match effect line in a player's sheet (points = rating points, signed). */
+  matchLine: (points: number) =>
+    points === 0 ? "No effect on his match rating." : `${points > 0 ? "+" : "−"}${Math.abs(points)} to his match rating while he feels this way.`,
+  trend: { up: "Rising", down: "Falling", steady: "Steady" } as Record<string, string>,
   /** The talk's answer buttons in the inbox (params: need, of). */
   answers: ANSWER_LABELS_EN as Record<string, (p: P) => string>,
   answeredLabel: (answer: string) => `Your answer: ${answer}.`,
@@ -110,6 +174,17 @@ export const CAREER_LOCKER_EN = {
       blunt: () => "No promise, and he takes it badly: his mood drops.",
       sell: () => "He goes on the transfer list at his value and he is relieved. In a closed window the listing waits for the next one.",
       refuse: () => "He stays, unhappy: his mood drops, and he will not ask again for a few weeks.",
+      // rc9 LOCKER
+      lighten: () => "He trains on a light load until the block ends. He grows a little slower, wears less, and his mood lifts.",
+      keepLoad: () => "The heavy load stays. He keeps tiring, and his mood drops.",
+      pushHim: () =>
+        "He trains on a heavy load until the block ends. He grows faster, but the wear raises his risk of missing an event. His mood lifts.",
+      holdBack: () => "Nothing changes, and he takes it well.",
+      enterHim: (p: P) => `You enter ${cupOf(p)} with him in the side. His mood lifts. The result depends on his own rating.`,
+      passCup: (p: P) => `He does not play ${cupOf(p)}, and his mood drops a little.`,
+      startHim: () =>
+        "He takes the weakest starter's seat for this regional only, then the lineup goes back. A new trio has less chemistry, and the starter who makes way is not pleased. His mood lifts.",
+      notYet: () => "The lineup stays. His mood drops a little.",
     } as Record<string, (p: P) => string>,
     nowMood: (player: string, mood: string) => `${player} is ${mood.toLowerCase()} now.`,
     promiseOpened: "The promise is open in the locker room, on the Squad screen.",
@@ -128,6 +203,12 @@ export const CAREER_LOCKER_EN = {
       lockerPromiseBroken: (p: P) => `Promise broken: ${p.player}`,
       lockerMood: (p: P) => (Number(p.count) === 1 ? "A change in the locker room" : `${p.count} changes in the locker room`),
       lockerListLater: (p: P) => `${p.player}: the sale waits for the window`,
+      // rc9 LOCKER
+      lockerTalk_load: (p: P) => `${p.player} asks for a lighter load`,
+      lockerTalk_more: (p: P) => `${p.player} asks for more training`,
+      lockerTalk_side: (p: P) => `${p.player} wants to play ${cupOf(p)}`,
+      lockerTalk_start: (p: P) => `${p.player} asks to start the regional`,
+      lockerSwapBack: (p: P) => `${p.player} is back in the lineup`,
     } as Record<string, (p: P) => string>,
     body: {
       lockerTalk_bench_0: (p: P) =>
@@ -161,6 +242,33 @@ export const CAREER_LOCKER_EN = {
       lockerMood: (p: P) => `Mood changes, because ${REASONS_EN[String(p.reason)] ?? String(p.reason)}:\n\n${changesOf(p, MOODS_EN)}`,
       lockerListLater: (p: P) =>
         `You agreed to sell ${p.player}, but the transfer window is closed. Put him on the list from the market when it opens; it will not upset him.`,
+      // rc9 LOCKER: the players' own requests, reported by the staff (never his words).
+      lockerTalk_load_0: (p: P) =>
+        `${p.player} has trained on a heavy load for several weeks and told the staff he is tired. He asks for a lighter load.`,
+      lockerTalk_load_1: (p: P) =>
+        `The staff say ${p.player} is feeling the heavy training block. He has asked whether his load can come down.`,
+      lockerTalk_load_2: (p: P) =>
+        `${p.player} went to the staff after another heavy week. He wants a lighter load before the next event.`,
+      lockerTalk_more_0: (p: P) =>
+        `${p.player} is in good spirits and told the staff he can handle more. He asks for a heavier load.`,
+      lockerTalk_more_1: (p: P) =>
+        `The staff report that ${p.player} feels sharp and wants to train harder until the block ends.`,
+      lockerTalk_more_2: (p: P) =>
+        `${p.player} has asked the staff for extra work. He feels good and wants a heavy load.`,
+      lockerTalk_side_0: (p: P) =>
+        `${p.player} has asked the staff to put his name down for ${cupOf(p)} this week.`,
+      lockerTalk_side_1: (p: P) =>
+        `${p.player} saw ${cupOf(p)} on the calendar and wants to play it. He asked the staff to check with you.`,
+      lockerTalk_side_2: (p: P) =>
+        `The staff pass on a request from ${p.player}: he would like to enter ${cupOf(p)} this week.`,
+      lockerTalk_start_0: (p: P) =>
+        `${p.player} has watched the last events from the bench and asked the staff for a start in the regional this week.`,
+      lockerTalk_start_1: (p: P) =>
+        `The staff say ${p.player} wants a chance in the regional. He has not played for a while and feels ready.`,
+      lockerTalk_start_2: (p: P) =>
+        `${p.player} asked the staff whether he can start the regional this week instead of watching it.`,
+      lockerSwapBack: (p: P) =>
+        `The regional is over, so ${p.player} takes his seat back and ${p.sub} returns to the bench. Change the lineup on the Squad screen if you want to keep the new trio.`,
     } as Record<string, (p: P) => string>,
   },
 };
