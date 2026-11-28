@@ -154,7 +154,7 @@ const breachWhenPt = (p: Record<string, string | number>): string =>
 
 /**
  * rc9 TRAIN-MARKET: o que o banco faz na próxima quebra, numa oração só para as linhas do aviso
- * de dinheiro (os e-mails seguem com `nextBreachPt`). Palavras simples: "limite de crédito", sem "piso".
+ * de dinheiro (os e-mails seguem com `nextBreachPt`). Integração do rc.9: as notificações dizem "piso", como o e-mail e Finanças.
  */
 const noticeNextPt = (p: Record<string, string | number | undefined>): string => {
   if (p.next === "restructure") return "";
@@ -174,10 +174,6 @@ const noticeNextPt = (p: Record<string, string | number | undefined>): string =>
 /** rc9 TRAIN-MARKET: como fechar a diferença até o prazo do empréstimo, numa linha. */
 const noticeWaysPt = (p: Record<string, string | number | undefined>): string =>
   `Venda um jogador (${p.salePct}% da taxa vai para o empréstimo), ganhe premiações (${p.garnishPct}% de cada) ou reduza a folha`;
-
-/** rc.33 (ECO-07): o último pagamento do parceiro de resgate, como o e-mail do resgate o cita. */
-const partnerUntilPt = (p: Record<string, string | number>): string =>
-  `a segunda-feira da semana ${p.partnerUntilWeek}${Number(p.partnerNextSeason) ? " da próxima temporada" : ""}`;
 
 /** rc.33 (UX-07, ECO-08): "primeira", "segunda"… para a linha de dinheiro do assistente e o e-mail do resgate (qualquer número). */
 const ordinalPt = (n: number): string => ["primeira", "segunda", "terceira", "quarta", "quinta"][n - 1] ?? `${n}ª`;
@@ -672,7 +668,7 @@ export const CAREER_PT: CareerCopy = {
       // rc.34 (ECO-04): os e-mails dos contratos.
       // rc.36 (front S2): duas ou três marcas (o acesso da escada), com preço pelo risco (rc.35), e a regra do prazo.
       sponsorDecision: (p: Record<string, string | number>) =>
-        `Marcas oferecem à org um contrato ${Number(p.n) === 2 ? "Estável ou Equilibrado" : "Estável, Equilibrado ou Ousado"} (nível ${p.tier}). Contratos mais ousados pagam mais, com metas mais difíceis e multas maiores. Assine um até o domingo da semana ${p.byWeek}${Number(p.auto) ? "; depois disso o mais seguro é assinado por você" : ""}.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um nível abaixo." : ""}`,
+        `Marcas oferecem à org um contrato ${Number(p.n) === 2 ? "Estável ou Equilibrado" : "Estável, Equilibrado ou Ousado"} (nível ${p.tier}). Contratos mais ousados pagam mais, com metas mais difíceis e multas maiores. Assine um até o domingo da semana ${p.byWeek}${Number(p.auto) ? "; depois disso o mais seguro é assinado por você" : "; nesse dia o relógio espera a sua escolha"}.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um nível abaixo." : ""}`,
       sponsorLapsed: () =>
         `Ninguém assinou antes do prazo e as marcas seguiram em frente. Novas propostas chegam no próximo split.`,
       sponsorAutoSigned: (p: Record<string, string | number>) =>
@@ -2934,11 +2930,11 @@ export const CAREER_PT: CareerCopy = {
     toFinances: "Abrir Finanças",
     loanOpened: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "O banco entrou em cena",
-      lead: `Seu saldo ficou abaixo do limite de crédito (${p.floor}), então o banco emprestou ${p.lent}.`,
+      lead: `Seu saldo ficou abaixo do piso (${p.floor}), então o banco emprestou ${p.lent}.`,
       rows: noticeRows(
         ["Você deve", `${p.owed}, com ${p.repayPct}% de juros`],
         p.dlDate !== undefined && ["Quitar até", `${p.dlDate} (${p.dlWeeks} semanas)`],
-        p.dlDate !== undefined && ["No prazo", "O banco cobra. Se isso deixar você abaixo do limite de crédito, a carreira acaba"],
+        p.dlDate !== undefined && ["No prazo", "O banco cobra. Se isso deixar você abaixo do piso, a carreira acaba"],
         ["Como se paga", `${p.garnishPct}% de cada premiação e ${p.salePct}% de cada venda vão para o banco. O resto você paga em Finanças`],
         positive(p.partnerWeekly) && [
           "Investidor",
@@ -2950,7 +2946,7 @@ export const CAREER_PT: CareerCopy = {
     }),
     loanTopUp: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "O banco aumentou seu empréstimo",
-      lead: `Seu saldo ficou abaixo do limite de crédito de novo, então o banco emprestou mais ${p.lent}.`,
+      lead: `Seu saldo ficou abaixo do piso de novo, então o banco emprestou mais ${p.lent}.`,
       rows: noticeRows(
         ["Você deve", `${p.owed} no total`],
         p.dlDate !== undefined && ["Quitar até", `${p.dlDate}, o prazo não muda`],
@@ -2964,7 +2960,9 @@ export const CAREER_PT: CareerCopy = {
         // rc.34 review: as contas projetadas até o prazo (com o gasto semanal), não o saldo de hoje.
         ["Neste ritmo", onPacePt(p)],
         !Number(p.covered) && ["Como fechar a diferença", noticeWaysPt(p)],
-        !Number(p.covered) && ["No prazo", "O banco cobra. Se isso deixar você abaixo do limite de crédito, a carreira acaba"],
+        !Number(p.covered) && ["No prazo", "O banco cobra. Se isso deixar você abaixo do piso, a carreira acaba"],
+        // rc.9 integração: como pagar antes; um pagamento parcial não fecha nada.
+        ["Pagar antes", "Quitar tudo, em Finanças, encerra a dívida em qualquer dia em que o saldo fique acima do piso depois de pagar"],
       ),
     }),
     // rc.34 review: nas últimas semanas a projeção deixou de cobrir a dívida (uma taxa, uma compra, um prêmio perdido).
@@ -2978,17 +2976,17 @@ export const CAREER_PT: CareerCopy = {
       lead: `O prazo chegou e as contas aguentaram: o banco cobrou ${p.collected}. O saldo agora é de ${p.balance}.`,
       rows: noticeRows([
         "E agora",
-        p.next === undefined ? "Cair de novo abaixo do limite de crédito abre outro empréstimo, com prazo novo" : noticeNextPt(p),
+        p.next === undefined ? "Cair de novo abaixo do piso abre outro empréstimo, com prazo novo" : noticeNextPt(p),
       ]),
     }),
     careerEnded: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "A carreira termina aqui",
       lead:
         p.cause === "deadline"
-          ? `O empréstimo emergencial venceu com ${p.owed} de dívida e ${p.balance} em caixa. Pagar deixaria você abaixo do limite de crédito, então a org fechou as portas.`
+          ? `O empréstimo emergencial venceu com ${p.owed} de dívida e ${p.balance} em caixa. Pagar deixaria você abaixo do piso, então a org fechou as portas.`
           : !positive(p.owed) && Number(p.maxLoans) >= 0 && Number(p.loans) >= Number(p.maxLoans)
-            ? `Seu saldo ficou abaixo do limite de crédito de novo e o banco não abriria outro empréstimo emergencial depois ${Number(p.loans) === 1 ? "do que já emprestou" : `dos ${p.loans} que já emprestou`}. A org fechou as portas.`
-            : `Seu saldo ficou abaixo do limite de crédito de novo e o banco não quis emprestar mais${Number(p.topUps) > 0 ? ` depois de ${p.topUps} acréscimos` : ""}. A org fechou as portas.`,
+            ? `Seu saldo ficou abaixo do piso de novo e o banco não abriria outro empréstimo emergencial depois ${Number(p.loans) === 1 ? "do que já emprestou" : `dos ${p.loans} que já emprestou`}. A org fechou as portas.`
+            : `Seu saldo ficou abaixo do piso de novo e o banco não quis emprestar mais${Number(p.topUps) > 0 ? ` depois de ${p.topUps} acréscimos` : ""}. A org fechou as portas.`,
       rows: noticeRows(["O que fica", "A revisão da temporada, o arquivo e os troféus"]),
     }),
     loanTakenOver: (p: Record<string, string | number>): MoneyNoticeText => ({
@@ -3006,22 +3004,22 @@ export const CAREER_PT: CareerCopy = {
       title: "O banco oferece um empréstimo",
       lead:
         Number(p.weeks) > 0
-          ? `Gastando ${p.burn} por semana, seu caixa dura mais ou menos ${p.weeks} segundas-feiras. Antes de chegar ao limite de crédito (${p.floor}), o banco oferece um empréstimo.`
-          : `Você está no vermelho (${p.balance}) e perde ${p.burn} por semana. Antes de chegar ao limite de crédito (${p.floor}), o banco oferece um empréstimo.`,
+          ? `Gastando ${p.burn} por semana, seu caixa dura mais ou menos ${p.weeks} segundas-feiras. Antes de chegar ao piso (${p.floor}), o banco oferece um empréstimo.`
+          : `Você está no vermelho (${p.balance}) e perde ${p.burn} por semana. Antes de chegar ao piso (${p.floor}), o banco oferece um empréstimo.`,
       rows: noticeRows(
         ["Você recebe", `${p.loanNet} agora`],
         ["Você paga", `${p.loanTotal} no total, com ${p.loanPct}% de juros`],
         ["Prazo", `${p.loanTerm} semanas, ${p.loanWeekly} toda segunda`],
-        ["Sem ele", `Neste ritmo você passa do limite de crédito n${breachWhenPt(p)}`],
+        ["Sem ele", `Neste ritmo você passa do piso n${breachWhenPt(p)}`],
       ),
       foot: `O empréstimo emergencial custa mais: ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, quitado em até ${p.emergencyTerm} semanas` : ""}`,
     }),
     // rc.37 F2 (pacote 4): um gasto único trouxe o piso para perto (careerFlow.spendAlertFlow).
     spendRisk: (p: Record<string, string | number>): MoneyNoticeText => ({
-      title: Number(p.mondays) === 1 ? "A próxima segunda passa do limite de crédito" : "Isso deixa você perto do limite de crédito",
+      title: Number(p.mondays) === 1 ? "A próxima segunda passa do piso" : "Isso deixa você perto do piso",
       lead: positive(p.burn)
-        ? `Depois de ${p.spent}, sobram ${p.balance}. Gastando ${p.burn} por semana, você passa do limite de crédito (${p.floor}) n${breachWhenPt(p)}.`
-        : `Depois de ${p.spent}, sobram ${p.balance}, abaixo do limite de crédito (${p.floor}) mesmo com a receita da semana: ${breachWhenPt(p)} passa dele.`,
+        ? `Depois de ${p.spent}, sobram ${p.balance}. Gastando ${p.burn} por semana, você passa do piso (${p.floor}) n${breachWhenPt(p)}.`
+        : `Depois de ${p.spent}, sobram ${p.balance}, abaixo do piso (${p.floor}) mesmo com a receita da semana: ${breachWhenPt(p)} passa dele.`,
       rows: noticeRows(
         noticeNextPt(p) !== "" && ["Nessa segunda", noticeNextPt(p)],
         Number(p.offer) > 0 && [
@@ -3516,7 +3514,7 @@ export const CAREER_PT: CareerCopy = {
       flipReset: "Flip reset",
     } as Record<string, string>,
     hints: { risky: "Arriscado", uncertain: "Incerto", likely: "Provável", mastered: "Você domina isso" } as Record<string, string>,
-    locked: (_name: string) => `Ainda não desbloqueada`,
+    locked: "Ainda não desbloqueada",
     instinct: "No instinto",
     instinctHint: "O seu estilo faz a escolha. Não ajuda e não atrapalha.",
     result: {
@@ -4480,7 +4478,7 @@ export const CAREER_PT: CareerCopy = {
       cancel: "Agora não",
       goodbyeTitle: (name: string) => `${name} se aposenta`,
       careerLine: (from: number, to: number, seasons: number, series: number, won: number) => `Dos ${from} aos ${to} anos, ${seasons} ${seasons === 1 ? "temporada" : "temporadas"}, ${series} séries jogadas e ${won} vencidas.`,
-      peak: (_p: string) => "Overall de pico",
+      peak: "Overall de pico",
       orgs: "Orgs",
       titles: "Títulos",
       awards: "Prêmios",

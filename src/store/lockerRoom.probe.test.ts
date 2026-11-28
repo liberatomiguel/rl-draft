@@ -143,7 +143,6 @@ function runCareer(region: Region, difficulty: CareerDifficulty, seed: number, a
   const lastMood = new Map<string, { mood: MoodId; week: number; prev?: MoodId; prevWeek?: number }>();
   const seenLog = new Set<string>();
   const seenTalks = new Set<string>();
-  let lastEvent = "";
   try {
     const from = takeoverAt(region, difficulty, seed);
     const career = playArcCareer({

@@ -7,7 +7,7 @@
  * twice in a season.
  */
 import { describe, expect, it } from "vitest";
-import { dayOfWeekOf, weekOfDay } from "@/engine/career/calendar";
+import { weekOfDay } from "@/engine/career/calendar";
 import type { ProSave, ProWeekPlan } from "@/engine/career/pro/types";
 import { newProBotSave, proBotDecide } from "./proBot";
 import {
@@ -20,7 +20,6 @@ import {
   proStopOf,
   setProAutoPlanFlow,
   setProWeeklyPlanningFlow,
-  weekKeyOf,
 } from "./proFlow";
 
 const TRAIN3: ProWeekPlan = [

@@ -291,7 +291,7 @@ describe("M4: repeat fatigue and the locker room", () => {
   function twice(lockerOn: boolean) {
     F.mediaDays = true;
     F.lockerRoom = lockerOn;
-    const { save, def, monday } = regionalWeek();
+    const { save, monday } = regionalWeek();
     save.pendingEventDef = null;
     const playerId = save.starterIds[1];
     const wk = absWeekOf(0, monday);

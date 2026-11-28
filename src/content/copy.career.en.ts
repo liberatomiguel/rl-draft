@@ -163,7 +163,7 @@ const breachWhenEn = (p: Record<string, string | number>): string =>
 
 /**
  * rc9 TRAIN-MARKET: what the bank does at the next breach, as one clause for the money
- * notice's rows (the mails keep `nextBreachEn`). Plain words: "credit limit", no "floor".
+ * notice's rows (the mails keep `nextBreachEn`). rc.9 integration: the notices say "floor", as the mail and Finances do.
  */
 const noticeNextEn = (p: Record<string, string | number | undefined>): string => {
   if (p.next === "restructure") return "";
@@ -183,10 +183,6 @@ const noticeNextEn = (p: Record<string, string | number | undefined>): string =>
 /** rc9 TRAIN-MARKET: how to close the gap to the loan's deadline, in one line. */
 const noticeWaysEn = (p: Record<string, string | number | undefined>): string =>
   `Sell a player (${p.salePct}% of the fee goes to the loan), win prizes (${p.garnishPct}% of each) or lower the wage bill`;
-
-/** rc.33 (ECO-07): the rescue partner's last payday, as the rescue mail quotes it. */
-const partnerUntilEn = (p: Record<string, string | number>): string =>
-  `the Monday of ${Number(p.partnerNextSeason) ? "next season's " : ""}week ${p.partnerUntilWeek}`;
 
 /** rc.34 review: a small count in words for the wizard's money line ("two", "three"; digits past five). */
 const countWordEn = (n: number): string => ["zero", "one", "two", "three", "four", "five"][n] ?? String(n);
@@ -691,7 +687,7 @@ export const CAREER_EN = {
       // rc.34 (ECO-04): the deals' mails.
       // rc.36 (front S2): two or three brands (the ladder's access), priced by risk (rc.35), and the deadline rule.
       sponsorDecision: (p: Record<string, string | number>) =>
-        `Brands offer the org a ${Number(p.n) === 2 ? "Steady or a Balanced deal" : "Steady, Balanced or Bold deal"} (level ${p.tier}). Bolder deals pay more, with harder goals and bigger fines. Sign one by Sunday of week ${p.byWeek}${Number(p.auto) ? "; after that the safest is signed for you" : ""}.${Number(p.demoted) ? " Three goals slipped on the last Steady deal, so this round is a level lower." : ""}`,
+        `Brands offer the org a ${Number(p.n) === 2 ? "Steady or a Balanced deal" : "Steady, Balanced or Bold deal"} (level ${p.tier}). Bolder deals pay more, with harder goals and bigger fines. Sign one by Sunday of week ${p.byWeek}${Number(p.auto) ? "; after that the safest is signed for you" : "; that day the clock waits for your pick"}.${Number(p.demoted) ? " Three goals slipped on the last Steady deal, so this round is a level lower." : ""}`,
       sponsorLapsed: () =>
         `Nobody signed before the deadline, so the brands moved on. New offers come at the next split.`,
       sponsorAutoSigned: (p: Record<string, string | number>) =>
@@ -2964,11 +2960,11 @@ export const CAREER_EN = {
     toFinances: "Open Finances",
     loanOpened: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "The bank stepped in",
-      lead: `Your balance fell below the credit limit (${p.floor}), so the bank lent you ${p.lent}.`,
+      lead: `Your balance fell below the floor (${p.floor}), so the bank lent you ${p.lent}.`,
       rows: noticeRows(
         ["You owe", `${p.owed}, with ${p.repayPct}% interest`],
         p.dlDate !== undefined && ["Repay by", `${p.dlDate} (${p.dlWeeks} weeks)`],
-        p.dlDate !== undefined && ["On the deadline", "The bank collects. If that puts you below the credit limit, the career ends"],
+        p.dlDate !== undefined && ["On the deadline", "The bank collects. If that puts you below the floor, the career ends"],
         ["How it is repaid", `${p.garnishPct}% of each prize and ${p.salePct}% of each sale go to the bank. Pay the rest from Finances`],
         positive(p.partnerWeekly) && [
           "Investor",
@@ -2980,7 +2976,7 @@ export const CAREER_EN = {
     }),
     loanTopUp: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "The bank added to your loan",
-      lead: `Your balance fell below the credit limit again, so the bank lent you ${p.lent} more.`,
+      lead: `Your balance fell below the floor again, so the bank lent you ${p.lent} more.`,
       rows: noticeRows(
         ["You owe", `${p.owed} in all`],
         p.dlDate !== undefined && ["Repay by", `${p.dlDate}, the deadline does not move`],
@@ -2994,7 +2990,9 @@ export const CAREER_EN = {
         // rc.34 review: the books projected to the deadline (the weekly spending counted), not today's balance.
         ["At this pace", onPaceEn(p)],
         !Number(p.covered) && ["Ways to close the gap", noticeWaysEn(p)],
-        !Number(p.covered) && ["On the deadline", "The bank collects. If that puts you below the credit limit, the career ends"],
+        !Number(p.covered) && ["On the deadline", "The bank collects. If that puts you below the floor, the career ends"],
+        // rc.9 integration: how to repay early; a partial payment closes nothing.
+        ["Repay early", "Pay it all, in Finances, clears the debt any day the balance stays above the floor after paying"],
       ),
     }),
     // rc.34 review: inside the last weeks the projection stopped covering the debt (a fee, a purchase, a lost prize).
@@ -3008,17 +3006,17 @@ export const CAREER_EN = {
       lead: `The deadline arrived and the books could pay it: the bank took ${p.collected}. The balance is now ${p.balance}.`,
       rows: noticeRows([
         "What comes next",
-        p.next === undefined ? "Another dip below the credit limit opens a new loan, with a new deadline" : noticeNextEn(p),
+        p.next === undefined ? "Another dip below the floor opens a new loan, with a new deadline" : noticeNextEn(p),
       ]),
     }),
     careerEnded: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "The career ends here",
       lead:
         p.cause === "deadline"
-          ? `The emergency loan came due with ${p.owed} owed and ${p.balance} in the bank. Paying it would have put you below the credit limit, so the org closed.`
+          ? `The emergency loan came due with ${p.owed} owed and ${p.balance} in the bank. Paying it would have put you below the floor, so the org closed.`
           : !positive(p.owed) && Number(p.maxLoans) >= 0 && Number(p.loans) >= Number(p.maxLoans)
-            ? `Your balance fell below the credit limit again and the bank would not open another emergency loan after ${Number(p.loans) === 1 ? "the one it lent" : `the ${p.loans} it lent`}. The org closed.`
-            : `Your balance fell below the credit limit again and the bank would not lend any more${Number(p.topUps) > 0 ? ` after ${p.topUps} top-ups` : ""}. The org closed.`,
+            ? `Your balance fell below the floor again and the bank would not open another emergency loan after ${Number(p.loans) === 1 ? "the one it lent" : `the ${p.loans} it lent`}. The org closed.`
+            : `Your balance fell below the floor again and the bank would not lend any more${Number(p.topUps) > 0 ? ` after ${p.topUps} top-ups` : ""}. The org closed.`,
       rows: noticeRows(["What stays", "The season review, the archive and the trophies"]),
     }),
     loanTakenOver: (p: Record<string, string | number>): MoneyNoticeText => ({
@@ -3036,22 +3034,22 @@ export const CAREER_EN = {
       title: "The bank offers a loan",
       lead:
         Number(p.weeks) > 0
-          ? `At ${p.burn} spent a week, your cash lasts about ${p.weeks} more Mondays. Before you reach the credit limit (${p.floor}), the bank offers a loan.`
-          : `You are in the red (${p.balance}) and losing ${p.burn} a week. Before you reach the credit limit (${p.floor}), the bank offers a loan.`,
+          ? `At ${p.burn} spent a week, your cash lasts about ${p.weeks} more Mondays. Before you reach the floor (${p.floor}), the bank offers a loan.`
+          : `You are in the red (${p.balance}) and losing ${p.burn} a week. Before you reach the floor (${p.floor}), the bank offers a loan.`,
       rows: noticeRows(
         ["You receive", `${p.loanNet} now`],
         ["You repay", `${p.loanTotal} in all, with ${p.loanPct}% interest`],
         ["Term", `${p.loanTerm} weeks, ${p.loanWeekly} every Monday`],
-        ["Without it", `At this pace you go below the credit limit on ${breachWhenEn(p)}`],
+        ["Without it", `At this pace you go below the floor on ${breachWhenEn(p)}`],
       ),
       foot: `The emergency loan costs more: ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, repaid within ${p.emergencyTerm} weeks` : ""}`,
     }),
     // rc.37 F2 (package 4): a one-off spend brought the floor within reach (careerFlow.spendAlertFlow).
     spendRisk: (p: Record<string, string | number>): MoneyNoticeText => ({
-      title: Number(p.mondays) === 1 ? "Next Monday breaks the credit limit" : "This leaves you near the credit limit",
+      title: Number(p.mondays) === 1 ? "Next Monday breaks the floor" : "This leaves you near the floor",
       lead: positive(p.burn)
-        ? `After ${p.spent}, ${p.balance} is left. At ${p.burn} spent a week, you go below the credit limit (${p.floor}) on ${breachWhenEn(p)}.`
-        : `After ${p.spent}, ${p.balance} is left, below the credit limit (${p.floor}) even with the week's income: ${breachWhenEn(p)} breaks it.`,
+        ? `After ${p.spent}, ${p.balance} is left. At ${p.burn} spent a week, you go below the floor (${p.floor}) on ${breachWhenEn(p)}.`
+        : `After ${p.spent}, ${p.balance} is left, below the floor (${p.floor}) even with the week's income: ${breachWhenEn(p)} breaks it.`,
       rows: noticeRows(
         noticeNextEn(p) !== "" && ["On that Monday", noticeNextEn(p)],
         Number(p.offer) > 0 && [
@@ -3547,7 +3545,7 @@ export const CAREER_EN = {
       flipReset: "Flip reset",
     } as Record<string, string>,
     hints: { risky: "Risky", uncertain: "Uncertain", likely: "Likely", mastered: "You own this" } as Record<string, string>,
-    locked: (_name: string) => `Not unlocked yet`,
+    locked: "Not unlocked yet",
     instinct: "On instinct",
     instinctHint: "Your style makes the call. It does not help you and it does not hurt you.",
     result: {
@@ -4517,7 +4515,7 @@ export const CAREER_EN = {
       cancel: "Not yet",
       goodbyeTitle: (name: string) => `${name} retires`,
       careerLine: (from: number, to: number, seasons: number, series: number, won: number) => `Ages ${from} to ${to}, ${seasons} ${seasons === 1 ? "season" : "seasons"}, ${series} series played and ${won} won.`,
-      peak: (_p: string) => "Peak overall",
+      peak: "Peak overall",
       orgs: "Orgs",
       titles: "Titles",
       awards: "Awards",

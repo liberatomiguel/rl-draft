@@ -729,7 +729,9 @@ describe("rc.34 review (P3) — 'covered' is the bank's test on the books projec
     expect(Number(mail.params!.gap)).toBeGreaterThan(0);
     for (const C of [EN, CAREER_PT]) {
       const body = C.mail.body.loanDeadline(mail.params!);
-      const notice = moneyNoticeTextOf(C, moneyNoticeOf(monday)!, monday.clock);
+      // rc.9 integration: the warning's own notice (the head of the queue can be the loan's opening one).
+      const warning = monday.moneyNotices!.find((n) => n.kind === "deadlineWarning")!;
+      const notice = moneyNoticeTextOf(C, warning, monday.clock);
       const all = [body, notice.lead, ...notice.rows.flat()].join(" ");
       expect(all).not.toMatch(/Pay it down from Finances|Abata em Finanças|undefined|NaN/);
       expect(all).toMatch(C === CAREER_PT ? /Quitar tudo/ : /Pay it all/);

@@ -309,7 +309,6 @@ export function orgLifecycle(
   ctx: Ctx & { stacks: readonly StackCandidate[]; retiredNow: readonly string[]; userSquadIds: readonly string[] },
 ): { world: WorldState; report: OrgLifeReport } {
   const T = L.orgTurnover;
-  const C = L.coaches;
   const next = cloneOrgs(world);
   const report: OrgLifeReport = { turnovers: [], stacks: [], coachRetired: 0, coachChanged: 0 };
   const season = ctx.seasonIndex;

@@ -48,7 +48,7 @@ export function ProDecisionCard({
                 <span className="block text-xs text-sub">{copy.STAT_LABELS[o.attr]}</span>
               </span>
               <span className="shrink-0 text-xs font-semibold text-blue-bright">
-                {o.locked ? M.locked(M.calls[o.requires ?? ""] ?? "") : o.hint ? M.hints[o.hint] : ""}
+                {o.locked ? M.locked : o.hint ? M.hints[o.hint] : ""}
               </span>
             </button>
           </li>

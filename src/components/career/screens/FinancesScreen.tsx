@@ -834,14 +834,6 @@ export function FinancesScreen() {
     );
   };
 
-  /** The perks under their own head, where no host titles them. */
-  const perkBlock = (tier: number): React.ReactNode => (
-    <div className="mt-3 border-t border-line pt-3">
-      <p className="kicker">{C.finances.sponsorPerks}</p>
-      {perkChips(tier)}
-    </div>
-  );
-
   const sponsorMoneyLine = (s: SponsorState): React.ReactNode => (
     <>
       <p className="display mt-2 text-xl font-bold leading-none tabular-nums text-good">

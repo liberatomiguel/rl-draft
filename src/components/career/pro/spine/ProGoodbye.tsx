@@ -45,7 +45,7 @@ export function ProGoodbye({ save }: { save: ProSave }) {
       </div>
       <div className="bg-paper px-4 py-3 text-paper-ink">
         <span className="display block text-5xl font-bold leading-none">{card.peak.toFixed(1)}</span>
-        <span className="display mt-1 block text-xs font-semibold uppercase">{P.peak(card.peak.toFixed(1))}</span>
+        <span className="display mt-1 block text-xs font-semibold uppercase">{P.peak}</span>
       </div>
       {row(P.orgs, card.orgs)}
       {row(P.titles, card.titles)}

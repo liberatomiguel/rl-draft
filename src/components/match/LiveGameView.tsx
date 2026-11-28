@@ -118,9 +118,9 @@ export function LiveGameView({
 
   const jump = reduced || skip;
   useEffect(() => {
+    // The render already shows the end while jumping; only the loop's clock moves.
     if (!jump) return;
     elapsedRef.current = schedule.totalMs;
-    setElapsed(schedule.totalMs);
   }, [jump, schedule]);
 
   // One loop: game time advances with the speed; the view redraws ~12 times a second.
