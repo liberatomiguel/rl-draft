@@ -409,6 +409,34 @@ export const DRAFT_UPSET_GUARD = {
     MENA: { hard: 0.3, legacy: 0.5 },
     OCE: { hard: 0.1, legacy: 1.5 },
   } as Partial<Record<Region, Partial<Record<Difficulty, number>>>>,
+  /**
+   * MENA compensation (#221; Miguel 27/11: MENA was made harder on purpose
+   * because it paid too much Season Rating, the guard must not give that back).
+   * The guard keeps the title rate but makes the weak-looking rivals beatable,
+   * so the top 4 and the final come more often (MENA Legacy top 4 36% to 64%)
+   * and a run pays more. Those Swiss exits WERE the absurd losses, so no
+   * rating change brings them back without the tail (see LEGACY.md, "MENA
+   * compensation"). Instead, a CLASSIC Region-only run in these cells pays this
+   * row instead of SEASON_RATING.delta while the guard is on: the title keeps
+   * its value, the placements that became easier pay less, so a run pays what
+   * it did in rc.8 on average. `enabled: false` = the plain table.
+   * Fitted on 5,760 tournaments per cell (960 sessions, live reset profile,
+   * hidden-overall bonus on Hard / Legacy): rating points per run rc.8 / guard
+   * with the plain table / guard with the row. MENA Legacy 5.66 / 9.53 / 5.72,
+   * MENA Hard 4.19 / 4.44 / 4.18, MENA Normal 2.27 / 2.37 / 2.27, SAM Legacy
+   * 12.09 / 13.68 / 12.22, OCE Legacy 8.93 / 10.05 / 8.93, EU Legacy 6.28 /
+   * 6.55 / 6.30. Every other cell drifts under 2% and keeps the table.
+   */
+  ratingRows: {
+    MENA: {
+      normal: { champion: 4, runner_up: 2, third: 1, fourth: 1, playoffs: 0, swiss_exit: -7 },
+      hard: { champion: 10, runner_up: 4, third: 0, fourth: 0, playoffs: 0, swiss_exit: -4 },
+      legacy: { champion: 70, runner_up: 9, third: 3, fourth: 3, playoffs: 0, swiss_exit: -6 },
+    },
+    SAM: { legacy: { champion: 70, runner_up: 16, third: 6, fourth: 6, playoffs: 0, swiss_exit: -4 } },
+    OCE: { legacy: { champion: 70, runner_up: 15, third: 5, fourth: 5, playoffs: 0, swiss_exit: -4 } },
+    EU: { legacy: { champion: 70, runner_up: 17, third: 6, fourth: 6, playoffs: 0, swiss_exit: -3 } },
+  } as Partial<Record<Region, Partial<Record<Difficulty, SeasonRatingRow>>>>,
 };
 
 /** Region-only field depth for a run (0 = none; see REGION_LOCK.fieldDepth). */
@@ -914,11 +942,16 @@ export const SEASON_RATING = {
   } as Partial<Record<Difficulty, Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>>>,
 } as const;
 
+/** One difficulty's placement deltas (SEASON_RATING.delta). */
+export type SeasonRatingRow = Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>;
+
 /** Season Rating delta for one finished run (signed). Pure; see `SEASON_RATING`. */
 export function seasonRatingDelta(input: {
   difficulty: Difficulty;
   placement: Placement;
   mode: string;
+  /** rc9 LEGACY: the run's region lock (null / omitted = worldwide). Reads DRAFT_UPSET_GUARD.ratingRows. */
+  region?: Region | null;
   hiddenOverall: boolean;
   /** Runs finished in this season BEFORE this one (placement protection). */
   seasonRunsBefore: number;
@@ -927,7 +960,13 @@ export function seasonRatingDelta(input: {
   /** The v2.0.5 / v2.0.6 history re-price only: use the frozen `retuneTable` rows. */
   frozenRetune?: boolean;
 }): number {
+  // rc9 LEGACY: a classic Region-only run in a compensated cell, guard on only (#221).
+  const regionRow =
+    !input.frozenRetune && input.region && input.mode === "classic" && DRAFT_UPSET_GUARD.enabled
+      ? DRAFT_UPSET_GUARD.ratingRows[input.region]?.[input.difficulty]
+      : undefined;
   const row =
+    regionRow ??
     (input.frozenRetune ? SEASON_RATING.retuneTable[input.difficulty] : undefined) ??
     SEASON_RATING.delta[input.difficulty];
   const bucket =

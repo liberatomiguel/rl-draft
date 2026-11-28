@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mmrBackfillFloor, SEASON_RATING, seasonRatingAfter, seasonRatingDelta } from "@/config/balance";
+import { DRAFT_UPSET_GUARD, mmrBackfillFloor, SEASON_RATING, seasonRatingAfter, seasonRatingDelta } from "@/config/balance";
 import { PRESEASON_ID, SEASON } from "@/config/season";
 import {
   freshSeason,
@@ -239,6 +239,34 @@ describe("seasonRatingDelta (SEASON_RATING table)", () => {
     }
     // No rating given: the plain table (the v2.0.5 history re-price never applies it).
     expect(seasonRatingDelta({ ...base, difficulty: "normal", placement: "champion" })).toBe(4);
+  });
+
+  it("rc9 LEGACY (#221): a classic Region-only run in a compensated cell pays its row, guard on only", () => {
+    const enabled = DRAFT_UPSET_GUARD.enabled;
+    try {
+      const row = DRAFT_UPSET_GUARD.ratingRows.MENA?.legacy;
+      expect(row).toBeDefined();
+      const legacy = { ...base, difficulty: "legacy" as const };
+      DRAFT_UPSET_GUARD.enabled = true;
+      // The title keeps its value; the placements the guard made easier pay the row.
+      expect(row!.champion).toBe(SEASON_RATING.delta.legacy.champion);
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: "MENA" })).toBe(row!.runner_up);
+      expect(seasonRatingDelta({ ...legacy, placement: "third", region: "MENA" })).toBe(row!.third);
+      expect(seasonRatingDelta({ ...legacy, placement: "swiss_exit", region: "MENA" })).toBe(row!.swiss_exit);
+      // Worldwide, a region without a row, and Quick / Daily keep the table.
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up" })).toBe(SEASON_RATING.delta.legacy.runner_up);
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: null })).toBe(SEASON_RATING.delta.legacy.runner_up);
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: "NA" })).toBe(SEASON_RATING.delta.legacy.runner_up);
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: "MENA", mode: "quick" })).toBe(SEASON_RATING.delta.legacy.runner_up / 2);
+      // The history re-price never reads it.
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: "MENA", frozenRetune: true })).toBe(SEASON_RATING.retuneTable.legacy!.runner_up);
+      // Guard off: the plain table everywhere (rc.8).
+      DRAFT_UPSET_GUARD.enabled = false;
+      expect(seasonRatingDelta({ ...legacy, placement: "runner_up", region: "MENA" })).toBe(SEASON_RATING.delta.legacy.runner_up);
+      expect(seasonRatingDelta({ ...legacy, placement: "swiss_exit", region: "MENA" })).toBe(SEASON_RATING.delta.legacy.swiss_exit);
+    } finally {
+      DRAFT_UPSET_GUARD.enabled = enabled;
+    }
   });
 
   it("seasonRatingAfter floors at SEASON_RATING.floor", () => {
