@@ -50,8 +50,10 @@ save `rocket-draft:pro:v1`. Miguel: **does not ship in 2.1**.
 Soft lock founded `P1_SOFT=1`; takeover `P1_SOFT=1 P1_SOFT_ERA=6
 P1_SOFT_REGIONS=NA,EU,SAM P1_SOFT_SEASONS=4`
 (`store/careerSoftlock.probe.test.ts`); Pro `PRO_CAREER=1`
-(`store/proCareer.probe.test.ts`). Results of the rc.9 integration run: see
-the 2.1.0-rc.9 CHANGELOG entry.
+(`store/proCareer.probe.test.ts`). rc.9 integration run (28/11, all twelve
+staging flags on): founded passed with no finding (675 s); takeover 6 careers
+(NA, EU, SAM x autopilot, tuned; 4 seasons, 89 to 94 lobbies each), 0
+findings; Pro 4 runs (NA, EU, SAM Normal, NA Hard), no problem (315 s).
 
 ## Open
 
@@ -74,13 +76,11 @@ the 2.1.0-rc.9 CHANGELOG entry.
 | Series/matchday | matchday/matchdaySeries/matchTimeline → careerFlow (MATCHDAY blocks) → event/SeriesRoom, match/LiveGameView |
 | Fields/results/titles | worldSim/careerResults/honors/eventLayouts → careerFlow → Event, Standings |
 | Training/coaches | development/training → careerTraining → Training |
-| Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, MoneyNoticeModal |
-| Selling/trading | transferList/market → careerFlow/careerDecisions → Market, ListPlayerSheet, TradeSheet |
+| Money/market | economy/sponsorDeals/market/transferList → careerFlow/careerHq → Finances, Market, MoneyNoticeModal, TradeSheet |
 | Locker room | lockerRoom/lockerRoomFacts/lockerRoomView → lockerRoomFlow → locker/*, Squad |
 | Feed/media | fanFeed/mediaDays → fanFeedFlow/mediaDaysFlow → feed/*, News (Fans) |
 | Board / real orgs | era/board/mandate/orgCatalogue/established → boardFlow/orgFlow/takeoverPreview → takeover/*, board/*, finances/* |
-| Endless | endless (`CAREER_ENDLESS`) → endlessFlow → OrgSheet, EventScreen |
-| Pro | career/pro/* → proFlow/proSeat/proMatch/proStore → career/pro/* |
+| Endless / Pro | endless → endlessFlow → EventScreen; career/pro/* → proFlow/proStore → career/pro/* |
 
 ## Contracts
 

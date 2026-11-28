@@ -67,17 +67,13 @@ ship in 2.1 is Miguel's call; he has said the Pro player career does not.
 - SHARE: the "Share frame" cosmetic slot (#262); whether a podium counts as
   "went well" for the invite.
 - BUGS: the challenge-reset copy (not applied).
-- Carried: Etapa 1 gate items (ETAPA-1-STATUS.md), MATCHDAY-SPEC §11 P1–P4,
-  org-less stacks, the DEPLOY-CLOUDFLARE §9 zone rule, PENDING-COSMETICS.md.
+- Carried: ETAPA-1-STATUS.md gate items, MATCHDAY-SPEC §11, PENDING-COSMETICS.md.
 
 ## The staging line
 
-Staging accumulates stages; `main` moves only when Miguel decides. Publish:
-`git fetch`, merge `origin/staging` if it moved, re-run the checks, then a
-fast-forward `git push origin HEAD:staging` (never force; Workers Build,
-~11 min). Never a local deploy (`.env.local` holds the Supabase keys), never
-`public/fonts-trial/`. After any career engine or store change: the soft-lock
-probe (`P1_SOFT=1`, alone) and the Pro probe with every staging flag on.
+Staging accumulates stages; `main` moves only when Miguel decides. Publish by
+fast-forward `git push origin HEAD:staging` after merging `origin/staging`
+(never force, never a local deploy: `.env.local` holds the Supabase keys).
 
 ## Standing contracts
 
