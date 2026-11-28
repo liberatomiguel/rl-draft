@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, EventLayout, HistoricalStrength, Placement,
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and STAGING_BUILD and fails until the bump is made.
  */
-export const BALANCE_VERSION = 57; // integration 27/11: 56 (v2.3 on rc.7) + v22/event-formats (CAREER_EVENT_LAYOUTS joined the export and the points split moved, which was 52 -> 53 on its branch)
+export const BALANCE_VERSION = 58; // 2.1.0-rc.9 (28/11): the rc.9 fronts' exports (locker drivers, endgame, feed effects, live pacing, duel match). Before, 57 = integration 27/11: 56 (v2.3 on rc.7) + v22/event-formats (CAREER_EVENT_LAYOUTS joined the export and the points split moved, which was 52 -> 53 on its branch)
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)

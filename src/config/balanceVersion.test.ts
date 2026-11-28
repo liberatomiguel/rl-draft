@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import * as balance from "./balance";
 
-const FINGERPRINT = { balanceVersion: 57, hash: "2ef44228" }; // v2.3 + event formats on v2.2.0-rc.7
+const FINGERPRINT = { balanceVersion: 58, hash: "e1402900" }; // 2.1.0-rc.9: every rc.9 front's balance exports
 
 /** Stable text of any value: sorted keys, functions by their whitespace-free source. */
 function canon(value: unknown): string {

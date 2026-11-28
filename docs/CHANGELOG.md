@@ -10,34 +10,49 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## rc.9 (unreleased)
+## [2.1.0-rc.9] — 2026-11-28 · The rc.9 pass: every screen redrawn, morale that moves, the manager's post, team-against-team duel (staging)
 
-### Changed - STORIES (the manager's post and the Fans tab; R253 to R257, DESIGN-DECISIONS #288 to #293)
+The release is named **2.1**: the staging series numbered 2.2.0-rc.1 to rc.8 continues as 2.1.0 from this build (rc.9). Sections are grouped by front; each front's flag is unchanged (staging-only flags stay staging-only). `BALANCE_VERSION` 57 → 58 (the fronts' new balance exports: locker drivers, late endless projects, coach retirement, feed effects, live pacing, duel match).
+
+### INTEGRATION (28/11)
+
+**Changed**
+- The screens show the held mood (`lockerRoomView`): the Squad tile and the contract row's mood button carry a small trend arrow; the mood sheet adds the trend, the main reason and the match effect; the locker block shows the room's trend. Talks pass their own params to the copy (the cup's size).
+- The money notices say "floor" ("piso") like the mail and Finances; the deadline warning says that Pay it all, in Finances, clears the debt early. The sponsor offer mail says again that the deadline day holds the clock.
+- Goal deadlines name the event in words with the date ("Last chance: Worlds · Oct 12"), no "W32".
+- The /duel share text and the OG card script describe the new duel (the art is not regenerated yet).
+
+**Fixed**
+- A dialog opened by a click that did not focus its button (Safari, a scripted click) did not return the focus there on close. Root cause: `useDialogFocus` took the opener from `document.activeElement` only, which is `<body>` in that case; it now falls back to the control pressed in the last second.
+- The STORIES morale reason `managerPost` had no line in the mood sheet's "why". Root cause: the LOCKER branch's `why` table was written before the reason existed; added on the merge.
+- Lint: a synchronous `setState` in `LiveGameView`'s jump effect (the render already shows the finished game; only the loop's clock moves now) and dead helpers (`perkBlock`, `partnerUntilEn/Pt`, unused copy params).
+
+### STORIES front — Changed (the manager's post and the Fans tab; R253 to R257, DESIGN-DECISIONS #288 to #293)
 - The offer to post comes only after a moment: a title, a final lost, a Major or Worlds exit, a favourite out of a qualifier, a first qualification or first playoffs, an upset with a real rating gap, a long win streak. At least 21 days apart (a title skips the gap), at most 6 a season, and it lapses quietly after 4 days.
 - It is one of HQ's decisions (never holds the clock), with the top bar's "Decision required" on the day it appears. The extra HQ card is gone.
 - The sheet shows the post as the feed will show it, per tone, and what it does: followers, each player's morale (locker room on), the board's confidence (with a board), the receipt risk for a provocative post. The figures come from the action itself.
 - 63 manager posts written or rewritten, by moment and tone (EN and PT), 6 more fan replies; a post gets two replies; no sentence repeats in a season.
 - Fans tab rebuilt: followers as the figure, posts as rows, the manager's post as a thread with its replies, an honest empty state.
 
-### Balance - STORIES
+### STORIES front — Balance
 - A post now moves morale and board confidence a little by tone and result (`CAREER_FEED.effects`); followers by tone and result instead of by tone only.
 
-### Fixed - STORIES
+### STORIES front — Fixed
 - Publishing a post from HQ now lands on the Fans view. Root cause: News reads its view from the hash only on mount or on "hashchange", and a client navigation to `/career/news#fans` fires neither.
 
-### Changed - DUEL-UI (team against team; DESIGN-DECISIONS #294 to #300)
+### DUEL-UI front — Changed (team against team; DESIGN-DECISIONS #294 to #300)
 - The friend duel is now team against team: the challenger sets the rules on /duel (rerolls 0, 3 or 7, overalls visible or hidden, Classic or Quick, region, optional name), drafts on the game's own draft screens, and sends a link. The friend drafts on the same boards, then both teams play a best of 7 on the clock (the career's live game view), with face-off, auto-advance, pause, speed, skip game and skip series. The reply link carries both teams, so the challenger watches the very same series. New match: same rules, new boards, the asker drafts first.
 - A duel's draft half-way can be resumed or dropped from /duel or from the challenge link.
 - Broken, edited or old-format duel links get their own screen with what to do.
 - Analytics: `duel_played` replaces `friend_duel`.
 
-### Removed - DUEL-UI
+### DUEL-UI front — Removed
 - The rc.6 friend duel (same seed, standings compared): its engine, screens, results panels, Setup button, run-share branch and copy.
 
-### Changed - ORG (R226)
+### ORG front — Changed (R226)
 - The sponsor deal in force on a takeover now follows the save's difficulty (easy steady, normal balanced, hard bold) instead of the org's tier; the tier still scales the money.
 
-### Changed — MATCHDAY (the series room and the live game; R240 to R247, DESIGN-DECISIONS #233 to #239)
+### MATCHDAY front — Changed (the series room and the live game; R240 to R247, DESIGN-DECISIONS #233 to #239)
 - Manage: one plan before the series (approach, risk, who to shut down, the coach's call preselected), then every game plays live on its own, with no stop between games. Two clicks per series (Play the series, Continue), one to skip; it was 5 to 7.
 - The live game: crests, score and clock large, the 5:00 as a track with each goal at its minute, goals on their side, team stats as a centre-label comparison with proportional bars, each team's players climbing with the clock, overtime as its own beat.
 - Timeout: a button always in the live controls; pressed, it is called at the next break (once a series) and can be taken back until then.
@@ -47,24 +62,24 @@ with the root cause — that section doubles as the project's bugfix log.
 - Marking the right playmaker costs 0.08 rating a game (R242); the coach marks only when it pays.
 - Copy: event, scrim, matchday and narration findings from the copy audit (dead keys out in EN and PT, "next man up" and other tells rewritten, PT rewritten where it read as a translation).
 
-### Fixed — MATCHDAY
+### MATCHDAY front — Fixed
 - A series played in the room could be replayed by the Match Center after Continue. Root cause: "played live" was kept only in a ref set at the series' start, lost on a remount or a reload mid-series; Continue now marks the round too.
 - A knockout event's title read "Swiss stage" until its first round was revealed. Root cause: the reveal stage fell back to "swiss" with no revealed round; it now falls back to the event's own format.
 - The timeout line after a series never showed when the timeout found no momentum to clear. Root cause: a cut of 0 was dropped as falsy when logged.
 
-### Changed — ORG-UI (the established org's screens; DESIGN-DECISIONS #270 to #278)
+### ORG-UI front — Changed (the established org's screens; DESIGN-DECISIONS #270 to #278)
 - Pick an org: no grouping by tier; the region's orgs are one grid of cards (mark, name, problem, size, squad level) and a card opens the org's file in a modal with the action (Escape closes, focus returns to the card).
 - Finances for an established org: the board's budget leads as the large figure, the cash beside it, and one bar splits the season's money into still to pay, kept by the mandate and free to spend; three blocks (income to come, still to pay, wage bill) each led by a figure. The season budget card and the three-figure strip under it are gone from that path.
 - Operations: facility and department cards in the org catalogue's terms (levels as steps, effect, price, upkeep, board sign-off); no founded item name in an established save.
 - Board page: confidence first, then the mandate's progress, then the board's brief; the standing is a word (tier, drift, what it means), never a number.
 - Copy: dead keys removed in EN and PT for board, finances, orgmode and takeover; sponsor lines no longer print a brand's tier number.
 
-### Fixed — ORG-UI
+### ORG-UI front — Fixed
 - The career nav wrapped "Careers" to a second row at 1280 once the Board tab was added. Root cause: tab padding grew at `xl` (1280) and the eleven tabs no longer fit; padding now grows at `2xl`.
 - The org file kept the previous org's logo when the next org had no art. Root cause: the `<img>` was reused across orgs and its failed-source list was not reset; the logo is now keyed by org.
 - Finances' ledger printed a sponsor's id ("gridlock") and founded ids. Root cause: `refName` was printed raw; it is now resolved to the brand or the catalogue name.
 
-### Changed — DS front (type, spacing, chrome, Squad; DESIGN-DECISIONS #209 to #219)
+### DS front — Changed (type, spacing, chrome, Squad; DESIGN-DECISIONS #209 to #219)
 - The type ladder is one step lighter everywhere: Bold only for a screen's title and a block's key figure, Demi for section and card titles and buttons, Medium for nav, tags and labels. Caps track wider as they get smaller (0.05em to 0.08em), card titles and names are mixed case, body text is 15px / 1.55 on desktop (14px on a phone), secondary 13px. The ladder lives in CSS variables (`globals.css`), so the display face can be swapped.
 - Spacing scale (4 to 48) as tokens; standard boards get 24px of padding on desktop.
 - Type lab on staging and dev: Settings, "Display typeface" (Industry or Chakra Petch), or `?type=chakra`.
@@ -72,10 +87,15 @@ with the root cause — that section doubles as the project's bugfix log.
 - Squad: roster stability is a line in the starters; bench and coach are boards of their own; contracts take the left column, sorted by end date, with column heads, mood on each row (opens the mood sheet) and quieter actions; season stats and the locker room (talks, promises, your word) sit in the right column.
 - A disabled primary button is a grey slab instead of a faded orange.
 
-### Fixed — DS front
+### DS front — Fixed
 - The news toast's blue band stopped short of the close button. Root cause: the X's 48px of room was reserved as padding on the whole toast, so the band inside it ended 48px early; the band now spans the card and reserves the X's room itself.
 - Toast titles and bodies were never clamped. Root cause: a `block` class beside `line-clamp-*` overrode the `-webkit-box` display the clamp needs.
 - Tracking utilities on display text never applied. Root cause: the unlayered `.display` rule set 0.02em and beat every layered `tracking-*` utility; tracking is now set by role.
+
+### TRAIN-MARKET front — Changed (Training, Market, sheets, money modals; DESIGN-DECISIONS #248 to #254; entry written at integration)
+- Training is built around one decision: the running plan with its gain as the figure, or the picker (empty by default) and Start training; the squad's growth as rows.
+- The Market is a grid of candidate cards again; deals are rows. The player sheet reads as the back of his card; a sale's consequences, the trade and the listing are rows of figures; value tags red for a cost, green for a gain.
+- The money modals say each rule once, as rows under hairlines.
 
 ### HQ front (HQ, Calendar, Standings, Season review, tour; DESIGN-DECISIONS #240 to #247)
 
@@ -120,12 +140,10 @@ with the root cause — that section doubles as the project's bugfix log.
 - The unlock modal ("Novas possibilidades") announced founded-club items in a takeover save. Root cause: the toolbox keys (`tb:*`) were never marked seen when the announcements initialised, and an established org has the whole shelf open, so every unowned installation queued a notice.
 - Finances showed a 1.3M budget over 1.8M of cash with no link between them. Root cause: the board's budget is paid into the cash once, and the screen compared a payment against a balance that also holds the money the org already had and the season's movement since.
 
----
-
-### Added
+### DUEL front, engine — Added
 - **Duel front, engine (`rc9/duel`, #225-#229):** the friend duel becomes team against team. New `engine/duelRules.ts`, `duelDraft.ts`, `duelMatch.ts`, `duelLink.ts`, `duelViews.ts` (+ `duelTestKit.ts` for tests) and `DUEL_MATCH` in balance: rules the challenger sets (mode, rerolls 0/3/7, overalls, region, seed), boards that depend only on (seed, slot, board index), a best-of-7 on the game's own series engine with a clock timeline and running team stats per game, format-2 links (challenge and reply), `duelRematch` and the view functions. Copy group `DUEL_MATCH_UI` (EN/PT). The old standings duel (`engine/duel.ts` and its screens) is untouched and deprecated until the screens are rebuilt.
 
-### Fixed
+### BUGS front — Fixed
 - **BUGS front: no live defect found among the five survey reports.** The sponsor goal that read as reset or out of reach was fixed in v2.0.34 (root cause there: `rolloverToNextSeason` emptied the results a contract goal counts). New regression over every signing week (`sponsorDeals.test.ts`). Challenge resets replaying the same teams is intended (fixed seed).
 
 ### LEGACY front (the draft's absurd losses and the final overall)
@@ -176,7 +194,7 @@ with the root cause — that section doubles as the project's bugfix log.
 - The collection's album tabs truncated both names at 320 px. Root cause: an `inline-flex` pair with a 10px count that could not shrink; the tabs now share the row.
 - "Challenges" and "Collection" overlapped in the bottom nav at 320 px. Root cause: six equal columns of 53 px for labels 55 and 50 px wide.
 
-### LOCKER: player morale that moves (branch `rc9/locker`, FEATURES.lockerRoom, R211–R219)
+### LOCKER front (player morale that moves; branch `rc9/locker`, FEATURES.lockerRoom, R211–R219)
 
 - **Fixed:** morale read flat in play ("parece que o emocional não muda").
   Root cause: a starter had two drivers that cancelled out (+1 per event
@@ -203,15 +221,12 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Added:** `lockerRoomView.ts` (mood, trend, reason as a copy key, what
   waits for the manager) for the screens; the arc bot runs the locker room.
 
-### Changed (ENDGAME, R230-R235)
+### ENDGAME front — Changed (R230-R235)
 - **Coaches retire between 28 and 35, from the first rollover** (`worldLife`): ages on first sight 24-32, a spread of exits inside the window, AI orgs hire a successor at most 2 worse, the user's coach announces a season ahead by mail. Real dataset coaches leave the market on the same clock and keep their market age when hired. Before, coaches aged only from 2027 and retired from 40 to 52.
 - **Late endless projects** (`endlessVariety`, `CAREER_ENDLESS.late`, from season index 8): full kit, three signings from any region, up to six projects (APAC joins). Floor-99 bot, Normal, NA/EU/SAM x 2 seeds, S8-S15: a 100+ team wins 13 of 37 Worlds (35 %, was 23 of 42), 3.7 AI sides within 3 points (was 2.8). Seasons 0-7 unchanged by construction.
 - `eventFormats` is checked by `stagingFlags.test.ts`. Endless-year format rotation verified on a 12-season career (no rule change).
 
-### Balance
-- `BALANCE_VERSION` not bumped (integration does it); `balanceVersion.test.ts` may flag the new exports.
-
-### Fixed
+### ENDGAME front — Fixed
 - Coaches never retired in seasons 0-6. Root cause: the coach life cycle sat inside the M1 world-life pass, which runs only from the first infinite season (`worldLifeOn`), and the retirement curve started at 40.
 - Real coaches stayed on the coach shortlist forever. Root cause: the dataset coach pool read only the seasons they had coached, with no age.
 
