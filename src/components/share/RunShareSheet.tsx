@@ -8,7 +8,7 @@
  * sends the duel link itself, so the friend plays the same draft.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SITE } from "@/config/site";
 import { useCopy, useUiLocale } from "@/content/copy";
 import { capEntries, duelEntryFromResults, duelPath } from "@/engine/duel";
@@ -17,7 +17,10 @@ import { resolveShareFonts } from "@/lib/share/canvasKit";
 import { renderRunImage, type ShareFormat } from "@/lib/share/runImage";
 import { shareLinkOf } from "@/lib/share/links";
 import { buildRunShare } from "@/lib/share/runShare";
+import { shareBannerUrl } from "@/lib/share/shareBanner";
+import { useProfileStore } from "@/store/profileStore";
 import { ShareSheet } from "./ShareSheet";
+import { SharePrompts } from "./SharePrompts";
 
 export function RunShareSheet({
   run,
@@ -41,6 +44,17 @@ export function RunShareSheet({
   const copy = useCopy();
   const locale = useUiLocale();
   const S = copy.SHARE_UI;
+  // rc9 SHARE: the equipped banner on the image (#259), the prompts after the run (#256, #257).
+  const cosmetics = useProfileStore((s) => s.cosmetics);
+  const bannerUrl = useMemo(() => shareBannerUrl(cosmetics), [cosmetics]);
+  const activeDays = useProfileStore((s) => s.login.total);
+  const runsCompleted = useProfileStore((s) => s.runsCompleted);
+  const [promptOpened, setPromptOpened] = useState(false);
+  const sheetOpen = open || promptOpened;
+  const closeSheet = () => {
+    setPromptOpened(false);
+    onClose();
+  };
   const bundle = useMemo(
     () =>
       buildRunShare({
@@ -55,8 +69,9 @@ export function RunShareSheet({
           .format(new Date())
           .replace(/\./g, ""),
         dailyNumber: run.daily?.n ?? null,
+        bannerUrl,
       }),
-    [run, copy, placementLabel, teamOverall, chemistryTier, modeLabel, difficultyLabel, locale],
+    [run, copy, placementLabel, teamOverall, chemistryTier, modeLabel, difficultyLabel, locale, bannerUrl],
   );
   const formats = useMemo(() => {
     if (!bundle) return undefined;
@@ -74,17 +89,30 @@ export function RunShareSheet({
         })}`
       : shareLinkOf(SITE.url, locale === "pt" ? "/pt" : "/", bundle.campaign);
   const title = bundle.campaign === "daily" ? S.titleDaily : bundle.campaign === "duel" ? S.titleDuel : S.titleRun;
+  // rc9 SHARE: a won run (not a duel) may offer the image; a podium may invite, once.
+  const placement = run.results?.placement ?? null;
+  const titleKey = placement === "champion" && !run.duel ? `run:${run.seed}:${run.startedAt}` : null;
   return (
-    <ShareSheet
-      open={open}
-      onClose={onClose}
-      title={title}
-      surface={bundle.campaign}
-      gameMode="draft"
-      text={bundle.text}
-      url={url}
-      formats={formats}
-      fileName={bundle.fileName}
-    />
+    <>
+      <ShareSheet
+        open={sheetOpen}
+        onClose={closeSheet}
+        title={title}
+        surface={bundle.campaign}
+        gameMode="draft"
+        text={bundle.text}
+        url={url}
+        formats={formats}
+        fileName={bundle.fileName}
+      />
+      <SharePrompts
+        gameMode="draft"
+        ready={!sheetOpen}
+        titleKey={titleKey}
+        invite={{ activeDays, runsCompleted, careerSeasons: 0, moment: "run", placement, ordinaryRun: !run.duel }}
+        preview={formats?.post}
+        onShareImage={() => setPromptOpened(true)}
+      />
+    </>
   );
 }

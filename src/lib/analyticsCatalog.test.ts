@@ -70,6 +70,7 @@ describe("the catalogue", () => {
         "referral_claimed",
         "rank_up",
         "research_invite",
+        "share_prompt", // rc9 SHARE
         "run_abandoned",
         "run_completed",
         "session_started",

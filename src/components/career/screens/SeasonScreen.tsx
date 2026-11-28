@@ -415,7 +415,7 @@ export function SeasonScreen() {
               {C.ceremonies.retire}
             </Button>
             {/* v2.2 share kit: the season's close is the moment to post the club. */}
-            {!isInsolvent ? <CareerShareButton save={save} label={wonWorlds ? C.share.buttonTitle : undefined} /> : null}
+            {!isInsolvent ? <CareerShareButton save={save} label={wonWorlds ? C.share.buttonTitle : undefined} promptAt="season" /> : null}
           </>
         ) : (
           <>
@@ -430,7 +430,7 @@ export function SeasonScreen() {
             >
               {C.ceremonies.rolloverCta} · {seasonLabelFor(save.clock.seasonIndex + 1)}
             </Button>
-            <CareerShareButton save={save} size="lg" />
+            <CareerShareButton save={save} size="lg" promptAt="season" /* rc9 SHARE: the invite's moment */ />
           </>
         )}
       </div>

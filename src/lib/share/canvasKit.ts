@@ -25,9 +25,6 @@ export const LINE = "rgba(146, 164, 196, 0.13)";
 export const LINE_STRONG = "rgba(146, 164, 196, 0.26)";
 export const GOLD = "#f3c969";
 
-/** tan(12deg): the slab's cut (`--cut` in globals.css). */
-const CUT = Math.tan((12 * Math.PI) / 180);
-
 // ---------------------------------------------------------------------------
 // Fonts
 // ---------------------------------------------------------------------------
@@ -261,66 +258,128 @@ export function drawBoard(
 }
 
 /**
- * The section-title slab: dark Bold caps on paper, cut at 12deg, followed by
- * the orange chip. Returns the slab's right edge (after the chip).
+ * rc9 SHARE (#258): the image's own frame. A board cut from the cards' stock
+ * (body gradient, diagonal hairlines, hairline frame); a title gets the gold
+ * frame with its soft light, the one glow DESIGN.md allows here.
  */
-export function drawSlab(
+export function drawImageFrame(g: CanvasRenderingContext2D, w: number, h: number, inset: number, gold: boolean): void {
+  drawBoard(g, inset, inset, w - inset * 2, h - inset * 2, { radius: 26, strong: true, texture: true });
+  if (!gold) return;
+  g.save();
+  g.shadowColor = "rgba(243,201,105,0.4)";
+  g.shadowBlur = 26;
+  roundRect(g, inset + 1, inset + 1, w - inset * 2 - 2, h - inset * 2 - 2, 25);
+  g.lineWidth = 3;
+  g.strokeStyle = cssGradient(g, 165, inset, inset, w - inset * 2, h - inset * 2, ["#f3c969", "#8a6224", "#d9a943"]);
+  g.stroke();
+  g.restore();
+}
+
+// ---------------------------------------------------------------------------
+// The profile banner (rc9 SHARE, #259)
+// ---------------------------------------------------------------------------
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** WCAG relative luminance of an sRGB colour (0..255 channels). */
+export function luminance(r: number, g: number, b: number): number {
+  const c = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
+}
+
+export function contrastRatio(l1: number, l2: number): number {
+  const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+export function hexLuminance(hex: string): number {
+  const n = parseInt(hex.replace("#", ""), 16);
+  return luminance((n >> 16) & 255, (n >> 8) & 255, n & 255);
+}
+
+/** The lowest contrast `fg` would have over any pixel already painted in `rect` (its worst spot). */
+export function worstContrast(g: CanvasRenderingContext2D, rect: Rect, fg: string): number {
+  const x = Math.max(0, Math.floor(rect.x));
+  const y = Math.max(0, Math.floor(rect.y));
+  const w = Math.max(1, Math.min(g.canvas.width - x, Math.ceil(rect.w)));
+  const h = Math.max(1, Math.min(g.canvas.height - y, Math.ceil(rect.h)));
+  const data = g.getImageData(x, y, w, h).data;
+  const lf = hexLuminance(fg);
+  let worst = 21;
+  // Every second pixel each way: the banners have no detail finer than that.
+  for (let j = 0; j < h; j += 2) {
+    for (let i = 0; i < w; i += 2) {
+      const k = (j * w + i) * 4;
+      const ratio = contrastRatio(lf, luminance(data[k], data[k + 1], data[k + 2]));
+      if (ratio < worst) worst = ratio;
+    }
+  }
+  return worst;
+}
+
+/**
+ * The equipped banner as a quiet band behind the top of the image: the art
+ * covers the band, fades into the stock towards the content, and is laid at
+ * the highest strength (from `maxAlpha` down) at which every text box that
+ * will sit over it keeps `minRatio` against its worst pixel. Text is drawn
+ * after, so the measure is of the background alone.
+ */
+export function drawBannerBand(
   g: CanvasRenderingContext2D,
-  fonts: ShareFonts,
-  text: string,
-  x: number,
-  baseline: number,
-  size: number,
-  opts: { align?: "left" | "center"; maxWidth?: number; chip?: boolean } = {},
-): { left: number; right: number; top: number; bottom: number } {
-  const label = text.toUpperCase();
-  let fontSize = size;
-  g.font = displayFont(fonts, fontSize, 700);
-  setTracking(g, 0.015, fontSize);
-  const padL = fontSize * 0.42;
-  const padR = fontSize * 0.5;
-  let tw = g.measureText(label).width;
-  const room = (opts.maxWidth ?? Infinity) - padL - padR - fontSize * 0.5;
-  if (tw > room) {
-    fontSize = Math.max(size * 0.55, fontSize * (room / tw));
-    g.font = displayFont(fonts, fontSize, 700);
-    setTracking(g, 0.015, fontSize);
-    tw = g.measureText(label).width;
+  img: HTMLImageElement,
+  band: Rect & { radius: number },
+  textOver: { rect: Rect; color: string }[],
+  opts: { maxAlpha?: number; minAlpha?: number; minRatio?: number } = {},
+): { alpha: number; worst: number } {
+  const maxAlpha = opts.maxAlpha ?? 0.5;
+  const minAlpha = opts.minAlpha ?? 0.12;
+  const minRatio = opts.minRatio ?? 4.5;
+  const bx = Math.floor(band.x);
+  const by = Math.floor(band.y);
+  const bw = Math.ceil(band.w);
+  const bh = Math.ceil(band.h);
+  const under = g.getImageData(bx, by, bw, bh);
+
+  // The art, covered into the band and masked: full at the top, gone at the foot.
+  const layer = document.createElement("canvas");
+  layer.width = bw;
+  layer.height = bh;
+  const lg = layer.getContext("2d");
+  if (!lg) return { alpha: 0, worst: 21 };
+  lg.imageSmoothingQuality = "high";
+  drawCover(lg, img, 0, 0, bw, bh, 0.5);
+  lg.globalCompositeOperation = "destination-in";
+  const fade = lg.createLinearGradient(0, 0, 0, bh);
+  fade.addColorStop(0, "rgba(0,0,0,1)");
+  fade.addColorStop(0.45, "rgba(0,0,0,0.75)");
+  fade.addColorStop(1, "rgba(0,0,0,0)");
+  lg.fillStyle = fade;
+  lg.fillRect(0, 0, bw, bh);
+
+  let alpha = maxAlpha;
+  let worst = 21;
+  for (; alpha >= minAlpha - 1e-6; alpha -= 0.04) {
+    g.putImageData(under, bx, by);
+    g.save();
+    roundRect(g, band.x, band.y, band.w, band.h + band.radius, band.radius);
+    g.clip();
+    g.globalAlpha = alpha;
+    g.drawImage(layer, bx, by);
+    g.restore();
+    worst = Math.min(21, ...textOver.map((t) => worstContrast(g, t.rect, t.color)));
+    if (worst >= minRatio) return { alpha, worst };
   }
-  const h = fontSize * 1.08;
-  const top = baseline - fontSize * 0.86;
-  const w = tw + padL + padR;
-  const left = opts.align === "center" ? x - (w + fontSize * 0.44) / 2 : x;
-  const skew = h * CUT;
-  // Paper parallelogram.
-  g.fillStyle = PAPER;
-  g.beginPath();
-  g.moveTo(left + skew, top);
-  g.lineTo(left + w + skew, top);
-  g.lineTo(left + w, top + h);
-  g.lineTo(left, top + h);
-  g.closePath();
-  g.fill();
-  g.fillStyle = PAPER_INK;
-  g.textBaseline = "alphabetic";
-  g.textAlign = "left";
-  g.fillText(label, left + padL + skew * 0.45, top + h * 0.83);
-  resetTracking(g);
-  let right = left + w + skew;
-  if (opts.chip !== false) {
-    const cx = left + w + fontSize * 0.18;
-    const cw = fontSize * 0.26;
-    g.fillStyle = ORANGE;
-    g.beginPath();
-    g.moveTo(cx + skew, top);
-    g.lineTo(cx + cw + skew, top);
-    g.lineTo(cx + cw, top + h);
-    g.lineTo(cx, top + h);
-    g.closePath();
-    g.fill();
-    right = cx + cw + skew;
-  }
-  return { left, right, top, bottom: top + h };
+  // Even the faintest band fails somewhere: leave the stock plain.
+  g.putImageData(under, bx, by);
+  return { alpha: 0, worst: Math.min(21, ...textOver.map((t) => worstContrast(g, t.rect, t.color))) };
 }
 
 /** The ROCKET DRAFT wordmark (the header logo: upright, ink and orange). */
@@ -393,8 +452,9 @@ export function wrapText(g: CanvasRenderingContext2D, text: string, max: number)
 }
 
 /**
- * A figure as the game sets it: the large number first, the quiet caps label
- * under it. `align` places both on `x`.
+ * A figure as the game sets it (rc9 ladder): the number in display Demi, the
+ * quiet caps label under it in Medium and `--faint`. Bold is kept for the
+ * image's one headline. `align` places both on `x`.
  */
 export function drawFigure(
   g: CanvasRenderingContext2D,
@@ -404,22 +464,146 @@ export function drawFigure(
   x: number,
   baseline: number,
   size: number,
-  opts: { align?: CanvasTextAlign; color?: string; maxWidth?: number } = {},
+  opts: { align?: CanvasTextAlign; color?: string; labelSize?: number } = {},
 ): void {
   g.textAlign = opts.align ?? "left";
   g.textBaseline = "alphabetic";
-  const v = value.toUpperCase();
-  const s = opts.maxWidth ? fitFontSize(g, v, opts.maxWidth, size, size * 0.5, (n) => displayFont(fonts, n, 700)) : size;
-  g.font = displayFont(fonts, s, 700);
+  g.font = displayFont(fonts, size, 600);
   g.fillStyle = opts.color ?? INK;
-  g.fillText(v, x, baseline);
-  const ls = Math.max(14, size * 0.3);
-  g.font = displayFont(fonts, ls, 600);
-  setTracking(g, 0.06, ls);
-  g.fillStyle = SUB;
-  g.fillText(label.toUpperCase(), x, baseline + ls * 1.55);
+  g.fillText(value, x, baseline);
+  const ls = opts.labelSize ?? Math.max(15, size * 0.3);
+  g.font = displayFont(fonts, ls, 500);
+  setTracking(g, 0.08, ls);
+  g.fillStyle = FAINT;
+  g.fillText(label.toUpperCase(), x, baseline + ls * 1.9);
   resetTracking(g);
   g.textAlign = "left";
+}
+
+/**
+ * The image's one headline (rc9, #258): display Bold caps at 0.03em in paper
+ * white, shrunk to fit `max` (never under `min`). Returns the size used.
+ */
+export function drawHeadline(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  text: string,
+  x: number,
+  baseline: number,
+  size: number,
+  max: number,
+  opts: { align?: CanvasTextAlign; min?: number; color?: string } = {},
+): number {
+  const label = text.toUpperCase();
+  const font = (n: number) => {
+    setTracking(g, 0.03, n);
+    return displayFont(fonts, n, 700);
+  };
+  const s = fitFontSize(g, label, max, size, opts.min ?? size * 0.5, font);
+  g.font = font(s);
+  g.textAlign = opts.align ?? "left";
+  g.textBaseline = "alphabetic";
+  g.fillStyle = opts.color ?? PAPER;
+  g.fillText(fitText(g, label, max), x, baseline);
+  resetTracking(g);
+  g.textAlign = "left";
+  return s;
+}
+
+/** A caps label (meta line): display Medium at open tracking. Returns its width. */
+export function drawLabel(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  text: string,
+  x: number,
+  baseline: number,
+  size: number,
+  max: number,
+  opts: { align?: CanvasTextAlign; color?: string } = {},
+): number {
+  g.font = displayFont(fonts, size, 500);
+  setTracking(g, 0.08, size);
+  g.textAlign = opts.align ?? "left";
+  g.textBaseline = "alphabetic";
+  g.fillStyle = opts.color ?? SUB;
+  const t = fitText(g, text.toUpperCase(), max);
+  g.fillText(t, x, baseline);
+  const width = g.measureText(t).width;
+  resetTracking(g);
+  g.textAlign = "left";
+  return width;
+}
+
+/** Sentences in the text face, wrapped to `max`, at most `lines` lines. Returns the last baseline. */
+export function drawSentence(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  text: string,
+  x: number,
+  baseline: number,
+  size: number,
+  max: number,
+  opts: { align?: CanvasTextAlign; color?: string; lines?: number; lineHeight?: number } = {},
+): number {
+  g.font = textFont(fonts, size, 400);
+  g.textAlign = opts.align ?? "left";
+  g.textBaseline = "alphabetic";
+  g.fillStyle = opts.color ?? SUB;
+  const lh = opts.lineHeight ?? size * 1.38;
+  const lines = wrapText(g, text, max).slice(0, opts.lines ?? 2);
+  lines.forEach((line, i) => g.fillText(line, x, baseline + i * lh));
+  g.textAlign = "left";
+  return baseline + (lines.length - 1) * lh;
+}
+
+/**
+ * The cards as a hand (rc9, #258): the middle card in front and larger, the
+ * two beside it tilted behind it, so three cards read as one team instead of a
+ * grid. `cx`/`cy` is the middle card's centre.
+ */
+export function drawCardHand(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  cards: ShareCardFace[],
+  images: Map<string, HTMLImageElement>,
+  cx: number,
+  cy: number,
+  frontW: number,
+  opts: { spread?: number; tilt?: number; sideScale?: number } = {},
+): void {
+  if (cards.length === 0) return;
+  const ratio = 4.3 / 3;
+  const spread = opts.spread ?? frontW * 0.72;
+  const tilt = ((opts.tilt ?? 7) * Math.PI) / 180;
+  const sideW = frontW * (opts.sideScale ?? 0.9);
+  const draw = (face: ShareCardFace, x: number, y: number, w: number, angle: number) => {
+    const h = w * ratio;
+    g.save();
+    g.translate(x, y);
+    g.rotate(angle);
+    // The card's own shadow on the stock: an object lying on the table, not a glow.
+    g.shadowColor = "rgba(0,0,0,0.55)";
+    g.shadowBlur = w * 0.12;
+    g.shadowOffsetY = w * 0.04;
+    roundRect(g, -w / 2, -h / 2, w, h, w * 0.08);
+    g.fillStyle = FLOOR;
+    g.fill();
+    g.restore();
+    g.save();
+    g.translate(x, y);
+    g.rotate(angle);
+    drawGameCard(g, fonts, face, images, -w / 2, -h / 2, w, h);
+    g.restore();
+  };
+  if (cards.length === 1) {
+    draw(cards[0], cx, cy, frontW, 0);
+    return;
+  }
+  // Order: the second and third behind, the first (the best pick) in front.
+  const [front, left, right] = cards;
+  if (left) draw(left, cx - spread, cy + frontW * 0.08, sideW, -tilt);
+  if (right) draw(right, cx + spread, cy + frontW * 0.08, sideW, tilt);
+  draw(front, cx, cy, frontW, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -641,7 +825,7 @@ export function drawGameCard(
 
   // Role tag.
   const tagSize = 10.5 * s;
-  g.font = displayFont(fonts, tagSize, 700);
+  g.font = displayFont(fonts, tagSize, 600);
   setTracking(g, 0.12, tagSize);
   const tagText = face.roleLabel.toUpperCase();
   const tagW = g.measureText(tagText).width + 9 * s;
@@ -695,7 +879,8 @@ export function drawGameCard(
 
   // Name plate.
   const nameSize = 17 * s;
-  g.font = displayFont(fonts, nameSize, 700);
+  // The card's name plate is `font-bold` in GameCard, which the rc9 ladder sets in Demi.
+  g.font = displayFont(fonts, nameSize, 600);
   setTracking(g, 0.03, nameSize);
   g.fillStyle = photo ? "#ffffff" : INK;
   const nameY = iy + ih - pad - (face.line ? 17 * s : 4 * s);

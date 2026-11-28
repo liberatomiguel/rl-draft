@@ -130,7 +130,7 @@ export function NewsScreen() {
 
         {/* The desk's views: what was sent to you, the news, the transfer wire. */}
         {/* v2.3 UI: with the fourth view (Fans) the strip scrolls sideways on a narrow phone instead of wrapping. */}
-        <div ref={tabsRef} role="tablist" aria-label={C.mail.title} className="flex gap-6 border-b border-line max-sm:-mx-3 max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
+        <div ref={tabsRef} role="tablist" aria-label={C.mail.title} className="flex gap-6 border-b border-line max-sm:-mx-3 max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:px-3 max-sm:[scrollbar-width:none]">
           {VIEWS.map((v) => (
             <button
               key={v}
@@ -157,7 +157,7 @@ export function NewsScreen() {
       {view === "inbox" ? (
         <div className="stack-block">
           {/* The kinds: quiet text keys, the chosen one underlined. Phone: one row that scrolls sideways. */}
-          <div role="group" aria-label={C.mail.title} className="flex flex-wrap gap-x-5 gap-y-1 max-sm:-mx-3 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
+          <div role="group" aria-label={C.mail.title} className={cx("flex flex-wrap gap-x-5 gap-y-1 max-sm:-mx-3 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]", selected && "max-lg:hidden")}>
             {(["all", ...KINDS] as FilterKey[]).map((key) => (
               <button
                 key={key}

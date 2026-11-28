@@ -141,7 +141,7 @@ function goalViewsOf(C: CareerCopy, m: BoardMandate): GoalView[] {
   ];
 }
 
-const GOAL_COLS = "sm:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem]";
+const GOAL_COLS = "sm:grid-cols-[minmax(0,1fr)_10.5rem_10.5rem]";
 
 /**
  * rc9 ORG-UI (#272): the three goals as three rows of one table: what each

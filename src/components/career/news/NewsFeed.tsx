@@ -406,7 +406,7 @@ export function NewsFeed({ save, C, lang, full = false }: { save: CareerSave; C:
         </div>
       </div>
       {open ? (
-        <div role="group" aria-label={C.news.feed.name} className="flex gap-x-5 overflow-x-auto border-b border-line px-4 [scrollbar-width:none] sm:px-6">
+        <div role="group" aria-label={C.news.feed.name} className="flex gap-x-5 overflow-x-auto overflow-y-hidden border-b border-line px-4 [scrollbar-width:none] sm:px-6">
           {FILTERS.map((key) => (
             <button
               key={key}

@@ -5791,3 +5791,5 @@ export * from "./balance.fanFeed"; // v2.3 FEED
 export * from "./balance.lockerRoom"; // v2.3 LOCKER
 
 export * from "./balance.mediaDays"; // v2.3 MEDIA
+
+export * from "./balance.sharePrompts"; // rc9 SHARE

@@ -96,6 +96,18 @@ export interface RunShareInput {
   dateLabel: string;
   /** Today's Daily number, when the run is the Daily. */
   dailyNumber?: number | null;
+  /** rc9 SHARE: the equipped profile banner's art URL (null = the plain stock). */
+  bannerUrl?: string | null;
+}
+
+/** rc9 SHARE: the three drafted players, the run's best pick first (the front card). */
+export function playerFaces(run: RunState, playerLabel: string): ShareCardFace[] {
+  const best = run.results?.bestPlayerCardId ?? null;
+  const players = rosterSlots(run.draft.roster)
+    .filter((s) => s.card && s.card.kind === "player")
+    .map((s) => s.card!);
+  players.sort((a, b) => Number(b.refId === best) - Number(a.refId === best));
+  return players.slice(0, 3).map((c) => shareFaceOf(c, playerLabel));
 }
 
 export interface RunShareBundle {
@@ -115,6 +127,7 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
   const champion = results.placement === "champion";
   const quick = run.mode === "quick";
   const record = `${results.swissRecord.wins}-${results.swissRecord.losses}`;
+  // The chemistry tier stays in the post's words; the image no longer carries it.
   const chem = copy.CHEM_TIERS[input.chemistryTier] ?? input.chemistryTier;
 
   let headline: string;
@@ -125,40 +138,26 @@ export function buildRunShare(input: RunShareInput): RunShareBundle | null {
     headline = S.headlineOut(e.name, stage, `${e.score[0]}-${e.score[1]}`);
   } else headline = S.headlineFallback;
 
-  const figures: RunImageData["figures"] = [
-    { value: String(input.teamOverall), label: S.figTeamOvr },
-    { value: chem, label: S.figChemistry },
-    quick
-      ? { value: String(results.playoffWins), label: S.figPlayoffWins }
-      : { value: record, label: S.figSwiss },
-  ];
-
+  // rc9 SHARE (#258): the meta is the mode and the difficulty (the date and the
+  // chemistry were noise on the image).
   const meta = [
     input.dailyNumber ? S.dailyTag(input.dailyNumber) : input.modeLabel,
     run.duel ? copy.DUEL_UI.stepperTag : null,
     input.difficultyLabel,
     run.showOverall ? null : copy.RESULTS_UI.shareHiddenOvr,
-    input.dateLabel,
   ]
     .filter(Boolean)
     .join("  ·  ");
 
-  const roles = copy.RESULTS_UI.shareRoles;
   const image: RunImageData = {
     placementLabel: input.placementLabel,
     champion,
     meta,
     headline,
-    road,
-    figures,
-    cards: runFaces(run, {
-      player: copy.DRAFT_UI.player,
-      coach: roles.coach ?? "Coach",
-      sub: roles.sub ?? "Sub",
-      org: roles.org ?? "Org",
-    }),
+    teamFigure: { value: String(input.teamOverall), label: S.figTeamOvr },
+    cards: playerFaces(run, copy.DRAFT_UI.player),
+    bannerUrl: input.bannerUrl ?? null,
     site: "rocketdraft.app",
-    pitch: S.pitchRun,
   };
 
   let text: string;

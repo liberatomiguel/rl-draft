@@ -237,6 +237,16 @@ export const EVENT_CATALOG = {
     gameMode: "string",
   }),
   /**
+   * rc9 SHARE (`lib/share/sharePrompts.ts`): a share prompt. `kind` = invite
+   * (once per device) or image (after a title, sparse); `action` = shown /
+   * accepted / dismissed / optedOut. A handful per device, so critical.
+   */
+  share_prompt: spec("shared", "critical", {
+    kind: "string",
+    action: "string",
+    gameMode: "string",
+  }),
+  /**
    * Share kit (v2.2, `lib/referral.ts`): a browser that arrived through a
    * share link with a player's code played for the first time and its claim
    * settled. `result` = counted | refused (own code, daily cap, already

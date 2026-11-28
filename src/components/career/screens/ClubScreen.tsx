@@ -217,7 +217,7 @@ export function ClubScreen() {
             className="shrink-0"
           />
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <h3 className="display truncate text-3xl font-bold leading-[1.05] text-ink sm:text-4xl">
+            <h3 className="display text-3xl font-bold leading-[1.05] text-ink [overflow-wrap:anywhere] sm:text-4xl">
               {save.identity.orgName}
             </h3>
             <p className="mt-2.5 flex flex-wrap items-center justify-center gap-2 text-sm text-sub sm:justify-start">

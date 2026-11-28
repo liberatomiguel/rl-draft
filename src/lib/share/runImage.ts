@@ -1,35 +1,34 @@
 /**
- * Share kit (v2.2): the image of a finished draft run, in two formats — the
- * post (1200 × 630: X, Discord, WhatsApp, Reddit) and the story
- * (1080 × 1920: Instagram, TikTok and WhatsApp status). Same parts in both:
- * the placement on the paper slab, the road through the bracket as squares,
- * three figures and the drafted roster as the game's own cards.
+ * Share kit: the image of a finished draft run, in two formats, the post
+ * (1200 × 630: X, Discord, WhatsApp, Reddit) and the story (1080 × 1920:
+ * Instagram, TikTok and WhatsApp status).
+ *
+ * rc9 (#258): one thing first. The placement is the headline, in Bold paper
+ * white; one sentence says how it went; the team is the second thing (the
+ * three drafted players as a hand of the game's cards, and the team rating as
+ * one figure). The meta line, the wordmark and the link are small. Orange
+ * appears once, in the wordmark. The player's equipped banner, when there is
+ * one, is a quiet band behind the top (#259).
  */
 
 import {
-  BAD,
-  GOLD,
-  GOOD,
+  FAINT,
   INK,
-  LINE_STRONG,
-  ORANGE,
   SUB,
-  displayFont,
-  drawBoard,
+  drawBannerBand,
+  drawCardHand,
   drawFigure,
   drawFloor,
-  drawGameCard,
-  drawSlab,
+  drawHeadline,
+  drawImageFrame,
+  drawLabel,
+  drawSentence,
   drawWordmark,
-  fitText,
+  loadImage,
   loadImages,
   makeCanvas,
-  resetTracking,
-  roundRect,
-  setTracking,
   textFont,
-  wrapText,
-  cssGradient,
+  type Rect,
   type ShareCardFace,
   type ShareFonts,
 } from "./canvasKit";
@@ -51,221 +50,104 @@ export interface RunImageData {
   /** Placement in the player's language ("Champion", "Top 8"). */
   placementLabel: string;
   champion: boolean;
-  /** "CLASSIC DRAFT · HARD · 27 NOV 2026". */
+  /** "Classic draft · Hard" (drawn in caps). */
   meta: string;
-  /** One sentence under the slab ("Undefeated", "Out to Vitality in the Grand Final, 2-4"). */
+  /** One sentence under the headline ("Undefeated.", "Out to Vitality (2-4) in the Grand Final."). */
   headline: string;
-  road: RoadStage[];
-  figures: { value: string; label: string; color?: string }[];
-  /** Players first, then coach, sub and org (3 in Quick, 6 in Classic). */
+  /** The team rating, the image's second figure. */
+  teamFigure: { value: string; label: string };
+  /** The three drafted players (the best pick first). */
   cards: ShareCardFace[];
+  /** The player's equipped profile banner (an asset URL), or null for the plain stock. */
+  bannerUrl: string | null;
   site: string;
-  pitch: string;
+}
+
+/** Where the site line sits: the wordmark, then the link in `--faint`. */
+export function drawSignature(
+  g: CanvasRenderingContext2D,
+  fonts: ShareFonts,
+  site: string,
+  x: number,
+  baseline: number,
+  size: number,
+  align: "left" | "center",
+): void {
+  if (align === "left") {
+    const end = drawWordmark(g, fonts, x, baseline, size, "left");
+    g.font = textFont(fonts, size * 0.78, 400);
+    g.fillStyle = FAINT;
+    g.textAlign = "left";
+    g.fillText(site, end + size * 0.7, baseline);
+    return;
+  }
+  drawWordmark(g, fonts, x, baseline, size, "center");
+  g.font = textFont(fonts, size * 0.72, 400);
+  g.fillStyle = FAINT;
+  g.textAlign = "center";
+  g.fillText(site, x, baseline + size * 1.25);
+  g.textAlign = "left";
 }
 
 function imageUrls(data: RunImageData): string[] {
   return data.cards.flatMap((c) => [c.flagUrl, c.logoUrl, c.photoUrl]).filter((u): u is string => Boolean(u));
 }
 
-/** The road: a label and a square per series (won in green, lost in red). */
-function drawRoad(
-  g: CanvasRenderingContext2D,
+export interface RenderReport {
+  /** The banner's strength and the worst text contrast over it (null = no banner). */
+  banner: { alpha: number; worst: number } | null;
+}
+
+export async function renderRunImage(
+  data: RunImageData,
+  format: ShareFormat,
   fonts: ShareFonts,
-  road: RoadStage[],
-  x: number,
-  y: number,
-  size: number,
-  align: "left" | "center",
-): void {
-  const stages = road.filter((st) => st.series.length > 0);
-  if (stages.length === 0) return;
-  const sq = size;
-  const gap = size * 0.3;
-  const stageGap = size * 1.2;
-  const labelSize = size * 0.62;
-  g.font = displayFont(fonts, labelSize, 600);
-  setTracking(g, 0.06, labelSize);
-  const widths = stages.map((st) => g.measureText(st.label.toUpperCase()).width + size * 0.5 + st.series.length * (sq + gap) - gap);
-  const total = widths.reduce((a, b) => a + b, 0) + stageGap * (stages.length - 1);
-  let cx = align === "center" ? x - total / 2 : x;
-  stages.forEach((st, i) => {
-    g.font = displayFont(fonts, labelSize, 600);
-    setTracking(g, 0.06, labelSize);
-    g.fillStyle = SUB;
-    g.textAlign = "left";
-    g.textBaseline = "middle";
-    const label = st.label.toUpperCase();
-    g.fillText(label, cx, y + sq / 2 + 1);
-    cx += g.measureText(label).width + size * 0.5;
-    for (const won of st.series) {
-      roundRect(g, cx, y, sq, sq, Math.max(2, sq * 0.16));
-      g.fillStyle = won ? GOOD : BAD;
-      g.globalAlpha = won ? 1 : 0.85;
-      g.fill();
-      g.globalAlpha = 1;
-      cx += sq + gap;
-    }
-    cx += stageGap - gap;
-    if (i === stages.length - 1) return;
-  });
-  resetTracking(g);
-  g.textBaseline = "alphabetic";
-}
-
-/** The image's own frame: gold with a soft light for a title, the hairline otherwise. */
-function drawFrame(g: CanvasRenderingContext2D, w: number, h: number, inset: number, champion: boolean): void {
-  drawBoard(g, inset, inset, w - inset * 2, h - inset * 2, { radius: 26, strong: true, texture: true });
-  if (!champion) return;
-  g.save();
-  g.shadowColor = "rgba(243,201,105,0.45)";
-  g.shadowBlur = 28;
-  roundRect(g, inset + 1, inset + 1, w - inset * 2 - 2, h - inset * 2 - 2, 25);
-  g.lineWidth = 3;
-  g.strokeStyle = cssGradient(g, 165, inset, inset, w - inset * 2, h - inset * 2, ["#f3c969", "#8a6224", "#d9a943"]);
-  g.stroke();
-  g.restore();
-}
-
-function cardGrid(
-  g: CanvasRenderingContext2D,
-  fonts: ShareFonts,
-  cards: ShareCardFace[],
-  images: Map<string, HTMLImageElement>,
-  box: { x: number; y: number; w: number; h: number },
-  gapRatio = 0.09,
-): void {
-  if (cards.length === 0) return;
-  const rows = cards.length > 3 ? 2 : 1;
-  const perRow = Math.min(3, cards.length);
-  // The largest card (3 : 4.3) that fits the box.
-  const ratio = 4.3 / 3;
-  let cw = box.w / (perRow + gapRatio * (perRow - 1));
-  let ch = cw * ratio;
-  const needH = ch * rows + ch * gapRatio * (rows - 1);
-  if (needH > box.h) {
-    ch = box.h / (rows + gapRatio * (rows - 1));
-    cw = ch / ratio;
-  }
-  const gap = cw * gapRatio;
-  const gridW = cw * perRow + gap * (perRow - 1);
-  const gridH = ch * rows + gap * (rows - 1);
-  const x0 = box.x + (box.w - gridW) / 2;
-  const y0 = box.y + (box.h - gridH) / 2;
-  cards.slice(0, 6).forEach((face, i) => {
-    const row = Math.floor(i / 3);
-    const col = i % 3;
-    drawGameCard(g, fonts, face, images, x0 + col * (cw + gap), y0 + row * (ch + gap), cw, ch);
-  });
-}
-
-export async function renderRunImage(data: RunImageData, format: ShareFormat, fonts: ShareFonts): Promise<HTMLCanvasElement> {
+  report?: RenderReport,
+): Promise<HTMLCanvasElement> {
   const { w, h } = SHARE_SIZES[format];
   const { canvas, g } = makeCanvas(w, h);
-  const images = await loadImages(imageUrls(data));
+  const [images, banner] = await Promise.all([loadImages(imageUrls(data)), loadImage(data.bannerUrl)]);
   drawFloor(g, w, h);
 
   if (format === "post") {
-    drawFrame(g, w, h, 22, data.champion);
-    const left = 70;
-    const colW = 470;
-    drawWordmark(g, fonts, left, 96, 30);
-    g.font = displayFont(fonts, 17, 600);
-    setTracking(g, 0.06, 17);
-    g.fillStyle = SUB;
-    g.fillText(fitText(g, data.meta.toUpperCase(), colW), left, 128);
-    resetTracking(g);
-
-    const slab = drawSlab(g, fonts, data.placementLabel, left, 232, 76, { maxWidth: colW });
-    g.font = textFont(fonts, 22, 400);
-    g.fillStyle = INK;
-    const lines = wrapText(g, data.headline, colW).slice(0, 2);
-    lines.forEach((line, i) => g.fillText(line, left, slab.bottom + 40 + i * 30));
-    const afterHeadline = slab.bottom + 40 + (lines.length - 1) * 30;
-    drawRoad(g, fonts, data.road, left, afterHeadline + 26, 20, "left");
-
-    const figY = 490;
-    const figGap = colW / Math.max(1, data.figures.length);
-    data.figures.slice(0, 3).forEach((f, i) => {
-      drawFigure(g, fonts, f.value, f.label, left + i * figGap, figY, 50, { color: f.color, maxWidth: figGap - 18 });
-    });
-    if (data.figures.length > 1) {
-      g.strokeStyle = LINE_STRONG;
-      g.lineWidth = 1.5;
-      for (let i = 1; i < Math.min(3, data.figures.length); i++) {
-        const lx = left + i * figGap - 14;
-        g.beginPath();
-        g.moveTo(lx, figY - 44);
-        g.lineTo(lx, figY + 22);
-        g.stroke();
-      }
+    const inset = 22;
+    drawImageFrame(g, w, h, inset, data.champion);
+    const left = 76;
+    const col = 540;
+    const metaY = 98;
+    if (banner) {
+      const over: { rect: Rect; color: string }[] = [{ rect: { x: left, y: metaY - 18, w: col, h: 24 }, color: SUB }];
+      const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 196, radius: 24 }, over);
+      if (report) report.banner = out;
     }
-
-    g.font = displayFont(fonts, 22, 700);
-    setTracking(g, 0.05, 22);
-    g.fillStyle = ORANGE;
-    g.fillText("ROCKETDRAFT.APP", left, 574);
-    const siteW = g.measureText("ROCKETDRAFT.APP").width;
-    resetTracking(g);
-    g.font = textFont(fonts, 18, 400);
-    g.fillStyle = SUB;
-    g.fillText(fitText(g, data.pitch, colW - siteW - 16), left + siteW + 16, 574);
-
-    cardGrid(g, fonts, data.cards, images, { x: 572, y: 50, w: 584, h: 530 });
+    drawLabel(g, fonts, data.meta, left, metaY, 17, col);
+    drawHeadline(g, fonts, data.placementLabel, left, 262, 112, col, { min: 60 });
+    const last = drawSentence(g, fonts, data.headline, left, 326, 26, col, { lines: 2, lineHeight: 36 });
+    drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, left, Math.max(470, last + 120), 54, { labelSize: 15 });
+    drawSignature(g, fonts, data.site, left, 566, 24, "left");
+    drawCardHand(g, fonts, data.cards.slice(0, 3), images, 902, 330, 206, { spread: 146, tilt: 7, sideScale: 0.88 });
     return canvas;
   }
 
-  // Story.
-  drawFrame(g, w, h, 34, data.champion);
+  // Story: the content stays between 220 and 1700 px (the Instagram bars).
+  const inset = 34;
+  drawImageFrame(g, w, h, inset, data.champion);
   const cx = w / 2;
-  drawWordmark(g, fonts, cx, 262, 46, "center");
-  g.font = displayFont(fonts, 26, 600);
-  setTracking(g, 0.06, 26);
-  g.fillStyle = SUB;
-  g.textAlign = "center";
-  g.fillText(fitText(g, data.meta.toUpperCase(), w - 180), cx, 314);
-  resetTracking(g);
-  g.textAlign = "left";
-
-  const slab = drawSlab(g, fonts, data.placementLabel, cx, 470, 118, { align: "center", maxWidth: w - 280 });
-  g.font = textFont(fonts, 34, 400);
-  g.fillStyle = INK;
-  g.textAlign = "center";
-  const lines = wrapText(g, data.headline, w - 200).slice(0, 2);
-  lines.forEach((line, i) => g.fillText(line, cx, slab.bottom + 62 + i * 44));
-  g.textAlign = "left";
-  const roadY = slab.bottom + 62 + (lines.length - 1) * 44 + 34;
-  drawRoad(g, fonts, data.road, cx, roadY, 30, "center");
-
-  const gridTop = roadY + 70;
-  cardGrid(g, fonts, data.cards, images, { x: 74, y: gridTop, w: w - 148, h: 1560 - gridTop });
-
-  const figs = data.figures.slice(0, 3);
-  const span = (w - 200) / Math.max(1, figs.length);
-  figs.forEach((f, i) => {
-    drawFigure(g, fonts, f.value, f.label, 100 + span * i + span / 2, 1650, 74, { align: "center", color: f.color, maxWidth: span - 30 });
-  });
-  g.strokeStyle = LINE_STRONG;
-  g.lineWidth = 2;
-  for (let i = 1; i < figs.length; i++) {
-    const lx = 100 + span * i;
-    g.beginPath();
-    g.moveTo(lx, 1584);
-    g.lineTo(lx, 1690);
-    g.stroke();
+  const metaY = 356;
+  if (banner) {
+    const over: { rect: Rect; color: string }[] = [
+      { rect: { x: cx - 260, y: 262, w: 520, h: 50 }, color: INK },
+      { rect: { x: 90, y: metaY - 26, w: w - 180, h: 34 }, color: SUB },
+    ];
+    const out = drawBannerBand(g, banner, { x: inset + 2, y: inset + 2, w: w - inset * 2 - 4, h: 380, radius: 24 }, over);
+    if (report) report.banner = out;
   }
-
-  g.textAlign = "center";
-  g.font = displayFont(fonts, 40, 700);
-  setTracking(g, 0.05, 40);
-  g.fillStyle = ORANGE;
-  g.fillText("ROCKETDRAFT.APP", cx, 1778);
-  resetTracking(g);
-  g.font = textFont(fonts, 28, 400);
-  g.fillStyle = SUB;
-  g.fillText(fitText(g, data.pitch, w - 200), cx, 1822);
-  g.textAlign = "left";
+  drawWordmark(g, fonts, cx, 304, 42, "center");
+  drawLabel(g, fonts, data.meta, cx, metaY, 24, w - 180, { align: "center" });
+  drawHeadline(g, fonts, data.placementLabel, cx, 600, 168, w - 160, { align: "center", min: 90 });
+  drawSentence(g, fonts, data.headline, cx, 684, 38, w - 220, { align: "center", lines: 2, lineHeight: 50 });
+  drawCardHand(g, fonts, data.cards.slice(0, 3), images, cx, 1100, 330, { spread: 250, tilt: 6, sideScale: 0.88 });
+  drawFigure(g, fonts, data.teamFigure.value, data.teamFigure.label, cx, 1488, 92, { align: "center", labelSize: 24 });
+  drawSignature(g, fonts, data.site, cx, 1648, 40, "center");
   return canvas;
 }
-
-/** The trophy-gold used for a champion's figures. */
-export const CHAMPION_GOLD = GOLD;
