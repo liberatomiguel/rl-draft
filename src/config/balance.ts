@@ -4587,14 +4587,23 @@ export const CAREER_WORLD_LIFE = {
    * `aiChangeChance` once he has coached `aiChangeMinSeasons` seasons there.
    */
   coaches: {
-    ageRange: [30, 46] as const,
-    exProAge: [29, 34] as const,
-    retireByAge: { 40: 0.08, 43: 0.15, 46: 0.3, 49: 0.5, 52: 1 } as Record<number, number>,
+    // rc9 ENDGAME (R230, Miguel's number, 27/11): coaches retire between 28 and 35, a spread
+    // inside the range (rc.8: ageRange [30, 46], exProAge [29, 34], 8 % at 40 ... 100 % at 52).
+    // First-sight ages sit below most of the window so season 1 has no wave.
+    ageRange: [24, 32] as const,
+    exProAge: [26, 31] as const,
+    retireByAge: { 28: 0.1, 30: 0.2, 32: 0.35, 34: 0.6, 35: 1 } as Record<number, number>,
+    /** rc9 ENDGAME: a coach already past 35 (aged under the rc.8 window in a save in progress) leaves at this chance a season, not all at once. */
+    pastWindowChance: 0.35,
     aiChangeOutsideTop: 10,
     aiChangeChance: 0.5,
     aiChangeMinSeasons: 2,
     /** A retiring AI coach's successor is at most this much worse (probe: dataset coaches outclass the generated pool). */
     successorMaxDrop: 2,
+    // rc9 ENDGAME (R230): coaches age, retire and are replaced from this season index on
+    // (the user's, the AI orgs' and the dataset coaches on the market), not only in the
+    // infinite seasons. Sacking after bad seasons still waits for `fromSeasonIndex`. null = rc.8.
+    lifeFromSeasonIndex: 1 as number | null,
   },
   /**
    * v2.1 Mundo vivo M2.1 (R142, docs/MUNDO-VIVO-M2-SPEC.md): the world grows.
@@ -5809,6 +5818,31 @@ export const CAREER_ENDLESS = {
     importFromStrength: 2,
     /** A project's core stays together this many seasons while the answer lasts, then the org rests a season. */
     maxSeasons: 3,
+  },
+  /**
+   * rc9 ENDGAME (R234): from `fromSeasonIndex` (one season after the projects
+   * start, so 2027 and the first endless year keep their difficulty) these
+   * project fields replace `projects`. Empty = the round-2 answer.
+   * R234 arm A2 (28/11, floor 99, Normal, NA/EU/SAM x 2 seeds, S8-S15): every
+   * answered season gets the full kit, three signings from every region, and
+   * up to six projects (APAC joins). A 100+ team won 13 of 37 Worlds (35 %;
+   * round 2: 23 of 42, 55 %), 3.7 AI sides within 3 points (2.8), series 86.7 %.
+   */
+  late: {
+    fromSeasonIndex: 8,
+    projects: {
+      kitBase: 5,
+      bigGap: 2,
+      gapStep: 0.5,
+      dominanceFloor: 1,
+      defenceFloor: 1,
+      buysBase: 3,
+      importFromStrength: 1,
+      maxProjects: 6,
+      regions: ["NA", "EU", "SAM", "MENA", "OCE", "APAC"],
+    } as Partial<Record<"dominanceFloor" | "defenceFloor" | "bigGap" | "gapStep" | "maxProjects" | "kitBase" | "candidateOrgs" | "buysBase" | "maxBuys" | "topUpBuys" | "importFromStrength", number>> & {
+      regions?: readonly ("NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC")[];
+    },
   },
   /**
    * M2.1 in a long dynasty: from `fromTitles` consecutive Worlds, the season's

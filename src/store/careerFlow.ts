@@ -371,6 +371,10 @@ import {
   stackCandidatesFrom,
   userCoachRollover,
   worldLifeOn,
+  coachLifeOn, // rc9 ENDGAME
+  coachLifecycle, // rc9 ENDGAME
+  marketCoachRetiredBy, // rc9 ENDGAME
+  marketCoachAge, // rc9 ENDGAME
 } from "@/engine/career/worldLife";
 import { endlessEliteBonus, endlessGenerationNews, endlessOffer, endlessProjectBid, endlessRollover, legendNameOf, withEndlessDraw } from "./endlessFlow";
 import type {
@@ -4731,6 +4735,18 @@ function worldLifeRollover(save: CareerSave, nextSeason: number, retiredNow: str
   for (const p of elite.lifted.filter((x) => x.region === save.identity.region).slice(0, 2)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "prodigyRises", params: { player: p.playerName, region: p.region } });
   }
+  userCoachLife(save, nextSeason);
+}
+
+// rc9 ENDGAME (R230): coaches age and retire from the first rollover of a save (FEATURES.worldLife).
+/** Before the infinite seasons: only the coaches' life cycle (the AI orgs' and the user's). */
+function coachLifeRollover(save: CareerSave, nextSeason: number, retiredNow: string[]): void {
+  save.world = coachLifecycle(save.world, { careerSeed: save.careerSeed, seasonIndex: nextSeason, retiredNow }).world;
+  userCoachLife(save, nextSeason);
+}
+
+/** The user's coach ages; an announced one leaves now, a new announcement gives a season's notice (mail). */
+function userCoachLife(save: CareerSave, nextSeason: number): void {
   if (save.coach) {
     const c = userCoachRollover(save.coach, nextSeason, save.careerSeed);
     const name = save.coach.name;
@@ -4803,6 +4819,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   }
   // v2.1 M1 (R139): the world renews itself (infinite seasons, FEATURES.worldLife).
   if (worldLifeOn(nextSeason)) worldLifeRollover(save, nextSeason, pass.retired.map((r) => r.id));
+  else if (coachLifeOn(nextSeason)) coachLifeRollover(save, nextSeason, pass.retired.map((r) => r.id)); // rc9 ENDGAME
   if (pass.rookies.length > 0) {
     const headline = pass.rookies[0];
     pushNews(save, {
@@ -6631,6 +6648,13 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     difficulty: save.difficulty,
     nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion, save.careerSeed)],
     reputation: save.reputation,
+    // rc9 ENDGAME (R231): the dataset's coaches retire from the market too (false with the flag off).
+    ...(coachLifeOn(save.clock.seasonIndex)
+      ? {
+          staffRetired: (id: string, first: number) => marketCoachRetiredBy(`coach:staff:${id}`, first, save.clock.seasonIndex, save.careerSeed),
+          staffAge: (id: string, first: number) => marketCoachAge(`coach:staff:${id}`, first, save.clock.seasonIndex, save.careerSeed),
+        }
+      : {}),
   }).filter((c) => !save.retiredCoachIds?.includes(c.id));
 }
 

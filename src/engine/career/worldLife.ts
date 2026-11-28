@@ -44,6 +44,17 @@ export function worldLifeOn(seasonIndex: number): boolean {
   return FEATURES.worldLife && seasonIndex >= worldLifeFrom();
 }
 
+/**
+ * rc9 ENDGAME (R230): coaches age and retire at the rollover into `seasonIndex`
+ * (FEATURES.worldLife, from `coaches.lifeFromSeasonIndex`, so a save founded
+ * in 2020 sees it from its first rollover). Null in the config = rc.8 (the
+ * infinite seasons only).
+ */
+export function coachLifeOn(seasonIndex: number): boolean {
+  const from = L.coaches.lifeFromSeasonIndex;
+  return FEATURES.worldLife && seasonIndex >= (from ?? worldLifeFrom());
+}
+
 const ratingOf = (o: WorldOrgState) => o.rating ?? 70 + o.prestige * 6;
 const byRatingDesc = (a: WorldOrgState, b: WorldOrgState) => ratingOf(b) - ratingOf(a) || a.ref.localeCompare(b.ref);
 
@@ -255,7 +266,13 @@ export function stackCandidatesFrom(
 
 export function coachRetireChance(age: number): number {
   let p = 0;
-  for (const [k, v] of Object.entries(L.coaches.retireByAge)) if (age >= Number(k)) p = Math.max(p, v);
+  let top = 0;
+  for (const [k, v] of Object.entries(L.coaches.retireByAge)) {
+    top = Math.max(top, Number(k));
+    if (age >= Number(k)) p = Math.max(p, v);
+  }
+  // rc9 ENDGAME (R230): past the window (a coach aged under rc.8's ages) the exits spread over seasons.
+  if (age > top) return L.coaches.pastWindowChance;
   return p;
 }
 
@@ -300,17 +317,7 @@ export function orgLifecycle(
   const model = growthModelOf(next);
   const view = { careerSeed: ctx.careerSeed, seasonIndex: season, world: next };
 
-  // Ex-pros of this rollover who move into coaching, best first.
-  const exPros = ctx.retiredNow
-    .filter((id) => playerById.has(id) && becomesCoachOnRetirement(id, ctx.careerSeed))
-    .map((id) => ({ id, q: exProCoachQuality(bestCardOverall(id) ?? 74, derivedFloat(ctx.careerSeed, streams.gen("coachJitter", id))) }))
-    .sort((a, b) => b.q - a.q || a.id.localeCompare(b.id));
-  const newCoach = (key: string): { overall: number; age: number } => {
-    const ex = exPros.shift();
-    if (ex) return { overall: ex.q, age: coachAgeOnFirstSight(`ai:${ex.id}`, true, ctx.careerSeed) };
-    const f = derivedFloat(ctx.careerSeed, streams.gen("wlCoachNew", key));
-    return { overall: Math.round(triangular(f, CAREER_COACH_MARKET.generated.senior.quality)), age: coachAgeOnFirstSight(`ai:new:${key}`, false, ctx.careerSeed) };
-  };
+  const newCoach = newCoachSource(ctx);
 
   for (const region of REGIONS) {
     const inRegion = Object.values(next.orgs).filter((o) => o.region === region).sort(byRatingDesc);
@@ -373,31 +380,94 @@ export function orgLifecycle(
     }
 
     // 4. AI coaches: age, retire, or go after bad seasons.
-    const ranked = Object.values(next.orgs).filter((o) => o.region === region).sort(byRatingDesc);
-    ranked.forEach((o, rank) => {
-      if (o.coachOverall === undefined) return;
-      // First sight: an age, no stamp (his tenure counts from the first M1 season).
-      if (o.coachAge === undefined) o.coachAge = coachAgeOnFirstSight(`ai:${o.ref}`, false, ctx.careerSeed);
-      else if (o.coachSince !== season) o.coachAge += 1;
-      const retires = derivedFloat(ctx.careerSeed, streams.gen("wlCoachRetire", `ai:${o.ref}:${season}`)) < coachRetireChance(o.coachAge);
-      const sacked =
-        !retires &&
-        rank >= C.aiChangeOutsideTop &&
-        season - (o.coachSince ?? worldLifeFrom()) >= C.aiChangeMinSeasons &&
-        derivedFloat(ctx.careerSeed, streams.gen("wlCoachSack", `${o.ref}:${season}`)) < C.aiChangeChance;
-      if (!retires && !sacked) return;
-      const c = newCoach(`${o.ref}:${season}`);
-      // A retiring coach's org hires at about his level (an org does not fall for a retirement);
-      // a sacked one takes whoever answers.
-      o.coachOverall = retires ? Math.max(c.overall, o.coachOverall - C.successorMaxDrop) : c.overall;
-      o.coachAge = c.age;
-      o.coachSince = season;
-      if (retires) report.coachRetired += 1;
-      else report.coachChanged += 1;
-    });
+    aiCoachesAge(next, region, season, ctx.careerSeed, newCoach, report, true);
   }
   next.version += 1;
   return { world: next, report };
+}
+
+type NewCoach = (key: string) => { overall: number; age: number };
+
+/** The rollover's coach supply: its ex-pros who move into coaching, best first, then generated seniors. */
+function newCoachSource(ctx: { careerSeed: number; retiredNow: readonly string[] }): NewCoach {
+  const exPros = ctx.retiredNow
+    .filter((id) => playerById.has(id) && becomesCoachOnRetirement(id, ctx.careerSeed))
+    .map((id) => ({ id, q: exProCoachQuality(bestCardOverall(id) ?? 74, derivedFloat(ctx.careerSeed, streams.gen("coachJitter", id))) }))
+    .sort((a, b) => b.q - a.q || a.id.localeCompare(b.id));
+  return (key) => {
+    const ex = exPros.shift();
+    if (ex) return { overall: ex.q, age: coachAgeOnFirstSight(`ai:${ex.id}`, true, ctx.careerSeed) };
+    const f = derivedFloat(ctx.careerSeed, streams.gen("wlCoachNew", key));
+    return { overall: Math.round(triangular(f, CAREER_COACH_MARKET.generated.senior.quality)), age: coachAgeOnFirstSight(`ai:new:${key}`, false, ctx.careerSeed) };
+  };
+}
+
+/** One region's AI coaches at the rollover into `season`: age, retire, or (`sacking`) go after bad seasons. */
+function aiCoachesAge(next: WorldState, region: Region, season: number, careerSeed: number, newCoach: NewCoach, report: OrgLifeReport, sacking: boolean): void {
+  const C = L.coaches;
+  const ranked = Object.values(next.orgs).filter((o) => o.region === region).sort(byRatingDesc);
+  ranked.forEach((o, rank) => {
+    if (o.coachOverall === undefined) return;
+    // First sight: an age, no stamp (his tenure counts from the first M1 season).
+    if (o.coachAge === undefined) o.coachAge = coachAgeOnFirstSight(`ai:${o.ref}`, false, careerSeed);
+    else if (o.coachSince !== season) o.coachAge += 1;
+    const retires = derivedFloat(careerSeed, streams.gen("wlCoachRetire", `ai:${o.ref}:${season}`)) < coachRetireChance(o.coachAge);
+    const sacked =
+      sacking &&
+      !retires &&
+      rank >= C.aiChangeOutsideTop &&
+      season - (o.coachSince ?? worldLifeFrom()) >= C.aiChangeMinSeasons &&
+      derivedFloat(careerSeed, streams.gen("wlCoachSack", `${o.ref}:${season}`)) < C.aiChangeChance;
+    if (!retires && !sacked) return;
+    const c = newCoach(`${o.ref}:${season}`);
+    // A retiring coach's org hires at about his level (an org does not fall for a retirement);
+    // a sacked one takes whoever answers.
+    o.coachOverall = retires ? Math.max(c.overall, o.coachOverall - C.successorMaxDrop) : c.overall;
+    o.coachAge = c.age;
+    o.coachSince = season;
+    if (retires) report.coachRetired += 1;
+    else report.coachChanged += 1;
+  });
+}
+
+/**
+ * rc9 ENDGAME (R230): the coaches' life cycle alone, for a rollover before the
+ * infinite seasons (`coachLifeOn` but not `worldLifeOn`): the AI coaches age
+ * and retire, a retiring coach's org hires at about his level. No sacking, no
+ * turnover, no scouting: the RLCS timeline keeps its orgs and rosters.
+ */
+export function coachLifecycle(
+  world: WorldState,
+  ctx: { careerSeed: number; seasonIndex: number; retiredNow: readonly string[] },
+): { world: WorldState; report: OrgLifeReport } {
+  const next = cloneOrgs(world);
+  const report: OrgLifeReport = { turnovers: [], stacks: [], coachRetired: 0, coachChanged: 0 };
+  const newCoach = newCoachSource(ctx);
+  for (const region of REGIONS) aiCoachesAge(next, region, ctx.seasonIndex, ctx.careerSeed, newCoach, report, false);
+  next.version += 1;
+  return { world: next, report };
+}
+
+/**
+ * rc9 ENDGAME (R231): a coach on the market (the dataset's real coaches) has
+ * retired by `seasonIndex`. He is first seen at `firstSeason` with the same age
+ * and the same yearly draw the user's coach would get (`userCoachRollover`), so
+ * a coach the user hires keeps the fate he had on the market. Without this the
+ * 144 dataset coaches stayed on the shortlist forever.
+ */
+export function marketCoachRetiredBy(coachId: string, firstSeason: number, seasonIndex: number, careerSeed: number): boolean {
+  if (!coachLifeOn(seasonIndex)) return false;
+  const from = Math.max(firstSeason + 1, L.coaches.lifeFromSeasonIndex ?? worldLifeFrom());
+  const base = coachAgeOnFirstSight(coachId, false, careerSeed);
+  for (let s = from; s <= seasonIndex; s++) {
+    if (derivedFloat(careerSeed, streams.gen("wlCoachRetire", `${coachId}:${s}`)) < coachRetireChance(base + s - firstSeason)) return true;
+  }
+  return false;
+}
+
+/** rc9 ENDGAME (R231): that market coach's age in `seasonIndex`, on the clock `marketCoachRetiredBy` reads (a hired coach keeps it). */
+export function marketCoachAge(coachId: string, firstSeason: number, seasonIndex: number, careerSeed: number): number {
+  return coachAgeOnFirstSight(coachId, false, careerSeed) + Math.max(0, seasonIndex - firstSeason);
 }
 
 /**

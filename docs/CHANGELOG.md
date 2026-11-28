@@ -203,6 +203,18 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Added:** `lockerRoomView.ts` (mood, trend, reason as a copy key, what
   waits for the manager) for the screens; the arc bot runs the locker room.
 
+### Changed (ENDGAME, R230-R235)
+- **Coaches retire between 28 and 35, from the first rollover** (`worldLife`): ages on first sight 24-32, a spread of exits inside the window, AI orgs hire a successor at most 2 worse, the user's coach announces a season ahead by mail. Real dataset coaches leave the market on the same clock and keep their market age when hired. Before, coaches aged only from 2027 and retired from 40 to 52.
+- **Late endless projects** (`endlessVariety`, `CAREER_ENDLESS.late`, from season index 8): full kit, three signings from any region, up to six projects (APAC joins). Floor-99 bot, Normal, NA/EU/SAM x 2 seeds, S8-S15: a 100+ team wins 13 of 37 Worlds (35 %, was 23 of 42), 3.7 AI sides within 3 points (was 2.8). Seasons 0-7 unchanged by construction.
+- `eventFormats` is checked by `stagingFlags.test.ts`. Endless-year format rotation verified on a 12-season career (no rule change).
+
+### Balance
+- `BALANCE_VERSION` not bumped (integration does it); `balanceVersion.test.ts` may flag the new exports.
+
+### Fixed
+- Coaches never retired in seasons 0-6. Root cause: the coach life cycle sat inside the M1 world-life pass, which runs only from the first infinite season (`worldLifeOn`), and the retirement curve started at 40.
+- Real coaches stayed on the coach shortlist forever. Root cause: the dataset coach pool read only the seasons they had coached, with no age.
+
 ## [2.2.0-rc.8] — 2026-11-27 · Everything from the 27/11 chats on one staging build (staging)
 
 Integration of the two lines that were not on staging yet, on top of rc.7 + the share kit's server count (`71eded8`). No new gameplay of its own: each part keeps its flag, and every flag is on in the staging build only.

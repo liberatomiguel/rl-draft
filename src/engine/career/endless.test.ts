@@ -14,6 +14,7 @@ import {
   majorHostsFor,
   projectKitEffect,
   projectStrengthFor,
+  projectsAt,
   rivalProjectsPass,
   worldsStreakOf,
 } from "./endless";
@@ -84,7 +85,7 @@ describe("rival projects", () => {
 
   it("only moves players: the same people, every org still fields three, nobody twice", () => {
     const res = rivalProjectsPass(world, ctx);
-    expect(res.projects.length).toBe(projectStrengthFor(res.gap, 3));
+    expect(res.projects.length).toBe(projectStrengthFor(res.gap, 3, false, ctx.seasonIndex)); // rc9 ENDGAME: the season's rules (R234)
     expect(allIds(res.world)).toEqual(allIds(world));
     for (const o of Object.values(res.world.orgs)) {
       expect(o.playerIds.filter(Boolean)).toHaveLength(3);
@@ -133,11 +134,17 @@ describe("rival projects", () => {
       expect(Object.values(after.world.orgs).some((o) => o.projectKit)).toBe(false);
     } else for (const p of after.projects) expect(p.orgRef).not.toBe(after.leader);
   });
+  it("rc9 ENDGAME (R234): the late rules start at CAREER_ENDLESS.late.fromSeasonIndex, never earlier", () => {
+    const L = CAREER_ENDLESS.late;
+    expect(projectsAt(L.fromSeasonIndex - 1)).toEqual(CAREER_ENDLESS.projects);
+    expect(projectsAt(L.fromSeasonIndex)).toEqual({ ...CAREER_ENDLESS.projects, ...L.projects });
+    expect(L.fromSeasonIndex).toBeGreaterThan(CAREER_ENDLESS.fromSeasonIndex);
+  });
   it("does nothing before the endless years; an AI leader gets the same rule, never answered by itself", () => {
     expect(rivalProjectsPass(world, { ...ctx, seasonIndex: 3 }).projects).toEqual([]);
     const ai = rivalProjectsPass(world, { ...ctx, userRating: 60, streak: { ref: null, titles: 0 } });
     expect(ai.leader).not.toBe("user");
-    expect(ai.strength).toBe(projectStrengthFor(ai.gap, 0));
+    expect(ai.strength).toBe(projectStrengthFor(ai.gap, 0, false, ctx.seasonIndex)); // rc9 ENDGAME: the season's rules (R234)
     for (const p of ai.projects) expect(p.orgRef).not.toBe(ai.leader);
   });
 });

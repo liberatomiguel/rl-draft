@@ -15,9 +15,9 @@
  *
  * Observers only — the saves are never changed.
  */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { it } from "vitest";
-import { FEATURES } from "@/config/balance";
+import { CAREER_ENDLESS, FEATURES } from "@/config/balance";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import { playerViewById } from "@/engine/career/development";
 import { orgTeamFor } from "@/engine/career/worldSim";
@@ -71,6 +71,11 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
   const seasons = Number(env.EP_SEASONS ?? 14);
   const seedBase = Number(env.EP_SEED_BASE ?? 9100);
   console.log(`flags worldLife=${FEATURES.worldLife} styles=${FEATURES.matchdayStyles} decisions=${FEATURES.matchdayDecisions} endless=${(FEATURES as Record<string, unknown>).endlessVariety}`);
+  // rc9 ENDGAME: EP_LATE='{"kitBase":5}' sets CAREER_ENDLESS.late.projects for an arm (probe-only).
+  if (env.EP_LATE) {
+    (CAREER_ENDLESS.late as { projects: Record<string, unknown> }).projects = JSON.parse(env.EP_LATE);
+    console.log(`late ${JSON.stringify(CAREER_ENDLESS.late)}`);
+  }
   const out: { region: Region; difficulty: CareerDifficulty; seed: number; ended: string | null; ms: number; rows: EndlessSeason[] }[] = [];
   for (const region of regions)
     for (const difficulty of diffs)
@@ -80,12 +85,22 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
         const row = (s: number): EndlessSeason =>
           rows.get(s) ??
           (rows.set(s, { season: s, rating: 0, titles: {}, played: {}, series: {}, near3: [], cupKnock: [], worlds: null, aiTop: [] }), rows.get(s)!);
-        const res = playArcCareer({
+        // rc9 ENDGAME: EP_DUMP_AT=6 EP_DUMP=prefix writes the save at that season's start and stops
+        // (seasons before CAREER_ENDLESS.fromSeasonIndex do not read the endless config); EP_FROM=prefix
+        // resumes every arm from those saves, so an arm plays only the endless years.
+        const dumpAt = env.EP_DUMP_AT !== undefined ? Number(env.EP_DUMP_AT) : null;
+        const fileOf = (prefix: string) => `${prefix}-${region}-${difficulty}-${seed}.json`;
+        const startFrom = env.EP_FROM ? (JSON.parse(readFileSync(fileOf(env.EP_FROM), "utf8")) as CareerSave) : undefined;
+        let dumped = false;
+        let res: ReturnType<typeof playArcCareer>;
+        try {
+        res = playArcCareer({
           region,
           difficulty,
           policy,
           seed,
-          seasons,
+          seasons: startFrom ? seasons - startFrom.clock.seasonIndex : seasons,
+          ...(startFrom ? { startFrom } : {}),
           budgetMs: 3_600_000,
           onEvent(save) {
             const a = save.activeEvent;
@@ -122,6 +137,11 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
             }
           },
           onSeason(moment, save) {
+            if (dumpAt !== null && moment === "start" && save.clock.seasonIndex === dumpAt && env.EP_DUMP) {
+              writeFileSync(fileOf(env.EP_DUMP), JSON.stringify(save));
+              dumped = true;
+              throw new Error("EP_DUMPED");
+            }
             // EP_FLOOR=98: a dominant user (a human who trains past the bot): from EP_FLOOR_FROM (6) each
             // season starts with every squad player at least this overall (probe-only, the arm's premise).
             // Also at the season's end, so the rollover (the projects' read of dominance) sees the same team.
@@ -167,6 +187,13 @@ it.runIf(env.ENDLESS_PROBE === "1")("v2.2 endless probe", { timeout: 24 * 3_600_
             r.userStreak = save.endless?.streak?.ref === "user" ? save.endless.streak.titles : 0;
           },
         });
+        } catch (e) {
+          if (dumped) {
+            console.log(`dumped ${fileOf(env.EP_DUMP!)}`);
+            continue;
+          }
+          throw e;
+        }
         for (const s of res.seasons) {
           const r = row(s.seasonIndex);
           r.rating = s.teamRating;

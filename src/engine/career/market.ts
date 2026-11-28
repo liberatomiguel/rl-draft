@@ -1004,7 +1004,7 @@ const lastPlayedOrder: Map<string, number> = (() => {
   return map;
 })();
 
-type StaffPick = { id: string; name: string; region: Region; overall: number; experience: number; bonusType: StatKey; f: number };
+type StaffPick = { firstSeason: number; id: string; name: string; region: Region; overall: number; experience: number; bonusType: StatKey; f: number };
 
 /**
  * rc.44 (R118): the real coaches a club of this reputation can shortlist in a
@@ -1018,6 +1018,10 @@ export function staffCoachCandidatesFor(ctx: {
   careerSeed: number;
   difficulty: CareerDifficulty;
   reputation: number;
+  /** rc9 ENDGAME (R231): a dataset coach who has retired by now (his person id, the season index he was first on the market). Absent = rc.8. */
+  staffRetired?: (personId: string, firstSeason: number) => boolean;
+  /** rc9 ENDGAME (R231): his age now, on the same clock as `staffRetired` (so a hired coach keeps the fate he had on the market). Absent = no age (rc.8). */
+  staffAge?: (personId: string, firstSeason: number) => number;
 }): CoachState[] {
   const S = CAREER_COACH_MARKET.staff;
   if (S.perWindow <= 0) return [];
@@ -1028,9 +1032,13 @@ export function staffCoachCandidatesFor(ctx: {
   for (const [id, person] of staffByPerson) {
     const past = person.cards.filter((c) => c.order <= order);
     if (past.length === 0 || (lastPlayedOrder.get(id) ?? 0) >= order) continue;
+    // rc9 ENDGAME (R231): the dataset's coaches age and retire too.
+    const firstSeason = Math.max(0, Math.min(...past.map((c) => c.order)) - seasonOrderFor(0));
+    if (ctx.staffRetired?.(id, firstSeason)) continue;
     const best = past.reduce((a, b) => (b.overall > a.overall ? b : a));
     if (best.overall > cap) continue;
     pool.push({
+      firstSeason,
       id,
       name: person.name,
       region: person.region,
@@ -1070,6 +1078,7 @@ export function staffCoachCandidatesFor(ctx: {
         Math.floor(derivedFloat(ctx.careerSeed, streams.gen("coachSpec", `staff:${p.id}`)) * OBJECTIVES.length) % OBJECTIVES.length
       ],
     ceiling: coachCeilingFor(p.overall, derivedFloat(ctx.careerSeed, streams.gen("coachCeil", `staff:${p.id}`))),
+    ...(ctx.staffAge ? { age: ctx.staffAge(p.id, p.firstSeason) } : {}), // rc9 ENDGAME (R231)
   }));
 }
 
@@ -1092,6 +1101,9 @@ export function coachCandidatesFor(ctx: {
   nameBank: string[];
   /** rc.44 (R118): the club's reputation, which decides who of the real coaches answers. Absent = none (rc.43's shortlist). */
   reputation?: number;
+  /** rc9 ENDGAME (R231): see staffCoachCandidatesFor. */
+  staffRetired?: (personId: string, firstSeason: number) => boolean;
+  staffAge?: (personId: string, firstSeason: number) => number;
 }): CoachState[] {
   const M = CAREER_COACH_MARKET;
   const out: CoachState[] = [];
