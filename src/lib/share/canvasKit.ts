@@ -113,14 +113,91 @@ export async function loadImages(urls: readonly (string | null | undefined)[]): 
   return map;
 }
 
-/** An inline SVG element (a career crest) as an image the canvas can draw. */
-export function svgElementToImage(svg: SVGSVGElement | null, px = 512): Promise<HTMLImageElement | null> {
-  if (!svg) return Promise.resolve(null);
+const FONT_WAIT_MS = 2500;
+
+function familyName(fontFamily: string): string {
+  return (fontFamily.split(",")[0] ?? "").trim().replace(/^["']|["']$/g, "");
+}
+
+/** The page's @font-face for `family` at `weight`, inlined as a data URL (null when it cannot be read). */
+async function inlineFontFace(family: string, weight: string): Promise<string | null> {
+  let src: string | null = null;
+  try {
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue; // a cross-origin sheet
+      }
+      for (const rule of Array.from(rules)) {
+        if (!(rule instanceof CSSFontFaceRule)) continue;
+        const s = rule.style;
+        if (familyName(s.getPropertyValue("font-family")) !== family) continue;
+        if ((s.getPropertyValue("font-weight") || "400").trim() !== weight) continue;
+        const m = /url\(["']?([^"')]+)["']?\)/.exec(s.getPropertyValue("src"));
+        if (m) src = new URL(m[1], sheet.href ?? location.href).href;
+      }
+    }
+    if (!src) return null;
+    const blob = await (await fetch(src)).blob();
+    const data = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(blob);
+    });
+    return `@font-face{font-family:"${family}";font-weight:${weight};src:url(${data}) format("woff2");}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * An inline SVG element (a career crest) as an image the canvas can draw.
+ *
+ * An SVG drawn as an image is its own document: it cannot see the page's
+ * fonts or CSS variables, so the crest's `var(--font-rajdhani)` monogram fell
+ * back to the system serif. Each text's face is resolved on the live element,
+ * waited for (Rajdhani is not preloaded), and embedded in the clone; if the
+ * face cannot be read, the monogram falls back to a sans, never a serif.
+ */
+export async function svgElementToImage(svg: SVGSVGElement | null, px = 512): Promise<HTMLImageElement | null> {
+  if (!svg) return null;
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   clone.setAttribute("width", String(px));
   clone.setAttribute("height", String(px));
   clone.removeAttribute("class");
+
+  const live = Array.from(svg.querySelectorAll("text"));
+  const copies = Array.from(clone.querySelectorAll("text"));
+  const faces = new Map<string, { family: string; weight: string }>();
+  live.forEach((t, i) => {
+    const cs = getComputedStyle(t);
+    const family = familyName(cs.fontFamily);
+    const weight = String(cs.fontWeight || "400");
+    const copy = copies[i];
+    if (copy && family) copy.style.fontFamily = `"${family}", "Barlow Condensed", sans-serif`;
+    if (family) faces.set(`${family}|${weight}`, { family, weight });
+  });
+  if (faces.size > 0) {
+    const css: string[] = [];
+    for (const { family, weight } of faces.values()) {
+      try {
+        await Promise.race([document.fonts.load(`${weight} 32px "${family}"`), new Promise((r) => setTimeout(r, FONT_WAIT_MS))]);
+      } catch {
+        /* the embed below still tries */
+      }
+      const rule = await inlineFontFace(family, weight);
+      if (rule) css.push(rule);
+    }
+    if (css.length) {
+      const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+      style.textContent = css.join("");
+      clone.insertBefore(style, clone.firstChild);
+    }
+  }
   const markup = new XMLSerializer().serializeToString(clone);
   const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
   return loadImage(url);
