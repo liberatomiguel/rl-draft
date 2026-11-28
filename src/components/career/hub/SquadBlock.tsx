@@ -56,6 +56,7 @@ import { NewTag } from "@/components/ui/NewDot";
 import { TrendDownIcon, TrendUpIcon, WhistleIcon } from "@/components/ui/icons";
 import { BLOCK_LINK, BLOCK_TITLE } from "@/components/career/hub/hubShared";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { playerFocusLabel } from "@/components/career/training/TrainingPackageParts";
 
 /** A player's contract as his card and row print it (UX-06b): the season it runs to, or its time left once it warns. */
 function contractLabelOf(save: CareerSave, p: SquadPlayer, C: CareerCopy): { text: string; warns: boolean } {
@@ -320,8 +321,7 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
       contractLabel: seasonLabelFor(p.contractEndSeason),
       shareLabel: prizeShareLabelOf(C, p),
       phase: agePhase(save, p),
-      focusLabel:
-        p.trainingFocus === "auto" || p.trainingFocus === "balanced" ? C.training[p.trainingFocus] : t.STAT_LABELS[p.trainingFocus],
+      focusLabel: playerFocusLabel(save, p.id, C, t.STAT_LABELS),
     });
   };
 
