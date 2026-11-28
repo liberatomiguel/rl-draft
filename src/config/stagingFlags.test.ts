@@ -6,7 +6,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore", "proCareer", "realOrgStart", "board", "endlessVariety", "fanFeed", "lockerRoom", "mediaDays"] as const; // v2.3 FEED, v2.3 LOCKER, v2.3 MEDIA
+const FLAGS = ["matchdayStyles", "worldLife", "matchdayDecisions", "matchdayBoxScore", "proCareer", "realOrgStart", "board", "endlessVariety", "fanFeed", "lockerRoom", "mediaDays", "eventFormats"] as const; // v2.3 FEED, v2.3 LOCKER, v2.3 MEDIA, rc9 ENDGAME (eventFormats)
 const PROBE_VARS = [
   "NEXT_PUBLIC_MATCHDAY_STYLES",
   "NEXT_PUBLIC_WORLD_LIFE",
@@ -20,6 +20,7 @@ const PROBE_VARS = [
 
   "NEXT_PUBLIC_LOCKER_ROOM",
   "NEXT_PUBLIC_MEDIA_DAYS", // v2.3 MEDIA
+  "NEXT_PUBLIC_EVENT_FORMATS", // rc9 ENDGAME
 ];
 
 type Build = { nodeEnv: string; noindex?: string; playtest?: string };

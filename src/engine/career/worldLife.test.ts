@@ -3,6 +3,9 @@ import { CAREER_SEASONS, CAREER_WORLD_LIFE, FEATURES } from "@/config/balance";
 import { developmentPhaseOf, developmentProfileOf, playerViewById } from "./development";
 import type { CoachState, CompetitionState, WorldState } from "./types";
 import {
+  coachLifeOn,
+  coachLifecycle,
+  marketCoachRetiredBy,
   coachRetireChance,
   eliteRenewalPass,
   localCapsFor,
@@ -103,8 +106,11 @@ describe("v2.1 Mundo vivo M1 (R139)", () => {
   });
 
   it("the user's coach announces his last season a season ahead and leaves only at a rollover", () => {
-    const coach: CoachState = { id: "coach:gen:0:0:1", name: "Coach X", overall: 80, bonusType: "shooting" as never, bonusLevel: "+", salaryPerSplit: 1, source: "generated", age: 60 };
-    expect(coachRetireChance(60)).toBe(1);
+    const coach: CoachState = { id: "coach:gen:0:0:1", name: "Coach X", overall: 80, bonusType: "shooting" as never, bonusLevel: "+", salaryPerSplit: 1, source: "generated", age: 34 };
+    // rc9 ENDGAME (R230): the window is 28-35; 35 always retires, past it the exits spread.
+    expect(coachRetireChance(35)).toBe(1);
+    expect(coachRetireChance(27)).toBe(0);
+    expect(coachRetireChance(60)).toBe(CAREER_WORLD_LIFE.coaches.pastWindowChance);
     const a = userCoachRollover(coach, SEASON, SEED);
     expect(a.announced).toBe(true);
     expect(a.coach).not.toBeNull();
@@ -113,9 +119,72 @@ describe("v2.1 Mundo vivo M1 (R139)", () => {
     expect(b.retired).toBe(true);
     expect(b.coach).toBeNull();
     // A young coach just ages.
-    const young = userCoachRollover({ ...coach, age: 33 }, SEASON, SEED);
-    expect(young.coach!.age).toBe(34);
+    const young = userCoachRollover({ ...coach, age: 25 }, SEASON, SEED);
+    expect(young.coach!.age).toBe(26);
     expect(young.announced).toBe(false);
+  });
+});
+
+describe("rc9 ENDGAME (R230-R231): coaches age and retire from the first season", () => {
+  const flags = FEATURES as { worldLife: boolean };
+  const on = <T,>(fn: () => T): T => {
+    flags.worldLife = true;
+    try {
+      return fn();
+    } finally {
+      flags.worldLife = false;
+    }
+  };
+
+  it("is off with the flag off; on, it runs from season 1 while M1 itself waits for the infinite seasons", () => {
+    expect(coachLifeOn(1)).toBe(false);
+    on(() => {
+      expect(coachLifeOn(1)).toBe(true);
+      expect(worldLifeOn(1)).toBe(false);
+    });
+  });
+
+  it("a timeline rollover ages the AI coaches, retires some, never sacks, never changes a roster", () => {
+    const w = world();
+    const first = on(() => coachLifecycle(w, { careerSeed: SEED, seasonIndex: 1, retiredNow: [] }));
+    const coached = Object.values(w.orgs).filter((o) => o.coachOverall !== undefined);
+    expect(coached.length).toBeGreaterThan(20);
+    expect(first.report.coachChanged).toBe(0);
+    for (const o of Object.values(first.world.orgs)) {
+      expect(o.playerIds).toEqual(w.orgs[o.ref].playerIds);
+      if (o.coachOverall !== undefined) expect(o.coachAge).toBeDefined();
+    }
+    // First-sight ages sit under the window: season 1 has no wave (at most a quarter retire).
+    expect(first.report.coachRetired).toBeLessThanOrEqual(Math.ceil(coached.length / 4));
+    // Everyone past 35 is gone within a few seasons; nobody coaches past the window for long.
+    let cur = first.world;
+    let retired = first.report.coachRetired;
+    for (let s = 2; s <= 12; s++) {
+      const r = on(() => coachLifecycle(cur, { careerSeed: SEED, seasonIndex: s, retiredNow: [] }));
+      retired += r.report.coachRetired;
+      cur = r.world;
+    }
+    expect(retired).toBeGreaterThan(coached.length / 2);
+    const ages = Object.values(cur.orgs).map((o) => o.coachAge ?? 0);
+    expect(Math.max(...ages)).toBeLessThanOrEqual(36);
+  });
+
+  it("a dataset coach on the market retires on the same draw for a career, and only with the flag on", () => {
+    expect(marketCoachRetiredBy("coach:staff:x", 0, 12, SEED)).toBe(false);
+    const ids = Array.from({ length: 40 }, (_, i) => `coach:staff:p${i}`);
+    const at12 = on(() => ids.filter((id) => marketCoachRetiredBy(id, 0, 12, SEED)));
+    const at3 = on(() => ids.filter((id) => marketCoachRetiredBy(id, 0, 3, SEED)));
+    expect(at12.length).toBeGreaterThan(at3.length);
+    for (const id of at3) expect(at12).toContain(id); // once retired, retired for good
+  });
+
+  it("a save in progress keeps its coach on load: a coach seen for the first time can only announce", () => {
+    const coach: CoachState = { id: "coach:staff:old", name: "Coach Old", overall: 85, bonusType: "shooting" as never, bonusLevel: "+", salaryPerSplit: 1, source: "dataset" };
+    for (let s = 1; s <= 12; s++) {
+      const r = userCoachRollover(coach, s, SEED + s);
+      expect(r.retired).toBe(false);
+      expect(r.coach).not.toBeNull();
+    }
   });
 });
 

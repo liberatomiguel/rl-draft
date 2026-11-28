@@ -136,8 +136,8 @@ export function worldsStreakOf(
  * rating lead adds one, capped. Without dominance there is no answer, and a
  * broken dynasty starts again from the bottom. The kit follows the strength.
  */
-export function projectStrengthFor(gap: number, defendingTitles: number, holding = false): number {
-  const P = E.projects;
+export function projectStrengthFor(gap: number, defendingTitles: number, holding = false, seasonIndex = 0): number {
+  const P = projectsAt(seasonIndex);
   // A running dynasty (two titles or more) is answered while it holds the top; a first defence needs a lead.
   const answered = gap >= P.dominanceFloor || (defendingTitles >= 1 && gap >= P.defenceFloor) || (defendingTitles >= 2 && holding);
   if (!answered) return 0;
@@ -145,8 +145,14 @@ export function projectStrengthFor(gap: number, defendingTitles: number, holding
 }
 
 /** The kit at a strength, in KIT_ORDER: `kitBase` items for one project, one more per step. */
-export function kitFor(strength: number): KitItem[] {
-  return KIT_ORDER.slice(0, Math.min(KIT_ORDER.length, strength + E.projects.kitBase - 1));
+export function kitFor(strength: number, seasonIndex = 0): KitItem[] {
+  return KIT_ORDER.slice(0, Math.min(KIT_ORDER.length, strength + projectsAt(seasonIndex).kitBase - 1));
+}
+
+/** rc9 ENDGAME (R234): the project rules of a season (CAREER_ENDLESS.late from its season on). */
+type ProjectRules = { [K in keyof typeof E.projects]: (typeof E.projects)[K] extends number ? number : (typeof E.projects)[K] };
+export function projectsAt(seasonIndex: number): ProjectRules {
+  return seasonIndex >= E.late.fromSeasonIndex ? { ...E.projects, ...E.late.projects } : E.projects;
 }
 
 function cloneOrgs(world: WorldState): WorldState {
@@ -167,7 +173,7 @@ export function rivalProjectsPass(
   input: WorldState,
   ctx: Ctx,
 ): { world: WorldState; projects: RivalProject[]; gap: number; leader: string | null; strength: number } {
-  const P = E.projects;
+  const P = projectsAt(ctx.seasonIndex);
   // Every kit is decided again each season, on the bare world (a running project never hides the lead it answers).
   let world = input;
   if (Object.values(input.orgs).some((o) => o.projectKit)) {
@@ -189,9 +195,9 @@ export function rivalProjectsPass(
   const next3 = holding ? sides.filter((x) => x.id !== champ!.id).sort((a, b) => b.rating - a.rating).slice(0, 3) : [];
   const gap = holding ? Math.max(0, champ!.rating - next3.reduce((n, x) => n + x.rating, 0) / Math.max(1, next3.length)) : top.gap;
   const defending = holding ? ctx.streak.titles : 0;
-  const strength = endlessYear(ctx.seasonIndex) ? projectStrengthFor(gap, defending, holding) : 0;
+  const strength = endlessYear(ctx.seasonIndex) ? projectStrengthFor(gap, defending, holding, ctx.seasonIndex) : 0;
   if (strength === 0) return { world, projects: [], gap, leader, strength };
-  const items = kitFor(strength);
+  const items = kitFor(strength, ctx.seasonIndex);
   const imports = strength >= P.importFromStrength;
 
   const next = cloneOrgs(world);
