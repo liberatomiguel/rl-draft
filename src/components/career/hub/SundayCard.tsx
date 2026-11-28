@@ -33,21 +33,15 @@ import { formatDateShort } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 import { advancedSeedsOf, openingOpponentOf, userSeedOf } from "@/components/career/event/weekendView";
-import { TierChip } from "@/components/career/hub/hubShared";
-import { REGION_BADGE } from "@/components/regionStyle";
+import { DECISION_TITLE, TierChip } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { CheckIcon, ClipboardIcon, HeartPulseIcon, TargetIcon, TrophyIcon, WhistleIcon } from "@/components/ui/icons";
+import { ClipboardIcon, HeartPulseIcon, TargetIcon, TrophyIcon, WhistleIcon } from "@/components/ui/icons";
 
 const BRIEFING_ICON: Record<SundayBriefingChoice, typeof ClipboardIcon> = {
   keep: ClipboardIcon,
   recover: HeartPulseIcon,
   prepare: TargetIcon,
-};
-const BRIEFING_TONE: Record<SundayBriefingChoice, string> = {
-  keep: "bg-white/10 text-sub",
-  recover: "bg-good/15 text-good",
-  prepare: "bg-orange/15 text-orange-bright",
 };
 
 /** A row of small crests (a field, the qualified eight, the playoff seeds). */
@@ -108,14 +102,15 @@ function SundayHeader({
 }) {
   return (
     <div>
+      {/* rc9 HQ: the label line is faint (when, where); one tag, the tier. */}
       <div className="flex flex-wrap items-center gap-2">
-        <p className="kicker text-orange-bright">
+        <p className="kicker">
           {ahead.sundayDay === save.clock.day ? C.sunday.today : C.sunday.tomorrow} · {formatDateShort(C.dates, dateOfDay(save.clock.seasonIndex, ahead.sundayDay))}
+          {ahead.def.region ? ` · ${ahead.def.region}` : ""}
         </p>
         <TierChip tier={ahead.def.tier} />
-        {ahead.def.region ? <Badge className={REGION_BADGE[ahead.def.region]}>{ahead.def.region}</Badge> : null}
       </div>
-      <h2 className="display mt-1.5 text-2xl font-bold uppercase leading-tight tracking-wide text-ink sm:text-3xl">{title}</h2>
+      <h2 className={cx(DECISION_TITLE, "mt-2")}>{title}</h2>
       {children}
     </div>
   );
@@ -150,15 +145,14 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
         <SundayHeader save={save} C={C} ahead={ahead} title={C.sunday.outTitle}>
           <p className="mt-1 text-sm text-sub">{C.sunday.outLine(recordText)}</p>
         </SundayHeader>
-        <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3">
+        <div className="mt-5 border-t border-line pt-4">
           <CrestStrip
             save={save}
             refs={seeds}
             label={t?.layout ? (t.layout.stage === "none" ? C.event.formats.lastEight : C.event.formats.sundayField(seeds.length)) : C.event.playoffEight}
           />
         </div>
-        <div className="mt-4"><Button variant="secondary" size="lg" onClick={() => go(null, "watch")}>{C.sunday.watch}</Button></div>
-        <p className="mt-2 text-[11px] text-faint">{C.sunday.outHint}</p>
+        <div className="mt-5"><Button variant="secondary" size="lg" onClick={() => go(null, "watch")}>{C.sunday.watch}</Button></div>
       </div>
     );
   }
@@ -204,7 +198,8 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
       </SundayHeader>
 
       {/* Who waits on Sunday: the opener (a Major / Worlds) or the field (the regional). */}
-      <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3">
+      {/* rc9 HQ: ruled off by a hairline, not boxed inside the day card. */}
+      <div className="mt-5 border-t border-line pt-4">
         {championship && openerId ? (
           <div>
             <p className="kicker mb-2">{C.sunday.openerLabel}</p>
@@ -229,15 +224,12 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
       </div>
 
       {/* Only a hired coach can give a briefing. */}
-      {save.coach ? <div className="mt-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan/15 text-cyan">
-            <WhistleIcon className="h-4 w-4" />
-          </span>
-          <p className="display text-sm font-bold uppercase tracking-[0.12em] text-ink">{C.sunday.briefingTitle}</p>
-        </div>
-        <p className="mt-1 text-xs text-sub">{championship ? C.sunday.championshipHint : C.sunday.briefingHint}</p>
-        <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={C.sunday.briefingTitle}>
+      {/* Only a hired coach can give a briefing. rc9 HQ: a card title, one hint line, three equal outlines
+          (the picked one in the orange hairline); the icons name the plan, so they sit plain. */}
+      {save.coach ? <div className="mt-5 border-t border-line pt-4">
+        <p className="card-title flex items-center gap-2"><WhistleIcon className="h-4 w-4 text-faint" />{C.sunday.briefingTitle}</p>
+        <p className="mt-1.5 text-xs text-sub">{championship ? C.sunday.championshipHint : C.sunday.briefingHint}</p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={C.sunday.briefingTitle}>
           {SUNDAY_BRIEFINGS.map((c) => {
             const Icon = BRIEFING_ICON[c];
             const active = choice === c;
@@ -249,27 +241,25 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
                 aria-checked={active}
                 onClick={() => setChoice(c)}
                 className={cx(
-                  "flex min-h-14 items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                  active ? "border-orange/70 bg-orange/10" : "border-line bg-white/[0.03] hover:border-line-strong",
+                  "flex min-h-14 items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                  active ? "border-orange/60 bg-white/[0.03]" : "border-line hover:border-line-strong",
                 )}
               >
-                <span className={cx("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", BRIEFING_TONE[c])}>
-                  <Icon className="h-[18px] w-[18px]" />
-                </span>
+                <Icon className={cx("mt-0.5 h-[18px] w-[18px] shrink-0", active ? "text-ink" : "text-faint")} />
                 <span className="min-w-0 flex-1">
-                  <span className={cx("display block text-[13px] font-bold uppercase tracking-wide", active ? "text-orange-bright" : "text-ink")}>
+                  <span className={cx("display block text-[15px] font-bold leading-snug", active ? "text-ink" : "text-sub")}>
                     {championship ? C.sunday.championshipBriefing[c] : C.sunday.briefing[c]}
                   </span>
-                  <span className="mt-0.5 block text-[11px] leading-snug text-sub">{effectOf(c)}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-sub">{effectOf(c)}</span>
                 </span>
                 <span
                   aria-hidden
                   className={cx(
-                    "mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                    active ? "border-orange bg-orange text-white" : "border-line-strong",
+                    "mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                    active ? "border-orange" : "border-line-strong",
                   )}
                 >
-                  {active ? <CheckIcon className="h-3 w-3" /> : null}
+                  {active ? <span className="h-2 w-2 rounded-full bg-orange" /> : null}
                 </span>
               </button>
             );
@@ -281,7 +271,8 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => go(choice)}>
           {C.sunday.start}
         </Button>
-        <span className="text-[11px] text-faint">{ahead.sundayDay === save.clock.day ? C.sunday.todayHint : C.sunday.startHint}</span>
+        {/* rc9 HQ: the hint only when the button moves the clock (Saturday evening); on Sunday itself it said nothing new. */}
+        {ahead.sundayDay === save.clock.day ? null : <span className="text-xs text-faint">{C.sunday.startHint}</span>}
       </div>
     </div>
   );
@@ -312,11 +303,12 @@ export function NowFollow({
       router.push("/career/follow");
     };
     return (
-      <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
+      // rc9 HQ: no tinted blue box inside the day card (the day card rules it off from the clock).
+      <div>
         <SundayHeader save={save} C={C} ahead={{ def: out.def, sundayDay: out.def.day }} title={C.sunday.withoutYouTitle(out.def.name)}>
-          <p className="mt-1 text-sm text-sub">{C.sunday.withoutYouLine}</p>
+          <p className="mt-1.5 text-sm text-sub">{C.sunday.withoutYouLine}</p>
         </SundayHeader>
-        <div className="mt-3">
+        <div className="mt-4">
           <CrestStrip save={save} refs={out.qualifiedIds} label={C.sunday.whoQualified} />
         </div>
         <div className="mt-4"><Button variant="secondary" size="md" className="min-h-11" onClick={watch}>{C.sunday.watch}</Button></div>
@@ -333,22 +325,22 @@ export function NowFollow({
     router.push("/career/follow");
   };
   return (
-    <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
+    <div>
       <div className="flex flex-wrap items-center gap-2">
-        <p className="kicker text-blue-bright">{C.follow.kicker}</p>
+        <p className="kicker">{C.follow.kicker}{follow.def.region ? ` · ${follow.def.region}` : ""}</p>
         <TierChip tier={follow.def.tier} />
-        {follow.def.region ? <Badge className={REGION_BADGE[follow.def.region]}>{follow.def.region}</Badge> : null}
       </div>
-      <h2 className="display mt-1.5 text-xl font-bold uppercase leading-tight tracking-wide text-ink">
+      <h2 className="display mt-2 text-xl font-bold uppercase leading-tight text-ink">
         {C.sunday.resultsInTitle(follow.def.name)}
       </h2>
-      <p className="mt-1 text-sm text-sub">{C.sunday.resultsInLine}</p>
+      <p className="mt-1.5 text-sm text-sub">{C.sunday.resultsInLine}</p>
       {champion ? (
-        <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-amber-400/40 bg-amber-400/[0.06] px-3 py-2">
+        // The champion is a title, so the trophy keeps its gold; the line is not boxed.
+        <div className="mt-4 flex items-center gap-2.5">
           <TrophyIcon className="h-5 w-5 shrink-0 text-amber-300" />
-          <span className="kicker text-amber-300">{C.follow.champion}</span>
+          <span className="kicker">{C.follow.champion}</span>
           <OrgMark save={save} orgRef={champion} size="xs" className="shrink-0" />
-          <span className="min-w-0 truncate text-sm font-semibold text-ink">{championName}</span>
+          <span className="display min-w-0 truncate text-[15px] font-bold text-ink">{championName}</span>
         </div>
       ) : null}
       <div className="mt-4"><Button variant="secondary" size="md" className="min-h-11" onClick={open}>{C.sunday.watch}</Button></div>

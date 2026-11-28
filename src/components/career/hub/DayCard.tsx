@@ -44,7 +44,6 @@ import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
-import { WeeklyScrimLine } from "./WeeklyScrimLine";
 
 const PlayGlyph = () => (
   <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current" aria-hidden>
@@ -223,30 +222,33 @@ export function DayCard({
   const inserting = Boolean(decision) && !decision?.inline;
 
   return (
-    <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-clip p-4 sm:p-5", inserting && "!border-cyan/40")}>
-      {/* header: date + season progress */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    // rc9 HQ (#240): the day is the focal object. The date is the block's one large figure (mixed case, as dates are);
+    // when a decision holds the clock, the decision is the focal object and the date steps down into the label line.
+    // State is the hairline (blue while a decision holds), never a glow.
+    <Panel strong glow={inserting ? "blue" : undefined} className="rise-in overflow-clip p-4 sm:p-5">
+      {/* header: the day, at most two tags, the season's progress */}
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         {/* Phone: the career bar pinned right above already says the date, the
-            split and the week, so the card opens on its badges and the week. */}
+            split and the week, so the card opens on its tags and the week. */}
         <div className="min-w-0 max-sm:hidden">
           <p className="kicker">
-            {C.hub.today}
-            {clock.split ? <span className="text-faint"> · {C.calendar.split(clock.split)} · {C.hub.week(clock.week)}</span> : null}
+            {inserting ? formatDateShort(D, clock.date) : C.hub.today}
+            {clock.split ? <span> · {C.calendar.split(clock.split)} · {C.hub.week(clock.week)}</span> : null}
           </p>
-          <h2 key={today} className="display rise-in mt-1 text-3xl font-bold uppercase leading-none tracking-[0.02em] text-ink sm:text-[2.75rem]">
-            {formatDateShort(D, clock.date)}
-          </h2>
+          {inserting ? null : (
+            <h2 key={today} className="display rise-in mt-1.5 text-[2rem] font-bold leading-none text-ink sm:text-[2.5rem]">
+              {formatDateShort(D, clock.date)}
+            </h2>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {todayRole && !inserting ? <Badge tone="orange">{todayRole}</Badge> : null}
+          {inserting ? <Badge tone="blue">{C.hub.nowDecision}</Badge> : todayRole ? <Badge tone="orange">{todayRole}</Badge> : null}
           {clock.windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
-          {clock.kind === "open" && running && !inserting ? <Badge tone="good">{C.hub.trainingWeek}</Badge> : null}
-          {inserting ? <Badge tone="blue">{C.hub.nowDecision}</Badge> : null}
-          {decision?.count ? <span className="text-[11px] font-semibold text-cyan">{decision.count}</span> : null}
-          <span className="text-[11px] text-faint">{C.hub.dayOf(today, DAYS_PER_SEASON)}</span>
+          {decision?.count ? <span className="display text-xs font-semibold text-ink">{decision.count}</span> : null}
+          <span className="text-xs text-faint">{C.hub.dayOf(today, DAYS_PER_SEASON)}</span>
         </div>
       </div>
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden>
+      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden>
         {/* v2.0 (P1): by transform (no layout per frame); see ui/ProgressBar. */}
         <div
           className="h-full w-full origin-left rounded-full bg-orange/70 transition-transform duration-500"
@@ -254,7 +256,8 @@ export function DayCard({
         />
       </div>
 
-      {decision ? <div className="mt-4">{decision.body}</div> : null}
+      {/* An inline decision (an invite, an event without you) sits above the clock, ruled off from it. */}
+      {decision ? <div className={cx("mt-5", decision.inline && "border-b border-line pb-5")}>{decision.body}</div> : null}
       {decision && !decision.inline ? null : (
         <>
           {/* the week strip — remounts (and slides in) when the week turns */}
@@ -313,8 +316,8 @@ export function DayCard({
           ) : null}
         </>
       )}
-      <WeeklyScrimLine save={save} C={C} />
-      {footer ? <div className="mt-4 border-t border-line/60 pt-3">{footer}</div> : null}
+      {/* rc9 HQ: the week's growth and scrims moved to the team board (they are the squad's, not the day's). */}
+      {footer ? <div className="mt-5 border-t border-line pt-4">{footer}</div> : null}
     </Panel>
   );
 }

@@ -10,7 +10,7 @@
  * (FEATURES.matchdayDecisions): unmarked sides never reach this file.
  */
 
-import { CAREER_MATCHDAY as MD } from "@/config/balance";
+import { CAREER_MATCHDAY as MD, SIMULATION as SIM } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { KickoffPlan, PlayStyleId, SeriesPlan, Stats, TournamentTeam } from "../types";
 import { deriveSeed } from "./seeds";
@@ -31,6 +31,32 @@ export interface MatchdaySeriesState {
   timeoutB: boolean;
   /** The series seed the coach / AI decisions hash from (0 for a world series). */
   seed: number;
+  /**
+   * rc9 MATCHDAY (R243): the user's series only (matchdaySeries.playUserGame):
+   * what the plan did in each game, read back for the line after the series.
+   * Never read by the simulation.
+   */
+  userLog?: PlanLogEntry[];
+  /** rc9: rating points of momentum a timeout cleared, until the next game logs it. */
+  cutA?: number;
+  cutB?: number;
+}
+
+/** rc9 MATCHDAY (R243): one game of the user's series, as the plan played it. */
+export interface PlanLogEntry {
+  /** 1-based game index. */
+  game: number;
+  /** The style each side played (null = no style on that side). */
+  style: PlayStyleId | null;
+  oppStyle: PlayStyleId | null;
+  /** The style matchup this game: the user's bonus minus the opponent's, rating points. */
+  edge: number;
+  /** The user marked the opponent's playmaker this game. */
+  marked: boolean;
+  kickoff: KickoffPlan;
+  won: boolean;
+  /** Rating points of their momentum the user's timeout cleared before this game. */
+  timeoutCut?: number;
 }
 
 export function initMatchday(planA?: SeriesPlan, planB?: SeriesPlan, seed = 0): MatchdaySeriesState {
@@ -88,8 +114,24 @@ export function planShift(team: TournamentTeam, opponent: TournamentTeam, plan: 
     const fit = team.style.fit[plan.style] ?? 0;
     shift -= MD.offStyleCostPerFit * Math.max(0, natFit - fit);
   }
-  if (plan.mark !== undefined && plan.mark !== (opponent.playmakerIndex ?? 0)) shift += MD.markWrongCost;
+  if (plan.mark !== undefined) shift += plan.mark !== (opponent.playmakerIndex ?? 0) ? MD.markWrongCost : MD.markRightCost;
   return clamp(shift, -MD.planCap, MD.planCap);
+}
+
+/**
+ * rc9 MATCHDAY (R242): what marking `opponent`'s playmaker saves per game, in
+ * rating points: the special plays it cuts (match.ts gameSide's proc, the same
+ * formula). Worth the mark when it beats −markRightCost.
+ */
+export function markValue(opponent: TournamentTeam): number {
+  const n = clamp((opponent.stats.mechanics - SIM.statBaseline) / SIM.statDivisor, -1.2, 1.2);
+  const proc = SIM.mechProcBaseChance * (0.5 + Math.max(0, n));
+  return MD.markProcCut * proc * SIM.mechProcBonus;
+}
+
+/** True when the mark pays for itself against this opponent. */
+export function markWorthIt(opponent: TournamentTeam): boolean {
+  return markValue(opponent) > -MD.markRightCost;
 }
 
 /** True when the opponent's plan marks this side's playmaker. */
@@ -160,9 +202,10 @@ export function applyTimeout(md: MatchdaySeriesState, side: "a" | "b"): Matchday
   if (side === "a" ? md.timeoutA : md.timeoutB) return md;
   const opp = side === "a" ? md.momentumB : md.momentumA;
   const cut = Math.min(Math.max(0, opp), MD.timeoutMax / MD.momentumPerPoint);
+  const points = r3(cut * MD.momentumPerPoint);
   return side === "a"
-    ? { ...md, timeoutA: true, momentumB: r3(opp - cut) }
-    : { ...md, timeoutB: true, momentumA: r3(opp - cut) };
+    ? { ...md, timeoutA: true, momentumB: r3(opp - cut), cutA: points }
+    : { ...md, timeoutB: true, momentumA: r3(opp - cut), cutB: points };
 }
 
 /** What `style` is worth per game for `team` against an opponent playing `oppStyle` (matchup minus the off-style cost). */
@@ -272,7 +315,8 @@ export function coachPlanFor(
     if (best) plan.style = best;
   }
   if (decisionUnit(seed, `${sideKey}:kickoff`) < q) plan.kickoff = kickoffFor(team, opponent);
-  if (opponent.playmakerIndex !== undefined && decisionUnit(seed, `${sideKey}:mark`) < q) {
+  // rc9 MATCHDAY (R242): the right call is to mark only a playmaker worth it.
+  if (opponent.playmakerIndex !== undefined && markWorthIt(opponent) && decisionUnit(seed, `${sideKey}:mark`) < q) {
     plan.mark = opponent.playmakerIndex;
   }
   return plan;

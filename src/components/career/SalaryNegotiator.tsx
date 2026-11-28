@@ -407,9 +407,6 @@ export function SalaryNegotiator({
       {/* 2 — HIS POSITION: the worth gauge, his ask, what each lever is worth to him */}
       <div className="mt-5 border-t border-line pt-4">
         <GroupHead title={N.groupPosition} />
-        <p className="mt-1 text-xs text-sub">
-          {N.asks(money(ask.weekly), ask.sharePct, ask.bonus > 0 ? formatMoney(ask.bonus, { compact: true }) : null)}
-        </p>
         <WorthGauge talk={talk} N={N} />
         {shareDelta !== 0 || bonusDelta !== 0 || effects.length > 0 || talk.refusals > 0 ? (
           <details className="mt-3" aria-label={N.effectsTitle}>

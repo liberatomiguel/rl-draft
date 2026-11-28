@@ -91,7 +91,9 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { CareerAiTicker, type TickerItem } from "@/components/career/event/CareerAiTicker";
 import { CareerBracket } from "@/components/career/event/CareerBracket";
 import { CareerMatchCenter } from "@/components/career/event/CareerMatchCenter";
-import { SeriesDesk } from "@/components/career/event/SeriesDesk";
+import { SeriesRoom } from "@/components/career/event/SeriesRoom"; // rc9 MATCHDAY
+import { EventStatsCard } from "@/components/career/event/EventStatsCard"; // rc9 MATCHDAY
+import { matchdayLevelOf } from "@/store/careerFlow"; // rc9 MATCHDAY
 import { pendingUserSeriesOf } from "@/store/careerFlow";
 import {
   beatStepKey,
@@ -318,8 +320,18 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       {isToday && !short ? (
         <div className="rise-in space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="primary" size="lg" className="max-sm:w-full" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
-            <Button variant="secondary" size="lg" className="max-sm:min-w-0 max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-3 max-sm:text-[15px]" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+            {/* rc9 MATCHDAY (R245): the main button follows the matchday setting; the other way stays one tap away. */}
+            {matchdayLevelOf(save) === "result" ? (
+              <>
+                <Button variant="primary" size="lg" className="max-sm:w-full" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+                <Button variant="secondary" size="lg" className="max-sm:min-w-0 max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-3 max-sm:text-[15px]" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="primary" size="lg" className="max-sm:w-full" onClick={() => enterEvent(true)}>{C.event.watch}</Button>
+                <Button variant="secondary" size="lg" className="max-sm:min-w-0 max-sm:flex-1 max-sm:whitespace-nowrap max-sm:px-3 max-sm:text-[15px]" onClick={() => { enterEvent(false); simEvent(); }}>{C.event.instant}</Button>
+              </>
+            )}
             {isUnofficial ? <Button variant="ghost" className="max-sm:shrink-0" onClick={() => { passUnofficial(); router.push("/career"); }}>{C.calendar.skip}</Button> : null}
           </div>
           {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
@@ -583,7 +595,6 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const pendingSeries = pendingUserSeriesOf(save);
   const hasPendingSeries = pendingSeries !== null;
   const liveRoundsRef = useRef<Set<string>>(new Set());
-  const parkedAfterRef = useRef<string | null>(null);
 
   // The playback clock — ONE effect, paced by what is being revealed.
   useEffect(() => {
@@ -667,13 +678,9 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
       // Reveal queue drained — ask the engine for the next round(s). Slice 5:
       // after a series the user played at the desk, park once on its result
       // and box score (Resume asks for the next round, which may open the desk).
-      const last = rounds[rounds.length - 1];
-      if (last && liveRoundsRef.current.has(last.key) && parkedAfterRef.current !== last.key) {
-        parkedAfterRef.current = last.key;
-        tick(0, () => setRunning(false));
-      } else {
-        tick(P.advanceMs, () => playEventRound());
-      }
+      // rc9 MATCHDAY (R246): the series room already showed the result and its
+      // end panel, so the event runs on (the slice-5 park cost one more click).
+      tick(P.advanceMs, () => playEventRound());
     } else {
       // Everything revealed and the tournament is done — or (R40) the
       // Saturday Swiss is complete and the event waits for Championship
@@ -1058,7 +1065,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         {/* main column — the cinema */}
         <div className="min-w-0 space-y-4 lg:col-span-2">
           {deskReady ? (
-            <SeriesDesk save={save} label={deskLabel} onPlayGame={markLive} onContinue={continueFromDesk} />
+            <SeriesRoom save={save} label={deskLabel} onStart={markLive} onContinue={continueFromDesk} />
           ) : center ? (
             <CareerMatchCenter
               save={save}
@@ -1118,6 +1125,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
 
         {/* side rail — the tables */}
         <div className="space-y-4">
+          {/* rc9 MATCHDAY (STORIES): your players' numbers, always on the screen. */}
+          <EventStatsCard t={t} rounds={rounds} revealed={revealedKeys} />
           {hasSwiss ? (
             <CareerSwissStandings
               save={save}

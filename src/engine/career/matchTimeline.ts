@@ -78,11 +78,14 @@ const TIMELINE_SALT = 0x2f6b_a7c3;
  * Stable seed of one game's timeline. `roundKey` is the round's position in
  * the event (eventPlayback's RoundRef.key, e.g. "sw:2" / "po:0"); together
  * with both team ids it pins the series, since a team plays once per round.
- * The whole series' persisted results go in too, so the same pairing in a
- * different event (different games) gets its own story.
+ * The series' persisted results up to this game go in too, so the same
+ * pairing in a different event (different games) gets its own story.
  */
 export function timelineSeed(roundKey: string, series: SeriesResult, game: GameResult): number {
+  // rc9 MATCHDAY (R241): only the games up to this one, so a game's story is
+  // the same while the series is still being played (the live view) and after it.
   const games = series.games
+    .filter((g) => g.index <= game.index)
     .map((g) => {
       const side = g.winnerTeamId === series.teamAId ? "a" : "b";
       const scorers = g.scorers ? `${g.scorers.a.join(",")}/${g.scorers.b.join(",")}` : "-";

@@ -19,7 +19,8 @@ import {
   type SeriesState,
 } from "../match";
 import type { KickoffPlan, PlayStyleId, SeriesPlan, SeriesResult, TournamentTeam } from "../types";
-import { aiQualityOf, applyTimeout, coachBreakOn, coachPlanFor } from "./matchday";
+import { aiQualityOf, applyTimeout, coachBreakOn, coachPlanFor, withPlayed, type PlanLogEntry } from "./matchday";
+import { playedStyle, styleMatchupBonus } from "./styles";
 
 export { aiQualityOf };
 
@@ -139,8 +140,98 @@ export function playUserGame(
 ): { state: SeriesState; rngState: number } {
   const rng = createRng(rngState);
   let next = playNextGame(state, teamA, teamB, rng);
+  next = logUserGame(state, next, teamA, teamB, userSide);
   next = aiBreak(next, other(userSide), teamA, teamB);
   return { state: next, rngState: rng.state };
+}
+
+/**
+ * rc9 MATCHDAY (R243): writes what the plan did in the game just played onto
+ * the user's log (read only by planReport). `before` is the state the game
+ * was played from, so the plans and meters are the ones that played.
+ */
+function logUserGame(before: SeriesState, after: SeriesState, teamA: TournamentTeam, teamB: TournamentTeam, userSide: Side): SeriesState {
+  const md = before.matchday;
+  if (!md || !after.matchday) return after;
+  const pa = withPlayed(teamA, md.planA.style);
+  const pb = withPlayed(teamB, md.planB.style);
+  const me = userSide === "a" ? pa : pb;
+  const opp = userSide === "a" ? pb : pa;
+  const myPlan = userSide === "a" ? md.planA : md.planB;
+  const cut = userSide === "a" ? md.cutA : md.cutB;
+  const game = after.games[after.games.length - 1];
+  const entry: PlanLogEntry = {
+    game: game.index,
+    style: me.style ? playedStyle(me.style) : null,
+    oppStyle: opp.style ? playedStyle(opp.style) : null,
+    edge: Math.round((styleMatchupBonus(me, opp) - styleMatchupBonus(opp, me)) * 1000) / 1000,
+    marked: myPlan.mark !== undefined && myPlan.mark === (opp.playmakerIndex ?? 0),
+    kickoff: myPlan.kickoff,
+    won: game.winnerTeamId === me.id,
+    ...(cut ? { timeoutCut: cut } : {}),
+  };
+  const nextMd = { ...after.matchday, userLog: [...(md.userLog ?? []), entry] };
+  if (userSide === "a") delete nextMd.cutA;
+  else delete nextMd.cutB;
+  return { ...after, matchday: nextMd };
+}
+
+/**
+ * rc9 MATCHDAY (R240): the next game of the user's series with the coach
+ * making the user's break calls first (the timeout, an adjustment after a
+ * loss), exactly as quick mode does. The user's own timeout, if called, is
+ * already on the state (the coach then leaves it).
+ */
+export function playUserNext(
+  state: SeriesState,
+  rngState: number,
+  teamA: TournamentTeam,
+  teamB: TournamentTeam,
+  ctl: SeriesControl,
+): { state: SeriesState; rngState: number } {
+  if (isSeriesOver(state)) return { state, rngState };
+  const st = coachBreak(state, ctl.userSide, teamA, teamB, ctl.userQuality);
+  return playUserGame(st, rngState, teamA, teamB, ctl.userSide);
+}
+
+/** rc9 MATCHDAY (R243): what the plan did, from the log (the facts the line is built from). */
+export interface PlanReport {
+  /** The style the user opened with and the opponent's at game 1. */
+  style: PlayStyleId | null;
+  oppStyle: PlayStyleId | null;
+  /** Games the user's style had the matchup edge in, and the ones the opponent's had. */
+  edgeGames: number[];
+  againstGames: number[];
+  /** Of the edge games, how many the user won. */
+  edgeWins: number;
+  /** The opponent switched style before this game (the first switch), if it did. */
+  oppSwitchedAt: number | null;
+  oppSwitchedTo: PlayStyleId | null;
+  /** The user's timeout: before which game and how much momentum it cleared. */
+  timeout: { game: number; cut: number } | null;
+  marked: boolean;
+  games: number;
+}
+
+export function planReport(state: SeriesState): PlanReport | null {
+  const log = state.matchday?.userLog;
+  if (!log || log.length === 0) return null;
+  const first = log[0];
+  const switched = log.find((e) => e.oppStyle !== first.oppStyle);
+  const t = log.find((e) => e.timeoutCut !== undefined);
+  const edgeGames = log.filter((e) => e.edge > 0).map((e) => e.game);
+  return {
+    style: first.style,
+    oppStyle: first.oppStyle,
+    edgeGames,
+    againstGames: log.filter((e) => e.edge < 0).map((e) => e.game),
+    edgeWins: log.filter((e) => e.edge > 0 && e.won).length,
+    oppSwitchedAt: switched ? switched.game : null,
+    oppSwitchedTo: switched ? switched.oppStyle : null,
+    timeout: t ? { game: t.game, cut: t.timeoutCut ?? 0 } : null,
+    marked: first.marked,
+    games: log.length,
+  };
 }
 
 /** Finishes the user's series with the coach making every remaining call (quick mode, or "leave it to the coach"). */

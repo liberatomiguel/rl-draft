@@ -124,7 +124,7 @@ function stepsOf(chapter: Chapter, C: CareerCopy): TourStep[] {
         step("finances", T.hub.finances, "hub-finances", <WalletIcon className={BIG} />),
         step("progress", T.hub.progress, "hub-progress", <GaugeIcon className={BIG} />),
         step("inbox", T.hub.inbox, "hub-inbox", <ClipboardIcon className={BIG} />),
-        step("help", T.hub.help, "career-help", <QuestionIcon className={BIG} />),
+        // rc9 HQ: the step that explained the help button is gone (the button names itself).
       ];
     }
     case "training":
@@ -217,14 +217,15 @@ export function CareerTour() {
 
   return (
     <>
-      {/* The help button: reopens this screen's chapter. Above the phone's bottom nav. */}
+      {/* The help button: reopens this screen's chapter. Above the phone's bottom nav, and on a phone
+          above a docked action too (rc9 HQ: at 72px it sat on the season plan's Accept button). */}
       <button
         type="button"
         data-tour="career-help"
         onClick={() => setOpened({ chapter, route })}
         aria-label={C.tour.help}
         title={C.tour.help}
-        className="fixed bottom-[4.5rem] right-3 z-30 flex h-10 w-10 items-center justify-center rounded-lg border border-line-strong bg-raised text-sub transition-colors hover:border-blue/60 hover:text-ink md:bottom-5 md:right-5"
+        className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] right-3 z-30 flex h-11 w-11 sm:bottom-[4.5rem] sm:h-10 sm:w-10 items-center justify-center rounded-lg border border-line-strong bg-raised text-sub transition-colors hover:border-blue/60 hover:text-ink md:bottom-5 md:right-5"
       >
         <QuestionIcon className="h-5 w-5" />
       </button>

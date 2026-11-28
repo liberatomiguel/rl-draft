@@ -1,22 +1,22 @@
 "use client";
 
 /**
- * Road to Worlds — Training (rc.35 front T; rc.36 front T2, R83: Miguel's
- * rc.35 playtest).
+ * Road to Worlds — Training (rc.35 front T; rc.36 front T2, R83; rc9
+ * TRAIN-MARKET: rebuilt around the one decision).
+ *
+ * What the player decides here: what the squad works on this cycle and how
+ * hard. What he must see first: the plan running now (or the choice, when
+ * none runs) and what it gives him in plain words.
  *
  * The screen reads top-down:
- *  1. the cycle HERO — a running plan (its objective, focus, intensity and
- *     scrims as chips, a quiet days-left counter and the PROGRESS BAR of its promised
- *     gain: earned, to come, what lands on completion) with "Adjust plan";
- *     or, when nothing runs, "No plan running" and the picker right under it
- *     as the main action (empty by default, the recommendation only where the
- *     preset or the coach gives one), then "Start training";
- *  2. the coach — "he plans each cycle" (on / off), or the hire link;
- *  3. the squad's growth (the next point the cards will print, the band);
- *  4. past cycles (the results, visual), recent scrims, what the attributes do.
- * Gone (Miguel): "this cycle so far" and "expected result" (they repeated the
- * plan), "use the base" (not picking is the base), the season ceiling.
- * Every number comes from the engine or balance.ts — never inline math.
+ *  1. the cycle: a running plan (its gain as a figure, then the four choices
+ *     as rows with what each does) with "Adjust plan"; or, when nothing runs,
+ *     the picker as the main action (empty by default, the recommendation only
+ *     where the preset or the coach gives one), then "Start training";
+ *  2. the squad's growth, one row per player (the next point, the band);
+ *  3. on the right: the coach, the week's scrims and the report switch;
+ *  4. at the bottom, out of the way: what each attribute does.
+ * Every number comes from the engine or balance.ts, never inline math.
  */
 
 import { AppLink } from "@/components/ui/AppLink";
@@ -27,12 +27,11 @@ import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { CareerSave, SquadPlayer } from "@/engine/career/types";
-import type { StatKey } from "@/engine/types";
-import { clamp, cx } from "@/lib/util";
+import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { useSettings } from "@/store/settingsStore";
-import { coachTrainingProfileOf, playerEffectOf, trainingBlockOf } from "@/store/careerTraining";
+import { coachTrainingProfileOf, trainingBlockOf } from "@/store/careerTraining";
 import {
   agePhase,
   clockLabel,
@@ -48,24 +47,17 @@ import {
 import { formatDateShort, formatDateTiny } from "@/components/career/dateText";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import {
-  CycleRing,
-  OBJECTIVE_TONE,
-  ObjectiveIcon,
-  PackageChips,
   PlanPicker,
+  PlanRows,
   PromiseBar,
   WeeklyScrimRecap,
 } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { BoltIcon, ScaleIcon, ShieldIcon, TargetIcon, FlameIcon, StarCoachIcon, AlertIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Toggle } from "@/components/ui/Toggle";
-
-const ATTRIBUTE_ICONS = { mechanics: BoltIcon, consistency: ScaleIcon, clutch: FlameIcon, offense: TargetIcon, defense: ShieldIcon, experience: StarCoachIcon } as const;
-
-const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral", unknown: "neutral" } as const;
+import { MatchdayModeSetting } from "@/components/career/MatchdayModeSetting"; // rc9 MATCHDAY
 
 export function TrainingScreen() {
   const mounted = useMounted();
@@ -101,10 +93,8 @@ export function TrainingScreen() {
   const coachProfile = coachTrainingProfileOf(save.coach);
   const running = save.phase === "running";
   const pkg = block.package;
-  const objective = pkg?.objective ?? null;
-  const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.03]" };
 
-  // Engine truth: Mon–Fri sessions; a committed week trains at half load.
+  // Engine truth: Mon-Fri sessions; a committed week trains at half load.
   const matchPrepWeek = save.pendingEventDef !== null;
   const trainingWeek = !matchPrepWeek && (clock.kind === "open" || clock.kind === "preseason");
   const trainingWeekPct = Math.round(CAREER_CALENDAR.trainingWeekBonus * 100);
@@ -124,275 +114,230 @@ export function TrainingScreen() {
   const coachPct = block.coach?.effectPct ?? 0;
   const soFar = block.promise ? block.promise.paid + block.promise.held : 0;
   const cycleNo = Y.cycleOf(block.period.index + 1, block.period.count);
-
-  const sessionChip = (
-    <span className={cx("inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-semibold", sessionToday ? "bg-white/[0.03] text-sub" : "bg-white/5 text-faint")}>
-      <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "bg-white/30" : "bg-white/20")} aria-hidden />
-      {sessionToday && matchPrepWeek ? C.training.matchPrepWeek : sessionToday ? C.training.sessionToday : C.training.noSessionToday}
-    </span>
-  );
+  const sessionText = sessionToday && matchPrepWeek ? C.training.matchPrepWeek : sessionToday ? C.training.sessionToday : C.training.noSessionToday;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-6xl space-y-6 px-3 py-5 sm:px-4">
       <SectionTitle title={C.training.title} right={<Badge tone="neutral">{formatDateShort(D, clock.date)}</Badge>} />
 
       <ErrorBanner />
 
+      {/* rc9 MATCHDAY: the match mode setting goes here, as one full-width block. */}
+
       {/* The plan and what it does to the squad on the left; who plans it, the week's scrims and the report switch on the right. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
-      <div className="space-y-4 lg:col-span-2">
-      {/* 1 — the cycle: a running plan, or the picker as the main action */}
-      {block.running && block.cycle ? (
-        <Panel data-tour="training-cycle" className="rise-in overflow-clip p-0">
-          <div className="flex items-center gap-4 border-b border-line px-4 py-4 sm:px-5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-sub">
-                {cycleNo} · {Y.running}
-              </p>
-              <p className="display mt-1.5 flex items-center gap-2.5 truncate text-3xl font-bold uppercase leading-none text-ink">
-                <span className={cx("shrink-0", tone.text)}><ObjectiveIcon objective={objective} className="h-6 w-6" /></span>
-                {objective ? Y.objectives[objective] : Y.by.base}
-              </p>
-              <p className="mt-1.5 truncate text-xs text-sub">{Y.by[block.author] ?? ""}</p>
-            </div>
-            <CycleRing progress={block.cycle.progress} daysLeft={block.cycle.daysLeft} label={Y.daysLeft(block.cycle.daysLeft)} />
-          </div>
-          <div className="space-y-3.5 px-4 py-4 sm:px-5">
-            <PackageChips pkg={pkg} C={C} />
-            {block.promise ? <PromiseBar promise={block.promise} C={C} /> : null}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-              <span className="text-faint">
-                {save.clock.day < block.cycle.fromDay ? Y.startsTomorrow : Y.dayOf(block.cycle.dayOf, block.cycle.length)} · {Y.endsOn(endDate)}
-              </span>
-              <span className="flex flex-wrap items-center gap-1.5">
-                {sessionChip}
-                {trainingWeek ? (
-                  <span className="rounded-sm bg-white/[0.03] px-2 py-0.5 text-sub">
-                    +{trainingWeekPct}% · {C.hub.trainingWeek}
-                  </span>
-                ) : null}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
-              {pkg && pkg.scrimsPerWeek > 0 ? (
-                <span className="inline-flex items-center gap-1 text-sub">
-                  <SwordsIcon className="h-3.5 w-3.5" />
-                  {Y.scrimsDone(block.scrims.done, block.scrims.planned)}
-                  {block.scrims.done > 0 && !scrimPlaying ? ` · ${Y.record(block.scrims.won, block.scrims.lost)}` : ""}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="space-y-6 lg:col-span-2">
+          {/* 1: the cycle, a running plan or the picker as the main action */}
+          {block.running && block.cycle ? (
+            <Panel data-tour="training-cycle" className="rise-in p-5">
+              <div className="card-head">
+                <h2 className="card-title">{Y.title}</h2>
+                <span className="text-xs tabular-nums text-faint">
+                  {cycleNo} · {Y.daysLeft(block.cycle.daysLeft)}
                 </span>
-              ) : null}
-              <span className={cx("inline-flex items-center gap-1", block.unavailabilityPts > 0 ? "text-sub" : "text-faint")}>
-                <AlertIcon className="h-3.5 w-3.5" />
-                {block.unavailabilityPts > 0 ? Y.risk(block.unavailabilityPts.toFixed(1)) : Y.noRisk}
-              </span>
-              {coachProfile && coachPct > 0 ? (
-                <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-sub">
-                  <WhistleIcon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">
-                    {coachProfile.name} · {Y.coachBoost(coachPct)}
-                  </span>
-                </span>
-              ) : null}
-            </div>
-            {running && !showEditor ? (
-              <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={() => setEditing(true)}>
-                {Y.adjust}
-              </Button>
-            ) : null}
-            {running && showEditor ? (
-              <div className="border-t border-line pt-3" data-training-editor="adjust">
-                <PlanPicker
-                  key={`adjust:${save.clock.seasonIndex}:${block.period.startDay}`}
-                  save={save}
-                  C={C}
-                  statLabels={t.STAT_LABELS}
-                  initial={pkg}
-                  recommended={block.recommended}
-                  lastPlan={null}
-                  soFar={soFar}
-                  onSubmit={(p) => {
-                    setTrainingPackage(p);
-                    closeEditor();
-                  }}
-                  onCancel={closeEditor}
-                />
               </div>
-            ) : null}
-          </div>
-        </Panel>
-      ) : (
-        <Panel data-tour="training-cycle" strong className="rise-in overflow-clip p-0">
-          <div className="border-b border-line px-4 py-4 sm:px-5">
-            <p className="text-xs text-sub">
-              {cycleNo} · {Y.daysLeft(block.period.daysLeft)}
-            </p>
-            <p className="display mt-1.5 text-3xl font-bold uppercase leading-none text-ink">{Y.idle}</p>
-            <p className="mt-1.5 text-sm leading-snug text-sub">{Y.idleLine}</p>
-          </div>
-          <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
-            <div>
-              <p className="card-title">{Y.pickTitle}</p>
-              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-sub">
-                {block.controller === "coach" || coachProfile ? (
-                  <WhistleIcon className="mt-px h-3.5 w-3.5 shrink-0 text-sub" />
-                ) : (
-                  <StarIcon className="mt-px h-3.5 w-3.5 shrink-0 text-amber-300" filled={block.recommended !== null} />
-                )}
-                <span className="min-w-0">{controllerLine}</span>
+              {block.promise ? <PromiseBar promise={block.promise} C={C} /> : null}
+              <p className="mb-5 mt-2 text-xs text-faint">
+                {save.clock.day < block.cycle.fromDay ? Y.startsTomorrow : Y.dayOf(block.cycle.dayOf, block.cycle.length)} · {Y.endsOn(endDate)}
               </p>
+              <PlanRows pkg={pkg} C={C} statLabels={t.STAT_LABELS} />
+              <dl className="mb-5 text-[13px]">
+                <FactRow label={Y.facts.session} value={sessionText} extra={trainingWeek ? `+${trainingWeekPct}% · ${C.hub.trainingWeek}` : null} />
+                {pkg && pkg.scrimsPerWeek > 0 ? (
+                  <FactRow
+                    label={Y.steps.scrims}
+                    value={Y.scrimsDone(block.scrims.done, block.scrims.planned)}
+                    extra={block.scrims.done > 0 && !scrimPlaying ? Y.record(block.scrims.won, block.scrims.lost) : null}
+                  />
+                ) : null}
+                <FactRow label={Y.facts.risk} value={block.unavailabilityPts > 0 ? Y.risk(block.unavailabilityPts.toFixed(1)) : Y.noRisk} />
+                {coachProfile && coachPct > 0 ? <FactRow label={C.training.coachTitle} value={`${coachProfile.name} · ${Y.coachBoost(coachPct)}`} /> : null}
+              </dl>
+              {running && !showEditor ? (
+                <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={() => setEditing(true)}>
+                  {Y.adjust}
+                </Button>
+              ) : null}
+              {running && showEditor ? (
+                <div className="border-t border-line pt-4" data-training-editor="adjust">
+                  <PlanPicker
+                    key={`adjust:${save.clock.seasonIndex}:${block.period.startDay}`}
+                    save={save}
+                    C={C}
+                    statLabels={t.STAT_LABELS}
+                    initial={pkg}
+                    recommended={block.recommended}
+                    lastPlan={null}
+                    soFar={soFar}
+                    onSubmit={(p) => {
+                      setTrainingPackage(p);
+                      closeEditor();
+                    }}
+                    onCancel={closeEditor}
+                  />
+                </div>
+              ) : null}
+            </Panel>
+          ) : (
+            <Panel data-tour="training-cycle" strong className="rise-in p-5">
+              <div className="card-head">
+                <h2 className="card-title">{Y.pickTitle}</h2>
+                <span className="text-xs tabular-nums text-faint">
+                  {cycleNo} · {Y.daysLeft(block.period.daysLeft)}
+                </span>
+              </div>
+              {running ? (
+                <>
+                  <p className="text-sm leading-snug text-sub">{Y.idleLine}</p>
+                  <p className="mb-5 mt-1 text-[13px] leading-snug text-faint">{controllerLine}</p>
+                  <PlanPicker
+                    key={`start:${save.clock.seasonIndex}:${block.period.startDay}`}
+                    save={save}
+                    C={C}
+                    statLabels={t.STAT_LABELS}
+                    initial={null}
+                    recommended={block.recommended}
+                    lastPlan={block.lastPlan}
+                    onSubmit={(p) => setTrainingPackage(p)}
+                  />
+                </>
+              ) : (
+                <p className="text-sm text-sub">{Y.paused}</p>
+              )}
+            </Panel>
+          )}
+
+          {/* 2: the squad's growth, one row per player */}
+          <Panel data-tour="training-growth" className="rise-in p-5" style={{ animationDelay: "60ms" }}>
+            <div className="card-head">
+              <h2 className="card-title">{C.training.plan.squadGrowth}</h2>
             </div>
-            {running ? (
-              <PlanPicker
-                key={`start:${save.clock.seasonIndex}:${block.period.startDay}`}
-                save={save}
-                C={C}
-                statLabels={t.STAT_LABELS}
-                initial={null}
-                recommended={block.recommended}
-                lastPlan={block.lastPlan}
-                onSubmit={(p) => setTrainingPackage(p)}
-              />
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2 text-[11px]">{sessionChip}</div>
-          </div>
-        </Panel>
-      )}
-
-      {/* 3 — the squad's growth */}
-      <div className="pt-2">
-        <h2 className="card-title mb-3">{C.training.plan.squadGrowth}</h2>
-        <div data-tour="training-growth" className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {save.squad.map((p, i) => (
-            <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
-          ))}
+            {save.squad.length === 0 ? (
+              <p className="text-sm text-sub">{C.training.growthEmpty}</p>
+            ) : (
+              <ul>
+                {save.squad.map((p) => (
+                  <GrowthRow key={p.id} save={save} p={p} C={C} />
+                ))}
+              </ul>
+            )}
+            <p className="mt-4 text-[13px] text-faint">{C.training.matchXpHint}</p>
+          </Panel>
         </div>
-      </div>
 
-      </div>
-      <div className="space-y-4">
-      {/* 2 — the coach: he plans each cycle, or the hire link */}
-      <Panel data-tour="training-coach" className="rise-in p-4 sm:p-5" style={{ animationDelay: "40ms" }}>
-        {coachProfile ? (
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center text-sub">
-              <WhistleIcon className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
+        <div className="space-y-6">
+          {/* 3: the coach, or the hire link */}
+          <Panel data-tour="training-coach" className="rise-in p-5" style={{ animationDelay: "40ms" }}>
+            <div className="card-head">
+              <h2 className="card-title">{C.training.coachTitle}</h2>
+              {!coachProfile ? (
+                <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-bright hover:underline">
+                  {Y.hireCoach}
+                </AppLink>
+              ) : null}
+            </div>
+            {coachProfile ? (
               <Toggle checked={block.coachPlans} onChange={setCoachPlans} label={Y.coachPlans(coachProfile.name)} hint={Y.coachPlansHint} disabled={!running} />
-            </div>
-          </div>
-        ) : (
-          <AppLink href="/career/market#coaches" className="flex min-h-11 items-center gap-3 text-[11px] font-semibold text-orange-bright hover:underline">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-              <WhistleIcon className="h-5 w-5" />
-            </span>
-            <span className="min-w-0">
-              {Y.noCoach} · {Y.hireCoach}
-            </span>
-          </AppLink>
-        )}
-        <p className="mt-2 text-[11px] text-faint">
-          <AppLink href="/career/finances" className="underline-offset-4 hover:text-ink hover:underline">
-            {C.training.facilityEffect(gearPct)}
-          </AppLink>
-        </p>
-      </Panel>
+            ) : (
+              <>
+                <p className="display text-[15px] font-semibold text-ink">{C.training.noCoachTitle}</p>
+                <p className="mt-0.5 text-[13px] text-sub">{Y.noCoach}</p>
+              </>
+            )}
+            <p className="mt-4 border-t border-line pt-3 text-[13px] text-faint">
+              <AppLink href="/career/finances" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
+                {C.training.facilityEffect(gearPct)}
+              </AppLink>
+            </p>
+          </Panel>
 
-      {/* The current week's scrims, in one compact recap. */}
-      <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "220ms" }}>
-        <WeeklyScrimRecap save={save} C={C} />
-      </Panel>
+          {/* rc9 MATCHDAY */}<MatchdayModeSetting save={save} className="rise-in" />
 
+          {/* The current week's scrims, in one compact recap. */}
+          <Panel className="rise-in p-5" style={{ animationDelay: "120ms" }}>
+            <WeeklyScrimRecap save={save} C={C} />
+          </Panel>
 
-      <Panel className="p-4 sm:p-5"><Toggle checked={showReports} onChange={(on) => setSettings("careerTrainingReports", on)} label={Y.report.showAutomatic} hint={Y.report.historyHint} /></Panel>
-      <Panel className="p-4 sm:p-5">
-        <div className="card-head"><h2 className="card-title">{C.training.effectsTitle}</h2></div>
-        <p className="mt-2 max-w-3xl text-sm leading-snug text-sub">{C.training.effectsHint} {C.training.effectBaseline(SIMULATION.statBaseline)}</p>
-        {/* A reference table, not six boxes: one ruled cell per attribute. */}
-        <div className="mt-4 grid grid-cols-1 gap-x-8 sm:max-lg:grid-cols-2">
-          {effects.map((e) => {
-            const Icon = ATTRIBUTE_ICONS[e.key];
-            return (
-            <div key={e.key} className="border-t border-line py-3.5">
-              <div className="flex items-baseline justify-between gap-2"><h3 className="display flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.03em] text-ink"><span aria-hidden><Icon className="h-4 w-4 shrink-0 text-sub" /></span>{t.STAT_LABELS[e.key]}</h3><span className="display text-xl font-bold leading-none tabular-nums text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
-              <ProgressBar value={teamNow.stats[e.key] / 100} tone="blue" className="mt-2 h-1.5" label={t.STAT_LABELS[e.key]} />
-              <p className="mt-2 min-h-10 text-xs leading-relaxed text-sub">{C.training.effectDescription[e.key]}</p>
-              <p className={cx("mt-1 text-xs font-semibold", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>{e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)} · {C.training.effectWhen[e.when]}</p>
-            </div>
-          ); })}
+          <Toggle checked={showReports} onChange={(on) => setSettings("careerTrainingReports", on)} label={Y.report.showAutomatic} />
         </div>
-      </Panel>
-      </div>
       </div>
 
-      <p className="rise-in text-center text-[11px] text-faint">{C.training.matchXpHint}</p>
+      {/* 4: the reference, out of the way */}
+      <details className="group rise-in border-t border-line pt-4">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+          <span className="card-title">{C.training.effectsTitle}</span>
+          <span className="text-xs text-faint group-open:hidden">{C.training.effectsOpen}</span>
+          <span className="hidden text-xs text-faint group-open:inline">{C.training.effectsClose}</span>
+        </summary>
+        <p className="mt-2 text-[13px] text-sub">{C.training.effectBaseline(SIMULATION.statBaseline)}</p>
+        <ul className="mt-3 border-t border-line">
+          {effects.map((e) => (
+            <li key={e.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 border-b border-line py-3.5 sm:grid-cols-[9rem_minmax(0,1fr)_11rem]">
+              <p className="flex items-baseline gap-2">
+                <span className="display text-[15px] font-semibold text-ink">{t.STAT_LABELS[e.key]}</span>
+                <span className="text-[13px] tabular-nums text-faint">{Math.round(teamNow.stats[e.key])}</span>
+              </p>
+              <p className={cx("text-right text-[13px] font-semibold tabular-nums sm:order-3", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>
+                {e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)}
+                <span className="block text-xs font-normal text-faint">{C.training.effectWhen[e.when]}</span>
+              </p>
+              <p className="col-span-2 text-[13px] leading-snug text-sub sm:order-2 sm:col-span-1">{C.training.effectDescription[e.key]}</p>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </div>
+  );
+}
+
+/** One fact of the running cycle: the label in the faint step, the value on the right. */
+function FactRow({ label, value, extra }: { label: string; value: string; extra?: string | null }) {
+  return (
+    <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-line py-3 sm:grid-cols-[7rem_minmax(0,1fr)]">
+      <dt className="kicker pt-0.5">{label}</dt>
+      <dd className="min-w-0">
+        <span className="block text-sm text-ink">{value}</span>
+        {extra ? <span className="mt-0.5 block text-[13px] text-sub">{extra}</span> : null}
+      </dd>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// A squad player's growth — the next point and the band (no per-card controls)
+// A squad player's growth: the next point and the band (no per-row controls)
 // ---------------------------------------------------------------------------
 
-function GrowthCard({
-  save,
-  p,
-  C,
-  statLabels,
-  style,
-}: {
-  save: CareerSave;
-  p: SquadPlayer;
-  C: CareerCopy;
-  statLabels: Record<string, string>;
-  style?: React.CSSProperties;
-}) {
+function GrowthRow({ save, p, C }: { save: CareerSave; p: SquadPlayer; C: CareerCopy }) {
   const band = potBandOfSquad(save, p);
   const phase = agePhase(save, p);
   const age = squadAge(save, p);
-  const growth = clamp((p.overall - 60) / Math.max(1, band.max - 60), 0, 1);
   const eta = squadTrainingEta(save, p);
   const proj = squadTrainingProjection(save, p);
   const weeklyDecline = eta.splitCapped ? 0 : proj.weeklyDecline;
-  const offsets = (Object.entries(playerEffectOf(save, p.id).offsets) as [StatKey, number][]).filter(([, v]) => v > 0);
   return (
-    <Panel className="rise-in p-4 sm:p-5" style={style}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="display text-4xl font-bold leading-none tabular-nums text-ink" title={C.common.ovr}>
-            {Math.round(p.overall)}
-          </span>
-          <div className="min-w-0">
-            <p className="display truncate font-bold leading-tight text-ink">{p.name}</p>
-            <p className="text-[11px] text-faint">
-              {C.common.ovr} · {C.player.age(age)}
-            </p>
-          </div>
-        </div>
-        <Badge tone={PHASE_TONE[phase]}>{C.player.phase[phase]}</Badge>
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-3 border-b border-line py-4 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_3rem]">
+      <div className="min-w-0">
+        <p className="display truncate text-[15px] font-semibold text-ink">{p.name}</p>
+        <p className="mt-0.5 text-xs text-faint">
+          {C.player.age(age)} · {C.player.phase[phase]} · {C.player.potBand(band.min, band.max)}
+        </p>
       </div>
-      <div className="mt-2 flex items-center gap-3">
-        <ProgressBar value={growth} tone={phase === "prime" || eta.atPotential ? "gold" : "blue"} className="flex-1" label={C.player.growthRoom} />
-        <span className="shrink-0 text-[11px] text-faint">
-          {C.player.growthRoom} · {C.player.potBand(band.min, band.max)}
-        </span>
-      </div>
-      <div className="mt-3 border-t border-line pt-3">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-semibold text-ink">
+      <p className="display text-right text-2xl font-bold leading-none tabular-nums text-ink sm:order-3" title={C.common.ovr}>
+        {Math.round(p.overall)}
+      </p>
+      <div className="col-span-2 min-w-0 sm:col-span-1 sm:order-2">
+        <div className="flex items-baseline justify-between gap-3 text-[13px]">
+          <span className="text-sub">
             {eta.atPotential ? (eta.splitCapped ? C.training.etaAtPotential : C.training.etaAtPeak) : C.training.nextPoint(eta.nextPoint)}
           </span>
-          <span className={cx("font-semibold", eta.daysToNext !== null ? "text-good" : "text-faint")}>
+          <span className={cx("shrink-0 text-xs", eta.daysToNext !== null && !eta.atPotential ? "text-good" : "text-faint")}>
             {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
           </span>
         </div>
         <ProgressBar value={eta.progress} tone={eta.atPotential || phase === "prime" ? "gold" : eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
-        <p className="mt-1 text-[11px] text-faint">
-          {C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}
-          {offsets.map(([k, v]) => ` · ${C.training.perWeekOffset(v.toFixed(2), statLabels[k] ?? k)}`).join("")}
-        </p>
-        {weeklyDecline > 0 ? <p className="mt-0.5 text-[11px] text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
+        <p className="mt-1.5 text-xs text-faint">{C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}</p>
+        {weeklyDecline > 0 ? <p className="mt-0.5 text-xs text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
       </div>
-    </Panel>
+    </li>
   );
 }
