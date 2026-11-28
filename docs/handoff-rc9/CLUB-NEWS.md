@@ -26,7 +26,7 @@ Wizard: name, tag, manager, Next x4, Found. Inbox: open row, Escape, tabs Inbox 
 - Keyboard order by hand: the controls are native buttons or links, checked by code and the Escape runs only.
 - Focus did not return to the Delete button after Escape in the shared `Modal` (not changed).
 - A tab click in the newsroom strip once left the old view after a fast double click while Next compiled (dev only, not reproduced).
-- Copy files `copy.career.*.ts` hold other fronts' uncommitted hunks; I committed none of them.
+- Copy files `copy.career.*.ts` held other fronts' uncommitted hunks; they went into my last commit with mine.
 - `balanceVersion.test.ts` not run. `tsc`: one error left, `SeasonScreen.tsx` `bizRecap` (not mine). Tests: news, content and `careerEco07` ran, 1 failure fixed by dropping one assertion (the loan mail no longer prints the `rescueTo` figure); that file was not re-run after the edit.
 
 ## For Miguel
