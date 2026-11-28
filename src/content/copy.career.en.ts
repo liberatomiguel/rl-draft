@@ -4186,8 +4186,8 @@ export const CAREER_EN = {
    */
   orgmode: {
     standing: "Standing",
-    budget: {
     // rc9 ORG-UI (#272): the money board's remaining labels (SeasonMoney.tsx); the season budget card's went with it.
+    budget: {
       when: (season: string, mondays: number) =>
         mondays > 1 ? `${season} · ${mondays} Mondays to go` : mondays === 1 ? `${season} · the last Monday to go` : `${season} · no Monday left to book`,
       wagesTitle: "Wage bill",
@@ -4233,9 +4233,9 @@ export const CAREER_EN = {
       staffNone: "No department staffed",
       // rc9 ORG-UI (#274): what a new level adds to the weekly bill.
       addsUpkeep: (amount: string) => `+${amount} a week upkeep`,
+      weekly: "a week",
     },
     club: {
-      weekly: "a week",
       promotes: (pct: number, cap: number) =>
         `A promotion raises the budget base and the wage ceiling by ${pct}%, raises what the board expects, and lets the org sign players up to ${cap}.`,
       top: (pct: number) => `At the top tier the board expects titles. A drop cuts the budget base and the wage ceiling by ${pct}%.`,

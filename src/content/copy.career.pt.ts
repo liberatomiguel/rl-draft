@@ -4150,8 +4150,8 @@ export const CAREER_PT: CareerCopy = {
   },
   orgmode: {
     standing: "Prestígio",
-    budget: {
     // rc9 ORG-UI (#272)
+    budget: {
       when: (season: string, mondays: number) =>
         mondays > 1 ? `${season} · faltam ${mondays} segundas` : mondays === 1 ? `${season} · falta a última segunda` : `${season} · nenhuma segunda a lançar`,
       wagesTitle: "Folha salarial",
@@ -4197,9 +4197,9 @@ export const CAREER_PT: CareerCopy = {
       staffNone: "Nenhum departamento com equipe",
       // rc9 ORG-UI (#274)
       addsUpkeep: (amount: string) => `+${amount} por semana de manutenção`,
+      weekly: "por semana",
     },
     club: {
-      weekly: "por semana",
       promotes: (pct: number, cap: number) =>
         `Uma promoção aumenta a base do orçamento e o teto da folha em ${pct}%, aumenta o que a diretoria espera e deixa a org contratar jogadores até ${cap}.`,
       top: (pct: number) => `No topo, a diretoria espera títulos. Uma queda corta a base do orçamento e o teto da folha em ${pct}%.`,
