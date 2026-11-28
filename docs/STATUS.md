@@ -1,129 +1,86 @@
 # Project Status — current state only
 
-> Updated: **2026-11-27**. History: CHANGELOG.md. Career map:
-> ROAD-TO-WORLDS-STATUS.md. Post-2.0 Road to Worlds roadmap:
-> ROADMAP-RTW-2026-11-17.md, reordered by PLANO-PROXIMO-NIVEL-2026-11-19.md
-> (E1/E2 decided 24/11). Etapa 1: ETAPA-1-STATUS.md (gate closed) and
-> MATCHDAY-SPEC.md. Etapa 2: PRO-SPEC.md. Phone redesign:
-> `docs/redesign/MOBILE-PLAN.md`. Competitor study: CONCORRENTES-2026-11-19.md.
+> Updated: **2026-11-28**. History: CHANGELOG.md. Career map:
+> ROAD-TO-WORLDS-STATUS.md. The rc.9 pass: `docs/handoff-rc9/` (SPEC.md and
+> one handoff per front). Earlier gate documents: V2.2-STATUS.md,
+> V2.3-STATUS.md, ETAPA-1-STATUS.md, PRO-SPEC.md.
 
 ## Current builds
 
-- **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`: the career landing
-  `/rocket-league-manager` leads with what a PC mod cannot offer (no mod, no
-  download, phones). The current identity; no Etapa 1 code.
-- **Staging = 2.2.0-rc.8 (27/11/2026)**, branch `release/v2.2`: rc.7 below
-  plus v2.3 (locker room, media days, fan feed, Skip guard; `V2.3-STATUS.md`)
-  and the per-season Majors/Worlds formats (`eventFormats`, R210,
-  `handoff-2.2/FORMATS-SPEC.md`), each behind its staging-only flag;
-  BALANCE_VERSION 57.
-- **rc.7 (27/11/2026)** below it (rc.7 is the
-  second pass on the takeover of a real org: it starts in RLCS 2027 with the
-  current orgs, and the board sets a mandate of three goals with no choice;
-  R173 to R180, BALANCE_VERSION 55; rc.6 gave it standing, operations, the
-  org's budget and its screens): the 2.1 rc.6 plus
-  the big update, each part behind its own staging-only flag: the Pro player
-  career to retirement (`proCareer`), a start at a real organisation
-  (`realOrgStart`), the board with confidence, dismissal and job offers
-  (`board`), endless variety rounds 1 and 2 (`endlessVariety`).
-  Gate document, numbers and probe commands:
-  **`V2.2-STATUS.md`** (decisions R151 to R162, DESIGN-DECISIONS #186;
-  handoffs in `docs/handoff-2.2/`). **Open before the gate:** the board's
-  stated chances are now bands in words and hold within one band of the
-  measured rate (underdog Normal is easier than stated); Worlds reached by
-  92 % of average Pro careers (spec: about 40 %); a final browser pass is
-  running (no full check of the board, real-organisation and endless screens
-  nor of the Pro's match, gala and card); per-season circuit formats were
-  judged unsafe and are not built.
-- **Share kit (27/11/2026, on staging since rc.6, branch `claude/share-boost`):**
-  one share sheet for runs, the Daily, duels, Road to Worlds careers and an
-  invitation; images in Post (1200 x 630) and Story (1080 x 1920) drawn in the
-  game's material; WhatsApp, X, Reddit, Telegram, copy image, native share;
-  "With friends" on the Home (duel in one click, invite). Event
-  `content_shared`; links carry `utm_medium=share`. Decisions #202 to #208.
-  Ambassador title on the first share. Friends brought to play are counted on
-  the server (`docs/sql/v2.2-referrals.sql`, **not applied yet: Miguel's
-  step**; inert on staging, accounts off); 5 = mark `share-friends-5` for the
-  Party Leader banner (art pending, PENDING-COSMETICS.md).
-  Not checked on a physical phone (native share sheet, Instagram story).
-- **rc.6 (24/11/2026)** below it, integration of five lines on top of
-  rc.5 (`3914518`, the phone redesign):
-  - **Phone redesign (rc.5):** every screen has its own layout under 640px
-    (run, career with its tab bar, hub); desktop unchanged. Rules: `DESIGN.md`
-    "Phone"; DESIGN-DECISIONS #178 to #182, R148. Not on a physical phone or
-    Safari.
-  - **Etapa 1 gate closed (R149)** and v2.0.36 merged in: new identity,
-    Matchday slices 1 to 5, Mundo vivo M1, M2.1, M3, Worlds by region (R146).
-  - **Daily: today's best draft and a percentile** against simulated drafts
-    (#183, `engine/dailyOptimal.ts`), under a finished Daily only.
-  - **Friend duel by link** (#184, `engine/duel.ts`, `/duel`): same seed, same
-    draft, standings compared; an exhibition (no XP, rating or cards).
-  - **Pro slice 1** (R150, #185, `PRO-SPEC.md`): create a player, growth,
-    own save `rocket-draft:pro:v1` (persist CONTRACT changed on purpose),
-    behind `FEATURES.proCareer`.
-  - Flags on in the staging build only (`STAGING_BUILD`,
-    `stagingFlags.test.ts`): `matchdayStyles`, `matchdayDecisions`,
-    `matchdayBoxScore`, `worldLife`, `proCareer`. BALANCE_VERSION 47.
-  - Entry: https://staging.rocketdraft.app (career on, noindex, accounts and
-    analytics off). The duel and Daily screens were built on the rc.4 look and
-    merged under the phone redesign: check them at 375 px.
+- **Production = v2.0.36 (22/11/2026)**, `main` `0991f70`. No Etapa 1 code.
+- **Staging candidate = 2.1.0-rc.9 (28/11/2026)**, branch `rc9/ui` (not
+  published yet; the publish is Miguel's go). The release is named **2.1**:
+  the staging series 2.2.0-rc.1 to rc.8 continues as 2.1.0. BALANCE_VERSION
+  58. On top of rc.8 (v2.3 locker room, media days, fan feed; event formats;
+  the real-org takeover in RLCS 2027 with the board's mandate; Pro career;
+  endless variety; the share kit):
+  - **Every screen redrawn** (DS, HQ, TRAIN-MARKET, ORG-UI, CLUB-NEWS,
+    DRAFT-UI, MATCHDAY, SHARE, STORIES, DUEL-UI fronts): Demi caps titles, a
+    lead block per screen, large figures, cards for choices, rows for ledgers
+    (`DESIGN.md` "Composition"; DESIGN-DECISIONS #209 to #300).
+  - **Matchday:** the series room (plan, live game, end), two clicks per
+    managed series; the live game as a broadcast board.
+  - **Locker room that moves** (R211–R219): a weekly pull toward a target
+    (results against expectation, form, load), a held mood, four player
+    requests, a bounded match effect; the screens show the held mood with
+    its trend and reason.
+  - **The manager's post** after a big moment (R253–R257) and the Fans tab.
+  - **Duel, team against team** (#225–#229, #294–#300): `/duel`, draft from
+    the same boards, a best of 7 on the series engine; the rc.6 duel is gone.
+  - **Established orgs** get their own catalogue (R220–R226); **coaches
+    retire 28 to 35**, late endless projects from season 8 (R230–R235).
+  - **Draft:** the absurd losses capped and Region-only placements re-priced
+    (#221); share prompts and images (#255–#262).
 
-## The staging line (rule since 24/11)
+## Flags (`FEATURES`, balance.ts)
 
-- **Staging accumulates stages; `main` moves only when Miguel decides.**
-  Etapa 1 passed its gate on 24/11 (R149) and stays on staging.
-- New work (Etapa 2 Pro, the Draft fronts) branches from `origin/staging`.
-  A v2.0.x hotfix that ships on `main` is merged into staging, never the
-  other way round.
-- Several sessions publish to staging in parallel: `git fetch`, merge
-  `origin/staging` if it moved, re-run the checks, then a **fast-forward**
-  `git push origin HEAD:staging` (never force). Workers Build builds it
-  (~11 min). Never a local deploy (`.env.local` holds the Supabase keys),
-  never `main` without Miguel, never `public/fonts-trial/`.
+On in every build: `careerMode` (kill switch `NEXT_PUBLIC_CAREER_MODE=0`),
+`showEliminatorTeam`. Off everywhere: `careerHardStabilityRule`. On in the
+staging build only (`STAGING_BUILD`, off in production): `matchdayStyles`,
+`worldLife`, `matchdayDecisions`, `matchdayBoxScore`, `proCareer`,
+`realOrgStart`, `board`, `endlessVariety`, `fanFeed`, `lockerRoom`,
+`mediaDays`, `eventFormats`. `previewTools` and the type lab (`TYPE_LAB`)
+follow staging/dev; `playtest` only with `NEXT_PUBLIC_PLAYTEST=1`. Which flags
+ship in 2.1 is Miguel's call; he has said the Pro player career does not.
 
-## Next
+## Open in rc.9
 
-- **Miguel plays rc.6 on staging**, phone first: the redesign, the duel
-  (`/duel`), the Daily's best draft, and the Pro door on the saves picker.
-- **Etapa 2 Pro, slice 2** after Miguel's review of slice 1 (PRO-SPEC.md
-  lists the slices).
+- Not checked on a phone or in the browser after integration: the held-mood
+  marks on Squad, the mood sheet, the goal deadline lines, the dialog focus
+  fallback. Phone widths of the TRAIN-MARKET screens were never checked.
+- A React "state update before mount" error on the Saves screen (dev only)
+  was reported but not reproduced here (no browser run at integration).
+- The `/duel` share image still shows the old duel's wording: its text and
+  alt are updated, the art needs `node scripts/build-og-duel.mjs`.
+- `docs/sql/v2.2-referrals.sql` not applied (Miguel's step).
 
-## Open decisions (Miguel's)
+## Miguel's pending decisions (from the rc.9 handoffs)
 
-From the Etapa 1 gate (details in ETAPA-1-STATUS.md):
-- XP for the substitute who comes in on a swap (`fieldedIds` does not change).
-- Confirm the Worlds spread of R146 (EU 57 / NA 30 / others 13, seasons 1–8).
-- Gate goals 3, 6 and 7 (the bot probes do not measure them).
-- A7: rc.5 added the career tab bar on phones (`CareerTabBar`); Miguel confirms it closes A7.
-- P1–P4 of MATCHDAY-SPEC.md §11 (style cycle, trait names, "Leave it to the
-  coach" default, the section 7 limits).
+- Which staging flags ship in 2.1 (Pro: no).
+- LOCKER: the positive match effect (+0.25, brief said +1.0), the Hard
+  dynasty lean, "more load" asks about 3 a season.
+- STORIES: about one post offer a season for weak clubs; the effect sizes.
+- ORG: the inherited deal's profile per tier; the signing cap as the one
+  standing figure. CLUB-NEWS: founded items in the Club's Progression for an
+  org; the 50/50 mark twice in the newsroom.
+- DS: Industry or Chakra Petch (`?type=chakra` on staging).
+- SHARE: the "Share frame" cosmetic slot (#262); whether a podium counts as
+  "went well" for the invite.
+- BUGS: the challenge-reset copy (not applied).
+- Carried: Etapa 1 gate items (ETAPA-1-STATUS.md), MATCHDAY-SPEC §11 P1–P4,
+  org-less stacks, the DEPLOY-CLOUDFLARE §9 zone rule, PENDING-COSMETICS.md.
 
-Carried from v2.0.x:
-- Org-less stacks (A4 / E3): needs Miguel's list.
-- The zone rule of DEPLOY-CLOUDFLARE §9 (self-repair of failed build files,
-  v2.0.32) is not applied yet.
-- Career cloud save (v2.0.26–2.0.30): not verified on two real devices or
-  mobile Safari; watch `account_sync_failed`.
-- Which landing start founds more careers (PostHog `/career/new` with or
-  without `?start=quick`); search baseline in memory `seo-search-landscape`.
-- POSTLAUNCH-2.0-REPORT: an event for a refused career advance, the event
-  budget, FR / ES, mobile career entry.
-- PENDING-COSMETICS.md: the Staff and Creator grant SQL, missing photos, the
-  unlock copy.
+## The staging line
 
-## Evidence and limits
-
-- Etapa 1 numbers come from bots (probes and batteries), not players: see
-  ETAPA-1-STATUS.md. Mobile widths, PT screens and lite-effects mode of the
-  new identity were not checked screen by screen.
-- The daily calendar is reviewed through 8 November 2027; refresh before
-  then or after rule changes.
-- After any career engine or store change: the soft-lock probe
-  (`P1_SOFT=1`, alone) before staging.
+Staging accumulates stages; `main` moves only when Miguel decides. Publish:
+`git fetch`, merge `origin/staging` if it moved, re-run the checks, then a
+fast-forward `git push origin HEAD:staging` (never force; Workers Build,
+~11 min). Never a local deploy (`.env.local` holds the Supabase keys), never
+`public/fonts-trial/`. After any career engine or store change: the soft-lock
+probe (`P1_SOFT=1`, alone) and the Pro probe with every staging flag on.
 
 ## Standing contracts
 
 Player saves stay on rocketdraft.app; staging is a separate origin. Persist
-keys/versions stay frozen and repairs are additive. Pure static export,
-assets-only Worker, no account/hosting changes. Generated art and manifests
-follow the asset build pipeline.
+keys/versions frozen, repairs additive. Pure static export, assets-only
+Worker. Generated art and manifests follow the asset build pipeline.

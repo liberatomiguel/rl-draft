@@ -1,43 +1,89 @@
 # Road to Worlds — current state
 
-> Updated **2026-11-27**. Production **v2.0.36**; **2.2.0-rc.7** on staging (`release/v2.2`).
-> Decisions R1–R180. BALANCE_VERSION **55**. Gate: V2.2-STATUS.md. Feedback: CAREER-FEEDBACK-rc42.md.
+> Updated **2026-11-28**. Production **v2.0.36**; staging candidate
+> **2.1.0-rc.9** (branch `rc9/ui`). Decisions R1–R259 (rc.9 used R211–R259,
+> some numbers unused). BALANCE_VERSION **58**. rc.9 handoffs:
+> `docs/handoff-rc9/`. Earlier gates: V2.2-STATUS.md, V2.3-STATUS.md.
 
-## v2.2 (staging only, each front behind its own flag)
+## On staging, each behind its staging-only flag
 
-**Real organisations and the board** (`realOrgStart`, `board`; R151–R154, R163–R172). `/career/new` opens on two doors: found a club, or take over a real org. An established org (`establishedOf`: `identity.realOrgRef` set) has its own rules: the reputation number is its Standing on four tiers (underdog, mid, contender, elite), nothing is locked behind it, the tier sets the signing cap and changes at the season review (promotion needs the line and the objective met); installations, staff and camps are all on the shelf (Operations), with the board's sign-off for capital projects; the org arrives with its tier's structure and a sponsor desk on day one; the season budget is fixed at the takeover, covers the season's committed costs, and is read as a plan (`seasonBudgetOf`). The board's objectives are picked for the tier; confidence moves with a logged reason, then warning, ultimatum and dismissal at a review. Dismissal never ends the save. Permanent achievements are not earned in an established org (R171, Miguel decides). A founded club keeps the ladder and every earlier rule.
+**Real organisations and the board** (`realOrgStart`, `board`; R151–R180,
+R220–R226). Two doors on `/career/new`: found a club, or take over a real org
+in RLCS 2027 (`clock.seasonIndex` is the era, `startSeasonIndex` where the save
+began). An established org has its Standing (four tiers), the board's mandate
+of three goals each season (`engine/career/mandate.ts`), confidence with
+reasons, dismissal without ending the save, and since rc.9 its own catalogue
+(`orgCatalogue.ts`: facility levels, departments with people, the event camp),
+each mapped onto an existing effect (balance unchanged). A founded club keeps
+the ladder and the three plans.
 
-**A takeover starts in RLCS 2027** (rc.7, R173–R176, R180; handoff `ORGMODE-2027-ERA.md`). `clock.seasonIndex` is the absolute era (6 = RLCS 2027); a save's optional `startSeasonIndex` is where it began and progress reads `careerSeasonOf` (`engine/career/era.ts`). `buildWorldAtCreation(seed, era)` builds that era's world: its lineups, then real orgs of the two seasons before (`returningFrom`) before any filler, free agents from the three seasons before. In a 2027 world every real player develops off his cards, players of 21 or younger get a projected potential, retirement runs 26 to 32 and decline never starts before 24 to 27 (`CAREER_ERA`). Money reads the era. A founded club starts at 0, bit-identical. The staging build takes `?era=N` on the pick screen.
+**Locker room** (`lockerRoom`; R211–R219, rc.9). Each Monday morale moves 30 %
+toward a target set by results against expectation, box-score form against
+teammates and training load; bench, promises and the market stay one-off
+shocks. The shown mood is held 3 points past a bound. Four player requests
+through the talk machinery. A bounded match effect by mood (per player −1.5 to
++0.25, team mean clamped −1 / +0.25), never written to a rating. Screens read
+`lockerRoomView.ts` (mood, trend, reason). STORIES adds the reason
+`managerPost`.
 
-**The board's mandate** (rc.7, R177–R179; handoff `ORGMODE-2027-MANDATE.md`). An established org does not choose a plan: each season the board sets three goals (classification, money, squad) with their gain and loss, read from the org's problems (`orgIssuesOf` in `engine/career/mandate.ts`) and its demand level; a pop-up, the owner's welcome, mails and the Board page carry them (`MandateParts.tsx`, `boardFlow.ts`). A founded club keeps the three plans. Next (spec stage 3): inherited contracts, asks to the board, departments with people.
+**Media days, fan feed, the manager's post** (`mediaDays`, `fanFeed`;
+R253–R257). The post is offered only after a big moment, at least 21 days
+apart, as an HQ decision; tone moves followers, morale and board confidence.
 
-**Endless variety** (`endlessVariety`, from season index 7; R155–R156). Drawn cups, a Legends Invitational, an Intercontinental, season hosts. Rival projects use the user's own toolbox and scale with the dynasty; elite promotions arrive stronger; a project may bid for the user's best starter. Worlds won by a 100+ team: 91 % to 64 %; the target of 3 AI sides within 3 points is missed (2.2 to 2.7). Per-season circuit formats are not built.
+**Matchday** (`matchdayStyles`, `matchdayDecisions`, `matchdayBoxScore`;
+R240–R247). The series room: plan (approach, risk, shut down), live games,
+the end; one optional timeout when the opponent has momentum.
 
-**Event formats** (`eventFormats`; R210, branch `v22/event-formats`, on staging since the 27/11 integration; spec handoff-2.2/FORMATS-SPEC.md). Majors and Worlds take each season's RLCS shape (`CAREER_EVENT_LAYOUTS`: Swiss, groups of 4, double-elimination groups of 8, the 16-team double elimination; top-8 / 12 knockouts and 8 / 12 hybrids); 2027+ rotates through the six rows; Season X's Worlds stays cancelled. Same points and prize total per event. Engine `engine/eventLayouts.ts` and the career-only brackets in `playoffs.ts`. Probe `EVENT_FORMATS_PROBE=1`; screen fixtures `EF_FIX=1`. Title odds per shape not measured.
+**Endless variety and the end game** (`endlessVariety`, `worldLife`;
+R155–R156, R230–R235). From season index 7 drawn cups and invitationals; from
+season 8 late rival projects (a 100+ team wins 35 % of Worlds, was 23 %).
+Coaches retire between 28 and 35 from the first rollover.
 
-**Pro, the player career** (`proCareer`; R157–R161; spec PRO-SPEC.md, §15 is its state). Own save `rocket-draft:pro:v1`; the world runs on a hidden host save, not `worldTick.ts`. Week, ranked, one decision a game, offers, rotation, aging, gala, nicknames, a shareable card. Peaks: average managed 92.1, high 97.2, careless 82.2. Out of band: Worlds played in 92 % of average careers. The board is inert on the host (R162).
+**Event formats** (`eventFormats`, R210). Majors and Worlds take each season's
+RLCS shape; same points and prize total per event.
 
-After any career engine or store change run the soft-lock probe (`P1_SOFT=1`) and the Pro probe (`PRO_CAREER=1`) with every staging flag on together, each alone.
+**Pro, the player career** (`proCareer`; R157–R161; PRO-SPEC.md §15). Own
+save `rocket-draft:pro:v1`. Miguel: **does not ship in 2.1**.
 
-## Earlier
+## Probes (each alone, every staging flag on)
 
-rc.42 and before (cards, Club, Finances, Inbox, calendar, title ledger): CHANGELOG and CAREER-FEEDBACK-rc42.md. rc.43–rc.50 (R113–R132): mid-career retune, coaches, elite pricing, staff retainers, the season-3 soft lock fix. v2.0.27 (R135): transfer list and player-for-player trades (`engine/career/transferList.ts`, `SELLTRADE_PROBE=1`). v2.1 (R139–R149): Mundo vivo M1, M2.1, M3 (`worldLife`), Matchday, the Etapa 1 gate (ETAPA-1-STATUS.md). v2.2.0-dev.1 (R150): Pro slice 1.
+Soft lock founded `P1_SOFT=1`; takeover `P1_SOFT=1 P1_SOFT_ERA=6
+P1_SOFT_REGIONS=NA,EU,SAM P1_SOFT_SEASONS=4`
+(`store/careerSoftlock.probe.test.ts`); Pro `PRO_CAREER=1`
+(`store/proCareer.probe.test.ts`). Results of the rc.9 integration run: see
+the 2.1.0-rc.9 CHANGELOG entry.
+
+## Open
+
+- LOCKER (Miguel): the positive match effect at +0.25 (brief +1.0), the Hard
+  dynasty lean, "more load" asks about 3 a season.
+- STORIES (Miguel): about one post offer a season for clubs that win nothing
+  (aim was 3 to 6); effect sizes (R256).
+- ORG (Miguel): the inherited deal's profile per tier; the signing cap as the
+  standing's one figure.
+- Not measured: title odds per event format; a balance battery for the
+  matchday mark (−0.08); the locker room's effect on title odds beyond the
+  LOCKER probe; the board's stated chances hold within one band only.
+- Pro: Worlds played in 92 % of average careers (spec about 40 %).
 
 ## System map
 
 | System | Engine → flow → screen |
 |---|---|
 | Calendar/weekend | calendar/sunday → careerFlow/careerSunday/careerDecisions → Calendar, SundayCard, Event |
-| Fields/results/titles | worldSim/careerResults/honors → careerFlow → Event, Standings, CareerHonorsTable |
-| Training/coaches | development/training → careerTraining → Training, TrainingBlock |
-| Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, Toolbox |
-| Selling/trading | transferList/market → careerFlow (R135 section)/careerDecisions → Market (My Deals), ListPlayerSheet, TradeSheet, Squad |
-| News/identity | communications/names → careerNew/careerFlow → NewsFeed, Inbox, Wizard/UserCrest |
-| Cloud save / files (2.0.26) | lib/careerCloud, lib/careerSaveFile → careerCloudStore, careerSaveTransfer → Saves, components/career/cloud |
-| Board / real orgs (v2.2) | orgProfile/seatSwap/era/board/boardTypes/mandate/manager/reputation, established (standing, operations, sign-off, signing cap), budget (`seasonBudgetOf`) → store/boardFlow, takeoverPreview → components/career/takeover (WayInDoor, TakeoverPick, ArrivalSplash), board (BoardScreen, BoardParts, MandateParts, StandingTrack, briefLines), finances (SeasonBudget, Operations), hub/OperationsBlock, `/career/board` |
-| Endless variety (v2.2) | engine/career/endless (`CAREER_ENDLESS`) → store/endlessFlow (news through communications) → OrgSheet, OrgMark, EventScreen |
-| Pro (v2.2) | engine/career/pro (week, ranked, moments, offers, aging, gala, nickname, card) → store/proFlow, proSeat, proMatch, proGala, proStore → components/career/pro (+ spine), `/career/pro/**` |
+| Series/matchday | matchday/matchdaySeries/matchTimeline → careerFlow (MATCHDAY blocks) → event/SeriesRoom, match/LiveGameView |
+| Fields/results/titles | worldSim/careerResults/honors/eventLayouts → careerFlow → Event, Standings |
+| Training/coaches | development/training → careerTraining → Training |
+| Money/contracts | economy/sponsorDeals/market → careerFlow/careerHq → Finances, Market, MoneyNoticeModal |
+| Selling/trading | transferList/market → careerFlow/careerDecisions → Market, ListPlayerSheet, TradeSheet |
+| Locker room | lockerRoom/lockerRoomFacts/lockerRoomView → lockerRoomFlow → locker/*, Squad |
+| Feed/media | fanFeed/mediaDays → fanFeedFlow/mediaDaysFlow → feed/*, News (Fans) |
+| Board / real orgs | era/board/mandate/orgCatalogue/established → boardFlow/orgFlow/takeoverPreview → takeover/*, board/*, finances/* |
+| Endless | endless (`CAREER_ENDLESS`) → endlessFlow → OrgSheet, EventScreen |
+| Pro | career/pro/* → proFlow/proSeat/proMatch/proStore → career/pro/* |
 
-## Open and frozen contracts
+## Contracts
 
-Gate 3b pacing/affordability and Miguel's playtest acceptance remain open (ROADMAP-NEXT-2026-11-05.md). Persist version **3**, saveVersion **5**, unchanged; the Pro has its own key and the boards, endless and Pro fields are additive. Permanent achievements survive save/season resets. The Pro has no account copy yet. Organization relocation as a player action, T1 and PvP remain deferred.
+Persist version 3, saveVersion 5, unchanged; every rc.9 save field is
+optional and additive; flag off writes nothing. The Pro has its own key and
+no account copy.
