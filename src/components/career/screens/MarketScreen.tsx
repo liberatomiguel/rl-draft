@@ -97,14 +97,15 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateTiny, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
-import { CandidateHead, CandidateRow, DealRow, OfferFact } from "@/components/career/market/MarketRows";
+import { PlayerCardTile } from "@/components/career/PlayerCardTile";
+import { DealRow, OfferFact } from "@/components/career/market/MarketRows";
 import { LockIcon } from "@/components/ui/icons";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { CoachAttributeLines, CoachHireCard, CoachDevelopment } from "@/components/career/training/CoachHireCard";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 
@@ -616,54 +617,72 @@ export function MarketScreen() {
             </div>
           ) : (
             <>
-              {/* One board of rows: who, what he could become, what he costs, what he changes in the team. */}
-              <Panel className="rise-in p-4 sm:p-5" style={{ animationDelay: "80ms" }}>
-                <CandidateHead labels={{ player: C.market.col.player, potential: C.market.col.potential, cost: C.market.col.cost, team: C.market.col.team }} />
-                <ul>
-                  {visible.slice(0, shown).map((r) => {
-                    // v0.3 visible signing gate: over-cap players stay browsable
-                    // but read as locked, with the rep that opens the door.
-                    const repLocked = !signableFor(save, r.view) || (tab === "contracted" && gateRepOf(save) < CAREER_UNLOCKS.contractedRep);
-                    // rc.35 (front C): an org signed him in this window: no offer until the next one.
-                    const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
-                    const locked = repLocked || justSigned;
-                    const phase = phaseLabelOf(phaseOfView(save, r.view));
-                    const overall = Math.round(r.view.overall);
-                    const teamGain = weakestStarter !== null && overall > Math.round(weakestStarter.overall);
-                    return (
-                      <CandidateRow
-                        key={r.view.id}
-                        name={r.view.name}
-                        overall={r.view.overall}
-                        detail={[r.view.region, C.player.age(r.view.age), r.view.archetype ? C.player.archetype[r.view.archetype] : ""].filter(Boolean).join(" · ")}
-                        org={r.orgRef ? <OrgMark save={save} orgRef={r.orgRef} size="xs" /> : null}
-                        potential={r.band.min === r.band.max ? C.player.potExact(r.band.max) : C.player.potBand(r.band.min, r.band.max)}
-                        phase={C.player.phase[phase]}
-                        wage={wageLabel(C, r.salary)}
-                        feeLine={r.orgRef ? `${nameOfRef(save, r.orgRef)} · ${C.market.feeLine(formatMoney(r.fee, { compact: true }))}` : C.market.freeAgentTag}
-                        team={openSeat ? C.market.teamSeat : teamGain && weakestStarter ? C.market.teamUp(overall - Math.round(weakestStarter.overall), weakestStarter.name) : C.market.teamSub}
-                        teamGain={openSeat || teamGain}
-                        lock={
-                          locked
-                            ? justSigned
-                              ? C.market.justSignedTag
-                              : establishedOf(save)
-                                ? C.board.signCapLock(signCapOf(save))
-                                : C.market.lockedAtRep(Math.max(repNeededForOverall(signingLevelOf(r.view)), r.orgRef ? CAREER_UNLOCKS.contractedRep : 0))
-                            : null
-                        }
-                        lockTitle={justSigned ? C.market.errors.justSigned : C.market.lockedHint}
-                        opensLabel={C.market.viewSheet}
-                        onOpen={() => {
-                          setTarget(r);
-                          setOfferOpen(false);
-                          setLen(2);
-                        }}
-                      />
-                    );
-                  })}
-                </ul>
-              </Panel>
+              {/* A grid of player cards, as before: the card carries what decides a signing (overall,
+                  potential, who he is) and its footer the cost and what he adds to the team. */}
+              <div className="rise-in grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3" style={{ animationDelay: "80ms" }}>
+                {visible.slice(0, shown).map((r) => {
+                  // v0.3 visible signing gate: over-cap players stay browsable
+                  // but read as locked, with the rep that opens the door.
+                  const repLocked = !signableFor(save, r.view) || (tab === "contracted" && gateRepOf(save) < CAREER_UNLOCKS.contractedRep);
+                  // rc.35 (front C): an org signed him in this window: no offer until the next one.
+                  const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
+                  const locked = repLocked || justSigned;
+                  const overall = Math.round(r.view.overall);
+                  const teamGain = openSeat || (weakestStarter !== null && overall > Math.round(weakestStarter.overall));
+                  const teamText = openSeat
+                    ? C.market.teamSeat
+                    : teamGain && weakestStarter
+                      ? C.market.teamUp(overall - Math.round(weakestStarter.overall), weakestStarter.name)
+                      : C.market.teamSub;
+                  return (
+                    <PlayerCardTile
+                      key={r.view.id}
+                      rarityFrame
+                      className={locked ? "opacity-70" : undefined}
+                      name={r.view.name}
+                      overall={r.view.overall}
+                      age={r.view.age}
+                      band={r.band}
+                      phase={phaseLabelOf(phaseOfView(save, r.view))}
+                      archetype={r.view.archetype}
+                      country={r.view.country}
+                      region={r.view.region}
+                      onClick={() => {
+                        setTarget(r);
+                        setOfferOpen(false);
+                        setLen(2);
+                      }}
+                      footer={
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="min-w-0">
+                              <span className="block text-sm tabular-nums text-ink">{wageLabel(C, r.salary)}</span>
+                              <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-faint">
+                                {r.orgRef ? <OrgMark save={save} orgRef={r.orgRef} size="xs" /> : null}
+                                <span className="truncate">
+                                  {r.orgRef ? `${nameOfRef(save, r.orgRef)} · ${C.market.feeLine(formatMoney(r.fee, { compact: true }))}` : C.market.freeAgentTag}
+                                </span>
+                              </span>
+                            </span>
+                            <span className={cx("shrink-0 text-right text-[13px]", teamGain ? "text-good" : "text-sub")}>{teamText}</span>
+                          </div>
+                          {/* The gate reads inside the card it locks, as its last line. */}
+                          {locked ? (
+                            <p className="flex items-center gap-1.5 text-xs text-faint" title={justSigned ? C.market.errors.justSigned : C.market.lockedHint}>
+                              <LockIcon className="h-3.5 w-3.5 shrink-0" />
+                              {justSigned
+                                ? C.market.justSignedTag
+                                : establishedOf(save)
+                                  ? C.board.signCapLock(signCapOf(save))
+                                  : C.market.lockedAtRep(Math.max(repNeededForOverall(signingLevelOf(r.view)), r.orgRef ? CAREER_UNLOCKS.contractedRep : 0))}
+                            </p>
+                          ) : null}
+                        </div>
+                      }
+                    />
+                  );
+                })}
+              </div>
               {visible.length > shown ? (
                 <div className="text-center">
                   <Button variant="ghost" onClick={() => setShown((n) => n + PAGE)}>
@@ -806,7 +825,7 @@ export function MarketScreen() {
                           <TeamStars stars={orgStars} size="xs" />
                         </span>,
                         o.listed && o.ask !== undefined && o.fee < o.ask ? (
-                          <span key="counter" className="text-orange-bright">{C.market.transferList.counterLine(formatMoney(o.ask))}</span>
+                          <span key="counter">{C.market.transferList.counterLine(formatMoney(o.ask))}</span>
                         ) : null,
                         // rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself.
                         o.blockbuster ? <span key="bb">{blockbusterWhatOf(C, orgName)}</span> : null,
@@ -835,7 +854,7 @@ export function MarketScreen() {
           {/* R135 (ECO-06): the transfer list. */}
           <Panel className="p-4 sm:p-5">
             <div className="card-head">
-              <p className="card-title">{C.market.transferList.title}</p>
+              <h3 className="card-title">{C.market.transferList.title}</h3>
               <Button
                 variant="secondary"
                 size="sm"
@@ -845,9 +864,10 @@ export function MarketScreen() {
                 {C.market.transferList.listPlayer}
               </Button>
             </div>
-            {listBlock ? <p className="mb-3 text-[13px] text-orange-bright">{listErrorText(listBlock)}</p> : null}
+            {listBlock ? <p className="mb-3 text-[13px] text-sub">{listErrorText(listBlock)}</p> : null}
             {listed.length === 0 ? (
-              <p className="text-[13px] text-faint">{C.market.transferList.empty}</p>
+              // The block already says why nothing can be listed; the how-to is for when it can.
+              listBlock ? null : <p className="text-[13px] text-faint">{C.market.transferList.empty}</p>
             ) : (
               <ul>
                 {listed.map((l) => {
@@ -967,7 +987,7 @@ export function MarketScreen() {
                   {C.player.scoutDone}
                 </Badge>
               )}
-              {(!windowOpen && !(freeAgentSignable && target.orgRef === null)) ? <span className="self-center text-[13px] text-orange-bright">{C.market.errors.windowClosed}</span> : targetLocked ? (
+              {(!windowOpen && !(freeAgentSignable && target.orgRef === null)) ? <span className="self-center text-[13px] text-sub">{C.market.errors.windowClosed}</span> : targetLocked ? (
                 <span className="self-center" title={C.market.lockedHint}>
                   <Badge tone="neutral">
                     <LockIcon className="mr-1 inline h-3 w-3" />
@@ -1008,14 +1028,9 @@ export function MarketScreen() {
             {/* rc.33 (UX-07): a full squad only warns and points to Squad — the
                 signing waits for a free seat (signingPlanFor refuses "squadFull"). */}
             {squadFull ? (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-orange/40 bg-orange/[0.06] p-3">
-                <p className="min-w-0 flex-1 text-xs font-semibold text-orange-bright">
-                  {C.market.squadFullWarn(CAREER_CONTRACT.squadCap)}
-                </p>
-                <AppLink
-                  href="/career/squad"
-                  className="inline-flex min-h-11 items-center rounded-lg border border-orange/50 px-3 text-xs font-semibold text-orange-bright hover:bg-orange/10"
-                >
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <p className="min-w-0 flex-1 text-[13px] text-sub">{C.market.squadFullWarn(CAREER_CONTRACT.squadCap)}</p>
+                <AppLink href="/career/squad" className={cx(buttonClass("secondary", "md"), "min-h-11")}>
                   {C.market.toSquad}
                 </AppLink>
               </div>
@@ -1090,7 +1105,7 @@ export function MarketScreen() {
                 />
               </dl>
               {backerRisk ? (
-                <p className="mt-3 text-[13px] text-orange-bright">
+                <p className="mt-3 text-[13px] text-bad">
                   {/* rc.33 review (ECO-08): a breach that ends the career is not the Backer's rescue. */}
                   {nextBreachOutcomeOf(save) === "insolvent" ? C.finances.endsCareerWarning : C.finances.backerWarning}
                 </p>
@@ -1171,10 +1186,10 @@ export function MarketScreen() {
         }
       >
         {confirmBid ? (
-          <div className="space-y-2">
-            <p className="text-ink">
-              {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")}{" "}
-             : {confirmBid.playerName} · {formatMoney(confirmBid.fee)}
+          <div>
+            <p className="display text-[15px] font-semibold text-ink">{confirmBid.playerName}</p>
+            <p className="text-[13px] text-faint">
+              {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")} · {formatMoney(confirmBid.fee)}
             </p>
             {/* ECO-02 (R46) / ECO-03 (R47): what the sale books — the Backer's share included. */}
             <SaleConsequences save={save} offer={confirmBid} />
@@ -1235,26 +1250,24 @@ export function MarketScreen() {
             }
           >
             {p ? (
-              <div className="space-y-2 text-sm">
-                <p className="text-ink">{C.market.trade.row(p.giveName, p.takeName, nameOfRef(save, p.orgRef))}</p>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.leaves}</span><span className="display font-bold text-ink">{p.giveName}</span></div>
-                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.arrives}</span><span className="display font-bold text-ink">{p.takeName}</span></div>
-                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.cash}</span><span className="display font-bold text-ink">{tcash > 0 ? formatMoney(tcash) : C.market.trade.noCash}</span></div>
+              <div>
+                <p className="text-[13px] text-faint">{nameOfRef(save, p.orgRef)}</p>
+                <dl className="mt-2 border-t border-line">
+                  <OfferFact label={C.market.trade.leaves} value={p.giveName} />
+                  <OfferFact label={C.market.trade.arrives} value={p.takeName} />
+                  <OfferFact label={C.market.trade.cash} value={tcash > 0 ? formatMoney(tcash) : C.market.trade.noCash} />
                   {tplan ? (
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sub">{C.squad.wage}</span>
-                      <span className="text-right font-bold text-ink">
-                        {C.market.trade.wageLine(wageLabel(C, tplan.signing.talk.offered.wagePerSplit), prizeShareLabelOf(C, { prizeSharePct: tplan.signing.talk.offered.sharePct }))}
-                      </span>
-                    </div>
+                    <OfferFact
+                      label={C.squad.wage}
+                      value={C.market.trade.wageLine(wageLabel(C, tplan.signing.talk.offered.wagePerSplit), prizeShareLabelOf(C, { prizeSharePct: tplan.signing.talk.offered.sharePct }))}
+                    />
                   ) : null}
-                  <div className="flex items-center justify-between gap-3"><span className="text-sub">{C.market.trade.length}</span><span className="font-bold text-ink">{C.market.trade.lengthLine(p.lengthSeasons)}</span></div>
-                </div>
+                  <OfferFact label={C.market.trade.length} value={C.market.trade.lengthLine(p.lengthSeasons)} />
+                </dl>
                 {terr ? (
-                  <p className="rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad">{listErrorText(terr)}</p>
+                  <p role="alert" className="mt-3 text-[13px] font-semibold text-bad">{listErrorText(terr)}</p>
                 ) : null}
-                <p className="text-xs text-faint">{C.market.trade.irreversible}</p>
+                <p className="mt-3 text-[13px] text-faint">{C.market.trade.irreversible}</p>
               </div>
             ) : null}
           </Modal>

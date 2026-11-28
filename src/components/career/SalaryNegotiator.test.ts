@@ -42,7 +42,7 @@ describe("SalaryNegotiator — rc.36: your offer, his position, send (his answer
     for (const text of [N.groupOffer, N.groupPosition, N.send, N.sendHint, N.oddsSure, N.worthTitle, N.shareAsk(9)]) expect(html).toContain(text);
     expect(html).toContain(N.sureFrom(formatMoney(talk.zone.needWorth)));
     expect(html).toContain(N.askMark(formatMoney(talk.zone.askWorth)));
-    expect(html).toContain(N.asks(formatMoney(talk.ask.weekly), 9, null));
+    expect(html).toContain(N.fullAsk);
     // His answer is never on the sheet before an offer is sent.
     expect(html).not.toContain(N.meetPrice);
     expect(html).not.toContain(N.refused(formatMoney(talk.offer.weekly)));
@@ -155,7 +155,8 @@ describe("rc.34 front I — a closed way says why; no share lever for a player w
       for (const k of Object.keys(CAREER_EN.market.negotiation.why) as (keyof typeof why)[]) expect(why[k], k).toBeTruthy();
       const T = C.market.negotiation;
       expect(T.effectShare(-1)).toContain("1");
-      expect(T.asks("$900", 0, null)).not.toContain("%");
+      expect(T.shareAsk(9)).toContain("9");
+      expect(T.bonusAsk("$900")).toContain("$900");
       expect(T.refused("$900")).toContain("$900");
     }
   });

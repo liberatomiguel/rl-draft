@@ -23,7 +23,7 @@ import { coachTrainingProfileOf, coachImpactFor, type CoachImpact } from "@/stor
 import { wageLabel } from "@/components/career/careerUi";
 import { OBJECTIVE_TONE, ObjectiveIcon } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
-import { HourglassIcon, LockIcon, StarIcon, TrendUpIcon, WalletIcon, WhistleIcon } from "@/components/ui/icons";
+import { LockIcon, WalletIcon, WhistleIcon } from "@/components/ui/icons";
 
 const clamp01 = (n: number): number => Math.min(1, Math.max(0, n));
 

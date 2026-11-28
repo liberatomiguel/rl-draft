@@ -27,11 +27,12 @@ import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { CareerSave, SquadPlayer } from "@/engine/career/types";
+import type { StatKey } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { useSettings } from "@/store/settingsStore";
-import { coachTrainingProfileOf, trainingBlockOf } from "@/store/careerTraining";
+import { coachTrainingProfileOf, playerEffectOf, trainingBlockOf } from "@/store/careerTraining";
 import {
   agePhase,
   clockLabel,
@@ -46,7 +47,12 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDateTiny } from "@/components/career/dateText";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
+import { PlayerCardTile } from "@/components/career/PlayerCardTile";
+import { CoachEffectLines } from "@/components/career/CoachEffects";
+import { AlertIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 import {
+  OBJECTIVE_TONE,
+  ObjectiveIcon,
   PlanPicker,
   PlanRows,
   PromiseBar,
@@ -93,6 +99,8 @@ export function TrainingScreen() {
   const coachProfile = coachTrainingProfileOf(save.coach);
   const running = save.phase === "running";
   const pkg = block.package;
+  const objective = pkg?.objective ?? null;
+  const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub" };
 
   // Engine truth: Mon-Fri sessions; a committed week trains at half load.
   const matchPrepWeek = save.pendingEventDef !== null;
@@ -122,44 +130,79 @@ export function TrainingScreen() {
 
       <ErrorBanner />
 
-      {/* rc9 MATCHDAY: the match mode setting goes here, as one full-width block. */}
-
-      {/* The plan and what it does to the squad on the left; who plans it, the week's scrims and the report switch on the right. */}
+      {/* The plan and what it does to the squad on the left; the coach, the week's scrims and the report switch on the right. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         <div className="space-y-6 lg:col-span-2">
-          {/* 1: the cycle, a running plan or the picker as the main action */}
+          {/* 1: the lead block. A running plan (its gain as the figure, the cycle as a bar, the four choices as cards) or the picker. */}
           {block.running && block.cycle ? (
-            <Panel data-tour="training-cycle" className="rise-in p-5">
-              <div className="card-head">
-                <h2 className="card-title">{Y.title}</h2>
-                <span className="text-xs tabular-nums text-faint">
-                  {cycleNo} · {Y.daysLeft(block.cycle.daysLeft)}
-                </span>
+            <Panel data-tour="training-cycle" className="rise-in overflow-clip p-0">
+              <div className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="kicker">{cycleNo}</p>
+                    <p className="display mt-2 flex items-center gap-3 text-3xl font-bold leading-none text-ink">
+                      <span className={cx("shrink-0", tone.text)}>
+                        <ObjectiveIcon objective={objective} className="h-7 w-7" />
+                      </span>
+                      <span className="truncate">{objective ? Y.objectives[objective] : Y.by.base}</span>
+                    </p>
+                    <p className="mt-2 text-[13px] text-faint">{Y.by[block.author] ?? ""}</p>
+                  </div>
+                  <p className="shrink-0 text-right text-[13px] tabular-nums text-sub">{Y.daysLeft(block.cycle.daysLeft)}</p>
+                </div>
+                <div
+                  className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10"
+                  role="progressbar"
+                  aria-label={Y.title}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(block.cycle.progress * 100)}
+                >
+                  <span className="block h-full rounded-full bg-ink/80" style={{ width: `${Math.round(block.cycle.progress * 100)}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-faint">
+                  {save.clock.day < block.cycle.fromDay ? Y.startsTomorrow : Y.dayOf(block.cycle.dayOf, block.cycle.length)} · {Y.endsOn(endDate)}
+                </p>
               </div>
-              {block.promise ? <PromiseBar promise={block.promise} C={C} /> : null}
-              <p className="mb-5 mt-2 text-xs text-faint">
-                {save.clock.day < block.cycle.fromDay ? Y.startsTomorrow : Y.dayOf(block.cycle.dayOf, block.cycle.length)} · {Y.endsOn(endDate)}
-              </p>
-              <PlanRows pkg={pkg} C={C} statLabels={t.STAT_LABELS} />
-              <dl className="mb-5 text-[13px]">
-                <FactRow label={Y.facts.session} value={sessionText} extra={trainingWeek ? `+${trainingWeekPct}% · ${C.hub.trainingWeek}` : null} />
-                {pkg && pkg.scrimsPerWeek > 0 ? (
-                  <FactRow
-                    label={Y.steps.scrims}
-                    value={Y.scrimsDone(block.scrims.done, block.scrims.planned)}
-                    extra={block.scrims.done > 0 && !scrimPlaying ? Y.record(block.scrims.won, block.scrims.lost) : null}
-                  />
-                ) : null}
-                <FactRow label={Y.facts.risk} value={block.unavailabilityPts > 0 ? Y.risk(block.unavailabilityPts.toFixed(1)) : Y.noRisk} />
-                {coachProfile && coachPct > 0 ? <FactRow label={C.training.coachTitle} value={`${coachProfile.name} · ${Y.coachBoost(coachPct)}`} /> : null}
-              </dl>
-              {running && !showEditor ? (
-                <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={() => setEditing(true)}>
-                  {Y.adjust}
-                </Button>
+              {block.promise ? (
+                <div className="border-t border-line p-5 sm:p-6">
+                  <PromiseBar promise={block.promise} C={C} />
+                </div>
               ) : null}
+              <div className="border-t border-line p-5 sm:p-6">
+                <PlanRows pkg={pkg} C={C} statLabels={t.STAT_LABELS} />
+                <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-sub">
+                  <li className="flex items-center gap-1.5">
+                    <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "bg-good" : "bg-white/25")} aria-hidden />
+                    {sessionText}
+                    {trainingWeek ? <span className="text-faint">· +{trainingWeekPct}% · {C.hub.trainingWeek}</span> : null}
+                  </li>
+                  {pkg && pkg.scrimsPerWeek > 0 ? (
+                    <li className="flex items-center gap-1.5">
+                      <SwordsIcon className="h-4 w-4" />
+                      {Y.scrimsDone(block.scrims.done, block.scrims.planned)}
+                      {block.scrims.done > 0 && !scrimPlaying ? <span className="text-faint">· {Y.record(block.scrims.won, block.scrims.lost)}</span> : null}
+                    </li>
+                  ) : null}
+                  <li className={cx("flex items-center gap-1.5", block.unavailabilityPts > 0 ? "" : "text-faint")}>
+                    <AlertIcon className="h-4 w-4" />
+                    {block.unavailabilityPts > 0 ? Y.risk(block.unavailabilityPts.toFixed(1)) : Y.noRisk}
+                  </li>
+                  {coachProfile && coachPct > 0 ? (
+                    <li className="flex items-center gap-1.5">
+                      <WhistleIcon className="h-4 w-4" />
+                      {coachProfile.name} · {Y.coachBoost(coachPct)}
+                    </li>
+                  ) : null}
+                </ul>
+                {running && !showEditor ? (
+                  <Button variant="secondary" size="md" className="mt-5 min-h-11 w-full sm:w-auto" onClick={() => setEditing(true)}>
+                    {Y.adjust}
+                  </Button>
+                ) : null}
+              </div>
               {running && showEditor ? (
-                <div className="border-t border-line pt-4" data-training-editor="adjust">
+                <div className="border-t border-line p-5 sm:p-6" data-training-editor="adjust">
                   <PlanPicker
                     key={`adjust:${save.clock.seasonIndex}:${block.period.startDay}`}
                     save={save}
@@ -179,7 +222,7 @@ export function TrainingScreen() {
               ) : null}
             </Panel>
           ) : (
-            <Panel data-tour="training-cycle" strong className="rise-in p-5">
+            <Panel data-tour="training-cycle" strong className="rise-in p-5 sm:p-6">
               <div className="card-head">
                 <h2 className="card-title">{Y.pickTitle}</h2>
                 <span className="text-xs tabular-nums text-faint">
@@ -207,26 +250,24 @@ export function TrainingScreen() {
             </Panel>
           )}
 
-          {/* 2: the squad's growth, one row per player */}
-          <Panel data-tour="training-growth" className="rise-in p-5" style={{ animationDelay: "60ms" }}>
-            <div className="card-head">
-              <h2 className="card-title">{C.training.plan.squadGrowth}</h2>
-            </div>
+          {/* 2: the squad's growth, one card per player */}
+          <section data-tour="training-growth" className="rise-in" style={{ animationDelay: "60ms" }}>
+            <h2 className="card-title mb-3">{C.training.plan.squadGrowth}</h2>
             {save.squad.length === 0 ? (
-              <p className="text-sm text-sub">{C.training.growthEmpty}</p>
+              <Panel className="p-5 text-sm text-sub">{C.training.growthEmpty}</Panel>
             ) : (
-              <ul>
+              <div className="grid grid-cols-1 gap-3 min-[560px]:grid-cols-2">
                 {save.squad.map((p) => (
-                  <GrowthRow key={p.id} save={save} p={p} C={C} />
+                  <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} />
                 ))}
-              </ul>
+              </div>
             )}
-            <p className="mt-4 text-[13px] text-faint">{C.training.matchXpHint}</p>
-          </Panel>
+            <p className="mt-3 text-[13px] text-faint">{C.training.matchXpHint}</p>
+          </section>
         </div>
 
         <div className="space-y-6">
-          {/* 3: the coach, or the hire link */}
+          {/* 3: the coach, as his card, or the way to hire one */}
           <Panel data-tour="training-coach" className="rise-in p-5" style={{ animationDelay: "40ms" }}>
             <div className="card-head">
               <h2 className="card-title">{C.training.coachTitle}</h2>
@@ -236,13 +277,35 @@ export function TrainingScreen() {
                 </AppLink>
               ) : null}
             </div>
-            {coachProfile ? (
-              <Toggle checked={block.coachPlans} onChange={setCoachPlans} label={Y.coachPlans(coachProfile.name)} hint={Y.coachPlansHint} disabled={!running} />
-            ) : (
+            {coachProfile && save.coach ? (
               <>
-                <p className="display text-[15px] font-semibold text-ink">{C.training.noCoachTitle}</p>
-                <p className="mt-0.5 text-[13px] text-sub">{Y.noCoach}</p>
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-surface text-sub" aria-hidden>
+                    <WhistleIcon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="display truncate text-[15px] font-semibold text-ink">{coachProfile.name}</p>
+                    <CoachEffectLines coach={save.coach} compact className="mt-1.5" />
+                  </div>
+                  <p className="shrink-0 text-right">
+                    <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(save.coach.overall)}</span>
+                    <span className="kicker mt-1 block">{C.common.ovr}</span>
+                  </p>
+                </div>
+                <div className="mt-4 border-t border-line pt-3">
+                  <Toggle checked={block.coachPlans} onChange={setCoachPlans} label={Y.coachPlans(coachProfile.name)} hint={Y.coachPlansHint} disabled={!running} />
+                </div>
               </>
+            ) : (
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-dashed border-line-strong text-faint" aria-hidden>
+                  <WhistleIcon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="display text-[15px] font-semibold text-ink">{C.training.noCoachTitle}</p>
+                  <p className="mt-0.5 text-[13px] text-sub">{Y.noCoach}</p>
+                </div>
+              </div>
             )}
             <p className="mt-4 border-t border-line pt-3 text-[13px] text-faint">
               <AppLink href="/career/finances" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
@@ -290,54 +353,55 @@ export function TrainingScreen() {
   );
 }
 
-/** One fact of the running cycle: the label in the faint step, the value on the right. */
-function FactRow({ label, value, extra }: { label: string; value: string; extra?: string | null }) {
-  return (
-    <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-line py-3 sm:grid-cols-[7rem_minmax(0,1fr)]">
-      <dt className="kicker pt-0.5">{label}</dt>
-      <dd className="min-w-0">
-        <span className="block text-sm text-ink">{value}</span>
-        {extra ? <span className="mt-0.5 block text-[13px] text-sub">{extra}</span> : null}
-      </dd>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// A squad player's growth: the next point and the band (no per-row controls)
+// A squad player's growth: his card, the next point, and the attributes that move
 // ---------------------------------------------------------------------------
 
-function GrowthRow({ save, p, C }: { save: CareerSave; p: SquadPlayer; C: CareerCopy }) {
+function GrowthCard({ save, p, C, statLabels }: { save: CareerSave; p: SquadPlayer; C: CareerCopy; statLabels: Record<string, string> }) {
   const band = potBandOfSquad(save, p);
   const phase = agePhase(save, p);
   const age = squadAge(save, p);
   const eta = squadTrainingEta(save, p);
   const proj = squadTrainingProjection(save, p);
   const weeklyDecline = eta.splitCapped ? 0 : proj.weeklyDecline;
+  const offsets = (Object.entries(playerEffectOf(save, p.id).offsets) as [StatKey, number][]).filter(([, v]) => v > 0);
+  const top = Math.max(0.01, ...offsets.map(([, v]) => v));
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-3 border-b border-line py-4 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_3rem]">
-      <div className="min-w-0">
-        <p className="display truncate text-[15px] font-semibold text-ink">{p.name}</p>
-        <p className="mt-0.5 text-xs text-faint">
-          {C.player.age(age)} · {C.player.phase[phase]} · {C.player.potBand(band.min, band.max)}
-        </p>
-      </div>
-      <p className="display text-right text-2xl font-bold leading-none tabular-nums text-ink sm:order-3" title={C.common.ovr}>
-        {Math.round(p.overall)}
-      </p>
-      <div className="col-span-2 min-w-0 sm:col-span-1 sm:order-2">
-        <div className="flex items-baseline justify-between gap-3 text-[13px]">
-          <span className="text-sub">
-            {eta.atPotential ? (eta.splitCapped ? C.training.etaAtPotential : C.training.etaAtPeak) : C.training.nextPoint(eta.nextPoint)}
-          </span>
-          <span className={cx("shrink-0 text-xs", eta.daysToNext !== null && !eta.atPotential ? "text-good" : "text-faint")}>
-            {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
-          </span>
+    <PlayerCardTile
+      rarityFrame
+      name={p.name}
+      overall={p.overall}
+      age={age}
+      band={band}
+      phase={phase}
+      footer={
+        <div>
+          <div className="flex items-baseline justify-between gap-3 text-[13px]">
+            <span className="text-ink">
+              {eta.atPotential ? (eta.splitCapped ? C.training.etaAtPotential : C.training.etaAtPeak) : C.training.nextPoint(eta.nextPoint)}
+            </span>
+            <span className={cx("shrink-0 text-xs", eta.daysToNext !== null && !eta.atPotential ? "text-good" : "text-faint")}>
+              {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
+            </span>
+          </div>
+          <ProgressBar value={eta.progress} tone={eta.atPotential || phase === "prime" ? "gold" : eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
+          <p className="mt-1.5 text-xs text-faint">{C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}</p>
+          {weeklyDecline > 0 ? <p className="mt-0.5 text-xs text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
+          {offsets.length > 0 ? (
+            <ul className="mt-3 space-y-1.5 border-t border-line pt-2.5">
+              {offsets.map(([k, v]) => (
+                <li key={k} className="grid grid-cols-[5.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 text-xs">
+                  <span className="truncate text-sub">{statLabels[k] ?? k}</span>
+                  <span className="h-1 overflow-hidden rounded-full bg-white/10" aria-hidden>
+                    <span className="block h-full rounded-full bg-blue-bright/70" style={{ width: `${Math.round((v / top) * 100)}%` }} />
+                  </span>
+                  <span className="text-right tabular-nums text-ink">+{v.toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        <ProgressBar value={eta.progress} tone={eta.atPotential || phase === "prime" ? "gold" : eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
-        <p className="mt-1.5 text-xs text-faint">{C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}</p>
-        {weeklyDecline > 0 ? <p className="mt-0.5 text-xs text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
-      </div>
-    </li>
+      }
+    />
   );
 }

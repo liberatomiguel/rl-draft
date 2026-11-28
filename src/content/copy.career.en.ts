@@ -515,6 +515,7 @@ export const CAREER_EN = {
       sunday: "Start Sunday",
       follow: "Without you",
       board: "The board",
+      post: "Post to the fans", // rc9 STORIES
     },
     noticeTitle: "A notice needs you",
     // rc.36 (front S2, Miguel on rc.35): the sponsor choice is a pop-up; the block only prompts it.
@@ -2690,6 +2691,9 @@ export const CAREER_EN = {
     devRecap: "Squad growth",
     nextSeason: "Before the next season", // rc9 HQ
     rank: "In the region",
+    results: "Podiums",
+    otherEvents: (n: number) => (n === 1 ? "1 more event played" : `${n} more events played`),
+    noPodium: "No podium this season",
     prize: "Prize money",
     rolloverCta: "Start the season",
     worldsChampion: (name: string) => `World champions: ${name}`,
@@ -3787,6 +3791,7 @@ export const CAREER_EN = {
       missed: "Objective missed",
     },
     reasons: {
+      managerPost: "Your post to the fans", // rc9 STORIES
       objectiveMet: "Season objective met",
       objectiveMissed: "Season objective missed",
       objectiveOut: "Season objective out of reach",

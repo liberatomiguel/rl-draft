@@ -19,6 +19,7 @@ import { useCareerStore } from "@/store/careerStore";
 import { prizeShareLabelOf, wageLabel } from "@/components/career/careerUi";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { OfferFact } from "@/components/career/market/MarketRows";
 
 export interface TradeTarget {
   id: string;
@@ -50,6 +51,8 @@ export function TradeSheet({
   const [len, setLen] = useState<1 | 2 | 3>(2);
   const [cash, setCash] = useState(0);
   const cashId = useId();
+  const giveId_ = useId();
+  const lenId = useId();
   const errorText = (key: string): string => (C.market.errors as Record<string, string>)[key] ?? C.market.errors.unknown;
 
   if (!target) return null;
@@ -104,68 +107,76 @@ export function TradeSheet({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         {lastError && lastError !== "negotiationCounter" ? (
-          <p role="alert" className="rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad">
+          <p role="alert" className="text-[13px] font-semibold text-bad">
             {errorText(lastError)}
           </p>
         ) : null}
 
-        <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3">
-          <p className="kicker mb-1">{T.target}</p>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="card-title">{target.name}</span>
-            <span className="text-xs text-sub">
-              {C.common.ovr} <strong className="text-ink">{Math.round(target.overall)}</strong> · {nameOfRef(save, target.orgRef)}
-            </span>
+        {/* Who arrives: his name, where he plays now, his overall as the figure. */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="kicker">{T.target}</p>
+            <p className="display mt-1 truncate text-lg font-semibold text-ink">{target.name}</p>
+            <p className="text-xs text-faint">{nameOfRef(save, target.orgRef)}</p>
           </div>
+          <p className="shrink-0 text-right">
+            <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(target.overall)}</span>
+            <span className="kicker mt-1 block">{C.common.ovr}</span>
+          </p>
         </div>
 
         <div>
-          <p className="kicker mb-1">{T.pickGive}</p>
-          <div className="space-y-1.5">
+          <p className="kicker mb-2" id={giveId_}>
+            {T.pickGive}
+          </p>
+          <ul className="space-y-1.5" role="radiogroup" aria-labelledby={giveId_}>
             {plans.map(({ p, res }) => {
               const err = "error" in res ? res.error : null;
               const selected = p.id === activeId;
               return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={Boolean(err)}
-                  aria-pressed={selected}
-                  onClick={() => setGiveId(p.id)}
-                  className={cx(
-                    "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-                    selected ? "border-blue/50 bg-blue/10" : "border-line bg-white/[0.02] enabled:hover:border-line-strong",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className="display block truncate font-bold text-ink">{p.name}</span>
-                    {err ? <span className="block text-[11px] text-orange-bright">{errorText(err)}</span> : null}
-                  </span>
-                  <span className="shrink-0 text-xs text-sub">
-                    {C.common.ovr} <strong className="text-ink">{Math.round(p.overall)}</strong>
-                  </span>
-                </button>
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    disabled={Boolean(err)}
+                    onClick={() => setGiveId(p.id)}
+                    className={cx(
+                      "flex min-h-11 w-full items-center justify-between gap-4 rounded-lg border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/60 disabled:cursor-not-allowed disabled:opacity-60",
+                      selected ? "border-orange bg-orange/[0.06]" : "border-line enabled:hover:border-line-strong",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className="display block truncate text-[15px] font-semibold text-ink">{p.name}</span>
+                      {err ? <span className="mt-0.5 block text-xs text-faint">{errorText(err)}</span> : null}
+                    </span>
+                    <span className="display shrink-0 text-lg font-bold tabular-nums text-ink">{Math.round(p.overall)}</span>
+                  </button>
+                </li>
               );
             })}
-          </div>
-          {planError && !plan ? <p className="mt-1.5 text-xs font-semibold text-bad">{errorText(planError)}</p> : null}
-          {shortTenure ? <p className="mt-1.5 text-xs font-semibold text-orange-bright">{C.market.transferList.shortTenure(shortPct)}</p> : null}
+          </ul>
+          {planError && !plan ? <p className="mt-2 text-[13px] text-bad">{errorText(planError)}</p> : null}
+          {shortTenure ? <p className="mt-2 text-[13px] text-sub">{C.market.transferList.shortTenure(shortPct)}</p> : null}
         </div>
 
         <div>
-          <p className="kicker mb-1">{T.length}</p>
-          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${finalSeason ? 1 : 3}, minmax(0, 1fr))` }}>
+          <p className="kicker mb-2" id={lenId}>
+            {T.length}
+          </p>
+          <div className="grid gap-2" role="radiogroup" aria-labelledby={lenId} style={{ gridTemplateColumns: `repeat(${finalSeason ? 1 : 3}, minmax(0, 1fr))` }}>
             {(finalSeason ? ([1] as const) : ([1, 2, 3] as const)).map((l) => (
               <button
                 key={l}
                 type="button"
-                aria-pressed={effLen === l}
+                role="radio"
+                aria-checked={effLen === l}
                 onClick={() => setLen(l)}
                 className={cx(
-                  "min-h-11 rounded-lg border px-1.5 py-1 text-center text-xs font-bold transition-colors",
-                  effLen === l ? "border-white/25 bg-white/[0.06] text-sub" : "border-line text-ink hover:border-line-strong",
+                  "display min-h-11 rounded-lg border px-2 py-1 text-center text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/60",
+                  effLen === l ? "border-orange bg-orange/[0.06] text-ink" : "border-line text-ink hover:border-line-strong",
                 )}
               >
                 {C.market.seasons(l)}
@@ -175,9 +186,10 @@ export function TradeSheet({
         </div>
 
         <div>
-          <label htmlFor={cashId} className="kicker mb-1 block">
+          <label htmlFor={cashId} className="kicker block">
             {T.cashLabel}
           </label>
+          <p className="display mt-1 text-3xl font-bold leading-none tabular-nums text-ink">{cashShown > 0 ? formatMoney(cashShown) : T.noCash}</p>
           <input
             id={cashId}
             type="range"
@@ -187,35 +199,23 @@ export function TradeSheet({
             value={cashShown}
             disabled={!plan}
             onChange={(e) => setCash(Number(e.target.value))}
-            className="h-11 w-full cursor-pointer accent-orange"
+            className="mt-2 h-11 w-full cursor-pointer accent-orange disabled:cursor-not-allowed"
           />
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="display text-lg font-bold text-orange-bright">{cashShown > 0 ? formatMoney(cashShown) : T.noCash}</span>
-            <span className="text-[11px] text-faint">{T.cashHint}</span>
-          </div>
+          <p className="text-[13px] text-faint">{T.cashHint}</p>
         </div>
 
         {plan && talk ? (
-          <div className="rounded-lg border border-line bg-white/[0.02] p-3 text-sm">
+          <div>
             <p className="kicker mb-2">{T.summary}</p>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sub">{T.wage}</span>
-                <span className="display font-bold text-ink">{wageLabel(C, talk.offered.wagePerSplit)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sub">{T.share}</span>
-                <span className="display font-bold text-ink">{prizeShareLabelOf(C, { prizeSharePct: talk.offered.sharePct })}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sub">{T.cash}</span>
-                <span className="display font-bold text-ink">{plan.cash > 0 ? formatMoney(plan.cash) : T.noCash}</span>
-              </div>
-            </div>
+            <dl className="border-t border-line">
+              <OfferFact label={T.wage} value={wageLabel(C, talk.offered.wagePerSplit)} />
+              <OfferFact label={T.share} value={prizeShareLabelOf(C, { prizeSharePct: talk.offered.sharePct })} />
+              <OfferFact label={T.cash} value={plan.cash > 0 ? formatMoney(plan.cash) : T.noCash} />
+            </dl>
             <p
               className={cx(
-                "mt-3 text-xs font-semibold",
-                plan.outlook === "likely" ? "text-good" : plan.outlook === "close" ? "text-orange-bright" : "text-bad",
+                "mt-3 text-[13px] font-semibold",
+                plan.outlook === "likely" ? "text-good" : plan.outlook === "close" ? "text-sub" : "text-bad",
               )}
             >
               {T.outlook[plan.outlook]}
@@ -223,7 +223,7 @@ export function TradeSheet({
           </div>
         ) : null}
 
-        <p className="text-xs leading-relaxed text-sub">{T.rules(minDays, maxDays)}</p>
+        <p className="text-[13px] text-faint">{T.rules(minDays, maxDays)}</p>
       </div>
     </Modal>
   );

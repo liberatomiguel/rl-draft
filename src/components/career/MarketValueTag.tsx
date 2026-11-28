@@ -6,6 +6,8 @@
  * offer reads BELOW MARKET VALUE (its fee as a percent of the value, stored
  * when it was tabled), a Blockbuster bid ABOVE MARKET VALUE
  * (CAREER_TRANSFER.blockbusterFeeMult). Every other offer shows none.
+ * rc9 TRAIN-MARKET: the tag's colour says what it means to the seller (a cost
+ * is red, a gain is green; orange stays the action's).
  */
 
 import { CAREER_TRANSFER } from "@/config/balance";
@@ -30,7 +32,7 @@ export function MarketValueTag({ offer }: { offer: Pick<TransferOffer, "emergenc
   const tag = marketValueTagOf(offer);
   if (!tag) return null;
   return (
-    <Badge tone={tag.side === "below" ? "orange" : "good"}>
+    <Badge tone={tag.side === "below" ? "bad" : "good"}>
       {tag.side === "below" ? C.market.belowValue(tag.pct) : C.market.aboveValue(tag.pct)}
     </Badge>
   );

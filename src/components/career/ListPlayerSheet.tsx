@@ -10,12 +10,12 @@ import { useId, useState } from "react";
 import { CAREER_TRANSFER } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
-import { cx } from "@/lib/util";
 import { listingPlanFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import type { CareerSave } from "@/engine/career/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { OfferFact } from "@/components/career/market/MarketRows";
 
 export function ListPlayerSheet({
   save,
@@ -46,34 +46,35 @@ export function ListPlayerSheet({
     onClose();
   };
 
-  // --- squad picker -------------------------------------------------------
+  // --- squad picker: one row per player, the reason he cannot be listed under his name ---
   if (!player || !plan) {
     return (
       <Modal open={open} onClose={close} title={L.pickTitle} actions={<Button variant="ghost" onClick={close}>{C.common.cancel}</Button>}>
-        <p className="mb-3 text-xs text-sub">{L.pickHint}</p>
-        <div className="space-y-2">
+        <ul className="border-t border-line">
           {save.squad.map((p) => {
             const pl = listingPlanFor(save, p.id);
             const err = pl?.error ?? null;
             return (
-              <button
-                key={p.id}
-                type="button"
-                disabled={Boolean(err)}
-                onClick={() => setPicked(p.id)}
-                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-white/[0.02] px-3 py-2 text-left transition-colors enabled:hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="min-w-0">
-                  <span className="display block truncate font-bold text-ink">{p.name}</span>
-                  {err ? <span className="block text-[11px] text-orange-bright">{errorText(err)}</span> : null}
-                </span>
-                <span className="shrink-0 text-xs text-sub">
-                  {C.common.ovr} <strong className="text-ink">{Math.round(p.overall)}</strong>
-                </span>
-              </button>
+              <li key={p.id} className="border-b border-line">
+                <button
+                  type="button"
+                  disabled={Boolean(err)}
+                  onClick={() => setPicked(p.id)}
+                  className="flex min-h-11 w-full items-center justify-between gap-4 py-3 text-left transition-colors enabled:hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/60 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="min-w-0">
+                    <span className="display block truncate text-[15px] font-semibold text-ink">{p.name}</span>
+                    {err ? <span className="mt-0.5 block text-xs text-faint">{errorText(err)}</span> : null}
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="display block text-xl font-bold leading-none tabular-nums text-ink">{Math.round(p.overall)}</span>
+                    <span className="kicker mt-1 block">{C.common.ovr}</span>
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </Modal>
     );
   }
@@ -110,22 +111,23 @@ export function ListPlayerSheet({
         </>
       }
     >
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="card-title">{player.name}</span>
-          <span className="text-xs text-sub">
-            {C.common.ovr} <strong className="text-ink">{Math.round(player.overall)}</strong>
-          </span>
+      <div className="space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <p className="display min-w-0 truncate text-lg font-semibold text-ink">{player.name}</p>
+          <p className="shrink-0 text-right">
+            <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{Math.round(player.overall)}</span>
+            <span className="kicker mt-1 block">{C.common.ovr}</span>
+          </p>
         </div>
-        <div className="flex items-center justify-between rounded-lg border border-line bg-white/[0.03] px-3 py-2 text-sm">
-          <span className="text-sub">{L.value}</span>
-          <span className="display font-bold text-ink">{formatMoney(plan.value)}</span>
-        </div>
-        {plan.shortTenure ? <p className="text-xs font-semibold text-orange-bright">{L.shortTenure(shortPct)}</p> : null}
+        <dl className="border-t border-line">
+          <OfferFact label={L.value} value={formatMoney(plan.value)} />
+        </dl>
         <div>
-          <label htmlFor={rangeId} className="kicker mb-1 block">
+          <label htmlFor={rangeId} className="kicker block">
             {L.askLabel}
           </label>
+          <p className="display mt-1 text-3xl font-bold leading-none tabular-nums text-ink">{formatMoney(ask)}</p>
+          <p className="mt-1 text-[13px] tabular-nums text-sub">{L.askPct(pct)}</p>
           <input
             id={rangeId}
             type="range"
@@ -134,16 +136,13 @@ export function ListPlayerSheet({
             step={step}
             value={ask}
             onChange={(e) => setAskByPlayer((m) => ({ ...m, [player.id]: Number(e.target.value) }))}
-            className="h-11 w-full cursor-pointer accent-orange"
+            className="mt-2 h-11 w-full cursor-pointer accent-orange"
           />
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="display text-xl font-bold text-orange-bright">{formatMoney(ask)}</span>
-            <span className="text-xs text-sub">{L.askPct(pct)}</span>
-          </div>
         </div>
-        <p className="text-xs leading-relaxed text-sub">{L.guidance(minDays, maxDays)}</p>
+        {plan.shortTenure ? <p className="text-[13px] text-sub">{L.shortTenure(shortPct)}</p> : null}
+        <p className="text-[13px] text-faint">{L.guidance(minDays, maxDays)}</p>
         {plan.error ? (
-          <p className={cx("rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad")}>
+          <p role="alert" className="text-[13px] font-semibold text-bad">
             {errorText(plan.error)}
           </p>
         ) : null}

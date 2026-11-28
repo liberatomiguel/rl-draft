@@ -114,6 +114,15 @@ export function FocusIcon({ focus, className }: { focus: SquadFocus; className?:
   return <ScaleIcon className={className} />;
 }
 
+/** The intensity as a mark: a 20px box that holds the gauge. */
+export function IntensityMark({ workload }: { workload: TrainingWorkload }) {
+  return (
+    <span className="flex h-5 w-5 items-end justify-center">
+      <IntensityBars workload={workload} />
+    </span>
+  );
+}
+
 /** A gauge with 1-3 filled bars for the intensity. */
 function IntensityBars({ workload, className }: { workload: TrainingWorkload; className?: string }) {
   const n = workload === "light" ? 1 : workload === "normal" ? 2 : 3;
@@ -180,28 +189,32 @@ function scrimEffectOf(C: CareerCopy, scrims: ScrimChoice): string {
 }
 
 /**
- * A running plan as four rows (rc9): the choice in ink, what it does in plain
- * words under it, the label in the faint step. Nothing here is a control.
+ * A running plan as four small cards (rc9): the mark of the choice, the label in
+ * the faint step, the choice in ink and what it does in plain words under it.
+ * Nothing here is a control; the picker uses the same cards to choose.
  */
 export function PlanRows({ pkg, C, statLabels }: { pkg: TrainingPackage | null; C: CareerCopy; statLabels: Record<string, string> }) {
   const Y = C.training.cycle;
   const scrims = pkg ? scrimChoiceOf(pkg) : null;
-  const rows: [string, string, string | null][] = pkg
+  const cards: { label: string; value: string; effect: string | null; icon: React.ReactNode }[] = pkg
     ? [
-        [Y.steps.objective, Y.objectives[pkg.objective], Y.objectiveEffect[pkg.objective]],
-        [Y.steps.focus, focusLabel(C, pkg.focus), focusEffectOf(C, pkg.focus, statLabels)],
-        [Y.steps.intensity, Y.intensities[pkg.workload], Y.intensityEffect[pkg.workload]],
-        [Y.steps.scrims, scrims ? Y.scrimChoices[scrims] : "", scrims ? scrimEffectOf(C, scrims) : null],
+        { label: Y.steps.objective, value: Y.objectives[pkg.objective], effect: Y.objectiveEffect[pkg.objective], icon: <ObjectiveIcon objective={pkg.objective} className="h-5 w-5" /> },
+        { label: Y.steps.focus, value: focusLabel(C, pkg.focus), effect: focusEffectOf(C, pkg.focus, statLabels), icon: <FocusIcon focus={pkg.focus} className="h-5 w-5" /> },
+        { label: Y.steps.intensity, value: Y.intensities[pkg.workload], effect: Y.intensityEffect[pkg.workload], icon: <IntensityMark workload={pkg.workload} /> },
+        { label: Y.steps.scrims, value: scrims ? Y.scrimChoices[scrims] : "", effect: scrims ? scrimEffectOf(C, scrims) : null, icon: scrims === "off" ? <BaseDotIcon className="h-5 w-5" /> : <SwordsIcon className="h-5 w-5" /> },
       ]
-    : [[Y.steps.objective, Y.by.base, Y.idleLine]];
+    : [{ label: Y.steps.objective, value: Y.by.base, effect: Y.idleLine, icon: <BaseDotIcon className="h-5 w-5" /> }];
   return (
-    <dl className="border-t border-line">
-      {rows.map(([label, value, effect]) => (
-        <div key={label} className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-line py-3 sm:grid-cols-[7rem_minmax(0,1fr)]">
-          <dt className="kicker pt-0.5">{label}</dt>
-          <dd className="min-w-0">
-            <span className="display block text-[15px] font-semibold leading-snug text-ink">{value}</span>
-            {effect ? <span className="mt-0.5 block text-[13px] leading-snug text-sub">{effect}</span> : null}
+    <dl className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+      {cards.map((c) => (
+        <div key={c.label} className="rounded-lg border border-line bg-white/[0.02] p-3">
+          <dt className="flex items-center justify-between gap-2">
+            <span className="kicker">{c.label}</span>
+            <span className="text-sub" aria-hidden>{c.icon}</span>
+          </dt>
+          <dd className="mt-1.5">
+            <span className="display block text-[15px] font-semibold leading-snug text-ink">{c.value}</span>
+            {c.effect ? <span className="mt-0.5 block text-[13px] leading-snug text-sub">{c.effect}</span> : null}
           </dd>
         </div>
       ))}
@@ -271,21 +284,25 @@ export function PromiseBar({ promise, C, className }: { promise: NonNullable<Tra
 // ---------------------------------------------------------------------------
 
 /**
- * One option of a step: its name, and the recommendation's mark when the preset
- * or the coach gives one. The chosen option is the orange hairline (state is a
- * coloured hairline); what it does is printed once under the step.
+ * One option of a step as a card: its mark, its name, what it does in a line,
+ * and the recommendation's tag when the preset or the coach gives one. The
+ * chosen card is the orange hairline (state is a coloured hairline).
  */
 function Choice({
   selected,
   recommended,
   onClick,
   title,
+  effect,
+  icon,
   C,
 }: {
   selected: boolean;
   recommended: boolean;
   onClick: () => void;
   title: string;
+  effect?: string;
+  icon: React.ReactNode;
   C: CareerCopy;
 }) {
   return (
@@ -295,17 +312,23 @@ function Choice({
       aria-checked={selected}
       onClick={onClick}
       className={cx(
-        "flex min-h-11 w-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2.5 text-center transition-colors",
+        "flex min-h-11 w-full min-w-0 flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/60",
         selected ? "border-orange bg-orange/[0.06]" : "border-line hover:border-line-strong",
       )}
     >
+      <span className="flex w-full items-center justify-between gap-2">
+        <span className={selected ? "text-ink" : "text-sub"} aria-hidden>
+          {icon}
+        </span>
+        {recommended ? <RecommendedTag>{C.training.cycle.recommended}</RecommendedTag> : null}
+      </span>
       <span className="display block max-w-full break-words text-sm font-semibold leading-tight text-ink">{title}</span>
-      {recommended ? <RecommendedTag>{C.training.cycle.recommended}</RecommendedTag> : null}
+      {effect ? <span className="block text-xs leading-snug text-sub">{effect}</span> : null}
     </button>
   );
 }
 
-/** One decision of the plan: its label, the options, and what the chosen one does. */
+/** One decision of the plan: its label, the options as cards, and (when the cards carry none) what the chosen one does. */
 function Decision({
   label,
   done,
@@ -316,8 +339,7 @@ function Decision({
   label: string;
   done: boolean;
   cols: string;
-  /** What the chosen option does (else the step's hint). */
-  effect: string;
+  effect?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -329,7 +351,7 @@ function Decision({
       <div className={cx("grid gap-2", cols)} role="radiogroup" aria-label={label}>
         {children}
       </div>
-      <p className="mt-2.5 min-h-5 text-[13px] leading-snug text-sub">{effect}</p>
+      {effect ? <p className="mt-2.5 min-h-5 text-[13px] leading-snug text-sub">{effect}</p> : null}
     </section>
   );
 }
@@ -411,44 +433,29 @@ export function PlanPicker({
         </div>
       ) : null}
 
-      <Decision
-        label={Y.steps.objective}
-        done={picks.objective !== null}
-        cols="grid-cols-3"
-        effect={picks.objective ? Y.objectiveEffect[picks.objective] : Y.objectiveHint}
-      >
+      <Decision label={Y.steps.objective} done={picks.objective !== null} cols="grid-cols-1 min-[560px]:grid-cols-3">
         {OBJECTIVES.map((o) => (
-          <Choice key={o} C={C} selected={picks.objective === o} recommended={rec.objective === o} onClick={() => set({ objective: o })} title={Y.objectives[o]} />
+          <Choice key={o} C={C} selected={picks.objective === o} recommended={rec.objective === o} onClick={() => set({ objective: o })} title={Y.objectives[o]} effect={Y.objectiveEffect[o]} icon={<ObjectiveIcon objective={o} className="h-5 w-5" />} />
         ))}
       </Decision>
       <Decision
         label={Y.steps.focus}
         done={picks.focus !== null}
-        cols="grid-cols-2 min-[420px]:grid-cols-3 lg:grid-cols-6"
+        cols="grid-cols-2 min-[420px]:grid-cols-3"
         effect={picks.focus ? focusEffectOf(C, picks.focus, statLabels) : Y.focusHint}
       >
         {SQUAD_FOCI.map((f) => (
-          <Choice key={f} C={C} selected={picks.focus === f} recommended={rec.focus === f} onClick={() => set({ focus: f })} title={focusLabel(C, f)} />
+          <Choice key={f} C={C} selected={picks.focus === f} recommended={rec.focus === f} onClick={() => set({ focus: f })} title={focusLabel(C, f)} icon={<FocusIcon focus={f} className="h-5 w-5" />} />
         ))}
       </Decision>
-      <Decision
-        label={Y.steps.intensity}
-        done={picks.workload !== null}
-        cols="grid-cols-3"
-        effect={picks.workload ? Y.intensityEffect[picks.workload] : Y.intensityHint}
-      >
+      <Decision label={Y.steps.intensity} done={picks.workload !== null} cols="grid-cols-1 min-[560px]:grid-cols-3">
         {WORKLOADS.map((w) => (
-          <Choice key={w} C={C} selected={picks.workload === w} recommended={rec.workload === w} onClick={() => set({ workload: w })} title={Y.intensities[w]} />
+          <Choice key={w} C={C} selected={picks.workload === w} recommended={rec.workload === w} onClick={() => set({ workload: w })} title={Y.intensities[w]} effect={Y.intensityEffect[w]} icon={<IntensityMark workload={w} />} />
         ))}
       </Decision>
-      <Decision
-        label={Y.steps.scrims}
-        done={picks.scrims !== null}
-        cols="grid-cols-2 min-[420px]:grid-cols-4"
-        effect={picks.scrims ? scrimEffectOf(C, picks.scrims) : Y.scrimsHint}
-      >
+      <Decision label={Y.steps.scrims} done={picks.scrims !== null} cols="grid-cols-1 min-[420px]:grid-cols-2">
         {SCRIM_CHOICES.map((s) => (
-          <Choice key={s} C={C} selected={picks.scrims === s} recommended={rec.scrims === s} onClick={() => set({ scrims: s })} title={Y.scrimChoices[s]} />
+          <Choice key={s} C={C} selected={picks.scrims === s} recommended={rec.scrims === s} onClick={() => set({ scrims: s })} title={Y.scrimChoices[s]} effect={scrimEffectOf(C, s)} icon={s === "off" ? <BaseDotIcon className="h-5 w-5" /> : <SwordsIcon className="h-5 w-5" />} />
         ))}
       </Decision>
 

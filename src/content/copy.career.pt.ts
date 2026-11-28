@@ -494,6 +494,7 @@ export const CAREER_PT: CareerCopy = {
       sunday: "Começar o domingo",
       follow: "Sem você",
       board: "A diretoria",
+      post: "Post para a torcida", // rc9 STORIES
     },
     noticeTitle: "Um aviso precisa de você",
     // rc.36 (front S2, Miguel sobre a rc.35): a escolha do patrocínio é um pop-up; o bloco só a chama.
@@ -2664,6 +2665,9 @@ export const CAREER_PT: CareerCopy = {
     devRecap: "Evolução do elenco",
     nextSeason: "Antes da próxima temporada", // rc9 HQ
     rank: "Na região",
+    results: "Pódios",
+    otherEvents: (n: number) => (n === 1 ? "Mais 1 evento disputado" : `Mais ${n} eventos disputados`),
+    noPodium: "Nenhum pódio na temporada",
     prize: "Prêmios",
     rolloverCta: "Iniciar a temporada",
     worldsChampion: (name: string) => `Campeões mundiais: ${name}`,
@@ -3756,6 +3760,7 @@ export const CAREER_PT: CareerCopy = {
       missed: "Objetivo perdido",
     },
     reasons: {
+      managerPost: "Seu post para a torcida", // rc9 STORIES
       objectiveMet: "Objetivo da temporada cumprido",
       objectiveMissed: "Objetivo da temporada perdido",
       objectiveOut: "Objetivo da temporada fora de alcance",

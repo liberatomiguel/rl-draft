@@ -26,11 +26,13 @@ export function CoachEffectLines({
   // these are the two numeric effects players could not see before.
   const rows = [
     { key: "train", text: C.market.coachTraining(fx.trainingPct), tone: fx.trainingPct > 0 ? "text-good" : "text-sub" },
-    { key: "rating", text: C.market.coachRating(fx.ratingMod), tone: fx.ratingMod > 0 ? "text-blue-bright" : "text-sub" },
+    { key: "rating", text: C.market.coachRating(fx.ratingMod), tone: fx.ratingMod > 0 ? "text-ink" : "text-sub" },
   ];
+  // rc9 TRAIN-MARKET: a gain in training is green (a gain, against what it was); the rating line is
+  // a plain value in ink; the label is the faint kicker. No blue: blue is for links.
   return (
-    <ul className={cx("space-y-0.5 text-xs leading-snug", className)} aria-label={C.market.coachEffects}>
-      {!compact ? <li className="kicker mb-1">{C.market.coachEffects}</li> : null}
+    <ul className={cx("space-y-1 text-[13px] leading-snug", className)} aria-label={C.market.coachEffects}>
+      {!compact ? <li className="kicker mb-1.5">{C.market.coachEffects}</li> : null}
       {rows.map((r) => (
         <li key={r.key} className={r.tone}>
           {r.text}
