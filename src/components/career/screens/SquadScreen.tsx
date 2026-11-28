@@ -484,10 +484,13 @@ export function SquadScreen() {
             return (
               <li
                 key={p.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 border-b border-line py-4 first:pt-0 last:border-b-0 last:pb-0 sm:first:pt-4 sm:grid-cols-[minmax(0,1fr)_10rem_7.5rem]"
+                // rc9 (Miguel, 27/11: "as linhas dos contratos podem ser reduzidas, estão muito
+                // altas"): from `sm` the player spans both lines on the left and the actions
+                // sit under the term and the wage, so a contract is two short lines, not three.
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 border-b border-line py-2.5 first:pt-0 last:border-b-0 last:pb-0 sm:gap-y-0.5 sm:first:pt-2.5 sm:grid-cols-[minmax(0,1fr)_10rem_7.5rem]"
               >
                 {/* Who: his face, his name (opens his sheet), his state, his mood. */}
-                <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
+                <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1 sm:row-span-2">
                   <PlayerFace overall={p.overall} size="sm" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -526,20 +529,21 @@ export function SquadScreen() {
                   {/* rc.34 (UX-06b): the time left in a final-season contract. */}
                   {expiring && contractWarnsFor(save, p) ? (
                     <p className="text-xs text-orange-bright">{C.squad.weeksLeft(contractClockOf(save, p).weeksLeft ?? 0)}</p>
-                  ) : (
-                    // rc.33 (ECO-10): the prize share this contract carries.
+                  ) : p.prizeSharePct > 0 ? (
+                    // rc.33 (ECO-10): the prize share this contract carries, shown when there is one.
                     <p className="text-xs text-faint">{prizeShareLabelOf(C, p)}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* What it costs. */}
                 <p className="text-right text-sm tabular-nums text-ink">{wageLabel(C, p.salaryPerSplit)}</p>
 
                 {/* What he can do: renew first, the rest quieter. */}
-                <div className="col-span-2 flex flex-wrap gap-1.5 sm:col-span-3 sm:pl-12">
+                <div className="col-span-2 flex flex-wrap items-center gap-x-1 gap-y-1.5 sm:col-span-2 sm:col-start-2 sm:-ml-2.5 sm:[&>button]:!min-h-7 sm:[&>button]:!px-2.5 sm:[&>button]:!py-1">
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="ghost"
+                    className="!text-blue-bright"
                     onClick={() => {
                       markCareerSeen([contractNewKey(p.id, p.contractEndSeason)]);
                       setRenewLen(2);
