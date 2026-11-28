@@ -472,7 +472,7 @@ export function SquadScreen() {
         </div>
         {/* rc9 DS (#217): one row per contract, built around what the manager reads first:
             who (and how he feels), when it ends, what it costs; then what he can do. */}
-        <div className="hidden grid-cols-[minmax(0,1fr)_10rem_7.5rem] gap-x-4 pb-2 sm:grid">
+        <div className="hidden grid-cols-[minmax(0,1fr)_12rem_8.5rem] gap-x-4 pb-2 sm:grid">
           <span className="kicker">{C.squad.colPlayer}</span>
           <span className="kicker">{C.squad.colEnds}</span>
           <span className="kicker text-right">{C.squad.colWage}</span>
@@ -487,7 +487,7 @@ export function SquadScreen() {
                 // rc9 (Miguel, 27/11: "as linhas dos contratos podem ser reduzidas, estão muito
                 // altas"): from `sm` the player spans both lines on the left and the actions
                 // sit under the term and the wage, so a contract is two short lines, not three.
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 border-b border-line py-2.5 first:pt-0 last:border-b-0 last:pb-0 sm:gap-y-0.5 sm:first:pt-2.5 sm:grid-cols-[minmax(0,1fr)_10rem_7.5rem]"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 border-b border-line py-2.5 first:pt-0 last:border-b-0 last:pb-0 sm:gap-y-0.5 sm:first:pt-2.5 sm:grid-cols-[minmax(0,1fr)_12rem_8.5rem]"
               >
                 {/* Who: his face, his name (opens his sheet), his state, his mood. */}
                 <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1 sm:row-span-2">
@@ -539,7 +539,7 @@ export function SquadScreen() {
                 <p className="text-right text-sm tabular-nums text-ink">{wageLabel(C, p.salaryPerSplit)}</p>
 
                 {/* What he can do: renew first, the rest quieter. */}
-                <div className="col-span-2 flex flex-wrap items-center gap-x-1 gap-y-1.5 sm:col-span-2 sm:col-start-2 sm:-ml-2.5 sm:[&>button]:!min-h-7 sm:[&>button]:!px-2.5 sm:[&>button]:!py-1">
+                <div className="col-span-2 flex flex-wrap items-center gap-x-1 gap-y-1.5 sm:col-span-2 sm:col-start-2 sm:-ml-2 sm:flex-nowrap sm:whitespace-nowrap sm:[&>button]:!min-h-7 sm:[&>button]:!px-2 sm:[&>button]:!py-1">
                   <Button
                     size="sm"
                     variant="ghost"
