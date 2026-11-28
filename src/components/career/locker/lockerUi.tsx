@@ -15,7 +15,8 @@ import { useState } from "react";
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
-import { moodOf, moraleOf, type LockerDate, type LockerTalk, type MoodId } from "@/engine/career/lockerRoom";
+import type { LockerDate, LockerTalk, MoodId } from "@/engine/career/lockerRoom";
+import { lockerPlayerViewOf, type MoodTrend } from "@/engine/career/lockerRoomView";
 import type { CareerSave } from "@/engine/career/types";
 import { baseRarityOf } from "@/engine/cards";
 import { cx } from "@/lib/util";
@@ -107,14 +108,31 @@ export function signedDelta(n: number): string {
   return n > 0 ? `+${n}` : `−${Math.abs(n)}`;
 }
 
-/** A player's mood, read through the engine's view helpers. */
+/** A player's mood as the screens show it: the held mood (R215), not the raw morale's. */
 export function playerMoodOf(save: CareerSave, playerId: string): MoodId {
-  return moodOf(moraleOf(save.lockerRoom, playerId));
+  return lockerPlayerViewOf(save, playerId).mood;
 }
 
-/** U1: the mood on a squad card's footer (the Squad screen's starters and bench). */
+/** rc.9 integration: the trend of the last weeks as a small quiet arrow; nothing when steady. */
+export function TrendMark({ trend, C }: { trend: MoodTrend; C: CareerCopy }) {
+  if (trend === "steady") return null;
+  return (
+    <span className="text-[11px] leading-none text-faint" title={C.locker.trend[trend]}>
+      <span aria-hidden>{trend === "up" ? "↑" : "↓"}</span>
+      <span className="sr-only">{C.locker.trend[trend]}</span>
+    </span>
+  );
+}
+
+/** U1: the mood on a squad card's footer (the Squad screen's starters and bench), with its trend. */
 export function TileMood({ save, C, playerId }: { save: CareerSave; C: CareerCopy; playerId: string }) {
-  return <MoodMark mood={playerMoodOf(save, playerId)} C={C} />;
+  const view = lockerPlayerViewOf(save, playerId);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <MoodMark mood={view.mood} C={C} />
+      <TrendMark trend={view.trend} C={C} />
+    </span>
+  );
 }
 
 /**
@@ -122,14 +140,19 @@ export function TileMood({ save, C, playerId }: { save: CareerSave; C: CareerCop
  * sheet (why he feels this way); the row's other controls stay separate.
  */
 export function MoodButton({ save, C, playerId, name, onOpen }: { save: CareerSave; C: CareerCopy; playerId: string; name: string; onOpen: (id: string) => void }) {
+  const view = lockerPlayerViewOf(save, playerId);
+  const trend = view.trend === "steady" ? "" : `, ${C.locker.trend[view.trend]}`;
   return (
     <button
       type="button"
       onClick={() => onOpen(playerId)}
-      aria-label={`${C.squad.openMood(name)}: ${C.locker.moods[playerMoodOf(save, playerId)]}`}
-      className="-mx-1.5 inline-flex min-h-8 items-center rounded-md px-1.5 transition-colors hover:bg-white/[0.05]"
+      aria-label={`${C.squad.openMood(name)}: ${C.locker.moods[view.mood]}${trend}`}
+      className="-mx-1.5 inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 transition-colors hover:bg-white/[0.05]"
     >
-      <MoodMark mood={playerMoodOf(save, playerId)} C={C} />
+      <MoodMark mood={view.mood} C={C} />
+      <span aria-hidden>
+        <TrendMark trend={view.trend} C={C} />
+      </span>
     </button>
   );
 }

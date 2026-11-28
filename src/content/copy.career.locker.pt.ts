@@ -83,6 +83,7 @@ const WHY_PT: Record<string, string> = {
   passedOver: "Você recusou o pedido dele",
   madeWay: "Barrado por um reserva",
   sideEvent: "Jogou um evento paralelo",
+  managerPost: "O seu post para a torcida", // rc9 STORIES
 };
 // rc9 LOCKER end
 

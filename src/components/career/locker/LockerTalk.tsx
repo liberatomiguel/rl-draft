@@ -15,7 +15,7 @@
 
 import { CAREER_LOCKER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import { moodOf, moraleOf, type LockerTalk as Talk } from "@/engine/career/lockerRoom";
+import { shownMoodOf, type LockerTalk as Talk } from "@/engine/career/lockerRoom";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -50,9 +50,11 @@ export function LockerTalk({
   const L = C.locker;
   const player = save.squad.find((p) => p.id === talk.playerId);
   const name = player?.name ?? "?";
-  const mood = moodOf(moraleOf(save.lockerRoom, talk.playerId));
-  const label = (a: string) => L.answers[a]?.(PARAMS) ?? a;
-  const report = L.mail.body[`lockerTalk_${talk.topic}_${talk.variant}`]?.({ ...PARAMS, player: name });
+  // rc.9 integration: the held mood the other screens show; the talk's own params (the cup's size) reach the copy.
+  const mood = shownMoodOf(save.lockerRoom, talk.playerId);
+  const params = { ...PARAMS, ...(talk.params ?? {}) };
+  const label = (a: string) => L.answers[a]?.(params) ?? a;
+  const report = L.mail.body[`lockerTalk_${talk.topic}_${talk.variant}`]?.({ ...params, player: name });
   const answered = talk.answer !== undefined;
   const promised = talk.answer === "promiseMinutes" || talk.answer === "promiseStay";
 
@@ -114,7 +116,7 @@ export function LockerTalk({
                     <span className="text-sm font-semibold text-ink">{label(a)}</span>
                     {a === talk.neutral ? <Badge>{L.ui.defaultTag}</Badge> : null}
                   </span>
-                  <span className="mt-1 text-xs leading-relaxed text-sub">{L.ui.commits[a]?.(PARAMS)}</span>
+                  <span className="mt-1 text-xs leading-relaxed text-sub">{L.ui.commits[a]?.(params)}</span>
                 </button>
               </li>
             ))}

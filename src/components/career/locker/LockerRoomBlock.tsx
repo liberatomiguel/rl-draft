@@ -21,7 +21,8 @@ import { cx } from "@/lib/util";
 import { Panel } from "@/components/ui/Panel";
 import { LockerTalk } from "./LockerTalk";
 import { PlayerMoodSheet, PromiseLines } from "./PlayerMoodSheet";
-import { MoodMark, lockerDateText, useShownTalks } from "./lockerUi";
+import { lockerSquadViewOf } from "@/engine/career/lockerRoomView";
+import { MoodMark, TrendMark, lockerDateText, useShownTalks } from "./lockerUi";
 
 export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -36,6 +37,11 @@ export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }
   const issues = lockerIssuesOf(save);
   const word = st?.word ?? { kept: 0, broken: 0 };
   const standing = wordStandingOf(word);
+  // rc.9 integration: the room's trend is the side more players are moving to (lockerRoomView).
+  const views = lockerSquadViewOf(save);
+  const ups = views.filter((v) => v.trend === "up").length;
+  const downs = views.filter((v) => v.trend === "down").length;
+  const roomTrend = ups > downs ? "up" : downs > ups ? "down" : "steady";
   const nameOf = (id: string) => save.squad.find((p) => p.id === id)?.name ?? "?";
 
   return (
@@ -45,6 +51,7 @@ export function LockerRoomBlock({ save, C }: { save: CareerSave; C: CareerCopy }
         <span className="flex items-center gap-2">
           <span className="text-xs text-sub">{L.ui.room}</span>
           <MoodMark mood={squadMoodOf(st, save.squad.map((p) => p.id))} C={C} />
+          <TrendMark trend={roomTrend} C={C} />
         </span>
       </div>
 

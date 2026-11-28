@@ -83,6 +83,7 @@ const WHY_EN: Record<string, string> = {
   passedOver: "You turned down his request",
   madeWay: "Benched for a reserve",
   sideEvent: "Played a side event",
+  managerPost: "Your post to the fans", // rc9 STORIES
 };
 // rc9 LOCKER end
 

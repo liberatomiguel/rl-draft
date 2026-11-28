@@ -8,7 +8,8 @@
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
-import { moodOf, moraleOf, playerLockerLogOf, promiseProgressOf, type LockerPromise } from "@/engine/career/lockerRoom";
+import { playerLockerLogOf, promiseProgressOf, type LockerPromise } from "@/engine/career/lockerRoom";
+import { lockerPlayerViewOf } from "@/engine/career/lockerRoomView";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +21,11 @@ export function PlayerMoodSheet({ save, C, playerId, onClose }: { save: CareerSa
   const L = C.locker;
   const player = playerId ? save.squad.find((p) => p.id === playerId) : undefined;
   const st = save.lockerRoom;
-  const mood = moodOf(moraleOf(st, playerId ?? ""));
+  // rc.9 integration: the held mood, its trend and the main reason (lockerRoomView, R218).
+  const view = lockerPlayerViewOf(save, playerId ?? "");
+  const mood = view.mood;
+  const why = view.reason ? L.why[view.reason.key] : undefined;
+  const trendLine = [view.trend === "steady" ? null : L.trend[view.trend], why].filter(Boolean).join(" · ");
   const log = playerId ? playerLockerLogOf(st, playerId, 4) : [];
   const promises = (st?.promises ?? []).filter((p) => p.playerId === playerId);
   const shown = useShownTalks(save, (t) => t.playerId === playerId);
@@ -43,7 +48,8 @@ export function PlayerMoodSheet({ save, C, playerId, onClose }: { save: CareerSa
             <PlayerFace overall={player.overall} />
             <div className="min-w-0">
               <MoodMark mood={mood} C={C} size="lg" />
-              <p className="mt-1 text-xs text-sub">{L.ui.whyOf(player.name)}</p>
+              <p className="mt-1 text-xs text-sub">{trendLine || L.ui.whyOf(player.name)}</p>
+              <p className="mt-0.5 text-[11px] text-faint">{L.matchLine(view.matchEffect)}</p>
             </div>
           </div>
 
