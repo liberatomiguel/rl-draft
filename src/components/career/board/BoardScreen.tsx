@@ -21,7 +21,8 @@
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
-import { useCareerCopy } from "@/content/careerCopy";
+import { useOrgCareerCopy } from "@/components/career/orgCopy";
+import { briefLinesOf } from "./briefLines";
 import { CAREER_BOARD } from "@/config/balance";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
@@ -36,7 +37,6 @@ import { MandateGoals, MandateIssues } from "./MandateParts";
 import {
   AlsoAsked,
   BoardMandateInline,
-  BoardBrief,
   BoardPackageChoice,
   BoardSeasonPanel,
   BoardTerms,
@@ -50,10 +50,24 @@ import {
   UltimatumBoard,
 } from "./BoardParts";
 
+/** The board's last word: the brief it set the season on, as its own board (rc9 ORG-UI #277). */
+function LastWord({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const lines = briefLinesOf(C, save.board?.season?.brief, save.identity.orgName);
+  if (!lines) return null;
+  return (
+    <section className="panel p-4 sm:p-5">
+      <h3 className="card-title">{C.board.brief.heading}</h3>
+      <p className="mt-2 max-w-2xl text-[15px] leading-snug text-ink">{lines.reason}</p>
+      {lines.facts.length ? <p className="mt-1.5 text-sm text-sub">{lines.facts.join(" ")}</p> : null}
+    </section>
+  );
+}
+
 export function BoardScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const C = useCareerCopy();
+  // rc9 ORG-UI (#277): an established org reads its own words (the board's upgrade names catalogue items).
+  const C = useOrgCareerCopy(save);
   if (!mounted || !save) return <div className="mx-auto h-56 max-w-6xl animate-pulse px-3 py-5" aria-busy />;
   const board = save.board;
   const own = board?.kind === "owners";
@@ -69,11 +83,21 @@ export function BoardScreen() {
     !(save.manager?.offers?.length) &&
     !save.manager?.accepted;
 
+  const decision = mandatePending ? (
+    <div className="panel-strong p-4 sm:p-6">
+      <BoardMandateInline save={save} C={C} />
+    </div>
+  ) : pending ? (
+    <div className="panel-strong p-4 sm:p-6">
+      <BoardPackageChoice save={save} C={C} />
+    </div>
+  ) : null;
+
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4">
+      {/* rc9 ORG-UI (#277): no kicker under the title (it restated "Board"). */}
       <SectionTitle
         title={own ? C.board.ownersTitle : C.board.title}
-        kicker={own ? C.board.ownersKicker : C.board.kicker}
         className="rise-in"
         right={
           <div className="flex items-center gap-3 max-sm:hidden">
@@ -88,53 +112,46 @@ export function BoardScreen() {
 
       {!board ? <p className="text-sm text-sub">{C.board.logEmpty}</p> : null}
 
+      {/* A decision the board waits on (the mandate to read, the plan to choose) is the page's object. */}
+      {board && decision ? decision : null}
+
+      {/*
+        rc9 ORG-UI (#277), Miguel: the board in the order the job is read: how much the board
+        trusts you (confidence and why it moved), how the mandate is going, then the board's
+        last word. At the season review the verdict is that last word and leads instead.
+      */}
       {board ? (
-        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] lg:items-start lg:gap-6">
-          {/* The object and what hangs off it. */}
-          <div className="contents lg:block lg:space-y-5">
-            <div className="order-1 space-y-5">
-              {mandatePending ? (
-                <div className="panel-strong p-4 sm:p-6">
-                  <BoardMandateInline save={save} C={C} />
-                </div>
-              ) : pending ? (
-                <div className="panel-strong p-4 sm:p-6">
-                  <BoardPackageChoice save={save} C={C} />
-                </div>
-              ) : (
+        <>
+          {verdictOnly ? <BoardSeasonPanel save={save} C={C} /> : null}
+          <UltimatumBoard save={save} C={C} />
+          <ConfidencePanel board={board} C={C} save={save} wide />
+
+          <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] lg:items-start lg:gap-6">
+            <div className="min-w-0 space-y-5">
+              {decision ? null : (
                 <>
-                  <BoardSeasonPanel save={save} C={C} />
-                  <BoardBrief save={save} C={C} />
                   {/* At the review the verdict states the objective and its result; the object would repeat it. */}
                   {verdictOnly ? null : <ObjectiveBoard save={save} C={C} />}
-                  {/* v2.2 MANDATE: the money and squad goals hang off the classification object. */}
                   {verdictOnly ? null : <MandateGoals save={save} C={C} />}
+                  {verdictOnly ? null : <BoardSeasonPanel save={save} C={C} />}
+                  <LastWord save={save} C={C} />
                 </>
               )}
-              <UltimatumBoard save={save} C={C} />
-            </div>
-            <div className="order-4 space-y-5">
               {/* v2.2 MANDATE: what needs fixing at the org, read live (the mandate was set on the problems of its first day). */}
               {mandate ? <MandateIssues issues={orgIssuesOf(save)} C={C} title={C.board.mandate.issuesNow} /> : null}
               <AlsoAsked save={save} C={C} />
-              <BudgetStrip save={save} C={C} />
+              {/* The season's money lives in Finances for an established org (one board that adds up). */}
+              {own ? <BudgetStrip save={save} C={C} /> : null}
               <BoardTerms save={save} C={C} />
             </div>
-          </div>
-          {/* The relationship: confidence, the org's standing, the manager. */}
-          <div className="contents lg:block lg:space-y-5">
-            <div className="order-2 space-y-5">
+            {/* The relationship beyond the season: the board's upgrade, the org's standing, the manager. */}
+            <div className="min-w-0 space-y-5">
               <BoardUpgradePanel save={save} C={C} />
-              <ConfidencePanel board={board} C={C} save={save} />
-            </div>
-            <div className="order-3">
               <StandingTrack save={save} C={C} />
-            </div>
-            <div className="order-5">
               <ManagerPanel save={save} C={C} />
             </div>
           </div>
-        </div>
+        </>
       ) : null}
     </div>
   );

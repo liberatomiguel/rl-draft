@@ -113,7 +113,8 @@ import { ladderOf, ladderRungs, type LadderRungId } from "@/engine/career/ladder
 import { Children, isValidElement, type ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { OperationsBoard } from "@/components/career/finances/Operations";
-import { SeasonBudget } from "@/components/career/finances/SeasonBudget";
+import { SeasonMoneyBoard } from "@/components/career/finances/SeasonMoney";
+import { ledgerRefNameOf } from "@/components/career/finances/operationsView";
 import { useActiveCareerCopy, useOrgCareerCopy } from "@/components/career/orgCopy";
 
 type LedgerFilter = "all" | "in" | "out";
@@ -863,17 +864,20 @@ export function FinancesScreen() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
-      <SectionTitle title={C.finances.title} kicker={C.finances.statementHint} className="rise-in" />
+      {/* rc9 ORG-UI (#272): no kicker; the statement's rows say what moves on a Monday. */}
+      <SectionTitle title={C.finances.title} className="rise-in" />
 
       <FinanceErrorNotice className="rise-in" />
 
-      {/* rc.6 (ORGMODE UI-C): an established org's season budget leads the screen. */}
-      {established ? <SeasonBudget save={save} C={C} className="rise-in" /> : null}
+      {/* rc9 ORG-UI (#272): an established org's money is ONE board whose figures add up
+          (seasonMoneyOf); the season budget card and the founded strip under it repeated it. */}
+      {established ? <SeasonMoneyBoard save={save} C={C} onChart={() => setChartOpen(true)} className="rise-in" /> : null}
 
       {/* The books as ONE strip of three figures (the 1px gaps are its
           dividers): what is in the bank, what a Monday does to it, where that
           leaves it. Each cell is the figure first and large, its label under
-          it, then the detail that explains it. */}
+          it, then the detail that explains it. A founded club's. */}
+      {established ? null : (
       <div
         id="career-finance-summary"
         data-tour="finances-overview"
@@ -936,6 +940,7 @@ export function FinancesScreen() {
           {save.phase !== "ended" ? <p className={cx("mt-auto border-t border-line pt-3 text-xs leading-relaxed", projection.balance < 0 ? "text-bad" : "text-sub")}>{C.finances.projectionSplit(formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)), formatMoney(projection.balance, { compact: true }))}</p> : null}
         </div>
       </div>
+      )}
 
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
         {/* Phone: money first (sponsors, the ledger, the loans), the ladder after
@@ -1468,21 +1473,23 @@ export function FinancesScreen() {
                 {ledgerGroups.map((g) => (
                   <div key={g.key}>
                     <p className="kicker mb-1">{g.label}</p>
-                    <div className="rounded-lg border border-line bg-white/[0.02]">
+                    {/* rc9 ORG-UI (#272): rows under hairlines, no box per day; the reference reads as a name
+                        (a sponsor's brand, an org facility), never as a raw id. */}
+                    <div className="border-t border-line">
                       {g.items.map((e) => (
                         <div
                           key={e.id}
-                          className="flex items-baseline justify-between gap-3 border-b border-line/50 px-2.5 py-1.5 text-xs last:border-0"
+                          className="flex items-baseline justify-between gap-3 border-b border-line py-2 text-sm last:border-b-0"
                         >
-                          <span className="min-w-0 truncate text-sub">
+                          <span className="min-w-0 truncate text-ink">
                             {C.finances.ledgerKind[e.kind]}
                             {e.refName ? (
-                              <span className="text-faint"> · {e.refName}</span>
+                              <span className="text-faint"> · {sponsorBrandById.get(e.refName)?.name ?? ledgerRefNameOf(C, e.refName, established)}</span>
                             ) : null}
                           </span>
                           <span
                             className={cx(
-                              "shrink-0 tabular-nums font-semibold",
+                              "shrink-0 tabular-nums",
                               e.amount >= 0 ? "text-good" : "text-bad",
                             )}
                           >

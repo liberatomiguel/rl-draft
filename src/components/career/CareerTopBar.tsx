@@ -292,7 +292,8 @@ export function CareerTopBar() {
               className={cx(
                 // The current tab is marked by weight and the orange rule, not by colour alone.
                 // rc9 DS: tabs are caps in Medium; the current one is Demi in ink over the orange rule.
-                "display relative flex min-h-11 items-center whitespace-nowrap px-2 text-[13px] uppercase transition-colors xl:px-3",
+                // rc9 ORG-UI (#276): 3 only from 2xl; with the Board tab, xl's 12px wrapped "Careers" to a second row at 1280.
+                "display relative flex min-h-11 items-center whitespace-nowrap px-2 text-[13px] uppercase transition-colors 2xl:px-3",
                 startsGroup && tab.group < 4 && "ml-3 before:absolute before:-left-1.5 before:top-1/2 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-line-strong",
                 tab.group === 4 && "ml-auto",
                 active

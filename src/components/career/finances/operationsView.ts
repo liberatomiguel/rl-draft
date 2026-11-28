@@ -16,6 +16,7 @@ import type { OperationItem, Operations } from "@/engine/career/established";
 import { bootcampTierFor } from "@/engine/career/economy";
 import type { LadderRungId } from "@/engine/career/ladder";
 import {
+  ORG_CAMP_TIER,
   ORG_FACILITY_LEVELS,
   orgItemOfFounded,
   type OrgDepartment,
@@ -142,4 +143,35 @@ export function nextUpgradeOf(ops: OrgOperations): OrgFacility | null {
 /** The departments staffed, by name (HQ's one line). */
 export function staffedNamesOf(C: CareerCopy, ops: OrgOperations): string[] {
   return ops.departments.filter((d) => d.staffed).map((d) => orgItemNameOf(C, d.id));
+}
+
+// ---------------------------------------------------------------------------
+// rc9 ORG-UI (#274): the screens' reading of the catalogue
+// ---------------------------------------------------------------------------
+
+/** What the levels built give together ("+10% training, +1 team buff level"); "" when none is built. */
+export function facilityEffectNowOf(C: CareerCopy, f: OrgFacility): string {
+  const built = f.levels.slice(0, f.level);
+  if (!built.length) return "";
+  const sum = built.reduce((s, l) => ({ t: s.t + l.trainingPct, b: s.b + l.buffLevels, r: s.r + l.rating }), { t: 0, b: 0, r: 0 });
+  return C.orgmode.org.levelEffect(sum.t, sum.b, Math.round(sum.r * 100) / 100);
+}
+
+/** The next level's effect alone ("+5% training"); "" when the facility is complete. */
+export function facilityNextEffectOf(C: CareerCopy, f: OrgFacility): string {
+  const next = f.next ? f.levels[f.next.level - 1] : null;
+  return next ? C.orgmode.org.levelEffect(next.trainingPct, next.buffLevels, next.rating) : "";
+}
+
+/** The camp's effect, with the engine's figures (the structured tier an established org runs). */
+export function campEffectOf(C: CareerCopy): string {
+  return opsEffectOf(C, ORG_CAMP_TIER === 2 ? "bootcamp2" : "bootcamp1");
+}
+
+/** A ledger line's reference as the screen names it: a catalogue id or a founded id through the catalogue, else the raw name. */
+export function ledgerRefNameOf(C: CareerCopy, refName: string, established: boolean): string {
+  if (!established) return refName;
+  const org = (C.orgmode.org.name as Record<string, string>)[refName];
+  if (org) return org;
+  return orgItemOfFounded(refName) ? opsNameOf(C, refName as OperationItem["id"]) : refName;
 }

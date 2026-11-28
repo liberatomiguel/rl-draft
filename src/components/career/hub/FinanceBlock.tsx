@@ -16,6 +16,8 @@ import { useMemo, useState } from "react";
 import { CAREER_HQ, CAREER_PAYROLL } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
+import { seasonMoneyOf } from "@/engine/career/budget";
+import { establishedOf } from "@/engine/career/established";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { backerLineOf, balanceHistoryOf, nextBreachOutcomeOf } from "@/store/careerFlow";
@@ -83,6 +85,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const money = (n: number) => formatMoney(n, { compact: true });
   const cashTight = f.runway !== null && f.runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const ended = save.phase === "ended";
+  const money_ = useMemo(() => (establishedOf(save) ? seasonMoneyOf(save) : null), [save]);
 
   return (
     <div>
@@ -112,6 +115,14 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           {line.length >= 2 ? <MondayLine points={line} /> : <span className="px-1 text-[11px] text-faint">{C.finances.chartTitle}</span>}
         </button>
       </div>
+
+      {/* rc9 ORG-UI (#272): an established org's board figure, the same one Finances ends its sum on. */}
+      {!ended && money_ && money_.budget.paid ? (
+        <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-2.5">
+          <span className="kicker">{money_.freeToSpend < 0 ? C.orgmode.money.short : C.orgmode.money.freeToSpend}</span>
+          <span className={cx("display text-base font-bold tabular-nums", money_.freeToSpend < 0 ? "text-bad" : "text-good")}>{money(money_.freeToSpend)}</span>
+        </p>
+      ) : null}
 
       {/* rc.36: the next payroll and the runway as two full-width lines. */}
       {!ended ? (

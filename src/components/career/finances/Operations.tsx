@@ -2,22 +2,23 @@
 
 /**
  * v2.2 rc.6 (ORGMODE UI-C): an established org's Operations on Finances, in
- * place of the founded club's gear ladder.
+ * place of the founded club's gear ladder. rc9 ORG-UI (#274): rebuilt on the
+ * org catalogue (`orgOperationsOf`, R220), so an established save never reads
+ * a founded item's name (Miguel: "não faz sentido eu ter 'equipamentos
+ * profissionais' em uma org gigantesca").
  *
- * Nothing here is locked by reputation (spec E2): every installation, staff
- * role and the camp is on the shelf, and the row says what decides it: owned
- * or retained, the board's sign-off with the confidence it needs, a freeze,
- * the money. Three departments in one board, each a list of rows: the name
- * and its state, what it does, the notes (upkeep, the board, what releasing
- * saves) and, on the right, the price over the action. The actions are the
- * store's (buyGear, setStaff, setPsychologist, runBootcamp), the ones the
- * ladder used.
+ * One board, three groups of rows. Facilities: one row per facility (two),
+ * its level as the state, what the built levels give, and the next level on
+ * the right: its price, what it adds, the board's sign-off. Departments: one
+ * row per department, staffed or not, what it does, its weekly pay and the
+ * action. The event camp: one row. Every action is the store's founded action
+ * the catalogue maps onto (`orgFlow`: a facility's next level is its first
+ * installation not owned), so prices, refusals and effects are the engine's.
  */
 
 import { useState, type ReactNode } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
-import { gateRepOf, operationsOf, type OperationItem } from "@/engine/career/established";
-import type { GearItemId } from "@/engine/career/economy";
+import { ORG_DEPARTMENT_ROLE, nextLevelGearOf, orgOperationsOf, type OrgDepartment, type OrgFacility } from "@/engine/career/orgCatalogue";
 import type { CareerSave, StaffId } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -27,12 +28,11 @@ import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { boardRefusalText } from "@/components/career/hub/hubShared";
-import { RungIcon } from "@/components/career/ladder/LadderParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { AppLink } from "@/components/ui/AppLink";
-import { campsShown, nextPurchaseOf, OPS_DEPTS, opsEffectOf, opsNameOf, opsRungOf, runningCostOf, type OpsDept } from "./operationsView";
+import { campEffectOf, departmentEffectOf, facilityEffectNowOf, facilityNextEffectOf, orgItemNameOf } from "./operationsView";
 
 const money = (n: number) => formatMoney(n, { compact: true });
 
@@ -41,184 +41,195 @@ function refusalText(C: CareerCopy, key: string): string {
   return boardRefusalText(C, key) ?? (key === "funds" ? C.orgmode.ops.cantAfford : key in r ? r[key as keyof typeof r] : r.other);
 }
 
-function OpsRow({ item, name, state, effect, notes, price, priceTone = "ink", action, quiet }: {
-  item: OperationItem;
+/**
+ * A card (second pass, Miguel: "clean does not mean bare"): the name and its state, the level as
+ * steps (facilities), what it does, the notes; at the foot the figure and the action.
+ */
+function Row({ name, state, steps, effect, notes, figure, figureNote, figureTone = "text-ink", action }: {
   name: string;
   state: ReactNode;
-  effect: string;
+  steps?: { level: number; max: number } | null;
+  effect?: string;
   notes?: ReactNode;
-  price?: string | null;
-  priceTone?: "ink" | "good" | "quiet";
+  figure?: string | null;
+  figureNote?: string | null;
+  figureTone?: string;
   action?: ReactNode;
-  quiet?: boolean;
 }) {
   return (
-    <li className="flex flex-col gap-3 border-b border-line py-4 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <RungIcon id={opsRungOf(item.id)} className={cx("h-5 w-5 shrink-0", quiet ? "text-faint" : "text-sub")} />
-        <div className="min-w-0 flex-1">
-          <h4 className={cx("display flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold uppercase leading-tight", quiet ? "text-sub" : "text-ink")}>
-            {name}
-            {state}
-          </h4>
-          <p className="mt-1 text-sm leading-snug text-sub">{effect}</p>
-          {notes}
-        </div>
-      </div>
-      {price || action ? (
-        <div className="flex shrink-0 items-center justify-between gap-3 pl-8 sm:min-w-28 sm:flex-col sm:items-end sm:justify-start sm:gap-2 sm:pl-0">
-          {price ? (
-            <span className={cx("display text-xl font-bold leading-none tabular-nums", priceTone === "good" ? "text-good" : priceTone === "quiet" ? "text-faint" : "text-ink")}>{price}</span>
-          ) : <span />}
-          {action}
+    <li className="panel flex min-w-0 flex-col p-4">
+      <h4 className="display flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[15px] font-bold leading-tight text-ink">
+        <span className="min-w-0">{name}</span>
+        {state}
+      </h4>
+      {steps ? (
+        <span className="mt-3 flex gap-1" role="img" aria-label={`${steps.level} / ${steps.max}`}>
+          {Array.from({ length: steps.max }).map((_, i) => (
+            <span key={i} className={cx("h-1.5 flex-1 rounded-sm", i < steps.level ? "bg-blue-bright" : "bg-white/10")} />
+          ))}
+        </span>
+      ) : null}
+      {effect ? <p className="mt-2.5 text-sm leading-snug text-sub">{effect}</p> : null}
+      {notes}
+      {figure || action ? (
+        <div className="mt-auto pt-4">
+          <div className="flex items-end justify-between gap-3 border-t border-line pt-3">
+            {figure ? (
+              <span className="min-w-0">
+                <span className={cx("display block text-xl font-bold leading-none tabular-nums", figureTone)}>{figure}</span>
+                {figureNote ? <span className="mt-1 block text-xs text-faint">{figureNote}</span> : null}
+              </span>
+            ) : <span />}
+            <span className="shrink-0 whitespace-nowrap">{action}</span>
+          </div>
         </div>
       ) : null}
     </li>
   );
 }
 
-const Note = ({ children, tone = "text-faint" }: { children: ReactNode; tone?: string }) => <p className={cx("mt-1 text-xs", tone)}>{children}</p>;
+const Note = ({ children, tone = "text-faint" }: { children: ReactNode; tone?: string }) => <p className={cx("mt-1 text-xs leading-snug", tone)}>{children}</p>;
 
 export function OperationsBoard({ save, C, primaryAllowed, className }: { save: CareerSave; C: CareerCopy; primaryAllowed: boolean; className?: string }) {
   const buyGear = useCareerStore((s) => s.buyGear);
   const setStaff = useCareerStore((s) => s.setStaff);
   const setPsychologist = useCareerStore((s) => s.setPsychologist);
   const runBootcamp = useCareerStore((s) => s.runBootcamp);
-  const [release, setRelease] = useState<OperationItem | null>(null);
+  const [release, setRelease] = useState<OrgDepartment | null>(null);
 
-  const ops = operationsOf(save, { floor: backerLineOf(save).floor });
+  const ops = orgOperationsOf(save, { floor: backerLineOf(save).floor });
   if (!ops) return null;
   const O = C.orgmode.ops;
+  const G = C.orgmode.org;
   const ended = save.phase === "ended";
   const fin = save.finances;
-  const confidence = save.board?.confidence ?? 0;
-  const next = nextPurchaseOf(ops);
+  const confidence = Math.round(save.board?.confidence ?? 0);
   const freeLeft = Math.max(0, sponsorFreeBootcampsOf(save.sponsor) - fin.freeBootcampsUsedThisSeason);
+  // One filled button on the screen: the cheapest facility level the board signs now.
+  const buyable = ops.facilities.filter((f) => f.next?.state === "available" && !gearRefusalOf(save, nextLevelGearOf(fin.gear, f.id)!));
+  const primaryId = primaryAllowed && !ended ? (buyable.sort((a, b) => a.next!.price - b.next!.price)[0]?.id ?? null) : null;
 
-  const setRetainer = (id: OperationItem["id"], on: boolean) => {
-    if (id === "psychologist") setPsychologist(on);
-    else setStaff(id as StaffId, on);
+  const setDepartment = (d: OrgDepartment, on: boolean) => {
+    const role = ORG_DEPARTMENT_ROLE[d.id];
+    if (role === "psychologist") setPsychologist(on);
+    else setStaff(role as StaffId, on);
   };
 
-  const facilityRow = (item: OperationItem) => {
-    const name = opsNameOf(C, item.id);
-    const owned = item.state === "owned";
-    const refusal = owned || ended ? null : gearRefusalOf(save, item.id as GearItemId);
-    const canBuy = item.state === "available" && !refusal && !ended;
-    const primary = primaryAllowed && canBuy && next?.id === item.id;
-    const tag =
-      owned ? <Badge>{O.state.owned}</Badge>
-      : item.state === "needsApproval" ? <Badge tone="orange">{O.state.needsApproval}</Badge>
-      : item.state === "frozen" ? <Badge tone="orange">{O.state.frozen}</Badge>
-      : item.state === "cantAfford" ? <Badge tone="bad">{O.state.cantAfford}</Badge>
-      : null;
+  const facilityRow = (f: OrgFacility) => {
+    const name = orgItemNameOf(C, f.id);
+    const gear = nextLevelGearOf(fin.gear, f.id);
+    const next = f.next;
+    const refusal = !next || !gear || ended ? null : gearRefusalOf(save, gear);
+    const canBuy = Boolean(next && next.state === "available" && !refusal && !ended);
+    const now = facilityEffectNowOf(C, f);
+    const levelTag = f.level > 0 ? <Badge>{G.level(f.level, f.maxLevel)}</Badge> : <Badge tone="neutral">{G.notBuilt}</Badge>;
     return (
-      <OpsRow
-        key={item.id}
-        item={item}
+      <Row
+        key={f.id}
         name={name}
-        state={tag}
-        effect={opsEffectOf(C, item.id)}
-        quiet={item.state === "needsApproval" || item.state === "frozen"}
+        state={levelTag}
+        steps={{ level: f.level, max: f.maxLevel }}
+        effect={now || (C.orgmode.org.about[f.id] ?? "")}
         notes={
           <>
-            {item.upkeep > 0 ? <Note>{O.upkeep(money(item.upkeep))}</Note> : null}
-            {item.state === "needsApproval" && item.confidence !== null ? <Note tone="text-sub">{O.needs(item.confidence, Math.round(confidence))}</Note> : null}
-            {item.state === "frozen" ? <Note tone="text-orange-bright">{O.frozen}</Note> : null}
-            {item.state === "cantAfford" ? <Note tone="text-sub">{O.cantAfford}</Note> : null}
-            {item.state === "available" && item.confidence !== null && !refusal ? <Note tone="text-good">{O.signs}</Note> : null}
-            {item.state === "available" && refusal ? <Note tone="text-sub">{refusalText(C, refusal)}</Note> : null}
+            {next ? <Note tone="text-sub">{G.nextLine(next.level, facilityNextEffectOf(C, f))}</Note> : <Note>{G.complete}</Note>}
+            {next && next.state === "needsApproval" && next.confidence !== null ? <Note tone="text-orange-bright">{O.needs(next.confidence, confidence)}</Note> : null}
+            {next && next.state === "frozen" ? <Note tone="text-orange-bright">{O.frozen}</Note> : null}
+            {next && next.state === "cantAfford" ? <Note tone="text-sub">{O.cantAfford}</Note> : null}
+            {next && next.state === "available" && refusal ? <Note tone="text-sub">{refusalText(C, refusal)}</Note> : null}
+            {next && next.state === "available" && !refusal && next.confidence !== null ? <Note tone="text-good">{O.signs}</Note> : null}
           </>
         }
-        price={owned ? null : money(item.price)}
-        priceTone={canBuy ? "ink" : "quiet"}
+        figure={next ? money(next.price) : null}
+        figureNote={next && next.upkeep > 0 ? O.addsUpkeep(money(next.upkeep)) : null}
+        figureTone={canBuy ? "text-ink" : "text-faint"}
         action={
-          owned || item.state === "needsApproval" || item.state === "frozen" ? null : (
-            <Button variant={primary ? "primary" : "secondary"} size="sm" disabled={!canBuy} onClick={() => buyGear(item.id as GearItemId)}>
+          next && !ended ? (
+            <Button variant={primaryId === f.id ? "primary" : "secondary"} size="sm" disabled={!canBuy} onClick={() => gear && buyGear(gear)}>
               {O.buy}
             </Button>
-          )
+          ) : null
         }
       />
     );
   };
 
-  const staffRow = (item: OperationItem) => {
-    const on = item.state === "retained";
-    return (
-      <OpsRow
-        key={item.id}
-        item={item}
-        name={opsNameOf(C, item.id)}
-        state={on ? <Badge tone="good">{O.state.retained}</Badge> : null}
-        effect={opsEffectOf(C, item.id)}
-        notes={on ? <Note tone="text-sub">{O.saves(money(item.price))}</Note> : null}
-        price={O.perWeek(money(item.upkeep))}
-        priceTone={on ? "ink" : "ink"}
-        action={
-          ended ? null : on ? (
-            <Button variant="ghost" size="sm" onClick={() => setRelease(item)}>{O.release}</Button>
-          ) : (
-            <Button variant="secondary" size="sm" onClick={() => setRetainer(item.id, true)}>{O.hire}</Button>
-          )
-        }
-      />
-    );
-  };
+  const departmentRow = (d: OrgDepartment) => (
+    <Row
+      key={d.id}
+      name={orgItemNameOf(C, d.id)}
+      state={d.staffed ? <Badge tone="good">{G.staffed}</Badge> : <Badge tone="neutral">{G.vacant}</Badge>}
+      effect={departmentEffectOf(C, d.id)}
+      notes={d.staffed ? <Note>{O.saves(money(d.perSplit))}</Note> : null}
+      figure={money(d.weekly)}
+      figureNote={O.weekly}
+      figureTone={d.staffed ? "text-ink" : "text-sub"}
+      action={
+        ended ? null : d.staffed ? (
+          <Button variant="ghost" size="sm" onClick={() => setRelease(d)}>{O.release}</Button>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={() => setDepartment(d, true)}>{O.hire}</Button>
+        )
+      }
+    />
+  );
 
-  const campRow = (item: OperationItem) => {
+  const campRow = () => {
+    const camp = ops.camp;
+    if (!camp) return null;
     const refusal = ended ? "blocked" : bootcampRefusalOf(save);
     const free = freeLeft > 0;
     const until = fin.bootcampUntil;
+    const state =
+      camp.note === "active" ? <Badge tone="good">{O.campActive(until ? formatDateTiny(C.dates, dateOfDay(until.seasonIndex, until.day)) : "")}</Badge>
+      : camp.note === "used" ? <Badge>{O.campUsed}</Badge>
+      : null;
     return (
-      <OpsRow
-        key={item.id}
-        item={item}
-        name={opsNameOf(C, item.id)}
-        state={item.note === "active" ? <Badge tone="good">{O.campActive(until ? formatDateTiny(C.dates, dateOfDay(until.seasonIndex, until.day)) : "")}</Badge> : item.note === "used" ? <Badge>{O.campUsed}</Badge> : item.state === "cantAfford" && !free ? <Badge tone="bad">{O.state.cantAfford}</Badge> : null}
-        effect={opsEffectOf(C, item.id)}
+      <Row
+        name={orgItemNameOf(C, camp.id)}
+        state={state}
+        effect={campEffectOf(C)}
         notes={
           <>
             {free ? <Note tone="text-sub">{C.finances.freeBootcampLeft(freeLeft)}</Note> : null}
-            {refusal && refusal !== "used" && !(item.note === "active") ? <Note tone="text-sub">{refusalText(C, refusal)}</Note> : null}
+            {refusal && refusal !== "used" && camp.note !== "active" ? <Note tone="text-sub">{refusalText(C, refusal)}</Note> : null}
           </>
         }
-        price={free ? C.common.free : money(item.price)}
-        priceTone={free ? "good" : refusal ? "quiet" : "ink"}
+        figure={free ? C.common.free : money(camp.price)}
+        figureTone={free ? "text-good" : refusal ? "text-faint" : "text-ink"}
         action={ended ? null : <Button variant="secondary" size="sm" disabled={Boolean(refusal)} onClick={runBootcamp}>{O.run}</Button>}
       />
     );
   };
 
-  const rows: Record<OpsDept, OperationItem[]> = { facilities: ops.facilities, staff: ops.staff, camps: campsShown(ops, gateRepOf(save)) };
-  const render: Record<OpsDept, (i: OperationItem) => ReactNode> = { facilities: facilityRow, staff: staffRow, camps: campRow };
+  const group = (key: "facilities" | "staff" | "camps", rows: ReactNode) => (
+    <div key={key} className="mt-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+        <h4 className="kicker">{O.dept[key]}</h4>
+        <p className="text-xs text-faint">{O.deptNote[key]}</p>
+      </div>
+      <ol className="mt-2 grid gap-3 sm:grid-cols-2">{rows}</ol>
+    </div>
+  );
 
+  // Second pass: the board is the section (title and running cost); facilities and departments are cards in it.
   return (
-    <section id="career-operations" data-tour="finances-progress" aria-labelledby="career-operations-title" className={cx("panel min-w-0 scroll-mt-20 p-4 sm:p-5", className)}>
-      <div className="card-head">
-        <div className="min-w-0">
-          <h3 id="career-operations-title" className="card-title">{O.title}</h3>
-          <p className="mt-1 max-w-prose text-sm normal-case leading-snug tracking-normal text-sub">{O.body}</p>
-        </div>
+    <section id="career-operations" data-tour="finances-progress" aria-labelledby="career-operations-title" className={cx("min-w-0 scroll-mt-20", className)}>
+      <div className="card-head border-b border-line pb-3">
+        <h3 id="career-operations-title" className="card-title">{O.title}</h3>
         <p className="shrink-0 text-right">
-          <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{money(runningCostOf(ops))}</span>
-          <span className="mt-1 block text-xs text-sub">{O.running}</span>
+          <span className="display block text-2xl font-bold leading-none tabular-nums text-ink">{O.perWeek(money(ops.runningWeekly))}</span>
+          <span className="mt-1 block text-xs text-faint">{O.running}</span>
         </p>
       </div>
 
-      {OPS_DEPTS.map((dept) => (
-        <div key={dept} className="mt-5 first-of-type:mt-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-line-strong pb-2">
-            <h4 className="display text-sm font-bold uppercase tracking-[0.04em] text-ink">{O.dept[dept]}</h4>
-            <p className="text-xs text-sub">{O.deptNote[dept]}</p>
-          </div>
-          <ol>{rows[dept].map((i) => render[dept](i))}</ol>
-        </div>
-      ))}
+      {group("facilities", ops.facilities.map(facilityRow))}
+      {group("staff", ops.departments.map(departmentRow))}
+      {ops.camp ? group("camps", campRow()) : null}
 
       <Modal
         open={Boolean(release)}
-        title={release ? O.releaseTitle(opsNameOf(C, release.id)) : ""}
+        title={release ? O.releaseTitle(orgItemNameOf(C, release.id)) : ""}
         onClose={() => setRelease(null)}
         actions={
           <>
@@ -227,7 +238,7 @@ export function OperationsBoard({ save, C, primaryAllowed, className }: { save: 
               variant="secondary"
               className="min-h-11"
               onClick={() => {
-                if (release) setRetainer(release.id, false);
+                if (release) setDepartment(release, false);
                 setRelease(null);
               }}
             >
@@ -236,54 +247,51 @@ export function OperationsBoard({ save, C, primaryAllowed, className }: { save: 
           </>
         }
       >
-        {release ? <p className="text-sm leading-snug text-sub">{O.releaseBody(money(release.price), money(release.upkeep))}</p> : null}
+        {release ? <p className="text-sm leading-snug text-sub">{O.releaseBody(money(release.perSplit), money(release.weekly))}</p> : null}
       </Modal>
     </section>
   );
 }
 
 /**
- * The Club page's Operations: one row per department (what is in place, as a
- * figure and a line), each opening Finances at the Operations board.
+ * The Club page's Operations: what the org runs, one row per facility, the
+ * departments staffed and the camp, each opening Finances at the board.
  */
 export function OperationsSummary({ save, C, className }: { save: CareerSave; C: CareerCopy; className?: string }) {
-  const ops = operationsOf(save, { floor: backerLineOf(save).floor });
+  const ops = orgOperationsOf(save, { floor: backerLineOf(save).floor });
   if (!ops) return null;
   const O = C.orgmode.ops;
+  const G = C.orgmode.org;
   const K = C.orgmode.club;
-  const owned = ops.facilities.filter((i) => i.state === "owned");
-  const retained = ops.staff.filter((i) => i.state === "retained");
-  const camp = campsShown(ops, gateRepOf(save))[0];
+  const staffed = ops.departments.filter((d) => d.staffed);
   const until = save.finances.bootcampUntil;
-  const rows: { key: OpsDept; figure: string; line: string; tone?: string }[] = [
-    {
-      key: "facilities",
-      figure: `${owned.length} / ${ops.facilities.length}`,
-      line: owned.length ? owned.map((i) => opsNameOf(C, i.id)).join(", ") : O.facilitiesNone,
-    },
-    { key: "staff", figure: String(retained.length), line: retained.length ? retained.map((i) => opsNameOf(C, i.id)).join(", ") : O.staffNone },
-    {
-      key: "camps",
-      figure: camp ? (camp.note === "active" ? "1" : "0") : "0",
-      line: !camp ? O.campReady : camp.note === "active" ? O.campActive(until ? formatDateTiny(C.dates, dateOfDay(until.seasonIndex, until.day)) : "") : camp.note === "used" ? O.campUsed : O.campReady,
-      tone: camp?.note === "active" ? "text-good" : undefined,
-    },
+  const camp = ops.camp;
+  const rows: { key: string; name: string; line: string; tone?: string }[] = [
+    ...ops.facilities.map((f) => ({ key: f.id, name: orgItemNameOf(C, f.id), line: f.level > 0 ? G.level(f.level, f.maxLevel) : G.notBuilt })),
+    { key: "staff", name: O.dept.staff, line: staffed.length ? staffed.map((d) => orgItemNameOf(C, d.id)).join(", ") : O.staffNone },
+    ...(camp
+      ? [{
+          key: "camp",
+          name: orgItemNameOf(C, camp.id),
+          line: camp.note === "active" ? O.campActive(until ? formatDateTiny(C.dates, dateOfDay(until.seasonIndex, until.day)) : "") : camp.note === "used" ? O.campUsed : O.campReady,
+          tone: camp.note === "active" ? "text-good" : undefined,
+        }]
+      : []),
   ];
   return (
     <section aria-labelledby="club-ops-title" className={cx("panel min-w-0 overflow-hidden", className)}>
-      <div className="border-b border-line px-4 py-3 sm:px-5">
+      <div className="card-head border-b border-line px-4 py-3 sm:px-5">
         <h3 id="club-ops-title" className="card-title">{K.opsTitle}</h3>
-        <p className="mt-1.5 text-sm leading-snug text-sub">{K.opsBody}</p>
+        <span className="text-xs text-sub">{O.perWeek(money(ops.runningWeekly))}</span>
       </div>
       <ul>
         {rows.map((r) => (
           <li key={r.key} className="border-b border-line last:border-b-0">
-            <AppLink href="/career/finances#career-operations" className="flex min-h-14 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.03] sm:px-5">
+            <AppLink href="/career/finances#career-operations" className="flex min-h-14 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.03] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-bright sm:px-5">
               <span className="min-w-0 flex-1">
-                <span className="display block text-sm font-bold uppercase leading-tight text-ink">{O.dept[r.key]}</span>
+                <span className="display block text-[15px] font-bold leading-tight text-ink">{r.name}</span>
                 <span className={cx("mt-0.5 block truncate text-xs", r.tone ?? "text-sub")}>{r.line}</span>
               </span>
-              <span className="display shrink-0 text-2xl font-bold leading-none tabular-nums text-ink">{r.key === "camps" ? null : r.figure}</span>
               <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -291,12 +299,6 @@ export function OperationsSummary({ save, C, className }: { save: CareerSave; C:
           </li>
         ))}
       </ul>
-      <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2 sm:px-5">
-        <span className="text-xs text-sub">{O.running} · {O.perWeek(money(runningCostOf(ops)))}</span>
-        <AppLink href="/career/finances#career-operations" className="inline-flex min-h-11 items-center text-sm font-semibold text-blue-bright hover:underline">
-          {K.opsOpen}
-        </AppLink>
-      </div>
     </section>
   );
 }

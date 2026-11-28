@@ -27,7 +27,7 @@ import { chanceBandOf, missionProgressOf, type ChanceBand } from "@/engine/caree
 import type { BoardPackage, BoardState, JobOffer, PackageId } from "@/engine/career/boardTypes";
 import { seasonBudgetOf } from "@/engine/career/budget";
 import { weekOfDay } from "@/engine/career/calendar";
-import { promoteLineOf, STANDING_TIERS, standingOf } from "@/engine/career/established";
+import { STANDING_TIERS, standingOf, standingSenseOf } from "@/engine/career/established";
 import { seasonGoalProgressOf } from "@/engine/career/seasonGoals";
 import { careerSeasonOf } from "@/engine/career/era";
 import type { CareerSave, SeasonGoalSpec } from "@/engine/career/types";
@@ -389,10 +389,15 @@ export function ObjectiveBoard({ save, C }: { save: CareerSave; C: CareerCopy })
     : null;
   return (
     <Panel strong className="p-5 sm:p-7">
+      {/* rc9 ORG-UI (#277): under a mandate the goal's area is enough; the mandate's own board titles the other two. */}
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-sub">
-        <span>{season.mandate ? C.board.mandate.area.classification : C.board.sporting}</span>
-        <span aria-hidden>·</span>
-        <span className="font-semibold text-ink">{season.mandate ? C.board.mandate.title : K.plan(K.name[pkg.id])}</span>
+        <span className="kicker">{season.mandate ? C.board.mandate.area.classification : C.board.sporting}</span>
+        {season.mandate ? null : (
+          <>
+            <span aria-hidden>·</span>
+            <span className="font-semibold text-ink">{K.plan(K.name[pkg.id])}</span>
+          </>
+        )}
       </p>
       <h2 className="display mt-3 max-w-3xl text-3xl uppercase leading-[0.95] text-ink [overflow-wrap:break-word] sm:text-[2.5rem]">{goalText(C, pkg.objective)}</h2>
 
@@ -485,15 +490,17 @@ export function AlsoAsked({ save, C }: { save: CareerSave; C: CareerCopy }) {
 }
 
 /** Confidence: the large figure, the meter with its two labelled lines, the state sentence, the log. */
-export function ConfidencePanel({ board, C, save }: { board: BoardState; C: CareerCopy; save?: CareerSave }) {
+export function ConfidencePanel({ board, C, save, wide = false }: { board: BoardState; C: CareerCopy; save?: CareerSave; wide?: boolean }) {
   // v2.2 MANDATE (after ERA): "S1 · W3" is the career's season, not the era index (a 2027 takeover starts at index 6).
   const seasonNo = (s: number) => (save ? careerSeasonOf(save, s) : s) + 1;
   const L = CAREER_BOARD.confidence;
   const c = Math.round(board.confidence);
   const fill = c >= L.warn ? "bg-ink" : c >= L.ultimatum ? "bg-orange-bright" : "bg-bad";
   const state = c >= L.warn ? "text-ink" : c >= L.ultimatum ? "text-orange-bright" : "text-bad";
+  // rc9 ORG-UI (#277): `wide` lays the figure and the log side by side (the Board page's first board).
   return (
-    <Panel className="p-4 sm:p-5">
+    <Panel className={cx("p-4 sm:p-5", wide && "lg:grid lg:grid-cols-2 lg:gap-x-10")}>
+      <div className="min-w-0">
       <h3 className="card-title">{board.kind === "owners" ? C.board.ownersConfidence : C.board.confidence}</h3>
       <div className="mt-4 flex items-end justify-between gap-4">
         <p className="display text-6xl font-bold leading-[0.85] tabular-nums text-ink">
@@ -515,8 +522,10 @@ export function ConfidencePanel({ board, C, save }: { board: BoardState; C: Care
         </div>
       </div>
       <p className="mt-3 text-sm leading-snug text-sub">{C.board.lines(L.warn, L.ultimatum)}</p>
+      </div>
 
-      <h4 className="kicker mt-5">{C.board.log}</h4>
+      <div className="min-w-0">
+      <h4 className={cx("kicker mt-5", wide && "lg:mt-0")}>{C.board.log}</h4>
       {board.log.length === 0 ? <p className="mt-1.5 text-sm text-sub">{C.board.logEmpty}</p> : null}
       <ul className="mt-1.5 border-t border-line">
         {board.log.slice(0, 10).map((e, i) => (
@@ -529,6 +538,7 @@ export function ConfidencePanel({ board, C, save }: { board: BoardState; C: Care
           </li>
         ))}
       </ul>
+      </div>
     </Panel>
   );
 }
@@ -536,14 +546,18 @@ export function ConfidencePanel({ board, C, save }: { board: BoardState; C: Care
 /** An established org's standing: the four tiers, the marker, the next tier's line, the relegation line. */
 export function StandingTrack({ save, C, note, className }: { save: CareerSave; C: CareerCopy; note?: string; className?: string }) {
   const st = standingOf(save);
-  if (!st) return null;
+  const sense = standingSenseOf(save);
+  if (!st || !sense) return null;
   const S = C.board.standing;
-  const pos = (n: number) => `${Math.max(0, Math.min(100, n))}%`;
+  const N = C.orgmode.sense;
+  // rc9 ORG-UI (#275): the standing is a word (Miguel: "não deve ser um número físico que aparece
+  // para o player e sobe ou desce"). The tier is the figure; which way it drifts and what it means
+  // are sentences. rc.6 printed the reputation and its tier lines as numbers.
   return (
     <section className={cx("panel p-4 sm:p-5", className)}>
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="card-title">{S.title}</h3>
-        <p className="display text-3xl font-bold leading-none tabular-nums text-ink">{st.value}</p>
+        <p className="display text-2xl font-bold uppercase leading-none text-ink">{S.tier[sense.tier] ?? sense.tier}</p>
       </div>
       <ol className="mt-4 grid grid-cols-4 gap-1.5" aria-label={S.title}>
         {STANDING_TIERS.map((t) => (
@@ -559,15 +573,12 @@ export function StandingTrack({ save, C, note, className }: { save: CareerSave; 
           </li>
         ))}
       </ol>
-      <div className="relative mt-5 h-1.5 rounded-sm bg-white/10" aria-hidden>
-        <div className="h-1.5 rounded-sm bg-blue-bright/70" style={{ width: pos(st.value) }} />
-        {st.relegationLine !== null ? <span className="absolute -top-1 h-3.5 w-px bg-bad" style={{ left: pos(st.relegationLine) }} /> : null}
-        {st.next ? <span className="absolute -top-1 h-3.5 w-px bg-good" style={{ left: pos(st.next.line) }} /> : null}
-        <span className="absolute -top-[5px] h-4 w-1 -translate-x-1/2 rounded-sm bg-ink" style={{ left: pos(st.value) }} />
-      </div>
-      <ul className="mt-4 space-y-1 text-sm leading-snug">
-        <li className="text-ink">{st.next ? S.next(S.tier[st.next.tier] ?? st.next.tier, promoteLineOf(st.next.tier)) : S.top}</li>
-        {st.relegationLine !== null ? <li className="text-sub">{S.relegation(st.relegationLine)}</li> : null}
+      <p className={cx("mt-4 text-sm leading-snug", sense.drift === "rising" ? "text-good" : sense.drift === "slipping" ? "text-orange-bright" : "text-ink")}>
+        {N.drift[sense.drift]}
+      </p>
+      <ul className="mt-2 space-y-1 text-sm leading-snug text-sub">
+        <li>{N.expects[sense.tier]}</li>
+        <li>{N.pull(sense.signCap)}</li>
       </ul>
       {/* rc.6 (ORGMODE UI-C): the Club page says what a promotion changes. */}
       {note ? <p className="mt-3 border-t border-line pt-3 text-sm leading-snug text-sub">{note}</p> : null}
